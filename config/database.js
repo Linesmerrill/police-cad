@@ -1,3 +1,3 @@
 module.exports = {
-	'url' : 'mongodb://localhost/knoldus' 
+	'url' : process.env.MONGODB_URI || 'mongodb://localhost/knoldus' 
 };
