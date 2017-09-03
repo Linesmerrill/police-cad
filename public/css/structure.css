@@ -462,3 +462,11 @@ div#menu li.back .left {
 .width-10 {
   width: 10rem;
 }
+
+.display-inline {
+  display: inline;
+}
+
+.margin-top-2 {
+  margin-top: 2rem;
+}
