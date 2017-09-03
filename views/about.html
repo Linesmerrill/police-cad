@@ -29,12 +29,11 @@
       <div class="col-md-12 text-align-center">
         <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".add-new-civ">Add New Civilian</button>
         <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".create-new-vehicle">Add New Vehicle</button>
-        <button type="button" class="btn btn-primary btn-width-150">Edit Civilian</button>
-        <button type="button" class="btn btn-primary btn-width-150">Patrol Log</button>
+        <button type="button" class="btn btn-primary btn-width-150" disabled>Edit Civilian</button>
+        <button type="button" class="btn btn-primary btn-width-150" disabled>Patrol Log</button>
         <button type="button" class="btn btn-default btn-width-150" onClick="parent.location='/logout'">Log Out</button>
       </div>
     </div>
-    <!-- <button class="btn btn-primary" data-toggle="modal" data-target=".bd-example-modal-lg">Large modal</button> -->
 
 <!--Beginning of Modal: Create Civilian  -->
 <div class="modal fade add-new-civ" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
@@ -169,7 +168,7 @@
         <div class="form-group">
           <label class="col-md-4 control-label" for="valid-registration">Valid Registration?</label>
           <div class="col-md-4">
-            <select id="valid-registration" name="valid-registration" class="form-control">
+            <select id="valid-registration" name="validRegistration" class="form-control">
               <option value="1">Yes</option>
               <option value="2">No</option>
             </select>
@@ -180,7 +179,7 @@
         <div class="form-group">
           <label class="col-md-4 control-label" for="valid-insurance">Valid Insurance</label>
           <div class="col-md-4">
-            <select id="valid-insurance" name="valid-insurance" class="form-control">
+            <select id="valid-insurance" name="validInsurance" class="form-control">
               <option value="1">Yes</option>
               <option value="2">No</option>
             </select>
@@ -191,14 +190,14 @@
         <div class="form-group">
           <label class="col-md-4 control-label" for="registered-owner">Registered Owner</label>
           <div class="col-md-4">
-            <input id="registered-owner" name="registered-owner" type="search" placeholder="Registered Owner" class="form-control input-md" required="">
+            <input id="registered-owner" name="registeredOwner" type="search" placeholder="Registered Owner" class="form-control input-md" required="">
 
           </div>
         </div>
 
         <!-- Select Basic -->
         <div class="form-group">
-          <label class="col-md-4 control-label" for="is-stolen">Marked Stolen?</label>
+          <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
           <div class="col-md-4">
             <select id="is-stolen" name="is-stolen" class="form-control">
               <option value="1">No</option>
@@ -211,7 +210,7 @@
         <div class="form-group">
           <label class="col-md-4 control-label" for="create-vehicle"></label>
           <div class="col-md-4">
-            <button id="create-vehicle" name="create-vehicle" class="btn btn-primary">Create</button>
+            <button id="create-vehicle" name="submitNewVeh" value=<%= user.user.username %> class="btn btn-primary">Create</button>
           </div>
         </div>
         </fieldset>
@@ -220,31 +219,44 @@
   </div>
 </div> <!--End of Modal: Create Vehicle  -->
 
-    <div class="row">
-      <div class="col-md-12 text-align-center">
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-12 text-align-center margin-top-2 font-size-20-px">
+  <div class="col-md-12">
+      <div class="col-md-6 text-align-center margin-top-2 font-size-20-px">
         Your Personas:
       </div>
-    </div>
-    <div class="col-md-10 col-md-offset-1 text-align-center name-table">
+
+      <div class="col-md-6 text-align-center margin-top-2 font-size-20-px">
+        Your Vehicles:
+      </div>
 
 
+    <div class="col-md-4 col-md-offset-1 text-align-center name-table">
     <table class="table table-hover">
   <thead>
     <tr>
     </tr>
   </thead>
   <tbody>
-
-
     <% for(var i=0; i<personas.length; i++) {%>
  <tr><td><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td></tr>
 <% } %>
   </tbody>
 </table>
+</div>
+
+  <!--Table for Vehicles  -->
+  <div class="col-md-4 col-md-offset-2 text-align-center name-table">
+    <table class="table table-hover">
+      <thead>
+        <tr><td>Plate</td><td>Model</td><td>Color</td></tr>
+
+      </thead>
+        <tbody>
+          <% for(var i=0; i<vehicles.length; i++) {%>
+          <tr><td><%= vehicles[i].vehicle.plate%></td><td> <%= vehicles[i].vehicle.model%></td><td> <%= vehicles[i].vehicle.color%></td></tr>
+          <% } %>
+        </tbody>
+    </table>
+  </div>
 </div>
   </body>
 </html>

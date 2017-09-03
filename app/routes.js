@@ -1,5 +1,6 @@
 var User = require('../app/models/user');
 var Civilian = require('../app/models/civilian');
+var Vehicle = require('../app/models/vehicle');
 var Friend = require('../app/models/friend');
 async = require("async");
 var path = require('path'),
@@ -30,9 +31,14 @@ module.exports = function(app, passport, server) {
   Civilian.find({
    'civilian.username': request.user.user.username
   }, function(err, dbPersonas) {
+    Vehicle.find({'vehicle.username': request.user.user.username}, function(err, dbVehicles) {
+
+
    response.render('about.html', {
     user: request.user,
-    personas: dbPersonas
+    personas: dbPersonas,
+    vehicles: dbVehicles
+  });
    });
   })
  });
@@ -119,6 +125,21 @@ module.exports = function(app, passport, server) {
    var myCiv = new Civilian()
    myCiv.updateCiv(req, res)
    myCiv.save(function(err, fluffy) {
+    if (err) return console.error(err);
+   });
+
+  })
+ });
+
+ app.post('/create-vehicle', function(req, res) {
+
+  User.findOne({
+   'user.username': req.body.submitNewVeh
+  }, function(err, user) {
+
+   var myVeh = new Vehicle()
+   myVeh.updateVeh(req, res)
+   myVeh.save(function(err, fluffy) {
     if (err) return console.error(err);
    });
 

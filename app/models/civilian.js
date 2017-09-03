@@ -20,14 +20,6 @@ var civilianSchema = mongoose.Schema({
  }
 });
 
-// userSchema.methods.generateHash = function(password) {
-//  return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
-// };
-//
-// userSchema.methods.verifyPassword = function(password) {
-//  return bcrypt.compareSync(password, this.user.password);
-// };
-
 civilianSchema.methods.updateCiv = function(request, response) {
 
  this.civilian.firstName = request.body.civFirstName;
@@ -40,7 +32,5 @@ civilianSchema.methods.updateCiv = function(request, response) {
  this.civilian.save();
  response.redirect('/about');
 };
-
-
 
 module.exports = mongoose.model('Civilian', civilianSchema);
