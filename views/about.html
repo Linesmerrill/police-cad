@@ -28,7 +28,7 @@
     <div class="row margin-top-2">
       <div class="col-md-12 text-align-center">
         <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".add-new-civ">Add New Civilian</button>
-        <button type="button" class="btn btn-primary btn-width-150">Add New Vehicle</button>
+        <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".create-new-vehicle">Add New Vehicle</button>
         <button type="button" class="btn btn-primary btn-width-150">Edit Civilian</button>
         <button type="button" class="btn btn-primary btn-width-150">Patrol Log</button>
         <button type="button" class="btn btn-default btn-width-150" onClick="parent.location='/logout'">Log Out</button>
@@ -39,10 +39,186 @@
 <div class="modal fade add-new-civ" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      Create New Civilian
+      <form class="form-horizontal">
+        <fieldset>
+
+        <!-- Form Name -->
+        <legend>Create a New Civilian</legend>
+
+        <!-- Text input-->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="civ-first-name">Civilian First Name</label>
+          <div class="col-md-4">
+          <input id="civ-first-name" name="civ-first-name" type="text" placeholder="First Name" class="form-control input-md" required="">
+
+          </div>
+        </div>
+
+        <!-- Text input-->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="civ-last-name">Civilian Last Name</label>
+          <div class="col-md-4">
+          <input id="civ-last-name" name="civ-last-name" type="text" placeholder="Last Name" class="form-control input-md" required="">
+
+          </div>
+        </div>
+
+        <!-- Button (Double) -->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="gen-random-name-male">Generate Random Name</label>
+          <div class="col-md-8">
+            <input type="button" value="Random Male Name" id="gen-random-name-male" name="gen-random-name-male" class="btn btn-info" disabled>
+            <input type="button" value="Random Female Name" id="gen-random-name-female" name="gen-random-name-female" class="btn btn-info" disabled>
+          </div>
+        </div>
+
+        <!-- Select Basic -->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="license-status">License Status</label>
+          <div class="col-md-4">
+            <select id="license-status" name="license-status" class="form-control">
+              <option value="1">Valid</option>
+              <option value="2">Revoked</option>
+              <option value="3">None</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Text input-->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="ticket-count">Ticket Count</label>
+          <div class="col-md-4">
+          <input id="ticket-count" name="ticket-count" type="text" placeholder="# Tickets" class="form-control input-md">
+
+          </div>
+        </div>
+
+        <!-- Text input-->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="birthday">Date of Birth</label>
+          <div class="col-md-4">
+          <input id="birthday" name="birthday" type="text" placeholder="mm/dd/yyyy" class="form-control input-md" required>
+
+          </div>
+        </div>
+
+        <!-- Select Basic -->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="warrants">Warrants?</label>
+          <div class="col-md-4">
+            <select id="warrants" name="warrants" class="form-control">
+              <option value="1">No</option>
+              <option value="2">Yes</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Button -->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="submit-new-civ"></label>
+          <div class="col-md-4">
+            <button id="submit-new-civ" name="submit-new-civ" class="btn btn-primary">Create</button>
+          </div>
+        </div>
+
+        </fieldset>
+      </form>
     </div>
   </div>
-</div>
+</div> <!--End of Modal: Create New Civ  -->
+
+<!--Beginning of Modal: Create Vehicle  -->
+<div class="modal fade create-new-vehicle" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <form class="form-horizontal">
+        <fieldset>
+
+        <!-- Form Name -->
+        <legend>Create Vehicle</legend>
+
+        <!-- Text input-->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="plate">Plate</label>
+          <div class="col-md-4">
+          <input id="plate" name="plate" type="text" placeholder="Plate" class="form-control input-md" required="">
+
+          </div>
+        </div>
+
+        <!-- Search input-->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="model">Model</label>
+          <div class="col-md-4">
+            <input id="model" name="model" type="search" placeholder="Model" class="form-control input-md" required="">
+
+          </div>
+        </div>
+
+        <!-- Text input-->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="color">Color</label>
+          <div class="col-md-4">
+          <input id="color" name="color" type="text" placeholder="Color" class="form-control input-md" required="">
+
+          </div>
+        </div>
+
+        <!-- Select Basic -->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="valid-registration">Valid Registration?</label>
+          <div class="col-md-4">
+            <select id="valid-registration" name="valid-registration" class="form-control">
+              <option value="1">Yes</option>
+              <option value="2">No</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Select Basic -->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="valid-insurance">Valid Insurance</label>
+          <div class="col-md-4">
+            <select id="valid-insurance" name="valid-insurance" class="form-control">
+              <option value="1">Yes</option>
+              <option value="2">No</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Search input-->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="registered-owner">Registered Owner</label>
+          <div class="col-md-4">
+            <input id="registered-owner" name="registered-owner" type="search" placeholder="Registered Owner" class="form-control input-md" required="">
+
+          </div>
+        </div>
+
+        <!-- Select Basic -->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="is-stolen">Marked Stolen?</label>
+          <div class="col-md-4">
+            <select id="is-stolen" name="is-stolen" class="form-control">
+              <option value="1">No</option>
+              <option value="2">Yes</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Button -->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="create-vehicle"></label>
+          <div class="col-md-4">
+            <button id="create-vehicle" name="create-vehicle" class="btn btn-primary">Create</button>
+          </div>
+        </div>
+        </fieldset>
+        </form>
+    </div>
+  </div>
+</div> <!--End of Modal: Create Vehicle  -->
+
     <div class="row">
       <div class="col-md-12 text-align-center">
       </div>
