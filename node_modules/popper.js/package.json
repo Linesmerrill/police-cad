@@ -1,0 +1,84 @@
+{
+  "name": "popper.js",
+  "version": "1.12.5",
+  "description": "A kickass library to manage your poppers",
+  "homepage": "https://popper.js.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FezVrasta/popper.js.git"
+  },
+  "author": {
+    "name": "Federico Zivolo",
+    "email": "federico.zivolo@gmail.com"
+  },
+  "contributors": [
+    {
+      "name": "Contributors",
+      "url": "https://github.com/FezVrasta/popper.js/graphs/contributors"
+    }
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/FezVrasta/popper.js/issues"
+  },
+  "keywords": [
+    "popperjs",
+    "component",
+    "drop",
+    "tooltip",
+    "popover",
+    "position",
+    "attached"
+  ],
+  "main": "dist/umd/popper.js",
+  "module": "dist/esm/popper.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "prepare": "npm run build",
+    "postpublish": "nuget-publish && ./bower-publish.sh",
+    "prebuild": "npm run lint",
+    "pretest": "npm run lint",
+    "build": "node bundle.js",
+    "lint": "eslint .",
+    "test": "popper-karma",
+    "test:dev": "BROWSERS=Chrome NODE_ENV=development npm run test",
+    "coverage": "NODE_ENV=coverage npm run test"
+  },
+  "devDependencies": {
+    "@popperjs/bundle": "^1.0.2",
+    "@popperjs/eslint-config-popper": "^1.0.0",
+    "nuget-publish": "^1.0.3",
+    "@popperjs/test": "^1.0.0",
+    "@popperjs/test-utils": "^1.0.0",
+    "eslint": "^4.1.1"
+  },
+  "resolutions": {
+    "micromatch": "^3.0.3"
+  },
+  "_id": "popper.js@1.12.5",
+  "_npmVersion": "5.3.0",
+  "_nodeVersion": "8.1.2",
+  "_npmUser": {
+    "name": "fezvrasta",
+    "email": "federico.zivolo@gmail.com"
+  },
+  "dist": {
+    "integrity": "sha512-6R2eXIy1xYukMNutoD+y/Gj0IpjEQhivyZonm5Vz0Fp8jdc7kvheKCvpM/t+PxqKb7VbLVnvPVEdTyslEb7f6w==",
+    "shasum": "229e4dea01629e1f1a1e26991ffade5024220fa6",
+    "tarball": "https://registry.npmjs.org/popper.js/-/popper.js-1.12.5.tgz"
+  },
+  "maintainers": [
+    {
+      "name": "fezvrasta",
+      "email": "info@mywebexpression.com"
+    }
+  ],
+  "_npmOperationalInternal": {
+    "host": "s3://npm-registry-packages",
+    "tmp": "tmp/popper.js-1.12.5.tgz_1504016188639_0.5722488483879715"
+  },
+  "directories": {},
+  "_shasum": "229e4dea01629e1f1a1e26991ffade5024220fa6",
+  "_resolved": "https://registry.npmjs.org/popper.js/-/popper.js-1.12.5.tgz",
+  "_from": "popper.js@>=1.11.0 <2.0.0"
+}

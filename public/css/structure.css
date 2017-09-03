@@ -1,14 +1,14 @@
 /*
-  ✰✰✰✰✰✰✰✰✰✰✰✰✰✰ 
+  ✰✰✰✰✰✰✰✰✰✰✰✰✰✰
 
   Simple Login Form
   HTML5/CSS3 Coded by: $hekh@r d-Ziner, CSSJunction.com
   PSD by:PremiumPixels.com
-  
+
   Uuage: Free. You can modify, remove our links and use wherever you want ☺.
-  
-  ✰✰✰✰✰✰✰✰✰✰✰✰✰✰✰ 
-  
+
+  ✰✰✰✰✰✰✰✰✰✰✰✰✰✰✰
+
 */
 body {
 	background: #eff3f6;
@@ -149,32 +149,6 @@ body {
 	vertical-align: sub;
 	*vertical-align: middle;
 	margin-right: 10px;
-}
-
-.box input[type=text],.box input[type=password],.txtField,.cjComboBox {
-	border: 6px solid #F7F9FA;
-	-webkit-border-radius: 3px;
-	-moz-border-radius: 3px;
-	border-radius: 3px;
-	-moz-box-shadow: 2px 3px 3px rgba(0, 0, 0, 0.06) inset, 0 0 1px #95a2a7
-		inset;
-	-webkit-box-shadow: 2px 3px 3px rgba(0, 0, 0, 0.06) inset, 0 0 1px
-		#95a2a7 inset;
-	box-shadow: 2px 3px 3px rgba(0, 0, 0, 0.06) inset, 0 0 1px #95a2a7 inset;
-	margin: 3px 0 4px;
-	padding: 8px 6px;
-	width: 270px;
-}
-
-.box input[type=text]:focus,.box input[type=password]:focus,.txtField:focus,.cjComboBox:focus
-	{
-	border: 6px solid #f0f7fc;
-	-moz-box-shadow: 2px 3px 3px rgba(0, 0, 0, 0.04) inset, 0 0 1px #0d6db6
-		inset;
-	-webkit-box-shadow: 2px 3px 3px rgba(0, 0, 0, 0.04) inset, 0 0 1px
-		#0d6db6 inset;
-	box-shadow: 2px 3px 3px rgba(0, 0, 0, 0.04) inset, 0 0 1px #0d6db6 inset;
-	color: #333;
 }
 
 .cjComboBox {
@@ -383,7 +357,7 @@ div#menu ul.menu>li:hover>a span {
 }
 
 div#menu li {
-	
+
 }
 
 div#menu li.last {
@@ -447,7 +421,7 @@ div#menu li.back .left {
 	position: absolute;
 	z-index:999;
 	font-size:16px;
-	color: #F0F2F5; 
+	color: #F0F2F5;
    font: bold 16px Helvetica, Arial, Sans-Serif;
    text-shadow: 2px 2px 4px #000;
 }
@@ -457,5 +431,34 @@ div#menu li.back .left {
 }
 #reminder a{
 	text-decoration:none;
-	color:#E26262;	
+	color:#E26262;
+}
+
+.cursor-default {
+  cursor: default;
+}
+
+.font-size-20 {
+  font-size: 2em;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.button-sign-in {
+  float: right;
+  width: 12rem;
+}
+
+.float-right {
+  float: right;
+}
+
+.margin-right-1 {
+  margin-right: 1rem;
+}
+
+.width-10 {
+  width: 10rem;
 }
