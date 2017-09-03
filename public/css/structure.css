@@ -10,10 +10,10 @@
   ✰✰✰✰✰✰✰✰✰✰✰✰✰✰✰
 
 */
-body {
+/*body {
 	background: #eff3f6;
 	background: url(../images/background.jpeg) repeat scroll;
-}
+}*/
 
 .box {
 	background: #fefefe;
@@ -75,14 +75,14 @@ body {
 	height: 80px;
 }
 
-.box.editProfile table tr button,.box.content table tr button {
+/*.box.editProfile table tr button,.box.content table tr button {
 	margin: 25px 15px;
-}
+}*/
 
-.box.editProfile table tr td:first-child+td button,.box.content table tr td:first-child+td button
+/*.box.editProfile table tr td:first-child+td button,.box.content table tr td:first-child+td button
 	{
 	margin-left: 80px;
-}
+}*/
 
 .box.editProfile textarea,.box.reminder textarea {
 	margin-left: 6px;
@@ -185,7 +185,7 @@ body {
 	color: #f84747;
 }
 
-.btnLogin {
+/*.btnLogin {
 	-moz-border-radius: 2px;
 	-webkit-border-radius: 2px;
 	border-radius: 15px;
@@ -210,9 +210,9 @@ body {
 	margin-left: 12px;
 	float: right;
 	padding: 7px 21px;
-}
+}*/
 
-.btnLogin:hover,.btnLogin:focus,.btnLogin:active {
+/*.btnLogin:hover,.btnLogin:focus,.btnLogin:active {
 	background: #a1d8f0;
 	background: -moz-linear-gradient(top, #7acbed, #badff3);
 	background: -webkit-gradient(linear, left top, left bottom, from(#7acbed),
@@ -223,7 +223,7 @@ body {
 
 .btnLogin:active {
 	text-shadow: rgba(0, 0, 0, 0.3) 0 -1px 0px;
-}
+}*/
 
 footer#main {
 	position: fixed;
@@ -467,6 +467,35 @@ div#menu li.back .left {
   display: inline;
 }
 
+.margin-top-1 {
+  margin-top: 1rem;
+}
+
 .margin-top-2 {
   margin-top: 2rem;
+}
+
+.margin-top-4 {
+  margin-top: 4rem;
+}
+
+.text-align-right {
+  text-align: right;
+}
+
+.text-align-center {
+  text-align: center;
+}
+
+.image-star {
+  width: 10%;
+}
+
+.username {
+  margin-left: -2.25em;
+  font-size: 17px;
+}
+
+.btn-width-150 {
+  width: 150px;
 }
