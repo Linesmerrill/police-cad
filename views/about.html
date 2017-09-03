@@ -14,30 +14,64 @@
   </head>
   <body>
     <div class="row margin-top-4">
-      <div class="col-md-12 text-align-center font-size-20">
+      <div class="col-md-12 text-align-center font-size-20-px margin-left-2">
         San Andreas <img class="image-star" src="/images/star.png" alt="star"> Civilian Operations
       </div>
 
     </div>
 
     <div class="row">
-      <div class="col-md-12 username text-align-center font-size-10">
+      <div class="col-md-12 text-align-center font-size-20-px">
         Hi, <%= user.user.username %>
       </div>
     </div>
     <div class="row margin-top-2">
       <div class="col-md-12 text-align-center">
-        <button type="button" class="btn btn-primary btn-width-150">Add New Civilian</button>
+        <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".add-new-civ">Add New Civilian</button>
         <button type="button" class="btn btn-primary btn-width-150">Add New Vehicle</button>
         <button type="button" class="btn btn-primary btn-width-150">Edit Civilian</button>
         <button type="button" class="btn btn-primary btn-width-150">Patrol Log</button>
         <button type="button" class="btn btn-default btn-width-150" onClick="parent.location='/logout'">Log Out</button>
       </div>
     </div>
+    <!-- <button class="btn btn-primary" data-toggle="modal" data-target=".bd-example-modal-lg">Large modal</button> -->
+
+<div class="modal fade add-new-civ" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      Create New Civilian
+    </div>
+  </div>
+</div>
     <div class="row">
       <div class="col-md-12 text-align-center">
-
       </div>
     </div>
+    <div class="row">
+      <div class="col-md-12 text-align-center margin-top-2 font-size-20-px">
+        Your Personas:
+      </div>
+    </div>
+    <div class="col-md-10 col-md-offset-1 text-align-center name-table">
+
+
+    <table class="table table-hover">
+  <thead>
+    <tr>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Mark</td>
+    </tr>
+    <tr>
+      <td>Jacob</td>
+    </tr>
+    <tr>
+      <td>Larry the Bird</td>
+    </tr>
+  </tbody>
+</table>
+</div>
   </body>
 </html>

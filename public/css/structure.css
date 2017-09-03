@@ -438,8 +438,12 @@ div#menu li.back .left {
   cursor: default;
 }
 
-.font-size-20 {
+.font-size-2-em {
   font-size: 2em;
+}
+
+.font-size-20-px {
+  font-size: 20px
 }
 
 .cursor-pointer {
@@ -459,8 +463,16 @@ div#menu li.back .left {
   margin-right: 1rem;
 }
 
+.margin-left-2 {
+  margin-left: 2.5rem;
+}
+
 .width-10 {
   width: 10rem;
+}
+
+.width-80 {
+  width: 80%;
 }
 
 .display-inline {
@@ -498,4 +510,8 @@ div#menu li.back .left {
 
 .btn-width-150 {
   width: 150px;
+}
+
+.name-table {
+  border: 2px solid gray;
 }
