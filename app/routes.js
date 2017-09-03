@@ -38,6 +38,10 @@ module.exports = function(app, passport,server) {
 			response.render('login-civ.html', { message: request.flash('error') });
 		});
 
+    app.get('/login', function(req, res) {
+      res.redirect('/');
+    })
+
 		app.post('/login-civ', passport.authenticate('login', {
 			successRedirect : '/about',
 			failureRedirect : '/login-civ',
@@ -85,6 +89,27 @@ module.exports = function(app, passport,server) {
 
                          });
   		});
+
+      app.post('/create-civ',  function (req, res){
+         console.log(req.body)
+
+  				//  var tempPath = req.files.file.path,
+          // 			targetPath = path.resolve('./uploads/'+req.files.file.originalFilename);
+      		// 		if (path.extname(req.files.file.name).toLowerCase() === '.png') {
+          // 				fs.rename(tempPath, './uploads/image_'+req.user._id, function(err) {
+          //     					if (err) throw err;
+          //     				console.log("Upload completed!");
+          // 				});
+      		// 		}
+
+          //db stuff here:
+   		// 	 User.findOne({ 'user.email' :  req.body.email }, function(err, user) {
+        //           		if (err){ return done(err);}
+        //           		if (user)
+        //               			user.updateUser(req, res)
+        //
+        //                    });
+    		});
 
 		app.get('/profile', auth, function(request, response) {
 			var query = Friend.find({'friend.mainfriendid': request.user._id}, { 'friend.anotherfriendid': 1 });
