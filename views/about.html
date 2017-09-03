@@ -50,7 +50,7 @@
         <div class="form-group">
           <label class="col-md-4 control-label" for="civ-first-name">Civilian First Name</label>
           <div class="col-md-4">
-          <input id="civ-first-name" name="civ-first-name" type="text" placeholder="First Name" class="form-control input-md" required="">
+          <input id="civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" required="">
 
           </div>
         </div>
@@ -59,7 +59,7 @@
         <div class="form-group">
           <label class="col-md-4 control-label" for="civ-last-name">Civilian Last Name</label>
           <div class="col-md-4">
-          <input id="civ-last-name" name="civ-last-name" type="text" placeholder="Last Name" class="form-control input-md" required="">
+          <input id="civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" required="">
 
           </div>
         </div>
@@ -68,8 +68,8 @@
         <div class="form-group">
           <label class="col-md-4 control-label" for="gen-random-name-male">Generate Random Name</label>
           <div class="col-md-8">
-            <input type="button" value="Random Male Name" id="gen-random-name-male" name="gen-random-name-male" class="btn btn-info" disabled>
-            <input type="button" value="Random Female Name" id="gen-random-name-female" name="gen-random-name-female" class="btn btn-info" disabled>
+            <input type="button" value="Random Male Name" id="gen-random-name-male" name="genRandomNameMale" class="btn btn-info" disabled>
+            <input type="button" value="Random Female Name" id="gen-random-name-female" name="genRandomNameFemale" class="btn btn-info" disabled>
           </div>
         </div>
 
@@ -77,7 +77,7 @@
         <div class="form-group">
           <label class="col-md-4 control-label" for="license-status">License Status</label>
           <div class="col-md-4">
-            <select id="license-status" name="license-status" class="form-control">
+            <select id="license-status" name="licenseStatus" class="form-control">
               <option value="1">Valid</option>
               <option value="2">Revoked</option>
               <option value="3">None</option>
@@ -89,7 +89,7 @@
         <div class="form-group">
           <label class="col-md-4 control-label" for="ticket-count">Ticket Count</label>
           <div class="col-md-4">
-          <input id="ticket-count" name="ticket-count" type="text" placeholder="# Tickets" class="form-control input-md">
+          <input id="ticket-count" name="ticketCount" type="text" placeholder="# Tickets" class="form-control input-md">
 
           </div>
         </div>
@@ -118,7 +118,7 @@
         <div class="form-group">
           <label class="col-md-4 control-label" for="submit-new-civ"></label>
           <div class="col-md-4">
-            <button id="submit-new-civ" name="submit-new-civ" class="btn btn-primary">Create</button>
+            <button id="submit-new-civ" name="submitNewCiv" value=<%= user.user.username %> class="btn btn-primary">Create</button>
           </div>
         </div>
 
@@ -238,15 +238,11 @@
     </tr>
   </thead>
   <tbody>
-    <tr>
-      <td>Mark</td>
-    </tr>
-    <tr>
-      <td>Jacob</td>
-    </tr>
-    <tr>
-      <td>Larry the Bird</td>
-    </tr>
+
+
+    <% for(var i=0; i<personas.length; i++) {%>
+ <tr><td><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td></tr>
+<% } %>
   </tbody>
 </table>
 </div>
