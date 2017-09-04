@@ -15,6 +15,11 @@
 	background: url(../images/background.jpeg) repeat scroll;
 }*/
 
+.alert-message {
+  font-size: 14px;
+  color: red;
+}
+
 .box {
 	background: #fefefe;
 	border: 1px solid #C3D4DB;

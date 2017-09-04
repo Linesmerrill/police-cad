@@ -27,23 +27,23 @@ module.exports = function(app, passport, server) {
   });
  });
 
- app.get('/about', auth, function(request, response) {
-  Civilian.find({
-   'civilian.username': request.user.user.username
-  }, function(err, dbPersonas) {
-   Vehicle.find({
-    'vehicle.username': request.user.user.username
-   }, function(err, dbVehicles) {
-
-
-    response.render('about.html', {
-     user: request.user,
-     personas: dbPersonas,
-     vehicles: dbVehicles
-    });
-   });
-  })
- });
+ // app.get('/about', auth, function(request, response) {
+ //  Civilian.find({
+ //   'civilian.username': request.user.user.username
+ //  }, function(err, dbPersonas) {
+ //   Vehicle.find({
+ //    'vehicle.username': request.user.user.username
+ //   }, function(err, dbVehicles) {
+ //
+ //
+ //    response.render('about.html', {
+ //     user: request.user,
+ //     personas: dbPersonas,
+ //     vehicles: dbVehicles
+ //    });
+ //   });
+ //  })
+ // });
 
  app.get('/civ-dashboard', auth, function(request, response) {
   Civilian.find({
@@ -63,15 +63,15 @@ module.exports = function(app, passport, server) {
   })
  });
 
+ app.get('/police-dashboard', auth, function(request, response) {
+  response.render('police-dashboard.html', {
+   user: request.user,
+  });
+ });
+
  app.get('/logout', function(request, response) {
   request.logout();
   response.redirect('/');
- });
-
- app.get('/police-dashboard', function(request, response) {
-  response.render('page-not-found.html', {
-   message: request.flash('error')
-  });
  });
 
  app.get('/login', function(req, res) {
@@ -102,8 +102,8 @@ module.exports = function(app, passport, server) {
   failureFlash: true
  }));
 
- app.get('/signup', function(request, response) {
-  response.render('signup.html', {
+ app.get('/signup-police', function(request, response) {
+  response.render('signup-police.html', {
    message: request.flash('signuperror')
   });
  });
@@ -118,6 +118,12 @@ module.exports = function(app, passport, server) {
  app.post('/signup-civ', passport.authenticate('signup', {
   successRedirect: '/civ-dashboard',
   failureRedirect: '/signup-civ',
+  failureFlash: true
+ }));
+
+ app.post('/signup-police', passport.authenticate('signup', {
+  successRedirect: '/police-dashboard',
+  failureRedirect: '/signup-police',
   failureFlash: true
  }));
 

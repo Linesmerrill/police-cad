@@ -11,7 +11,7 @@
   	<link rel="stylesheet" type="text/css" href="css/structure.css">
   </head>
   <body>
-    <form action="/signup" method="post" class="box login">
+    <form action="/signup-police" method="post" class="box login">
     	<fieldset class="boxBody">
       	<% if (message.length > 0) { %>
       		<div class="alert alert-message"><%= message %></div>
@@ -19,12 +19,12 @@
         </br>
         <p class="font-size-20">Create An Account</p>
         <div class="form-group">
-          <label for="inputName1">Name</label>
-          <input type="text" name="username" class="form-control" id="inputName1" placeholder="Enter name" required>
+          <label for="inputName1">Username</label>
+          <input type="text" name="username" class="form-control" id="inputName1" placeholder="Enter Username" required>
         </div>
         <div class="form-group">
           <label for="inputEmail1">Email address</label>
-          <input type="email" name="email" class="form-control" id="inputEmail1" placeholder="Enter email" required>
+          <input type="email" name="email" class="form-control" id="inputEmail1" placeholder="Enter Email" required>
         </div>
         <div class="form-group">
           <label for="inputPassword1">Password</label>
