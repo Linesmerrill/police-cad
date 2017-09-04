@@ -20,30 +20,11 @@ module.exports = function(app, passport, server) {
   res.sendfile(path.resolve('./uploads/image_' + req.user._id));
  });
 
-
  app.get('/edit', auth, function(request, response) {
   response.render('edit.html', {
    user: request.user
   });
  });
-
- // app.get('/about', auth, function(request, response) {
- //  Civilian.find({
- //   'civilian.username': request.user.user.username
- //  }, function(err, dbPersonas) {
- //   Vehicle.find({
- //    'vehicle.username': request.user.user.username
- //   }, function(err, dbVehicles) {
- //
- //
- //    response.render('about.html', {
- //     user: request.user,
- //     personas: dbPersonas,
- //     vehicles: dbVehicles
- //    });
- //   });
- //  })
- // });
 
  app.get('/civ-dashboard', auth, function(request, response) {
   Civilian.find({
@@ -64,8 +45,11 @@ module.exports = function(app, passport, server) {
  });
 
  app.get('/police-dashboard', auth, function(request, response) {
-  response.render('police-dashboard.html', {
-   user: request.user,
+   Civilian.find({}, function(err, dbCivilians) {
+    response.render('police-dashboard.html', {
+     user: request.user,
+     civilians: dbCivilians
+    });
   });
  });
 

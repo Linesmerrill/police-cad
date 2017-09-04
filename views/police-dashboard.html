@@ -25,6 +25,77 @@
         Hi, <%= user.user.username %>
       </div>
     </div>
-    
+
+    <div class="row margin-top-2">
+      <div class="col-md-12 text-align-center">
+        <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".run-name">Name Database</button>
+        <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".run-plate">Plate Database</button>
+        <button type="button" class="btn btn-default btn-width-150" onClick="parent.location='/logout'">Log Out</button>
+      </div>
+    </div>
+
+    <div class="modal fade run-name" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <form class="form-horizontal" action="/search-civ" method="get">
+            <fieldset>
+
+              <!-- Form Name -->
+              <legend class="text-align-center">Person Database</legend>
+              <datalist id="names">
+                <% for(var i=0; i<civilians.length; i++) {%>
+             <option value="<%= civilians[i].civilian.firstName %> <%= civilians[i].civilian.lastName%>">
+            <% } %>
+              </datalist>
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="civName">Civilian Name</label>
+                <div class="col-md-4">
+                  <input id="civName" name="civName" type="text" placeholder="Civilian Name" class="form-control input-md" list="names" required>
+                </div>
+                <div class="col-md-4">
+                  <button type="button" class="btn btn-info" onclick="searchNames()">Search</button>
+                </div>
+              </div>
+               <div id="civDetails" class="" style="display:none">
+                <div class="col-md-12">
+                  FirstName LastName
+                </div>
+                <div class="col-md-12">
+                  DOB: mm/dd/yyyy
+                </div>
+                <div class="col-md-12">
+                  Address: - - -
+                </div>
+                <div class="col-md-12">
+                  <button type="button" class="btn btn-primary btn-width-150">NCIC Warrant Check</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade run-plate" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+        </div>
+      </div>
+    </div>
+
   </body>
 </html>
+
+<script type="text/javascript">
+
+  function searchNames(){
+    var x = document.getElementById('civDetails');
+    if (x.style.display === 'none') {
+        x.style.display = 'block';
+    } else {
+        x.style.display = 'none';
+    }
+  }
+</script>
