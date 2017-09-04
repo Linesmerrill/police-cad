@@ -43,10 +43,36 @@ module.exports = function(app, passport, server) {
   })
  });
 
+ app.get('/civ-dashboard', auth, function(request, response) {
+  Civilian.find({
+   'civilian.username': request.user.user.username
+  }, function(err, dbPersonas) {
+    Vehicle.find({'vehicle.username': request.user.user.username}, function(err, dbVehicles) {
+
+
+   response.render('civ-dashboard.html', {
+    user: request.user,
+    personas: dbPersonas,
+    vehicles: dbVehicles
+  });
+   });
+  })
+ });
+
  app.get('/logout', function(request, response) {
   request.logout();
   response.redirect('/');
  });
+
+ app.get('/police-dashboard', function(request, response) {
+   response.render('page-not-found.html', {
+    message: request.flash('error')
+   });
+  });
+
+ app.get('/login', function(req, res) {
+  res.redirect('/');
+ })
 
  app.get('/login-civ', function(request, response) {
   response.render('login-civ.html', {
@@ -54,12 +80,8 @@ module.exports = function(app, passport, server) {
   });
  });
 
- app.get('/login', function(req, res) {
-  res.redirect('/');
- })
-
  app.post('/login-civ', passport.authenticate('login', {
-  successRedirect: '/about',
+  successRedirect: '/civ-dashboard',
   failureRedirect: '/login-civ',
   failureFlash: true
  }));
@@ -71,7 +93,7 @@ module.exports = function(app, passport, server) {
  });
 
  app.post('/login-police', passport.authenticate('login', {
-  successRedirect: '/about',
+  successRedirect: '/police-dashboard',
   failureRedirect: '/login-police',
   failureFlash: true
  }));
@@ -82,9 +104,16 @@ module.exports = function(app, passport, server) {
   });
  });
 
- app.post('/signup', passport.authenticate('signup', {
-  successRedirect: '/about',
-  failureRedirect: '/signup',
+ app.get('/signup-civ', function(request, response) {
+  response.render('signup-civ.html', {
+   message: request.flash('signuperror')
+  });
+ });
+
+
+ app.post('/signup-civ', passport.authenticate('signup', {
+  successRedirect: '/civ-dashboard',
+  failureRedirect: '/signup-civ',
   failureFlash: true
  }));
 
@@ -258,7 +287,7 @@ module.exports = function(app, passport, server) {
  // which, in this example, will redirect the user to the home page.
  app.get('/auth/facebook/callback',
   passport.authenticate('facebook', {
-   successRedirect: '/about',
+   successRedirect: '/facebook',
    failureRedirect: '/login'
   }));
 
@@ -281,7 +310,7 @@ module.exports = function(app, passport, server) {
  // which, in this example, will redirect the user to the home page.
  app.get('/auth/twitter/callback',
   passport.authenticate('twitter', {
-   successRedirect: '/about',
+   successRedirect: '/twitter',
    failureRedirect: '/login'
   }));
 
@@ -303,7 +332,7 @@ module.exports = function(app, passport, server) {
  // which, in this example, will redirect the user to the home page.
  app.get('/auth/google/callback',
   passport.authenticate('google', {
-   successRedirect: '/about',
+   successRedirect: '/google',
    failureRedirect: '/login'
   }));
 

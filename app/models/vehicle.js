@@ -25,7 +25,7 @@ vehicleSchema.methods.updateVeh = function(request, response) {
  this.vehicle.isStolen = request.body.isStolen;
  this.vehicle.username = request.body.submitNewVeh;
  this.vehicle.save();
- response.redirect('/about');
+ response.redirect('/civ-dashboard');
 };
 
 module.exports = mongoose.model('Vehicle', vehicleSchema);

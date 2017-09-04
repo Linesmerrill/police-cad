@@ -30,7 +30,7 @@ civilianSchema.methods.updateCiv = function(request, response) {
  this.civilian.warrants = request.body.warrants;
  this.civilian.username = request.body.submitNewCiv;
  this.civilian.save();
- response.redirect('/about');
+ response.redirect('/civ-dashboard');
 };
 
 module.exports = mongoose.model('Civilian', civilianSchema);
