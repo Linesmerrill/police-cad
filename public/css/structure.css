@@ -451,6 +451,10 @@ div#menu li.back .left {
   font-size: 20px
 }
 
+.font-size-16-px {
+  font-size: 16px;
+}
+
 .cursor-pointer {
   cursor: pointer;
 }
@@ -519,4 +523,39 @@ div#menu li.back .left {
 
 .name-table {
   border: 2px solid gray;
+}
+
+.civ-details {
+  padding-left: 2rem;
+}
+
+.name {
+  font-size: 17px;
+  font-weight: 500;
+  padding-bottom: 0.25rem;
+  padding-left: 2.95rem;
+}
+
+.birthday {
+  margin-left: -1.1em;
+  padding-bottom: 0.25rem;
+}
+
+.address {
+  padding-bottom: 1rem;
+  margin-left: 1.5rem;
+}
+
+.ncic-button {
+  margin-left: 1.45rem;
+  padding-bottom: 7rem;
+}
+
+.license-status {
+  margin-left: -5rem;
+}
+
+.ticket-count {
+  margin-left: -8rem;
+  padding-bottom: 10rem;
 }
