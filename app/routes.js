@@ -46,9 +46,12 @@ module.exports = function(app, passport, server) {
 
  app.get('/police-dashboard', auth, function(request, response) {
    Civilian.find({}, function(err, dbCivilians) {
-    response.render('police-dashboard.html', {
-     user: request.user,
-     civilians: dbCivilians
+     Vehicle.find({}, function(err, dbVehicles) {
+      response.render('police-dashboard.html', {
+       user: request.user,
+       civilians: dbCivilians,
+       vehicles: dbVehicles
+      });
     });
   });
  });

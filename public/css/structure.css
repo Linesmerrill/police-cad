@@ -559,3 +559,19 @@ div#menu li.back .left {
   margin-left: -8rem;
   padding-bottom: 10rem;
 }
+
+.margin-bottom-2 {
+  margin-bottom: 2rem;
+}
+
+.ro-name {
+  margin-left: -1.5rem;
+}
+
+.owners-license {
+  margin-left: -4.5rem;
+}
+
+.reg-padding-bottom {
+  padding-bottom: 10rem;
+}

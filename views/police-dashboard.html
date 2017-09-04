@@ -30,6 +30,7 @@
       <div class="col-md-12 text-align-center">
         <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".run-name">Name Database</button>
         <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".run-plate">Plate Database</button>
+        <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".reports">Reports</button>
         <button type="button" class="btn btn-default btn-width-150" onClick="parent.location='/logout'">Log Out</button>
       </div>
     </div>
@@ -111,6 +112,100 @@
 
     <div class="modal fade run-plate" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
+        <div id="stolenMessage" class="alert alert-danger" style="display:none">
+          <strong>Danger!</strong> Vehicle reported as stolen.
+        </div>
+        <div class="modal-content">
+          <form id="plate-form" class="form-horizontal" action="" method="">
+            <fieldset>
+
+              <!-- Form Name -->
+              <legend class="text-align-center">Vehicle Database</legend>
+              <datalist id="plates">
+                <% for(var i=0; i<vehicles.length; i++) {%>
+             <option value="<%= vehicles[i].vehicle.plate %>">
+            <% } %>
+              </datalist>
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="plateName">Plate Number</label>
+                <div class="col-md-4">
+                  <input id="plateName" name="plateName" type="text" placeholder="License Plate #" class="form-control input-md" list="plates" required>
+                </div>
+                <div class="col-md-4">
+                  <button type="button" name="searchPlateNum" class="btn btn-info" onclick="searchPlate()">Search</button>
+                </div>
+              </div>
+
+
+               <div id="plateDetails" class="civ-details" style="display:none">
+                <div id="plate" class="col-md-12 name">
+                  License Plate #
+                </div>
+                <div class="col-md-12">
+                  <div class="col-md-1 font-size-16-px">
+                    Color:
+                  </div>
+                  <div id="color" class="col-md-4 font-size-16-px">
+                    color
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="col-md-1 font-size-16-px">
+                    Model:
+                  </div>
+                  <div id="model" class="col-md-4 margin-bottom-2 font-size-16-px">
+                    car model
+                  </div>
+                </div>
+                <div class="col-md-12">
+
+                </div>
+                <div class="col-md-12">
+                  <div class="col-md-1 font-size-16-px">
+                    RO:
+                  </div>
+                  <div id="reg-owner" class="col-md-4 ro-name font-size-16-px">
+                    firstname lastname
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="col-md-3 font-size-16-px margin-bottom-2">
+                    Owner's License:
+                  </div>
+                  <div id="license" class="col-md-3 owners-license font-size-16-px">
+                    N/A
+                  </div>
+                </div>
+                <div class="col-md-12">
+
+                </div>
+                <div class="col-md-12">
+                  <div class="col-md-2 font-size-16-px">
+                    Insurance:
+                  </div>
+                  <div id="insurance" class="col-md-2 font-size-16-px">
+                    --
+                  </div>
+                </div>
+
+                <div class="col-md-12">
+                  <div class="col-md-2 font-size-16-px reg-padding-bottom">
+                    Registration:
+                  </div>
+                  <div id="registration" class="col-md-2 font-size-16-px">
+                    --
+                  </div>
+                </div>
+               </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade reports" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
         <div class="modal-content">
 
         </div>
@@ -121,6 +216,55 @@
 </html>
 
 <script type="text/javascript">
+
+function searchPlate() {
+  var stolenVehicle = document.getElementById('stolenMessage');
+  stolenVehicle.style.display = 'none';
+  var x = document.getElementById('plateDetails');
+  if (x.style.display === 'none') {
+      x.style.display = 'block';
+  } else {
+  }
+
+  var myValue = $('#plateName').val();
+  var myVar = <%- JSON.stringify(vehicles) %>;
+  var index = 0;
+  for (i=0; i < myVar.length; i++) {
+    if (myVar[i].vehicle.plate === myValue) {
+      index = i;
+      break;
+    }
+  }
+  var color = myVar[index].vehicle.color
+  var plate = myVar[index].vehicle.plate
+  var model = myVar[index].vehicle.model
+  var registeredOwner = myVar[index].vehicle.registeredOwner
+  var validInsurance = myVar[index].vehicle.validInsurance
+  if (validInsurance === "1") {
+    validInsurance = "Valid"
+  } else {
+    validInsurance = "Not Valid"
+  }
+  var validRegistration = myVar[index].vehicle.validRegistration
+  if (validRegistration === "1") {
+    validRegistration = "Valid"
+  } else {
+    validRegistration = "Not Valid"
+  }
+  var isStolen = myVar[index].vehicle.isStolen
+  console.log(isStolen);
+  if (isStolen === "2") {
+    stolenVehicle.style.display = 'block';
+  }
+
+  $('#color').text(color)
+  $('#plate').text(plate)
+  $('#model').text(model)
+  $('#reg-owner').text(registeredOwner)
+  $('#insurance').text(validInsurance)
+  $('#registration').text(validRegistration)
+
+}
 
   function searchNames(){
     var cleanWarrant = document.getElementById('noWarrantFound');
@@ -174,7 +318,7 @@
 
   }
 
-function checkWarrantStatus() {
+  function checkWarrantStatus() {
   var dirtyWarrant = document.getElementById('warrantMessage');
   var cleanWarrant = document.getElementById('noWarrantFound');
   var myValue = $('#civName').val();
@@ -198,6 +342,22 @@ function checkWarrantStatus() {
 
   }
 }
+
+$(document).on("keypress", "form", function(event) {
+    return event.keyCode != 13;
+});
+
+$('#plateName').on("keyup", function(e) {
+    if (e.keyCode == 13) {
+        searchPlate()
+    }
+});
+
+$('#civName').on("keyup", function(e) {
+    if (e.keyCode == 13) {
+        searchNames()
+    }
+});
 
 
 </script>
