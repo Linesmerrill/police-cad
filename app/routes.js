@@ -31,14 +31,16 @@ module.exports = function(app, passport, server) {
   Civilian.find({
    'civilian.username': request.user.user.username
   }, function(err, dbPersonas) {
-    Vehicle.find({'vehicle.username': request.user.user.username}, function(err, dbVehicles) {
+   Vehicle.find({
+    'vehicle.username': request.user.user.username
+   }, function(err, dbVehicles) {
 
 
-   response.render('about.html', {
-    user: request.user,
-    personas: dbPersonas,
-    vehicles: dbVehicles
-  });
+    response.render('about.html', {
+     user: request.user,
+     personas: dbPersonas,
+     vehicles: dbVehicles
+    });
    });
   })
  });
@@ -47,14 +49,16 @@ module.exports = function(app, passport, server) {
   Civilian.find({
    'civilian.username': request.user.user.username
   }, function(err, dbPersonas) {
-    Vehicle.find({'vehicle.username': request.user.user.username}, function(err, dbVehicles) {
+   Vehicle.find({
+    'vehicle.username': request.user.user.username
+   }, function(err, dbVehicles) {
 
 
-   response.render('civ-dashboard.html', {
-    user: request.user,
-    personas: dbPersonas,
-    vehicles: dbVehicles
-  });
+    response.render('civ-dashboard.html', {
+     user: request.user,
+     personas: dbPersonas,
+     vehicles: dbVehicles
+    });
    });
   })
  });
@@ -65,10 +69,10 @@ module.exports = function(app, passport, server) {
  });
 
  app.get('/police-dashboard', function(request, response) {
-   response.render('page-not-found.html', {
-    message: request.flash('error')
-   });
+  response.render('page-not-found.html', {
+   message: request.flash('error')
   });
+ });
 
  app.get('/login', function(req, res) {
   res.redirect('/');
