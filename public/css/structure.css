@@ -21,7 +21,7 @@
 }
 
 .box {
-	background: #fefefe;
+	background: white;
 	border: 1px solid #C3D4DB;
 	border-top: 1px;
 	-webkit-border-radius: 5px;
@@ -127,7 +127,7 @@
 }
 
 .box footer {
-	background: #eff4f6;
+	background: white;
 	border-top: 1px solid #fff;
 	padding: 10px;
 	overflow: hidden;
