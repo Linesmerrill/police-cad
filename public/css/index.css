@@ -1,0 +1,29 @@
+#bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  /* Preserve aspet ratio */
+  min-width: 100%;
+  min-height: 100%;
+
+  z-index:-1;
+}
+
+.abs {
+  display:block;
+    margin:auto;
+     width:100%;
+    height:500px;
+}
+.box {
+    margin:auto;
+    position: relative;
+    width:350px;
+    height:200px;
+    background-color: rgba(128, 128, 128, 0.7);
+    text-align:center;
+    margin-top: 7rem;
+    border-radius: 15px;
+
+}

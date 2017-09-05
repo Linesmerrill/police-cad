@@ -1,0 +1,36 @@
+.login .pane {
+    position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    margin: auto;
+    width: 300px;
+    height: 250px;
+
+    background: #f0f0fd;
+    background: rgba(240,240,253,0.90);
+    padding: 22px 32px;
+    -moz-border-radius: 8px;
+    -webkit-border-radius: 8px;
+    border-radius: 8px;
+    -moz-box-shadow: 0 0 18px rgba(0, 0, 0, 0.9);
+    -webkit-box-shadow: 0 0 18px rgba(0, 0, 0, 0.9);
+    -box-shadow: 0 0 18px rgba(0, 0, 0, 0.9);
+}
+
+.login .misc
+{
+    position: absolute;
+    top: 103%;
+    left: 0;
+    width: 100%;
+}
+
+.login footer {
+	background: #555;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: 50%;
+}
+.login .misc, .login .misc a{color: white;}
+.login footer a:hover {color: #9CF;}

@@ -460,8 +460,13 @@ div#menu li.back .left {
 }
 
 .button-sign-in {
-  float: right;
-  width: 12rem;
+  width: 45%;
+}
+
+.signup-text {
+  font-size: 15px;
+  text-align: center;
+  margin-top: 1rem;
 }
 
 .float-right {
