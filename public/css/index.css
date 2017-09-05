@@ -30,3 +30,9 @@
 .sub-title {
   margin-top: 4rem;
 }
+
+.my-body {
+  width: 100%;
+  text-align:center;
+  font-size: 25px;
+}
