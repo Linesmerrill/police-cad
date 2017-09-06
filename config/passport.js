@@ -69,7 +69,7 @@ module.exports = function(passport) {
                 User.findOne({ 'user.email' :  email }, function(err, user) {
             	    if (err){ return done(err);}
                     if (user) {
-                        return done(null, false, req.flash('signuperror', 'User already exists'));
+                        return done(null, false, req.flash('signuperror', 'that email address already exists'));
                     } else {
                         var newUser            = new User();
 			newUser.user.username    = req.body.username;

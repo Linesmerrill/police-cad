@@ -1,41 +1,175 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
-  	<title>Lines Police - cad</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
-
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-  	<link rel="stylesheet" type="text/css" href="css/structure.css">
+    <meta charset="utf-8">
+    <title>Lines Police - CAD</title>
+    <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="Codeply">
+    <link rel="stylesheet" href="./css/bootstrap.min.css" />
+    <link rel="stylesheet" href="./css/animate.min.css" />
+    <link rel="stylesheet" href="./css/ionicons.min.css" />
+    <link rel="stylesheet" href="./css/styles.css" />
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
   </head>
   <body>
-    <form action="/signup-police" method="post" class="box login">
-    	<fieldset class="boxBody">
-      	<% if (message.length > 0) { %>
-      		<div class="alert alert-message"><%= message %></div>
-      	<% } %>
-        </br>
-        <p class="font-size-20">Create An Account</p>
-        <div class="form-group">
-          <label for="inputName1">Username</label>
-          <input type="text" name="username" class="form-control" id="inputName1" placeholder="Enter Username" required>
+    <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand page-scroll" href="/"><i class="ion-ios-analytics-outline"></i> Lines Police Server</a>
+            </div>
+            <div class="navbar-collapse collapse" id="bs-navbar">
+                <ul class="nav navbar-nav">
+
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a class="page-scroll" data-toggle="modal" title="Lines Police Server - CAD" href="#aboutModal">About</a>
+                    </li>
+                </ul>
+            </div>
         </div>
-        <div class="form-group">
-          <label for="inputEmail1">Email address</label>
-          <input type="email" name="email" class="form-control" id="inputEmail1" placeholder="Enter Email" required>
+    </nav>
+    <header id="first">
+
+        <div class="header-content">
+            <div class="inner">
+                <h4>Register as a Police Officer</h4>
+                <hr>
+                 <div class="col-lg-10 col-lg-offset-1 text-center">
+                <form id="signInForm" class="contact-form row" action="/signup-police" method="post">
+                	<% if (message.length > 0) { %>
+                  <div class="alert alert-danger col-md-4 col-md-offset-4">
+                    <strong>Sorry, <%= message %> </strong>
+                  </div>
+                  <% } %>
+                  <div class="col-md-12">
+                    <div class="col-md-4 col-md-offset-4">
+                        <label>Username</label>
+                        <input id="inputUsername" type="text" name="username" class="form-control" placeholder="Username" required>
+                    </div>
+                  </div>
+                  <div class="col-md-12">
+                    <div class="col-md-4 col-md-offset-4">
+                        <label>Email</label>
+                        <input id="inputEmail" type="email" name="email" class="form-control" placeholder="Email Address" required>
+                    </div>
+                  </div>
+                    <div class="col-md-12">
+                      <div class="col-md-4 col-md-offset-4">
+                          <label>Password</label>
+                          <input id="inputPassword" type="password" name="password" class="form-control" placeholder="Password" required>
+                      </div>
+                    </div>
+                </div>
+
+                <button type="submit" value="SignUp" class="btn btn-primary btn-xl margin-top-2" >Create</button>
+              </form>
+            </div>
         </div>
-        <div class="form-group">
-          <label for="inputPassword1">Password</label>
-          <input type="password" name="password" class="form-control" id="inputPassword1" placeholder="Password" required>
+
+    </header>
+    <footer id="footer">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-xs-6 col-sm-3 column">
+                    <h4>Information</h4>
+                    <ul class="list-unstyled">
+                        <li><a href="">Products</a></li>
+                        <li><a href="">Services</a></li>
+                        <li><a href="">Benefits</a></li>
+                        <li><a href="">Developers</a></li>
+                    </ul>
+                </div>
+                <div class="col-xs-6 col-sm-3 column">
+                    <h4>About</h4>
+                    <ul class="list-unstyled">
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Delivery Information</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms &amp; Conditions</a></li>
+                    </ul>
+                </div>
+                <div class="col-xs-12 col-sm-3 column">
+                    <h4>Stay Posted</h4>
+
+                        <div class="form-group">
+                          <input type="text" class="form-control" title="No spam, we promise!" placeholder="Tell us your email">
+                        </div>
+                        <div class="form-group">
+                          <button class="btn btn-primary" data-toggle="modal" data-target="#alertModal" type="button">Subscribe for updates</button>
+                        </div>
+
+                </div>
+                <div class="col-xs-12 col-sm-3 text-right">
+                    <h4>Follow</h4>
+                    <ul class="list-inline">
+                      <li><a rel="nofollow" href="" title="Twitter"><i class="icon-lg ion-social-twitter-outline"></i></a>&nbsp;</li>
+                      <li><a rel="nofollow" href="" title="Facebook"><i class="icon-lg ion-social-facebook-outline"></i></a>&nbsp;</li>
+                      <li><a rel="nofollow" href="" title="Dribble"><i class="icon-lg ion-social-dribbble-outline"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+            <br/>
+            <span class="pull-right text-muted small"><a href="#">Lines Police Server</a> ©2017 Merrill Lines</span>
         </div>
-    	</fieldset>
-    	<footer>
-        <button type="submit" id="account-form-btn2" class="btn btn-primary float-right width-10" value="SignUp">Submit</button>
-        <button type="button" id="account-form-btn1" class="btn btn-default float-right margin-right-1 width-10" value="Login" onClick="parent.location='/'">Cancel</button>
-    	</footer>
-    </form>
+    </footer>
+    <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+        	<div class="modal-body">
+        		<img src="" id="galleryImage" class="img-responsive" />
+        		<p>
+        		    <br/>
+        		    <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i class="ion-android-close"></i></button>
+        		</p>
+        	</div>
+        </div>
+        </div>
+    </div>
+    <div id="aboutModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+        <div class="modal-content">
+        	<div class="modal-body">
+        		<h2 class="text-center">Lines Police Server</h2>
+        		<h5 class="text-center">
+        		   CAD (Computer Aided Dispatch)
+        		</h5>
+        		<p class="text-justify">
+        		    Developed with users in mind. Easy to log in and create an account. From there you can take the
+                freedom of playing with a certain persona in GTA V. Buy cars, apartments, make a living online.
+                Or join the law, become a police officer and patrol the streets. You decide your own fate.
+        		</p>
+
+        		<br/>
+        		<button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true"> OK </button>
+        	</div>
+        </div>
+        </div>
+    </div>
+    <div id="alertModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+        	<div class="modal-body">
+        		<h2 class="text-center">Nice Job!</h2>
+        		<p class="text-center">You clicked the button, this is just one of the many easter eggs on this site ;)</p>
+        		<br/>
+        		<button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK <i class="ion-android-close"></i></button>
+        	</div>
+        </div>
+        </div>
+    </div>
+    <!--scripts loaded here -->
+    <script src="./js/jquery.min.js"></script>
+    <script src="./js/bootstrap.min.js"></script>
+    <script src="./js/jquery.easing.min.js"></script>
+    <script src="./js/wow.js"></script>
+    <script src="./js/scripts.js"></script>
   </body>
 </html>
