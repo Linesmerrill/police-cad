@@ -7,6 +7,7 @@
 
 <link rel="stylesheet" type="text/css" href="/css/reset.css" />
 <link rel="stylesheet" type="text/css" href="/css/structure.css" />
+<link rel="icon" href="data:;base64,iVBORw0KGgo=">
 
 <link rel="stylesheet"
 	href="http://code.jquery.com/ui/1.10.1/themes/base/jquery-ui.css" />
@@ -37,19 +38,19 @@ if(key =='<%= friends[i] %>') {
 		html += '<img src="images/green-dot.png"  >'
 	}else{
 		html += '<img src="images/green-dot.png" ><%= friends[i] %>'
-	}	
+	}
    }else{
 
 	if(html.indexOf(str) != -1){
 		html += ''
 	}else{
 		html += '<%= friends[i] %>'
-	}	
+	}
 
 
 }
 
-     
+
     });
 
 	html +=  '</a></li><% } %> </ul>'
@@ -63,41 +64,41 @@ $('#users').append(html)
 </script>
 <style>
 
- 
+
 h2 {
   font: 400 40px/1.5 Helvetica, Verdana, sans-serif;
   margin: 0;
   padding: 0;
 }
- 
+
 ul {
   list-style-type: none;
   margin: 0;
   padding: 0;
 }
- 
+
 li {
   font: 200 20px/1.5 Helvetica, Verdana, sans-serif;
   border-bottom: 1px solid #ccc;
 }
- 
+
 li:last-child {
   border: none;
 }
- 
+
 li a {
   text-decoration: none;
   color: #000;
   display: block;
   width: 600px;
- 
+
   -webkit-transition: font-size 0.3s ease, background-color 0.3s ease;
   -moz-transition: font-size 0.3s ease, background-color 0.3s ease;
   -o-transition: font-size 0.3s ease, background-color 0.3s ease;
   -ms-transition: font-size 0.3s ease, background-color 0.3s ease;
   transition: font-size 0.3s ease, background-color 0.3s ease;
 }
- 
+
 li a:hover {
   font-size: 30px;
   color: #00FFFF;
@@ -124,13 +125,13 @@ $(function () {
                }
             });
          },
-         
+
          // The minimum number of characters a user must type before a search is performed.
-         minLength: 3, 
-         
+         minLength: 3,
+
          // set an onFocus event to show the result on input field when result is focused
-         focus: function (event, ui) { 
-            this.value = ui.item.label; 
+         focus: function (event, ui) {
+            this.value = ui.item.label;
             // Prevent other event from not being execute
             event.preventDefault();
          },
@@ -138,8 +139,8 @@ $(function () {
             // Prevent value from being put in the input:
             this.value = ui.item.label;
             // Set the id to the next input hidden field
-            $(this).next("input").val(ui.item.value); 
-            // Prevent other event from not being execute            
+            $(this).next("input").val(ui.item.value);
+            // Prevent other event from not being execute
             event.preventDefault();
             // optionnal: submit the form after field has been filled up
             $('#quicksearch').submit();
