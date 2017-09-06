@@ -52,7 +52,7 @@
                   <div class="col-md-12">
                     <div class="col-md-4 col-md-offset-4">
                         <label>Username</label>
-                        <input id="inputUsername" type="text" name="username" class="form-control" placeholder="Username" required>
+                        <input id="inputUsername" type="text" name="username" class="form-control" placeholder="Username (cannot contain spaces)" required>
                     </div>
                   </div>
                   <div class="col-md-12">
@@ -173,3 +173,11 @@
     <script src="./js/scripts.js"></script>
   </body>
 </html>
+
+<script type="text/javascript">
+$('input').keyup(function() {
+  str = $(this).val();
+  str = str.replace(/\s/g,'');
+  $(this).val(str);
+});
+</script>
