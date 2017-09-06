@@ -522,3 +522,7 @@ img::-moz-selection {
     color: #fff;
     background: 0 0;
 }
+
+.margin-top-2 {
+  margin-top: 2rem;
+}
