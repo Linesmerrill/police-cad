@@ -5,106 +5,79 @@ var Friend = require('../app/models/friend');
 async = require("async");
 var path = require('path'),
  fs = require('fs');
- var express = require('express')
-var app = express()
 module.exports = function(app, passport, server) {
 
-app.all('*', checkUserRoute);
+ app.get('/', function(request, response) {
+  response.render('index.html');
+ });
 
-function checkUserRoute(req, res, next) {
-  switch (req.path) {
-    case '/':
-      app.get('/', function(request, response) {
-        response.render('index.html');
-      });
-      next();
-      break;
-    case '/edit':
-      app.get('/edit', auth, function(request, response) {
-        response.render('edit.html', {
-         user: request.user
-        });
-      });
-      next();
-      break;
-    case '/login-civ':
-      app.get('/login-civ', function(request, response) {
-        response.render('login-civ.html', {
-         message: request.flash('error')
-        });
-      });
-      next();
-      break;
-    case '/login-police':
-      app.get('/login-police', function(request, response) {
-        response.render('login-police.html', {
-          message: request.flash('error')
-        });
-      });
-      next();
-      break;
-    case '/signup-civ':
-      app.get('/signup-civ', function(request, response) {
-        response.render('signup-civ.html', {
-          message: request.flash('signuperror')
-        });
-      });
-      next();
-      break;
-    case '/signup-police':
-      app.get('/signup-police', function(request, response) {
-        response.render('signup-police.html', {
-          message: request.flash('signuperror')
-        });
-      });
-      next();
-      break;
-    case '/logout':
-      app.get('/logout', function(request, response) {
-        request.logout();
-        response.redirect('/');
-      });
-      next();
-      break;
-    case '/civ-dashboard':
-      app.get('/civ-dashboard', auth, function(request, response) {
-       Civilian.find({
-        'civilian.username': request.user.user.username
-       }, function(err, dbPersonas) {
-        Vehicle.find({
-         'vehicle.username': request.user.user.username
-        }, function(err, dbVehicles) {
-         response.render('civ-dashboard.html', {
-          user: request.user,
-          personas: dbPersonas,
-          vehicles: dbVehicles
-         });
-        });
-       })
-      });
-      next();
-      break;
-    case '/police-dashboard':
-      app.get('/police-dashboard', auth, function(request, response) {
-        Civilian.find({}, function(err, dbCivilians) {
-          Vehicle.find({}, function(err, dbVehicles) {
-           response.render('police-dashboard.html', {
-            user: request.user,
-            civilians: dbCivilians,
-            vehicles: dbVehicles
-           });
-         });
-       });
-      });
-      next();
-      break;
-    default:
-      app.get('*', function(request, response) {
-        response.render('page-not-found.html');
-      });
-      next();
-  }
-}
+ app.get('/edit', auth, function(request, response) {
+  response.render('edit.html', {
+   user: request.user
+  });
+ });
+
+ app.get('/login-civ', function(request, response) {
+  response.render('login-civ.html', {
+   message: request.flash('error')
+  });
+ });
+
+ app.get('/login-police', function(request, response) {
+  response.render('login-police.html', {
+   message: request.flash('error')
+  });
+ });
+
+ app.get('/signup-civ', function(request, response) {
+  response.render('signup-civ.html', {
+   message: request.flash('signuperror')
+  });
+ });
+
+ app.get('/signup-police', function(request, response) {
+  response.render('signup-police.html', {
+   message: request.flash('signuperror')
+  });
+ });
+
+ app.get('/logout', function(request, response) {
+  request.logout();
+  response.redirect('/');
+ });
+
+ app.get('/civ-dashboard', auth, function(request, response) {
+  Civilian.find({
+   'civilian.username': request.user.user.username
+  }, function(err, dbPersonas) {
+   Vehicle.find({
+    'vehicle.username': request.user.user.username
+   }, function(err, dbVehicles) {
+    response.render('civ-dashboard.html', {
+     user: request.user,
+     personas: dbPersonas,
+     vehicles: dbVehicles
+    });
+   });
+  })
+ });
+
+ app.get('/police-dashboard', auth, function(request, response) {
+  Civilian.find({}, function(err, dbCivilians) {
+   Vehicle.find({}, function(err, dbVehicles) {
+    response.render('police-dashboard.html', {
+     user: request.user,
+     civilians: dbCivilians,
+     vehicles: dbVehicles
+    });
+   });
+  });
+ });
+
+ app.get('*', function(request, response) {
+  response.render('page-not-found.html');
+ });
+
 
  app.post('/login-civ', passport.authenticate('login', {
   successRedirect: '/civ-dashboard',
