@@ -42,7 +42,7 @@ a {
 
 a:hover,
 a:focus {
-    color: #9c27c1;
+    color: #d9edf7;
     outline: 0;
 }
 
@@ -131,7 +131,7 @@ footer {
 
 .navbar-header > .navbar-brand:hover,
 .navbar-header > .navbar-brand:focus {
-    color: #8b27b0;
+    color: #d9edf7;
 }
 
 .navbar-default .navbar-toggle:focus, .navbar-default .navbar-toggle:hover {
@@ -211,7 +211,7 @@ footer {
 
     .navbar-default.affix .navbar-header .navbar-brand:hover,
     .navbar-default.affix .navbar-header .navbar-brand:focus {
-        color: #8b27b0;
+        color: #d9edf7;
     }
 
     .navbar-default.affix .nav > li>a,
@@ -525,4 +525,9 @@ img::-moz-selection {
 
 .margin-top-2 {
   margin-top: 2rem;
+}
+
+.signup-text {
+  margin-top: 2rem;
+  font-size: 18px;
 }
