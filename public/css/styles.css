@@ -488,6 +488,8 @@ fieldset[disabled] .btn-default.active {
 
 .btn.btn-primary:hover {
     opacity: 0.7;
+    border-color: #00aced;
+    color: #00aced;
 }
 
 .btn {
@@ -530,4 +532,8 @@ img::-moz-selection {
 .signup-text {
   margin-top: 2rem;
   font-size: 18px;
+}
+
+.table-hover>tbody>tr:hover {
+  background-color: #00aced;
 }

@@ -1,269 +1,317 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Civilian Dashboard</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-    <link rel="stylesheet" type="text/css" href="css/structure.css">
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+<head>
+  <meta charset="utf-8">
+  <title>Lines Police - CAD</title>
+  <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Codeply">
+  <link rel="stylesheet" href="./css/bootstrap.min.css" />
+  <link rel="stylesheet" href="./css/animate.min.css" />
+  <link rel="stylesheet" href="./css/ionicons.min.css" />
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
 
-  </head>
-  <body>
-    <div class="row margin-top-4">
-      <div class="col-md-12 text-align-center font-size-20-px margin-left-2">
-        San Andreas <img class="image-star" src="/images/star.png" alt="star"> Civilian Operations
+<body>
+  <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+        <a class="navbar-brand page-scroll" href="/"><i class="ion-ios-analytics-outline"></i> Lines Police Server</a>
       </div>
+      <div class="navbar-collapse collapse" id="bs-navbar">
+        <ul class="nav navbar-nav">
 
-    </div>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+            <li>
+                <a> Hi, <%= user.user.username %></a>
+            </li>
+        </ul>
 
-    <div class="row">
-      <div class="col-md-12 text-align-center font-size-20-px">
-        Hi, <%= user.user.username %>
       </div>
     </div>
-    <div class="row margin-top-2">
-      <div class="col-md-12 text-align-center">
-        <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".add-new-civ">Add New Civilian</button>
-        <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".create-new-vehicle">Add New Vehicle</button>
-        <button type="button" class="btn btn-primary btn-width-150" disabled>Edit Civilian</button>
-        <button type="button" class="btn btn-primary btn-width-150" disabled>Patrol Log</button>
-        <button type="button" class="btn btn-default btn-width-150" onClick="parent.location='/logout'">Log Out</button>
+  </nav>
+  <header id="first" style='background-image: url("/images/dark-background.jpg");'>
+    <div class="header-content" style="top: 30%;">
+      <div class="inner">
+        <h4>San Andreas - Civilian Operations</h4>
+        <div class="col-lg-10 col-lg-offset-1 text-center">
+          <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-lg margin-top-2">Add New Civilian</button>
+          <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-lg margin-top-2">Add New Vehicle</button>
+          <button type="submit" value="SignUp" class="btn btn-primary btn-lg margin-top-2" disabled>Edit Civilian</button>
+          <button type="submit" value="SignUp" class="btn btn-primary btn-lg margin-top-2" onClick="parent.location='/logout'">Log Out</button>
+        </div>
       </div>
-    </div>
+      <hr style="width: 88%;max-width: 100rem;">
 
-<!--Beginning of Modal: Create Civilian  -->
-<div class="modal fade add-new-civ" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <form class="form-horizontal" action="/create-civ" method="post">
-        <fieldset>
-
-        <!-- Form Name -->
-        <legend>Create a New Civilian</legend>
-
-        <!-- Text input-->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="civ-first-name">Civilian First Name</label>
-          <div class="col-md-4">
-          <input id="civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" required="">
-
-          </div>
-        </div>
-
-        <!-- Text input-->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="civ-last-name">Civilian Last Name</label>
-          <div class="col-md-4">
-          <input id="civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" required="">
-
-          </div>
-        </div>
-
-        <!-- Button (Double) -->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="gen-random-name-male">Generate Random Name</label>
-          <div class="col-md-8">
-            <input type="button" value="Random Male Name" id="gen-random-name-male" name="genRandomNameMale" class="btn btn-info" disabled>
-            <input type="button" value="Random Female Name" id="gen-random-name-female" name="genRandomNameFemale" class="btn btn-info" disabled>
-          </div>
-        </div>
-
-        <!-- Select Basic -->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="license-status">License Status</label>
-          <div class="col-md-4">
-            <select id="license-status" name="licenseStatus" class="form-control">
-              <option value="1">Valid</option>
-              <option value="2">Revoked</option>
-              <option value="3">None</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Text input-->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="ticket-count">Ticket Count</label>
-          <div class="col-md-4">
-          <input id="ticket-count" name="ticketCount" type="text" placeholder="# Tickets" class="form-control input-md">
-
-          </div>
-        </div>
-
-        <!-- Text input-->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="birthday">Date of Birth</label>
-          <div class="col-md-4">
-          <input id="birthday" name="birthday" type="text" placeholder="mm/dd/yyyy" class="form-control input-md" required>
-
-          </div>
-        </div>
-
-        <!-- Select Basic -->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="warrants">Warrants?</label>
-          <div class="col-md-4">
-            <select id="warrants" name="warrants" class="form-control">
-              <option value="1">No</option>
-              <option value="2">Yes</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Button -->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="submit-new-civ"></label>
-          <div class="col-md-4">
-            <button id="submit-new-civ" name="submitNewCiv" value=<%= user.user.username %> class="btn btn-primary">Create</button>
-          </div>
-        </div>
-
-        </fieldset>
-      </form>
-    </div>
-  </div>
-</div> <!--End of Modal: Create New Civ  -->
-
-<!--Beginning of Modal: Create Vehicle  -->
-<div class="modal fade create-new-vehicle" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-md">
-    <div class="modal-content">
-      <form class="form-horizontal" action="/create-vehicle" method="post">
-        <fieldset>
-
-        <!-- Form Name -->
-        <legend>Create Vehicle</legend>
-
-        <!-- Text input-->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="plate">Plate</label>
-          <div class="col-md-4">
-          <input id="plate" name="plate" type="text" placeholder="Plate" class="form-control input-md" required="">
-
-          </div>
-        </div>
-
-        <!-- Search input-->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="model">Model</label>
-          <div class="col-md-4">
-            <input id="model" name="model" type="search" placeholder="Model" class="form-control input-md" required="">
-
-          </div>
-        </div>
-
-        <!-- Text input-->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="color">Color</label>
-          <div class="col-md-4">
-          <input id="color" name="color" type="text" placeholder="Color" class="form-control input-md" required="">
-
-          </div>
-        </div>
-
-        <!-- Select Basic -->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="valid-registration">Valid Registration?</label>
-          <div class="col-md-4">
-            <select id="valid-registration" name="validRegistration" class="form-control">
-              <option value="1">Yes</option>
-              <option value="2">No</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Select Basic -->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="valid-insurance">Valid Insurance</label>
-          <div class="col-md-4">
-            <select id="valid-insurance" name="validInsurance" class="form-control">
-              <option value="1">Yes</option>
-              <option value="2">No</option>
-            </select>
-          </div>
-        </div>
-
-        <datalist id="names">
-          <% for(var i=0; i<personas.length; i++) {%>
-       <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%>">
-      <% } %>
-        </datalist>
-
-        <!-- Search input-->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="registered-owner">Registered Owner</label>
-          <div class="col-md-4">
-            <input id="registered-owner" name="registeredOwner" type="search" placeholder="Registered Owner" list="names" class="form-control input-md" required="">
-
-          </div>
-        </div>
-
-        <!-- Select Basic -->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
-          <div class="col-md-4">
-            <select id="is-stolen" name="isStolen" class="form-control">
-              <option value="1">No</option>
-              <option value="2">Yes</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Button -->
-        <div class="form-group">
-          <label class="col-md-4 control-label" for="create-vehicle"></label>
-          <div class="col-md-4">
-            <button id="create-vehicle" name="submitNewVeh" value=<%= user.user.username %> class="btn btn-primary">Create</button>
-          </div>
-        </div>
-        </fieldset>
-        </form>
-    </div>
-  </div>
-</div> <!--End of Modal: Create Vehicle  -->
-
-  <div class="col-md-12">
-      <div class="col-md-6 text-align-center margin-top-2 font-size-20-px">
-        Your Personas:
-      </div>
-
-      <div class="col-md-6 text-align-center margin-top-2 font-size-20-px">
-        Your Vehicles:
-      </div>
-
-
-    <div class="col-md-4 col-md-offset-1 text-align-center name-table">
-    <table class="table table-hover">
-  <thead>
-    <tr>
-    </tr>
-  </thead>
-  <tbody>
-    <% for(var i=0; i<personas.length; i++) {%>
- <tr><td><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td></tr>
-<% } %>
-  </tbody>
-</table>
+<!--Table for Personas  -->
+      <div class="col-md-4 col-md-offset-1 name-table">
+      <table class="table table-hover" border="1" frame="box">
+    <thead>
+      <tr>
+        Personas:
+      </tr>
+    </thead>
+    <tbody>
+      <% for(var i=0; i<personas.length; i++) {%>
+   <tr><td><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td></tr>
+  <% } %>
+    </tbody>
+  </table>
 </div>
 
-  <!--Table for Vehicles  -->
-  <div class="col-md-4 col-md-offset-2 text-align-center name-table">
-    <table class="table table-hover">
-      <thead>
-        <tr><td>Plate</td><td>Model</td><td>Color</td></tr>
+<!--Table for Vehicles  -->
+<div class="col-md-4 col-md-offset-1 name-table">
+  <table class="table table-hover" border="1" frame="box">
+    <thead>
+      <tr>
+        Vehicles:
+      </tr>
+      <tr style="background-color: #2d2d2d;"><td>Plate</td><td>Model</td><td>Color</td></tr>
 
-      </thead>
-        <tbody>
-          <% for(var i=0; i<vehicles.length; i++) {%>
-          <tr><td><%= vehicles[i].vehicle.plate%></td><td> <%= vehicles[i].vehicle.model%></td><td> <%= vehicles[i].vehicle.color%></td></tr>
+    </thead>
+      <tbody>
+        <% for(var i=0; i<vehicles.length; i++) {%>
+        <tr class="gray-hover"><td><%= vehicles[i].vehicle.plate%></td><td> <%= vehicles[i].vehicle.model%></td><td> <%= vehicles[i].vehicle.color%></td></tr>
+        <% } %>
+      </tbody>
+  </table>
+</div>
+
+    </div>
+  </header>
+
+  <footer id="footer">
+    <div class="container-fluid">
+
+      <span class="pull-right text-muted small"><a href="#">Lines Police Server</a> ©2017 Merrill Lines</span>
+    </div>
+  </footer>
+  <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-body">
+          <img src="" id="galleryImage" class="img-responsive" />
+          <p>
+            <br/>
+            <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i class="ion-android-close"></i></button>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newCivModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-civ" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <h4>Add a New Civilian</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="civ-first-name">Civilian First Name</label>
+              <div class="col-md-4">
+              <input id="civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" required="">
+
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="civ-last-name">Civilian Last Name</label>
+              <div class="col-md-4">
+              <input id="civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" required="">
+
+              </div>
+            </div>
+
+            <!-- Button (Double) -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="gen-random-name-male">Generate Random Name</label>
+              <div class="col-md-8">
+                <input type="button" value="Random Male Name" id="gen-random-name-male" name="genRandomNameMale" class="btn btn-info" disabled>
+                <input type="button" value="Random Female Name" id="gen-random-name-female" name="genRandomNameFemale" class="btn btn-info" disabled>
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="license-status">License Status</label>
+              <div class="col-md-4">
+                <select id="license-status" name="licenseStatus" class="form-control">
+                  <option value="1">Valid</option>
+                  <option value="2">Revoked</option>
+                  <option value="3">None</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="ticket-count">Ticket Count</label>
+              <div class="col-md-4">
+              <input id="ticket-count" name="ticketCount" type="text" placeholder="# Tickets" class="form-control input-md">
+
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="birthday">Date of Birth</label>
+              <div class="col-md-4">
+              <input id="birthday" name="birthday" type="text" placeholder="mm/dd/yyyy" class="form-control input-md" required>
+
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="warrants">Warrants?</label>
+              <div class="col-md-4">
+                <select id="warrants" name="warrants" class="form-control">
+                  <option value="1">No</option>
+                  <option value="2">Yes</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="submit-new-civ"></label>
+              <div class="col-md-4">
+                <button id="submit-new-civ" name="submitNewCiv" value=<%= user.user.username %> class="btn btn-primary">Create</button>
+              </div>
+            </div>
+
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newVehicleModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-vehicle" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <h4>Add a New Vehicle</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="plate">Plate</label>
+              <div class="col-md-4">
+              <input id="plate" name="plate" type="text" placeholder="Plate" class="form-control input-md" required="">
+
+              </div>
+            </div>
+
+            <!-- Search input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="model">Model</label>
+              <div class="col-md-4">
+                <input id="model" name="model" type="search" placeholder="Model" class="form-control input-md" required="">
+
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="color">Color</label>
+              <div class="col-md-4">
+              <input id="color" name="color" type="text" placeholder="Color" class="form-control input-md" required="">
+
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="valid-registration">Valid Registration?</label>
+              <div class="col-md-4">
+                <select id="valid-registration" name="validRegistration" class="form-control">
+                  <option value="1">Yes</option>
+                  <option value="2">No</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="valid-insurance">Valid Insurance</label>
+              <div class="col-md-4">
+                <select id="valid-insurance" name="validInsurance" class="form-control">
+                  <option value="1">Yes</option>
+                  <option value="2">No</option>
+                </select>
+              </div>
+            </div>
+
+            <datalist id="names">
+              <% for(var i=0; i<personas.length; i++) {%>
+           <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%>">
           <% } %>
-        </tbody>
-    </table>
+            </datalist>
+
+            <!-- Search input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="registered-owner">Registered Owner</label>
+              <div class="col-md-4">
+                <input id="registered-owner" name="registeredOwner" type="search" placeholder="Registered Owner" list="names" class="form-control input-md" required="">
+
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
+              <div class="col-md-4">
+                <select id="is-stolen" name="isStolen" class="form-control">
+                  <option value="1">No</option>
+                  <option value="2">Yes</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="create-vehicle"></label>
+              <div class="col-md-4">
+                <button id="create-vehicle" name="submitNewVeh" value=<%= user.user.username %> class="btn btn-primary">Create</button>
+              </div>
+            </div>
+            </fieldset>
+            </form>
+
+        </div>
+      </div>
+    </div>
   </div>
-</div>
-  </body>
+
+
+
+  <!--scripts loaded here -->
+  <script src="./js/jquery.min.js"></script>
+  <script src="./js/bootstrap.min.js"></script>
+  <script src="./js/jquery.easing.min.js"></script>
+  <script src="./js/wow.js"></script>
+  <script src="./js/scripts.js"></script>
+</body>
+
 </html>
