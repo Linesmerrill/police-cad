@@ -11,6 +11,10 @@ module.exports = function(app, passport, server) {
   response.render('index.html');
  });
 
+ app.get('/login', function(request, response) {
+  response.redirect('/');
+ });
+
  app.get('/edit', auth, function(request, response) {
   response.render('edit.html', {
    user: request.user

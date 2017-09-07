@@ -537,3 +537,14 @@ img::-moz-selection {
 .table-hover>tbody>tr:hover {
   background-color: #00aced;
 }
+
+.margin-bottom-1 {
+  margin-bottom: 1rem;
+}
+
+.details {
+  position: absolute;
+    margin-left: -19rem;
+    margin-top: 2rem;
+    border:none !important;
+}

@@ -34,20 +34,21 @@
             <li>
                 <a> Hi, <%= user.user.username %></a>
             </li>
+            <li>
+                <a href="/logout">Logout</a>
+            </li>
         </ul>
 
       </div>
     </div>
   </nav>
   <header id="first" style='background-image: url("/images/dark-background.jpg");'>
-    <div class="header-content" style="top: 30%;">
+    <div class="header-content">
       <div class="inner">
         <h4>San Andreas - Civilian Operations</h4>
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-lg margin-top-2">Add New Civilian</button>
           <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-lg margin-top-2">Add New Vehicle</button>
-          <button type="submit" value="SignUp" class="btn btn-primary btn-lg margin-top-2" disabled>Edit Civilian</button>
-          <button type="submit" value="SignUp" class="btn btn-primary btn-lg margin-top-2" onClick="parent.location='/logout'">Log Out</button>
         </div>
       </div>
       <hr style="width: 88%;max-width: 100rem;">
@@ -62,25 +63,32 @@
     </thead>
     <tbody>
       <% for(var i=0; i<personas.length; i++) {%>
-   <tr><td><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td></tr>
+   <tr data-toggle="modal" data-id=<%=i%> data-target="#viewCiv" onclick="loadCivData(<%=i%>)">
+     <td style="width: 27rem; height: 6rem;"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td>
+     <td class="details" style="height: 6rem;">(Click for Details)</td>
+   </tr>
   <% } %>
     </tbody>
   </table>
 </div>
 
 <!--Table for Vehicles  -->
-<div class="col-md-4 col-md-offset-1 name-table">
+<div class="col-md-5 col-md-offset-1 name-table">
   <table class="table table-hover" border="1" frame="box">
     <thead>
       <tr>
-        Vehicles:
+        Vehicles: (Click for Details)
       </tr>
       <tr style="background-color: #2d2d2d;"><td>Plate</td><td>Model</td><td>Color</td></tr>
 
     </thead>
       <tbody>
         <% for(var i=0; i<vehicles.length; i++) {%>
-        <tr class="gray-hover"><td><%= vehicles[i].vehicle.plate%></td><td> <%= vehicles[i].vehicle.model%></td><td> <%= vehicles[i].vehicle.color%></td></tr>
+        <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewVeh" onclick="loadVehData(<%=i%>)">
+          <td><%= vehicles[i].vehicle.plate%></td>
+          <td> <%= vehicles[i].vehicle.model%></td>
+          <td> <%= vehicles[i].vehicle.color%></td>
+        </tr>
         <% } %>
       </tbody>
   </table>
@@ -142,8 +150,8 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="gen-random-name-male">Generate Random Name</label>
               <div class="col-md-8">
-                <input type="button" value="Random Male Name" id="gen-random-name-male" name="genRandomNameMale" class="btn btn-info" disabled>
-                <input type="button" value="Random Female Name" id="gen-random-name-female" name="genRandomNameFemale" class="btn btn-info" disabled>
+                <input type="button" value="Male Name" id="gen-random-name-male" name="genRandomNameMale" class="btn btn-info" disabled>
+                <input type="button" value="Female Name" id="gen-random-name-female" name="genRandomNameFemale" class="btn btn-info" disabled>
               </div>
             </div>
 
@@ -305,6 +313,145 @@
   </div>
 
 
+  <div id="viewCiv" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body text-align-center">
+
+          <form>
+          <fieldset>
+            <!-- Form Name -->
+            <h4>Details about your Civilian</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="row">
+              <label class="col-md-3 control-label margin-bottom-1" for="civ-first-name">First Name:</label>
+              <div class="col-md-5">
+                <span id="firstNameView">FirstName here</span>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="row">
+              <label class="col-md-3 control-label margin-bottom-1" for="civ-last-name">Last Name:</label>
+              <div class="col-md-5">
+                <span id="lastNameView">LastName here</span>
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="row">
+              <label class="col-md-3 control-label margin-bottom-1" for="license-status">License Status:</label>
+              <div class="col-md-5">
+                <span id="licenseStatusView">License Status</span>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="row">
+              <label class="col-md-3 control-label margin-bottom-1" for="ticket-count">Ticket Count:</label>
+              <div class="col-md-5">
+                <span id="ticketCountView">ticketCount here</span>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="row">
+              <label class="col-md-3 control-label margin-bottom-1" for="birthday">Date of Birth:</label>
+              <div class="col-md-5">
+                <span id="birthdayView">birthday here</span>
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="row">
+              <label class="col-md-3 control-label margin-bottom-1" for="warrants">Warrants?</label>
+              <div class="col-md-5">
+                <span id="warrantsView">warrants here</span>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewVeh" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body text-align-center">
+
+          <form>
+          <fieldset>
+            <!-- Form Name -->
+            <h4>Details about your Vehicle</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="row">
+              <label class="col-md-3 control-label margin-bottom-1" for="civ-first-name">Plate:</label>
+              <div class="col-md-5">
+                <span id="plateView">plate here</span>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="row">
+              <label class="col-md-3 control-label margin-bottom-1" for="civ-last-name">Model:</label>
+              <div class="col-md-5">
+                <span id="modelView">model here</span>
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="row">
+              <label class="col-md-3 control-label margin-bottom-1" for="license-status">Color:</label>
+              <div class="col-md-5">
+                <span id="colorView">color here</span>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="row">
+              <label class="col-md-3 control-label margin-bottom-1" for="ticket-count">Valid Registration?</label>
+              <div class="col-md-5">
+                <span id="validRegView">validReg here</span>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="row">
+              <label class="col-md-3 control-label margin-bottom-1" for="birthday">Valid Insurance?</label>
+              <div class="col-md-5">
+                <span id="validInsView">validIns here</span>
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="row">
+              <label class="col-md-3 control-label margin-bottom-1" for="warrants">RO:</label>
+              <div class="col-md-5">
+                <span id="roView">ro here</span>
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="row">
+              <label class="col-md-3 control-label margin-bottom-1" for="warrants">Stolen?</label>
+              <div class="col-md-5">
+                <span id="stolenView">stolen here</span>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
 
   <!--scripts loaded here -->
   <script src="./js/jquery.min.js"></script>
@@ -315,3 +462,75 @@
 </body>
 
 </html>
+
+<script type="text/javascript">
+  function loadCivData(index) {
+    var myVar = <%- JSON.stringify(personas) %>;
+
+    var firstName = myVar[index].civilian.firstName
+    var lastName = myVar[index].civilian.lastName
+    var birthday = myVar[index].civilian.birthday
+    var address = myVar[index].civilian.address
+    var licenseStatus = myVar[index].civilian.licenseStatus
+    switch(licenseStatus) {
+      case "1":
+        licenseStatus = "Valid"
+        break
+      case "2":
+        licenseStatus = "Revoked"
+        break
+      default:
+        licenseStatus = "None"
+    }
+
+    var warrants = myVar[index].civilian.warrants
+    if (warrants === "1") {
+      warrants = "No"
+    } else {
+      warrants = "Yes"
+    }
+
+    var ticketCount = myVar[index].civilian.ticketCount
+    $('#firstNameView').text(firstName)
+    $('#lastNameView').text(lastName)
+    $('#licenseStatusView').text(licenseStatus)
+    $('#ticketCountView').text(ticketCount)
+    $('#birthdayView').text(birthday)
+    $('#warrantsView').text(warrants)
+  }
+
+  function loadVehData(index) {
+    var myVar = <%- JSON.stringify(vehicles) %>;
+
+    var color = myVar[index].vehicle.color
+    var plate = myVar[index].vehicle.plate
+    var model = myVar[index].vehicle.model
+    var registeredOwner = myVar[index].vehicle.registeredOwner
+    var validInsurance = myVar[index].vehicle.validInsurance
+    if (validInsurance === "1") {
+      validInsurance = "Valid"
+    } else {
+      validInsurance = "Not Valid"
+    }
+    var validRegistration = myVar[index].vehicle.validRegistration
+    if (validRegistration === "1") {
+      validRegistration = "Valid"
+    } else {
+      validRegistration = "Not Valid"
+    }
+    var isStolen = myVar[index].vehicle.isStolen
+    if (isStolen === "1") {
+      isStolen = "No"
+    } else {
+      isStolen = "Yes"
+    }
+
+    $('#plateView').text(plate)
+    $('#modelView').text(model)
+    $('#colorView').text(color)
+    $('#validRegView').text(validRegistration)
+    $('#validInsView').text(validInsurance)
+    $('#roView').text(registeredOwner)
+    $('#stolenView').text(isStolen)
+  }
+</script>
