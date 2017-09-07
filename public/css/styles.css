@@ -548,3 +548,7 @@ img::-moz-selection {
     margin-top: 2rem;
     border:none !important;
 }
+
+.float-right {
+  float: right
+}

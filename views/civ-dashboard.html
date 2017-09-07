@@ -58,14 +58,13 @@
       <table class="table table-hover" border="1" frame="box">
     <thead>
       <tr>
-        Personas:
+        Personas: (Click for Details)
       </tr>
     </thead>
     <tbody>
       <% for(var i=0; i<personas.length; i++) {%>
    <tr data-toggle="modal" data-id=<%=i%> data-target="#viewCiv" onclick="loadCivData(<%=i%>)">
-     <td style="width: 27rem; height: 6rem;"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td>
-     <td class="details" style="height: 6rem;">(Click for Details)</td>
+     <td><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td>
    </tr>
   <% } %>
     </tbody>
@@ -125,6 +124,7 @@
             <fieldset>
 
             <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Add a New Civilian</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
@@ -219,6 +219,7 @@
             <fieldset>
 
             <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Add a New Vehicle</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
@@ -321,6 +322,7 @@
           <form>
           <fieldset>
             <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Details about your Civilian</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
@@ -386,6 +388,7 @@
           <form>
           <fieldset>
             <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Details about your Vehicle</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
