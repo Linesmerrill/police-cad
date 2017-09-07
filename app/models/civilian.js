@@ -3,7 +3,7 @@ var bcrypt = require('bcrypt-nodejs');
 
 var civilianSchema = mongoose.Schema({
  civilian: {
-  username: String,
+  email: String,
   firstName: String,
   lastName: String,
   licenseStatus: String,
@@ -28,7 +28,7 @@ civilianSchema.methods.updateCiv = function(request, response) {
  this.civilian.ticketCount = request.body.ticketCount;
  this.civilian.birthday = request.body.birthday;
  this.civilian.warrants = request.body.warrants;
- this.civilian.username = request.body.submitNewCiv;
+ this.civilian.email = request.body.submitNewCiv;
  this.civilian.save();
  response.redirect('/civ-dashboard');
 };

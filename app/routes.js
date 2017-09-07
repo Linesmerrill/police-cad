@@ -52,10 +52,10 @@ module.exports = function(app, passport, server) {
 
  app.get('/civ-dashboard', auth, function(request, response) {
   Civilian.find({
-   'civilian.username': request.user.user.username
+   'civilian.email': request.user.user.email
   }, function(err, dbPersonas) {
    Vehicle.find({
-    'vehicle.username': request.user.user.username
+    'vehicle.email': request.user.user.email
    }, function(err, dbVehicles) {
     response.render('civ-dashboard.html', {
      user: request.user,
@@ -131,7 +131,7 @@ module.exports = function(app, passport, server) {
  app.post('/create-civ', function(req, res) {
 
   User.findOne({
-   'user.username': req.body.submitNewCiv
+   'user.email': req.body.submitNewCiv
   }, function(err, user) {
 
    var myCiv = new Civilian()
@@ -146,7 +146,7 @@ module.exports = function(app, passport, server) {
  app.post('/create-vehicle', function(req, res) {
 
   User.findOne({
-   'user.username': req.body.submitNewVeh
+   'user.email': req.body.submitNewVeh
   }, function(err, user) {
 
    var myVeh = new Vehicle()

@@ -3,7 +3,7 @@ var bcrypt = require('bcrypt-nodejs');
 
 var vehicleSchema = mongoose.Schema({
  vehicle: {
-  username: String,
+  email: String,
   plate: String,
   model: String,
   color: String,
@@ -23,7 +23,7 @@ vehicleSchema.methods.updateVeh = function(request, response) {
  this.vehicle.validInsurance = request.body.validInsurance;
  this.vehicle.registeredOwner = request.body.registeredOwner;
  this.vehicle.isStolen = request.body.isStolen;
- this.vehicle.username = request.body.submitNewVeh;
+ this.vehicle.email = request.body.submitNewVeh;
  this.vehicle.save();
  response.redirect('/civ-dashboard');
 };
