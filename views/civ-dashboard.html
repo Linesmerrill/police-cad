@@ -169,15 +169,6 @@
 
             <!-- Text input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="ticket-count">Ticket Count</label>
-              <div class="col-md-4">
-              <input id="ticket-count" name="ticketCount" type="text" placeholder="# Tickets" class="form-control input-md">
-
-              </div>
-            </div>
-
-            <!-- Text input-->
-            <div class="form-group">
               <label class="col-md-4 control-label" for="birthday">Date of Birth</label>
               <div class="col-md-4">
               <input id="birthday" name="birthday" type="text" placeholder="mm/dd/yyyy" class="form-control input-md" required>
@@ -340,11 +331,6 @@
             </div>
 
             <div class="col-md-9">
-              <label class="col-md-4 control-label margin-bottom-1" for="ticket-count">Ticket Count:</label>
-              <label id="ticketCountView" class="col-md-5">ticketCount here</label>
-            </div>
-
-            <div class="col-md-9">
               <label class="col-md-4 control-label margin-bottom-1" for="birthday">Date of Birth:</label>
               <label id="birthdayView" class="col-md-5">birthday here</label>
             </div>
@@ -458,11 +444,9 @@
       warrants = "Yes"
     }
 
-    var ticketCount = myVar[index].civilian.ticketCount
     $('#firstNameView').text(firstName)
     $('#lastNameView').text(lastName)
     $('#licenseStatusView').text(licenseStatus)
-    $('#ticketCountView').text(ticketCount)
     $('#birthdayView').text(birthday)
     $('#warrantsView').text(warrants)
   }

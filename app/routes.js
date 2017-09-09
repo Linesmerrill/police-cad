@@ -2,6 +2,7 @@ var User = require('../app/models/user');
 var Civilian = require('../app/models/civilian');
 var Vehicle = require('../app/models/vehicle');
 var Friend = require('../app/models/friend');
+var Ticket = require('../app/models/ticket');
 async = require("async");
 var path = require('path'),
  fs = require('fs');
@@ -69,10 +70,13 @@ module.exports = function(app, passport, server) {
  app.get('/police-dashboard', auth, function(request, response) {
   Civilian.find({}, function(err, dbCivilians) {
    Vehicle.find({}, function(err, dbVehicles) {
-    response.render('police-dashboard.html', {
-     user: request.user,
-     civilians: dbCivilians,
-     vehicles: dbVehicles
+     Ticket.find({}, function(err, dbTickets) {
+      response.render('police-dashboard.html', {
+       user: request.user,
+       civilians: dbCivilians,
+       vehicles: dbVehicles,
+       tickets: dbTickets
+      });
     });
    });
   });
@@ -155,6 +159,15 @@ module.exports = function(app, passport, server) {
     if (err) return console.error(err);
    });
   })
+ });
+
+ app.post('/create-ticket', function(req, res) {
+
+   var myTicket = new Ticket()
+   myTicket.updateTicket(req, res)
+   myTicket.save(function(err) {
+    if (err) return console.error(err);
+   });
  });
 
  // GET /auth/facebook
