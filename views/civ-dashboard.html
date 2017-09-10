@@ -132,8 +132,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="civ-first-name">Civilian First Name</label>
               <div class="col-md-4">
-              <input id="civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" required="">
-
+                <input id="civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
               </div>
             </div>
 
@@ -141,8 +140,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="civ-last-name">Civilian Last Name</label>
               <div class="col-md-4">
-              <input id="civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" required="">
-
+                <input id="civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
               </div>
             </div>
 
@@ -182,7 +180,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="submit-new-civ"></label>
               <div class="col-md-4">
-                <button id="submit-new-civ" name="submitNewCiv" value=<%= user.user.email %> class="btn btn-primary">Create</button>
+                <button id="submit-new-civ" name="submitNewCiv" value=<%= user.user.email %> class="btn btn-primary" onclick="createNewCiv()">Create</button>
               </div>
             </div>
 
@@ -299,7 +297,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form>
+          <form action="/deleteCiv" method="POST">
           <fieldset>
             <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Details about your Civilian</h4>
@@ -328,6 +326,10 @@
             <div class="col-md-9">
               <label class="col-md-4 control-label margin-bottom-1" for="warrants">Warrants?</label>
               <label id="warrantsView" class="col-md-5">warrants here</label>
+            </div>
+
+            <div class="col-md-12 text-align-center">
+              <button id="removeCiv" type="submit" name="removeCiv" class="btn btn-danger">Delete Civilian</button>
             </div>
             </fieldset>
           </form>
@@ -439,6 +441,8 @@
     $('#licenseStatusView').text(licenseStatus)
     $('#birthdayView').text(birthday)
     $('#warrantsView').text(warrants)
+    civFullName = firstName + ' ' + lastName
+    $('#removeCiv').val(civFullName)
   }
 
   function loadVehData(index) {
@@ -475,4 +479,28 @@
     $('#roView').text(registeredOwner)
     $('#stolenView').text(isStolen)
   }
+
+  function createNewCiv() {
+    $('#civ-first-name').popover('hide')
+    $('#civ-last-name').popover('hide')
+  }
+
+  $(document).ready(function(){
+$("#civ-first-name").keydown(function(event) {
+    if (event.keyCode == 32) {
+        event.preventDefault();
+        $('#civ-first-name').popover('show')
+    } else {
+      $('#civ-first-name').popover('hide')
+    }
+});
+$("#civ-last-name").keydown(function(event) {
+    if (event.keyCode == 32) {
+        event.preventDefault();
+        $('#civ-last-name').popover('show')
+    } else {
+      $('#civ-last-name').popover('hide')
+    }
+});
+});
 </script>

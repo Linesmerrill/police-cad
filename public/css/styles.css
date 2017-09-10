@@ -560,3 +560,9 @@ img::-moz-selection {
 .text-align-center {
   text-align: center;
 }
+
+.popover {
+  color: black;
+  width: 80%;
+
+}

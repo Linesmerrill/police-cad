@@ -21,11 +21,11 @@ ticketSchema.methods.updateTicket = function(request, response) {
   var additionalViolation = ""
  this.ticket.officerEmail = request.body.officerEmail;
  this.ticket.caseNumber = request.body.caseNumber;
- this.ticket.civName = request.body.civName;
- this.ticket.plate = request.body.plate;
- this.ticket.model = request.body.model;
- this.ticket.color = request.body.color;
- this.ticket.registeredOwner = request.body.registeredOwner;
+ this.ticket.civName = request.body.civName.trim();
+ this.ticket.plate = request.body.plate.trim();
+ this.ticket.model = request.body.model.trim();
+ this.ticket.color = request.body.color.trim();
+ this.ticket.registeredOwner = request.body.registeredOwner.trim();
  if (request.body.speedViolation !== undefined) {
    additionalViolation = ' - ' + additionalViolation + request.body.speedViolation + ' '
  }

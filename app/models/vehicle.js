@@ -16,12 +16,12 @@ var vehicleSchema = mongoose.Schema({
 
 vehicleSchema.methods.updateVeh = function(request, response) {
 
- this.vehicle.plate = request.body.plate;
- this.vehicle.model = request.body.model;
- this.vehicle.color = request.body.color;
+ this.vehicle.plate = request.body.plate.trim();
+ this.vehicle.model = request.body.model.trim();
+ this.vehicle.color = request.body.color.trim();
  this.vehicle.validRegistration = request.body.validRegistration;
  this.vehicle.validInsurance = request.body.validInsurance;
- this.vehicle.registeredOwner = request.body.registeredOwner;
+ this.vehicle.registeredOwner = request.body.registeredOwner.trim();
  this.vehicle.isStolen = request.body.isStolen;
  this.vehicle.email = request.body.submitNewVeh;
  this.vehicle.save();
