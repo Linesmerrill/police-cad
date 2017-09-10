@@ -222,8 +222,12 @@
                 <label class="col-md-3 margin-bottom-1" for="registration">Registration:</label>
                 <label id="registration" class="col-md-5">registration</label>
               </div>
+
+              <div class="col-md-9">
+                <label for="imageVeh">Vehicle Model Image:</label>
+                <img id="imageVeh" src="" alt="vehicle image not found ;(" style="width:100%;">
+              </div>
             </div>
-          </div>
             </fieldset>
           </form>
         </div>
@@ -485,6 +489,8 @@ function searchPlate() {
   $('#reg-owner').text(registeredOwner)
   $('#insurance').text(validInsurance)
   $('#registration').text(validRegistration)
+  var srcUrl = getSrcFromModel(model)
+  document.getElementById( 'imageVeh' ).setAttribute( 'src', srcUrl );
 
 }
 
@@ -613,6 +619,153 @@ function setDateAndTime() {
   time.value = new Date().toLocaleTimeString('en-GB', { hour: "numeric", minute: "numeric"});
 }
 
+function getSrcFromModel(model) {
+  var carUrl = ""
+  if (model.includes("Osiris")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/e/e3/Osiris.png";
+  } else if (model.includes("Bullet")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/d/d9/Bullet.jpg"
+  } else if (model.includes("Adder")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/a/a0/Adder.jpg"
+  } else if (model.includes("Vacca")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/9/9a/Vacca.jpg"
+  } else if (model.includes("Infernus")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/b/b1/Infernus.jpg"
+  } else if (model.includes("Zentorno")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/e/e6/Zentorno.jpg"
+  } else if (model.includes("Entity XF") || model.includes("Entity")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/e/eb/Entity-xf.jpg"
+  } else if (model.includes("Cheetah")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/8/8e/Cheetah.jpg"
+  } else if (model.includes("Turismo R") || model.includes("Turismo")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/f/f3/Turismo-r.jpg"
+  } else if (model.includes("Voltic")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/a/a0/Voltic.jpg"
+  } else if (model.includes("Sultan RS") || model.includes("Sultan")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/1/1a/Sultanrs_002.jpg"
+  } else if (model.includes("T20")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/d/de/T20_002.jpg"
+  } else if (model.includes("Banshee 900R") || model.includes("Banshee")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/0/0e/Banshee-900r_002.jpg"
+  } else if (model.includes("Reaper")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/7/73/DLC.png"
+  } else if (model.includes("VMJ")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/c/cd/DLC2.png"
+  } else if (model.includes("Bestia GTS") || model.includes("Bestia")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/5/5f/DLC3.png"
+  } else if (model.includes("Sentinel")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/9/90/Sentinel.jpg"
+  } else if (model.includes("Oracle")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/a/a8/Oracle2.jpg"
+  } else if (model.includes("Fusilade")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/3/3d/Fusilade.jpg"
+  } else if (model.includes("Comet")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/d/d5/Comet.jpg"
+  } else if (model.includes("Cabrio")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/4/47/9f-cabrio.jpg"
+  } else if (model.includes("9F")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/4/45/9f.jpg"
+  } else if (model.includes("Penumbra")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/3/30/Penumbra.jpg"
+  } else if (model.includes("Furore")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/7/7e/Furoregt.jpg"
+  } else if (model.includes("Sultan")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/4/46/Sultan.jpg"
+  } else if (model.includes("Futo")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/9/93/Futo.jpg"
+  } else if (model.includes("Coquette")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/5/53/Coquette.jpg"
+  } else if (model.includes("Carbonizzare")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/4/4e/Carbonizzare.jpg"
+  } else if (model.includes("Jester")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/1/1b/Jester.jpg"
+  } else if (model.includes("Rapid")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/3/3e/Rapid-gt.jpg"
+  } else if (model.includes("Buffalo")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/3/33/Buffalo.jpg"
+  } else if (model.includes("Banshee")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/8/89/Banshee.jpg"
+  } else if (model.includes("Surano")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/f/fd/Surano.jpg"
+  } else if (model.includes("Schwartzer")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/5/5e/Schwartzer.jpg"
+  } else if (model.includes("Feltzer")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/a/af/Feltzer.jpg"
+  } else if (model.includes("Elegy")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/1/14/Elegy-rh8.jpg"
+  } else if (model.includes("Khamelion")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/5/58/Khamelion.jpg"
+  } else if (model.includes("Alpha")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/0/02/Alpha_002.jpg"
+  } else if (model.includes("Compact")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/7/78/Blista-compact_002.jpg"
+  } else if (model.includes("Peyote")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/3/3a/Peyote.jpg"
+  } else if (model.includes("Z-type")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/9/98/Z-type.jpg"
+  } else if (model.includes("Monroe")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/d/d1/Monroe.jpg"
+  } else if (model.includes("Pigalle")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/b/b4/Pigalle.jpg"
+  } else if (model.includes("Coquette Classic")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/a/a9/Coquette-classic.jpg"
+  } else if (model.includes("Stinger")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/d/dd/Stinger-gt.jpg"
+  } else if (model.includes("JB 700") || model.includes("JB700")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/5/50/Jb-700.jpg"
+  } else if (model.includes("Tornado")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/1/12/Tornado.jpg"
+  } else if (model.includes("Manana")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/1/10/Manana.jpg"
+  } else if (model.includes("Zion")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/f/f7/Zion.jpg"
+  } else if (model.includes("Jackal")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/4/47/Jackal.jpg"
+  } else if (model.includes("F620")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/0/0b/F620.jpg"
+  } else if (model.includes("Felon")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/0/00/Felon.jpg"
+  } else if (model.includes("Cabrio")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/d/d2/Cognoscenti-cabrio.jpg"
+  } else if (model.includes("Exemplar")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/f/f4/Exemplar.jpg"
+  } else if (model.includes("Prairie")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/5/55/Prairie.jpg"
+  } else if (model.includes("XLS")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/1/1a/DLC4.png"
+  } else if (model.includes("Dominator")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/5/52/Dominator.jpg"
+  } else if (model.includes("Blade")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/9/94/Blade.jpg"
+  } else if (model.includes("Rat-loader")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/b/b6/Rat-loader.jpg"
+  } else if (model.includes("Ruiner")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/4/48/Ruiner.jpg"
+  } else if (model.includes("Phoenix")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/a/ac/Phoenix.jpg"
+  } else if (model.includes("Hotknife")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/f/fc/Hotknife.jpg"
+  } else if (model.includes("Voodoo")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/d/d4/Voodoo.jpg"
+  } else if (model.includes("Vigero")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/6/6c/Vigero.jpg"
+  } else if (model.includes("Sabre Turbo")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/9/9d/Sabre-turbo.jpg"
+  } else if (model.includes("Picador")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/thumb/2/24/Picador.jpg/100px-Picador.jpg"
+  } else if (model.includes("Gauntlet")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/f/f9/Gauntlet.jpg"
+  } else if (model.includes("Buccaneer")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/c/c2/Buccaneer.jpg"
+  } else if (modal.includes("Windsor Drop")) {
+    carUrl = "http://oyster.ignimgs.com/mediawiki/apis.ign.com/grand-theft-auto-5/8/8c/DLC5.png"
+  }
+  else {
+    carUrl = "image-not-found";
+  }
+  return carUrl;
+}
+
 $('#ticketModal').on('hidden.bs.modal', function () {
     $(this).find('form').trigger('reset');
 
@@ -627,6 +780,8 @@ $('#nameDatabaseModal').on('hidden.bs.modal', function () {
 $('#plateDatabaseModal').on('hidden.bs.modal', function () {
     $(this).find('form').trigger('reset');
     var plate = document.getElementById('plateDetails');
+    var stolenMessage = document.getElementById('stolenMessage');
     plate.style.display = 'none'
+    stolenMessage.style.display = 'none'
 })
 </script>

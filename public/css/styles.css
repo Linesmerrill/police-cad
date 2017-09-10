@@ -647,3 +647,7 @@ img::-moz-selection {
 .platform--pc {
     background-color: #cd4534;
 }
+
+#release-header {
+  top: 65%;
+}
