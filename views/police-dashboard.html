@@ -1,445 +1,441 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Police Dashboard</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-    <link rel="stylesheet" type="text/css" href="css/structure.css">
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+<head>
+  <meta charset="utf-8">
+  <title>Lines Police - CAD</title>
+  <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Codeply">
+  <link rel="stylesheet" href="./css/bootstrap.min.css" />
+  <link rel="stylesheet" href="./css/animate.min.css" />
+  <link rel="stylesheet" href="./css/ionicons.min.css" />
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
 
-  </head>
-  <body>
-    <div class="row margin-top-4">
-      <div class="col-md-12 text-align-center font-size-20-px margin-left-2">
-        San Andreas <img class="image-star" src="/images/star.png" alt="star"> Police Operations
+<body>
+  <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+        <a class="navbar-brand page-scroll" href="/"><i class="ion-ios-analytics-outline"></i> Lines Police Server</a>
       </div>
+      <div class="navbar-collapse collapse" id="bs-navbar">
+        <ul class="nav navbar-nav">
 
-    </div>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+            <li>
+                <a> Hi, <%= user.user.username %></a>
+            </li>
+            <li>
+                <a href="/logout">Logout</a>
+            </li>
+        </ul>
 
-    <div class="row">
-      <div class="col-md-12 text-align-center font-size-20-px">
-        Hi, <%= user.user.username %>
       </div>
     </div>
-
-    <div class="row margin-top-2">
-      <div class="col-md-12 text-align-center">
-        <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".run-name">Name Database</button>
-        <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".run-plate">Plate Database</button>
-        <button type="button" class="btn btn-primary btn-width-150" data-toggle="modal" data-target=".ticket" onclick="setDateAndTime();">Issue Ticket</button>
-        <button type="button" class="btn btn-default btn-width-150" onClick="parent.location='/logout'">Log Out</button>
-      </div>
-    </div>
-
-    <!-- Run Civilian Modal  -->
-    <div class="modal fade run-name" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-
-        <div id="warrantMessage" class="alert alert-danger" style="display:none">
-          <strong>Danger!</strong> Warrant found for this suspect.
+  </nav>
+  <header id="first" style='background-image: url("/images/dark-background.jpg");'>
+    <div class="header-content">
+      <div class="inner">
+        <h4>San Andreas - Police Operations</h4>
+        <div class="col-lg-10 col-lg-offset-1 text-center">
+          <button data-toggle="modal" href="#nameDatabaseModal"  class="btn btn-primary btn-lg margin-top-2">Name Database</button>
+          <button data-toggle="modal" href="#plateDatabaseModal"  class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
+          <button data-toggle="modal" href="#ticketModal"  class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime();">Issue Ticket</button>
         </div>
-        <div id="noWarrantFound" class="alert alert-success" style="display:none">
-          <strong>Clean!</strong> No Warrants found.
+      </div>
+      <hr style="width: 88%;max-width: 100rem;">
+    </div>
+  </header>
+
+  <footer id="footer">
+    <div class="container-fluid">
+
+      <span class="pull-right text-muted small"><a href="#">Lines Police Server</a> ©2017 Merrill Lines</span>
+    </div>
+  </footer>
+  <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-body">
+          <img src="" id="galleryImage" class="img-responsive" />
+          <p>
+            <br/>
+            <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i class="ion-android-close"></i></button>
+          </p>
         </div>
-        <div class="modal-content">
-          <form id="search-form" class="form-horizontal" action="" method="">
+      </div>
+    </div>
+  </div>
+
+  <div id="nameDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div id="warrantMessage" class="alert alert-danger" style="display:none">
+        <strong>Danger!</strong> Warrant found for this suspect.
+      </div>
+      <div id="noWarrantFound" class="alert alert-success" style="display:none">
+        <strong>Clean!</strong> No Warrants found.
+      </div>
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="" method="">
             <fieldset>
 
-              <!-- Form Name -->
-              <legend class="text-align-center">Person Database</legend>
-              <datalist id="names">
-                <% for(var i=0; i<civilians.length; i++) {%>
-             <option value="<%= civilians[i].civilian.firstName %> <%= civilians[i].civilian.lastName%>">
-            <% } %>
-              </datalist>
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="civName">Civilian Name</label>
-                <div class="col-md-4">
-                  <input id="civName" name="civName" type="text" placeholder="Civilian Name" class="form-control input-md" list="names" required>
-                </div>
-                <div class="col-md-4">
-                  <button type="button" name="searchCiv" class="btn btn-info" onclick="searchNames()" >Search</button>
-                </div>
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Person Database</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            <datalist id="names">
+              <% for(var i=0; i<civilians.length; i++) {%>
+           <option value="<%= civilians[i].civilian.firstName %> <%= civilians[i].civilian.lastName%>">
+          <% } %>
+            </datalist>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4" for="civ-first-name">Civilian Name</label>
+              <div class="col-md-4">
+              <input id="civName" name="civName" type="text" placeholder="Civilian Name" class="form-control input-md" list="names" required>
+              </div>
+              <div class="col-md-4">
+                <button type="button" name="searchCiv" class="btn btn-info" onclick="searchNames()" >Search</button>
+              </div>
+            </div>
+
+            <div id="civDetails" style="display:none">
+            <div class="col-md-9">
+              <label id="first-and-last-name" class="col-md-5 font-large"><strong>Name here</strong></label>
+            </div>
+
+            <div class="col-md-12">
+              <div class="col-md-5">
+                <label class="col-md-3 margin-bottom-1" for="dob">DOB:</label>
+                <label id="birthday" class="col-md-5">dob here</label>
+              </div>
+              <div class="col-md-5">
+                <label class="col-md-4 margin-bottom-1" for="license">License:</label>
+                <label id="license-status" class="col-md-3">license here</label>
+              </div>
+            </div>
+
+            <div class="col-md-12">
+              <div class="col-md-5">
+                <label class="col-md-4 margin-bottom-1" for="address">Address:</label>
+                <label id="address" class="col-md-5">N/A</label>
+              </div>
+              <div class="col-md-5">
+                <label class="col-md-7 margin-bottom-1" for="ticket">Ticket Count:</label>
+                <label id="ticket-count" class="col-md-5">ticket here</label>
+              </div>
+            </div>
+
+
+              <div class="col-md-9">
+                <input type="button" value="NCIC Warrant Check" id="warrants" name="ncicWarrantCheck" class="btn btn-info margin-bottom-1" onclick="checkWarrantStatus()">
               </div>
 
+            <!--Table for Tickets  -->
+            <div class="col-md-5 name-table text-align-center">
+              <table id="ticket-table" class="table table-hover" border="1" frame="box">
+                <thead>
+                  <tr>
+                    Tickets:
+                  </tr>
+                </thead>
+                  <tbody id="ticket-body">
+                  </tbody>
+              </table>
+            </div>
+          </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 
-               <div id="civDetails" class="civ-details" style="display:none">
-                <div id="first-and-last-name" class="col-md-12 name">
-                  FirstName LastName
-                </div>
-                <div class="col-md-12">
-                  <div class="col-md-1 font-size-16-px">
-                    DOB:
-                  </div>
-                  <div id="birthday" class="col-md-1 birthday font-size-16-px">
-                    mm/dd/yyyy
-                  </div>
-                </div>
-                <div id="address" class="col-md-12 address font-size-16-px">
-                  Address: - - -
-                </div>
-                <div class="col-md-12 ncic-button">
-                  <button id="warrants" type="button" class="btn btn-primary btn-width-150" onclick="checkWarrantStatus()">NCIC Warrant Check</button>
-                </div>
-                <div class="col-md-12">
-                  <div class="col-md-2 col-md-offset-4 font-size-16-px">
-                    License:
-                  </div>
-                   <div id="license-status" class="col-md-1 font-size-16-px license-status">
-                      license status
-                  </div>
-                </div>
+  <div id="plateDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div id="stolenMessage" class="alert alert-danger" style="display:none">
+        <strong>Danger!</strong> Vehicle reported as stolen.
+      </div>
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="" method="">
+            <fieldset>
 
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Vehicle Database</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            <datalist id="plates">
+              <% for(var i=0; i<vehicles.length; i++) {%>
+           <option value="<%= vehicles[i].vehicle.plate %>">
+          <% } %>
+            </datalist>
 
-                <div class="col-md-12">
-                  <div  class="col-md-3 col-md-offset-4 font-size-16-px">
-                    Ticket Count:
-                  </div>
-                   <div id="ticket-count" class="col-md-1 font-size-16-px ticket-count">
-                     # tickets
-                   </div>
-                </div>
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4" for="civ-first-name">Plate Number</label>
+              <div class="col-md-4">
+                <input id="plateName" name="plateName" type="text" placeholder="License Plate #" class="form-control input-md" list="plates" required>
+              </div>
+              <div class="col-md-4">
+                <button type="button" name="searchPlateNum" class="btn btn-info" onclick="searchPlate()" >Search</button>
+              </div>
+            </div>
 
-                <!--Table for Tickets  -->
-                <div class="col-md-5 col-md-offset-1 name-table">
-                  <table id="ticket-table" class="table table-hover" border="1" frame="box">
-                    <thead>
-                      <tr>
-                        Tickets:
-                      </tr>
-                    </thead>
-                      <tbody id="ticket-body">
-                      </tbody>
-                  </table>
-                </div>
-               </div>
+            <div id="plateDetails" style="display:none">
+            <div class="col-md-9">
+              <label id="plate" class="col-md-5 font-large">license plate #</label>
+            </div>
+
+              <div class="col-md-9">
+                <label class="col-md-3 margin-bottom-1" for="color">Color:</label>
+                <label id="color" class="col-md-5">color here</label>
+              </div>
+
+              <div class="col-md-9">
+                <label class="col-md-3 margin-bottom-1" for="address">Model:</label>
+                <label id="model" class="col-md-9">model here</label>
+              </div>
+
+              <div class="col-md-9">
+                <label class="col-md-3 margin-bottom-1" for="ro">RO:</label>
+                <label id="reg-owner" class="col-md-9">ro here</label>
+              </div>
+
+            <div class="col-md-9">
+                <label class="col-md-3 margin-bottom-1" for="insurance">Insurance:</label>
+                <label id="insurance" class="col-md-5">insurance</label>
+              </div>
+
+              <div class="col-md-9">
+                <label class="col-md-3 margin-bottom-1" for="registration">Registration:</label>
+                <label id="registration" class="col-md-5">registration</label>
+              </div>
+            </div>
+          </div>
             </fieldset>
           </form>
         </div>
       </div>
     </div>
 
-    <div class="modal fade run-plate" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div id="stolenMessage" class="alert alert-danger" style="display:none">
-          <strong>Danger!</strong> Vehicle reported as stolen.
-        </div>
-        <div class="modal-content">
-          <form id="plate-form" class="form-horizontal" action="" method="">
-            <fieldset>
 
-              <!-- Form Name -->
-              <legend class="text-align-center">Vehicle Database</legend>
-              <datalist id="plates">
+
+    <div id="ticketModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <form class="form-horizontal" action="/create-ticket" method="POST">
+              <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>San Andreas Traffic Ticket</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="plate">Date of Violation</label>
+                <div class="col-md-4">
+                  <input id="date" name="date" type="text" placeholder="mm/dd/yyyy" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="time">Time</label>
+                <div class="col-md-4">
+                  <input id="time" name="time" type="text" placeholder="hh:mm" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="civName">Name</label>
+                <div class="col-md-4">
+                  <input id="civName" name="civName" type="text" placeholder="name" class="form-control input-md" list="names" required="">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="plate">Plate</label>
+                <div class="col-md-4">
+                  <input id="plate" name="plate" type="text" placeholder="plate" class="form-control input-md" list="plates">
+                </div>
+              </div>
+
+              <datalist id="models">
                 <% for(var i=0; i<vehicles.length; i++) {%>
-             <option value="<%= vehicles[i].vehicle.plate %>">
-            <% } %>
+                <option value="<%= vehicles[i].vehicle.model %>">
+                <% } %>
               </datalist>
-              <!-- Text input-->
+
               <div class="form-group">
-                <label class="col-md-4 control-label" for="plateName">Plate Number</label>
+                <label class="col-md-4 control-label" for="model">Model</label>
                 <div class="col-md-4">
-                  <input id="plateName" name="plateName" type="text" placeholder="License Plate #" class="form-control input-md" list="plates" required>
-                </div>
-                <div class="col-md-4">
-                  <button type="button" name="searchPlateNum" class="btn btn-info" onclick="searchPlate()">Search</button>
+                  <input id="model" name="model" type="text" placeholder="model" class="form-control input-md" list="models">
                 </div>
               </div>
 
+              <datalist id="colors">
+                <% for(var i=0; i<vehicles.length; i++) {%>
+                <option value="<%= vehicles[i].vehicle.color %>">
+                <% } %>
+              </datalist>
 
-               <div id="plateDetails" class="civ-details" style="display:none">
-                <div id="plate" class="col-md-12 name">
-                  License Plate #
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="color">Color</label>
+                <div class="col-md-4">
+                  <input id="color" name="color" type="text" placeholder="color" class="form-control input-md" list="colors">
                 </div>
-                <div class="col-md-12">
-                  <div class="col-md-1 font-size-16-px">
-                    Color:
-                  </div>
-                  <div id="color" class="col-md-4 font-size-16-px">
-                    color
-                  </div>
-                </div>
-                <div class="col-md-12">
-                  <div class="col-md-1 font-size-16-px">
-                    Model:
-                  </div>
-                  <div id="model" class="col-md-4 margin-bottom-2 font-size-16-px">
-                    car model
-                  </div>
-                </div>
-                <div class="col-md-12">
+              </div>
 
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
+                <div class="col-md-4">
+                  <input id="registeredOwner" name="registeredOwner" type="text" placeholder="registeredOwner" class="form-control input-md" list="names">
                 </div>
-                <div class="col-md-12">
-                  <div class="col-md-1 font-size-16-px">
-                    RO:
-                  </div>
-                  <div id="reg-owner" class="col-md-4 ro-name font-size-16-px">
-                    firstname lastname
-                  </div>
-                </div>
-                <div class="col-md-12">
-                  <div class="col-md-3 font-size-16-px margin-bottom-2">
-                    Owner's License:
-                  </div>
-                  <div id="license" class="col-md-3 owners-license font-size-16-px">
-                    N/A
-                  </div>
-                </div>
-                <div class="col-md-12">
+              </div>
 
+              <!-- Multiple Checkboxes (inline) -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="violations">Violations</label>
+                <div class="col-md-4">
+                  <label class="checkbox-inline" for="violations-0">
+                    <input type="checkbox" name="violations" id="violations-0" value="Speed" onclick="toggle_visibility(speedViolationGroup);">Speed
+                  </label>
+                  <label class="checkbox-inline" for="violations-1">
+                    <input type="checkbox" name="violations" id="violations-1" value="DUI" onclick="toggle_visibility(duiViolationGroup);">DUI
+                  </label>
+                  <label class="checkbox-inline" for="violations-2">
+                    <input type="checkbox" name="violations" id="violations-2" value="Driver license" onclick="toggle_visibility(driverLicenseViolationGroup);">Driver License
+                  </label>
+                  <label class="checkbox-inline" for="violations-3">
+                    <input type="checkbox" name="violations" id="violations-3" value="Invalid registration">No Valid Registration
+                  </label>
+                  <label class="checkbox-inline" for="violations-4">
+                    <input type="checkbox" name="violations" id="violations-4" value="Invalid insurance">No Proof Insurance
+                  </label>
+                  <label class="checkbox-inline" for="violations-5">
+                    <input type="checkbox" name="violations" id="violations-5" value="Violated traffic signal">Violated Traffic Signal
+                  </label>
+                  <label class="checkbox-inline" for="violations-6">
+                    <input type="checkbox" name="violations" id="violations-6" value="Failure to yield">Failure to Yield
+                  </label>
+                  <label class="checkbox-inline" for="violations-7">
+                    <input type="checkbox" name="violations" id="violations-7" value="Other" onclick="toggle_visibility(otherOffenseGroup);">Other
+                  </label>
                 </div>
-                <div class="col-md-12">
-                  <div class="col-md-2 font-size-16-px">
-                    Insurance:
-                  </div>
-                  <div id="insurance" class="col-md-2 font-size-16-px">
-                    --
-                  </div>
-                </div>
+              </div>
 
-                <div class="col-md-12">
-                  <div class="col-md-2 font-size-16-px reg-padding-bottom">
-                    Registration:
-                  </div>
-                  <div id="registration" class="col-md-2 font-size-16-px">
-                    --
-                  </div>
+              <!-- Speed Violation -->
+              <div id="speedViolationGroup" class="form-group" style="display:none">
+                <label class="col-md-4 control-label" for="speedViolation">Speed Violation</label>
+                <div class="col-md-4">
+                <div class="checkbox">
+                  <label for="speedViolation-0">
+                    <input type="checkbox" name="speedViolation" id="speedViolation-0" value="Over limit">
+                    Over limit
+                  </label>
+              	</div>
+                <div class="checkbox">
+                  <label for="speedViolation-1">
+                    <input type="checkbox" name="speedViolation" id="speedViolation-1" value="Unsafe for conditions">
+                    Unsafe for conditions
+                  </label>
+              	</div>
                 </div>
-               </div>
-            </fieldset>
-          </form>
+              </div>
+
+              <!-- DUI Violation -->
+              <div id="duiViolationGroup" class="form-group" style="display:none">
+                <label class="col-md-4 control-label" for="duiViolation">DUI Violation</label>
+                <div class="col-md-4">
+                <div class="checkbox">
+                  <label for="duiViolation-0">
+                    <input type="checkbox" name="duiViolation" id="duiViolation-0" value="Under the influence">
+                    Under the influence
+                  </label>
+              	</div>
+                <div class="checkbox">
+                  <label for="duiViolation-1">
+                    <input type="checkbox" name="duiViolation" id="duiViolation-1" value="Prohibited B.A.C">
+                    Prohibited B.A.C
+                  </label>
+              	</div>
+                </div>
+              </div>
+
+              <!-- Driver License Violation -->
+              <div id="driverLicenseViolationGroup" class="form-group" style="display:none">
+                <label class="col-md-4 control-label" for="driverLicenseViolation">Driver License Violation</label>
+                <div class="col-md-4">
+                <div class="checkbox">
+                  <label for="driverLicenseViolation-0">
+                    <input type="checkbox" name="driverLicenseViolation" id="driverLicenseViolation-0" value="No license">
+                    None
+                  </label>
+              	</div>
+                <div class="checkbox">
+                  <label for="driverLicenseViolation-1">
+                    <input type="checkbox" name="driverLicenseViolation" id="driverLicenseViolation-1" value="Not on person">
+                    Not on person
+                  </label>
+              	</div>
+                <div class="checkbox">
+                  <label for="driverLicenseViolation-2">
+                    <input type="checkbox" name="driverLicenseViolation" id="driverLicenseViolation-2" value="Revoked">
+                    Revoked
+                  </label>
+              	</div>
+                </div>
+              </div>
+
+              <!-- Other Offense-->
+              <div id="otherOffenseGroup" class="form-group" style="display:none">
+                <label class="col-md-4 control-label" for="otherInput">Other Offense</label>
+                <div class="col-md-4">
+                  <input id="otherInput" name="otherInput" type="text" placeholder="offense" class="form-control input-md">
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="amount">Fine Amount</label>
+                <div class="col-md-4">
+                  <input id="amount" name="amount" type="text" placeholder="$ amount" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submitTicket"></label>
+                <div class="col-md-4">
+                  <button id="submitTicket" name="officerEmail" class="btn btn-primary" value=<%= user.user.email%>>Submit</button>
+                </div>
+              </div>
+              </fieldset>
+              </form>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Ticket  -->
-    <div class="modal fade ticket" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <form class="form-horizontal" action="/create-ticket" method="POST">
-          <fieldset>
+  <!--scripts loaded here -->
+  <script src="./js/jquery.min.js"></script>
+  <script src="./js/bootstrap.min.js"></script>
+  <script src="./js/jquery.easing.min.js"></script>
+  <script src="./js/wow.js"></script>
+  <script src="./js/scripts.js"></script>
+</body>
 
-          <!-- Form Name -->
-          <legend>San Andreas Traffic Ticket</legend>
-
-          <!-- Text input-->
-          <div class="form-group">
-          <label class="col-md-4 control-label" for="date">Date of Violation</label>
-          <div class="col-md-4">
-          <input id="date" name="date" type="text" placeholder="mm/dd/yyyy" class="form-control input-md" required="">
-
-          </div>
-          </div>
-
-          <!-- Text input-->
-          <div class="form-group">
-          <label class="col-md-4 control-label" for="time">Time</label>
-          <div class="col-md-4">
-          <input id="time" name="time" type="text" placeholder="hh:mm" class="form-control input-md" required="">
-
-          </div>
-          </div>
-
-          <!-- Text input-->
-          <div class="form-group">
-          <label class="col-md-4 control-label" for="civName">Name</label>
-          <div class="col-md-4">
-          <input id="civName" name="civName" type="text" placeholder="name" class="form-control input-md" list="names">
-
-          </div>
-          </div>
-
-          <!-- Text input-->
-          <div class="form-group">
-          <label class="col-md-4 control-label" for="plate">Plate</label>
-          <div class="col-md-4">
-          <input id="plate" name="plate" type="text" placeholder="plate" class="form-control input-md" list="plates">
-
-          </div>
-          </div>
-
-          <datalist id="models">
-            <% for(var i=0; i<vehicles.length; i++) {%>
-         <option value="<%= vehicles[i].vehicle.model %>">
-        <% } %>
-          </datalist>
-
-          <!-- Text input-->
-          <div class="form-group">
-          <label class="col-md-4 control-label" for="model">Model</label>
-          <div class="col-md-4">
-          <input id="model" name="model" type="text" placeholder="model" class="form-control input-md" list="models">
-
-          </div>
-          </div>
-
-          <datalist id="colors">
-            <% for(var i=0; i<vehicles.length; i++) {%>
-         <option value="<%= vehicles[i].vehicle.color %>">
-        <% } %>
-          </datalist>
-
-          <!-- Text input-->
-          <div class="form-group">
-          <label class="col-md-4 control-label" for="color">Color</label>
-          <div class="col-md-4">
-          <input id="color" name="color" type="text" placeholder="color" class="form-control input-md" list="colors">
-
-          </div>
-          </div>
-
-          <!-- Text input-->
-          <div class="form-group">
-          <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
-          <div class="col-md-4">
-          <input id="registeredOwner" name="registeredOwner" type="text" placeholder="registered owner" class="form-control input-md" list="names">
-
-          </div>
-          </div>
-
-          <!-- Multiple Checkboxes (inline) -->
-          <div class="form-group">
-          <label class="col-md-4 control-label" for="violations">Violations</label>
-          <div class="col-md-4">
-          <label class="checkbox-inline" for="violations-0">
-          <input type="checkbox" name="violations" id="violations-0" value="Speed" onclick="toggle_visibility(speedViolationGroup);">
-          Speed
-          </label>
-          <label class="checkbox-inline" for="violations-1">
-          <input type="checkbox" name="violations" id="violations-1" value="DUI" onclick="toggle_visibility(duiViolationGroup);">
-          DUI
-          </label>
-          <label class="checkbox-inline" for="violations-2">
-          <input type="checkbox" name="violations" id="violations-2" value="Driver license" onclick="toggle_visibility(driverLicenseViolationGroup);">
-          Driver License
-          </label>
-          <label class="checkbox-inline" for="violations-3">
-          <input type="checkbox" name="violations" id="violations-3" value="Invalid registration">
-          No Valid Registration
-          </label>
-          <label class="checkbox-inline" for="violations-4">
-          <input type="checkbox" name="violations" id="violations-4" value="Invalid insurance">
-          No Proof Insurance
-          </label>
-          <label class="checkbox-inline" for="violations-5">
-          <input type="checkbox" name="violations" id="violations-5" value="Violated traffic signal">
-          Violated Traffic Signal
-          </label>
-          <label class="checkbox-inline" for="violations-6">
-          <input type="checkbox" name="violations" id="violations-6" value="Failure to yield">
-          Failure to Yield
-          </label>
-          <label class="checkbox-inline" for="violations-7">
-          <input type="checkbox" name="violations" id="violations-7" value="Other" onclick="toggle_visibility(otherOffenseGroup);">
-          Other
-          </label>
-          </div>
-          </div>
-
-          <!-- Speed Violation -->
-          <div id="speedViolationGroup" class="form-group" style="display:none">
-            <label class="col-md-4 control-label" for="speedViolation">Speed Violation</label>
-            <div class="col-md-4">
-            <div class="checkbox">
-              <label for="speedViolation-0">
-                <input type="checkbox" name="speedViolation" id="speedViolation-0" value="Over limit">
-                Over limit
-              </label>
-          	</div>
-            <div class="checkbox">
-              <label for="speedViolation-1">
-                <input type="checkbox" name="speedViolation" id="speedViolation-1" value="Unsafe for conditions">
-                Unsafe for conditions
-              </label>
-          	</div>
-            </div>
-          </div>
-
-          <!-- DUI Violation -->
-          <div id="duiViolationGroup" class="form-group" style="display:none">
-            <label class="col-md-4 control-label" for="duiViolation">DUI Violation</label>
-            <div class="col-md-4">
-            <div class="checkbox">
-              <label for="duiViolation-0">
-                <input type="checkbox" name="duiViolation" id="duiViolation-0" value="Under the influence">
-                Under the influence
-              </label>
-          	</div>
-            <div class="checkbox">
-              <label for="duiViolation-1">
-                <input type="checkbox" name="duiViolation" id="duiViolation-1" value="Prohibited B.A.C">
-                Prohibited B.A.C
-              </label>
-          	</div>
-            </div>
-          </div>
-
-          <!-- Driver License Violation -->
-          <div id="driverLicenseViolationGroup" class="form-group" style="display:none">
-            <label class="col-md-4 control-label" for="driverLicenseViolation">Driver License Violation</label>
-            <div class="col-md-4">
-            <div class="checkbox">
-              <label for="driverLicenseViolation-0">
-                <input type="checkbox" name="driverLicenseViolation" id="driverLicenseViolation-0" value="No license">
-                None
-              </label>
-          	</div>
-            <div class="checkbox">
-              <label for="driverLicenseViolation-1">
-                <input type="checkbox" name="driverLicenseViolation" id="driverLicenseViolation-1" value="Not on person">
-                Not on person
-              </label>
-          	</div>
-            <div class="checkbox">
-              <label for="driverLicenseViolation-2">
-                <input type="checkbox" name="driverLicenseViolation" id="driverLicenseViolation-2" value="Revoked">
-                Revoked
-              </label>
-          	</div>
-            </div>
-          </div>
-
-          <!-- Other Offense-->
-          <div id="otherOffenseGroup" class="form-group" style="display:none">
-          <label class="col-md-4 control-label" for="otherInput">Other Offense</label>
-          <div class="col-md-4">
-          <input id="otherInput" name="otherInput" type="text" placeholder="offense" class="form-control input-md">
-
-          </div>
-          </div>
-
-          <!-- Text input-->
-          <div class="form-group">
-          <label class="col-md-4 control-label" for="amount">Fine Amount</label>
-          <div class="col-md-4">
-          <input id="amount" name="amount" type="text" placeholder="$ amount" class="form-control input-md" required="">
-
-          </div>
-          </div>
-
-          <!-- Button -->
-          <div class="form-group">
-          <label class="col-md-4 control-label" for="submitTicket"></label>
-          <div class="col-md-4">
-          <button id="submitTicket" name="officerEmail" class="btn btn-primary" value=<%= user.user.email%>>Submit</button>
-          </div>
-          </div>
-
-          </fieldset>
-          </form>
-
-        </div>
-      </div>
-    </div>
-
-  </body>
 </html>
 
 <script type="text/javascript">
@@ -515,10 +511,9 @@ function searchPlate() {
     }
     ticketIndex = new Array();
 
-    $("#ticket-table tr").remove(); 
+    $("#ticket-table tr").remove();
     var table = document.getElementById("ticket-table");
 
-    console.log(ticketIndex);
     for (i=0; i < myTicket.length; i++) {
       if (myTicket[i].ticket.civName === myValue) {
         ticketIndex.push(i);
@@ -618,5 +613,20 @@ function setDateAndTime() {
   time.value = new Date().toLocaleTimeString('en-GB', { hour: "numeric", minute: "numeric"});
 }
 
+$('#ticketModal').on('hidden.bs.modal', function () {
+    $(this).find('form').trigger('reset');
 
+})
+
+$('#nameDatabaseModal').on('hidden.bs.modal', function () {
+    $(this).find('form').trigger('reset');
+    var civ = document.getElementById('civDetails');
+    civ.style.display = 'none'
+})
+
+$('#plateDatabaseModal').on('hidden.bs.modal', function () {
+    $(this).find('form').trigger('reset');
+    var plate = document.getElementById('plateDetails');
+    plate.style.display = 'none'
+})
 </script>

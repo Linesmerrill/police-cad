@@ -27,18 +27,18 @@ ticketSchema.methods.updateTicket = function(request, response) {
  this.ticket.color = request.body.color;
  this.ticket.registeredOwner = request.body.registeredOwner;
  if (request.body.speedViolation !== undefined) {
-   additionalViolation = additionalViolation + request.body.speedViolation + ' '
+   additionalViolation = ' - ' + additionalViolation + request.body.speedViolation + ' '
  }
  if (request.body.duiViolation !== undefined) {
-   additionalViolation = additionalViolation + request.body.duiViolation + ' '
+   additionalViolation = ' - ' + additionalViolation + request.body.duiViolation + ' '
  }
  if (request.body.driverLicenseViolation !== undefined) {
-   additionalViolation = additionalViolation + request.body.driverLicenseViolation + ' '
+   additionalViolation = ' - ' + additionalViolation + request.body.driverLicenseViolation + ' '
  }
  if (request.body.otherInput !== '') {
-   additionalViolation = additionalViolation + request.body.otherInput
+   additionalViolation = ' - ' + additionalViolation + request.body.otherInput
  }
- this.ticket.violation = request.body.violations + ' - ' + additionalViolation;
+ this.ticket.violation = request.body.violations + additionalViolation;
  this.ticket.amount = request.body.amount;
  this.ticket.date = request.body.date;
  this.ticket.time = request.body.time;

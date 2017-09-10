@@ -550,5 +550,13 @@ img::-moz-selection {
 }
 
 .float-right {
-  float: right
+  float: right;
+}
+
+.font-large {
+  font-size: large;
+}
+
+.text-align-center {
+  text-align: center;
 }
