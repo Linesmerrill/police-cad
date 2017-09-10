@@ -182,6 +182,21 @@ module.exports = function(app, passport, server) {
    })
  })
 
+ app.post('/deleteVeh', function(req, res) {
+   var roName = req.body.roVeh
+   var modelName = req.body.modelVeh
+   var emailName = req.body.emailVeh
+   var plateName = req.body.plateVeh
+   Vehicle.deleteOne({
+     'vehicle.email': emailName,
+     'vehicle.model': modelName,
+     'vehicle.registeredOwner': roName,
+     'vehicle.plate': plateName}, function(err) {
+       if (err) return console.error(err);
+       res.redirect('/civ-dashboard');
+   })
+ })
+
  // GET /auth/facebook
  // Use passport.authenticate() as route middleware to authenticate the
  // request. The first step in Facebook authentication will involve

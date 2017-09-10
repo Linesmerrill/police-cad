@@ -217,7 +217,6 @@
               <label class="col-md-4 control-label" for="model">Model</label>
               <div class="col-md-4">
                 <input id="model" name="model" type="search" placeholder="Model" class="form-control input-md" required="">
-
               </div>
             </div>
 
@@ -226,7 +225,6 @@
               <label class="col-md-4 control-label" for="color">Color</label>
               <div class="col-md-4">
               <input id="color" name="color" type="text" placeholder="Color" class="form-control input-md" required="">
-
               </div>
             </div>
 
@@ -343,7 +341,7 @@
       <div class="modal-content">
         <div class="modal-body">
 
-          <form>
+          <form action="/deleteVeh" method="POST">
           <fieldset>
             <!-- Form Name -->
             <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
@@ -354,12 +352,14 @@
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="civ-first-name">Plate:</label>
                 <label class="col-md-5" id="plateView">plate here</label>
+                <input id="plateVeh" name="plateVeh" type="text" value="" style="display:none">
             </div>
 
             <!-- Text input-->
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="civ-last-name">Model:</label>
                 <label class="col-md-8" id="modelView">model here</label>
+                <input id="modelVeh" name="modelVeh" type="text" value="" style="display:none">
             </div>
 
             <!-- Select Basic -->
@@ -384,11 +384,16 @@
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="ro">RO:</label>
               <label class="col-md-8" id="roView">ro here</label>
+              <input id="roVeh" type="text" name="roVeh" value="" style="display:none">
             </div>
 
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="stolen">Stolen:</label>
               <label class="col-md-5" id="stolenView">stolen here</label>
+            </div>
+
+            <div class="col-md-12 text-align-center">
+              <button id="emailVeh" type="submit" name="emailVeh" class="btn btn-danger">Delete Vehicle</button>
             </div>
             </fieldset>
           </form>
@@ -449,6 +454,7 @@
     var myVar = <%- JSON.stringify(vehicles) %>;
 
     var color = myVar[index].vehicle.color
+    var email = myVar[index].vehicle.email
     var plate = myVar[index].vehicle.plate
     var model = myVar[index].vehicle.model
     var registeredOwner = myVar[index].vehicle.registeredOwner
@@ -478,6 +484,11 @@
     $('#validInsView').text(validInsurance)
     $('#roView').text(registeredOwner)
     $('#stolenView').text(isStolen)
+    $('#emailVeh').val(email)
+    $('#modelVeh').val(model)
+    $('#roVeh').val(registeredOwner)
+    $('#plateVeh').val(plate)
+
   }
 
   function createNewCiv() {

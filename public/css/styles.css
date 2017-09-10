@@ -571,6 +571,20 @@ img::-moz-selection {
   text-transform: uppercase;
 }
 
+#color {
+  text-transform: capitalize;
+}
+
+#model {
+  text-transform: capitalize;
+}
+#civ-first-name {
+  text-transform: capitalize;
+}
+#civ-last-name {
+  text-transform: capitalize;
+}
+
 ::-webkit-input-placeholder { /* WebKit browsers */
     text-transform: none;
 }
