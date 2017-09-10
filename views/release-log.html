@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Lines Police - CAD</title>
-    <meta name="description" content="Lines Roleplay Police CAD (Computer Aided Dispatch). Built to facilitate the needs of roleplay police and civilians." />
+    <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Codeply">
     <link rel="stylesheet" href="./css/bootstrap.min.css" />
@@ -40,43 +40,45 @@
         </div>
     </nav>
     <header id="first">
-
+      <form class="">
+      	<fieldset class="">
         <div class="header-content">
             <div class="inner">
-                <h4>Register as a Civilian</h4>
+                <h1 class="cursive">Release Log</h1>
                 <hr>
-                 <div class="col-lg-10 col-lg-offset-1 text-center">
-                <form id="signInForm" class="contact-form row" action="/signup-civ" method="post">
-                	<% if (message.length > 0) { %>
-                  <div class="alert alert-danger col-md-4 col-md-offset-4">
-                    <strong>Sorry, <%= message %> </strong>
-                  </div>
-                  <% } %>
-                  <div class="col-md-12">
-                    <div class="col-md-4 col-md-offset-4">
-                        <label>Username</label>
-                        <input id="inputUsername" type="text" name="username" class="form-control" placeholder="Username (cannot contain spaces)" required>
-                    </div>
-                  </div>
-                  <div class="col-md-12">
-                    <div class="col-md-4 col-md-offset-4">
-                        <label>Email</label>
-                        <input id="inputEmail" type="email" name="email" class="form-control" placeholder="Email Address" required>
-                    </div>
-                  </div>
-                    <div class="col-md-12">
-                      <div class="col-md-4 col-md-offset-4">
-                          <label>Password</label>
-                          <input id="inputPassword" type="password" name="password" class="form-control" placeholder="Password" required>
-                      </div>
-                    </div>
-                </div>
 
-                <button type="submit" value="SignUp" class="btn btn-primary btn-xl margin-top-2" >Create</button>
-              </form>
+                <div class="grid grid--cover-links">
+                  <div class="grid grid--cover-links">
+                  <div class="grid__cell grid__cell--small">
+                    <div class="grid__cell-content">
+                      <h2>Patch 0.12</h2>
+                      <div class="platform platform--ps4">Mobile</div>
+                      <div class="platform platform--pc">PC</div>
+                      <p>Patch 0.12 introduces small fixes around creating new Vehicles and Civilians.</p>
+                    </div>
+                  </div>
+                  <div class="grid__cell grid__cell--small">
+                    <div class="grid__cell-content">
+                      <h2>Patch 0.11</h2>
+                      <div class="platform platform--ps4">Mobile</div>
+                      <div class="platform platform--pc">PC</div>
+                      <p>Patch 0.11 allows users to create and delete <strong>Vehicles</strong>.</p>
+                    </div>
+                  </div>
+                  <div class="grid__cell grid__cell--small">
+                    <div class="grid__cell-content">
+                      <h2>Patch 0.10</h2>
+                      <div class="platform platform--ps4">Mobile</div>
+                      <div class="platform platform--pc">PC</div>
+                      <p>Patch 0.10 allows users to create and delete <strong>Civilians</strong>.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
         </div>
-
+      </fieldset>
+      </form>
     </header>
     <footer id="footer">
         <div class="container-fluid">
@@ -84,9 +86,7 @@
                 <div class="col-xs-6 col-sm-3 column">
                     <h4>Information</h4>
                     <ul class="list-unstyled">
-                        <li><a href="">Products</a></li>
-                        <li><a href="">Services</a></li>
-                        <li><a href="">Benefits</a></li>
+                        <li><a href="/release-log">Release Log</a></li>
                         <li><a href="https://linesmerrill.github.io/MerrillLines/" target="_blank">Developers</a></li>
                     </ul>
                 </div>
@@ -101,14 +101,14 @@
                 </div>
                 <div class="col-xs-12 col-sm-3 column">
                     <h4>Stay Posted</h4>
-
+                    <form>
                         <div class="form-group">
                           <input type="text" class="form-control" title="No spam, we promise!" placeholder="Tell us your email">
                         </div>
                         <div class="form-group">
                           <button class="btn btn-primary" data-toggle="modal" data-target="#alertModal" type="button">Subscribe for updates</button>
                         </div>
-
+                    </form>
                 </div>
                 <div class="col-xs-12 col-sm-3 text-right">
                     <h4>Follow</h4>
@@ -176,11 +176,3 @@
     <script src="./js/scripts.js"></script>
   </body>
 </html>
-
-<script type="text/javascript">
-$('input').keyup(function() {
-  str = $(this).val();
-  str = str.replace(/\s/g,'');
-  $(this).val(str);
-});
-</script>

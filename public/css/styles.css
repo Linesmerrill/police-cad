@@ -597,3 +597,53 @@ img::-moz-selection {
 :-ms-input-placeholder { /* Internet Explorer 10+ */
     text-transform: none;
 }
+
+.grid__cell {
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+    width: 100%;
+    border: 1px solid #000;
+    border-bottom: 0 solid #000;
+    background: linear-gradient(to bottom,rgba(0,0,0,.5) 0%,rgba(0,0,0,.25) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#80000000', endColorstr='#40000000',GradientType=0 );
+    margin-bottom: 70px;
+    margin-bottom: 7rem;
+}
+
+.grid__cell--small {
+    max-width: 30%;
+}
+
+.section__content a.link--inherit, a.link--inherit {
+    color: inherit;
+    text-decoration: none;
+}
+
+.grid {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-flow: row wrap;
+    flex-flow: row wrap;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+}
+
+.platform {
+    display: inline-block;
+    font-weight: 700;
+    padding: 8px 15px;
+    padding: .8rem 1.5rem;
+    margin-left: 15px;
+    margin-left: 1.5rem;
+    margin-bottom: 30px;
+    margin-bottom: 3rem;
+}
+
+.platform--ps4 {
+    background-color: #41626c;
+}
+
+.platform--pc {
+    background-color: #cd4534;
+}

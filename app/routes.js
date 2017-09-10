@@ -12,6 +12,10 @@ module.exports = function(app, passport, server) {
   response.render('index.html');
  });
 
+ app.get('/release-log', function(request, response) {
+  response.render('release-log.html');
+ });
+
  app.get('/login', function(request, response) {
   response.redirect('/');
  });
