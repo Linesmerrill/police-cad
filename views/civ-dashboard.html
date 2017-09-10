@@ -160,7 +160,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="birthday">Date of Birth</label>
               <div class="col-md-4">
-              <input id="birthday" name="birthday" type="text" placeholder="mm/dd/yyyy" class="form-control input-md" required>
+              <input id="birthday" name="birthday" type="text" placeholder="mm/dd/yyyy" maxlength="10" class="form-control input-md" required>
 
               </div>
             </div>
@@ -502,5 +502,25 @@ $("#civ-last-name").keydown(function(event) {
       $('#civ-last-name').popover('hide')
     }
 });
+});
+
+var format = "mm/dd/yyyy";
+var match = new RegExp(format
+    .replace(/(\w+)\W(\w+)\W(\w+)/, "^\\s*($1)\\W*($2)?\\W*($3)?([0-9]*).*")
+    .replace(/m|d|y/g, "\\d"));
+var replace = "$1/$2/$3$4"
+    .replace(/\//g, format.match(/\W/));
+
+function doFormat(target)
+{
+    target.value = target.value
+        .replace(/(^|\W)(?=\d\W)/g, "$10")   // padding
+        .replace(match, replace)             // fields
+        .replace(/(\W)+/g, "$1");            // remove repeats
+}
+
+$("#birthday").keyup(function(e) {
+   if(!e.ctrlKey && !e.metaKey && (e.keyCode == 32 || e.keyCode > 46))
+      doFormat(e.target)
 });
 </script>

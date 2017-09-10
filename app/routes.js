@@ -171,7 +171,6 @@ module.exports = function(app, passport, server) {
  });
 
  app.post('/deleteCiv', function(req, res) {
-   console.log(req.body);
    var nameArray = req.body.removeCiv.split(' ')
    var civFirstName = nameArray[0]
    var civLastName = nameArray[1]
