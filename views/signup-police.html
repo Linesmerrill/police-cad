@@ -64,10 +64,22 @@
                         <input id="inputEmail" type="email" name="email" class="form-control" placeholder="Email Address" required>
                     </div>
                   </div>
+                  <div class="col-md-12">
+                    <div class="col-md-4 col-md-offset-4">
+                        <label>Password</label>
+                        <input id="inputPassword" type="password" name="password" class="form-control" placeholder="Password" required>
+                    </div>
+                  </div>
                     <div class="col-md-12">
                       <div class="col-md-4 col-md-offset-4">
-                          <label>Password</label>
-                          <input id="inputPassword" type="password" name="password" class="form-control" placeholder="Password" required>
+                          <label>Confirm Password</label>
+                          <input id="confirmPassword" type="password" name="confirmPassword" class="form-control" placeholder="Confirm password" required>
+                      </div>
+                      <div id="password-check-bad" class="col-md-1" >
+                         <span class="password-check-bad"><i class="glyphicon glyphicon-cd"></i></span>
+                      </div>
+                      <div id="password-check-good" class="col-md-1" style="display:none">
+                         <span class="password-check-good"><i class="glyphicon glyphicon-cd"></i></span>
                       </div>
                     </div>
                 </div>
@@ -182,5 +194,37 @@ $('input').keyup(function() {
   str = $(this).val();
   str = str.replace(/\s/g,'');
   $(this).val(str);
+});
+
+$(document).ready(function() {
+  $("#confirmPassword").keyup(validate);
+});
+
+var goodPassword = document.getElementById('password-check-good');
+var badPassword = document.getElementById('password-check-bad');
+var passwordsMatch = false
+function validate() {
+  var password1 = $("#inputPassword").val();
+  var password2 = $("#confirmPassword").val();
+
+    if(password1 == password2) {
+      passwordsMatch = true;
+      goodPassword.style.display = 'block'
+      badPassword.style.display = 'none'
+       $("#password-check-good").val("valid");
+    }
+    else {
+      passwordsMatch = false;
+      goodPassword.style.display = 'none'
+      badPassword.style.display = 'block'
+        $("#validate-status").text("invalid");
+    }
+}
+
+$('#signInForm').submit(function (evt) {
+  if (passwordsMatch) {}
+  else {
+    evt.preventDefault();
+  }
 });
 </script>

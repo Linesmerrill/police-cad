@@ -651,3 +651,17 @@ img::-moz-selection {
 #release-header {
   top: 65%;
 }
+
+.password-check-bad {
+    float: left;
+    padding-top: 3.5rem;
+    font-size: 1.4em;
+    color: red;
+}
+
+.password-check-good {
+    float: left;
+    padding-top: 3.5rem;
+    font-size: 1.4em;
+    color: lawngreen;
+}
