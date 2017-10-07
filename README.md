@@ -4,14 +4,14 @@ Lines Police Server - CAD
 This is a easy to setup and use police server CAD. Includes a signup/login for both Civilians and Police Officers. Also this is mobile friendly.
 
 *************************************************************************************************************
-###Requirements : 
+### Requirements : 
 *************************************************************************************************************
 1.  Node.js
 1.  MongoDB
 
 
 *************************************************************************************************************
-###Getting Started with Code  : 
+### Getting Started with Code  : 
 
 
 *************************************************************************************************************
