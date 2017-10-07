@@ -320,31 +320,31 @@
 
               <!-- Multiple Checkboxes (inline) -->
               <div class="form-group">
-                <label class="col-md-4 control-label" for="violations">Violations</label>
+                <label class="col-md-4 control-label" for="violations">Violation</label>
                 <div class="col-md-4">
-                  <label class="checkbox-inline" for="violations-0">
-                    <input type="checkbox" name="violations" id="violations-0" value="Speed" onclick="toggle_visibility(speedViolationGroup);">Speed
+                  <label class="radio" for="violations-0">
+                    <input type="radio" name="violations" id="violations-0" value="Speed" onclick="toggle_visibility(speedViolationGroup);">Speed
                   </label>
-                  <label class="checkbox-inline" for="violations-1">
-                    <input type="checkbox" name="violations" id="violations-1" value="DUI" onclick="toggle_visibility(duiViolationGroup);">DUI
+                  <label class="radio" for="violations-1">
+                    <input type="radio" name="violations" id="violations-1" value="DUI" onclick="toggle_visibility(duiViolationGroup);">DUI
                   </label>
-                  <label class="checkbox-inline" for="violations-2">
-                    <input type="checkbox" name="violations" id="violations-2" value="Driver license" onclick="toggle_visibility(driverLicenseViolationGroup);">Driver License
+                  <label class="radio" for="violations-2">
+                    <input type="radio" name="violations" id="violations-2" value="Driver license" onclick="toggle_visibility(driverLicenseViolationGroup);">Driver License
                   </label>
-                  <label class="checkbox-inline" for="violations-3">
-                    <input type="checkbox" name="violations" id="violations-3" value="Invalid registration">No Valid Registration
+                  <label class="radio" for="violations-3">
+                    <input type="radio" name="violations" id="violations-3" value="Invalid registration">No Valid Registration
                   </label>
-                  <label class="checkbox-inline" for="violations-4">
-                    <input type="checkbox" name="violations" id="violations-4" value="Invalid insurance">No Proof Insurance
+                  <label class="radio" for="violations-4">
+                    <input type="radio" name="violations" id="violations-4" value="Invalid insurance">No Proof Insurance
                   </label>
-                  <label class="checkbox-inline" for="violations-5">
-                    <input type="checkbox" name="violations" id="violations-5" value="Violated traffic signal">Violated Traffic Signal
+                  <label class="radio" for="violations-5">
+                    <input type="radio" name="violations" id="violations-5" value="Violated traffic signal">Violated Traffic Signal
                   </label>
-                  <label class="checkbox-inline" for="violations-6">
-                    <input type="checkbox" name="violations" id="violations-6" value="Failure to yield">Failure to Yield
+                  <label class="radio" for="violations-6">
+                    <input type="radio" name="violations" id="violations-6" value="Failure to yield">Failure to Yield
                   </label>
-                  <label class="checkbox-inline" for="violations-7">
-                    <input type="checkbox" name="violations" id="violations-7" value="Other" onclick="toggle_visibility(otherOffenseGroup);">Other
+                  <label class="radio" for="violations-7">
+                    <input type="radio" name="violations" id="violations-7" value="Other" onclick="toggle_visibility(otherOffenseGroup);">Other
                   </label>
                 </div>
               </div>
@@ -353,15 +353,15 @@
               <div id="speedViolationGroup" class="form-group" style="display:none">
                 <label class="col-md-4 control-label" for="speedViolation">Speed Violation</label>
                 <div class="col-md-4">
-                <div class="checkbox">
+                <div class="radio">
                   <label for="speedViolation-0">
-                    <input type="checkbox" name="speedViolation" id="speedViolation-0" value="Over limit">
+                    <input type="radio" name="speedViolation" id="speedViolation-0" value="Over limit">
                     Over limit
                   </label>
               	</div>
-                <div class="checkbox">
+                <div class="radio">
                   <label for="speedViolation-1">
-                    <input type="checkbox" name="speedViolation" id="speedViolation-1" value="Unsafe for conditions">
+                    <input type="radio" name="speedViolation" id="speedViolation-1" value="Unsafe for conditions">
                     Unsafe for conditions
                   </label>
               	</div>
@@ -372,15 +372,15 @@
               <div id="duiViolationGroup" class="form-group" style="display:none">
                 <label class="col-md-4 control-label" for="duiViolation">DUI Violation</label>
                 <div class="col-md-4">
-                <div class="checkbox">
+                <div class="radio">
                   <label for="duiViolation-0">
-                    <input type="checkbox" name="duiViolation" id="duiViolation-0" value="Under the influence">
+                    <input type="radio" name="duiViolation" id="duiViolation-0" value="Under the influence">
                     Under the influence
                   </label>
               	</div>
-                <div class="checkbox">
+                <div class="radio">
                   <label for="duiViolation-1">
-                    <input type="checkbox" name="duiViolation" id="duiViolation-1" value="Prohibited B.A.C">
+                    <input type="radio" name="duiViolation" id="duiViolation-1" value="Prohibited B.A.C">
                     Prohibited B.A.C
                   </label>
               	</div>
@@ -391,21 +391,21 @@
               <div id="driverLicenseViolationGroup" class="form-group" style="display:none">
                 <label class="col-md-4 control-label" for="driverLicenseViolation">Driver License Violation</label>
                 <div class="col-md-4">
-                <div class="checkbox">
+                <div class="radio">
                   <label for="driverLicenseViolation-0">
-                    <input type="checkbox" name="driverLicenseViolation" id="driverLicenseViolation-0" value="No license">
+                    <input type="radio" name="driverLicenseViolation" id="driverLicenseViolation-0" value="No license">
                     None
                   </label>
               	</div>
-                <div class="checkbox">
+                <div class="radio">
                   <label for="driverLicenseViolation-1">
-                    <input type="checkbox" name="driverLicenseViolation" id="driverLicenseViolation-1" value="Not on person">
+                    <input type="radio" name="driverLicenseViolation" id="driverLicenseViolation-1" value="Not on person">
                     Not on person
                   </label>
               	</div>
-                <div class="checkbox">
+                <div class="radio">
                   <label for="driverLicenseViolation-2">
-                    <input type="checkbox" name="driverLicenseViolation" id="driverLicenseViolation-2" value="Revoked">
+                    <input type="radio" name="driverLicenseViolation" id="driverLicenseViolation-2" value="Revoked">
                     Revoked
                   </label>
               	</div>
@@ -613,11 +613,28 @@ $('#civName').on("keyup", function(e) {
 });
 
 function toggle_visibility(id) {
-      if(id.style.display == 'block')
-         id.style.display = 'none';
-      else
-         id.style.display = 'block';
-   }
+  if (id.id === "speedViolationGroup") {
+    id.style.display = 'block'
+    duiViolationGroup.style.display = 'none';
+    driverLicenseViolationGroup.style.display = 'none';
+    otherOffenseGroup.style.display = 'none';
+  } else if (id.id === "duiViolationGroup") {
+    id.style.display = 'block'
+    speedViolationGroup.style.display = 'none';
+    driverLicenseViolationGroup.style.display = 'none';
+    otherOffenseGroup.style.display = 'none';
+  } else if (id.id === "driverLicenseViolationGroup") {
+    id.style.display = 'block'
+    speedViolationGroup.style.display = 'none';
+    duiViolationGroup.style.display = 'none';
+    otherOffenseGroup.style.display = 'none';
+  } else {
+    id.style.display = 'block';
+    speedViolationGroup.style.display = 'none';
+    duiViolationGroup.style.display = 'none';
+    driverLicenseViolationGroup.style.display = 'none';
+  }
+}
 
 function setDateAndTime() {
   date = document.getElementById('date');
