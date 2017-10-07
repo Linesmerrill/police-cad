@@ -195,7 +195,7 @@
             <div class="form-group">
               <label class="col-md-4" for="civ-first-name">Plate Number</label>
               <div class="col-md-4">
-                <input id="plateName" name="plateName" type="text" placeholder="License Plate #" class="form-control input-md" list="plates" required>
+                <input id="plateName" name="plateName" type="text" maxlength="8" placeholder="License Plate #" class="form-control input-md" list="plates" required>
               </div>
               <div class="col-md-4">
                 <button type="button" name="searchPlateNum" class="btn btn-info" onclick="searchPlate()" >Search</button>
@@ -281,7 +281,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="plate">Plate</label>
                 <div class="col-md-4">
-                  <input id="plate" name="plate" type="text" placeholder="plate" class="form-control input-md" list="plates">
+                  <input id="plate" name="plate" type="text" maxlength="8" placeholder="plate" class="form-control input-md" list="plates">
                 </div>
               </div>
 

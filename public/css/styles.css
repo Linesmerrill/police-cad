@@ -571,6 +571,10 @@ img::-moz-selection {
   text-transform: uppercase;
 }
 
+#plateName {
+  text-transform: uppercase;
+}
+
 #color {
   text-transform: capitalize;
 }
@@ -649,7 +653,11 @@ img::-moz-selection {
 }
 
 #release-header {
-  top: 65%;
+  top: 95%;
+}
+
+.release-footer {
+  margin-top: 41%;
 }
 
 .password-check-bad {

@@ -215,7 +215,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="plate">Plate</label>
               <div class="col-md-4">
-              <input id="plate" name="plate" type="text" maxlength="7" placeholder="Plate" class="form-control input-md" required="">
+              <input id="plate" name="plate" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
 
               </div>
             </div>
@@ -463,7 +463,7 @@
 
     var color = myVar[index].vehicle.color
     var email = myVar[index].vehicle.email
-    var plate = myVar[index].vehicle.plate
+    var plate = myVar[index].vehicle.plate.toUpperCase()
     var model = myVar[index].vehicle.model
     var registeredOwner = myVar[index].vehicle.registeredOwner
     var validInsurance = myVar[index].vehicle.validInsurance
