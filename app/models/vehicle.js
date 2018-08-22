@@ -24,7 +24,6 @@ vehicleSchema.methods.updateVeh = function(request, response) {
  this.vehicle.registeredOwner = request.body.registeredOwner.trim();
  this.vehicle.isStolen = request.body.isStolen;
  this.vehicle.email = request.body.submitNewVeh;
- this.vehicle.save();
  response.redirect('/civ-dashboard');
 };
 

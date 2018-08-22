@@ -42,7 +42,6 @@ ticketSchema.methods.updateTicket = function(request, response) {
  this.ticket.amount = request.body.amount;
  this.ticket.date = request.body.date;
  this.ticket.time = request.body.time;
- this.ticket.save();
  response.redirect('/police-dashboard');
 };
 

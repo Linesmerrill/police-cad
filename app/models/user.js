@@ -23,7 +23,6 @@ userSchema.methods.updateUser = function(request, response) {
 
  this.user.name = request.body.name;
  this.user.address = request.body.address;
- this.user.save();
  response.redirect('/user');
 };
 

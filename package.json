@@ -6,9 +6,12 @@
   "dependencies": {
     "async": "latest",
     "bcrypt-nodejs": "latest",
+    "body-parser": "^1.18.3",
     "connect-flash": "^0.1.1",
+    "cookie-parser": "^1.4.3",
     "ejs": "0.8.5",
-    "express": "3.4.8",
+    "express": "^4.16.3",
+    "express-session": "^1.15.6",
     "mongoose": "^4.11.9",
     "mpromise": "^0.5.5",
     "now": ">=0.0.1",
