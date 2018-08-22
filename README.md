@@ -10,10 +10,7 @@ This is a easy to setup and use police server CAD. Includes a signup/login for b
 1.  MongoDB
 
 
-*************************************************************************************************************
 ### Getting Started with Code  : 
-
-
 *************************************************************************************************************
 1.  Set Up MongoDB
 1.  Start mongo: > mongo
