@@ -336,22 +336,22 @@
                     <input type="radio" name="violations" id="violations-2" value="Driver license" onclick="toggle_visibility(driverLicenseViolationGroup);">Driver License
                   </label>
                   <label class="radio" for="violations-3">
-                    <input type="radio" name="violations" id="violations-3" value="Invalid registration">No Valid Registration
+                    <input type="radio" name="violations" id="violations-3" value="Invalid registration" onclick="toggle_visibility('none');">No Valid Registration
                   </label>
                   <label class="radio" for="violations-4">
-                    <input type="radio" name="violations" id="violations-4" value="Invalid insurance">No Proof Insurance
+                    <input type="radio" name="violations" id="violations-4" value="Invalid insurance" onclick="toggle_visibility('none');">No Proof Insurance
                   </label>
                   <label class="radio" for="violations-5">
-                    <input type="radio" name="violations" id="violations-5" value="Violated traffic signal">Violated Traffic Signal
+                    <input type="radio" name="violations" id="violations-5" value="Violated traffic signal" onclick="toggle_visibility('none');">Violated Traffic Signal
                   </label>
                   <label class="radio" for="violations-6">
-                    <input type="radio" name="violations" id="violations-6" value="Failure to yield">Failure to Yield
+                    <input type="radio" name="violations" id="violations-6" value="Failure to yield" onclick="toggle_visibility('none');">Failure to Yield
                   </label>
                   <label class="radio" for="violations-7">
-                    <input type="radio" name="violations" id="violations-7" value="Unsafe lane change">Unsafe Lane Change
+                    <input type="radio" name="violations" id="violations-7" value="Unsafe lane change" onclick="toggle_visibility('none');">Unsafe Lane Change
                   </label>
                   <label class="radio" for="violations-8">
-                    <input type="radio" name="violations" id="violations-8" value="Walking on highway">Walking on Highway
+                    <input type="radio" name="violations" id="violations-8" value="Walking on highway" onclick="toggle_visibility('none');">Walking on Highway
                   </label>
                   <label class="radio" for="violations-9">
                     <input type="radio" name="violations" id="violations-9" value="Other" onclick="toggle_visibility(otherOffenseGroup);">Other
@@ -661,6 +661,10 @@ function toggle_visibility(id) {
     id.style.display = 'block'
     speedViolationGroup.style.display = 'none';
     duiViolationGroup.style.display = 'none';
+    otherOffenseGroup.style.display = 'none';
+  } else if (id === "none") {
+    duiViolationGroup.style.display = 'none';
+    driverLicenseViolationGroup.style.display = 'none';
     otherOffenseGroup.style.display = 'none';
   } else {
     id.style.display = 'block';
