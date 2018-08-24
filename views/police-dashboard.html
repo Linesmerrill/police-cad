@@ -91,7 +91,16 @@
         <strong>Danger!</strong> Warrant found for this suspect.
       </div>
       <div id="noWarrantFound" class="alert alert-success" style="display:none">
-        <strong>Clean!</strong> No Warrants found.
+        <strong>NCIC Warrant Check!</strong> Clean, No Warrants found.
+      </div>
+      <div id="licenseMessage" class="alert alert-warning" style="display:none">
+        <strong>Warning!</strong> License is Invalid.
+      </div>
+      <div id="insuranceMessage" class="alert alert-warning" style="display:none">
+        <strong>Warning!</strong> Insurance is Invalid.
+      </div>
+      <div id="registrationMessage" class="alert alert-warning" style="display:none">
+        <strong>Warning!</strong> Registration is Invalid.
       </div>
       <div class="modal-content">
         <div class="modal-body">
@@ -145,11 +154,6 @@
                 <label id="ticket-count" class="col-md-5">ticket here</label>
               </div>
             </div>
-
-
-              <div class="col-md-9">
-                <input type="button" value="NCIC Warrant Check" id="warrants" name="ncicWarrantCheck" class="btn btn-info margin-bottom-1" onclick="checkWarrantStatus()">
-              </div>
 
             <!--Table for Tickets  -->
             <div class="col-md-5 name-table text-align-center">
@@ -344,7 +348,13 @@
                     <input type="radio" name="violations" id="violations-6" value="Failure to yield">Failure to Yield
                   </label>
                   <label class="radio" for="violations-7">
-                    <input type="radio" name="violations" id="violations-7" value="Other" onclick="toggle_visibility(otherOffenseGroup);">Other
+                    <input type="radio" name="violations" id="violations-7" value="Unsafe lane change">Unsafe Lane Change
+                  </label>
+                  <label class="radio" for="violations-8">
+                    <input type="radio" name="violations" id="violations-8" value="Walking on highway">Walking on Highway
+                  </label>
+                  <label class="radio" for="violations-9">
+                    <input type="radio" name="violations" id="violations-9" value="Other" onclick="toggle_visibility(otherOffenseGroup);">Other
                   </label>
                 </div>
               </div>
@@ -562,6 +572,9 @@ function searchPlate() {
       warrants = "Yes"
     }
 
+    checkWarrantStatus()
+    checkLicenseStatus()
+
     var ticketCount = ticketIndex.length
     $('#first-and-last-name').text(name)
     $('#birthday').text(birthday)
@@ -595,6 +608,27 @@ function searchPlate() {
 
   }
 }
+
+function checkLicenseStatus() {
+  var invalidLicense = document.getElementById('licenseMessage');
+  var myValue = $('#civName').val();
+  var civName = myValue.split(' ')
+  var myVar = <%- JSON.stringify(civilians) %>;
+  var index = 0;
+  for (i=0; i < myVar.length; i++) {
+    if ((myVar[i].civilian.firstName === civName[0]) && (myVar[i].civilian.lastName === civName[1])) {
+      index = i;
+      break;
+    }
+  }
+
+  if (myVar[index].civilian.licenseStatus == 2) {
+    invalidLicense.style.display = 'block';
+  } else {
+    invalidLicense.style.display = 'none';
+  }
+}
+
 
 $(document).on("keypress", "form", function(event) {
     return event.keyCode != 13;
@@ -1015,6 +1049,10 @@ $('#ticketModal').on('hidden.bs.modal', function () {
 })
 
 $('#nameDatabaseModal').on('hidden.bs.modal', function () {
+  var cleanWarrant = document.getElementById('noWarrantFound');
+    var dirtyWarrant = document.getElementById('warrantMessage');
+    cleanWarrant.style.display = 'none';
+    dirtyWarrant.style.display = 'none';
     $(this).find('form').trigger('reset');
     var civ = document.getElementById('civDetails');
     civ.style.display = 'none'
