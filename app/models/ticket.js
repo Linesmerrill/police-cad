@@ -39,9 +39,9 @@ ticketSchema.methods.updateTicket = function(request, response) {
    additionalViolation = ' - ' + additionalViolation + request.body.otherInput
  }
  this.ticket.violation = request.body.violations + additionalViolation;
- this.ticket.amount = request.body.amount;
- this.ticket.date = request.body.date;
- this.ticket.time = request.body.time;
+ this.ticket.amount = request.body.amount.trim();
+ this.ticket.date = request.body.date.trim();
+ this.ticket.time = request.body.time.trim();
  response.redirect('/police-dashboard');
 };
 
