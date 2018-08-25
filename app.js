@@ -29,7 +29,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('views', __dirname + '/views');
 app.engine('html', require('ejs').renderFile);
 app.use(session({
-	secret: 'knoldus'
+	secret: 'knoldus',
+	resave: false,
+	saveUninitialized: true
 }));
 app.use(bodyParser({
 	uploadDir: '/images'
