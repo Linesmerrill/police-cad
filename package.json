@@ -24,5 +24,8 @@
   },
   "scripts": {
     "start": "node app.js"
+  },
+  "engines": {
+    "npm": "6.4.x"
   }
 }
