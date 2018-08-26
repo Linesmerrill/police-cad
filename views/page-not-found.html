@@ -1,70 +1,57 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <meta charset="utf-8">
     <title>Page Not Found</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-
-        * {
-            line-height: 1.2;
-            margin: 0;
-        }
-
-        html {
-            color: #888;
-            display: table;
-            font-family: sans-serif;
-            height: 100%;
-            text-align: center;
-            width: 100%;
-        }
-
-        body {
-            display: table-cell;
-            vertical-align: middle;
-            margin: 2em auto;
-        }
-
-        h1 {
-            color: #555;
-            font-size: 2em;
-            font-weight: 400;
-        }
-
-        p {
-            margin: 0 auto;
-            width: 280px;
-        }
-
-        @media only screen and (max-width: 280px) {
-
-            body, p {
-                width: 95%;
-            }
-
-            h1 {
-                font-size: 1.5em;
-                margin: 0 0 0.3em;
-            }
-
-        }
-
-    </style>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo="/>
+    <link rel="stylesheet" href="./css/bootstrap.min.css" />
+  <link rel="stylesheet" href="./css/animate.min.css" />
+  <link rel="stylesheet" href="./css/ionicons.min.css" />
+  <link rel="stylesheet" href="./css/styles.css" />
+    <link rel="stylesheet" href="./css/pagenotfound.css" />
     <!-- Global Site Tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-107735203-1"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-107735203-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
 
-  gtag('config', 'UA-107735203-1');
-</script>
+        gtag('config', 'UA-107735203-1');
+    </script>
 </head>
 <body>
-    <h1>Page Not Found</h1>
-    <p>Sorry, but the page you were trying to view does not exist.</p>
+        <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
+                            <span class="sr-only">Toggle navigation</span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand page-scroll" href="/"><i class="ion-ios-analytics-outline"></i> Lines Police Server</a>
+                    </div>
+                    <div class="navbar-collapse collapse" id="bs-navbar">
+                        
+                        <ul class="nav navbar-nav navbar-right">
+                            <li>
+                                <a href="/rules">Rules</a>
+                            </li>
+                            <li>
+                                <a href="/about">About</a>
+                            </li>
+                          <li>
+                            <a href="/release-log">Release Log</a>
+                          </li>
+                            
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+    <h1 class="page-not-found-header">SORRY</h1>
+    <h2>we couldn't find that page</h2>
+    <p>Try going to <a href="/">Lines Police Server's home page</a>.</p>
 </body>
 </html>
 <!-- IE needs 512+ bytes: https://blogs.msdn.microsoft.com/ieinternals/2010/08/18/friendly-http-error-pages/ -->
