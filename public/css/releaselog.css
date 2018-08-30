@@ -1,0 +1,6 @@
+.release-log {
+    background-image: url(/images/hway_bkground.jpg), url(/images/gta-landing-page.jpg), url(/images/civ-bkground.jpg);
+    background-position: right bottom, left top;
+    background-repeat: no-repeat, repeat;
+    padding: 15px;
+}
