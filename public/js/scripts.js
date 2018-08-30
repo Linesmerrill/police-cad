@@ -8,7 +8,7 @@
 
     $('#topNav').affix({
         offset: {
-            top: 200
+            top: 100
         }
     });
     

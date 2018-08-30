@@ -16,6 +16,14 @@ module.exports = function (app, passport, server) {
     response.render('release-log.html');
   });
 
+  app.get('/about', function (request, response) {
+    response.render('about.html');
+  });
+
+  app.get('/rules', function (request, response) {
+    response.render('rules.html');
+  });
+
   app.get('/login', function (request, response) {
     response.redirect('/');
   });
