@@ -5,7 +5,12 @@ var session = require('express-session')
 var app = express();
 var port = process.env.PORT || 8080;
 var mongoose = require('mongoose');
+var nodemailer = require('nodemailer');
 var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
+var bcrypt = require('bcrypt-nodejs');
+var async = require('async');
+var crypto = require('crypto');
 var flash = require('connect-flash');
 var path = require('path'),
 	fs = require('fs');
@@ -18,8 +23,6 @@ var configDB = require('./config/database.js');
 mongoose.connect(configDB.url);
 
 require('./config/passport')(passport);
-
-
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({

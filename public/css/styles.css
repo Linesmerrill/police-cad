@@ -546,6 +546,10 @@ img::-moz-selection {
     font-size: large;
 }
 
+.font-18 {
+    font-size: 18px;
+}
+
 .text-align-center {
     text-align: center;
 }
@@ -606,7 +610,7 @@ img::-moz-selection {
     width: 100%;
     border: 1px solid #000;
     border-bottom: 0 solid #000;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, .5) 0%, rgba(0, 0, 0, .25) 100%);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, .8) 0%, rgba(0, 0, 0, .55) 100%);
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#80000000', endColorstr='#40000000', GradientType=0);
     margin-bottom: 70px;
     margin-bottom: 7rem;

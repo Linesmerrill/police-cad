@@ -69,6 +69,12 @@
                 <hr>
                 <a href="/login-civ" class="btn btn-primary btn-xl">Civilian</a> &nbsp; <a href="/login-police" class="btn btn-primary btn-xl page-scroll">Police Officer</a>
                 &nbsp; <button type="button" data-toggle="modal" data-target="#alertModal" class="btn btn-primary btn-xl">EMS</button>
+                <hr>
+                <% if ( message.length > 0) { %>
+                    <div class="alert alert-info col-md-4 col-md-offset-4">
+                        <strong><%= message %> </strong>
+                    </div>
+                <% } %>
             </div>
         </div>
       </fieldset>
