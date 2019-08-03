@@ -9,10 +9,12 @@ This is a easy to setup and use police server CAD. Includes a signup/login for b
 
 
 ### Getting Started with Code  : 
-1.  Set Up MongoDB
-1.  Start mongo: > mongo
-1.  Set Up Node.js
-1.  Clone code from https://github.com/Linesmerrill/police-cad.git
-1.  Run <code>npm install</code>
-1.  Run <code>node app</code>
+1.  [Set Up MongoDB](#setting-up-mongodb) and start mongodb
+1.  Clone repo from https://github.com/Linesmerrill/police-cad.git
+1.  Run `npm install`
+1.  Run `node app`
 1.  Go to http://localhost:8080/
+
+### Setting up MongoDB
+1. Install mongodb via brew. `brew install mongodb`
+1. Start mongodb via brew. `brew services restart mongodb`
