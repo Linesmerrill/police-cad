@@ -3,7 +3,9 @@ var Civilian = require('../app/models/civilian');
 var Vehicle = require('../app/models/vehicle');
 var Friend = require('../app/models/friend');
 var Ticket = require('../app/models/ticket');
+var nodemailer = require('nodemailer');
 async = require("async");
+var crypto = require('crypto');
 var path = require('path'),
   fs = require('fs');
 module.exports = function (app, passport, server) {
@@ -61,6 +63,13 @@ module.exports = function (app, passport, server) {
   app.get('/logout', function (request, response) {
     request.logout();
     response.redirect('/');
+  });
+
+  app.get('/forgot-password', function (request, response) {
+    response.render('forgot-password.html', {
+      user: request.user,
+      message: request.flash('emailSend')
+    });
   });
 
   app.get('/civ-dashboard', auth, function (request, response) {
@@ -122,6 +131,57 @@ module.exports = function (app, passport, server) {
     failureRedirect: '/signup-police',
     failureFlash: true
   }));
+
+  app.post('/forgot-password', function (req, res, next) {
+    async.waterfall([
+      function (done) {
+        crypto.randomBytes(20, function (err, buf) {
+          var token = buf.toString('hex');
+          done(err, token);
+        });
+      },
+      function (token, done) {
+        User.findOne({ 'user.email': req.body.email }, function (err, user) {
+          if (!user) {
+            req.flash('emailSend', 'No account with that email address exists.');
+            return res.redirect('/forgot-password');
+          }
+  
+          user.resetPasswordToken = token;
+          user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+  
+          user.save(function (err) {
+            done(err, token, user);
+          });
+        });
+      },
+      function (token, users, done) {
+        var smtpTransport = nodemailer.createTransport({
+          service: process.env.MAIL_SERVICE_NAME,
+          auth: {
+            user: process.env.MAIL_USER,
+            pass: process.env.MAIL_PASS,
+          }
+        });
+        var mailOptions = {
+          to: users.user.email,
+          from: process.env.FROM_EMAIL,
+          subject: 'Change Password',
+          text: 'This email allows you to change your password.\n\n' +
+          'Please click on the following link, or paste this into your browser to complete the process:\n\n' +
+          'http://' + req.headers.host + '/reset/' + token + '\n\n' +
+          'If you did not request this, please ignore this email and your password will remain unchanged.\n'
+        };
+        smtpTransport.sendMail(mailOptions, function (err) {
+          req.flash('emailSend', 'An e-mail has been sent to ' + users.user.email + ' with a link to change the password.');
+          done(err, 'done');
+        });
+      }
+    ], function (err) {
+      if (err) return next(err);
+      res.render('forgot-password.html', {message: req.flash('emailSend')});
+    });
+  });
 
   app.post('/edit', function (req, res) {
     var tempPath = req.files.file.path,

@@ -546,6 +546,10 @@ img::-moz-selection {
     font-size: large;
 }
 
+.font-18 {
+    font-size: 18px;
+}
+
 .text-align-center {
     text-align: center;
 }
