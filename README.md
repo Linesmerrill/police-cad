@@ -18,3 +18,9 @@ This is a easy to setup and use police server CAD. Includes a signup/login for b
 ### Setting up MongoDB
 1. Install mongodb via brew. `brew install mongodb`
 1. Start mongodb via brew. `brew services restart mongodb`
+
+### Accessing the Database
+1. Locally this will use the knoldus db (or whatever you specify manually)
+1. launch mongo via your command-line: `mongo`
+1. Use `show dbs` to see all that are available. You should see `knoldus` in the list.
+1. Lets use that db: `use knoldus`.
