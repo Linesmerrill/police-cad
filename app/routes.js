@@ -28,14 +28,16 @@ module.exports = function (app, passport, server) {
     response.render('rules.html');
   });
 
-  app.get('/login', function (request, response) {
-    response.redirect('/');
+  app.get('/terms-and-conditions', function (request, response) {
+    response.render('terms-and-conditions.html');
   });
 
-  app.get('/edit', auth, function (request, response) {
-    response.render('edit.html', {
-      user: request.user
-    });
+  app.get('/privacy-policy', function (request, response) {
+    response.render('privacy-policy.html');
+  });
+
+  app.get('/login', function (request, response) {
+    response.redirect('/');
   });
 
   app.get('/login-civ', function (request, response) {
@@ -297,27 +299,6 @@ module.exports = function (app, passport, server) {
       }
     ], function(err) {
       res.redirect('/');
-    });
-  });
-
-  app.post('/edit', function (req, res) {
-    var tempPath = req.files.file.path,
-      targetPath = path.resolve('./uploads/' + req.files.file.originalFilename);
-    if (path.extname(req.files.file.name).toLowerCase() === '.png') {
-      fs.rename(tempPath, './uploads/image_' + req.user._id, function (err) {
-        if (err) throw err;
-        console.log("Upload completed!");
-      });
-    }
-    User.findOne({
-      'user.email': req.body.email
-    }, function (err, user) {
-      if (err) {
-        return done(err);
-      }
-      if (user)
-        user.updateUser(req, res)
-
     });
   });
 
