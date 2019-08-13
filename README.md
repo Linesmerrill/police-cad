@@ -3,6 +3,7 @@
 ![lines police server logo](lines-police-server-logo.png)
 
 [![build](https://travis-ci.com/Linesmerrill/police-cad.svg?branch=master)](https://travis-ci.com/Linesmerrill/police-cad)
+[![Repository](https://img.shields.io/github/tag/linesmerrill/police-cad.svg)](https://github.com/linesmerrill/police-cad)
 [![dependency status](https://david-dm.org/linesmerrill/police-cad.svg)](https://david-dm.org/linesmerrill/police-cad)
 
 
