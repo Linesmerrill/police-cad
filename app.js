@@ -7,7 +7,6 @@ var port = process.env.PORT || 8080;
 var mongoose = require('mongoose');
 var nodemailer = require('nodemailer');
 var passport = require('passport');
-var LocalStrategy = require('passport-local').Strategy;
 var bcrypt = require('bcrypt-nodejs');
 var async = require('async');
 var crypto = require('crypto');
