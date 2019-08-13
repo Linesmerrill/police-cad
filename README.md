@@ -1,5 +1,7 @@
 # Lines Police Server - CAD
 
+![](lines-police-server.png)
+
 [![build](https://travis-ci.com/Linesmerrill/police-cad.svg?branch=master)](https://travis-ci.com/Linesmerrill/police-cad)
 [![dependency status](https://david-dm.org/linesmerrill/police-cad.svg)](https://david-dm.org/linesmerrill/police-cad)
 
