@@ -4,7 +4,7 @@
 
 [![build](https://travis-ci.com/Linesmerrill/police-cad.svg?branch=master)](https://travis-ci.com/Linesmerrill/police-cad)
 [![Repository](https://img.shields.io/github/tag/linesmerrill/police-cad.svg?color=blue)](https://github.com/linesmerrill/police-cad)
-[![dependency status](https://david-dm.org/linesmerrill/police-cad.svg)](https://david-dm.org/linesmerrill/police-cad)
+[![dependencies Status](https://david-dm.org/linesmerrill/police-cad/status.svg)](https://david-dm.org/linesmerrill/police-cad)
 
 
 This is a easy to setup and use police server CAD. Includes a signup/login for both Civilians and Police Officers. Also this is mobile friendly.
