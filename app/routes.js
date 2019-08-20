@@ -3,6 +3,7 @@ var Civilian = require('../app/models/civilian');
 var Vehicle = require('../app/models/vehicle');
 var Friend = require('../app/models/friend');
 var Ticket = require('../app/models/ticket');
+var Ems = require('../app/models/ems');
 var nodemailer = require('nodemailer');
 async = require("async");
 var crypto = require('crypto');
@@ -52,6 +53,12 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.get('/login-ems', function (request, response) {
+    response.render('login-ems.html', {
+      message: request.flash('error')
+    });
+  });
+
   app.get('/signup-civ', function (request, response) {
     response.render('signup-civ.html', {
       message: request.flash('signuperror')
@@ -60,6 +67,12 @@ module.exports = function (app, passport, server) {
 
   app.get('/signup-police', function (request, response) {
     response.render('signup-police.html', {
+      message: request.flash('signuperror')
+    });
+  });
+
+  app.get('/signup-ems', function (request, response) {
+    response.render('signup-ems.html', {
       message: request.flash('signuperror')
     });
   });
@@ -105,6 +118,22 @@ module.exports = function (app, passport, server) {
     })
   });
 
+  app.get('/ems-dashboard', auth, function (request, response) {
+    Ems.find({
+      'ems.email': request.user.user.email
+    }, function (err, dbPersonas) {
+      Vehicle.find({
+        'vehicle.email': request.user.user.email
+      }, function (err, dbVehicles) {
+        response.render('ems-dashboard.html', {
+          user: request.user,
+          personas: dbPersonas,
+          vehicles: dbVehicles
+        });
+      });
+    })
+  });
+
   app.get('/police-dashboard', auth, function (request, response) {
     Civilian.find({}, function (err, dbCivilians) {
       Vehicle.find({}, function (err, dbVehicles) {
@@ -137,6 +166,12 @@ module.exports = function (app, passport, server) {
     failureFlash: true
   }));
 
+  app.post('/login-ems', passport.authenticate('login', {
+    successRedirect: '/ems-dashboard',
+    failureRedirect: '/login-ems',
+    failureFlash: true
+  }));
+
   app.post('/signup-civ', passport.authenticate('signup', {
     successRedirect: '/civ-dashboard',
     failureRedirect: '/signup-civ',
@@ -146,6 +181,12 @@ module.exports = function (app, passport, server) {
   app.post('/signup-police', passport.authenticate('signup', {
     successRedirect: '/police-dashboard',
     failureRedirect: '/signup-police',
+    failureFlash: true
+  }));
+
+  app.post('/signup-ems', passport.authenticate('signup', {
+    successRedirect: '/ems-dashboard',
+    failureRedirect: '/signup-ems',
     failureFlash: true
   }));
 
@@ -317,6 +358,21 @@ module.exports = function (app, passport, server) {
     })
   });
 
+  app.post('/create-ems', function (req, res) {
+
+    User.findOne({
+      'user.email': req.body.submitNewEms
+    }, function (err, user) {
+
+      var myEms = new Ems()
+      myEms.updateEms(req, res)
+      myEms.save(function (err, fluffy) {
+        if (err) return console.error(err);
+      });
+
+    })
+  });
+
   app.post('/create-vehicle', function (req, res) {
 
     User.findOne({
@@ -350,6 +406,19 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       res.redirect('/civ-dashboard');
+    })
+  })
+
+  app.post('/deleteEms', function (req, res) {
+    var nameArray = req.body.removeEms.split(' ')
+    var firstName = nameArray[0]
+    var lastName = nameArray[1]
+    Ems.deleteOne({
+      'ems.firstName': firstName,
+      'ems.lastName': lastName
+    }, function (err) {
+      if (err) return console.error(err);
+      res.redirect('/ems-dashboard');
     })
   })
 
