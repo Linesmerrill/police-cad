@@ -55,7 +55,7 @@
       </div>
     </div>
   </nav>
-  <header id="second" style='background-image: url("/images/civ-bkground.jpg");'>
+  <header id="second" style='background-image: url("/images/ems-bkground.png");'>
     <div class="header-content">
       <div class="inner">
         <h4>San Andreas - Fire/EMS Operations</h4>
@@ -91,15 +91,14 @@
       <tr>
         Vehicles: (Click for Details)
       </tr>
-      <tr style="background-color: #2d2d2d;"><td>Plate</td><td>Model</td><td>Color</td></tr>
+      <tr style="background-color: #2d2d2d;"><td>Plate</td><td>Model</td></tr>
 
     </thead>
       <tbody>
         <% for(var i=0; i<vehicles.length; i++) {%>
         <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewVeh" onclick="loadVehData(<%=i%>)">
-          <td><%= vehicles[i].vehicle.plate%></td>
-          <td> <%= vehicles[i].vehicle.model%></td>
-          <td> <%= vehicles[i].vehicle.color%></td>
+          <td><%= vehicles[i].emsVehicle.plate%></td>
+          <td> <%= vehicles[i].emsVehicle.model%></td>
         </tr>
         <% } %>
       </tbody>
@@ -205,7 +204,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/create-vehicle" method="post">
+          <form class="form-horizontal" action="/create-ems-vehicle" method="post">
             <fieldset>
 
             <!-- Form Name -->
@@ -232,31 +231,9 @@
 
             <!-- Text input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="color">Color</label>
+              <label class="col-md-4 control-label" for="color">Color (optional)</label>
               <div class="col-md-4">
-              <input id="color" name="color" type="text" placeholder="Color" class="form-control input-md" required="">
-              </div>
-            </div>
-
-            <!-- Select Basic -->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="valid-registration">Valid Registration?</label>
-              <div class="col-md-4">
-                <select id="valid-registration" name="validRegistration" class="form-control">
-                  <option value="1">Yes</option>
-                  <option value="2">No</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Select Basic -->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="valid-insurance">Valid Insurance</label>
-              <div class="col-md-4">
-                <select id="valid-insurance" name="validInsurance" class="form-control">
-                  <option value="1">Yes</option>
-                  <option value="2">No</option>
-                </select>
+              <input id="color" name="color" type="text" placeholder="Color" class="form-control input-md">
               </div>
             </div>
 
@@ -275,17 +252,6 @@
               </div>
             </div>
 
-            <!-- Select Basic -->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
-              <div class="col-md-4">
-                <select id="is-stolen" name="isStolen" class="form-control">
-                  <option value="1">No</option>
-                  <option value="2">Yes</option>
-                </select>
-              </div>
-            </div>
-
             <!-- Button -->
             <div class="form-group">
               <label class="col-md-4 control-label" for="create-vehicle"></label>
@@ -295,7 +261,6 @@
             </div>
             </fieldset>
             </form>
-
         </div>
       </div>
     </div>
@@ -356,7 +321,7 @@
       <div class="modal-content">
         <div class="modal-body">
 
-          <form action="/deleteVeh" method="POST">
+          <form action="/deleteEmsVeh" method="POST">
           <fieldset>
             <!-- Form Name -->
             <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
@@ -383,28 +348,11 @@
                 <label class="col-md-5" id="colorView">color here</label>
             </div>
 
-            <!-- Text input-->
-            <div class="col-md-7">
-              <label class="col-md-4 margin-bottom-1" for="registration">Registration:</label>
-                <label class="col-md-5" id="validRegView">validReg here</label>
-            </div>
-
-            <!-- Text input-->
-            <div class="col-md-7">
-              <label class="col-md-4 margin-bottom-1" for="insurance">Insurance:</label>
-              <label class="col-md-5" id="validInsView">validIns here</label>
-            </div>
-
             <!-- Select Basic -->
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="ro">RO:</label>
               <label class="col-md-8" id="roView">ro here</label>
               <input id="roVeh" type="text" name="roVeh" value="" style="display:none">
-            </div>
-
-            <div class="col-md-7">
-              <label class="col-md-4 margin-bottom-1" for="stolen">Stolen:</label>
-              <label class="col-md-5" id="stolenView">stolen here</label>
             </div>
 
             <div class="col-md-12 text-align-center">
@@ -453,37 +401,15 @@
   function loadVehData(index) {
     var myVar = <%- JSON.stringify(vehicles) %>;
 
-    var color = myVar[index].vehicle.color
-    var email = myVar[index].vehicle.email
-    var plate = myVar[index].vehicle.plate.toUpperCase()
-    var model = myVar[index].vehicle.model
-    var registeredOwner = myVar[index].vehicle.registeredOwner
-    var validInsurance = myVar[index].vehicle.validInsurance
-    if (validInsurance === "1") {
-      validInsurance = "Valid"
-    } else {
-      validInsurance = "Not Valid"
-    }
-    var validRegistration = myVar[index].vehicle.validRegistration
-    if (validRegistration === "1") {
-      validRegistration = "Valid"
-    } else {
-      validRegistration = "Not Valid"
-    }
-    var isStolen = myVar[index].vehicle.isStolen
-    if (isStolen === "1") {
-      isStolen = "No"
-    } else {
-      isStolen = "Yes"
-    }
-
+    var color = myVar[index].emsVehicle.color
+    var email = myVar[index].emsVehicle.email
+    var plate = myVar[index].emsVehicle.plate.toUpperCase()
+    var model = myVar[index].emsVehicle.model
+    var registeredOwner = myVar[index].emsVehicle.registeredOwner
     $('#plateView').text(plate)
     $('#modelView').text(model)
     $('#colorView').text(color)
-    $('#validRegView').text(validRegistration)
-    $('#validInsView').text(validInsurance)
     $('#roView').text(registeredOwner)
-    $('#stolenView').text(isStolen)
     $('#emailVeh').val(email)
     $('#modelVeh').val(model)
     $('#roVeh').val(registeredOwner)

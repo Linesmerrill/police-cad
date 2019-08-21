@@ -1,7 +1,7 @@
 var User = require('../app/models/user');
 var Civilian = require('../app/models/civilian');
 var Vehicle = require('../app/models/vehicle');
-var Friend = require('../app/models/friend');
+var EmsVehicle = require('../app/models/emsVehicle');
 var Ticket = require('../app/models/ticket');
 var Ems = require('../app/models/ems');
 var nodemailer = require('nodemailer');
@@ -122,8 +122,8 @@ module.exports = function (app, passport, server) {
     Ems.find({
       'ems.email': request.user.user.email
     }, function (err, dbPersonas) {
-      Vehicle.find({
-        'vehicle.email': request.user.user.email
+      EmsVehicle.find({
+        'emsVehicle.email': request.user.user.email
       }, function (err, dbVehicles) {
         response.render('ems-dashboard.html', {
           user: request.user,
@@ -387,6 +387,19 @@ module.exports = function (app, passport, server) {
     })
   });
 
+  app.post('/create-ems-vehicle', function (req, res) {
+    User.findOne({
+      'user.email': req.body.submitNewVeh
+    }, function (err, user) {
+
+      var myVeh = new EmsVehicle()
+      myVeh.updateVeh(req, res)
+      myVeh.save(function (err, fluffy) {
+        if (err) return console.error(err);
+      });
+    })
+  });
+
   app.post('/create-ticket', function (req, res) {
 
     var myTicket = new Ticket()
@@ -435,6 +448,22 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       res.redirect('/civ-dashboard');
+    })
+  })
+
+  app.post('/deleteEmsVeh', function (req, res) {
+    var roName = req.body.roVeh
+    var modelName = req.body.modelVeh
+    var emailName = req.body.emailVeh
+    var plateName = req.body.plateVeh
+    EmsVehicle.deleteOne({
+      'emsVehicle.email': emailName,
+      'emsVehicle.model': modelName,
+      'emsVehicle.registeredOwner': roName,
+      'emsVehicle.plate': plateName
+    }, function (err) {
+      if (err) return console.error(err);
+      res.redirect('/ems-dashboard');
     })
   })
 
