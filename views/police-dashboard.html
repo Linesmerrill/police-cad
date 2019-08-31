@@ -558,39 +558,39 @@
 
 <script type="text/javascript">
   function searchPlate() {
-    var stolenVehicle = document.getElementById('stolenMessage');
+    let stolenVehicle = document.getElementById('stolenMessage');
     stolenVehicle.style.display = 'none';
-    var x = document.getElementById('plateDetails');
+    let x = document.getElementById('plateDetails');
     if (x.style.display === 'none') {
       x.style.display = 'block';
     } else {}
 
-    var myValue = $('#plateName').val();
-    var myVar = <%-JSON.stringify(vehicles)%>;
-    var index = 0;
+    let myValue = $('#plateName').val();
+    let myVar = <%-JSON.stringify(vehicles)%>;
+    let index = 0;
     for (i = 0; i < myVar.length; i++) {
       if (myVar[i].vehicle.plate === myValue) {
         index = i;
         break;
       }
     }
-    var color = myVar[index].vehicle.color
-    var plate = myVar[index].vehicle.plate
-    var model = myVar[index].vehicle.model
-    var registeredOwner = myVar[index].vehicle.registeredOwner
-    var validInsurance = myVar[index].vehicle.validInsurance
+    let color = myVar[index].vehicle.color
+    let plate = myVar[index].vehicle.plate
+    let model = myVar[index].vehicle.model
+    let registeredOwner = myVar[index].vehicle.registeredOwner
+    let validInsurance = myVar[index].vehicle.validInsurance
     if (validInsurance === "1") {
       validInsurance = "Valid"
     } else {
       validInsurance = "Not Valid"
     }
-    var validRegistration = myVar[index].vehicle.validRegistration
+    let validRegistration = myVar[index].vehicle.validRegistration
     if (validRegistration === "1") {
       validRegistration = "Valid"
     } else {
       validRegistration = "Not Valid"
     }
-    var isStolen = myVar[index].vehicle.isStolen
+    let isStolen = myVar[index].vehicle.isStolen
     if (isStolen === "2") {
       stolenVehicle.style.display = 'block';
     }
@@ -601,25 +601,25 @@
     $('#reg-owner').text(registeredOwner)
     $('#insurance').text(validInsurance)
     $('#registration').text(validRegistration)
-    var srcUrl = getSrcFromModel(model)
+    let srcUrl = getSrcFromModel(model)
     document.getElementById('imageVeh').setAttribute('src', srcUrl);
 
   }
 
   function searchNames() {
-    var cleanWarrant = document.getElementById('noWarrantFound');
-    var dirtyWarrant = document.getElementById('warrantMessage');
+    let cleanWarrant = document.getElementById('noWarrantFound');
+    let dirtyWarrant = document.getElementById('warrantMessage');
     cleanWarrant.style.display = 'none';
     dirtyWarrant.style.display = 'none';
-    var x = document.getElementById('civDetails');
+    let x = document.getElementById('civDetails');
     if (x.style.display === 'none') {
       x.style.display = 'block';
     } else {}
-    var myValue = $('#civName').val();
-    var civName = myValue.split(' ')
-    var myCiv = <%-JSON.stringify(civilians)%>;
-    var myTicket = <%-JSON.stringify(tickets)%>;
-    var index = 0;
+    let myValue = $('#civName').val();
+    let civName = myValue.split(' ')
+    let myCiv = <%-JSON.stringify(civilians)%>;
+    let myTicket = <%-JSON.stringify(tickets)%>;
+    let index = 0;
     for (i = 0; i < myCiv.length; i++) {
       if ((myCiv[i].civilian.firstName === civName[0]) && (myCiv[i].civilian.lastName === civName[1])) {
         index = i;
@@ -629,22 +629,22 @@
     ticketIndex = new Array();
 
     $("#ticket-table tr").remove();
-    var table = document.getElementById("ticket-table");
+    let table = document.getElementById("ticket-table");
 
     for (i = 0; i < myTicket.length; i++) {
       if (myTicket[i].ticket.civName === myValue) {
         ticketIndex.push(i);
 
-        var row = table.insertRow(0);
-        var cell1 = row.insertCell(0);
+        let row = table.insertRow(0);
+        let cell1 = row.insertCell(0);
         cell1.innerHTML = myTicket[i].ticket.violation;
       }
     }
 
-    var name = myCiv[index].civilian.firstName + ' ' + myCiv[index].civilian.lastName
-    var birthday = myCiv[index].civilian.birthday
-    var address = myCiv[index].civilian.address
-    var licenseStatus = myCiv[index].civilian.licenseStatus
+    let name = myCiv[index].civilian.firstName + ' ' + myCiv[index].civilian.lastName
+    let birthday = myCiv[index].civilian.birthday
+    let address = myCiv[index].civilian.address
+    let licenseStatus = myCiv[index].civilian.licenseStatus
     switch (licenseStatus) {
       case "1":
         licenseStatus = "Valid"
@@ -656,7 +656,7 @@
         licenseStatus = "None"
     }
 
-    var warrants = myCiv[index].civilian.warrants
+    let warrants = myCiv[index].civilian.warrants
     if (warrants === "1") {
       warrants = "No"
     } else {
@@ -666,7 +666,7 @@
     checkWarrantStatus()
     checkLicenseStatus()
 
-    var ticketCount = ticketIndex.length
+    let ticketCount = ticketIndex.length
     $('#first-and-last-name').text(name)
     $('#birthday').text(birthday)
     $('#address').text(address)
@@ -676,12 +676,12 @@
   }
 
   function checkWarrantStatus() {
-    var dirtyWarrant = document.getElementById('warrantMessage');
-    var cleanWarrant = document.getElementById('noWarrantFound');
-    var myValue = $('#civName').val();
-    var civName = myValue.split(' ')
-    var myVar = <%-JSON.stringify(civilians)%>;
-    var index = 0;
+    let dirtyWarrant = document.getElementById('warrantMessage');
+    let cleanWarrant = document.getElementById('noWarrantFound');
+    let myValue = $('#civName').val();
+    let civName = myValue.split(' ')
+    let myVar = <%-JSON.stringify(civilians)%>;
+    let index = 0;
     for (i = 0; i < myVar.length; i++) {
       if ((myVar[i].civilian.firstName === civName[0]) && (myVar[i].civilian.lastName === civName[1])) {
         index = i;
@@ -689,7 +689,7 @@
       }
     }
 
-    var warrants = myVar[index].civilian.warrants
+    let warrants = myVar[index].civilian.warrants
     if (warrants === "1") {
       cleanWarrant.style.display = 'block';
       dirtyWarrant.style.display = 'none';
@@ -701,11 +701,11 @@
   }
 
   function checkLicenseStatus() {
-    var invalidLicense = document.getElementById('licenseMessage');
-    var myValue = $('#civName').val();
-    var civName = myValue.split(' ')
-    var myVar = <%-JSON.stringify(civilians)%>;
-    var index = 0;
+    let invalidLicense = document.getElementById('licenseMessage');
+    let myValue = $('#civName').val();
+    let civName = myValue.split(' ')
+    let myVar = <%-JSON.stringify(civilians)%>;
+    let index = 0;
     for (i = 0; i < myVar.length; i++) {
       if ((myVar[i].civilian.firstName === civName[0]) && (myVar[i].civilian.lastName === civName[1])) {
         index = i;
@@ -787,64 +787,64 @@
     } else {
       model = model[1].toLowerCase()
     }
-    var boats = ["tug", "toro", "kraken", "speeder", "seashark lifeguard", "tropic",
+    let boats = ["tug", "toro", "kraken", "speeder", "seashark lifeguard", "tropic",
       "suntrap", "submersible", "squalo", "seashark", "police perdator", "marquis", "jetmax", "dinghy"
     ]
-    var commercial = ["cerberus", "terrorbyte", "stockade", "pounder", "phantom",
+    let commercial = ["cerberus", "terrorbyte", "stockade", "pounder", "phantom",
       "packer", "mule", "hauler", "biff", "benson"
     ]
-    var compacts = ["issi", "brioso", "rhapsody", "panto", "dilettante", "prairie", "blista"]
-    var coupes = ["windsor", "zion", "sentinel", "oracle", "jackal", "felon", "f620",
+    let compacts = ["issi", "brioso", "rhapsody", "panto", "dilettante", "prairie", "blista"]
+    let coupes = ["windsor", "zion", "sentinel", "oracle", "jackal", "felon", "f620",
       "exemplar", "cognoscenti-cabrio"
     ]
-    var cycles = ["whippet-race-bike", "tri-cycles-race-bike", "scorcher", "fixter",
+    let cycles = ["whippet-race-bike", "tri-cycles-race-bike", "scorcher", "fixter",
       "endurex-race-bike", "cruiser", "bmx"
     ]
-    var industrial = ["guardian", "mixer", "tipper", "rubble", "flatbed", "dump", "dozer"]
-    var motorcycles = ["deathbike", "oppressor", "fcr-1000", "diabolus", "esskey", "shotaro",
+    let industrial = ["guardian", "mixer", "tipper", "rubble", "flatbed", "dump", "dozer"]
+    let motorcycles = ["deathbike", "oppressor", "fcr-1000", "diabolus", "esskey", "shotaro",
       "sanctus", "vortex", "daemon", "zombie", "wolfsbane", "rat-bike", "nightblade", "manchez",
       "hakuchou", "faggio", "defiler", "chimera", "avarus", "cliffhanger", "gargoyle", "bf400",
       "vindicator", "letro", "enduro", "innovation", "hakuchou", "sovereign", "thrust", "vader",
       "sanchez", "ruffian", "pcj-600", "nemesis", "hexer", "double-t", "carbon-rs", "bati-801",
       "bagger", "akuma"
     ]
-    var muscle = ["blade", "buccaneer", "burger-shot-stallion", "chino", "clique", "coquette",
+    let muscle = ["blade", "buccaneer", "burger-shot-stallion", "chino", "clique", "coquette",
       "deviant", "dominator", "dukes", "ellie", "faction", "gauntlet", "hermes", "hotknife",
       "hustler", "impaler", "imperator", "lurcher", "moonbeam", "nightshade", "phoenix", "voodoo-custom",
       "weaponized-tampa", "yosemite"
     ]
-    var offRoad = ["baller", "bf400", "bifta", "blazer", "bodhi", "brawler", "bruiser", "brutus",
+    let offRoad = ["baller", "bf400", "bifta", "blazer", "bodhi", "brawler", "bruiser", "brutus",
       "caracara", "desert-raid", "dubsta-6x6", "dune", "buggy", "duneloader", "freecrawler", "guardian",
       "hot-rod-blazer", "injection", "insurgent", "kalahari", "kamacho", "marshall", "menacer", "trophy-truck"
     ]
-    var sedans = ["asea", "asterope", "cognoscenti", "emperor", "fugitive", "glendale", "ingot", 
+    let sedans = ["asea", "asterope", "cognoscenti", "emperor", "fugitive", "glendale", "ingot", 
       "intruder", "premier", "primo", "regina", "romero-hearse", "schafter", "stafford", "stanier",
       "stratum", "stretch", "super-diamond", "surge", "tailgater", "warrener", "washington"
     ]
-    var sports = ["9f", "alpha", "banshee", "bestia", "blista-compact", "buffalo", "carbonizzare",
+    let sports = ["9f", "alpha", "banshee", "bestia", "blista-compact", "buffalo", "carbonizzare",
       "comet", "coquette", "drafter-8f", "drift-tampa", "elegy-rh8", "feltzer", "flash-gt", "furore-gt",
       "fusilade", "futo", "gb200", "go-go-monkey-blista", "hotring", "issi-sport", "itali-gto", "jester",
       "khamelion", "kuruma", "lynx", "massacro", "neon", "omnis", "paragon", "pariah", "penumbra", "raiden",
       "rapid-gt", "raptor", "revolter", "ruston", "schafter", "schlagen", "schwartzer", "sentinel", "seven-70",
       "specter", "sprunk-buffalo", "streiter", "sultan", "surano", "tropos-rallye", "verlierer", "zr-380"
     ]
-    var sportsClassic = ["190z", "ardent", "casco", "cheburek", "cheetah-classic", "coquette-classic",
+    let sportsClassic = ["190z", "ardent", "casco", "cheburek", "cheetah-classic", "coquette-classic",
       "deluxo", "fagaloa", "franken-stange", "gt500", "infernus-classic", "jb700", "mamba", "manana",
       "michelli-gt", "monroe", "peyote", "pigalle", "retinue", "roosevelt", "savestra", "stinger",
       "stirling-gt", "stromberg", "swinger", "torero", "tornado", "viseris", "ztype"
     ]
-    var superCars = ["811", "adder", "autarch", "banshee", "bullet", "cheetah", "cyclone", "deveste",
+    let superCars = ["811", "adder", "autarch", "banshee", "bullet", "cheetah", "cyclone", "deveste",
       "entity", "etr1", "fmj", "gp1", "infernus", "itali", "nero", "osiris", "penetrator", "reaper", 
       "re-7b", "rocket-voltic", "s80rr", "scramjet", "sc1", "sultan", "t20", "taipan", "tempesta",
       "tezeract", "thrax", "turismo", "tyrant", "tyrus", "vacca", "vagner", "vigilante", "visione", 
       "voltic", "x80", "xa-21", "zentorno"
     ]
-    var suvs = ["baller", "beejay", "cavalcade", "contender", "crusader", "dubsta", "fq2", "granger",
+    let suvs = ["baller", "beejay", "cavalcade", "contender", "crusader", "dubsta", "fq2", "granger",
       "gresley", "habanero", "huntley", "lanstalker", "mesa", "park-ranger", "patriot", "radius",
       "rocoto", "seminole", "serrano", "toros", "xls"
     ]
-    var utility = ["sadler", "scrap-truck", "tow", "utility"]
-    var vans = ["bison", "bobcat", "boxville", "burrito", "camper", "clown", "journey", "minivan", 
+    let utility = ["sadler", "scrap-truck", "tow", "utility"]
+    let vans = ["bison", "bobcat", "boxville", "burrito", "camper", "clown", "journey", "minivan", 
       "paradise", "pony", "rcv", "rumpo", "speedo", "surfer", "taco-van", "youga"
     ]
     if (boats.includes(model)) {
@@ -891,19 +891,19 @@
   })
 
   $('#nameDatabaseModal').on('hidden.bs.modal', function () {
-    var cleanWarrant = document.getElementById('noWarrantFound');
-    var dirtyWarrant = document.getElementById('warrantMessage');
+    let cleanWarrant = document.getElementById('noWarrantFound');
+    let dirtyWarrant = document.getElementById('warrantMessage');
     cleanWarrant.style.display = 'none';
     dirtyWarrant.style.display = 'none';
     $(this).find('form').trigger('reset');
-    var civ = document.getElementById('civDetails');
+    let civ = document.getElementById('civDetails');
     civ.style.display = 'none'
   })
 
   $('#plateDatabaseModal').on('hidden.bs.modal', function () {
     $(this).find('form').trigger('reset');
-    var plate = document.getElementById('plateDetails');
-    var stolenMessage = document.getElementById('stolenMessage');
+    let plate = document.getElementById('plateDetails');
+    let stolenMessage = document.getElementById('stolenMessage');
     plate.style.display = 'none'
     stolenMessage.style.display = 'none'
   })

@@ -1,22 +1,15 @@
 var express = require('express');
-var cookieParser = require('cookie-parser')
-var bodyParser = require('body-parser')
-var session = require('express-session')
+var cookieParser = require('cookie-parser');
+var bodyParser = require('body-parser');
+var session = require('express-session');
 var app = express();
 var port = process.env.PORT || 8080;
 var mongoose = require('mongoose');
-var nodemailer = require('nodemailer');
 var passport = require('passport');
-var bcrypt = require('bcrypt-nodejs');
-var async = require('async');
-var crypto = require('crypto');
 var flash = require('connect-flash');
-var path = require('path'),
-	fs = require('fs');
-var http = require('http')
-var server = http.createServer(app)
-
-
+var path = require('path');
+var http = require('http');
+var server = http.createServer(app);
 var configDB = require('./config/database.js');
 
 mongoose.connect(configDB.url);
@@ -41,8 +34,6 @@ app.use(bodyParser({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
-
-
 
 require('./app/routes.js')(app, passport, server);
 
