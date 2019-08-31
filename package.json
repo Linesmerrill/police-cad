@@ -26,7 +26,7 @@
     "socket.io": "latest"
   },
   "scripts": {
-    "start": "node --optimize_for_size --max_old_space_size=460 --gc_interval=100 app.js",
+    "start": "node --max-old-space-size=6000 app.js",
     "test": "mocha"
   },
   "engines": {
