@@ -138,26 +138,31 @@ module.exports = function (app, passport, server) {
     response.render('police-dashboard.html', {
       user: request.user,
       vehicles: null,
+      civilians: null,
+      tickets: null
     });
-    // Civilian.find({}, function (err, dbCivilians) {
-    //   Vehicle.find({}, function (err, dbVehicles) {
-    //     Ticket.find({}, function (err, dbTickets) {
-    //       response.render('police-dashboard.html', {
-    //         user: request.user,
-    //         civilians: dbCivilians,
-    //         vehicles: dbVehicles,
-    //         tickets: dbTickets
-    //       });
-    //     });
-    //   });
-    // });
   });
 
-  app.get('/police-dashboard:plate-search', auth, function (request, response) {
+  app.get('/name-search', auth, function (request, response) {
+    Civilian.find({'civilian.firstName': request.query.firstName, 'civilian.lastName': request.query.lastName}, function (err, dbCivilians) {
+      Ticket.find({'ticket.civName': request.query.firstName + " "+ request.query.lastName}, function (err, dbTickets) {
+        response.render('police-dashboard.html', {
+          user: request.user,
+          vehicles: null,
+          civilians: dbCivilians,
+          tickets: dbTickets
+        });
+      });
+    });
+  });
+
+  app.get('/plate-search', auth, function (request, response) {
     Vehicle.find({'vehicle.plate': request.query.plateNumber}, function (err, dbVehicles) {
       response.render('police-dashboard.html', {
         user: request.user,
-        vehicles: dbVehicles
+        civilians: null,
+        vehicles: dbVehicles,
+        tickets: null
       });
     })
   });
