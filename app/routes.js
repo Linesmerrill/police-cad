@@ -135,24 +135,37 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/police-dashboard', auth, function (request, response) {
-    Civilian.find({}, function (err, dbCivilians) {
-      Vehicle.find({}, function (err, dbVehicles) {
-        Ticket.find({}, function (err, dbTickets) {
-          response.render('police-dashboard.html', {
-            user: request.user,
-            civilians: dbCivilians,
-            vehicles: dbVehicles,
-            tickets: dbTickets
-          });
-        });
-      });
+    response.render('police-dashboard.html', {
+      user: request.user,
+      vehicles: null,
     });
+    // Civilian.find({}, function (err, dbCivilians) {
+    //   Vehicle.find({}, function (err, dbVehicles) {
+    //     Ticket.find({}, function (err, dbTickets) {
+    //       response.render('police-dashboard.html', {
+    //         user: request.user,
+    //         civilians: dbCivilians,
+    //         vehicles: dbVehicles,
+    //         tickets: dbTickets
+    //       });
+    //     });
+    //   });
+    // });
   });
 
+  app.get('/police-dashboard:plate-search', auth, function (request, response) {
+    Vehicle.find({'vehicle.plate': request.query.plateNumber}, function (err, dbVehicles) {
+      response.render('police-dashboard.html', {
+        user: request.user,
+        vehicles: dbVehicles
+      });
+    })
+  });
+
+  // Be sure to place all GET requests above this catchall
   app.get('*', function (request, response) {
     response.render('page-not-found.html');
   });
-
 
   app.post('/login-civ', passport.authenticate('login', {
     successRedirect: '/civ-dashboard',
@@ -344,7 +357,6 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-civ', function (req, res) {
-
     User.findOne({
       'user.email': req.body.submitNewCiv
     }, function (err, user) {
@@ -359,7 +371,6 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-ems', function (req, res) {
-
     User.findOne({
       'user.email': req.body.submitNewEms
     }, function (err, user) {
@@ -374,7 +385,6 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-vehicle', function (req, res) {
-
     User.findOne({
       'user.email': req.body.submitNewVeh
     }, function (err, user) {
@@ -401,7 +411,6 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-ticket', function (req, res) {
-
     var myTicket = new Ticket()
     myTicket.updateTicket(req, res)
     myTicket.save(function (err) {
