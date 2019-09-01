@@ -144,8 +144,8 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/name-search', auth, function (request, response) {
-    Civilian.find({'civilian.firstName': request.query.firstName, 'civilian.lastName': request.query.lastName}, function (err, dbCivilians) {
-      Ticket.find({'ticket.civName': request.query.firstName + " "+ request.query.lastName}, function (err, dbTickets) {
+    Civilian.find({'civilian.firstName': request.query.firstName.trim(), 'civilian.lastName': request.query.lastName.trim()}, function (err, dbCivilians) {
+      Ticket.find({'ticket.civName': request.query.firstName.trim() + " "+ request.query.lastName.trim()}, function (err, dbTickets) {
         response.render('police-dashboard.html', {
           user: request.user,
           vehicles: null,
@@ -157,7 +157,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/plate-search', auth, function (request, response) {
-    Vehicle.find({'vehicle.plate': request.query.plateNumber}, function (err, dbVehicles) {
+    Vehicle.find({'vehicle.plate': request.query.plateNumber.trim()}, function (err, dbVehicles) {
       response.render('police-dashboard.html', {
         user: request.user,
         civilians: null,
