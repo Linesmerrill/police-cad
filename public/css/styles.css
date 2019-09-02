@@ -687,3 +687,29 @@ a.link--inherit {
     padding-left: 0px;
 }
 
+.blue-hover:hover, .blue-hover:focus {
+    color: #5bc0de;
+}
+
+.blue-hover {
+    color: black;
+}
+
+.background-transparent {
+    background: transparent;
+}
+
+.plate-body-text {
+    font-size: 14px;
+    margin: 0;
+    line-height: 1.42857143;
+}
+
+.color-red {
+    color: red;
+}
+
+.color-green {
+    color: green;
+}
+

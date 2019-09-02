@@ -94,13 +94,7 @@
         <strong>NCIC Warrant Check!</strong> Clean, No Warrants found.
       </div>
       <div id="licenseMessage" class="alert alert-warning" style="display:none">
-        <strong>Warning!</strong> License is Invalid.
-      </div>
-      <div id="insuranceMessage" class="alert alert-warning" style="display:none">
-        <strong>Warning!</strong> Insurance is Invalid.
-      </div>
-      <div id="registrationMessage" class="alert alert-warning" style="display:none">
-        <strong>Warning!</strong> Registration is Invalid.
+        <strong>Warning!</strong> License is Revoked.
       </div>
       <div id="civilianNotFound" class="alert alert-warning" style="display:none">
           <strong>Not Found!</strong> Person not found in police database.
@@ -184,9 +178,7 @@
 
   <div id="plateDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
-      <div id="stolenMessage" class="alert alert-danger" style="display:none">
-        <strong>Danger!</strong> Vehicle reported as stolen.
-      </div>
+      
       <div id="vehicleNotFound" class="alert alert-warning" style="display:none">
         <strong>Not Found!</strong> Vehicle not found in police database.
       </div>
@@ -212,40 +204,49 @@
                 </div>
               </div>
 
+              <!-- List of Plates -->
               <div id="plateDetails" style="display:none">
-                <div class="col-md-9">
-                  <label id="plate" class="col-md-5 font-large">license plate #</label>
-                </div>
-
-                <div class="col-md-9">
-                  <label class="col-md-3 margin-bottom-1" for="color">Color:</label>
-                  <label id="color" class="col-md-5">color here</label>
-                </div>
-
-                <div class="col-md-9">
-                  <label class="col-md-3 margin-bottom-1" for="address">Model:</label>
-                  <label id="model" class="col-md-9">model here</label>
-                </div>
-
-                <div class="col-md-9">
-                  <label class="col-md-3 margin-bottom-1" for="ro">RO:</label>
-                  <label id="reg-owner" class="col-md-9">ro here</label>
-                </div>
-
-                <div class="col-md-9">
-                  <label class="col-md-3 margin-bottom-1" for="insurance">Insurance:</label>
-                  <label id="insurance" class="col-md-5">insurance</label>
-                </div>
-
-                <div class="col-md-9">
-                  <label class="col-md-3 margin-bottom-1" for="registration">Registration:</label>
-                  <label id="registration" class="col-md-5">registration</label>
-                </div>
-
-                <div class="col-md-9">
-                  <label for="imageVeh">Vehicle Model Image:</label>
-                  <img id="imageVeh" src="" alt="vehicle image not found ;(" style="width:100%;">
-                </div>
+                <div class="panel-group" id="accordion">
+                  <% if (vehicles != null) {%>
+                    <% for(var i=0; i<vehicles.length; i++) {%>
+                      <div class="panel panel-default background-transparent">
+                          <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion" href="#collapse<%=i%>"
+                            <h4 class="panel-title">
+                              <a class="blue-hover">
+                                  <%= vehicles[i].vehicle.plate%> | <%= vehicles[i].vehicle.registeredOwner%></a>
+                            </h4>
+                          </div>
+                          <% if (i === 0) {%>
+                          <div id="collapse<%=i%>" class="panel-collapse collapse in">
+                              <% } else {%>
+                                <div id="collapse<%=i%>" class="panel-collapse collapse">
+                                <% } %>
+                            <div class="panel-body">
+                              <% if (vehicles[i].vehicle.isStolen == 2) {%>
+                                <div id="stolenMessage" class="alert alert-danger" style="display:block">
+                                    <strong>Danger!</strong> Vehicle reported as stolen.
+                                </div>
+                              <% } %>
+                                License Plate #: <%= vehicles[i].vehicle.plate%><br/>
+                                Registered Owner: <%= vehicles[i].vehicle.registeredOwner%><br/>
+                                Color: <%= vehicles[i].vehicle.color%><br/>
+                                Model: <%= vehicles[i].vehicle.model%><br/>
+                                <% if (vehicles[i].vehicle.validInsurance == 1) {%>
+                                  <p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i></p>
+                                  <% } else {%>
+                                  <p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>
+                                <% } %>
+                                <% if (vehicles[i].vehicle.validRegistration == 1) {%>
+                                  <p class="plate-body-text">Registration: Valid <i class="ion-checkmark-circled color-green"></i></p>
+                                  <% } else {%>
+                                    <p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>
+                                <% } %>
+                            </div>
+                          </div>
+                        </div>
+                        <% } %>
+                      <% } %>
+                  </div>
               </div>
             </fieldset>
           </form>
@@ -570,8 +571,6 @@ $(document).ready(function() {
 });
 
   function searchPlate() {
-    let stolenVehicle = document.getElementById('stolenMessage');
-    stolenVehicle.style.display = 'none';
     let x = document.getElementById('plateDetails');
     if (x.style.display === 'none') {
       x.style.display = 'block';
@@ -589,43 +588,6 @@ $(document).ready(function() {
       vehNotFoundMsg.style.display = 'block'
       return
     }
-    let index = 0;
-    for (i = 0; i < myVar.length; i++) {
-      if (myVar[i].vehicle.plate === myValue) {
-        index = i;
-        break;
-      }
-    }
-    let color = myVar[index].vehicle.color
-    let plate = myVar[index].vehicle.plate
-    let model = myVar[index].vehicle.model
-    let registeredOwner = myVar[index].vehicle.registeredOwner
-    let validInsurance = myVar[index].vehicle.validInsurance
-    if (validInsurance === "1") {
-      validInsurance = "Valid"
-    } else {
-      validInsurance = "Not Valid"
-    }
-    let validRegistration = myVar[index].vehicle.validRegistration
-    if (validRegistration === "1") {
-      validRegistration = "Valid"
-    } else {
-      validRegistration = "Not Valid"
-    }
-    let isStolen = myVar[index].vehicle.isStolen
-    if (isStolen === "2") {
-      stolenVehicle.style.display = 'block';
-    }
-
-    $('#color').text(color)
-    $('#plate').text(plate)
-    $('#model').text(model)
-    $('#reg-owner').text(registeredOwner)
-    $('#insurance').text(validInsurance)
-    $('#registration').text(validRegistration)
-    let srcUrl = getSrcFromModel(model)
-    document.getElementById('imageVeh').setAttribute('src', srcUrl);
-
   }
 
   function searchNames() {
