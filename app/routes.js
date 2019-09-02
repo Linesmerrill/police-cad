@@ -144,7 +144,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/name-search', auth, function (request, response) {
-    Civilian.find({'civilian.firstName': request.query.firstName.trim(), 'civilian.lastName': request.query.lastName.trim()}, function (err, dbCivilians) {
+    Civilian.find({'civilian.firstName': request.query.firstName.trim().charAt(0).toUpperCase() + request.query.firstName.trim().slice(1), 'civilian.lastName': request.query.lastName.trim().charAt(0).toUpperCase() + request.query.lastName.trim().slice(1)}, function (err, dbCivilians) {
       Ticket.find({'ticket.civName': request.query.firstName.trim() + " "+ request.query.lastName.trim()}, function (err, dbTickets) {
         response.render('police-dashboard.html', {
           user: request.user,
