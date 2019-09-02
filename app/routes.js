@@ -157,7 +157,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/plate-search', auth, function (request, response) {
-    Vehicle.find({'vehicle.plate': request.query.plateNumber.trim()}, function (err, dbVehicles) {
+    Vehicle.find({'vehicle.plate': request.query.plateNumber.trim().toUpperCase()}, function (err, dbVehicles) {
       response.render('police-dashboard.html', {
         user: request.user,
         civilians: null,
