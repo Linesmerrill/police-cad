@@ -168,8 +168,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="birthday">Date of Birth</label>
               <div class="col-md-4">
-              <input id="birthday" name="birthday" type="text" placeholder="mm/dd/yyyy" maxlength="10" class="form-control input-md" required>
-
+              <input id="birthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
               </div>
             </div>
 
@@ -312,11 +311,13 @@
             <div class="col-md-9">
               <label class="col-md-4 control-label margin-bottom-1" for="civ-first-name">First Name:</label>
               <label id="firstNameView" class="col-md-5">FirstName here</label>
+              <input type="hidden" id="firstName" name="firstName">
             </div>
 
             <div class="col-md-9">
               <label class="col-md-4 control-label margin-bottom-1" for="civ-last-name">Last Name:</label>
               <label id="lastNameView" class="col-md-5">LastName here</label>
+              <input type="hidden" id="lastName" name="lastName">
             </div>
 
             <div class="col-md-9">
@@ -327,6 +328,7 @@
             <div class="col-md-9">
               <label class="col-md-4 control-label margin-bottom-1" for="birthday">Date of Birth:</label>
               <label id="birthdayView" class="col-md-5">birthday here</label>
+              <input type="hidden" id="delBirthday" name="birthday">
             </div>
 
             <div class="col-md-9">
@@ -335,7 +337,8 @@
             </div>
 
             <div class="col-md-12 text-align-center">
-              <button id="removeCiv" type="submit" name="removeCiv" class="btn btn-danger">Delete Civilian</button>
+              <input type="hidden" id="email" name="email">
+              <button type="submit" class="btn btn-danger">Delete Civilian</button>
             </div>
             </fieldset>
           </form>
@@ -450,12 +453,17 @@
     }
 
     $('#firstNameView').text(firstName)
+    $('#firstName').text(firstName)
     $('#lastNameView').text(lastName)
     $('#licenseStatusView').text(licenseStatus)
     $('#birthdayView').text(birthday)
     $('#warrantsView').text(warrants)
-    civFullName = firstName + ' ' + lastName
-    $('#removeCiv').val(civFullName)
+
+    // data to be sent to db for civ deletion
+    $('#firstName').val(firstName)
+    $('#lastName').val(lastName)
+    $('#email').val(myVar[index].civilian.email)
+    $('#delBirthday').val(birthday)
   }
 
   function loadVehData(index) {
@@ -523,23 +531,4 @@ $("#civ-last-name").keydown(function(event) {
 });
 });
 
-var format = "mm/dd/yyyy";
-var match = new RegExp(format
-    .replace(/(\w+)\W(\w+)\W(\w+)/, "^\\s*($1)\\W*($2)?\\W*($3)?([0-9]*).*")
-    .replace(/m|d|y/g, "\\d"));
-var replace = "$1/$2/$3$4"
-    .replace(/\//g, format.match(/\W/));
-
-function doFormat(target)
-{
-    target.value = target.value
-        .replace(/(^|\W)(?=\d\W)/g, "$10")   // padding
-        .replace(match, replace)             // fields
-        .replace(/(\W)+/g, "$1");            // remove repeats
-}
-
-$("#birthday").keyup(function(e) {
-   if(!e.ctrlKey && !e.metaKey && (e.keyCode == 32 || e.keyCode > 46))
-      doFormat(e.target)
-});
 </script>

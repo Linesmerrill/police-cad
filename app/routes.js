@@ -424,12 +424,11 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/deleteCiv', function (req, res) {
-    var nameArray = req.body.removeCiv.split(' ')
-    var civFirstName = nameArray[0]
-    var civLastName = nameArray[1]
     Civilian.deleteOne({
-      'civilian.firstName': civFirstName,
-      'civilian.lastName': civLastName
+      'civilian.firstName': req.body.firstName,
+      'civilian.lastName': req.body.lastName,
+      'civilian.email': req.body.email,
+      'civilian.birthday': req.body.birthday
     }, function (err) {
       if (err) return console.error(err);
       res.redirect('/civ-dashboard');
