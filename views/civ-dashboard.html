@@ -168,8 +168,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="birthday">Date of Birth</label>
               <div class="col-md-4">
-              <input id="birthday" name="birthday" type="text" placeholder="mm/dd/yyyy" maxlength="10" class="form-control input-md" required>
-
+              <input id="birthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
               </div>
             </div>
 
@@ -310,32 +309,36 @@
             <hr style="width: 88%;max-width: 100rem;">
 
             <div class="col-md-9">
-              <label class="col-md-4 control-label margin-bottom-1" for="civ-first-name">First Name:</label>
-              <label id="firstNameView" class="col-md-5">FirstName here</label>
+              <label class="col-md-4 control-label margin-bottom-1" for="firstNameView">First Name:</label>
+              <label id="firstNameView" class="col-md-5"></label>
+              <input type="hidden" id="firstName" name="firstName">
             </div>
 
             <div class="col-md-9">
-              <label class="col-md-4 control-label margin-bottom-1" for="civ-last-name">Last Name:</label>
-              <label id="lastNameView" class="col-md-5">LastName here</label>
+              <label class="col-md-4 control-label margin-bottom-1" for="lastNameView">Last Name:</label>
+              <label id="lastNameView" class="col-md-5"></label>
+              <input type="hidden" id="lastName" name="lastName">
             </div>
 
             <div class="col-md-9">
-              <label class="col-md-4 control-label margin-bottom-1" for="license-status">License Status:</label>
-              <label id="licenseStatusView" class="col-md-5">License Status</label>
+              <label class="col-md-4 control-label margin-bottom-1" for="licenseStatusView">License Status:</label>
+              <label id="licenseStatusView" class="col-md-5"></label>
             </div>
 
             <div class="col-md-9">
-              <label class="col-md-4 control-label margin-bottom-1" for="birthday">Date of Birth:</label>
-              <label id="birthdayView" class="col-md-5">birthday here</label>
+              <label class="col-md-4 control-label margin-bottom-1" for="birthdayView">Date of Birth:</label>
+              <label id="birthdayView" class="col-md-5"></label>
+              <input type="hidden" id="delBirthday" name="birthday">
             </div>
 
             <div class="col-md-9">
-              <label class="col-md-4 control-label margin-bottom-1" for="warrants">Warrants?</label>
-              <label id="warrantsView" class="col-md-5">warrants here</label>
+              <label class="col-md-4 control-label margin-bottom-1" for="warrantsView">Warrants?</label>
+              <label id="warrantsView" class="col-md-5"></label>
             </div>
 
             <div class="col-md-12 text-align-center">
-              <button id="removeCiv" type="submit" name="removeCiv" class="btn btn-danger">Delete Civilian</button>
+              <input type="hidden" id="email" name="email">
+              <button type="submit" class="btn btn-danger">Delete Civilian</button>
             </div>
             </fieldset>
           </form>
@@ -358,46 +361,46 @@
 
             <!-- Text input-->
             <div class="col-md-7">
-              <label class="col-md-4 margin-bottom-1" for="civ-first-name">Plate:</label>
-                <label class="col-md-5" id="plateView">plate here</label>
+              <label class="col-md-4 margin-bottom-1" for="plateView">Plate:</label>
+                <label id="plateView" class="col-md-5"></label>
                 <input id="plateVeh" name="plateVeh" type="text" value="" style="display:none">
             </div>
 
             <!-- Text input-->
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="civ-last-name">Model:</label>
-                <label class="col-md-8" id="modelView">model here</label>
+                <label class="col-md-8" id="modelView"></label>
                 <input id="modelVeh" name="modelVeh" type="text" value="" style="display:none">
             </div>
 
             <!-- Select Basic -->
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="color">Color:</label>
-                <label class="col-md-5" id="colorView">color here</label>
+                <label class="col-md-5" id="colorView"></label>
             </div>
 
             <!-- Text input-->
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="registration">Registration:</label>
-                <label class="col-md-5" id="validRegView">validReg here</label>
+                <label class="col-md-5" id="validRegView"></label>
             </div>
 
             <!-- Text input-->
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="insurance">Insurance:</label>
-              <label class="col-md-5" id="validInsView">validIns here</label>
+              <label class="col-md-5" id="validInsView"></label>
             </div>
 
             <!-- Select Basic -->
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="ro">RO:</label>
-              <label class="col-md-8" id="roView">ro here</label>
+              <label class="col-md-8" id="roView"></label>
               <input id="roVeh" type="text" name="roVeh" value="" style="display:none">
             </div>
 
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="stolen">Stolen:</label>
-              <label class="col-md-5" id="stolenView">stolen here</label>
+              <label class="col-md-5" id="stolenView"></label>
             </div>
 
             <div class="col-md-12 text-align-center">
@@ -450,12 +453,17 @@
     }
 
     $('#firstNameView').text(firstName)
+    $('#firstName').text(firstName)
     $('#lastNameView').text(lastName)
     $('#licenseStatusView').text(licenseStatus)
     $('#birthdayView').text(birthday)
     $('#warrantsView').text(warrants)
-    civFullName = firstName + ' ' + lastName
-    $('#removeCiv').val(civFullName)
+
+    // data to be sent to db for civ deletion
+    $('#firstName').val(firstName)
+    $('#lastName').val(lastName)
+    $('#email').val(myVar[index].civilian.email)
+    $('#delBirthday').val(birthday)
   }
 
   function loadVehData(index) {
@@ -523,23 +531,4 @@ $("#civ-last-name").keydown(function(event) {
 });
 });
 
-var format = "mm/dd/yyyy";
-var match = new RegExp(format
-    .replace(/(\w+)\W(\w+)\W(\w+)/, "^\\s*($1)\\W*($2)?\\W*($3)?([0-9]*).*")
-    .replace(/m|d|y/g, "\\d"));
-var replace = "$1/$2/$3$4"
-    .replace(/\//g, format.match(/\W/));
-
-function doFormat(target)
-{
-    target.value = target.value
-        .replace(/(^|\W)(?=\d\W)/g, "$10")   // padding
-        .replace(match, replace)             // fields
-        .replace(/(\W)+/g, "$1");            // remove repeats
-}
-
-$("#birthday").keyup(function(e) {
-   if(!e.ctrlKey && !e.metaKey && (e.keyCode == 32 || e.keyCode > 46))
-      doFormat(e.target)
-});
 </script>

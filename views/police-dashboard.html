@@ -62,7 +62,7 @@
       <div class="inner">
         <h4>San Andreas - Police Operations</h4>
         <div class="col-lg-10 col-lg-offset-1 text-center">
-          <button data-toggle="modal" href="#nameDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
+          <button data-toggle="modal" href="#nameDatabaseModal" class="btn btn-primary btn-lg margin-top-2" onclick=hideWarningModal()>Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
           <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime();">Issue Ticket</button>
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
@@ -114,13 +114,11 @@
                 <div class="col-md-12">
                   <div class="col-md-4">
                     <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-first-name">First Name</label>
-                    <input id="civ-first-name" name="firstName" type="text" placeholder="first name"
-                      class="form-control input-md col-md-offset-1" required>
+                    <input id="civ-first-name" name="firstName" type="text" placeholder="First Name" class="form-control input-md col-md-offset-1" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
                   </div>
                   <div class="col-md-4">
                     <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-last-name">Last Name</label>
-                    <input id="civ-last-name" name="lastName" type="text" placeholder="last name"
-                      class="form-control input-md" required>
+                    <input id="civ-last-name" name="lastName" type="text" placeholder="Last Name" class="form-control input-md col-md-offset-1" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
                   </div>
                   <div class="col-md-4">
                       <br>
@@ -131,17 +129,17 @@
 
               <div id="civDetails" style="display:none">
                 <div class="col-md-9">
-                  <label id="first-and-last-name" class="col-md-12 font-large">Name here</label>
+                  <label id="first-and-last-name" class="col-md-12 font-large"></label>
                 </div>
 
                 <div class="col-md-12">
                   <div class="col-md-5">
                     <label class="col-md-3 margin-bottom-1" for="dob">DOB:</label>
-                    <label id="birthday" class="col-md-5">dob here</label>
+                    <label id="birthday" class="col-md-5"></label>
                   </div>
                   <div class="col-md-5">
                     <label class="col-md-4 margin-bottom-1" for="license">License:</label>
-                    <label id="license-status" class="col-md-3">license here</label>
+                    <label id="license-status" class="col-md-3"></label>
                   </div>
                 </div>
 
@@ -152,7 +150,7 @@
                   </div>
                   <div class="col-md-5">
                     <label class="col-md-7 margin-bottom-1" for="ticket">Ticket Count:</label>
-                    <label id="ticket-count" class="col-md-5">ticket here</label>
+                    <label id="ticket-count" class="col-md-5"></label>
                   </div>
                 </div>
 
@@ -269,49 +267,49 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="plate">Date of Violation</label>
                 <div class="col-md-4">
-                  <input id="date" name="date" type="text" placeholder="mm/dd/yyyy" class="form-control input-md" required="">
+                  <input id="date" name="date" type="date" min="1900-01-01" max="2999-12-31" class="form-control input-md" required="">
                 </div>
               </div>
 
               <div class="form-group">
                 <label class="col-md-4 control-label" for="time">Time</label>
                 <div class="col-md-4">
-                  <input id="time" name="time" type="text" placeholder="hh:mm" class="form-control input-md" required="">
+                  <input id="time" name="time" type="time" placeholder="hh:mm" class="form-control input-md" required="">
                 </div>
               </div>
 
               <div class="form-group">
-                <label class="col-md-4 control-label" for="civName">Name</label>
+                <label class="col-md-4 control-label" for="ticket-civ-first-name">First Name</label>
                 <div class="col-md-4">
-                  <input id="civName" name="civName" type="text" placeholder="name" class="form-control input-md" list="names" required="">
+                    <input id="ticket-civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." style="text-transform:capitalize;" required="">
                 </div>
               </div>
+
+              <div class="form-group">
+                  <label class="col-md-4 control-label" for="ticket-civ-last-name">Last Name</label>
+                  <div class="col-md-4">
+                      <input id="ticket-civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." style="text-transform:capitalize;" required="">
+                  </div>
+                </div>
 
               <div class="form-group">
                 <label class="col-md-4 control-label" for="plate">Plate</label>
                 <div class="col-md-4">
-                  <input id="plate" name="plate" type="text" maxlength="8" placeholder="plate" class="form-control input-md" list="plates">
+                  <input id="plate" name="plate" type="text" maxlength="8" placeholder="plate" class="form-control input-md">
                 </div>
               </div>
 
               <div class="form-group">
                 <label class="col-md-4 control-label" for="model">Model</label>
                 <div class="col-md-4">
-                  <input id="model" name="model" type="text" placeholder="model" class="form-control input-md" list="models">
+                  <input id="model" name="model" type="text" placeholder="model" class="form-control input-md" style="text-transform:capitalize;">
                 </div>
               </div>
 
               <div class="form-group">
                 <label class="col-md-4 control-label" for="color">Color</label>
                 <div class="col-md-4">
-                  <input id="color" name="color" type="text" placeholder="color" class="form-control input-md" list="colors">
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
-                <div class="col-md-4">
-                  <input id="registeredOwner" name="registeredOwner" type="text" placeholder="registeredOwner" class="form-control input-md" list="names">
+                  <input id="color" name="color" type="text" placeholder="color" class="form-control input-md" style="text-transform:capitalize;">
                 </div>
               </div>
 
@@ -422,7 +420,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="amount">Fine Amount</label>
                 <div class="col-md-4">
-                  <input id="amount" name="amount" type="number" placeholder="$ amount" class="form-control input-md" required="">
+                  <input id="amount" name="amount" type="number" placeholder="$ amount" max="999999" class="form-control input-md" required="">
                 </div>
               </div>
 
@@ -430,7 +428,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitTicket"></label>
                 <div class="col-md-4">
-                  <button id="submitTicket" name="officerEmail" class="btn btn-primary" value=<%= user.user.email%>>Submit</button>
+                  <button id="submitTicket" name="officerEmail" class="btn btn-primary" onclick="hideTicketCivPopover()" value=<%= user.user.email%>>Submit</button>
                 </div>
               </div>
             </fieldset>
@@ -548,77 +546,97 @@
 </html>
 
 <script type="text/javascript">
-$(document).ready(function() { 
+$(document).ready(function() {
   let allVehicles = <%-JSON.stringify(vehicles)%>;
   let allCivilians = <%-JSON.stringify(civilians)%>;
   if ( allVehicles != null) {
-    let plateDetails = document.getElementById('plateDetails')
-    plateDetails.style.display = 'block'
+    $('#plateDetails').show()
     $('#plateDatabaseModal').modal('toggle');
     searchPlate()
   } else if (allCivilians != null) {
-    let civDetails = document.getElementById('civDetails')
-    civDetails.style.display = 'block'
+    $('#civDetails').show()
     $('#nameDatabaseModal').modal('toggle');
     searchNames()
   }
   else {
-    let plateDetails = document.getElementById('plateDetails')
-    plateDetails.style.display = 'none'
-    let civDetails = document.getElementById('civDetails')
-    civDetails.style.display = 'none'
+    $('#plateDetails').removeAttr("style").hide()
+    $('#civDetails').removeAttr("style").hide()
   }
+
+  $("#civ-first-name").keydown(function(event) {
+    if (event.keyCode == 32) {
+        event.preventDefault();
+        $('#civ-first-name').popover('show')
+    } else {
+      $('#civ-first-name').popover('hide')
+    }
+  });
+  $("#civ-last-name").keydown(function(event) {
+      if (event.keyCode == 32) {
+          event.preventDefault();
+          $('#civ-last-name').popover('show')
+      } else {
+        $('#civ-last-name').popover('hide')
+      }
+  });
+
+  $("#ticket-civ-first-name").keydown(function(event) {
+    if (event.keyCode == 32) {
+        event.preventDefault();
+        $('#ticket-civ-first-name').popover('show')
+    } else {
+      $('#ticket-civ-first-name').popover('hide')
+    }
+  });
+  $("#ticket-civ-last-name").keydown(function(event) {
+      if (event.keyCode == 32) {
+          event.preventDefault();
+          $('#ticket-civ-last-name').popover('show')
+      } else {
+        $('#ticket-civ-last-name').popover('hide')
+      }
+  });
 });
 
-  function searchPlate() {
-    let x = document.getElementById('plateDetails');
-    if (x.style.display === 'none') {
-      x.style.display = 'block';
-    } else {}
+function searchPlate() {
+  let x = document.getElementById('plateDetails');
+  if (x.style.display === 'none') {
+    x.style.display = 'block';
+  } else {}
 
-    let myValue = $('#plateName').val();
-    let myVar = <%-JSON.stringify(vehicles)%>;
-    if (myVar === null) {
-      return
-    }
-    if (myVar.length === 0) {
-      let plateDetails = document.getElementById('plateDetails')
-      plateDetails.style.display = 'none'
-      let vehNotFoundMsg = document.getElementById('vehicleNotFound')
-      vehNotFoundMsg.style.display = 'block'
-      return
-    }
+  let myValue = $('#plateName').val();
+  let myVar = <%-JSON.stringify(vehicles)%>;
+  if (myVar === null) {
+    return
   }
+  if (myVar.length === 0) {
+    $('#plateDetails').removeAttr("style").hide()
+    $('#vehicleNotFound').show()
+    return
+  }
+}
 
   function searchNames() {
-    let cleanWarrant = document.getElementById('noWarrantFound');
-    let dirtyWarrant = document.getElementById('warrantMessage');
-    cleanWarrant.style.display = 'none';
-    dirtyWarrant.style.display = 'none';
+    $('#noWarrantFound').removeAttr("style").hide()
+    $('#warrantMessage').removeAttr("style").hide()
     let x = document.getElementById('civDetails');
     if (x.style.display === 'none') {
       x.style.display = 'block';
     } else {}
-    let myValue = $('#civName').val();
-    let civName = myValue.split(' ')
     let myCiv = <%-JSON.stringify(civilians)%>;
     let myTicket = <%-JSON.stringify(tickets)%>;
     if (myCiv === null || myTicket === null) {
+      hideCivPopover();
       return
     } else if (myCiv.length === 0) {
       let civDetails = document.getElementById('civDetails')
       civDetails.style.display = 'none'
       let civNotFoundMsg = document.getElementById('civilianNotFound')
       civNotFoundMsg.style.display = 'block'
+      hideCivPopover();
       return
     }
-    let index = 0;
-    for (i = 0; i < myCiv.length; i++) {
-      if ((myCiv[i].civilian.firstName === civName[0]) && (myCiv[i].civilian.lastName === civName[1])) {
-        index = i;
-        break;
-      }
-    }
+    
     ticketIndex = new Array();
     $("#ticket-table tr").remove();
     let table = document.getElementById("ticket-table");
@@ -630,10 +648,11 @@ $(document).ready(function() {
         cell1.innerHTML = myTicket[i].ticket.violation;
     }
 
-    let name = myCiv[index].civilian.firstName + ' ' + myCiv[index].civilian.lastName
-    let birthday = myCiv[index].civilian.birthday
-    let address = myCiv[index].civilian.address
-    let licenseStatus = myCiv[index].civilian.licenseStatus
+    //this search just grabs the first it finds if there duplicates.. we should fix this
+    let name = myCiv[0].civilian.firstName + ' ' + myCiv[0].civilian.lastName
+    let birthday = myCiv[0].civilian.birthday
+    let address = myCiv[0].civilian.address
+    let licenseStatus = myCiv[0].civilian.licenseStatus
     switch (licenseStatus) {
       case "1":
         licenseStatus = "Valid"
@@ -645,7 +664,7 @@ $(document).ready(function() {
         licenseStatus = "None"
     }
 
-    let warrants = myCiv[index].civilian.warrants
+    let warrants = myCiv[0].civilian.warrants
     if (warrants === "1") {
       warrants = "No"
     } else {
@@ -661,75 +680,42 @@ $(document).ready(function() {
     $('#address').text(address)
     $('#license-status').text(licenseStatus)
     $('#ticket-count').text(ticketCount)
-
+    hideCivPopover();
   }
 
   function checkWarrantStatus() {
-    let dirtyWarrant = document.getElementById('warrantMessage');
-    let cleanWarrant = document.getElementById('noWarrantFound');
-    let myValue = $('#civName').val();
-    let civName = myValue.split(' ')
     let myVar = <%-JSON.stringify(civilians)%>;
     if (myVar === null) {
       return
     }
-    let index = 0;
-    for (i = 0; i < myVar.length; i++) {
-      if ((myVar[i].civilian.firstName === civName[0]) && (myVar[i].civilian.lastName === civName[1])) {
-        index = i;
-        break;
-      }
-    }
-
-    let warrants = myVar[index].civilian.warrants
+    //this search just grabs the first it finds if there duplicates.. we should fix this
+    let warrants = myVar[0].civilian.warrants
     if (warrants === "1") {
-      cleanWarrant.style.display = 'block';
-      dirtyWarrant.style.display = 'none';
+      $('#noWarrantFound').show()
+      $('#warrantMessage').removeAttr("style").hide()
     } else {
-      dirtyWarrant.style.display = 'block';
-      cleanWarrant.style.display = 'none';
-
+      $('#noWarrantFound').removeAttr("style").hide()
+      $('#warrantMessage').show()
     }
   }
 
   function checkLicenseStatus() {
-    let invalidLicense = document.getElementById('licenseMessage');
-    let myValue = $('#civName').val();
-    let civName = myValue.split(' ')
-    let myVar = <%-JSON.stringify(civilians)%>;
-    if (myVar === null) {
+    let civilianList = <%-JSON.stringify(civilians)%>;
+    if (civilianList === null) {
       return
     }
-    let index = 0;
-    for (i = 0; i < myVar.length; i++) {
-      if ((myVar[i].civilian.firstName === civName[0]) && (myVar[i].civilian.lastName === civName[1])) {
-        index = i;
-        break;
-      }
-    }
-
-    if (myVar[index].civilian.licenseStatus == 2) {
-      invalidLicense.style.display = 'block';
+    //this search just grabs the first it finds if there duplicates.. we should fix this
+    if (civilianList[0].civilian.licenseStatus == 2) {
+      $('#licenseMessage').show();
     } else {
-      invalidLicense.style.display = 'none';
+      $('#licenseMessage').removeAttr("style").hide()
     }
   }
 
-
+  // prevents submit modal when pressing enter because it closes the entire window and does not submit.
+  // we should fix the modals so this can work as expected.
   $(document).on("keypress", "form", function (event) {
     return event.keyCode != 13;
-  });
-
-  $('#plateName').on("keyup", function (e) {
-    if (e.keyCode == 13) {
-      searchPlate()
-    }
-  });
-
-  $('#civName').on("keyup", function (e) {
-    if (e.keyCode == 13) {
-      searchNames()
-    }
   });
 
   function toggle_visibility(id) {
@@ -761,12 +747,8 @@ $(document).ready(function() {
   }
 
   function setDateAndTime() {
-    date = document.getElementById('date');
+    document.getElementById('date').valueAsDate = new Date();
     time = document.getElementById('time');
-
-
-
-    date.value = new Date().toLocaleDateString();
     time.value = new Date().toLocaleTimeString('en-GB', {
       hour: "numeric",
       minute: "numeric"
@@ -882,24 +864,35 @@ $(document).ready(function() {
 
   $('#ticketModal').on('hidden.bs.modal', function () {
     $(this).find('form').trigger('reset');
-
   })
 
   $('#nameDatabaseModal').on('hidden.bs.modal', function () {
-    let cleanWarrant = document.getElementById('noWarrantFound');
-    let dirtyWarrant = document.getElementById('warrantMessage');
-    cleanWarrant.style.display = 'none';
-    dirtyWarrant.style.display = 'none';
+    $('#noWarrantFound').removeAttr("style").hide()
+    $('#warrantMessage').removeAttr("style").hide()
     $(this).find('form').trigger('reset');
-    let civ = document.getElementById('civDetails');
-    civ.style.display = 'none'
+    $('#civDetails').removeAttr("style").hide()
   })
 
   $('#plateDatabaseModal').on('hidden.bs.modal', function () {
     $(this).find('form').trigger('reset');
-    let plate = document.getElementById('plateDetails');
-    let stolenMessage = document.getElementById('stolenMessage');
-    plate.style.display = 'none'
-    stolenMessage.style.display = 'none'
+    $('#plateDetails').removeAttr("style").hide()
+    $('#stolenMessage').removeAttr("style").hide()
   })
+
+  function hideTicketCivPopover() {
+    $('#ticket-civ-first-name').popover('hide')
+    $('#ticket-civ-last-name').popover('hide')
+  }
+
+  function hideCivPopover() {
+    $('#civ-first-name').popover('hide')
+    $('#civ-last-name').popover('hide')
+  }
+
+  function hideWarningModal() {
+    $('#civilianNotFound').removeAttr("style").hide()
+    $('#licenseMessage').removeAttr("style").hide()
+    $('#noWarrantFound').removeAttr("style").hide()
+    $('#warrantMessage').removeAttr("style").hide()
+  }
 </script>

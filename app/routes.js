@@ -145,7 +145,7 @@ module.exports = function (app, passport, server) {
 
   app.get('/name-search', auth, function (request, response) {
     Civilian.find({'civilian.firstName': request.query.firstName.trim().charAt(0).toUpperCase() + request.query.firstName.trim().slice(1), 'civilian.lastName': request.query.lastName.trim().charAt(0).toUpperCase() + request.query.lastName.trim().slice(1)}, function (err, dbCivilians) {
-      Ticket.find({'ticket.civName': request.query.firstName.trim().charAt(0).toUpperCase() + request.query.firstName.trim().slice(1) + " "+ request.query.lastName.trim().charAt(0).toUpperCase() + request.query.lastName.trim().slice(1)}, function (err, dbTickets) {
+      Ticket.find({'ticket.civFirstName': request.query.firstName.trim().charAt(0).toUpperCase() + request.query.firstName.trim().slice(1), 'ticket.civLastName': request.query.lastName.trim().charAt(0).toUpperCase() + request.query.lastName.trim().slice(1)}, function (err, dbTickets) {
         response.render('police-dashboard.html', {
           user: request.user,
           vehicles: null,
@@ -424,15 +424,25 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/deleteCiv', function (req, res) {
-    var nameArray = req.body.removeCiv.split(' ')
-    var civFirstName = nameArray[0]
-    var civLastName = nameArray[1]
     Civilian.deleteOne({
-      'civilian.firstName': civFirstName,
-      'civilian.lastName': civLastName
+      'civilian.firstName': req.body.firstName, // comes from db so we don't need to convert to uppercase
+      'civilian.lastName': req.body.lastName,
+      'civilian.email': req.body.email,
+      'civilian.birthday': req.body.birthday
     }, function (err) {
-      if (err) return console.error(err);
-      res.redirect('/civ-dashboard');
+      Ticket.deleteMany({ // used to delete all the legacy tickets that don't have separate first/last names
+        'ticket.civName': req.body.firstName + " " + req.body.lastName,
+      }, function (err){
+        // the new future way to delete tickets, eventually we will have civEmail and
+        // civID to only delete the specific tickets for that civ
+        Ticket.deleteMany({
+          'ticket.civFirstName': req.body.firstName,
+          'ticket.civLastName': req.body.lastName
+        }, function (err){
+          if (err) return console.error(err);
+          res.redirect('/civ-dashboard');
+        })
+      })
     })
   })
 
