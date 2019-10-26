@@ -16,7 +16,8 @@ var ticketSchema = mongoose.Schema({
   civFirstName: String,
   civLastName: String,
   civID: String,
-  civEmail: String
+  civEmail: String,
+  isWarning: Boolean
  }
 });
 
@@ -45,6 +46,7 @@ ticketSchema.methods.updateTicket = function(request, response) {
   this.ticket.amount = request.body.amount.trim();
   this.ticket.date = request.body.date.trim();
   this.ticket.time = request.body.time.trim();
+  this.ticket.isWarning = request.body.isWarning;
   response.redirect('/police-dashboard');
 };
 

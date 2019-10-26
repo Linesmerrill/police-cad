@@ -64,7 +64,8 @@
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#nameDatabaseModal" class="btn btn-primary btn-lg margin-top-2" onclick=hideWarningModal()>Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
-          <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime();">Issue Ticket</button>
+          <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime();">Issue Citation</button>
+          <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTimeForWarning();">Issue Warning</button>
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
         </div>
       </div>
@@ -163,6 +164,18 @@
                       </tr>
                     </thead>
                     <tbody id="ticket-body">
+                    </tbody>
+                  </table>
+                </div>
+                <!--Table for Warnings  -->
+                <div class="col-md-5 name-table text-align-center">
+                  <table id="warning-table" class="table table-hover" border="1" frame="box">
+                    <thead>
+                      <tr>
+                        Warnings:
+                      </tr>
+                    </thead>
+                    <tbody id="warning-body">
                     </tbody>
                   </table>
                 </div>
@@ -423,12 +436,191 @@
                   <input id="amount" name="amount" type="number" placeholder="$ amount" max="999999" class="form-control input-md" required="">
                 </div>
               </div>
-
+              <input type="hidden" name="isWarning" value="false">
               <!-- Button -->
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitTicket"></label>
                 <div class="col-md-4">
                   <button id="submitTicket" name="officerEmail" class="btn btn-primary" onclick="hideTicketCivPopover()" value=<%= user.user.email%>>Submit</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="warningModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-ticket" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>San Andreas Traffic Warning</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="warning-date">Date of Violation</label>
+                <div class="col-md-4">
+                  <input id="warning-date" name="date" type="date" min="1900-01-01" max="2999-12-31" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="warning-time">Time</label>
+                <div class="col-md-4">
+                  <input id="warning-time" name="time" type="time" placeholder="hh:mm" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="warning-civ-first-name">First Name</label>
+                <div class="col-md-4">
+                    <input id="warning-civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." style="text-transform:capitalize;" required="">
+                </div>
+              </div>
+
+              <div class="form-group">
+                  <label class="col-md-4 control-label" for="warning-civ-last-name">Last Name</label>
+                  <div class="col-md-4">
+                      <input id="warning-civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." style="text-transform:capitalize;" required="">
+                  </div>
+                </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="warning-plate">Plate</label>
+                <div class="col-md-4">
+                  <input id="warning-plate" name="plate" type="text" maxlength="8" placeholder="plate" class="form-control input-md">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="warning-model">Model</label>
+                <div class="col-md-4">
+                  <input id="warning-model" name="model" type="text" placeholder="model" class="form-control input-md" style="text-transform:capitalize;">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="warning-color">Color</label>
+                <div class="col-md-4">
+                  <input id="warning-color" name="color" type="text" placeholder="color" class="form-control input-md" style="text-transform:capitalize;">
+                </div>
+              </div>
+
+              <!-- Multiple Checkboxes (inline) -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="warning-violations">Violation</label>
+                <div class="col-md-4">
+                  <label class="radio" for="warning-violations-0">
+                    <input type="radio" name="violations" id="warning-violations-0" value="Speed" onclick="toggle_visibility(warningSpeedViolationGroup);">Speed
+                  </label>
+                  <label class="radio" for="warning-violations-1">
+                    <input type="radio" name="violations" id="warning-violations-1" value="DUI" onclick="toggle_visibility(warningDuiViolationGroup);">DUI
+                  </label>
+                  <label class="radio" for="warning-violations-2">
+                    <input type="radio" name="violations" id="warning-violations-2" value="Driver license" onclick="toggle_visibility(warningDriverLicenseViolationGroup);">Driver License
+                  </label>
+                  <label class="radio" for="warning-violations-3">
+                    <input type="radio" name="violations" id="warning-violations-3" value="Invalid registration" onclick="toggle_visibility('warningNone');">No Valid Registration
+                  </label>
+                  <label class="radio" for="warning-violations-4">
+                    <input type="radio" name="violations" id="warning-violations-4" value="Invalid insurance" onclick="toggle_visibility('warningNone');">No Proof Insurance
+                  </label>
+                  <label class="radio" for="warning-violations-5">
+                    <input type="radio" name="violations" id="warning-violations-5" value="Violated traffic signal" onclick="toggle_visibility('warningNone');">Violated Traffic Signal
+                  </label>
+                  <label class="radio" for="warning-violations-6">
+                    <input type="radio" name="violations" id="warning-violations-6" value="Failure to yield" onclick="toggle_visibility('warningNone');">Failure to Yield
+                  </label>
+                  <label class="radio" for="warning-violations-7">
+                    <input type="radio" name="violations" id="warning-violations-7" value="Unsafe lane change" onclick="toggle_visibility('warningNone');">Unsafe Lane Change
+                  </label>
+                  <label class="radio" for="warning-violations-8">
+                    <input type="radio" name="violations" id="warning-violations-8" value="Walking on highway" onclick="toggle_visibility('warningNone');">Walking on Highway
+                  </label>
+                  <label class="radio" for="warning-violations-9">
+                    <input type="radio" name="violations" id="warning-violations-9" value="Other" onclick="toggle_visibility(warningOtherOffenseGroup);">Other
+                  </label>
+                </div>
+              </div>
+
+              <!-- Speed Violation -->
+              <div id="warningSpeedViolationGroup" class="form-group" style="display:none">
+                <label class="col-md-4 control-label" for="warning-speedViolation">Speed Violation</label>
+                <div class="col-md-4">
+                  <div class="radio">
+                    <label for="warning-speedViolation-0">
+                      <input type="radio" name="speedViolation" id="warning-speedViolation-0" value="Over limit"> Over limit
+                    </label>
+                  </div>
+                  <div class="radio">
+                    <label for="warning-speedViolation-1">
+                      <input type="radio" name="speedViolation" id="warning-speedViolation-1" value="Unsafe for conditions"> Unsafe for conditions
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- DUI Violation -->
+              <div id="warningDuiViolationGroup" class="form-group" style="display:none">
+                <label class="col-md-4 control-label" for="warning-duiViolation">DUI Violation</label>
+                <div class="col-md-4">
+                  <div class="radio">
+                    <label for="warning-duiViolation-0">
+                      <input type="radio" name="duiViolation" id="warning-duiViolation-0" value="Under the influence"> Under the influence
+                    </label>
+                  </div>
+                  <div class="radio">
+                    <label for="warning-duiViolation-1">
+                      <input type="radio" name="duiViolation" id="warning-duiViolation-1" value="Prohibited B.A.C"> Prohibited B.A.C
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Driver License Violation -->
+              <div id="warningDriverLicenseViolationGroup" class="form-group" style="display:none">
+                <label class="col-md-4 control-label" for="warning-driverLicenseViolation">Driver License Violation</label>
+                <div class="col-md-4">
+                  <div class="radio">
+                    <label for="warning-driverLicenseViolation-0">
+                      <input type="radio" name="driverLicenseViolation" id="warning-driverLicenseViolation-0"
+                        value="No license"> None
+                    </label>
+                  </div>
+                  <div class="radio">
+                    <label for="warning-driverLicenseViolation-1">
+                      <input type="radio" name="driverLicenseViolation" id="warning-driverLicenseViolation-1"
+                        value="Not on person"> Not on person
+                    </label>
+                  </div>
+                  <div class="radio">
+                    <label for="warning-driverLicenseViolation-2">
+                      <input type="radio" name="driverLicenseViolation" id="warning-driverLicenseViolation-2" value="Revoked"> Revoked
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Other Offense-->
+              <div id="warningOtherOffenseGroup" class="form-group" style="display:none">
+                <label class="col-md-4 control-label" for="warning-otherInput">Other Offense</label>
+                <div class="col-md-4">
+                  <input id="warning-otherInput" name="otherInput" type="text" placeholder="offense" class="form-control input-md">
+                </div>
+              </div>
+
+              <input type="hidden" name="isWarning" value="true">
+              <input type="hidden" name="amount" value="0">
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submitWarning"></label>
+                <div class="col-md-4">
+                  <button id="submitWarning" name="officerEmail" class="btn btn-primary" onclick="hideWarningCivPopover()" value=<%= user.user.email%>>Submit</button>
                 </div>
               </div>
             </fieldset>
@@ -636,17 +828,37 @@ function searchPlate() {
       hideCivPopover();
       return
     }
-    
-    ticketIndex = new Array();
-    $("#ticket-table tr").remove();
-    let table = document.getElementById("ticket-table");
 
-    for (i = 0; i < myTicket.length; i++) {
-        ticketIndex.push(i);
+    ticketIndex = new Array();
+    warningIndex = new Array();
+
+    $("#ticket-table tr").remove();
+    $("#warning-table tr").remove();
+
+    let table = document.getElementById("ticket-table");
+    let warningTable = document.getElementById("warning-table");
+
+    let ticketTotal = 0
+    let warningTotal = 0
+
+    myTicket.forEach(element => {
+      if (element.ticket.isWarning == true) {
+        console.log("its a warning")
+        let row = warningTable.insertRow(0);
+        let cell1 = row.insertCell(0);
+        let cell2 = row.insertCell(1);
+        cell1.innerHTML = element.ticket.violation
+        cell2.innerHTML = element.ticket.date
+        warningTotal++
+      } else {
         let row = table.insertRow(0);
         let cell1 = row.insertCell(0);
-        cell1.innerHTML = myTicket[i].ticket.violation;
-    }
+        let cell2 = row.insertCell(1);
+        cell1.innerHTML = element.ticket.violation
+        cell2.innerHTML = element.ticket.date
+        ticketTotal++
+      }
+    });
 
     //this search just grabs the first it finds if there duplicates.. we should fix this
     let name = myCiv[0].civilian.firstName + ' ' + myCiv[0].civilian.lastName
@@ -674,12 +886,13 @@ function searchPlate() {
     checkWarrantStatus()
     checkLicenseStatus()
 
-    let ticketCount = ticketIndex.length
+    
     $('#first-and-last-name').text(name)
     $('#birthday').text(birthday)
     $('#address').text(address)
     $('#license-status').text(licenseStatus)
-    $('#ticket-count').text(ticketCount)
+    $('#ticket-count').text(ticketTotal)
+    $('#warning-count').text(warningTotal)
     hideCivPopover();
   }
 
@@ -734,10 +947,29 @@ function searchPlate() {
       speedViolationGroup.style.display = 'none';
       duiViolationGroup.style.display = 'none';
       otherOffenseGroup.style.display = 'none';
+    } else if (id.id === "warningSpeedViolationGroup") {
+      id.style.display = 'block'
+      warningDuiViolationGroup.style.display = 'none';
+      warningDriverLicenseViolationGroup.style.display = 'none';
+      warningOtherOffenseGroup.style.display = 'none';
+    } else if (id.id === "warningDuiViolationGroup") {
+      id.style.display = 'block'
+      warningSpeedViolationGroup.style.display = 'none';
+      warningDriverLicenseViolationGroup.style.display = 'none';
+      warningOtherOffenseGroup.style.display = 'none';
+    } else if (id.id === "warningDriverLicenseViolationGroup") {
+      id.style.display = 'block'
+      warningSpeedViolationGroup.style.display = 'none';
+      warningDuiViolationGroup.style.display = 'none';
+      warningOtherOffenseGroup.style.display = 'none';
     } else if (id === "none") {
       duiViolationGroup.style.display = 'none';
       driverLicenseViolationGroup.style.display = 'none';
       otherOffenseGroup.style.display = 'none';
+    } else if (id === "warningNone") {
+      warningDuiViolationGroup.style.display = 'none';
+      warningDriverLicenseViolationGroup.style.display = 'none';
+      warningOtherOffenseGroup.style.display = 'none';
     } else {
       id.style.display = 'block';
       speedViolationGroup.style.display = 'none';
@@ -749,6 +981,15 @@ function searchPlate() {
   function setDateAndTime() {
     document.getElementById('date').valueAsDate = new Date();
     time = document.getElementById('time');
+    time.value = new Date().toLocaleTimeString('en-GB', {
+      hour: "numeric",
+      minute: "numeric"
+    });
+  }
+
+  function setDateAndTimeForWarning() {
+    document.getElementById('warning-date').valueAsDate = new Date();
+    time = document.getElementById('warning-time');
     time.value = new Date().toLocaleTimeString('en-GB', {
       hour: "numeric",
       minute: "numeric"
@@ -882,6 +1123,11 @@ function searchPlate() {
   function hideTicketCivPopover() {
     $('#ticket-civ-first-name').popover('hide')
     $('#ticket-civ-last-name').popover('hide')
+  }
+
+  function hideWarningCivPopover() {
+    $('#warning-civ-first-name').popover('hide')
+    $('#warning-civ-last-name').popover('hide')
   }
 
   function hideCivPopover() {
