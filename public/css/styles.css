@@ -583,6 +583,14 @@ img::-moz-selection {
     text-transform: capitalize;
 }
 
+#firstName {
+    text-transform: capitalize;
+}
+
+#lastName {
+    text-transform: capitalize;
+}
+
 ::-webkit-input-placeholder {
     /* WebKit browsers */
     text-transform: none;
@@ -713,3 +721,6 @@ a.link--inherit {
     color: green;
 }
 
+.color-black {
+    color: black;
+}

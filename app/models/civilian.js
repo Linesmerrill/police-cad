@@ -22,8 +22,8 @@ var civilianSchema = mongoose.Schema({
 
 civilianSchema.methods.updateCiv = function(request, response) {
 
- this.civilian.firstName = request.body.civFirstName.trim();
- this.civilian.lastName = request.body.civLastName.trim();
+ this.civilian.firstName = request.body.civFirstName.trim().charAt(0).toUpperCase() + request.body.civFirstName.trim().slice(1);
+ this.civilian.lastName = request.body.civLastName.trim().charAt(0).toUpperCase() + request.body.civLastName.trim().slice(1);
  this.civilian.licenseStatus = request.body.licenseStatus;
  this.civilian.ticketCount = request.body.ticketCount;
  this.civilian.birthday = request.body.birthday;
