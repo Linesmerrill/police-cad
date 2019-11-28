@@ -567,6 +567,10 @@ img::-moz-selection {
     text-transform: uppercase;
 }
 
+#plateVeh {
+    text-transform: uppercase;
+}
+
 #color {
     text-transform: capitalize;
 }
@@ -588,6 +592,14 @@ img::-moz-selection {
 }
 
 #lastName {
+    text-transform: capitalize;
+}
+
+#modelVeh {
+    text-transform: capitalize;
+}
+
+#colorView {
     text-transform: capitalize;
 }
 

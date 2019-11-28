@@ -214,8 +214,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="plate">Plate</label>
               <div class="col-md-4">
-              <input id="plate" name="plate" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
-
+                <input id="plate" name="plate" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
               </div>
             </div>
 
@@ -344,7 +343,7 @@
             <div class="form-group">
                 <label class="col-md-4 control-label" for="warrantsView">Warrants?</label>
                 <div class="col-md-4">
-                  <select id="warrantsView" name="warrants" class="form-control">
+                  <select id="warrantsView" name="warrants" class="form-control" selected="selected">
                     <option value="2">Yes</option>
                     <option value="1">No</option>
                   </select>
@@ -368,60 +367,83 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
+            <form class="form-horizontal" action="/updateOrDeleteVeh" method="post">
+              <fieldset>
 
-          <form action="/deleteVeh" method="POST">
-          <fieldset>
             <!-- Form Name -->
             <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Details about your Vehicle</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
-            <!-- Text input-->
-            <div class="col-md-7">
-              <label class="col-md-4 margin-bottom-1" for="plateView">Plate:</label>
-                <label id="plateView" class="col-md-5"></label>
-                <input id="plateVeh" name="plateVeh" type="text" value="" style="display:none">
-            </div>
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="plate">Plate:</label>
+                <div class="col-md-4">
+                  <input id="plateVeh" name="plateVeh" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
+                </div>
+              </div>
 
-            <!-- Text input-->
-            <div class="col-md-7">
-              <label class="col-md-4 margin-bottom-1" for="civ-last-name">Model:</label>
-                <label class="col-md-8" id="modelView"></label>
-                <input id="modelVeh" name="modelVeh" type="text" value="" style="display:none">
-            </div>
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="model">Model:</label>
+                <div class="col-md-4">
+                  <input id="modelVeh" name="modelVeh" type="search" placeholder="Model" class="form-control input-md" required="">
+                </div>
+              </div>
 
-            <!-- Select Basic -->
-            <div class="col-md-7">
-              <label class="col-md-4 margin-bottom-1" for="color">Color:</label>
-                <label class="col-md-5" id="colorView"></label>
-            </div>
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="colorView">Color:</label>
+                <div class="col-md-4">
+                  <input id="colorView" name="colorView" type="text" placeholder="Color" class="form-control input-md" required="">
+                </div>
+              </div>
 
-            <!-- Text input-->
-            <div class="col-md-7">
-              <label class="col-md-4 margin-bottom-1" for="registration">Registration:</label>
-                <label class="col-md-5" id="validRegView"></label>
-            </div>
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="valid-registration">Valid Registration?</label>
+                <div class="col-md-4">
+                  <select id="validRegView" name="validRegView" class="form-control" selected="selected">
+                    <option value="1">Yes</option>
+                    <option value="2">No</option>
+                  </select>
+                </div>
+              </div>
 
-            <!-- Text input-->
-            <div class="col-md-7">
-              <label class="col-md-4 margin-bottom-1" for="insurance">Insurance:</label>
-              <label class="col-md-5" id="validInsView"></label>
-            </div>
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="validInsView">Valid Insurance?</label>
+                <div class="col-md-4">
+                  <select id="validInsView" name="validInsView" class="form-control" selected="selected">
+                    <option value="1">Yes</option>
+                    <option value="2">No</option>
+                  </select>
+                </div>
+              </div>
 
-            <!-- Select Basic -->
-            <div class="col-md-7">
-              <label class="col-md-4 margin-bottom-1" for="ro">RO:</label>
-              <label class="col-md-8" id="roView"></label>
-              <input id="roVeh" type="text" name="roVeh" value="" style="display:none">
-            </div>
+              <datalist id="names">
+                  <% for(var i=0; i<personas.length; i++) {%>
+               <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%>">
+              <% } %>
+                </datalist>
 
-            <div class="col-md-7">
-              <label class="col-md-4 margin-bottom-1" for="stolen">Stolen:</label>
-              <label class="col-md-5" id="stolenView"></label>
-            </div>
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="roVeh">Registered Owner:</label>
+                <div class="col-md-4">
+                  <input id="roVeh" name="roVeh" type="search" placeholder="Registered Owner" list="names" class="form-control input-md" required="">
+                </div>
+              </div>
+
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="stolenView">Marked Stolen?</label>
+                <div class="col-md-4">
+                  <select id="stolenView" name="stolenView" class="form-control" selected="selected">
+                    <option value="1">No</option>
+                    <option value="2">Yes</option>
+                  </select>
+                </div>
+              </div>
 
             <div class="col-md-12 text-align-center">
-              <button id="emailVeh" type="submit" name="emailVeh" class="btn btn-danger">Delete Vehicle</button>
+                <input type="hidden" id="emailVeh" name="emailVeh">
+                <input type="hidden" id="vehicleID" name="vehicleID">
+                <button type="submit" value="update" name="action" class="btn btn-info">Update Vehicle</button>
+                <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Vehicle</button>
             </div>
             </fieldset>
           </form>
@@ -471,42 +493,15 @@
   function loadVehData(index) {
     var myVar = <%- JSON.stringify(vehicles) %>;
 
-    var color = myVar[index].vehicle.color
-    var email = myVar[index].vehicle.email
-    var plate = myVar[index].vehicle.plate.toUpperCase()
-    var model = myVar[index].vehicle.model
-    var registeredOwner = myVar[index].vehicle.registeredOwner
-    var validInsurance = myVar[index].vehicle.validInsurance
-    if (validInsurance === "1") {
-      validInsurance = "Valid"
-    } else {
-      validInsurance = "Not Valid"
-    }
-    var validRegistration = myVar[index].vehicle.validRegistration
-    if (validRegistration === "1") {
-      validRegistration = "Valid"
-    } else {
-      validRegistration = "Not Valid"
-    }
-    var isStolen = myVar[index].vehicle.isStolen
-    if (isStolen === "1") {
-      isStolen = "No"
-    } else {
-      isStolen = "Yes"
-    }
-
-    $('#plateView').text(plate)
-    $('#modelView').text(model)
-    $('#colorView').text(color)
-    $('#validRegView').text(validRegistration)
-    $('#validInsView').text(validInsurance)
-    $('#roView').text(registeredOwner)
-    $('#stolenView').text(isStolen)
-    $('#emailVeh').val(email)
-    $('#modelVeh').val(model)
-    $('#roVeh').val(registeredOwner)
-    $('#plateVeh').val(plate)
-
+    $('#vehicleID').val(myVar[index]._id)
+    $('#emailVeh').val(myVar[index].vehicle.email)
+    $('#plateVeh').val(myVar[index].vehicle.plate.toUpperCase())
+    $('#modelVeh').val(myVar[index].vehicle.model)
+    $('#colorView').val(myVar[index].vehicle.color)
+    $('#validRegView').val(myVar[index].vehicle.validRegistration)
+    $('#validInsView').val(myVar[index].vehicle.validInsurance)
+    $('#roVeh').val(myVar[index].vehicle.registeredOwner)
+    $('#stolenView').val(myVar[index].vehicle.isStolen)
   }
 
   function createNewCiv() {
