@@ -13,6 +13,7 @@ var server = http.createServer(app);
 var configDB = require('./config/database.js');
 
 mongoose.connect(configDB.url);
+mongoose.set('useFindAndModify', false);
 
 require('./config/passport')(passport);
 

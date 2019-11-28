@@ -4,6 +4,7 @@ var Vehicle = require('../app/models/vehicle');
 var EmsVehicle = require('../app/models/emsVehicle');
 var Ticket = require('../app/models/ticket');
 var Ems = require('../app/models/ems');
+var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
 async = require("async");
 var crypto = require('crypto');
@@ -423,27 +424,44 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.post('/deleteCiv', function (req, res) {
-    Civilian.deleteOne({
-      'civilian.firstName': req.body.firstName, // comes from db so we don't need to convert to uppercase
-      'civilian.lastName': req.body.lastName,
-      'civilian.email': req.body.email,
-      'civilian.birthday': req.body.birthday
-    }, function (err) {
-      Ticket.deleteMany({ // used to delete all the legacy tickets that don't have separate first/last names
-        'ticket.civName': req.body.firstName + " " + req.body.lastName,
-      }, function (err){
-        // the new future way to delete tickets, eventually we will have civEmail and
-        // civID to only delete the specific tickets for that civ
-        Ticket.deleteMany({
-          'ticket.civFirstName': req.body.firstName,
-          'ticket.civLastName': req.body.lastName
+  app.post('/updateOrDeleteCiv', function (req, res) {
+
+    if (req.body.action === "update") {
+      Civilian.findOneAndUpdate({
+        '_id': ObjectId(req.body.civilianID),
+        'civilian.email': req.body.email
+      },{
+        $set: {
+          "civilian.firstName": req.body.firstName.trim().charAt(0).toUpperCase() + req.body.firstName.trim().slice(1),
+          "civilian.lastName": req.body.lastName.trim().charAt(0).toUpperCase() + req.body.lastName.trim().slice(1),
+          'civilian.birthday': req.body.birthday,
+          'civilian.warrants': req.body.warrants,
+          'civilian.licenseStatus': req.body.licenseStatus
+      }
+      }, function (err) {
+        if (err) return console.error(err);
+        res.redirect('/civ-dashboard');
+      })
+    } else {
+      Civilian.deleteOne({
+        '_id': ObjectId(req.body.civilianID),
+        'civilian.email': req.body.email,
+      }, function (err) {
+        Ticket.deleteMany({ // used to delete all the legacy tickets that don't have separate first/last names
+          'ticket.civName': req.body.firstName + " " + req.body.lastName,
         }, function (err){
-          if (err) return console.error(err);
-          res.redirect('/civ-dashboard');
+          // the new future way to delete tickets, eventually we will have civEmail and
+          // civID to only delete the specific tickets for that civ
+          Ticket.deleteMany({
+            'ticket.civFirstName': req.body.firstName,
+            'ticket.civLastName': req.body.lastName
+          }, function (err){
+            if (err) return console.error(err);
+            res.redirect('/civ-dashboard');
+          })
         })
       })
-    })
+    }
   })
 
   app.post('/deleteEms', function (req, res) {

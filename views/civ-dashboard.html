@@ -132,7 +132,7 @@
             <fieldset>
 
             <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
             <h4>Add a New Civilian</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
@@ -302,43 +302,60 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form action="/deleteCiv" method="POST">
+          <form class="form-horizontal" action="/updateOrDeleteCiv" method="POST">
           <fieldset>
-            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true" onclick="clearHelpText()">X</button>
             <h4>Details about your Civilian</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
-            <div class="col-md-9">
-              <label class="col-md-4 control-label margin-bottom-1" for="firstNameView">First Name:</label>
-              <label id="firstNameView" class="col-md-5"></label>
-              <input type="hidden" id="firstName" name="firstName">
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="firstNameView">First Name:</label>
+                <div class="col-md-4">
+                  <input id="firstName" name="firstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
+                </div>
             </div>
 
-            <div class="col-md-9">
-              <label class="col-md-4 control-label margin-bottom-1" for="lastNameView">Last Name:</label>
-              <label id="lastNameView" class="col-md-5"></label>
-              <input type="hidden" id="lastName" name="lastName">
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="lastNameView">Last Name:</label>
+              <div class="col-md-4">
+                <input id="lastName" name="lastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
+              </div>
             </div>
 
-            <div class="col-md-9">
-              <label class="col-md-4 control-label margin-bottom-1" for="licenseStatusView">License Status:</label>
-              <label id="licenseStatusView" class="col-md-5"></label>
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="licenseStatusView">License Status</label>
+                <div class="col-md-4">
+                  <select id="licenseStatusView" name="licenseStatus" class="form-control" selected="selected">
+                    <option value="1">Valid</option>
+                    <option value="2">Revoked</option>
+                    <option value="3">None</option>
+                  </select>
+                </div>
+              </div>
+
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="birthdayView">Date of Birth</label>
+              <div class="col-md-4">
+                <input id="delBirthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
             </div>
 
-            <div class="col-md-9">
-              <label class="col-md-4 control-label margin-bottom-1" for="birthdayView">Date of Birth:</label>
-              <label id="birthdayView" class="col-md-5"></label>
-              <input type="hidden" id="delBirthday" name="birthday">
-            </div>
-
-            <div class="col-md-9">
-              <label class="col-md-4 control-label margin-bottom-1" for="warrantsView">Warrants?</label>
-              <label id="warrantsView" class="col-md-5"></label>
-            </div>
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="warrantsView">Warrants?</label>
+                <div class="col-md-4">
+                  <select id="warrantsView" name="warrants" class="form-control">
+                    <option value="2">Yes</option>
+                    <option value="1">No</option>
+                  </select>
+                </div>
+              </div>
 
             <div class="col-md-12 text-align-center">
               <input type="hidden" id="email" name="email">
-              <button type="submit" class="btn btn-danger">Delete Civilian</button>
+              <input type="hidden" id="civilianID" name="civilianID">
+              <button type="submit" value="update" name="action" class="btn btn-info" onclick="clearHelpText()">Update Civilian</button>
+              <button type="submit" value="delete" name="action" class="btn btn-danger" onclick="clearHelpText()">Delete Civilian</button>
             </div>
             </fieldset>
           </form>
@@ -428,36 +445,21 @@
 <script type="text/javascript">
   function loadCivData(index) {
     var myVar = <%- JSON.stringify(personas) %>;
-
+    
     var firstName = myVar[index].civilian.firstName
     var lastName = myVar[index].civilian.lastName
     var birthday = myVar[index].civilian.birthday
     var address = myVar[index].civilian.address
     var licenseStatus = myVar[index].civilian.licenseStatus
-    switch(licenseStatus) {
-      case "1":
-        licenseStatus = "Valid"
-        break
-      case "2":
-        licenseStatus = "Revoked"
-        break
-      default:
-        licenseStatus = "None"
-    }
-
     var warrants = myVar[index].civilian.warrants
-    if (warrants === "1") {
-      warrants = "No"
-    } else {
-      warrants = "Yes"
-    }
-
+    
+    $('#civilianID').val(myVar[index]._id)
     $('#firstNameView').text(firstName)
     $('#firstName').text(firstName)
     $('#lastNameView').text(lastName)
-    $('#licenseStatusView').text(licenseStatus)
+    $('#licenseStatusView').val(licenseStatus)
     $('#birthdayView').text(birthday)
-    $('#warrantsView').text(warrants)
+    $('#warrantsView').val(warrants)
 
     // data to be sent to db for civ deletion
     $('#firstName').val(firstName)
@@ -512,6 +514,12 @@
     $('#civ-last-name').popover('hide')
   }
 
+  function clearHelpText() {
+    $('#firstName').popover('hide')
+    $('#lastName').popover('hide')
+  }
+
+  // prevents spaces from user input
   $(document).ready(function(){
 $("#civ-first-name").keydown(function(event) {
     if (event.keyCode == 32) {
@@ -521,12 +529,28 @@ $("#civ-first-name").keydown(function(event) {
       $('#civ-first-name').popover('hide')
     }
 });
+$("#firstName").keydown(function(event) {
+    if (event.keyCode == 32) {
+        event.preventDefault();
+        $('#firstName').popover('show')
+    } else {
+      $('#firstName').popover('hide')
+    }
+});
 $("#civ-last-name").keydown(function(event) {
     if (event.keyCode == 32) {
         event.preventDefault();
         $('#civ-last-name').popover('show')
     } else {
       $('#civ-last-name').popover('hide')
+    }
+});
+$("#lastName").keydown(function(event) {
+    if (event.keyCode == 32) {
+        event.preventDefault();
+        $('#lastName').popover('show')
+    } else {
+      $('#lastName').popover('hide')
     }
 });
 });
