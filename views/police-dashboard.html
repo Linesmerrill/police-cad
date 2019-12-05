@@ -316,7 +316,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/create-ticket" method="POST">
+          <form id="ticket-form" class="form-horizontal" action="/create-ticket" method="POST">
             <fieldset>
 
               <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
@@ -340,7 +340,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="ticket-civ-first-name">First & Last Name</label>
                 <div class="col-md-4">
-                    <input id="ticket-civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md awesomplete" data-trigger="first-name-popover" style="text-transform:capitalize;" required="" data-list="">
+                    <input id="ticket-civ-first-name" name="civFirstName" type="text" placeholder="First and Last Name" class="form-control input-md awesompleteTicket" data-trigger="first-name-popover" data-content="* Please select from dropdown." style="text-transform:capitalize;" required="" data-list="">
                 </div>
               </div>
 
@@ -494,7 +494,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/create-ticket" method="POST">
+          <form id="warning-form" class="form-horizontal" action="/create-ticket" method="POST">
             <fieldset>
 
               <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
@@ -518,7 +518,7 @@
               <div class="form-group">
                   <label class="col-md-4 control-label" for="warning-civ-first-name">First & Last Name</label>
                   <div class="col-md-4">
-                      <input id="warning-civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md awesomplete" data-trigger="first-name-popover" style="text-transform:capitalize;" required="" data-list="">
+                      <input id="warning-civ-first-name" name="civFirstName" type="text" placeholder="First and Last Name" class="form-control input-md awesomplete" data-trigger="first-name-popover" data-content="* Please select from dropdown." style="text-transform:capitalize;" required="" data-list="">
                   </div>
                 </div>
 
@@ -816,14 +816,14 @@ $(document).ready(function() {
   });
 
   var input = document.getElementById("ticket-civ-first-name");
-  awesomplete = new Awesomplete(input);
+  awesompleteTicket = new Awesomplete(input);
 
   socket.on('find_user_result', function(user) {
     var users = []
     for (i=0; i< user.length; i++){
       users.push(user[i].civilian.firstName+ " "+ user[i].civilian.lastName + " | " + user[i].civilian.birthday + " | " + user[i]._id)
     }
-    awesomplete.list = users;
+    awesompleteTicket.list = users;
   })
 
   $("#warning-civ-first-name").keyup(function(event) {
@@ -1097,11 +1097,25 @@ function searchPlate() {
   function hideTicketCivPopover() {
     $('#ticket-civ-first-name').popover('hide')
     $('#ticket-civ-last-name').popover('hide')
+    if (!$('#ticket-civ-first-name').val().includes('|')) {
+      $('#ticket-civ-first-name').popover('show')
+      $('#ticket-form').attr('onsubmit','return false;');
+    } else {
+      $('#ticket-civ-first-name').popover('hide')
+      $('#ticket-form').attr('onsubmit','return true;');
+    }
   }
 
   function hideWarningCivPopover() {
     $('#warning-civ-first-name').popover('hide')
     $('#warning-civ-last-name').popover('hide')
+    if (!$('#warning-civ-first-name').val().includes('|')) {
+      $('#warning-civ-first-name').popover('show')
+      $('#warning-form').attr('onsubmit','return false;');
+    } else {
+      $('#warning-civ-first-name').popover('hide')
+      $('#warning-form').attr('onsubmit','return true;');
+    }
   }
 
   function hideCivPopover() {

@@ -564,11 +564,28 @@ module.exports = function (app, passport, server) {
     });
 
       socket.on('find_user', function(value) {
-        Civilian.find({'civilian.firstName': value}, function(err, user) {
-          if (err) throw err;
-          if (!user) socket.emit('find_user_result', {});
-          else socket.emit('find_user_result', user)
-        })
+        firstNameAndLastName = value.split(" ")
+        if (firstNameAndLastName.length < 2) {
+          const regexFirstName = new RegExp(escapeRegex(firstNameAndLastName[0].trim(), 'gi'))
+          Civilian.find({'civilian.firstName': regexFirstName}, function(err, user) {
+            if (err) throw err;
+            if (!user) socket.emit('find_user_result', {});
+            else socket.emit('find_user_result', user)
+          })
+        } else if (firstNameAndLastName.length == 2 && firstNameAndLastName[1] == "") {
+          Civilian.find({'civilian.firstName': firstNameAndLastName[0].trim()}, function(err, user) {
+            if (err) throw err;
+            if (!user) socket.emit('find_user_result', {});
+            else socket.emit('find_user_result', user)
+          })
+        } else {
+          const regexLastName = new RegExp(escapeRegex(firstNameAndLastName[1].trim(), 'gi'))
+          Civilian.find({'civilian.firstName': firstNameAndLastName[0].trim(), 'civilian.lastName': regexLastName}, function(err, user) {
+            if (err) throw err;
+            if (!user) socket.emit('find_user_result', {});
+            else socket.emit('find_user_result', user)
+          })
+        }
       })
   });
 
@@ -580,3 +597,7 @@ function auth(req, res, next) {
   }
   res.redirect('/login')
 }
+
+function escapeRegex(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+};
