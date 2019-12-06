@@ -861,272 +861,153 @@ function searchPlate() {
   }
 }
 
-  function searchNames() {
-    $('#noWarrantFound').removeAttr("style").hide()
-    $('#warrantMessage').removeAttr("style").hide()
-    let x = document.getElementById('civDetails');
-    if (x.style.display === 'none') {
-      x.style.display = 'block';
-    } else {}
-    let myCiv = <%-JSON.stringify(civilians)%>;
-    let myTicket = <%-JSON.stringify(tickets)%>;
-    if (myCiv === null || myTicket === null) {
-      hideCivPopover();
-      return
-    } else if (myCiv.length === 0) {
-      let civDetails = document.getElementById('civDetails')
-      civDetails.style.display = 'none'
-      let civNotFoundMsg = document.getElementById('civilianNotFound')
-      civNotFoundMsg.style.display = 'block'
-      hideCivPopover();
-      return
-    }
+function searchNames() {
+  let currentCiv = <%-JSON.stringify(civilians)%>;
+  if (currentCiv === null) {
     hideCivPopover();
-  }
-
-  function checkWarrantStatus() {
-    let myVar = <%-JSON.stringify(civilians)%>;
-    if (myVar === null) {
-      return
-    }
-    //this search just grabs the first it finds if there duplicates.. we should fix this
-    let warrants = myVar[0].civilian.warrants
-    if (warrants === "1") {
-      $('#noWarrantFound').show()
-      $('#warrantMessage').removeAttr("style").hide()
-    } else {
-      $('#noWarrantFound').removeAttr("style").hide()
-      $('#warrantMessage').show()
-    }
-  }
-
-  // prevents submit modal when pressing enter because it closes the entire window and does not submit.
-  // we should fix the modals so this can work as expected.
-  $(document).on("keypress", "form", function (event) {
-    return event.keyCode != 13;
-  });
-
-  function toggle_visibility(id) {
-    if (id.id === "speedViolationGroup") {
-      id.style.display = 'block'
-      duiViolationGroup.style.display = 'none';
-      driverLicenseViolationGroup.style.display = 'none';
-      otherOffenseGroup.style.display = 'none';
-    } else if (id.id === "duiViolationGroup") {
-      id.style.display = 'block'
-      speedViolationGroup.style.display = 'none';
-      driverLicenseViolationGroup.style.display = 'none';
-      otherOffenseGroup.style.display = 'none';
-    } else if (id.id === "driverLicenseViolationGroup") {
-      id.style.display = 'block'
-      speedViolationGroup.style.display = 'none';
-      duiViolationGroup.style.display = 'none';
-      otherOffenseGroup.style.display = 'none';
-    } else if (id.id === "warningSpeedViolationGroup") {
-      id.style.display = 'block'
-      warningDuiViolationGroup.style.display = 'none';
-      warningDriverLicenseViolationGroup.style.display = 'none';
-      warningOtherOffenseGroup.style.display = 'none';
-    } else if (id.id === "warningDuiViolationGroup") {
-      id.style.display = 'block'
-      warningSpeedViolationGroup.style.display = 'none';
-      warningDriverLicenseViolationGroup.style.display = 'none';
-      warningOtherOffenseGroup.style.display = 'none';
-    } else if (id.id === "warningDriverLicenseViolationGroup") {
-      id.style.display = 'block'
-      warningSpeedViolationGroup.style.display = 'none';
-      warningDuiViolationGroup.style.display = 'none';
-      warningOtherOffenseGroup.style.display = 'none';
-    } else if (id === "none") {
-      duiViolationGroup.style.display = 'none';
-      driverLicenseViolationGroup.style.display = 'none';
-      otherOffenseGroup.style.display = 'none';
-    } else if (id === "warningNone") {
-      warningDuiViolationGroup.style.display = 'none';
-      warningDriverLicenseViolationGroup.style.display = 'none';
-      warningOtherOffenseGroup.style.display = 'none';
-    } else {
-      id.style.display = 'block';
-      speedViolationGroup.style.display = 'none';
-      duiViolationGroup.style.display = 'none';
-      driverLicenseViolationGroup.style.display = 'none';
-    }
-  }
-
-  function setDateAndTime() {
-    document.getElementById('date').valueAsDate = new Date();
-    time = document.getElementById('time');
-    time.value = new Date().toLocaleTimeString('en-GB', {
-      hour: "numeric",
-      minute: "numeric"
-    });
-  }
-
-  function setDateAndTimeForWarning() {
-    document.getElementById('warning-date').valueAsDate = new Date();
-    time = document.getElementById('warning-time');
-    time.value = new Date().toLocaleTimeString('en-GB', {
-      hour: "numeric",
-      minute: "numeric"
-    });
-  }
-
-  function getSrcFromModel(model) {
-    // users sometimes enter the manufacturer and model so this checks to see if there were 2
-    // strings passed and will grab the second value (ex. Maibatsu Mule => Mule)
-    model = model.split(" ")
-    if (model.length <= 1) {
-      model = model[0].toLowerCase()
-    } else {
-      model = model[1].toLowerCase()
-    }
-    let boats = ["tug", "toro", "kraken", "speeder", "seashark lifeguard", "tropic",
-      "suntrap", "submersible", "squalo", "seashark", "police perdator", "marquis", "jetmax", "dinghy"
-    ]
-    let commercial = ["cerberus", "terrorbyte", "stockade", "pounder", "phantom",
-      "packer", "mule", "hauler", "biff", "benson"
-    ]
-    let compacts = ["issi", "brioso", "rhapsody", "panto", "dilettante", "prairie", "blista"]
-    let coupes = ["windsor", "zion", "sentinel", "oracle", "jackal", "felon", "f620",
-      "exemplar", "cognoscenti-cabrio"
-    ]
-    let cycles = ["whippet-race-bike", "tri-cycles-race-bike", "scorcher", "fixter",
-      "endurex-race-bike", "cruiser", "bmx"
-    ]
-    let industrial = ["guardian", "mixer", "tipper", "rubble", "flatbed", "dump", "dozer"]
-    let motorcycles = ["deathbike", "oppressor", "fcr-1000", "diabolus", "esskey", "shotaro",
-      "sanctus", "vortex", "daemon", "zombie", "wolfsbane", "rat-bike", "nightblade", "manchez",
-      "hakuchou", "faggio", "defiler", "chimera", "avarus", "cliffhanger", "gargoyle", "bf400",
-      "vindicator", "letro", "enduro", "innovation", "hakuchou", "sovereign", "thrust", "vader",
-      "sanchez", "ruffian", "pcj-600", "nemesis", "hexer", "double-t", "carbon-rs", "bati-801",
-      "bagger", "akuma"
-    ]
-    let muscle = ["blade", "buccaneer", "burger-shot-stallion", "chino", "clique", "coquette",
-      "deviant", "dominator", "dukes", "ellie", "faction", "gauntlet", "hermes", "hotknife",
-      "hustler", "impaler", "imperator", "lurcher", "moonbeam", "nightshade", "phoenix", "voodoo-custom",
-      "weaponized-tampa", "yosemite"
-    ]
-    let offRoad = ["baller", "bf400", "bifta", "blazer", "bodhi", "brawler", "bruiser", "brutus",
-      "caracara", "desert-raid", "dubsta-6x6", "dune", "buggy", "duneloader", "freecrawler", "guardian",
-      "hot-rod-blazer", "injection", "insurgent", "kalahari", "kamacho", "marshall", "menacer", "trophy-truck"
-    ]
-    let sedans = ["asea", "asterope", "cognoscenti", "emperor", "fugitive", "glendale", "ingot", 
-      "intruder", "premier", "primo", "regina", "romero-hearse", "schafter", "stafford", "stanier",
-      "stratum", "stretch", "super-diamond", "surge", "tailgater", "warrener", "washington"
-    ]
-    let sports = ["9f", "alpha", "banshee", "bestia", "blista-compact", "buffalo", "carbonizzare",
-      "comet", "coquette", "drafter-8f", "drift-tampa", "elegy-rh8", "feltzer", "flash-gt", "furore-gt",
-      "fusilade", "futo", "gb200", "go-go-monkey-blista", "hotring", "issi-sport", "itali-gto", "jester",
-      "khamelion", "kuruma", "lynx", "massacro", "neon", "omnis", "paragon", "pariah", "penumbra", "raiden",
-      "rapid-gt", "raptor", "revolter", "ruston", "schafter", "schlagen", "schwartzer", "sentinel", "seven-70",
-      "specter", "sprunk-buffalo", "streiter", "sultan", "surano", "tropos-rallye", "verlierer", "zr-380"
-    ]
-    let sportsClassic = ["190z", "ardent", "casco", "cheburek", "cheetah-classic", "coquette-classic",
-      "deluxo", "fagaloa", "franken-stange", "gt500", "infernus-classic", "jb700", "mamba", "manana",
-      "michelli-gt", "monroe", "peyote", "pigalle", "retinue", "roosevelt", "savestra", "stinger",
-      "stirling-gt", "stromberg", "swinger", "torero", "tornado", "viseris", "ztype"
-    ]
-    let superCars = ["811", "adder", "autarch", "banshee", "bullet", "cheetah", "cyclone", "deveste",
-      "entity", "etr1", "fmj", "gp1", "infernus", "itali", "nero", "osiris", "penetrator", "reaper", 
-      "re-7b", "rocket-voltic", "s80rr", "scramjet", "sc1", "sultan", "t20", "taipan", "tempesta",
-      "tezeract", "thrax", "turismo", "tyrant", "tyrus", "vacca", "vagner", "vigilante", "visione", 
-      "voltic", "x80", "xa-21", "zentorno"
-    ]
-    let suvs = ["baller", "beejay", "cavalcade", "contender", "crusader", "dubsta", "fq2", "granger",
-      "gresley", "habanero", "huntley", "lanstalker", "mesa", "park-ranger", "patriot", "radius",
-      "rocoto", "seminole", "serrano", "toros", "xls"
-    ]
-    let utility = ["sadler", "scrap-truck", "tow", "utility"]
-    let vans = ["bison", "bobcat", "boxville", "burrito", "camper", "clown", "journey", "minivan", 
-      "paradise", "pony", "rcv", "rumpo", "speedo", "surfer", "taco-van", "youga"
-    ]
-    if (boats.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/boats/" + model + ".jpg"
-    } else if (commercial.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/commercial/" + model + ".jpg"
-    } else if (compacts.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/compacts/" + model + ".jpg"
-    } else if (coupes.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/coupes/" + model + ".jpg"
-    } else if (cycles.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/cycles/" + model + ".jpg"
-    } else if (industrial.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/industrial/" + model + ".jpg"
-    } else if (motorcycles.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/motorcycles/" + model + ".jpg"
-    } else if (muscle.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/muscle/" + model + ".jpg"
-    } else if (offRoad.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/off-road/" + model + ".jpg"
-    } else if (sedans.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/sedans/" + model + ".jpg"
-    } else if (sports.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/sports/" + model + ".jpg"
-    } else if (sportsClassic.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/sports-classic/" + model + ".jpg"
-    } else if (superCars.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/super/" + model + ".jpg"
-    } else if (suvs.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/suvs/" + model + ".jpg"
-    } else if (utility.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/utility/" + model + ".jpg"
-    } else if (vans.includes(model)) {
-      return "http://www.gtabase.com/images/gta-5/vehicles/vans/" + model + ".jpg"
-    }
-    else {
-      return "image-not-found";
-    }
-  }
-
-  $('#ticketModal').on('hidden.bs.modal', function () {
-    $(this).find('form').trigger('reset');
-  })
-
-  $('#nameDatabaseModal').on('hidden.bs.modal', function () {
-    $('#warrantMessage').removeAttr("style").hide()
-    $(this).find('form').trigger('reset');
+    return
+  } else if (currentCiv.length === 0) {
     $('#civDetails').removeAttr("style").hide()
-  })
-
-  $('#plateDatabaseModal').on('hidden.bs.modal', function () {
-    $(this).find('form').trigger('reset');
-    $('#plateDetails').removeAttr("style").hide()
-    $('#stolenMessage').removeAttr("style").hide()
-  })
-
-  function hideTicketCivPopover() {
-    $('#ticket-civ-first-name').popover('hide')
-    $('#ticket-civ-last-name').popover('hide')
-    if (!$('#ticket-civ-first-name').val().includes('|')) {
-      $('#ticket-civ-first-name').popover('show')
-      $('#ticket-form').attr('onsubmit','return false;');
-    } else {
-      $('#ticket-civ-first-name').popover('hide')
-      $('#ticket-form').attr('onsubmit','return true;');
-    }
+    $('#civilianNotFound').show()
+    hideCivPopover();
+    return
   }
+  hideCivPopover();
+}
 
-  function hideWarningCivPopover() {
-    $('#warning-civ-first-name').popover('hide')
-    $('#warning-civ-last-name').popover('hide')
-    if (!$('#warning-civ-first-name').val().includes('|')) {
-      $('#warning-civ-first-name').popover('show')
-      $('#warning-form').attr('onsubmit','return false;');
-    } else {
-      $('#warning-civ-first-name').popover('hide')
-      $('#warning-form').attr('onsubmit','return true;');
-    }
+function checkWarrantStatus() {
+  let myVar = <%-JSON.stringify(civilians)%>;
+  if (myVar === null) {
+    return
   }
-
-  function hideCivPopover() {
-    $('#civ-first-name').popover('hide')
-    $('#civ-last-name').popover('hide')
-  }
-
-  function hideWarningModal() {
-    $('#civilianNotFound').removeAttr("style").hide()
-    $('#licenseMessage').removeAttr("style").hide()
-    $('#noWarrantFound').removeAttr("style").hide()
+  //this search just grabs the first it finds if there duplicates.. we should fix this
+  let warrants = myVar[0].civilian.warrants
+  if (warrants === "1") {
     $('#warrantMessage').removeAttr("style").hide()
+  } else {
+    $('#warrantMessage').show()
   }
+}
+
+// prevents submit modal when pressing enter because it closes the entire window and does not submit.
+// we should fix the modals so this can work as expected.
+$(document).on("keypress", "form", function (event) {
+  return event.keyCode != 13;
+});
+
+function toggle_visibility(id) {
+  if (id.id === "speedViolationGroup") {
+    id.style.display = 'block'
+    duiViolationGroup.style.display = 'none';
+    driverLicenseViolationGroup.style.display = 'none';
+    otherOffenseGroup.style.display = 'none';
+  } else if (id.id === "duiViolationGroup") {
+    id.style.display = 'block'
+    speedViolationGroup.style.display = 'none';
+    driverLicenseViolationGroup.style.display = 'none';
+    otherOffenseGroup.style.display = 'none';
+  } else if (id.id === "driverLicenseViolationGroup") {
+    id.style.display = 'block'
+    speedViolationGroup.style.display = 'none';
+    duiViolationGroup.style.display = 'none';
+    otherOffenseGroup.style.display = 'none';
+  } else if (id.id === "warningSpeedViolationGroup") {
+    id.style.display = 'block'
+    warningDuiViolationGroup.style.display = 'none';
+    warningDriverLicenseViolationGroup.style.display = 'none';
+    warningOtherOffenseGroup.style.display = 'none';
+  } else if (id.id === "warningDuiViolationGroup") {
+    id.style.display = 'block'
+    warningSpeedViolationGroup.style.display = 'none';
+    warningDriverLicenseViolationGroup.style.display = 'none';
+    warningOtherOffenseGroup.style.display = 'none';
+  } else if (id.id === "warningDriverLicenseViolationGroup") {
+    id.style.display = 'block'
+    warningSpeedViolationGroup.style.display = 'none';
+    warningDuiViolationGroup.style.display = 'none';
+    warningOtherOffenseGroup.style.display = 'none';
+  } else if (id === "none") {
+    duiViolationGroup.style.display = 'none';
+    driverLicenseViolationGroup.style.display = 'none';
+    otherOffenseGroup.style.display = 'none';
+  } else if (id === "warningNone") {
+    warningDuiViolationGroup.style.display = 'none';
+    warningDriverLicenseViolationGroup.style.display = 'none';
+    warningOtherOffenseGroup.style.display = 'none';
+  } else {
+    id.style.display = 'block';
+    speedViolationGroup.style.display = 'none';
+    duiViolationGroup.style.display = 'none';
+    driverLicenseViolationGroup.style.display = 'none';
+  }
+}
+
+function setDateAndTime() {
+  document.getElementById('date').valueAsDate = new Date();
+  var time = document.getElementById('time');
+  time.value = new Date().toLocaleTimeString('en-GB', {
+    hour: "numeric",
+    minute: "numeric"
+  });
+}
+
+function setDateAndTimeForWarning() {
+  document.getElementById('warning-date').valueAsDate = new Date();
+  var time = document.getElementById('warning-time');
+  time.value = new Date().toLocaleTimeString('en-GB', {
+    hour: "numeric",
+    minute: "numeric"
+  });
+}
+
+$('#ticketModal').on('hidden.bs.modal', function () {
+  $(this).find('form').trigger('reset');
+})
+
+$('#nameDatabaseModal').on('hidden.bs.modal', function () {
+  $('#warrantMessage').removeAttr("style").hide()
+  $(this).find('form').trigger('reset');
+  $('#civDetails').removeAttr("style").hide()
+})
+
+$('#plateDatabaseModal').on('hidden.bs.modal', function () {
+  $(this).find('form').trigger('reset');
+  $('#plateDetails').removeAttr("style").hide()
+  $('#stolenMessage').removeAttr("style").hide()
+})
+
+function hideTicketCivPopover() {
+  $('#ticket-civ-first-name').popover('hide')
+  $('#ticket-civ-last-name').popover('hide')
+  if (!$('#ticket-civ-first-name').val().includes('|')) {
+    $('#ticket-civ-first-name').popover('show')
+    $('#ticket-form').attr('onsubmit','return false;');
+  } else {
+    $('#ticket-civ-first-name').popover('hide')
+    $('#ticket-form').attr('onsubmit','return true;');
+  }
+}
+
+function hideWarningCivPopover() {
+  $('#warning-civ-first-name').popover('hide')
+  $('#warning-civ-last-name').popover('hide')
+  if (!$('#warning-civ-first-name').val().includes('|')) {
+    $('#warning-civ-first-name').popover('show')
+    $('#warning-form').attr('onsubmit','return false;');
+  } else {
+    $('#warning-civ-first-name').popover('hide')
+    $('#warning-form').attr('onsubmit','return true;');
+  }
+}
+
+function hideCivPopover() {
+  $('#civ-first-name').popover('hide')
+  $('#civ-last-name').popover('hide')
+}
+
+function hideWarningModal() {
+  $('#civilianNotFound').removeAttr("style").hide()
+  $('#licenseMessage').removeAttr("style").hide()
+  $('#warrantMessage').removeAttr("style").hide()
+}
 </script>
