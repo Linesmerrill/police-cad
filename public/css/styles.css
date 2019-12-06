@@ -333,6 +333,11 @@ footer {
     box-shadow: none;
 }
 
+.form-label {
+    padding: 6px 0px 0px 0px;
+    font-size: 14px;
+}
+
 textarea {
     resize: none;
 }

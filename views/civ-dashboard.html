@@ -309,6 +309,13 @@
             <hr style="width: 88%;max-width: 100rem;">
 
             <div class="form-group">
+              <label class="col-md-4 control-label" for="civilianIDView">ID #:</label>
+              <div class="col-md-4">
+                <label id="civilianIDView" class="form-label"></label>
+              </div>
+            </div>
+
+            <div class="form-group">
                 <label class="col-md-4 control-label" for="firstNameView">First Name:</label>
                 <div class="col-md-4">
                   <input id="firstName" name="firstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
@@ -477,6 +484,7 @@
     
     $('#civilianID').val(myVar[index]._id)
     $('#firstNameView').text(firstName)
+    $('#civilianIDView').text(myVar[index]._id)
     $('#firstName').text(firstName)
     $('#lastNameView').text(lastName)
     $('#licenseStatusView').val(licenseStatus)
