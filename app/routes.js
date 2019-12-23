@@ -42,22 +42,16 @@ module.exports = function (app, passport, server) {
     response.redirect('/');
   });
 
-  app.get('/login-civ', function (request, response) {
-    response.render('login-civ.html', {
-      message: request.flash('error')
-    });
+  app.get('/login-civ', authCivilian, function (request, response) {
+    response.redirect('/civ-dashboard');
   });
 
-  app.get('/login-police', function (request, response) {
-    response.render('login-police.html', {
-      message: request.flash('error')
-    });
+  app.get('/login-police', authPolice, function (request, response) {
+    response.redirect('/police-dashboard')
   });
 
-  app.get('/login-ems', function (request, response) {
-    response.render('login-ems.html', {
-      message: request.flash('error')
-    });
+  app.get('/login-ems', authEms, function (request, response) {
+    response.redirect('/ems-dashboard')
   });
 
   app.get('/signup-civ', function (request, response) {
@@ -571,4 +565,31 @@ function auth(req, res, next) {
     return next();
   }
   res.redirect('/login')
+}
+
+function authCivilian(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.render('login-civ.html', {
+    message: req.flash('error')
+  });
+}
+
+function authPolice(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.render('login-police.html', {
+    message: req.flash('error')
+  });
+}
+
+function authEms(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.render('login-ems.html', {
+    message: req.flash('error')
+  });
 }
