@@ -955,8 +955,8 @@ function searchPlate() {
     document.getElementById('date').valueAsDate = new Date();
     time = document.getElementById('time');
     time.value = new Date().toLocaleTimeString('en-GB', {
-      hour: "numeric",
-      minute: "numeric"
+      hour: "2-digit",
+      minute: "2-digit"
     });
   }
 
@@ -964,8 +964,8 @@ function searchPlate() {
     document.getElementById('warning-date').valueAsDate = new Date();
     time = document.getElementById('warning-time');
     time.value = new Date().toLocaleTimeString('en-GB', {
-      hour: "numeric",
-      minute: "numeric"
+      hour: "2-digit",
+      minute: "2-digit"
     });
   }
 
