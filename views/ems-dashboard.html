@@ -402,7 +402,7 @@
     var myVar = <%- JSON.stringify(vehicles) %>;
 
     var color = myVar[index].emsVehicle.color
-    var email = myVar[index].emsVehicle.email
+    var email = myVar[index].emsVehicle.email.toLowerCase()
     var plate = myVar[index].emsVehicle.plate.toUpperCase()
     var model = myVar[index].emsVehicle.model
     var registeredOwner = myVar[index].emsVehicle.registeredOwner
@@ -410,7 +410,7 @@
     $('#modelView').text(model)
     $('#colorView').text(color)
     $('#roView').text(registeredOwner)
-    $('#emailVeh').val(email)
+    $('#emailVeh').val(email.toLowerCase())
     $('#modelVeh').val(model)
     $('#roVeh').val(registeredOwner)
     $('#plateVeh').val(plate)

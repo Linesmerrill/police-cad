@@ -494,7 +494,7 @@
     // data to be sent to db for civ deletion
     $('#firstName').val(firstName)
     $('#lastName').val(lastName)
-    $('#email').val(myVar[index].civilian.email)
+    $('#email').val(myVar[index].civilian.email.toLowerCase())
     $('#delBirthday').val(birthday)
   }
 
@@ -502,7 +502,7 @@
     var myVar = <%- JSON.stringify(vehicles) %>;
 
     $('#vehicleID').val(myVar[index]._id)
-    $('#emailVeh').val(myVar[index].vehicle.email)
+    $('#emailVeh').val(myVar[index].vehicle.email.toLowerCase())
     $('#plateVeh').val(myVar[index].vehicle.plate.toUpperCase())
     $('#modelVeh').val(myVar[index].vehicle.model)
     $('#colorView').val(myVar[index].vehicle.color)
