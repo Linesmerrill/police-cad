@@ -408,7 +408,7 @@ module.exports = function (app, passport, server) {
 
   app.post('/create-vehicle', function (req, res) {
     User.findOne({
-      'user.email': req.body.submitNewVeh
+      'user.email': req.body.submitNewVeh.toLowerCase()
     }, function (err, user) {
 
       var myVeh = new Vehicle()
@@ -421,7 +421,7 @@ module.exports = function (app, passport, server) {
 
   app.post('/create-ems-vehicle', function (req, res) {
     User.findOne({
-      'user.email': req.body.submitNewVeh
+      'user.email': req.body.submitNewVeh.toLowerCase()
     }, function (err, user) {
 
       var myVeh = new EmsVehicle()
