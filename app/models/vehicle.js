@@ -23,7 +23,7 @@ vehicleSchema.methods.updateVeh = function(request, response) {
  this.vehicle.validInsurance = request.body.validInsurance;
  this.vehicle.registeredOwner = request.body.registeredOwner.trim();
  this.vehicle.isStolen = request.body.isStolen;
- this.vehicle.email = request.body.submitNewVeh;
+ this.vehicle.email = request.body.submitNewVeh.toLowerCase();
  response.redirect('/civ-dashboard');
 };
 

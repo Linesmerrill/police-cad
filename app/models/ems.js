@@ -21,7 +21,7 @@ emsSchema.methods.updateEms = function(request, response) {
  this.ems.assignmentArea = request.body.assignmentArea;
  this.ems.station = request.body.station;
  this.ems.callSign = request.body.callSign;
- this.ems.email = request.body.submitNewEms;
+ this.ems.email = request.body.submitNewEms.toLowerCase();
  response.redirect('/ems-dashboard');
 };
 

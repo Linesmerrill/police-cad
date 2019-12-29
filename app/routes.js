@@ -104,10 +104,10 @@ module.exports = function (app, passport, server) {
 
   app.get('/civ-dashboard', auth, function (request, response) {
     Civilian.find({
-      'civilian.email': request.user.user.email
+      'civilian.email': request.user.user.email.toLowerCase()
     }, function (err, dbPersonas) {
       Vehicle.find({
-        'vehicle.email': request.user.user.email
+        'vehicle.email': request.user.user.email.toLowerCase()
       }, function (err, dbVehicles) {
         response.render('civ-dashboard.html', {
           user: request.user,
@@ -120,10 +120,10 @@ module.exports = function (app, passport, server) {
 
   app.get('/ems-dashboard', auth, function (request, response) {
     Ems.find({
-      'ems.email': request.user.user.email
+      'ems.email': request.user.user.email.toLowerCase()
     }, function (err, dbPersonas) {
       EmsVehicle.find({
-        'emsVehicle.email': request.user.user.email
+        'emsVehicle.email': request.user.user.email.toLowerCase()
       }, function (err, dbVehicles) {
         response.render('ems-dashboard.html', {
           user: request.user,
@@ -226,7 +226,7 @@ module.exports = function (app, passport, server) {
       },
       function (token, done) {
         User.findOne({
-          'user.email': req.body.email
+          'user.email': req.body.email.toLowerCase()
         }, function (err, users) {
           if (!users) {
             req.flash('emailSend', 'No account with that email address exists.');
@@ -380,7 +380,7 @@ module.exports = function (app, passport, server) {
 
   app.post('/create-civ', function (req, res) {
     User.findOne({
-      'user.email': req.body.submitNewCiv
+      'user.email': req.body.submitNewCiv.toLowerCase()
     }, function (err, user) {
 
       var myCiv = new Civilian()
@@ -394,7 +394,7 @@ module.exports = function (app, passport, server) {
 
   app.post('/create-ems', function (req, res) {
     User.findOne({
-      'user.email': req.body.submitNewEms
+      'user.email': req.body.submitNewEms.toLowerCase()
     }, function (err, user) {
 
       var myEms = new Ems()

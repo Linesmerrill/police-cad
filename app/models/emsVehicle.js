@@ -17,7 +17,7 @@ emsVehicleSchema.methods.updateVeh = function(request, response) {
  this.emsVehicle.model = request.body.model.trim();
  this.emsVehicle.color = request.body.color.trim();
  this.emsVehicle.registeredOwner = request.body.registeredOwner.trim();
- this.emsVehicle.email = request.body.submitNewVeh;
+ this.emsVehicle.email = request.body.submitNewVeh.toLowerCase();
  response.redirect('/ems-dashboard');
 };
 

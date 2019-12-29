@@ -25,7 +25,7 @@ module.exports = function (passport) {
 		function (req, email, password, done) {
 			process.nextTick(function () {
 				User.findOne({
-					'user.email': email
+					'user.email': email.toLowerCase()
 				}, function (err, user) {
 					if (err) {
 						return done(err);
@@ -49,7 +49,7 @@ module.exports = function (passport) {
 			process.nextTick(function () {
 				if (!req.user) {
 					User.findOne({
-						'user.email': email
+						'user.email': email.toLowerCase()
 					}, function (err, user) {
 						if (err) {
 							return done(err);
@@ -59,7 +59,7 @@ module.exports = function (passport) {
 						} else {
 							var newUser = new User();
 							newUser.user.username = req.body.username;
-							newUser.user.email = email;
+							newUser.user.email = email.toLowerCase();
 							newUser.user.password = newUser.generateHash(password);
 							newUser.user.name = ''
 							newUser.user.address = ''
@@ -75,7 +75,7 @@ module.exports = function (passport) {
 				} else {
 					var user = req.user;
 					user.user.username = req.body.username;
-					user.user.email = email;
+					user.user.email = email.toLowerCase();
 					user.user.password = user.generateHash(password);
 					user.user.name = ''
 					user.user.address = ''

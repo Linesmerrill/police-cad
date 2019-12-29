@@ -36,7 +36,7 @@ ticketSchema.methods.updateTicket = function (request, response) {
   
 
   var additionalViolation = ""
-  this.ticket.officerEmail = request.body.officerEmail;
+  this.ticket.officerEmail = request.body.officerEmail.toLowerCase();
   this.ticket.caseNumber = request.body.caseNumber;
   this.ticket.plate = request.body.plate.trim().toUpperCase();
   this.ticket.model = request.body.model.trim().charAt(0).toUpperCase() + request.body.model.trim().slice(1);
