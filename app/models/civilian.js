@@ -16,7 +16,8 @@ var civilianSchema = mongoose.Schema({
   hairColor: String,
   weight: String,
   height: String,
-  image: String
+  image: String,
+  occupation: String
  }
 });
 
@@ -29,6 +30,8 @@ civilianSchema.methods.updateCiv = function(request, response) {
  this.civilian.birthday = request.body.birthday;
  this.civilian.warrants = request.body.warrants;
  this.civilian.email = request.body.submitNewCiv.toLowerCase();
+ this.civilian.address = request.body.address.trim();
+ this.civilian.occupation = request.body.occupation.trim();
  response.redirect('/civ-dashboard');
 };
 

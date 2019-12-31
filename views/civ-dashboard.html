@@ -137,7 +137,7 @@
             <hr style="width: 88%;max-width: 100rem;">
 
             <!-- Text input-->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="civ-first-name">Civilian First Name</label>
               <div class="col-md-4">
                 <input id="civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
@@ -145,7 +145,7 @@
             </div>
 
             <!-- Text input-->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="civ-last-name">Civilian Last Name</label>
               <div class="col-md-4">
                 <input id="civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
@@ -153,7 +153,7 @@
             </div>
 
             <!-- Select Basic -->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="license-status">License Status</label>
               <div class="col-md-4">
                 <select id="license-status" name="licenseStatus" class="form-control">
@@ -165,7 +165,7 @@
             </div>
 
             <!-- Text input-->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="birthday">Date of Birth</label>
               <div class="col-md-4">
               <input id="birthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
@@ -173,13 +173,29 @@
             </div>
 
             <!-- Select Basic -->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="warrants">Warrants?</label>
               <div class="col-md-4">
                 <select id="warrants" name="warrants" class="form-control">
                   <option value="1">No</option>
                   <option value="2">Yes</option>
                 </select>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="address">Address</label>
+              <div class="col-md-4">
+                <input id="address" name="address" type="text" placeholder="Address (optional)" class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="occupation">Occupation</label>
+              <div class="col-md-4">
+                <input id="occupation" name="occupation" type="text" placeholder="Occupation (optional)" class="form-control input-md">
               </div>
             </div>
 
@@ -316,7 +332,7 @@
             </div>
 
             <div class="form-group">
-                <label class="col-md-4 control-label" for="firstNameView">First Name:</label>
+                <label class="col-md-4 control-label" for="firstName">First Name:</label>
                 <div class="col-md-4">
                   <input id="firstName" name="firstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
                 </div>
@@ -356,6 +372,20 @@
                   </select>
                 </div>
               </div>
+
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="addressView">Address:</label>
+              <div class="col-md-4">
+                <input id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="occupationView">Occupation:</label>
+              <div class="col-md-4">
+                <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md">
+              </div>
+            </div>
 
             <div class="col-md-12 text-align-center">
               <input type="hidden" id="email" name="email">
@@ -478,18 +508,16 @@
     var firstName = myVar[index].civilian.firstName
     var lastName = myVar[index].civilian.lastName
     var birthday = myVar[index].civilian.birthday
-    var address = myVar[index].civilian.address
-    var licenseStatus = myVar[index].civilian.licenseStatus
-    var warrants = myVar[index].civilian.warrants
     
     $('#civilianID').val(myVar[index]._id)
-    $('#firstNameView').text(firstName)
     $('#civilianIDView').text(myVar[index]._id)
     $('#firstName').text(firstName)
     $('#lastNameView').text(lastName)
-    $('#licenseStatusView').val(licenseStatus)
+    $('#licenseStatusView').val(myVar[index].civilian.licenseStatus)
     $('#birthdayView').text(birthday)
-    $('#warrantsView').val(warrants)
+    $('#warrantsView').val(myVar[index].civilian.warrants)
+    $('#addressView').val(myVar[index].civilian.address)
+    $('#occupationView').val(myVar[index].civilian.occupation)
 
     // data to be sent to db for civ deletion
     $('#firstName').val(firstName)

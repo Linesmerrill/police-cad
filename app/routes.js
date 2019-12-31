@@ -452,7 +452,9 @@ module.exports = function (app, passport, server) {
           "civilian.lastName": req.body.lastName.trim().charAt(0).toUpperCase() + req.body.lastName.trim().slice(1),
           'civilian.birthday': req.body.birthday,
           'civilian.warrants': req.body.warrants,
-          'civilian.licenseStatus': req.body.licenseStatus
+          'civilian.licenseStatus': req.body.licenseStatus,
+          'civilian.address': req.body.address.trim(),
+          'civilian.occupation': req.body.occupation.trim()
         }
       }, function (err) {
         if (err) return console.error(err);
