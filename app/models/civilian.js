@@ -30,9 +30,22 @@ civilianSchema.methods.updateCiv = function(request, response) {
  this.civilian.birthday = request.body.birthday;
  this.civilian.warrants = request.body.warrants;
  this.civilian.email = request.body.submitNewCiv.toLowerCase();
- this.civilian.address = request.body.address.trim();
- this.civilian.occupation = request.body.occupation.trim();
+ if (exists(request.body.address)) {
+    this.civilian.address = request.body.address.trim();
+ }
+ if (exists(request.body.occupation)) {
+    this.civilian.occupation = request.body.occupation.trim();
+ } 
+ 
  response.redirect('/civ-dashboard');
 };
+
+function exists(v) {
+    if (v !== undefined) {
+      return true
+    } else {
+      return false
+    }
+  }
 
 module.exports = mongoose.model('Civilian', civilianSchema);
