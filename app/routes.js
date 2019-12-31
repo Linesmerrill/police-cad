@@ -443,6 +443,14 @@ module.exports = function (app, passport, server) {
   app.post('/updateOrDeleteCiv', function (req, res) {
 
     if (req.body.action === "update") {
+      var address
+      var occupation
+      if (exists(req.body.address)) {
+          var address = req.body.address.trim()
+      }
+      if (exists(req.body.occupation)) {
+        var occupation = req.body.occupation.trim()
+    }
       Civilian.findOneAndUpdate({
         '_id': ObjectId(req.body.civilianID),
         'civilian.email': req.body.email.toLowerCase()
@@ -453,8 +461,8 @@ module.exports = function (app, passport, server) {
           'civilian.birthday': req.body.birthday,
           'civilian.warrants': req.body.warrants,
           'civilian.licenseStatus': req.body.licenseStatus,
-          'civilian.address': req.body.address.trim(),
-          'civilian.occupation': req.body.occupation.trim()
+          'civilian.address': address,
+          'civilian.occupation': occupation
         }
       }, function (err) {
         if (err) return console.error(err);
@@ -594,4 +602,12 @@ function authEms(req, res, next) {
   res.render('login-ems.html', {
     message: req.flash('error')
   });
+}
+
+function exists(v) {
+  if (v !== undefined) {
+    return true
+  } else {
+    return false
+  }
 }
