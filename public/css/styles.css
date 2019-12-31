@@ -741,3 +741,8 @@ a.link--inherit {
 .color-black {
     color: black;
 }
+
+.form-group.required .control-label:after {
+    content:"*";
+    color:red;
+  }
