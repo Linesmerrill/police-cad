@@ -446,10 +446,10 @@ module.exports = function (app, passport, server) {
       var address
       var occupation
       if (exists(req.body.address)) {
-          var address = req.body.address.trim()
+          address = req.body.address.trim()
       }
       if (exists(req.body.occupation)) {
-        var occupation = req.body.occupation.trim()
+        occupation = req.body.occupation.trim()
     }
       Civilian.findOneAndUpdate({
         '_id': ObjectId(req.body.civilianID),
