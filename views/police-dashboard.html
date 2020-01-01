@@ -162,6 +162,13 @@
                                     <% } else {%>
                                   <p class="plate-body-text">Driver's License Status: Invalid <i class="ion-alert-circled color-red"></i></p>
                                 <% } %>
+                                <% if (civilians[i].civilian.firearmLicense == 2) {%>
+                                  <p class="plate-body-text">Firearm License: Valid <i class="ion-checkmark-circled color-green"></i></p>
+                                  <% } else if (civilians[i].civilian.firearmLicense == 3) {%>
+                                    <p class="plate-body-text">Firearm License: Revoked <i class="ion-alert-circled color-red"></i></p>
+                                    <% } else {%>
+                                      <p class="plate-body-text">Firearm License: None <i class="ion-alert-circled color-yellow"></i></p>
+                                <% } %>
                                 Address: <%= civilians[i].civilian.address%><br/>
                                 Occupation: <%= civilians[i].civilian.occupation%><br/>
                                 <!-- Table for Tickets -->

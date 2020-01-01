@@ -17,7 +17,8 @@ var civilianSchema = mongoose.Schema({
   weight: String,
   height: String,
   image: String,
-  occupation: String
+  occupation: String,
+  firearmLicense: String
  }
 });
 
@@ -36,7 +37,9 @@ civilianSchema.methods.updateCiv = function(request, response) {
  if (exists(request.body.occupation)) {
     this.civilian.occupation = request.body.occupation.trim();
  } 
- 
+ if (exists(request.body.firearmLicense)) {
+   this.civilian.firearmLicense = request.body.firearmLicense;
+ }
  response.redirect('/civ-dashboard');
 };
 
