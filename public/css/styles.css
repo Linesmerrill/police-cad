@@ -750,3 +750,7 @@ a.link--inherit {
     content:"*";
     color:red;
   }
+
+  .font-size-5 {
+      font-size: 5em;
+  }
