@@ -184,6 +184,18 @@
               </div>
             </div>
 
+            <!-- Select Basic -->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="firearmLicense">Firearm License:</label>
+              <div class="col-md-4">
+                <select id="firearmLicense" name="firearmLicense" class="form-control">
+                  <option value="1">None</option>
+                  <option value="2">Valid</option>
+                  <option value="3">Revoked</option>
+                </select>
+              </div>
+            </div>
+
             <!-- Text input-->
             <div class="form-group">
               <label class="col-md-4 control-label" for="address">Address</label>
@@ -375,6 +387,17 @@
               </div>
 
             <div class="form-group">
+              <label class="col-md-4 control-label" for="firearmLicenseView">Firearm License:</label>
+              <div class="col-md-4">
+                <select id="firearmLicenseView" name="firearmLicense" class="form-control" selected="selected">
+                  <option value="1">None</option>
+                  <option value="2">Valid</option>
+                  <option value="3">Revoked</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
               <label class="col-md-4 control-label" for="addressView">Address:</label>
               <div class="col-md-4">
                 <input id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md">
@@ -517,6 +540,7 @@
     $('#licenseStatusView').val(myVar[index].civilian.licenseStatus)
     $('#birthdayView').text(birthday)
     $('#warrantsView').val(myVar[index].civilian.warrants)
+    $('#firearmLicenseView').val(myVar[index].civilian.firearmLicense)
     $('#addressView').val(myVar[index].civilian.address)
     $('#occupationView').val(myVar[index].civilian.occupation)
 
