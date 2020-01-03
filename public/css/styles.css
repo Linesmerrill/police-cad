@@ -738,6 +738,10 @@ a.link--inherit {
     color: green;
 }
 
+.color-yellow {
+    color: yellow;
+}
+
 .color-black {
     color: black;
 }
@@ -745,4 +749,8 @@ a.link--inherit {
 .form-group.required .control-label:after {
     content:"*";
     color:red;
+  }
+
+  .font-size-5 {
+      font-size: 5em;
   }

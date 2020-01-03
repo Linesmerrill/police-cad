@@ -445,12 +445,16 @@ module.exports = function (app, passport, server) {
     if (req.body.action === "update") {
       var address
       var occupation
+      var firearmLicense
       if (exists(req.body.address)) {
           address = req.body.address.trim()
       }
       if (exists(req.body.occupation)) {
         occupation = req.body.occupation.trim()
-    }
+      }
+      if (exists(req.body.firearmLicense)) {
+        firearmLicense = req.body.firearmLicense
+      }
       Civilian.findOneAndUpdate({
         '_id': ObjectId(req.body.civilianID),
         'civilian.email': req.body.email.toLowerCase()
@@ -462,7 +466,8 @@ module.exports = function (app, passport, server) {
           'civilian.warrants': req.body.warrants,
           'civilian.licenseStatus': req.body.licenseStatus,
           'civilian.address': address,
-          'civilian.occupation': occupation
+          'civilian.occupation': occupation,
+          'civilian.firearmLicense': firearmLicense
         }
       }, function (err) {
         if (err) return console.error(err);
