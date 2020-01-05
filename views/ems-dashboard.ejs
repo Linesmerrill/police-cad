@@ -57,12 +57,12 @@
       </div>
     </div>
   </nav>
-  <header id="second" style='background-image: url("/images/civ-bkground.jpg");'>
+  <header id="second" style='background-image: url("/images/ems-bkground.png");'>
     <div class="header-content">
       <div class="inner">
-        <h4>San Andreas - Civilian Operations</h4>
+        <h4>San Andreas - Fire/EMS Operations</h4>
         <div class="col-lg-10 col-lg-offset-1 text-center">
-          <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-lg margin-top-2">Add New Civilian</button>
+          <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-lg margin-top-2">Add New Persona</button>
           <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-lg margin-top-2">Add New Vehicle</button>
         </div>
       </div>
@@ -78,8 +78,8 @@
     </thead>
     <tbody>
       <% for(var i=0; i<personas.length; i++) {%>
-   <tr data-toggle="modal" data-id=<%=i%> data-target="#viewCiv" onclick="loadCivData(<%=i%>)">
-     <td><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td>
+   <tr data-toggle="modal" data-id=<%=i%> data-target="#viewEms" onclick="loadEmsData(<%=i%>)">
+     <td><%= personas[i].ems.firstName%> <%= personas[i].ems.lastName%></td>
    </tr>
   <% } %>
     </tbody>
@@ -93,15 +93,14 @@
       <tr>
         Vehicles: (Click for Details)
       </tr>
-      <tr style="background-color: #2d2d2d;"><td>Plate</td><td>Model</td><td>Color</td></tr>
+      <tr style="background-color: #2d2d2d;"><td>Plate</td><td>Model</td></tr>
 
     </thead>
       <tbody>
         <% for(var i=0; i<vehicles.length; i++) {%>
         <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewVeh" onclick="loadVehData(<%=i%>)">
-          <td><%= vehicles[i].vehicle.plate%></td>
-          <td> <%= vehicles[i].vehicle.model%></td>
-          <td> <%= vehicles[i].vehicle.color%></td>
+          <td><%= vehicles[i].emsVehicle.plate%></td>
+          <td> <%= vehicles[i].emsVehicle.model%></td>
         </tr>
         <% } %>
       </tbody>
@@ -111,7 +110,7 @@
     </div>
   </header>
 
-  <% include footer.html %>
+  <% include footer %>
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -130,97 +129,72 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/create-civ" method="post">
+          <form class="form-horizontal" action="/create-ems" method="post">
             <fieldset>
 
             <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
-            <h4>Add a New Civilian</h4>
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Add a New Persona</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
             <!-- Text input-->
-            <div class="form-group required">
-              <label class="col-md-4 control-label" for="civ-first-name">Civilian First Name</label>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="first-name">First Name</label>
               <div class="col-md-4">
-                <input id="civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
+                <input id="first-name" name="emsFirstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
               </div>
             </div>
 
             <!-- Text input-->
-            <div class="form-group required">
-              <label class="col-md-4 control-label" for="civ-last-name">Civilian Last Name</label>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="last-name">Last Name</label>
               <div class="col-md-4">
-                <input id="civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
+                <input id="last-name" name="emsLastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
               </div>
             </div>
 
             <!-- Select Basic -->
-            <div class="form-group required">
-              <label class="col-md-4 control-label" for="license-status">License Status</label>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="department">Department</label>
               <div class="col-md-4">
-                <select id="license-status" name="licenseStatus" class="form-control">
-                  <option value="1">Valid</option>
-                  <option value="2">Revoked</option>
-                  <option value="3">None</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Text input-->
-            <div class="form-group required">
-              <label class="col-md-4 control-label" for="birthday">Date of Birth</label>
-              <div class="col-md-4">
-              <input id="birthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
-              </div>
-            </div>
-
-            <!-- Select Basic -->
-            <div class="form-group required">
-              <label class="col-md-4 control-label" for="warrants">Warrants?</label>
-              <div class="col-md-4">
-                <select id="warrants" name="warrants" class="form-control">
-                  <option value="1">No</option>
-                  <option value="2">Yes</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Select Basic -->
-            <div class="form-group required">
-              <label class="col-md-4 control-label" for="firearmLicense">Firearm License:</label>
-              <div class="col-md-4">
-                <select id="firearmLicense" name="firearmLicense" class="form-control">
-                  <option value="1">None</option>
-                  <option value="2">Valid</option>
-                  <option value="3">Revoked</option>
+                <select id="department" name="department" class="form-control">
+                  <option value="Fire">Fire</option>
+                  <option value="EMS">EMS</option>
                 </select>
               </div>
             </div>
 
             <!-- Text input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="address">Address</label>
+              <label class="col-md-4 control-label" for="assignment-area">Assignment Area</label>
               <div class="col-md-4">
-                <input id="address" name="address" type="text" placeholder="Address (optional)" class="form-control input-md">
+              <input id="assignment-area" name="assignmentArea" type="text" placeholder="assignment area" maxlength="50" class="form-control input-md" required>
               </div>
             </div>
 
             <!-- Text input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="occupation">Occupation</label>
+              <label class="col-md-4 control-label" for="station">Station (optional)</label>
               <div class="col-md-4">
-                <input id="occupation" name="occupation" type="text" placeholder="Occupation (optional)" class="form-control input-md">
+              <input id="station" name="station" type="number" placeholder="station #" maxlength="5" class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="call-sign">Call Sign (optional)</label>
+              <div class="col-md-4">
+              <input id="call-sign" name="callSign" type="text" placeholder="call sign" maxlength="10" class="form-control input-md">
               </div>
             </div>
 
             <!-- Button -->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="submit-new-civ"></label>
+              <label class="col-md-4 control-label" for="submit-new-ems"></label>
               <div class="col-md-4">
-                <button id="submit-new-civ" name="submitNewCiv" value=<%= user.user.email %> class="btn btn-primary" onclick="createNewCiv()">Create</button>
+                <button id="submit-new-ems" name="submitNewEms" value=<%= user.user.email %> class="btn btn-primary" onclick="createNewEms()">Create</button>
               </div>
             </div>
-
             </fieldset>
           </form>
         </div>
@@ -232,7 +206,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/create-vehicle" method="post">
+          <form class="form-horizontal" action="/create-ems-vehicle" method="post">
             <fieldset>
 
             <!-- Form Name -->
@@ -244,7 +218,8 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="plate">Plate</label>
               <div class="col-md-4">
-                <input id="plate" name="plate" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
+              <input id="plate" name="plate" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
+
               </div>
             </div>
 
@@ -258,37 +233,15 @@
 
             <!-- Text input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="color">Color</label>
+              <label class="col-md-4 control-label" for="color">Color (optional)</label>
               <div class="col-md-4">
-              <input id="color" name="color" type="text" placeholder="Color" class="form-control input-md" required="">
-              </div>
-            </div>
-
-            <!-- Select Basic -->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="valid-registration">Valid Registration?</label>
-              <div class="col-md-4">
-                <select id="valid-registration" name="validRegistration" class="form-control">
-                  <option value="1">Yes</option>
-                  <option value="2">No</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Select Basic -->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="valid-insurance">Valid Insurance</label>
-              <div class="col-md-4">
-                <select id="valid-insurance" name="validInsurance" class="form-control">
-                  <option value="1">Yes</option>
-                  <option value="2">No</option>
-                </select>
+              <input id="color" name="color" type="text" placeholder="Color" class="form-control input-md">
               </div>
             </div>
 
             <datalist id="names">
               <% for(var i=0; i<personas.length; i++) {%>
-           <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%>">
+           <option value="<%= personas[i].ems.firstName %> <%= personas[i].ems.lastName%>">
           <% } %>
             </datalist>
 
@@ -301,17 +254,6 @@
               </div>
             </div>
 
-            <!-- Select Basic -->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
-              <div class="col-md-4">
-                <select id="is-stolen" name="isStolen" class="form-control">
-                  <option value="1">No</option>
-                  <option value="2">Yes</option>
-                </select>
-              </div>
-            </div>
-
             <!-- Button -->
             <div class="form-group">
               <label class="col-md-4 control-label" for="create-vehicle"></label>
@@ -321,102 +263,53 @@
             </div>
             </fieldset>
             </form>
-
         </div>
       </div>
     </div>
   </div>
 
-  <div id="viewCiv" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div id="viewEms" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/updateOrDeleteCiv" method="POST">
+          <form action="/deleteEms" method="POST">
           <fieldset>
-
-            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true" onclick="clearHelpText()">X</button>
-            <h4>Details about your Civilian</h4>
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Details about your Persona</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="civilianIDView">ID #:</label>
-              <div class="col-md-4">
-                <label id="civilianIDView" class="form-label"></label>
-              </div>
+            <div class="col-md-9">
+              <label class="col-md-4 control-label margin-bottom-1" for="first-name">First Name:</label>
+              <label id="firstNameView" class="col-md-5">FirstName here</label>
             </div>
 
-            <div class="form-group">
-                <label class="col-md-4 control-label" for="firstName">First Name:</label>
-                <div class="col-md-4">
-                  <input id="firstName" name="firstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
-                </div>
+            <div class="col-md-9">
+              <label class="col-md-4 control-label margin-bottom-1" for="last-name">Last Name:</label>
+              <label id="lastNameView" class="col-md-5">LastName here</label>
             </div>
 
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="lastNameView">Last Name:</label>
-              <div class="col-md-4">
-                <input id="lastName" name="lastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
-              </div>
+            <div class="col-md-9">
+              <label class="col-md-4 control-label margin-bottom-1" for="department">Department:</label>
+              <label id="departmentView" class="col-md-5">department here</label>
             </div>
 
-            <div class="form-group">
-                <label class="col-md-4 control-label" for="licenseStatusView">License Status</label>
-                <div class="col-md-4">
-                  <select id="licenseStatusView" name="licenseStatus" class="form-control" selected="selected">
-                    <option value="1">Valid</option>
-                    <option value="2">Revoked</option>
-                    <option value="3">None</option>
-                  </select>
-                </div>
-              </div>
-
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="birthdayView">Date of Birth</label>
-              <div class="col-md-4">
-                <input id="delBirthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
-              </div>
+            <div class="col-md-9">
+              <label class="col-md-4 control-label margin-bottom-1" for="assignment-area">Assignment Area:</label>
+              <label id="assignmentAreaView" class="col-md-5">assignment area here</label>
             </div>
 
-            <div class="form-group">
-                <label class="col-md-4 control-label" for="warrantsView">Warrants?</label>
-                <div class="col-md-4">
-                  <select id="warrantsView" name="warrants" class="form-control" selected="selected">
-                    <option value="2">Yes</option>
-                    <option value="1">No</option>
-                  </select>
-                </div>
-              </div>
-
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="firearmLicenseView">Firearm License:</label>
-              <div class="col-md-4">
-                <select id="firearmLicenseView" name="firearmLicense" class="form-control" selected="selected">
-                  <option value="1">None</option>
-                  <option value="2">Valid</option>
-                  <option value="3">Revoked</option>
-                </select>
-              </div>
+            <div class="col-md-9">
+              <label class="col-md-4 control-label margin-bottom-1" for="station">Station:</label>
+              <label id="stationView" class="col-md-5">station here</label>
             </div>
 
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="addressView">Address:</label>
-              <div class="col-md-4">
-                <input id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="occupationView">Occupation:</label>
-              <div class="col-md-4">
-                <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md">
-              </div>
+            <div class="col-md-9">
+              <label class="col-md-4 control-label margin-bottom-1" for="call-sign">Call Sign:</label>
+              <label id="callSignView" class="col-md-5">call sign here</label>
             </div>
 
             <div class="col-md-12 text-align-center">
-              <input type="hidden" id="email" name="email">
-              <input type="hidden" id="civilianID" name="civilianID">
-              <button type="submit" value="update" name="action" class="btn btn-info" onclick="clearHelpText()">Update Civilian</button>
-              <button type="submit" value="delete" name="action" class="btn btn-danger" onclick="clearHelpText()">Delete Civilian</button>
+              <button id="removeEms" type="submit" name="removeEms" class="btn btn-danger">Delete Persona</button>
             </div>
             </fieldset>
           </form>
@@ -429,83 +322,43 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-            <form class="form-horizontal" action="/updateOrDeleteVeh" method="post">
-              <fieldset>
 
+          <form action="/deleteEmsVeh" method="POST">
+          <fieldset>
             <!-- Form Name -->
             <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Details about your Vehicle</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
-            <div class="form-group">
-                <label class="col-md-4 control-label" for="plate">Plate:</label>
-                <div class="col-md-4">
-                  <input id="plateVeh" name="plateVeh" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
-                </div>
-              </div>
+            <!-- Text input-->
+            <div class="col-md-7">
+              <label class="col-md-4 margin-bottom-1" for="first-name">Plate:</label>
+                <label class="col-md-5" id="plateView">plate here</label>
+                <input id="plateVeh" name="plateVeh" type="text" value="" style="display:none">
+            </div>
 
-            <div class="form-group">
-                <label class="col-md-4 control-label" for="model">Model:</label>
-                <div class="col-md-4">
-                  <input id="modelVeh" name="modelVeh" type="search" placeholder="Model" class="form-control input-md" required="">
-                </div>
-              </div>
+            <!-- Text input-->
+            <div class="col-md-7">
+              <label class="col-md-4 margin-bottom-1" for="last-name">Model:</label>
+                <label class="col-md-8" id="modelView">model here</label>
+                <input id="modelVeh" name="modelVeh" type="text" value="" style="display:none">
+            </div>
 
-            <div class="form-group">
-                <label class="col-md-4 control-label" for="colorView">Color:</label>
-                <div class="col-md-4">
-                  <input id="colorView" name="colorView" type="text" placeholder="Color" class="form-control input-md" required="">
-                </div>
-              </div>
+            <!-- Select Basic -->
+            <div class="col-md-7">
+              <label class="col-md-4 margin-bottom-1" for="color">Color:</label>
+                <label class="col-md-5" id="colorView">color here</label>
+            </div>
 
-            <div class="form-group">
-                <label class="col-md-4 control-label" for="valid-registration">Valid Registration?</label>
-                <div class="col-md-4">
-                  <select id="validRegView" name="validRegView" class="form-control" selected="selected">
-                    <option value="1">Yes</option>
-                    <option value="2">No</option>
-                  </select>
-                </div>
-              </div>
-
-            <div class="form-group">
-                <label class="col-md-4 control-label" for="validInsView">Valid Insurance?</label>
-                <div class="col-md-4">
-                  <select id="validInsView" name="validInsView" class="form-control" selected="selected">
-                    <option value="1">Yes</option>
-                    <option value="2">No</option>
-                  </select>
-                </div>
-              </div>
-
-              <datalist id="names">
-                  <% for(var i=0; i<personas.length; i++) {%>
-               <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%>">
-              <% } %>
-                </datalist>
-
-            <div class="form-group">
-                <label class="col-md-4 control-label" for="roVeh">Registered Owner:</label>
-                <div class="col-md-4">
-                  <input id="roVeh" name="roVeh" type="search" placeholder="Registered Owner" list="names" class="form-control input-md" required="">
-                </div>
-              </div>
-
-            <div class="form-group">
-                <label class="col-md-4 control-label" for="stolenView">Marked Stolen?</label>
-                <div class="col-md-4">
-                  <select id="stolenView" name="stolenView" class="form-control" selected="selected">
-                    <option value="1">No</option>
-                    <option value="2">Yes</option>
-                  </select>
-                </div>
-              </div>
+            <!-- Select Basic -->
+            <div class="col-md-7">
+              <label class="col-md-4 margin-bottom-1" for="ro">RO:</label>
+              <label class="col-md-8" id="roView">ro here</label>
+              <input id="roVeh" type="text" name="roVeh" value="" style="display:none">
+            </div>
 
             <div class="col-md-12 text-align-center">
-                <input type="hidden" id="emailVeh" name="emailVeh">
-                <input type="hidden" id="vehicleID" name="vehicleID">
-                <button type="submit" value="update" name="action" class="btn btn-info">Update Vehicle</button>
-                <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Vehicle</button>
+              <button id="emailVeh" type="submit" name="emailVeh" class="btn btn-danger">Delete Vehicle</button>
             </div>
             </fieldset>
           </form>
@@ -527,89 +380,66 @@
 </html>
 
 <script type="text/javascript">
-  function loadCivData(index) {
+  function loadEmsData(index) {
     var myVar = <%- JSON.stringify(personas) %>;
-    
-    var firstName = myVar[index].civilian.firstName
-    var lastName = myVar[index].civilian.lastName
-    var birthday = myVar[index].civilian.birthday
-    
-    $('#civilianID').val(myVar[index]._id)
-    $('#civilianIDView').text(myVar[index]._id)
-    $('#firstName').text(firstName)
-    $('#lastNameView').text(lastName)
-    $('#licenseStatusView').val(myVar[index].civilian.licenseStatus)
-    $('#birthdayView').text(birthday)
-    $('#warrantsView').val(myVar[index].civilian.warrants)
-    $('#firearmLicenseView').val(myVar[index].civilian.firearmLicense)
-    $('#addressView').val(myVar[index].civilian.address)
-    $('#occupationView').val(myVar[index].civilian.occupation)
 
-    // data to be sent to db for civ deletion
-    $('#firstName').val(firstName)
-    $('#lastName').val(lastName)
-    $('#email').val(myVar[index].civilian.email.toLowerCase())
-    $('#delBirthday').val(birthday)
+    var firstName = myVar[index].ems.firstName
+    var lastName = myVar[index].ems.lastName
+    var department = myVar[index].ems.department
+    var assignmentArea = myVar[index].ems.assignmentArea
+    var station = myVar[index].ems.station
+    var callSign = myVar[index].ems.callSign
+
+    $('#firstNameView').text(firstName)
+    $('#lastNameView').text(lastName)
+    $('#departmentView').text(department)
+    $('#assignmentAreaView').text(assignmentArea)
+    $('#stationView').text(station)
+    $('#callSignView').text(callSign)
+    emsFullName = firstName + ' ' + lastName
+    $('#removeEms').val(emsFullName)
   }
 
   function loadVehData(index) {
     var myVar = <%- JSON.stringify(vehicles) %>;
 
-    $('#vehicleID').val(myVar[index]._id)
-    $('#emailVeh').val(myVar[index].vehicle.email.toLowerCase())
-    $('#plateVeh').val(myVar[index].vehicle.plate.toUpperCase())
-    $('#modelVeh').val(myVar[index].vehicle.model)
-    $('#colorView').val(myVar[index].vehicle.color)
-    $('#validRegView').val(myVar[index].vehicle.validRegistration)
-    $('#validInsView').val(myVar[index].vehicle.validInsurance)
-    $('#roVeh').val(myVar[index].vehicle.registeredOwner)
-    $('#stolenView').val(myVar[index].vehicle.isStolen)
+    var color = myVar[index].emsVehicle.color
+    var email = myVar[index].emsVehicle.email.toLowerCase()
+    var plate = myVar[index].emsVehicle.plate.toUpperCase()
+    var model = myVar[index].emsVehicle.model
+    var registeredOwner = myVar[index].emsVehicle.registeredOwner
+    $('#plateView').text(plate)
+    $('#modelView').text(model)
+    $('#colorView').text(color)
+    $('#roView').text(registeredOwner)
+    $('#emailVeh').val(email.toLowerCase())
+    $('#modelVeh').val(model)
+    $('#roVeh').val(registeredOwner)
+    $('#plateVeh').val(plate)
+
   }
 
-  function createNewCiv() {
-    $('#civ-first-name').popover('hide')
-    $('#civ-last-name').popover('hide')
+  function createNewEms() {
+    $('#first-name').popover('hide')
+    $('#last-name').popover('hide')
   }
 
-  function clearHelpText() {
-    $('#firstName').popover('hide')
-    $('#lastName').popover('hide')
-  }
-
-  // prevents spaces from user input
   $(document).ready(function(){
-$("#civ-first-name").keydown(function(event) {
+$("#first-name").keydown(function(event) {
     if (event.keyCode == 32) {
         event.preventDefault();
-        $('#civ-first-name').popover('show')
+        $('#first-name').popover('show')
     } else {
-      $('#civ-first-name').popover('hide')
+      $('#first-name').popover('hide')
     }
 });
-$("#firstName").keydown(function(event) {
+$("#last-name").keydown(function(event) {
     if (event.keyCode == 32) {
         event.preventDefault();
-        $('#firstName').popover('show')
+        $('#last-name').popover('show')
     } else {
-      $('#firstName').popover('hide')
-    }
-});
-$("#civ-last-name").keydown(function(event) {
-    if (event.keyCode == 32) {
-        event.preventDefault();
-        $('#civ-last-name').popover('show')
-    } else {
-      $('#civ-last-name').popover('hide')
-    }
-});
-$("#lastName").keydown(function(event) {
-    if (event.keyCode == 32) {
-        event.preventDefault();
-        $('#lastName').popover('show')
-    } else {
-      $('#lastName').popover('hide')
+      $('#last-name').popover('hide')
     }
 });
 });
-
 </script>

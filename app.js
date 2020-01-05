@@ -34,9 +34,8 @@ app.use(bodyParser({
 	uploadDir: '/images'
 }));
 
-// Setup views and their engine.
-app.set('views', __dirname + '/views');
-app.engine('html', require('ejs').renderFile);
+// Set the view engine to ejs.
+app.set('view engine', 'ejs');
 
 // Setup session storage.
 app.use(session({

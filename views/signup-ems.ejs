@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Lines Police - CAD</title>
-    <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
+    <meta name="description" content="Lines Roleplay Police CAD (Computer Aided Dispatch). Built to facilitate the needs of roleplay police and civilians." />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="generator" content="Codeply">
     <link rel="stylesheet" href="./css/bootstrap.min.css" />
@@ -38,69 +38,76 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand page-scroll" href="#first"><i class="ion-ios-analytics-outline"></i> Lines Police Server</a>
+                <a class="navbar-brand page-scroll" href="/"><i class="ion-ios-analytics-outline"></i> Lines Police Server</a>
             </div>
             <div class="navbar-collapse collapse" id="bs-navbar">
                 <ul class="nav navbar-nav">
-                    <li>
-                        <a class="page-scroll" href="#last">Contact</a>
-                    </li>
+
                 </ul>
                 <ul class="nav navbar-nav navbar-right">
-                    <li>
-                        <a href="/rules">Rules</a>
-                    </li>
-                    <li>
-                        <a href="/about">About</a>
-                    </li>
                   <li>
                     <a href="/release-log">Release Log</a>
                   </li>
-                    
+                    <li>
+                        <a class="page-scroll" data-toggle="modal" title="Lines Police Server - CAD" href="#aboutModal">About</a>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
     <header id="first">
-      <form class="">
-      	<fieldset class="">
+
         <div class="header-content">
             <div class="inner">
-                <h1 class="cursive">Lines Police Server - Website</h1>
-                <h4>A free to use service built to facilitate any and all role play communities with Civilians, Police, and Fire/EMS</h4>
+                <h4>Register as Fire/EMS</h4>
                 <hr>
-                <a href="/login-civ" class="btn btn-primary btn-xl">Civilian</a> &nbsp; <a href="/login-police" class="btn btn-primary btn-xl page-scroll">Police Officer</a>
-                &nbsp; <a href="/login-ems" class="btn btn-primary btn-xl page-scroll">Fire/EMS</a>
-                <hr>
-                <% if ( message.length > 0) { %>
-                    <div class="alert alert-info col-md-4 col-md-offset-4">
-                        <strong><%= message %> </strong>
+                 <div class="col-lg-10 col-lg-offset-1 text-center">
+                <form id="signInForm" class="contact-form row" action="/signup-ems" method="post">
+                	<% if (message.length > 0) { %>
+                  <div class="alert alert-danger col-md-4 col-md-offset-4">
+                    <strong>Sorry, <%= message %> </strong>
+                  </div>
+                  <% } %>
+                  <div class="col-md-12">
+                    <div class="col-md-4 col-md-offset-4">
+                        <label>Username</label>
+                        <input id="inputUsername" type="text" name="username" class="form-control" placeholder="Username (cannot contain spaces)" required>
                     </div>
-                <% } %>
+                  </div>
+                  <div class="col-md-12">
+                    <div class="col-md-4 col-md-offset-4">
+                        <label>Email</label>
+                        <input id="inputEmail" type="email" name="email" class="form-control" placeholder="Email Address" required>
+                    </div>
+                  </div>
+                    <div class="col-md-12">
+                      <div class="col-md-4 col-md-offset-4">
+                          <label>Password</label>
+                          <input id="inputPassword" type="password" name="password" class="form-control" placeholder="Password" required>
+                      </div>
+                    </div>
+                    <div class="col-md-12">
+                      <div class="col-md-4 col-md-offset-4">
+                          <label>Confirm Password</label>
+                          <input id="confirmPassword" type="password" name="confirmPassword" class="form-control" placeholder="Confirm password" required>
+                      </div>
+                      <div id="password-check-bad" class="col-md-1" >
+                         <span class="password-check-bad"><i class="glyphicon glyphicon-cd"></i></span>
+                      </div>
+                      <div id="password-check-good" class="col-md-1" style="display:none">
+                         <span class="password-check-good"><i class="glyphicon glyphicon-cd"></i></span>
+                      </div>
+
+                    </div>
+                </div>
+
+                <button type="submit" value="SignUp" class="btn btn-primary btn-xl margin-top-2" >Create</button>
+              </form>
             </div>
         </div>
-      </fieldset>
-      </form>
+
     </header>
-    <section id="last">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-8 col-lg-offset-2 text-center">
-                    <h2 class="margin-top-0 wow fadeIn">Get in Touch</h2>
-                    <hr class="primary">
-                    <p>We love feedback. Send us an email and we'll get back to you as soon as possible.</p>
-                </div>
-                <div class="col-lg-10 col-lg-offset-1 text-center">
-                        <div class="col-md-4 col-md-offset-4">
-                            <a href="mailto:linespoliceserver@gmail.com" target="_blank">
-                            <button type="button" class="btn btn-primary btn-block btn-lg">Send <i class="ion-android-arrow-forward"></i></button>
-                        </a>
-                        </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    <% include footer.html %>
+    <% include footer %>    
     <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -138,8 +145,8 @@
         <div class="modal-dialog modal-sm">
         <div class="modal-content">
         	<div class="modal-body">
-        		<h2 class="text-center">Coming Soon!</h2>
-        		<p class="text-center">This is still being developed. Please check back later ;)</p>
+        		<h2 class="text-center">Nice Job!</h2>
+        		<p class="text-center">You clicked the button, this is just one of the many easter eggs on this site ;)</p>
         		<br/>
         		<button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK <i class="ion-android-close"></i></button>
         	</div>
@@ -154,3 +161,44 @@
     <script src="./js/scripts.js"></script>
   </body>
 </html>
+
+<script type="text/javascript">
+$('input').keyup(function() {
+  str = $(this).val();
+  str = str.replace(/\s/g,'');
+  $(this).val(str);
+});
+
+$(document).ready(function() {
+  $("#confirmPassword").keyup(validate);
+});
+
+var goodPassword = document.getElementById('password-check-good');
+var badPassword = document.getElementById('password-check-bad');
+var passwordsMatch = false
+function validate() {
+  var password1 = $("#inputPassword").val();
+  var password2 = $("#confirmPassword").val();
+
+    if(password1 == password2) {
+      passwordsMatch = true;
+      goodPassword.style.display = 'block'
+      badPassword.style.display = 'none'
+       $("#password-check-good").val("valid");
+    }
+    else {
+      passwordsMatch = false;
+      goodPassword.style.display = 'none'
+      badPassword.style.display = 'block'
+        $("#validate-status").text("invalid");
+    }
+}
+
+$('#signInForm').submit(function (evt) {
+  if (passwordsMatch) {}
+  else {
+    evt.preventDefault();
+  }
+});
+
+</script>
