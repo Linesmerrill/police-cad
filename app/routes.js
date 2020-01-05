@@ -6,10 +6,11 @@ var Ticket = require('../app/models/ticket');
 var Ems = require('../app/models/ems');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
-async = require("async");
+var async = require('async');
 var crypto = require('crypto');
-var path = require('path'),
-  fs = require('fs');
+var path = require('path');
+var fs = require('fs');
+
 module.exports = function (app, passport, server) {
 
   app.get('/', function (request, response) {
