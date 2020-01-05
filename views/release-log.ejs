@@ -2,16 +2,17 @@
 <html>
 
 <head>
-  <meta charset="utf-8">
   <title>Lines Police - CAD</title>
+  <meta charset="utf-8">
   <meta name="description"
-    content="Lines Roleplay Police CAD (Computer Aided Dispatch). Built to facilitate the needs of roleplay police and civilians." />
+    content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="Codeply">
-  <link rel="stylesheet" href="../css/bootstrap.min.css" />
-  <link rel="stylesheet" href="../css/animate.min.css" />
-  <link rel="stylesheet" href="../css/ionicons.min.css" />
-  <link rel="stylesheet" href="../css/styles.css" />
+  <link rel="stylesheet" href="./css/bootstrap.min.css" />
+  <link rel="stylesheet" href="./css/animate.min.css" />
+  <link rel="stylesheet" href="./css/ionicons.min.css" />
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/releaselog.css" />
   <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
   <!-- for FF, Chrome, Opera -->
   <link rel="icon" type="image/png"
@@ -53,97 +54,374 @@
         <a class="navbar-brand page-scroll" href="/"><i class="ion-ios-analytics-outline"></i> Lines Police Server</a>
       </div>
       <div class="navbar-collapse collapse" id="bs-navbar">
-        <ul class="nav navbar-nav">
 
-        </ul>
         <ul class="nav navbar-nav navbar-right">
           <li>
-            <a href="/release-log">Release Log</a>
+            <a href="/rules">Rules</a>
           </li>
           <li>
-            <a class="page-scroll" data-toggle="modal" title="Lines Police Server - CAD" href="#aboutModal">About</a>
+            <a href="/about">About</a>
+          </li>
+          <li>
+            <a href="/release-log">Release Log</a>
           </li>
         </ul>
       </div>
     </div>
   </nav>
-  <header id="first">
-
-    <div class="header-content">
-      <div class="inner">
-        <h4>Reset Password</h4>
+  <section class="release-log">
+    <div class="container">
+      <div class="inner text-align-center">
+        <h1 class="cursive text-align-center margin-top-2">Release Log</h1>
         <hr>
-        <div class="col-lg-10 col-lg-offset-1 text-center">
-          <form id="updatePasswordForm" class="contact-form row" action="/reset/:token" method="post">
-            <% if ( message.length > 0) { %>
-            <div class="alert alert-info col-md-4 col-md-offset-4">
-              <strong><%= message %> </strong>
-            </div>
-            <% } %>
-            <div class="col-md-12">
-              <div class="col-md-4 col-md-offset-4">
-                <label>New Password</label>
-                <input id="inputNewPassword" type="password" name="password" class="form-control"
-                  placeholder="New password" required>
+        <div class="grid grid--cover-links">
+          <div class="grid grid--cover-links">
+
+            <div id="Release-0.8.7" class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Release 0.8.7</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p><strong>Release 0.8.7 adds firearm status, adds Patreon link and fixes warrant display bug</strong>
+                    <br/>
+                    <br/>- You can now add or modify a firearm license on each civilian.
+                    <br/>- The new statuses are: None, Valid, and Revoked.
+                    <br/>- This status will also be displayed for officers when they look up civilians in the police database.
+                    <br/>- The status defaults to None, so be sure to update this for each civilian accordingly.
+                    <br/>
+                    <br/>- Adds our new Patreon link to the bottom of each page, feel free to check it out!
+                    <br/>
+                    <br/>- One of our users pointed out a bug where sometimes it would not show the warning for a warrant.
+                    <br/>- This will now properly show warrant status ran by NCIC when searching a civilian in the database.
+                </p>
+                <p>For more info on this release view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.8.7">Release v0.8.7</a></p>
               </div>
             </div>
-            <div class="col-md-12">
-              <div class="col-md-4 col-md-offset-4">
-                <label>Confirm Password</label>
-                <input id="inputConfirmPassword" type="password" name="confirm" class="form-control"
-                  placeholder="Confirm password" required>
+
+            <div id="Release-0.8.6" class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Release 0.8.6</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p><strong>Release 0.8.6 adds addresses and occupations to civilians 🎆</strong>
+                    <br/>
+                    <br/>- You can now add an address and occupation for each civilian you create.
+                    <br/>- If you already have civilians, you will now have the option to update them with these two new fields.
+                    <br/>- When an officer runs the civilian name in the database, it will now show the address and occupation.
+                    <br/>- These are optional fields so you are not required to enter these when creating or modifying a civilian.
+                </p>
+                <p>For more info on this release view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.8.6">Release v0.8.6</a></p>
               </div>
             </div>
-        </div>
-        <button type="submit" value="UpdatePassword" class="btn btn-primary btn-xl margin-top-2">Update
-          Password</button>
-        </form>
-        <br><a class="font-18" href="/"><u>Back to Home</u></a>
-      </div>
-    </div>
 
-  </header>
-  <% include footer.html %>
-  <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-body">
-          <img src="" id="galleryImage" class="img-responsive" />
-          <p>
-            <br />
-            <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i
-                class="ion-android-close"></i></button>
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div id="aboutModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <h2 class="text-center">Lines Police Server</h2>
-          <h5 class="text-center">
-            CAD (Computer Aided Dispatch)
-          </h5>
-          <p class="text-justify">
-            Developed with users in mind. Easy to log in and create an account. From there you can take the
-            freedom of playing with a certain persona in GTA V. Buy cars, apartments, make a living online.
-            Or join the law, become a police officer and patrol the streets. You decide your own fate.
-          </p>
+            <div id="Patch-0.8.5" class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.8.5</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p><strong>Patch 0.8.5 removes case sensitive email login</strong>
+                    <br/>
+                    <br/>- You can now login with any case of email and we will convert all to lowercase.
+                    <br/>- We found that there were issues with people creating new accounts because of case sensitive email.
+                </p>
+                <p>For more info on this patch view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.8.5">Patch v0.8.5</a></p>
+              </div>
+            </div>
 
-          <br />
-          <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true"> OK </button>
+            <div id="Release-0.8.4" class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Release 0.8.4</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p><strong>Release 0.8.4 adds persistent login to the website</strong>
+                    <br/>
+                    <br/>- Now when you login as any of the options, you will say logged in while you visit the other options.
+                    <br/>- You will only be logged out when you manually click 'Log out'.
+                </p>
+                <p>For more info on this release view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.8.4">Release v0.8.4</a></p>
+              </div>
+            </div>
+
+            <div id="Release-0.8.3" class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Release 0.8.3</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p><strong>Release 0.8.3 adds the ability to display civilians with the same name. 🙌</strong>
+                    <br/>
+                    <br/>- When searching for civilians, displays them each as separate records.
+                    <br/>- This will allow us in future updates to assign citations and warnings to specific civilians.
+                    <br/>- Fixes an issue where the Date when issuing a citation or warning was incorrect.
+                </p>
+                <p>For more info on this release view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.8.3">Release v0.8.3</a></p>
+              </div>
+            </div>
+
+            <div id="Patch-0.7.1" class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.7.1</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Patch 0.7.1 adds ability to modify Civilian vehicle details.
+                  <br />Now you can click on a specific civilian vehicle and modify the details.
+                  <br />Modify the Plate, Model, Color, Registration and Insurance Status and Stolen Status.
+                  <br />Now if you need to update details on a specific vehicle you can do so.
+                </p>
+                <p>For more info on this patch view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.7.1">Patch v0.7.1</a></p>
+              </div>
+            </div>
+
+            <div id="Release-0.7.0" class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Release 0.7.0</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Release 0.7.0 adds ability to modify Civilian details.
+                  <br />Now you can click on a specific civilian persona and modify the details. Modify the First or
+                  Last Name,
+                  Date of Birth, License and warrant Status.
+                  <br />Now if you misspell someone's name you can fix it.
+                  <br />Thank you all for the continued support! You are all the real MVPs 😄
+                </p>
+                <p>For more info on this release view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.7.0">Release v0.7.0</a></p>
+              </div>
+            </div>
+
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Release 0.6.0</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Release 0.6.0 allows officers to issue written warnings.
+                  <br />We have heard the feedback and we delivered. Officers can now issue written warnings
+                  for civilians. These will now show up in a separate table when searching for a civilian in the name
+                  database.
+                </p>
+                <p>For more info on this release view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.6.0">Release v0.6.0</a></p>
+              </div>
+            </div>
+
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.5.1</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Patch 0.5.1 adds support to delete a specific civilian.
+                  <br />We fixed how we were deleting civilians so now it is not possible to delete other peoples
+                  civilians by accident.
+                  <br />Separates the name input when writing tickets into First Name and Last Name. We will have more
+                  info for this
+                  in future releases, but for now it allows us to more easily associate a ticket with a civilian.
+                  <br />Lastly, contains
+                  some small bug fixes.
+                </p>
+                <p>For more info on this patch view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.5.1">Patch v0.5.1</a></p>
+              </div>
+            </div>
+
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Release 0.5.0</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Release 0.5.0 displays multiple vehicles when searching by license plate.
+                  <br />Up until now we only supported returning a single vehicle by license plate. <br />When
+                  searching a license plate you will see all the vehicles with that plate (and we mean
+                  <strong>all</strong> the vehicles).
+                  <br />We also added in some new icons to help identify if a vehicle has valid/invalid
+                  Registration or Insurance.
+                </p>
+                <p>For more info on this release view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.5.0">Release v0.5.0</a></p>
+              </div>
+            </div>
+
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.4.2</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Patch 0.4.2 fixes an issue where plate searches were not showing up correctly. This
+                  should now be back to normal and look up plates correctly. If you encounter any additional
+                  issue please let us know.
+                </p>
+                <p>For more info on this patch view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.4.2">Patch v0.4.2</a></p>
+              </div>
+            </div>
+
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.4.1</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Patch 0.4.1 improves performance issues when trying to load the police dashboard.
+                  Rather than grabbing all the entries when loading the page, it now only searches for the single
+                  name or plate that is searched.
+                </p>
+                <p>For more info on this patch view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.4.1">Patch v0.4.1</a></p>
+              </div>
+            </div>
+
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Release 0.4.0</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Release 0.4.0 adds Fire/EMS accounts to the website. By popular demand we have finally
+                  added the ability to create Fire/EMS accounts. Create new Personas and Vehicles specifically
+                  for your Fire/EMS roleplay needs.
+                </p>
+                <p>For more info on this release view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.4.0">Release v0.4.0</a></p>
+              </div>
+            </div>
+
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.3.1</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Patch 0.3.2 corrects the background image on /release-log so it remains fixed while
+                  the release images scroll over the top. <br>Also fixes the resizing of the background for
+                  larger displays.
+                </p>
+                <p>For more info on this patch view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.3.2">Patch v0.3.2</a></p>
+              </div>
+            </div>
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.3.1</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Patch 0.3.1 fixes vehicle images not properly loading when looking up a plate in the police
+                  dashboard.</p>
+                <p>For more info on this patch view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.3.1">Patch v0.3.1</a></p>
+              </div>
+            </div>
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Release 0.3.0</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Release 0.3.0 introduces the ability to reset your password. Simply navigate to <a
+                    href="/forgot-password">https://police-cad.herokuapp.com/forgot-password</a> to reset your password.
+                </p>
+                <p>For more info on this release view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.3.0">Release v0.3.0</a></p>
+              </div>
+            </div>
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Release 0.2.1</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Release 0.2.1 introduces two new pages in the website: Rules and About. <a href="/rules">Rules</a>
+                  lists out the basic rules that users should follow. The new <a href="/about">About</a> page lists
+                  legal information about Lines Police Server.</p>
+                <p>For more info on this release view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.2.1">Release v0.2.1</a></p>
+              </div>
+            </div>
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Release 0.2.0</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Release 0.2.0 contains UI overhauls and a new 10-codes button for officers.</p>
+                <p>For more info on this release view our release log: <a
+                    href="https://github.com/Linesmerrill/police-cad/releases/tag/v0.2.0">Release v0.2.0</a></p>
+              </div>
+            </div>
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.1.7</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Patch 0.1.7 only allows police officers to issue a single ticket at a time.</p>
+              </div>
+            </div>
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.1.6</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Patch 0.1.6 limits plate numbers to be 8 digits and always uppercase and addresses some bug fixes.
+                </p>
+              </div>
+            </div>
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.1.5</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Patch 0.1.5 adds in links to our social media pages on facebook and twitter.</p>
+              </div>
+            </div>
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.1.4</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Patch 0.1.4 now will ask you to confirm your password before creating an account.</p>
+              </div>
+            </div>
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.1.3</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Patch 0.1.3 brings photos of (most) car models to the Plate Database for Police Officers.</p>
+              </div>
+            </div>
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.1.2</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Patch 0.1.2 introduces small fixes around creating new Vehicles and Civilians.</p>
+              </div>
+            </div>
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Patch 0.1.1</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Patch 0.1.1 allows users to create and delete <strong>Vehicles</strong>.</p>
+              </div>
+            </div>
+            <div class="grid__cell grid__cell--medium">
+              <div class="grid__cell-content">
+                <h2>Release 0.1.0</h2>
+                <div class="platform platform--ps4">Mobile</div>
+                <div class="platform platform--pc">PC</div>
+                <p>Release 0.1.0 allows users to create and delete <strong>Civilians</strong>.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </section>
+  <% include footer %>
   <div id="alertModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
         <div class="modal-body">
-          <h2 class="text-center">Nice Job!</h2>
-          <p class="text-center">You clicked the button, this is just one of the many easter eggs on this site ;)</p>
+          <h2 class="text-center">Coming Soon!</h2>
+          <p class="text-center">This is still being developed. Please check back later ;)</p>
           <br />
           <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK <i
               class="ion-android-close"></i></button>
@@ -160,42 +438,3 @@
 </body>
 
 </html>
-
-<script type="text/javascript">
-  $('input').keyup(function () {
-    str = $(this).val();
-    str = str.replace(/\s/g, '');
-    $(this).val(str);
-  });
-
-  $(document).ready(function () {
-    $("#confirmPassword").keyup(validate);
-  });
-
-  var goodPassword = document.getElementById('password-check-good');
-  var badPassword = document.getElementById('password-check-bad');
-  var passwordsMatch = false
-
-  function validate() {
-    var password1 = $("#inputPassword").val();
-    var password2 = $("#confirmPassword").val();
-
-    if (password1 == password2) {
-      passwordsMatch = true;
-      goodPassword.style.display = 'block'
-      badPassword.style.display = 'none'
-      $("#password-check-good").val("valid");
-    } else {
-      passwordsMatch = false;
-      goodPassword.style.display = 'none'
-      badPassword.style.display = 'block'
-      $("#validate-status").text("invalid");
-    }
-  }
-
-  $('#signInForm').submit(function (evt) {
-    if (passwordsMatch) {} else {
-      evt.preventDefault();
-    }
-  });
-</script>
