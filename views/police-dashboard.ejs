@@ -67,8 +67,9 @@
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#nameDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
-          <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime();">Issue Citation</button>
-          <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTimeForWarning();">Issue Warning</button>
+          <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#date', '#time');">Issue Citation</button>
+          <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
+          <button data-toggle="modal" href="#arrestReportModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest Report</button>
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
         </div>
       </div>
@@ -685,6 +686,96 @@
     </div>
   </div>
 
+  <div id="arrestReportModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="arrest-report-form" class="form-horizontal" action="/create-arrest-report" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>San Andreas Arrest Report</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="arrest-report-case-no">Case No:</label>
+                <div class="col-md-4">
+                  <input id="arrest-report-case-no" name="case-no" type="number" class="form-control input-md" disabled>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="arrest-report-date">Date of Violation:</label>
+                <div class="col-md-4">
+                  <input id="arrest-report-date" name="date" type="date" min="1900-01-01" max="2999-12-31" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="arrest-report-time">Time:</label>
+                <div class="col-md-4">
+                  <input id="arrest-report-time" name="time" type="time" placeholder="hh:mm" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="reporting-officer">Reporting Officer:</label>
+                <div class="col-md-4">
+                    <input id="reporting-officer" name="reportingOfficer" type="text" placeholder="Reporting Officer" class="form-control input-md" style="text-transform:capitalize;" value=<%= user.user.username%> required="" disabled>
+                </div>
+              </div>
+
+              <div class="form-group">
+                  <label class="col-md-4 control-label" for="accused-name">Accused:</label>
+                  <div class="col-md-4">
+                      <input id="accused-name" name="accusedName" type="text" placeholder="Accused Name" class="form-control input-md" style="text-transform:capitalize;" required="">
+                  </div>
+                </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="charge">Charge(s)</label>
+                <div class="col-md-4">
+                  <input id="charge" name="charge" type="text" placeholder="Charge(s)" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <hr/>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="detail">Detail of Event:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <div class="col-md-10 col-md-offset-1">
+                  <textarea id="detail" name="model" type="text" placeholder="Detail" class="form-control input-md"></textarea>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="actions-taken">Actions Taken:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <div class="col-md-10 col-md-offset-1">
+                  <textarea id="actions-taken" name="actionsTaken" type="text" placeholder="Actions Taken" class="form-control input-md"></textarea>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="summary">Summary:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <div class="col-md-10 col-md-offset-1">
+                  <textarea id="summary" name="summary" type="text" placeholder="Summary" class="form-control input-md"></textarea>
+                </div>
+              </div>
+
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submitArrestReport"></label>
+                <div class="col-md-4">
+                  <button id="submitArrestReport" name="officerEmail" class="btn btn-primary" onclick="hideArrestReportPopover()" value=<%= user.user.email%>>Submit</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="10codesModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -943,22 +1034,16 @@ function searchPlate() {
     }
   }
 
-  function setDateAndTime() {
-    document.getElementById('date').valueAsDate = new Date();
-    time = document.getElementById('time');
-    time.value = new Date().toLocaleTimeString('en-GB', {
+  function setDateAndTime(dateElement, timeElement) {
+    $(dateElement)[0].valueAsDate = new Date();
+    $(timeElement)[0].value = new Date().toLocaleTimeString('en-GB', {
       hour: "2-digit",
       minute: "2-digit"
     });
   }
 
-  function setDateAndTimeForWarning() {
-    document.getElementById('warning-date').valueAsDate = new Date();
-    time = document.getElementById('warning-time');
-    time.value = new Date().toLocaleTimeString('en-GB', {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
+  function generateCaseNo(elementName) {
+    $(elementName).val(Math.round(Math.random() * 10000000000))
   }
 
   $('#ticketModal').on('hidden.bs.modal', function () {
