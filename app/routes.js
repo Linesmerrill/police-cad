@@ -16,8 +16,8 @@ module.exports = function (app, passport, server) {
   app.get('/', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/');
+      // res.Status(301).send()
     }
     res.render('index', {
       message: req.flash('info')
@@ -28,8 +28,8 @@ module.exports = function (app, passport, server) {
   app.get('/release-log', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/release-log');
+      // res.Status(301).send()
     }
     res.render('release-log');
   });
@@ -37,8 +37,8 @@ module.exports = function (app, passport, server) {
   app.get('/about', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/about');
+      // res.Status(301).send()
     }
     res.render('about');
   });
@@ -46,8 +46,8 @@ module.exports = function (app, passport, server) {
   app.get('/rules', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/rules');
+      // res.Status(301).send()
     }
     res.render('rules');
   });
@@ -55,8 +55,8 @@ module.exports = function (app, passport, server) {
   app.get('/terms-and-conditions', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/terms-and-conditions');
+      // res.Status(301).send()
     }
     res.render('terms-and-conditions');
   });
@@ -64,8 +64,8 @@ module.exports = function (app, passport, server) {
   app.get('/privacy-policy', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/privacy-policy');
+      // res.Status(301).send()
     }
     res.render('privacy-policy');
   });
@@ -73,8 +73,8 @@ module.exports = function (app, passport, server) {
   app.get('/login', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/login');
+      // res.Status(301).send()
     }
     res.redirect('/');
   });
@@ -82,17 +82,17 @@ module.exports = function (app, passport, server) {
   app.get('/login-civ', authCivilian, function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/civ-dashboard');
+      // res.Status(301).send()
     }
-    res.redirect('/civ-dashboard');
+    res.redirect('civ-dashboard');
   });
 
   app.get('/login-police', authPolice, function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/police-dashboard');
+      // res.Status(301).send()
     }
     res.redirect('/police-dashboard')
   });
@@ -100,8 +100,8 @@ module.exports = function (app, passport, server) {
   app.get('/login-ems', authEms, function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/ems-dashboard');
+      // res.Status(301).send()
     }
     res.redirect('/ems-dashboard')
   });
@@ -109,8 +109,8 @@ module.exports = function (app, passport, server) {
   app.get('/signup-civ', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/signup-civ');
+      // res.Status(301).send()
     }
     res.render('signup-civ', {
       message: req.flash('signuperror')
@@ -120,8 +120,8 @@ module.exports = function (app, passport, server) {
   app.get('/signup-police', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/signup-police');
+      // res.Status(301).send()
     }
     res.render('signup-police', {
       message: req.flash('signuperror')
@@ -131,8 +131,8 @@ module.exports = function (app, passport, server) {
   app.get('/signup-ems', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/signup-ems');
+      // res.Status(301).send()
     }
     res.render('signup-ems', {
       message: req.flash('signuperror')
@@ -142,8 +142,8 @@ module.exports = function (app, passport, server) {
   app.get('/logout', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/logout');
+      // res.Status(301).send()
     }
     req.logout();
     res.redirect('/');
@@ -152,8 +152,8 @@ module.exports = function (app, passport, server) {
   app.get('/forgot-password', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/forgot-password');
+      // res.Status(301).send()
     }
     res.render('forgot-password', {
       user: req.user,
@@ -164,8 +164,8 @@ module.exports = function (app, passport, server) {
   app.get('/reset/:token', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/reset/:token');
+      // res.Status(301).send()
     }
     User.findOne({
       'user.resetPasswordToken': req.params.token,
@@ -187,8 +187,8 @@ module.exports = function (app, passport, server) {
   app.get('/civ-dashboard', auth, function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/civ-dashboard');
+      // res.Status(301).send()
     }
     Civilian.find({
       'civilian.email': req.user.user.email.toLowerCase()
@@ -208,8 +208,8 @@ module.exports = function (app, passport, server) {
   app.get('/ems-dashboard', auth, function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/ems-dashboard');
+      // res.Status(301).send()
     }
     Ems.find({
       'ems.email': req.user.user.email.toLowerCase()
@@ -229,8 +229,8 @@ module.exports = function (app, passport, server) {
   app.get('/police-dashboard', auth, function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/police-dashboard');
+      // res.Status(301).send()
     }
     res.render('police-dashboard', {
       user: req.user,
@@ -243,8 +243,8 @@ module.exports = function (app, passport, server) {
   app.get('/name-search', auth, function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/name-search');
+      // res.Status(301).send()
     }
     Civilian.find({
       'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
@@ -267,8 +267,8 @@ module.exports = function (app, passport, server) {
   app.get('/plate-search', auth, function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/plate-search');
+      // res.Status(301).send()
     }
     Vehicle.find({
       'vehicle.plate': req.query.plateNumber.trim().toUpperCase()
@@ -287,7 +287,7 @@ module.exports = function (app, passport, server) {
     if (process.env.REDIRECT_URL === "") {
     } else {
       res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      // res.Status(301).send()
     }
     res.render('page-not-found');
   });
@@ -331,8 +331,8 @@ module.exports = function (app, passport, server) {
   app.post('/forgot-password', function (req, res, next) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/forgot-password');
+      // res.Status(301).send()
     }
     async.waterfall([
       function (done) {
@@ -446,8 +446,8 @@ module.exports = function (app, passport, server) {
   app.post('/reset/:token', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/reset/:token');
+      // res.Status(301).send()
     }
     //this is a super gross way to grab the token.. :yolo:
     var token = req.headers.referer.split("/")[req.headers.referer.split("/").length - 1]
@@ -503,8 +503,8 @@ module.exports = function (app, passport, server) {
   app.post('/create-civ', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/create-civ');
+      // res.Status(301).send()
     }
     User.findOne({
       'user.email': req.body.submitNewCiv.toLowerCase()
@@ -522,8 +522,8 @@ module.exports = function (app, passport, server) {
   app.post('/create-ems', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/create-ems');
+      // res.Status(301).send()
     }
     User.findOne({
       'user.email': req.body.submitNewEms.toLowerCase()
@@ -541,8 +541,8 @@ module.exports = function (app, passport, server) {
   app.post('/create-vehicle', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/create-vehicle');
+      // res.Status(301).send()
     }
     User.findOne({
       'user.email': req.body.submitNewVeh.toLowerCase()
@@ -559,8 +559,8 @@ module.exports = function (app, passport, server) {
   app.post('/create-ems-vehicle', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/create-ems-vehicle');
+      // res.Status(301).send()
     }
     User.findOne({
       'user.email': req.body.submitNewVeh.toLowerCase()
@@ -577,8 +577,8 @@ module.exports = function (app, passport, server) {
   app.post('/create-ticket', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/create-ticket');
+      // res.Status(301).send()
     }
     var myTicket = new Ticket()
     myTicket.updateTicket(req, res)
@@ -590,8 +590,8 @@ module.exports = function (app, passport, server) {
   app.post('/updateOrDeleteCiv', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/updateOrDeleteCiv');
+      // res.Status(301).send()
     }
     if (req.body.action === "update") {
       var address
@@ -649,8 +649,8 @@ module.exports = function (app, passport, server) {
   app.post('/deleteEms', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/deleteEms');
+      // res.Status(301).send()
     }
     var nameArray = req.body.removeEms.split(' ')
     var firstName = nameArray[0]
@@ -665,8 +665,8 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/updateOrDeleteVeh', function (req, res) {
-    res.set('location', process.env.REDIRECT_URL);
-    res.status(301).send()
+    res.set('location', process.env.REDIRECT_URL + '/updateOrDeleteVeh');
+    // res.Status(301).send()
     if (req.body.action === "update") {
       Vehicle.findOneAndUpdate({
         '_id': ObjectId(req.body.vehicleID),
@@ -699,8 +699,8 @@ module.exports = function (app, passport, server) {
   app.post('/deleteEmsVeh', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
-      res.set('location', process.env.REDIRECT_URL);
-      res.status(301).send()
+      res.set('location', process.env.REDIRECT_URL + '/deleteEmsVeh');
+      // res.Status(301).send()
     }
     var roName = req.body.roVeh
     var modelName = req.body.modelVeh
@@ -742,7 +742,7 @@ function auth(req, res, next) {
   if (process.env.REDIRECT_URL === "") {
   } else {
     res.set('location', process.env.REDIRECT_URL);
-    res.status(301).send()
+    // res.Status(301).send()
   }
   if (req.isAuthenticated()) {
     return next();
@@ -751,13 +751,14 @@ function auth(req, res, next) {
 }
 
 function authCivilian(req, res, next) {
-  if (process.env.REDIRECT_URL === "") {
-  } else {
-    res.set('location', process.env.REDIRECT_URL);
-    res.status(301).send()
-  }
+  
   if (req.isAuthenticated()) {
     return next();
+  }
+  if (process.env.REDIRECT_URL === "") {
+  } else {
+    res.set('location', process.env.REDIRECT_URL + '/login-civ');
+    // res.Status(301).send()
   }
   res.render('login-civ', {
     message: req.flash('error')
@@ -765,13 +766,14 @@ function authCivilian(req, res, next) {
 }
 
 function authPolice(req, res, next) {
-  if (process.env.REDIRECT_URL === "") {
-  } else {
-    res.set('location', process.env.REDIRECT_URL);
-    res.status(301).send()
-  }
+  
   if (req.isAuthenticated()) {
     return next();
+  }
+  if (process.env.REDIRECT_URL === "") {
+  } else {
+    res.set('location', process.env.REDIRECT_URL + '/login-police');
+    // res.Status(301).send()
   }
   res.render('login-police', {
     message: req.flash('error')
@@ -779,13 +781,14 @@ function authPolice(req, res, next) {
 }
 
 function authEms(req, res, next) {
-  if (process.env.REDIRECT_URL === "") {
-  } else {
-    res.set('location', process.env.REDIRECT_URL);
-    res.status(301).send()
-  }
+  
   if (req.isAuthenticated()) {
     return next();
+  }
+  if (process.env.REDIRECT_URL === "") {
+  } else {
+    res.set('location', process.env.REDIRECT_URL + '/login-ems');
+    // res.Status(301).send()
   }
   res.render('login-ems', {
     message: req.flash('error')
