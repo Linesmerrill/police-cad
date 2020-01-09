@@ -234,6 +234,7 @@ module.exports = function (app, passport, server) {
         'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
         'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
       }, function (err, dbTickets) {
+        res.set('location', process.env.REDIRECT_URL + '/police-dashboard');
         res.render('police-dashboard', {
           user: req.user,
           vehicles: null,
@@ -252,6 +253,7 @@ module.exports = function (app, passport, server) {
     Vehicle.find({
       'vehicle.plate': req.query.plateNumber.trim().toUpperCase()
     }, function (err, dbVehicles) {
+      res.set('location', process.env.REDIRECT_URL + '/police-dashboard');
       res.render('police-dashboard', {
         user: req.user,
         civilians: null,
@@ -414,6 +416,7 @@ module.exports = function (app, passport, server) {
       }
     ], function (err) {
       if (err) return next(err);
+      res.set('location', process.env.REDIRECT_URL + '/forgot-password');
       res.render('forgot-password', {
         message: req.flash('emailSend')
       });
@@ -472,6 +475,7 @@ module.exports = function (app, passport, server) {
         });
       }
     ], function (err) {
+      res.set('location', process.env.REDIRECT_URL + '/');
       res.redirect('/');
     });
   });
@@ -508,7 +512,6 @@ module.exports = function (app, passport, server) {
       myEms.save(function (err, fluffy) {
         if (err) return console.error(err);
       });
-
     })
   });
 
@@ -592,6 +595,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
+        res.set('location', process.env.REDIRECT_URL + '/civ-dashboard');
         res.redirect('/civ-dashboard');
       })
     } else {
@@ -609,6 +613,7 @@ module.exports = function (app, passport, server) {
             'ticket.civLastName': req.body.lastName
           }, function (err) {
             if (err) return console.error(err);
+            res.set('location', process.env.REDIRECT_URL + '/civ-dashboard');
             res.redirect('/civ-dashboard');
           })
         })
@@ -629,6 +634,7 @@ module.exports = function (app, passport, server) {
       'ems.lastName': lastName
     }, function (err) {
       if (err) return console.error(err);
+      res.set('location', process.env.REDIRECT_URL + '/ems-dashboard');
       res.redirect('/ems-dashboard');
     })
   })
@@ -651,6 +657,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
+        res.set('location', process.env.REDIRECT_URL + '/civ-dashboard');
         res.redirect('/civ-dashboard');
       })
     } else {
@@ -659,6 +666,7 @@ module.exports = function (app, passport, server) {
         'vehicle.email': req.body.emailVeh.toLowerCase()
       }, function (err) {
         if (err) return console.error(err);
+        res.set('location', process.env.REDIRECT_URL + '/civ-dashboard');
         res.redirect('/civ-dashboard');
       })
     }
@@ -680,6 +688,7 @@ module.exports = function (app, passport, server) {
       'emsVehicle.plate': plateName
     }, function (err) {
       if (err) return console.error(err);
+      res.set('location', process.env.REDIRECT_URL + '/ems-dashboard');
       res.redirect('/ems-dashboard');
     })
   })
