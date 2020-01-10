@@ -64,6 +64,14 @@ module.exports = function (app, passport, server) {
     res.render('privacy-policy');
   });
 
+  app.get('/contact-us', function (req, res) {
+    if (process.env.REDIRECT_URL === "") {
+    } else {
+      res.set('location', process.env.REDIRECT_URL + "/contact-us");
+    }
+    res.render('contact-us');
+  });
+
   app.get('/login', function (req, res) {
     if (process.env.REDIRECT_URL === "") {
     } else {
