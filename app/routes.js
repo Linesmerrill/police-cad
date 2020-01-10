@@ -17,6 +17,7 @@ module.exports = function (app, passport, server) {
     if (process.env.REDIRECT_URL === "") {
     } else {
       res.set('location', process.env.REDIRECT_URL + '/');
+      res.status(301).send()
     }
     res.render('index', {
       message: req.flash('info')
