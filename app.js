@@ -8,6 +8,9 @@ var passport = require('passport');
 var flash = require('connect-flash');
 var path = require('path');
 
+var newBaseURL = process.env.NEW_BASE_URL || 'http://localhost:8080';
+var redirectStatus = parseInt(process.env.REDIRECT_STATUS || 302);
+var oldBaseURL = process.env.OLD_BASE_URL
 // Load enviroment variables file into process.
 dotenv.config();
 
@@ -53,6 +56,14 @@ app.use(flash());
 
 // Static serving of public files.
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(function forceLiveDomain(req, res, next) {
+	var host = req.get('Host')
+	if (host === oldBaseURL) {
+		return res.redirect(redirectStatus, newBaseURL + req.originalUrl)
+	}
+	return next();
+})
 
 // Get the port we'll listen to.
 var port = process.env.PORT || 8080;
