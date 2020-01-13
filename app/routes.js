@@ -44,6 +44,13 @@ module.exports = function (app, passport, server) {
     res.render('contact-us');
   });
 
+  app.get('/ads.txt', (req, res) => {
+    fs.readFile('ads.txt', 'utf8', function(err, data) {
+      if (err) throw err;
+      return res.json(data);
+    })
+  })
+
   app.get('/login', function (req, res) {
     res.redirect('/');
   });
