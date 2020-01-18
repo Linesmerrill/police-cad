@@ -552,6 +552,10 @@ img::-moz-selection {
     margin-bottom: 1rem;
 }
 
+.margin-bottom-2 {
+    margin-bottom: 2rem;
+}
+
 .details {
     position: absolute;
     margin-left: -19rem;
@@ -778,4 +782,8 @@ a.link--inherit {
 
 #reporting-officer {
     background-color: #36333d;
+}
+
+.text-indent-2 {
+    text-indent: 2em;
 }
