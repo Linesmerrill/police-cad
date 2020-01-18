@@ -334,28 +334,28 @@
               <h4>San Andreas Traffic Ticket</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
-              <div class="form-group">
+              <div class="form-group required">
                 <label class="col-md-4 control-label" for="plate">Date of Violation</label>
                 <div class="col-md-4">
                   <input id="date" name="date" type="date" min="1900-01-01" max="2999-12-31" class="form-control input-md" required="">
                 </div>
               </div>
 
-              <div class="form-group">
+              <div class="form-group required">
                 <label class="col-md-4 control-label" for="time">Time</label>
                 <div class="col-md-4">
                   <input id="time" name="time" type="time" placeholder="hh:mm" class="form-control input-md" required="">
                 </div>
               </div>
 
-              <div class="form-group">
+              <div class="form-group required">
                 <label class="col-md-4 control-label" for="ticket-civ-first-name">First Name</label>
                 <div class="col-md-4">
                     <input id="ticket-civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." style="text-transform:capitalize;" required="">
                 </div>
               </div>
 
-              <div class="form-group">
+              <div class="form-group required">
                   <label class="col-md-4 control-label" for="ticket-civ-last-name">Last Name</label>
                   <div class="col-md-4">
                       <input id="ticket-civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." style="text-transform:capitalize;" required="">
@@ -384,11 +384,11 @@
               </div>
 
               <!-- Multiple Checkboxes (inline) -->
-              <div class="form-group">
+              <div class="form-group required">
                 <label class="col-md-4 control-label" for="fines">Fines</label>
                 <div class="col-md-4">
 
-              <select name="fines" class="select-move" multiple>
+              <select id="fines" name="fines" class="select-move" multiple required>
                 <optgroup label="Moving Violations: may result in suspended or revoked license">
                   <option>Speeding 5-10 over the posted speed limit</option>
                   <option>Speeding 10-39 over the posted speed limit</option>
@@ -403,8 +403,8 @@
                   <option>Racing on public street</option>
                   <option>Vehicular homicide</option>
                 </optgroup>
-                <optgroup label="Non-Moving Violations: 'fix-it' ticket">
-                  <option  id="parkingFireHydrant">Parking in front of fire hydrant</option>
+                <optgroup label="Non-Moving Violations: fix-it ticket">
+                  <option>Parking in front of fire hydrant</option>
                   <option>Parking in no-parking zone</option>
                   <option>Parking in front of an expired meter</option>
                   <option>Blocking sidewalk</option>
@@ -429,21 +429,11 @@
                   <option>Other</option>
                 </optgroup>
             </select>
-            <!-- <div class="tail-move-container"></div> -->
-           
           </div>
           </div>
-
-              <!-- Other Offense-->
-              <div id="otherOffenseGroup" class="form-group" style="display:none">
-                <label class="col-md-4 control-label" for="otherInput">Other Offense</label>
-                <div class="col-md-4">
-                  <input id="otherInput" name="otherInput" type="text" placeholder="offense" class="form-control input-md">
-                </div>
-              </div>
 
               <!-- Text input-->
-              <div class="form-group">
+              <div class="form-group required">
                 <label class="col-md-4 control-label" for="amount">Fine Amount</label>
                 <div class="col-md-4">
                   <input id="amount" name="amount" type="number" placeholder="$ amount" max="999999" class="form-control input-md" required="">
@@ -475,28 +465,28 @@
               <h4>San Andreas Traffic Warning</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
-              <div class="form-group">
+              <div class="form-group required">
                 <label class="col-md-4 control-label" for="warning-date">Date of Violation</label>
                 <div class="col-md-4">
                   <input id="warning-date" name="date" type="date" min="1900-01-01" max="2999-12-31" class="form-control input-md" required="">
                 </div>
               </div>
 
-              <div class="form-group">
+              <div class="form-group required">
                 <label class="col-md-4 control-label" for="warning-time">Time</label>
                 <div class="col-md-4">
                   <input id="warning-time" name="time" type="time" placeholder="hh:mm" class="form-control input-md" required="">
                 </div>
               </div>
 
-              <div class="form-group">
+              <div class="form-group required">
                 <label class="col-md-4 control-label" for="warning-civ-first-name">First Name</label>
                 <div class="col-md-4">
                     <input id="warning-civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." style="text-transform:capitalize;" required="">
                 </div>
               </div>
 
-              <div class="form-group">
+              <div class="form-group required">
                   <label class="col-md-4 control-label" for="warning-civ-last-name">Last Name</label>
                   <div class="col-md-4">
                       <input id="warning-civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." style="text-transform:capitalize;" required="">
@@ -525,107 +515,53 @@
               </div>
 
               <!-- Multiple Checkboxes (inline) -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="warning-violations">Violation</label>
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="fines">Violation</label>
                 <div class="col-md-4">
-                  <label class="radio" for="warning-violations-0">
-                    <input type="radio" name="violations" id="warning-violations-0" value="Speed" onclick="toggle_visibility(warningSpeedViolationGroup);">Speed
-                  </label>
-                  <label class="radio" for="warning-violations-1">
-                    <input type="radio" name="violations" id="warning-violations-1" value="DUI" onclick="toggle_visibility(warningDuiViolationGroup);">DUI
-                  </label>
-                  <label class="radio" for="warning-violations-2">
-                    <input type="radio" name="violations" id="warning-violations-2" value="Driver license" onclick="toggle_visibility(warningDriverLicenseViolationGroup);">Driver License
-                  </label>
-                  <label class="radio" for="warning-violations-3">
-                    <input type="radio" name="violations" id="warning-violations-3" value="Invalid registration" onclick="toggle_visibility('warningNone');">No Valid Registration
-                  </label>
-                  <label class="radio" for="warning-violations-4">
-                    <input type="radio" name="violations" id="warning-violations-4" value="Invalid insurance" onclick="toggle_visibility('warningNone');">No Proof Insurance
-                  </label>
-                  <label class="radio" for="warning-violations-5">
-                    <input type="radio" name="violations" id="warning-violations-5" value="Violated traffic signal" onclick="toggle_visibility('warningNone');">Violated Traffic Signal
-                  </label>
-                  <label class="radio" for="warning-violations-6">
-                    <input type="radio" name="violations" id="warning-violations-6" value="Failure to yield" onclick="toggle_visibility('warningNone');">Failure to Yield
-                  </label>
-                  <label class="radio" for="warning-violations-7">
-                    <input type="radio" name="violations" id="warning-violations-7" value="Unsafe lane change" onclick="toggle_visibility('warningNone');">Unsafe Lane Change
-                  </label>
-                  <label class="radio" for="warning-violations-8">
-                    <input type="radio" name="violations" id="warning-violations-8" value="Walking on highway" onclick="toggle_visibility('warningNone');">Walking on Highway
-                  </label>
-                  <label class="radio" for="warning-violations-9">
-                    <input type="radio" name="violations" id="warning-violations-9" value="Other" onclick="toggle_visibility(warningOtherOffenseGroup);">Other
-                  </label>
-                </div>
-              </div>
 
-              <!-- Speed Violation -->
-              <div id="warningSpeedViolationGroup" class="form-group" style="display:none">
-                <label class="col-md-4 control-label" for="warning-speedViolation">Speed Violation</label>
-                <div class="col-md-4">
-                  <div class="radio">
-                    <label for="warning-speedViolation-0">
-                      <input type="radio" name="speedViolation" id="warning-speedViolation-0" value="Over limit"> Over limit
-                    </label>
-                  </div>
-                  <div class="radio">
-                    <label for="warning-speedViolation-1">
-                      <input type="radio" name="speedViolation" id="warning-speedViolation-1" value="Unsafe for conditions"> Unsafe for conditions
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <!-- DUI Violation -->
-              <div id="warningDuiViolationGroup" class="form-group" style="display:none">
-                <label class="col-md-4 control-label" for="warning-duiViolation">DUI Violation</label>
-                <div class="col-md-4">
-                  <div class="radio">
-                    <label for="warning-duiViolation-0">
-                      <input type="radio" name="duiViolation" id="warning-duiViolation-0" value="Under the influence"> Under the influence
-                    </label>
-                  </div>
-                  <div class="radio">
-                    <label for="warning-duiViolation-1">
-                      <input type="radio" name="duiViolation" id="warning-duiViolation-1" value="Prohibited B.A.C"> Prohibited B.A.C
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Driver License Violation -->
-              <div id="warningDriverLicenseViolationGroup" class="form-group" style="display:none">
-                <label class="col-md-4 control-label" for="warning-driverLicenseViolation">Driver License Violation</label>
-                <div class="col-md-4">
-                  <div class="radio">
-                    <label for="warning-driverLicenseViolation-0">
-                      <input type="radio" name="driverLicenseViolation" id="warning-driverLicenseViolation-0"
-                        value="No license"> None
-                    </label>
-                  </div>
-                  <div class="radio">
-                    <label for="warning-driverLicenseViolation-1">
-                      <input type="radio" name="driverLicenseViolation" id="warning-driverLicenseViolation-1"
-                        value="Not on person"> Not on person
-                    </label>
-                  </div>
-                  <div class="radio">
-                    <label for="warning-driverLicenseViolation-2">
-                      <input type="radio" name="driverLicenseViolation" id="warning-driverLicenseViolation-2" value="Revoked"> Revoked
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Other Offense-->
-              <div id="warningOtherOffenseGroup" class="form-group" style="display:none">
-                <label class="col-md-4 control-label" for="warning-otherInput">Other Offense</label>
-                <div class="col-md-4">
-                  <input id="warning-otherInput" name="otherInput" type="text" placeholder="offense" class="form-control input-md">
-                </div>
-              </div>
+              <select name="fines" class="select-move" multiple required>
+                <optgroup label="Moving Violations: may result in suspended or revoked license">
+                  <option>Speeding 5-10 over the posted speed limit</option>
+                  <option>Speeding 10-39 over the posted speed limit</option>
+                  <option>Running a stop sign or red light</option>
+                  <option>Not yielding to pedestrian</option>
+                  <option>Illegal U-Turn</option>
+                  <option>Failure to yield</option>
+                  <option>Driving on suspended license</option>
+                  <option>Reckless or dangerous driving</option>
+                  <option>Operating motor vehicle while intoxicated</option>
+                  <option>Road rage</option>
+                  <option>Racing on public street</option>
+                  <option>Vehicular homicide</option>
+                </optgroup>
+                <optgroup label="Non-Moving Violations: fix-it ticket">
+                  <option>Parking in front of fire hydrant</option>
+                  <option>Parking in no-parking zone</option>
+                  <option>Parking in front of an expired meter</option>
+                  <option>Blocking sidewalk</option>
+                  <option>Double parking</option>
+                  <option>Excessive muffler noise</option>
+                  <option>No license plate</option>
+                  <option>Driving with expired registration tags</option>
+                  <option>Headlights or tail-lights not working</option>
+                  <option>Cracked windshield</option>
+                  <option>Illegal lights installed on vehicle</option>
+                  <option>Window tint darker than allowed</option>
+                </optgroup>
+                <optgroup label="Misdemeanors: fine, jail sentence or both">
+                  <option>Driving under the influence (DUI)</option>
+                  <option>Driving on suspended or revoked license</option>
+                  <option>Speeding 40mph or more in excess of speed limit</option>
+                  <option>Drag racing</option>
+                  <option>Reckless driving</option>
+                  <option>Leaving the scene of an accident</option>
+                </optgroup>
+                <optgroup label="Crime not listed">
+                  <option>Other</option>
+                </optgroup>
+            </select>
+          </div>
+          </div>
 
               <input type="hidden" name="isWarning" value="true">
               <input type="hidden" name="amount" value="0">
@@ -815,11 +751,10 @@ document.addEventListener("DOMContentLoaded", function(){
     descriptions: true,
     hideSelected: true,
     hideDisabled: true,
-    // multiLimit: 15,
     multiShowCount: true,
     multiContainer: true
+  });
 });
-            });
 
 function searchPlate() {
   let x = document.getElementById('plateDetails');
@@ -865,53 +800,6 @@ function searchPlate() {
   $(document).on("keypress", "form", function (event) {
     return event.keyCode != 13;
   });
-
-  function toggle_visibility(id) {
-    if (id.id === "speedViolationGroup") {
-      id.style.display = 'block'
-      duiViolationGroup.style.display = 'none';
-      driverLicenseViolationGroup.style.display = 'none';
-      otherOffenseGroup.style.display = 'none';
-    } else if (id.id === "duiViolationGroup") {
-      id.style.display = 'block'
-      speedViolationGroup.style.display = 'none';
-      driverLicenseViolationGroup.style.display = 'none';
-      otherOffenseGroup.style.display = 'none';
-    } else if (id.id === "driverLicenseViolationGroup") {
-      id.style.display = 'block'
-      speedViolationGroup.style.display = 'none';
-      duiViolationGroup.style.display = 'none';
-      otherOffenseGroup.style.display = 'none';
-    } else if (id.id === "warningSpeedViolationGroup") {
-      id.style.display = 'block'
-      warningDuiViolationGroup.style.display = 'none';
-      warningDriverLicenseViolationGroup.style.display = 'none';
-      warningOtherOffenseGroup.style.display = 'none';
-    } else if (id.id === "warningDuiViolationGroup") {
-      id.style.display = 'block'
-      warningSpeedViolationGroup.style.display = 'none';
-      warningDriverLicenseViolationGroup.style.display = 'none';
-      warningOtherOffenseGroup.style.display = 'none';
-    } else if (id.id === "warningDriverLicenseViolationGroup") {
-      id.style.display = 'block'
-      warningSpeedViolationGroup.style.display = 'none';
-      warningDuiViolationGroup.style.display = 'none';
-      warningOtherOffenseGroup.style.display = 'none';
-    } else if (id === "none") {
-      duiViolationGroup.style.display = 'none';
-      driverLicenseViolationGroup.style.display = 'none';
-      otherOffenseGroup.style.display = 'none';
-    } else if (id === "warningNone") {
-      warningDuiViolationGroup.style.display = 'none';
-      warningDriverLicenseViolationGroup.style.display = 'none';
-      warningOtherOffenseGroup.style.display = 'none';
-    } else {
-      id.style.display = 'block';
-      speedViolationGroup.style.display = 'none';
-      duiViolationGroup.style.display = 'none';
-      driverLicenseViolationGroup.style.display = 'none';
-    }
-  }
 
   function setDateAndTime() {
     document.getElementById('date').valueAsDate = new Date();
