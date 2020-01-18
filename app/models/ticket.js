@@ -5,7 +5,7 @@ var ticketSchema = mongoose.Schema({
     officerEmail: String,
     civName: String,
     caseNumber: String,
-    violation: String,
+    violation: [{type: String}],
     plate: String,
     model: String,
     color: String,
@@ -35,30 +35,31 @@ ticketSchema.methods.updateTicket = function (request, response) {
   }
   
 
-  var additionalViolation = ""
+  // var additionalViolation = ""
   this.ticket.officerEmail = request.body.officerEmail.toLowerCase();
   this.ticket.caseNumber = request.body.caseNumber;
   this.ticket.plate = request.body.plate.trim().toUpperCase();
   this.ticket.model = request.body.model.trim().charAt(0).toUpperCase() + request.body.model.trim().slice(1);
   this.ticket.color = request.body.color.trim().charAt(0).toUpperCase() + request.body.color.trim().slice(1);
-  if (exists(request.body.speedViolation)) {
-    additionalViolation = ' - ' + additionalViolation + request.body.speedViolation + ' '
-  }
-  if (exists(request.body.duiViolation)) {
-    additionalViolation = ' - ' + additionalViolation + request.body.duiViolation + ' '
-  }
-  if (exists(request.body.driverLicenseViolation)) {
-    additionalViolation = ' - ' + additionalViolation + request.body.driverLicenseViolation + ' '
-  }
-  if (request.body.otherInput !== '') {
-    additionalViolation = ' - ' + additionalViolation + request.body.otherInput
-  }
+  // request.body.fines.forEach((value, index) => console.log(`Index = ${index} Value = ${value}`))
+  // if (exists(request.body.speedViolation)) {
+  //   additionalViolation = ' - ' + additionalViolation + request.body.speedViolation + ' '
+  // }
+  // if (exists(request.body.duiViolation)) {
+  //   additionalViolation = ' - ' + additionalViolation + request.body.duiViolation + ' '
+  // }
+  // if (exists(request.body.driverLicenseViolation)) {
+  //   additionalViolation = ' - ' + additionalViolation + request.body.driverLicenseViolation + ' '
+  // }
+  // if (request.body.otherInput !== '') {
+  //   additionalViolation = ' - ' + additionalViolation + request.body.otherInput
+  // }
   if (exists(adjustedNameAndDOB)) {
     if (exists(adjustedNameAndDOB[2])) {
       this.ticket.civID = adjustedNameAndDOB[2].trim();
     }
   }
-  this.ticket.violation = request.body.violations + additionalViolation;
+  this.ticket.violation = request.body.fines;
   this.ticket.amount = request.body.amount.trim();
   this.ticket.date = request.body.date.trim();
   this.ticket.time = request.body.time.trim();
