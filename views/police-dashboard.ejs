@@ -376,7 +376,7 @@
                 <div class="form-group required">
                   <label class="col-md-4 control-label" for="civID">Selected ID</label>
                   <div class="col-md-4">
-                      <input id="civID" name="civID" type="text" placeholder="Autofill from searching" class="form-control input-md disabled-color" required readonly="readonly">
+                      <input id="civID" name="civID" type="text" placeholder="Autofill from searching" class="form-control input-md disabled-color" data-trigger="id-popover" data-content="* ID is required, try using the search button above." required readonly="readonly">
                   </div>
                 </div>
 
@@ -462,7 +462,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitTicket"></label>
                 <div class="col-md-4">
-                  <button id="submitTicket" name="officerEmail" class="btn btn-primary" value=<%= user.user.email%>>Submit</button>
+                  <button id="submitTicket" name="officerEmail" class="btn btn-primary" onclick="hideTicketCivPopover()" value=<%= user.user.email%>>Submit</button>
                 </div>
               </div>
             </fieldset>
@@ -738,7 +738,7 @@ function searchPlate() {
   function selectSearchTable(userID) {
     $('#ticketSearchModal').modal('toggle');
     $('#civID').val(userID);
-
+    $('#civID').popover('hide')
   }
 
   function searchNameInDB() {
@@ -772,8 +772,20 @@ function searchPlate() {
     });
   }
 
+  function hideTicketCivPopover() {
+    // $('#civID').popover('hide')
+    if ($('#civID').val().length < 1) {
+      $('#civID').popover('show')
+      $('#ticket-form').attr('onsubmit','return false;');
+    } else {
+      $('#civID').popover('hide')
+      $('#ticket-form').attr('onsubmit','return true;');
+    }
+  }
+
   $('#ticketModal').on('hidden.bs.modal', function () {
     $(this).find('form').trigger('reset');
+    $('#civID').popover('hide')
   })
 
   $('#plateDatabaseModal').on('hidden.bs.modal', function () {
