@@ -584,11 +584,15 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on('find_user', function(firstName, lastName) {
+      if (firstName.trim().length < 1 || lastName.trim().length < 1) {
+        socket.emit('find_user_result', {});
+      } else {
       Civilian.find({'civilian.firstName': firstName, 'civilian.lastName': lastName}, function(err, user) {
         if (err) throw err;
         if (!user) socket.emit('find_user_result', {});
         else socket.emit('find_user_result', user)
       })
+      }
     });
   });
 };
