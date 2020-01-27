@@ -523,14 +523,30 @@
               <div class="form-group required">
                 <label class="col-md-4 control-label" for="warning-civ-first-name">First Name</label>
                 <div class="col-md-4">
-                    <input id="warning-civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." style="text-transform:capitalize;" required="">
+                    <input id="warning-civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" style="text-transform:capitalize;" required="">
                 </div>
               </div>
 
               <div class="form-group required">
                   <label class="col-md-4 control-label" for="warning-civ-last-name">Last Name</label>
                   <div class="col-md-4">
-                      <input id="warning-civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." style="text-transform:capitalize;" required="">
+                      <input id="warning-civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" style="text-transform:capitalize;" required="">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-md-4 control-label" for=""></label>
+                  <div class="col-md-4">
+                    <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#warningSearchModal"
+                    onclick="searchNameInDBWarning()" title="search">
+                    <span class="iconify" data-icon="ion:search-circle-outline" data-inline="false"></span></a>&nbsp;
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="civIDWarning">Selected ID</label>
+                  <div class="col-md-4">
+                      <input id="civIDWarning" name="civID" type="text" placeholder="Autofill from searching" class="form-control input-md disabled-color" data-trigger="warning-id-popover" data-content="* ID is required, try using the search button above." required readonly="readonly">
                   </div>
                 </div>
 
@@ -619,6 +635,28 @@
       </div>
     </div>
   </div>
+  <div id="warningSearchModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4>Search Results from Database (select one):</h4>
+          <hr style="width: 88%;max-width: 100rem;">
+          <table id="warning-search-result-table" class="table table-hover" border="1" frame="box">
+            <thead>
+               <tr>
+                  <th>Name</th>
+                  <th>DOB</th>
+                  <th>ID #</th>
+               </tr>
+            </thead>
+            <tbody id="warning-search-result-tbody">
+            </tbody>
+         </table>
+        </div>
+      </div>
+    </div>
+  </div>
   <% include 10-codes %> 
 </body>
 </div>
@@ -682,6 +720,13 @@ $(document).ready(function() {
       $('#ticket-search-result-table').find('tbody:last').append(markup);
     }
   });
+
+  socket.on('find_user_result_warning', function(user) {
+    for (i=0; i< user.length; i++){
+      var markup = `<tr onclick="selectSearchTableWarning(` +`'${user[i]._id}')"><td>${user[i].civilian.firstName} ${user[i].civilian.lastName}</td><td>${user[i].civilian.birthday}</td><td>${user[i]._id}</td></tr>`;
+      $('#warning-search-result-table').find('tbody:last').append(markup);
+    }
+  });
 });
 
 
@@ -741,11 +786,24 @@ function searchPlate() {
     $('#civID').popover('hide')
   }
 
+  function selectSearchTableWarning(userID) {
+    $('#warningSearchModal').modal('toggle');
+    $('#civIDWarning').val(userID);
+    $('#civIDWarning').popover('hide')
+  }
+
   function searchNameInDB() {
     //clear out the old table
     $("#ticket-search-result-table tr>td").remove();
 
     socket.emit('find_user', $("#ticket-civ-first-name").val(), $("#ticket-civ-last-name").val());
+  }
+
+  function searchNameInDBWarning() {
+    //clear out the old table
+    $("#warning-search-result-table tr>td").remove();
+
+    socket.emit('find_user_warning', $("#warning-civ-first-name").val(), $("#warning-civ-last-name").val());
   }
 
   // prevents submit modal when pressing enter because it closes the entire window and does not submit.
@@ -773,7 +831,6 @@ function searchPlate() {
   }
 
   function hideTicketCivPopover() {
-    // $('#civID').popover('hide')
     if ($('#civID').val().length < 1) {
       $('#civID').popover('show')
       $('#ticket-form').attr('onsubmit','return false;');
@@ -783,9 +840,29 @@ function searchPlate() {
     }
   }
 
+  function hideWarningCivPopover() {
+    if ($('#civIDWarning').val().length < 1) {
+      $('#civIDWarning').popover('show')
+      $('#warning-form').attr('onsubmit','return false;');
+    } else {
+      $('#civIDWarning').popover('hide')
+      $('#warning-form').attr('onsubmit','return true;');
+    }
+  }
+
+  function hideCivPopover() {
+    $('#civ-first-name').popover('hide')
+    $('#civ-last-name').popover('hide')
+  }
+
   $('#ticketModal').on('hidden.bs.modal', function () {
     $(this).find('form').trigger('reset');
     $('#civID').popover('hide')
+  })
+
+  $('#warningModal').on('hidden.bs.modal', function () {
+    $(this).find('form').trigger('reset');
+    $('#civIDWarning').popover('hide')
   })
 
   $('#plateDatabaseModal').on('hidden.bs.modal', function () {
@@ -793,14 +870,4 @@ function searchPlate() {
     $('#plateDetails').removeAttr("style").hide()
     $('#stolenMessage').removeAttr("style").hide()
   })
-
-  function hideWarningCivPopover() {
-    $('#warning-civ-first-name').popover('hide')
-    $('#warning-civ-last-name').popover('hide')
-  }
-
-  function hideCivPopover() {
-    $('#civ-first-name').popover('hide')
-    $('#civ-last-name').popover('hide')
-  }
 </script>

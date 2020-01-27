@@ -771,3 +771,8 @@ a.link--inherit {
       color: #eee;
       background-color: #36333d;
   }
+
+  #civIDWarning {
+    color: #eee;
+    background-color: #36333d;
+}
