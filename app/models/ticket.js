@@ -44,8 +44,20 @@ ticketSchema.methods.updateTicket = function (request, response) {
   this.ticket.date = request.body.date.trim();
   this.ticket.time = request.body.time.trim();
   this.ticket.isWarning = request.body.isWarning;
-  this.ticket.civID = request.body.civID.trim();
+  if (exists(request.body.civID)) {
+    this.ticket.civID = request.body.civID.trim();
+  } else {
+    this.ticket.civID = request.body.civID
+  }
   response.redirect('/police-dashboard');
 };
 
 module.exports = mongoose.model('Ticket', ticketSchema);
+
+function exists(v) {
+  if (v !== undefined) {
+    return true
+  } else {
+    return false
+  }
+}
