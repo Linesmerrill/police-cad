@@ -582,8 +582,31 @@ module.exports = function (app, passport, server) {
       io.sockets.emit('updateusers', usernames);
       socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has disconnected');
     });
-  });
 
+    socket.on('find_user', function(firstName, lastName) {
+      if (firstName.trim().length < 1 || lastName.trim().length < 1) {
+        socket.emit('find_user_result', {});
+      } else {
+      Civilian.find({'civilian.firstName': firstName, 'civilian.lastName': lastName}, function(err, user) {
+        if (err) throw err;
+        if (!user) socket.emit('find_user_result', {});
+        else socket.emit('find_user_result', user)
+      })
+      }
+    });
+
+    socket.on('find_user_warning', function(firstName, lastName) {
+      if (firstName.trim().length < 1 || lastName.trim().length < 1) {
+        socket.emit('find_user_result_warning', {});
+      } else {
+      Civilian.find({'civilian.firstName': firstName, 'civilian.lastName': lastName}, function(err, user) {
+        if (err) throw err;
+        if (!user) socket.emit('find_user_result_warning', {});
+        else socket.emit('find_user_result_warning', user)
+      })
+      }
+    });
+  });
 };
 
 function auth(req, res, next) {
