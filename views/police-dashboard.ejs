@@ -856,13 +856,19 @@ function searchPlate() {
   }
 
   $('#ticketModal').on('hidden.bs.modal', function () {
-    // $(this).find('form').trigger('reset');
     $('#civID').popover('hide')
   })
 
+  $('#ticketSearchModal').on('hidden.bs.modal', function (e) {
+    $('body').addClass('modal-open');
+  })
+
   $('#warningModal').on('hidden.bs.modal', function () {
-    // $(this).find('form').trigger('reset');
     $('#civIDWarning').popover('hide')
+  })
+
+  $('#warningSearchModal').on('hidden.bs.modal', function (e) {
+    $('body').addClass('modal-open');
   })
 
   $('#plateDatabaseModal').on('hidden.bs.modal', function () {
