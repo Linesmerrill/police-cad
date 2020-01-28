@@ -69,7 +69,7 @@
       <div class="inner">
         <h4>San Andreas - Police Operations</h4>
         <div class="col-lg-10 col-lg-offset-1 text-center">
-          <button data-toggle="modal" href="#nameDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
+          <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
           <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#date', '#time');">Issue Citation</button>
           <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
@@ -119,6 +119,10 @@
                   <div class="col-md-4">
                     <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-last-name">Last Name</label>
                     <input id="civ-last-name" name="lastName" type="text" placeholder="Last Name" class="form-control input-md col-md-offset-1" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-dob">Date of Birth</label>
+                    <input id="civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md col-md-offset-1" required="">
                   </div>
                   <div class="col-md-4">
                       <br>
@@ -389,6 +393,13 @@
                   </div>
                 </div>
 
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="ticket-civ-dob">DOB</label>
+                  <div class="col-md-4">
+                      <input id="ticket-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md" required="">
+                  </div>
+                </div>
+
                 <div class="form-group">
                   <label class="col-md-4 control-label" for=""></label>
                   <div class="col-md-4">
@@ -556,6 +567,13 @@
                   <label class="col-md-4 control-label" for="warning-civ-last-name">Last Name</label>
                   <div class="col-md-4">
                       <input id="warning-civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" style="text-transform:capitalize;" required="">
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="warning-civ-dob">DOB</label>
+                  <div class="col-md-4">
+                      <input id="warning-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md" required="">
                   </div>
                 </div>
 
@@ -734,6 +752,13 @@
                   <label class="col-md-4 control-label" for="arrest-civ-last-name">Last Name</label>
                   <div class="col-md-4">
                       <input id="arrest-civ-last-name" name="accusedLastName" type="text" placeholder="Last Name" class="form-control input-md" style="text-transform:capitalize;" required="">
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="arrest-civ-dob">DOB</label>
+                  <div class="col-md-4">
+                      <input id="arrest-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md" required="">
                   </div>
                 </div>
 
@@ -972,21 +997,21 @@ function searchPlate() {
     //clear out the old table
     $("#ticket-search-result-table tr>td").remove();
 
-    socket.emit('find_user', $("#ticket-civ-first-name").val(), $("#ticket-civ-last-name").val());
+    socket.emit('find_user', $("#ticket-civ-first-name").val(), $("#ticket-civ-last-name").val(), $("#ticket-civ-dob").val());
   }
 
   function searchNameInDBWarning() {
     //clear out the old table
     $("#warning-search-result-table tr>td").remove();
 
-    socket.emit('find_user_warning', $("#warning-civ-first-name").val(), $("#warning-civ-last-name").val());
+    socket.emit('find_user_warning', $("#warning-civ-first-name").val(), $("#warning-civ-last-name").val(), $("#warning-civ-dob").val());
   }
 
   function searchNameInDBArrest() {
     //clear out the old table
     $("#arrest-search-result-table tr>td").remove();
 
-    socket.emit('find_user_arrest', $("#arrest-civ-first-name").val(), $("#arrest-civ-last-name").val());
+    socket.emit('find_user_arrest', $("#arrest-civ-first-name").val(), $("#arrest-civ-last-name").val(), $("#arrest-civ-dob").val());
   }
 
   // prevents submit modal when pressing enter because it closes the entire window and does not submit.
