@@ -231,6 +231,30 @@
                                         </tbody>
                                     </table>
                                   </div>
+
+                                  <!-- Table for Arrests  -->
+                                  <div class="col-md-5 name-table text-align-center">
+                                    <table id="arrest-table" class="table table-hover" border="1" frame="box">
+                                      <thead>
+                                        <tr>
+                                          Arrests:
+                                        </tr>
+                                      </thead>
+                                      <tbody id="arrest-body">
+                                          <% if (arrestReports != null) {%>
+                                            <% for(var j=0; j<arrestReports.length; j++) {%>
+                                                <tr>
+                                              <% if (arrestReports[j].arrestReport.accusedID == civilians[i]._id) {%>
+                                                <td><%= arrestReports[j].arrestReport.charges %></td>
+                                                <td><%= arrestReports[j].arrestReport.summary %></td>
+                                                <td><%= arrestReports[j].arrestReport.date %></td>
+                                                <% } %>
+                                              </tr>
+                                            <% } %>
+                                          <% } %>
+                                        </tbody>
+                                    </table>
+                                  </div>
                             </div>
                           </div>
                         </div>

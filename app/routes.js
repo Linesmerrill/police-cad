@@ -153,7 +153,8 @@ module.exports = function (app, passport, server) {
       user: req.user,
       vehicles: null,
       civilians: null,
-      tickets: null
+      tickets: null,
+      arrestReports: null,
     });
   });
 
@@ -166,12 +167,18 @@ module.exports = function (app, passport, server) {
         'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
         'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
       }, function (err, dbTickets) {
+        ArrestReport.find({
+          'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+          'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+        }, function (err, dbArrestReports) {
         res.render('police-dashboard', {
           user: req.user,
           vehicles: null,
           civilians: dbCivilians,
-          tickets: dbTickets
+          tickets: dbTickets,
+          arrestReports: dbArrestReports
         });
+      })
       });
     });
   });
@@ -184,7 +191,8 @@ module.exports = function (app, passport, server) {
         user: req.user,
         civilians: null,
         vehicles: dbVehicles,
-        tickets: null
+        tickets: null,
+        arrestReports: null
       });
     })
   });
