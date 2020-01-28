@@ -1066,6 +1066,12 @@ function searchPlate() {
     $('body').addClass('modal-open');
   })
 
+  // removes all the names from caching on the website when the modal is closed
+  $('#nameDatabaseModal').on('hidden.bs.modal', function (e) {
+    let civDetails = document.getElementById('civDetails')
+      civDetails.style.display = 'none'
+  })
+
   $('#plateDatabaseModal').on('hidden.bs.modal', function () {
     $(this).find('form').trigger('reset');
     $('#plateDetails').removeAttr("style").hide()
