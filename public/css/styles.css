@@ -784,6 +784,25 @@ a.link--inherit {
     background-color: #36333d;
 }
 
+.font-size-3 {
+    font-size: 3em;
+}
+
 .text-indent-2 {
     text-indent: 2em;
+}
+
+#civID {
+    color: #eee;
+    background-color: #36333d;
+}
+
+#civIDWarning {
+    color: #eee;
+    background-color: #36333d;
+}
+
+#civIDArrest {
+    color: #eee;
+    background-color: #36333d;
 }

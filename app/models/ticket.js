@@ -5,7 +5,7 @@ var ticketSchema = mongoose.Schema({
     officerEmail: String,
     civName: String,
     caseNumber: String,
-    violation: String,
+    violation: [{type: String}],
     plate: String,
     model: String,
     color: String,
@@ -22,50 +22,55 @@ var ticketSchema = mongoose.Schema({
 });
 
 ticketSchema.methods.updateTicket = function (request, response) {
-  var adjustedNameAndDOB
+  //debug log showing the request body for the ticket request
+  // console.debug("ticket request body: ", request.body)
   rawNameAndDOB = request.body.civFirstName
-  if (rawNameAndDOB.includes("|")) {
-    adjustedNameAndDOB = rawNameAndDOB.split(" | ")
-    firstNameAndLastName = adjustedNameAndDOB[0].split(" ")
-    this.ticket.civFirstName = firstNameAndLastName[0].trim().charAt(0).toUpperCase() + firstNameAndLastName[0].trim().slice(1);
-    this.ticket.civLastName = firstNameAndLastName[1].trim().charAt(0).toUpperCase() + firstNameAndLastName[1].trim().slice(1);
-  } else {
-    this.ticket.civFirstName = request.body.civFirstName.trim().charAt(0).toUpperCase() + request.body.civFirstName.trim().slice(1);
-    this.ticket.civLastName = request.body.civLastName.trim().charAt(0).toUpperCase() + request.body.civLastName.trim().slice(1);
-  }
-  
-
-  var additionalViolation = ""
-  this.ticket.officerEmail = request.body.officerEmail.toLowerCase();
-  this.ticket.caseNumber = request.body.caseNumber;
-  this.ticket.plate = request.body.plate.trim().toUpperCase();
-  this.ticket.model = request.body.model.trim().charAt(0).toUpperCase() + request.body.model.trim().slice(1);
-  this.ticket.color = request.body.color.trim().charAt(0).toUpperCase() + request.body.color.trim().slice(1);
-  if (exists(request.body.speedViolation)) {
-    additionalViolation = ' - ' + additionalViolation + request.body.speedViolation + ' '
-  }
-  if (exists(request.body.duiViolation)) {
-    additionalViolation = ' - ' + additionalViolation + request.body.duiViolation + ' '
-  }
-  if (exists(request.body.driverLicenseViolation)) {
-    additionalViolation = ' - ' + additionalViolation + request.body.driverLicenseViolation + ' '
-  }
-  if (request.body.otherInput !== '') {
-    additionalViolation = ' - ' + additionalViolation + request.body.otherInput
-  }
-  if (exists(adjustedNameAndDOB)) {
-    if (exists(adjustedNameAndDOB[2])) {
-      this.ticket.civID = adjustedNameAndDOB[2].trim();
+  if (exists(request.body.civFirstName) && exists(request.body.civLastName)){
+    if (request.body.civFirstName.trim().length > 1 && request.body.civLastName.length > 1) {
+      this.ticket.civFirstName = request.body.civFirstName.trim().charAt(0).toUpperCase() + request.body.civFirstName.trim().slice(1);
+      this.ticket.civLastName = request.body.civLastName.trim().charAt(0).toUpperCase() + request.body.civLastName.trim().slice(1);
+    } else { 
+      console.error("cannot process empty values for civFirstName and civLastName");
+      response.redirect('/police-dashboard');
+      return
     }
   }
-  this.ticket.violation = request.body.violations + additionalViolation;
-  this.ticket.amount = request.body.amount.trim();
-  this.ticket.date = request.body.date.trim();
-  this.ticket.time = request.body.time.trim();
-  this.ticket.isWarning = request.body.isWarning;
+  else { 
+    console.error("cannot process null values for civFirstName and civLastName");
+    response.redirect('/police-dashboard');
+    return
+  }
   
+  this.ticket.officerEmail = request.body.officerEmail.toLowerCase();
+  this.ticket.caseNumber = request.body.caseNumber;
+  if (exists(request.body.plate)){
+    this.ticket.plate = request.body.plate.trim().toUpperCase(); //optional
+  }
+  if (exists(request.body.model)){
+    this.ticket.model = request.body.model.trim().charAt(0).toUpperCase() + request.body.model.trim().slice(1); //optional
+  }
+  if (exists(request.body.color)){
+    this.ticket.color = request.body.color.trim().charAt(0).toUpperCase() + request.body.color.trim().slice(1); //optional
+  }
+  this.ticket.violation = request.body.fines;
+  if (exists(request.body.amount)){
+    this.ticket.amount = request.body.amount.trim();
+  }
+  if (exists(request.body.date)){
+    this.ticket.date = request.body.date.trim();
+
+  }
+  if (exists(request.body.time)){
+    this.ticket.time = request.body.time.trim();
+  }
+  this.ticket.isWarning = request.body.isWarning;
+  if (exists(request.body.civID)) {
+    this.ticket.civID = request.body.civID.trim();
+  }
   response.redirect('/police-dashboard');
 };
+
+module.exports = mongoose.model('Ticket', ticketSchema);
 
 function exists(v) {
   if (v !== undefined) {
@@ -74,5 +79,3 @@ function exists(v) {
     return false
   }
 }
-
-module.exports = mongoose.model('Ticket', ticketSchema);

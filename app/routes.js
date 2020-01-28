@@ -4,6 +4,7 @@ var Vehicle = require('../app/models/vehicle');
 var EmsVehicle = require('../app/models/emsVehicle');
 var Ticket = require('../app/models/ticket');
 var Ems = require('../app/models/ems');
+var ArrestReport = require('../app/models/arrestReport');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
 var async = require('async');
@@ -452,6 +453,14 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.post('/create-arrest-report', function (req, res) {
+    var myArrestReport = new ArrestReport()
+    myArrestReport.updateArrestReport(req, res)
+    myArrestReport.save(function (err) {
+      if (err) return console.error(err);
+    });
+  });
+
   app.post('/updateOrDeleteCiv', function (req, res) {
     if (req.body.action === "update") {
       var address
@@ -582,8 +591,43 @@ module.exports = function (app, passport, server) {
       io.sockets.emit('updateusers', usernames);
       socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has disconnected');
     });
-  });
 
+    socket.on('find_user', function(firstName, lastName) {
+      if (firstName.trim().length < 1 || lastName.trim().length < 1) {
+        socket.emit('find_user_result', {});
+      } else {
+      Civilian.find({'civilian.firstName': firstName, 'civilian.lastName': lastName}, function(err, user) {
+        if (err) throw err;
+        if (!user) socket.emit('find_user_result', {});
+        else socket.emit('find_user_result', user)
+      })
+      }
+    });
+
+    socket.on('find_user_warning', function(firstName, lastName) {
+      if (firstName.trim().length < 1 || lastName.trim().length < 1) {
+        socket.emit('find_user_result_warning', {});
+      } else {
+      Civilian.find({'civilian.firstName': firstName, 'civilian.lastName': lastName}, function(err, user) {
+        if (err) throw err;
+        if (!user) socket.emit('find_user_result_warning', {});
+        else socket.emit('find_user_result_warning', user)
+      })
+      }
+    });
+
+    socket.on('find_user_arrest', function(firstName, lastName) {
+      if (firstName.trim().length < 1 || lastName.trim().length < 1) {
+        socket.emit('find_user_result_arrest', {});
+      } else {
+      Civilian.find({'civilian.firstName': firstName, 'civilian.lastName': lastName}, function(err, user) {
+        if (err) throw err;
+        if (!user) socket.emit('find_user_result_arrest', {});
+        else socket.emit('find_user_result_arrest', user)
+      })
+      }
+    });
+  });
 };
 
 function auth(req, res, next) {
