@@ -71,8 +71,9 @@
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#nameDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
-          <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime();">Issue Citation</button>
-          <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTimeForWarning();">Issue Warning</button>
+          <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#date', '#time');">Issue Citation</button>
+          <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
+          <button data-toggle="modal" href="#arrestModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest Report</button>
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
         </div>
       </div>
@@ -224,6 +225,30 @@
                                                   <td><%= tickets[j].ticket.violation %></td>
                                                   <td><%= tickets[j].ticket.date %></td>
                                                   <% } %>
+                                              </tr>
+                                            <% } %>
+                                          <% } %>
+                                        </tbody>
+                                    </table>
+                                  </div>
+
+                                  <!-- Table for Arrests  -->
+                                  <div class="col-md-5 name-table text-align-center">
+                                    <table id="arrest-table" class="table table-hover" border="1" frame="box">
+                                      <thead>
+                                        <tr>
+                                          Arrests:
+                                        </tr>
+                                      </thead>
+                                      <tbody id="arrest-body">
+                                          <% if (arrestReports != null) {%>
+                                            <% for(var j=0; j<arrestReports.length; j++) {%>
+                                                <tr>
+                                              <% if (arrestReports[j].arrestReport.accusedID == civilians[i]._id) {%>
+                                                <td><%= arrestReports[j].arrestReport.charges %></td>
+                                                <td><%= arrestReports[j].arrestReport.summary %></td>
+                                                <td><%= arrestReports[j].arrestReport.date %></td>
+                                                <% } %>
                                               </tr>
                                             <% } %>
                                           <% } %>
@@ -635,6 +660,7 @@
       </div>
     </div>
   </div>
+
   <div id="warningSearchModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -657,6 +683,143 @@
       </div>
     </div>
   </div>
+
+  <div id="arrestModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="arrest-form" class="form-horizontal" action="/create-arrest-report" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>San Andreas Arrest Report</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="arrest-report-case-no">Case No:</label>
+                <div class="col-md-4">
+                  <input id="arrest-report-case-no" name="caseNumber" type="number" class="form-control input-md" readonly="readonly">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="arrest-report-date">Date of Violation:</label>
+                <div class="col-md-4">
+                  <input id="arrest-report-date" name="date" type="date" min="1900-01-01" max="2999-12-31" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="arrest-report-time">Time:</label>
+                <div class="col-md-4">
+                  <input id="arrest-report-time" name="time" type="time" placeholder="hh:mm" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="reporting-officer">Reporting Officer:</label>
+                <div class="col-md-4">
+                    <input id="reporting-officer" name="reportingOfficer" type="text" placeholder="Reporting Officer" class="form-control input-md" style="text-transform:capitalize;" value=<%= user.user.username%> required="" readonly="readonly">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="arrest-civ-first-name">First Name</label>
+                <div class="col-md-4">
+                    <input id="arrest-civ-first-name" name="accusedFirstName" type="text" placeholder="First Name" class="form-control input-md" style="text-transform:capitalize;" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                  <label class="col-md-4 control-label" for="arrest-civ-last-name">Last Name</label>
+                  <div class="col-md-4">
+                      <input id="arrest-civ-last-name" name="accusedLastName" type="text" placeholder="Last Name" class="form-control input-md" style="text-transform:capitalize;" required="">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-md-4 control-label" for=""></label>
+                  <div class="col-md-4">
+                    <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#arrestSearchModal"
+                    onclick="searchNameInDBArrest()" title="search">
+                    <span class="iconify" data-icon="ion:search-circle-outline" data-inline="false"></span></a>&nbsp;
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="civIDArrest">Selected ID</label>
+                  <div class="col-md-4">
+                      <input id="civIDArrest" name="accusedID" type="text" placeholder="Autofill from searching" class="form-control input-md disabled-color" data-trigger="arrest-id-popover" data-content="* ID is required, try using the search button above." required readonly="readonly">
+                  </div>
+                </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="charge">Charge(s)</label>
+                <div class="col-md-4">
+                  <input id="charge" name="charges" type="text" maxlength="500" placeholder="Charge(s)" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <hr/>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="detail">Detail of Event:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <div class="col-md-10 col-md-offset-1">
+                  <textarea id="detail" name="detailOfEvent" type="text" maxlength="500" placeholder="Detail" class="form-control input-md" required></textarea>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="actions-taken">Actions Taken:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <div class="col-md-10 col-md-offset-1">
+                  <textarea id="actions-taken" name="actionsTaken" type="text" maxlength="500" placeholder="Actions Taken" class="form-control input-md" required></textarea>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="summary">Summary:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <div class="col-md-10 col-md-offset-1">
+                  <textarea id="summary" name="summary" type="text" maxlength="500" placeholder="Summary" class="form-control input-md" required></textarea>
+                </div>
+              </div>
+
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submitArrestReport"></label>
+                <div class="col-md-4">
+                  <button id="submitArrestReport" name="reportingOfficerEmail" class="btn btn-primary" onclick="hideArrestReportPopover()" value=<%= user.user.email%>>Submit</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="arrestSearchModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4>Search Results from Database (select one):</h4>
+          <hr style="width: 88%;max-width: 100rem;">
+          <table id="arrest-search-result-table" class="table table-hover" border="1" frame="box">
+            <thead>
+               <tr>
+                  <th>Name</th>
+                  <th>DOB</th>
+                  <th>ID #</th>
+               </tr>
+            </thead>
+            <tbody id="search-result-tbody">
+            </tbody>
+         </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  
   <% include 10-codes %> 
 </body>
 </div>
@@ -727,6 +890,13 @@ $(document).ready(function() {
       $('#warning-search-result-table').find('tbody:last').append(markup);
     }
   });
+
+  socket.on('find_user_result_arrest', function(user) {
+    for (i=0; i< user.length; i++){
+      var markup = `<tr onclick="selectSearchTableArrest(` +`'${user[i]._id}')"><td>${user[i].civilian.firstName} ${user[i].civilian.lastName}</td><td>${user[i].civilian.birthday}</td><td>${user[i]._id}</td></tr>`;
+      $('#arrest-search-result-table').find('tbody:last').append(markup);
+    }
+  });
 });
 
 
@@ -792,6 +962,12 @@ function searchPlate() {
     $('#civIDWarning').popover('hide')
   }
 
+  function selectSearchTableArrest(userID) {
+    $('#arrestSearchModal').modal('toggle');
+    $('#civIDArrest').val(userID);
+    $('#civIDArrest').popover('hide')
+  }
+
   function searchNameInDB() {
     //clear out the old table
     $("#ticket-search-result-table tr>td").remove();
@@ -806,28 +982,29 @@ function searchPlate() {
     socket.emit('find_user_warning', $("#warning-civ-first-name").val(), $("#warning-civ-last-name").val());
   }
 
+  function searchNameInDBArrest() {
+    //clear out the old table
+    $("#arrest-search-result-table tr>td").remove();
+
+    socket.emit('find_user_arrest', $("#arrest-civ-first-name").val(), $("#arrest-civ-last-name").val());
+  }
+
   // prevents submit modal when pressing enter because it closes the entire window and does not submit.
   // we should fix the modals so this can work as expected.
   $(document).on("keypress", "form", function (event) {
     return event.keyCode != 13;
   });
 
-  function setDateAndTime() {
-    document.getElementById('date').valueAsDate = new Date();
-    time = document.getElementById('time');
-    time.value = new Date().toLocaleTimeString('en-GB', {
+  function setDateAndTime(dateElement, timeElement) {
+    $(dateElement)[0].valueAsDate = new Date();
+    $(timeElement)[0].value = new Date().toLocaleTimeString('en-GB', {
       hour: "2-digit",
       minute: "2-digit"
-    });
+    })
   }
 
-  function setDateAndTimeForWarning() {
-    document.getElementById('warning-date').valueAsDate = new Date();
-    time = document.getElementById('warning-time');
-    time.value = new Date().toLocaleTimeString('en-GB', {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
+  function generateCaseNo(elementName) {
+    $(elementName).val(Math.round(Math.random() * 10000000000))
   }
 
   function hideTicketCivPopover() {
@@ -850,6 +1027,16 @@ function searchPlate() {
     }
   }
 
+  function hideArrestReportPopover() {
+    if ($('#civIDArrest').val().length < 1) {
+      $('#civIDArrest').popover('show')
+      $('#arrest-form').attr('onsubmit','return false;');
+    } else {
+      $('#civIDArrest').popover('hide')
+      $('#arrest-form').attr('onsubmit','return true;');
+    }
+  }
+
   function hideCivPopover() {
     $('#civ-first-name').popover('hide')
     $('#civ-last-name').popover('hide')
@@ -868,6 +1055,14 @@ function searchPlate() {
   })
 
   $('#warningSearchModal').on('hidden.bs.modal', function (e) {
+    $('body').addClass('modal-open');
+  })
+
+  $('#arrestModal').on('hidden.bs.modal', function () {
+    $('#civIDArrest').popover('hide')
+  })
+
+  $('#arrestSearchModal').on('hidden.bs.modal', function (e) {
     $('body').addClass('modal-open');
   })
 

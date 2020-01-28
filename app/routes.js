@@ -4,6 +4,7 @@ var Vehicle = require('../app/models/vehicle');
 var EmsVehicle = require('../app/models/emsVehicle');
 var Ticket = require('../app/models/ticket');
 var Ems = require('../app/models/ems');
+var ArrestReport = require('../app/models/arrestReport');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
 var async = require('async');
@@ -152,7 +153,8 @@ module.exports = function (app, passport, server) {
       user: req.user,
       vehicles: null,
       civilians: null,
-      tickets: null
+      tickets: null,
+      arrestReports: null,
     });
   });
 
@@ -165,12 +167,18 @@ module.exports = function (app, passport, server) {
         'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
         'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
       }, function (err, dbTickets) {
+        ArrestReport.find({
+          'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+          'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+        }, function (err, dbArrestReports) {
         res.render('police-dashboard', {
           user: req.user,
           vehicles: null,
           civilians: dbCivilians,
-          tickets: dbTickets
+          tickets: dbTickets,
+          arrestReports: dbArrestReports
         });
+      })
       });
     });
   });
@@ -183,7 +191,8 @@ module.exports = function (app, passport, server) {
         user: req.user,
         civilians: null,
         vehicles: dbVehicles,
-        tickets: null
+        tickets: null,
+        arrestReports: null
       });
     })
   });
@@ -452,6 +461,14 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.post('/create-arrest-report', function (req, res) {
+    var myArrestReport = new ArrestReport()
+    myArrestReport.updateArrestReport(req, res)
+    myArrestReport.save(function (err) {
+      if (err) return console.error(err);
+    });
+  });
+
   app.post('/updateOrDeleteCiv', function (req, res) {
     if (req.body.action === "update") {
       var address
@@ -603,6 +620,18 @@ module.exports = function (app, passport, server) {
         if (err) throw err;
         if (!user) socket.emit('find_user_result_warning', {});
         else socket.emit('find_user_result_warning', user)
+      })
+      }
+    });
+
+    socket.on('find_user_arrest', function(firstName, lastName) {
+      if (firstName.trim().length < 1 || lastName.trim().length < 1) {
+        socket.emit('find_user_result_arrest', {});
+      } else {
+      Civilian.find({'civilian.firstName': firstName, 'civilian.lastName': lastName}, function(err, user) {
+        if (err) throw err;
+        if (!user) socket.emit('find_user_result_arrest', {});
+        else socket.emit('find_user_result_arrest', user)
       })
       }
     });

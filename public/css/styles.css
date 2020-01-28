@@ -7,6 +7,7 @@ http://www.bootstrapzero.com
 
 @import url(https://fonts.googleapis.com/css?family=Questrial);
 @import url(https://fonts.googleapis.com/css?family=Dancing+Script:700);
+
 html,
 body {
     width: 100%;
@@ -178,14 +179,17 @@ footer {
         background-color: transparent;
         min-height: 60px;
     }
+
     .navbar-header>.navbar-brand {
         color: rgba(255, 255, 255, 0.7);
         padding: 19px;
     }
+
     .navbar-default .navbar-header .navbar-brand:hover,
     .navbar-default .navbar-header .navbar-brand:focus {
         color: #f4f4f4;
     }
+
     .navbar-default .nav>li>a,
     .navbar-default .nav>li>a:focus {
         color: rgba(255, 255, 255, 0.8);
@@ -193,29 +197,35 @@ footer {
         letter-spacing: 1.1px;
         text-shadow: 1px 1px 1px rgba(60, 60, 60, 0.7);
     }
+
     .navbar-default .nav>li>a:hover,
     .navbar-default .nav>li>a:focus:hover {
         color: #fefefe;
     }
+
     .navbar-default.affix {
         border-color: rgba(34, 34, 34, .05);
         background-color: #222;
     }
+
     .navbar-default.affix .navbar-header .navbar-brand {
         font-size: 15px;
         color: #00aced;
         padding: 20px;
         letter-spacing: 1px;
     }
+
     .navbar-default.affix .navbar-header .navbar-brand:hover,
     .navbar-default.affix .navbar-header .navbar-brand:focus {
         color: #d9edf7;
     }
+
     .navbar-default.affix .nav>li>a,
     .navbar-default.affix .nav>li>a:focus {
         color: #ddd;
         text-shadow: 1px 1px 1px rgba(30, 30, 30, 0.7);
     }
+
     .navbar-default.affix .nav>li>a:hover,
     .navbar-default.affix .nav>li>a:focus:hover {
         color: #00aced;
@@ -280,9 +290,11 @@ footer {
     .icon-lg {
         font-size: 80px;
     }
+
     header {
         min-height: 100%;
     }
+
     header .header-content {
         position: absolute;
         top: 50%;
@@ -291,20 +303,24 @@ footer {
         -ms-transform: translateY(-50%);
         transform: translateY(-50%);
     }
+
     header .header-content .inner {
         margin-right: auto;
         margin-left: auto;
         max-width: 1000px;
     }
+
     header .header-content .inner h1 {
         font-size: 53px;
     }
+
     header .header-content .inner p {
         margin-right: auto;
         margin-left: auto;
         max-width: 80%;
         font-size: 18px;
     }
+
     section {
         min-height: 600px;
         padding: 100px 0;
@@ -640,7 +656,7 @@ img::-moz-selection {
     border: 1px solid #000;
     border-bottom: 0 solid #000;
     background: linear-gradient(to bottom, rgba(0, 0, 0, .8) 0%, rgba(0, 0, 0, .55) 100%);
-    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#80000000', endColorstr='#40000000', GradientType=0);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#80000000', endColorstr='#40000000', GradientType=0);
     margin-bottom: 70px;
     margin-bottom: 7rem;
 }
@@ -716,7 +732,8 @@ a.link--inherit {
     padding-left: 0px;
 }
 
-.blue-hover:hover, .blue-hover:focus {
+.blue-hover:hover,
+.blue-hover:focus {
     color: #5bc0de;
 }
 
@@ -751,28 +768,41 @@ a.link--inherit {
 }
 
 .form-group.required .control-label:after {
-    content:"*";
-    color:red;
-  }
+    content: "*";
+    color: red;
+}
 
-  .font-size-5 {
-      font-size: 5em;
-  }
+.font-size-5 {
+    font-size: 5em;
+}
 
-  .font-size-3 {
-      font-size: 3em;
-  }
+#arrest-report-case-no {
+    background-color: #36333d;
+}
 
-  .text-indent-2 {
-      text-indent: 2em;
-  }
+#reporting-officer {
+    background-color: #36333d;
+}
 
-  #civID {
-      color: #eee;
-      background-color: #36333d;
-  }
+.font-size-3 {
+    font-size: 3em;
+}
 
-  #civIDWarning {
+.text-indent-2 {
+    text-indent: 2em;
+}
+
+#civID {
+    color: #eee;
+    background-color: #36333d;
+}
+
+#civIDWarning {
+    color: #eee;
+    background-color: #36333d;
+}
+
+#civIDArrest {
     color: #eee;
     background-color: #36333d;
 }
