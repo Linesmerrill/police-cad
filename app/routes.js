@@ -606,8 +606,8 @@ module.exports = function (app, passport, server) {
         socket.emit('find_user_result', {});
       } else {
       Civilian.find({
-        'civilian.firstName': firstName, 
-        'civilian.lastName': lastName,
+        'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1), 
+        'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
         'civilian.birthday': dateOfBirth
       }, function(err, user) {
         if (err) throw err;
@@ -622,8 +622,8 @@ module.exports = function (app, passport, server) {
         socket.emit('find_user_result_warning', {});
       } else {
       Civilian.find({
-        'civilian.firstName': firstName, 
-        'civilian.lastName': lastName,
+        'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1), 
+        'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
         'civilian.birthday': dateOfBirth
       }, function(err, user) {
         if (err) throw err;
@@ -638,8 +638,8 @@ module.exports = function (app, passport, server) {
         socket.emit('find_user_result_arrest', {});
       } else {
       Civilian.find({
-        'civilian.firstName': firstName, 
-        'civilian.lastName': lastName,
+        'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1), 
+        'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
         'civilian.birthday': dateOfBirth
       }, function(err, user) {
         if (err) throw err;
