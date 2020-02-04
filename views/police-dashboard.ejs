@@ -71,9 +71,9 @@
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
-          <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#date', '#time');">Issue Citation</button>
-          <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
-          <button data-toggle="modal" href="#arrestModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest Report</button>
+          <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#date', '#time');openSearch()">Issue Citation</button>
+          <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#warning-date', '#warning-time');openSearch()">Issue Warning</button>
+          <button data-toggle="modal" href="#arrestModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#arrest-report-date', '#arrest-report-time');openSearch();generateCaseNo('#arrest-report-case-no');">Arrest Report</button>
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
         </div>
       </div>
@@ -164,6 +164,12 @@
                                     <strong>Warning!</strong> License is Revoked.
                                   </div>
                                 <% } %>
+                                <div class="text-align-center">
+                                  <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-md" onclick="OpenCitation('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#date', '#time');">Issue Citation</button>
+                                  <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-md" onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
+                                  <button data-toggle="modal" href="#arrestModal" class="btn btn-primary btn-md" onclick="OpenArrest('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
+                                </div>
+                                <hr/>
                                 Driver's ID #: <%= civilians[i]._id%><br/>
                                 Date of Birth: <%= civilians[i].civilian.birthday%><br/>
                                 <% if (civilians[i].civilian.licenseStatus == 1) {%>
@@ -261,8 +267,11 @@
                                   </div>
                             </div>
                           </div>
+                          
                         </div>
+                        
                         <% } %>
+                        
                       <% } %>
                   </div>
                 </div>
@@ -400,7 +409,7 @@
                   </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="searchTicketDiv">
                   <label class="col-md-4 control-label" for=""></label>
                   <div class="col-md-4">
                     <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#ticketSearchModal"
@@ -577,7 +586,7 @@
                   </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="searchWarningDiv">
                   <label class="col-md-4 control-label" for=""></label>
                   <div class="col-md-4">
                     <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#warningSearchModal"
@@ -762,7 +771,7 @@
                   </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="searchArrestDiv">
                   <label class="col-md-4 control-label" for=""></label>
                   <div class="col-md-4">
                     <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#arrestSearchModal"
@@ -975,6 +984,10 @@ function searchPlate() {
     hideCivPopover();
   }
 
+  function openSearch() {
+    $('#searchTicketDiv').show()
+  }
+
   function selectSearchTable(userID) {
     $('#ticketSearchModal').modal('toggle');
     $('#civID').val(userID);
@@ -1065,6 +1078,30 @@ function searchPlate() {
   function hideCivPopover() {
     $('#civ-first-name').popover('hide')
     $('#civ-last-name').popover('hide')
+  }
+
+  function OpenCitation(firstName, lastName, id, dob) {
+    $('#ticket-civ-first-name').val(firstName)
+    $('#ticket-civ-last-name').val(lastName)
+    $('#civID').val(id)
+    $('#ticket-civ-dob').val(dob)
+    $('#searchTicketDiv').hide()
+  }
+
+  function OpenWarning(firstName, lastName, id, dob) {
+    $('#warning-civ-first-name').val(firstName)
+    $('#warning-civ-last-name').val(lastName)
+    $('#civIDWarning').val(id)
+    $('#warning-civ-dob').val(dob)
+    $('#searchWarningDiv').hide()
+  }
+
+  function OpenArrest(firstName, lastName, id, dob) {
+    $('#arrest-civ-first-name').val(firstName)
+    $('#arrest-civ-last-name').val(lastName)
+    $('#civIDArrest').val(id)
+    $('#arrest-civ-dob').val(dob)
+    $('#searchArrestDiv').hide()
   }
 
   $('#ticketModal').on('hidden.bs.modal', function () {
