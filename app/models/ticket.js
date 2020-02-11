@@ -52,7 +52,14 @@ ticketSchema.methods.updateTicket = function (request, response) {
   if (exists(request.body.color)){
     this.ticket.color = request.body.color.trim().charAt(0).toUpperCase() + request.body.color.trim().slice(1); //optional
   }
-  this.ticket.violation = request.body.fines;
+  if (exists(request.body.fines)) {
+    //We check to see if they selected 'Other' and if so we need to grab the input value
+    if (exists(request.body.other) && Array.isArray(request.body.fines)) {
+    otherIndex = request.body.fines.findIndex(element => element.includes("Other"));
+    request.body.fines[otherIndex] = "Other - " + request.body.other.trim()
+    }
+    this.ticket.violation = request.body.fines;
+  }
   if (exists(request.body.amount)){
     this.ticket.amount = request.body.amount.trim();
   }

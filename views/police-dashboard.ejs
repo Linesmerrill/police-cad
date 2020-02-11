@@ -452,7 +452,7 @@
                 <label class="col-md-4 control-label" for="fines">Fines</label>
                 <div class="col-md-4">
 
-              <select id="fines" name="fines" class="select-move" multiple required>
+              <select id="ticket-select" name="fines" class="select-move" multiple required>
                 <optgroup label="Moving Violations: may result in suspended or revoked license">
                   <option>Speeding 5-10 over the posted speed limit</option>
                   <option>Speeding 10-39 over the posted speed limit</option>
@@ -490,10 +490,17 @@
                   <option>Leaving the scene of an accident</option>
                 </optgroup>
                 <optgroup label="Crime not listed">
-                  <option>Other</option>
+                  <option id="ticket-option-other">Other</option>
                 </optgroup>
             </select>
           </div>
+          </div>
+
+          <div id="ticket-other-div" class="form-group required" style="display:none">
+            <label class="col-md-4 control-label" for="ticket-other">Other</label>
+            <div class="col-md-4">
+              <input id="ticket-other" name="other" type="text" placeholder="other" class="form-control input-md" style="text-transform:capitalize;">
+            </div>
           </div>
 
               <!-- Text input-->
@@ -629,7 +636,7 @@
                 <label class="col-md-4 control-label" for="fines">Violation</label>
                 <div class="col-md-4">
 
-              <select name="fines" class="select-move" multiple required>
+              <select id="warning-select" name="fines" class="select-move" multiple required>
                 <optgroup label="Moving Violations: may result in suspended or revoked license">
                   <option>Speeding 5-10 over the posted speed limit</option>
                   <option>Speeding 10-39 over the posted speed limit</option>
@@ -667,10 +674,17 @@
                   <option>Leaving the scene of an accident</option>
                 </optgroup>
                 <optgroup label="Crime not listed">
-                  <option>Other</option>
+                  <option id="warning-option-other">Other</option>
                 </optgroup>
             </select>
           </div>
+          </div>
+
+          <div id="warning-other-div" class="form-group required" style="display:none">
+            <label class="col-md-4 control-label" for="warning-other">Other</label>
+            <div class="col-md-4">
+              <input id="warning-other" name="other" type="text" placeholder="other" class="form-control input-md" style="text-transform:capitalize;">
+            </div>
           </div>
 
               <input type="hidden" name="isWarning" value="true">
@@ -932,6 +946,18 @@ $(document).ready(function() {
       $('#arrest-search-result-table').find('tbody:last').append(markup);
     }
   });
+
+  $('#warning-select').change(function(){
+    if ($('#warning-option-other').is(':selected')) {
+      $('#warning-other-div').show();
+    }
+  })
+
+  $('#ticket-select').change(function(){
+    if ($('#ticket-option-other').is(':selected')) {
+      $('#ticket-other-div').show();
+    }
+  })
 });
 
 
