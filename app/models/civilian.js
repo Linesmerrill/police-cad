@@ -9,7 +9,7 @@ var civilianSchema = mongoose.Schema({
   licenseStatus: String,
   ticketCount: String,
   birthday: String,
-  warrants: String,
+  warrants: [{type: String}],
   gender: String,
   address: String,
   race: String,

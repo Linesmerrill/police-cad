@@ -5,6 +5,7 @@ var EmsVehicle = require('../app/models/emsVehicle');
 var Ticket = require('../app/models/ticket');
 var Ems = require('../app/models/ems');
 var ArrestReport = require('../app/models/arrestReport');
+var Warrant = require('../app/models/warrants');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
 var async = require('async');
@@ -155,6 +156,7 @@ module.exports = function (app, passport, server) {
       civilians: null,
       tickets: null,
       arrestReports: null,
+      warrants: null
     });
   });
 
@@ -172,17 +174,23 @@ module.exports = function (app, passport, server) {
           'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
           'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
         }, function (err, dbArrestReports) {
+          Warrant.find({
+            'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+            'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+          }, function (err, dbWarrants) {
         res.render('police-dashboard', {
           user: req.user,
           vehicles: null,
           civilians: dbCivilians,
           tickets: dbTickets,
-          arrestReports: dbArrestReports
+          arrestReports: dbArrestReports,
+          warrants: dbWarrants
         });
       })
       });
     });
   });
+})
 
   app.get('/plate-search', auth, function (req, res) {
     Vehicle.find({
@@ -193,7 +201,8 @@ module.exports = function (app, passport, server) {
         civilians: null,
         vehicles: dbVehicles,
         tickets: null,
-        arrestReports: null
+        arrestReports: null,
+        warrants: null
       });
     })
   });
@@ -468,6 +477,33 @@ module.exports = function (app, passport, server) {
     myArrestReport.save(function (err) {
       if (err) return console.error(err);
     });
+  });
+
+  app.post('/create-warrant', function (req, res) {
+    var myWarrant = new Warrant()
+    myWarrant.createWarrant(req, res)
+    myWarrant.save(function (err) {
+      if (err) return console.error(err);
+    });
+  });
+
+  app.post('/clear-warrant', function (req, res) {
+    Warrant.findByIdAndUpdate(
+      {
+      '_id': ObjectId(req.body.warrantID)
+      },
+      {
+        $set: {
+          'warrant.updatedDate': req.body.updatedDate, 
+          'warrant.updatedTime': req.body.updatedTime,
+          'warrant.clearingOfficer': req.body.clearingOfficer,
+          'warrant.clearingOfficerEmail': req.body.clearingOfficerEmail,
+          'warrant.status': false
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        res.redirect('/police-dashboard');
+      })
   });
 
   app.post('/updateOrDeleteCiv', function (req, res) {
