@@ -792,6 +792,10 @@ a.link--inherit {
     text-indent: 2em;
 }
 
+.margin-bottom-05 {
+    margin-bottom: 0.5em
+}
+
 #civID {
     color: #eee;
     background-color: #36333d;
@@ -803,6 +807,34 @@ a.link--inherit {
 }
 
 #civIDArrest {
+    color: #eee;
+    background-color: #36333d;
+}
+
+#civIDWarrant {
+    color: #eee;
+    background-color: #36333d;
+}
+
+#warrant-select {
+    color: #eee;
+    background-color: #36333d;
+    height: 35px;
+    line-height: 1.5;
+    width: 100%;
+}
+
+#warrant-civ-first-name {
+    color: #eee;
+    background-color: #36333d;
+}
+
+#warrant-civ-last-name {
+    color: #eee;
+    background-color: #36333d;
+}
+
+#warrant-civ-dob {
     color: #eee;
     background-color: #36333d;
 }

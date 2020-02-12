@@ -166,9 +166,15 @@
                                   </div>
                                 <% } %>
                                 <div class="text-align-center">
-                                  <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-md" onclick="OpenCitation('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#date', '#time');">Issue Citation</button>
-                                  <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-md" onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
-                                  <button data-toggle="modal" href="#arrestModal" class="btn btn-primary btn-md" onclick="OpenArrest('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
+                                  <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenCitation('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#date', '#time');">Issue Citation</button>
+                                  <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
+                                  <button data-toggle="modal" href="#arrestModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenArrest('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
+                                  <% if (civilians[i].civilian.warrants == 2) {%>
+                                  <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button>
+                                  <% } %>
+                                  <% if (civilians[i].civilian.warrants == 1) {%>
+                                    <button data-toggle="modal" href="#createWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenCreateWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Create Warrant</button>
+                                    <% } %>
                                 </div>
                                 <hr/>
                                 Driver's ID #: <%= civilians[i]._id%><br/>
@@ -868,6 +874,211 @@
       </div>
     </div>
   </div>
+
+  <div id="createWarrantModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="warrant-form" class="form-horizontal" action="/create-warrant" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Create Warrant</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="warrant-civ-first-name">First Name</label>
+                <div class="col-md-4">
+                    <input id="warrant-civ-first-name" name="accusedFirstName" type="text" placeholder="First Name" class="form-control input-md" style="text-transform:capitalize;" required="" readonly="readonly">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                  <label class="col-md-4 control-label" for="warrant-civ-last-name">Last Name</label>
+                  <div class="col-md-4">
+                      <input id="warrant-civ-last-name" name="accusedLastName" type="text" placeholder="Last Name" class="form-control input-md" style="text-transform:capitalize;" required="" readonly="readonly">
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="warrant-civ-dob">DOB</label>
+                  <div class="col-md-4">
+                      <input id="warrant-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md" required="" readonly="readonly">
+                  </div>
+                </div>
+
+                <!-- <div class="form-group" id="searchWarrantDiv">
+                  <label class="col-md-4 control-label" for=""></label>
+                  <div class="col-md-4">
+                    <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#arrestSearchModal"
+                    onclick="searchNameInDBArrest()" title="search">
+                    <span class="iconify" data-icon="ion:search-circle-outline" data-inline="false"></span></a>&nbsp;
+                  </div>
+                </div> -->
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="civIDWarrant">Selected ID</label>
+                  <div class="col-md-4">
+                      <input id="civIDWarrant" name="accusedID" type="text" placeholder="Autofill from searching" class="form-control input-md disabled-color" data-trigger="warrant-id-popover" data-content="* ID is required, try using the search button above." required readonly="readonly">
+                  </div>
+                </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="charge">Warrant Reason</label>
+                <div class="col-md-4">
+                  <select id="warrant-select" name="reasons">
+                    <option>Failure to Appear</option>
+                    <option>Murder</option>
+                    <option>Felony Evasion</option>
+                    <option>Prison Escape</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="warrant-other-div" class="form-group required" style="display:none">
+                <label class="col-md-4 control-label" for="warrant-other">Other</label>
+                <div class="col-md-4">
+                  <input id="warrant-other" name="other" type="text" placeholder="other" class="form-control input-md" style="text-transform:capitalize;">
+                </div>
+              </div>
+
+              <input type="hidden" name="date" value="">
+              <input type="hidden" name="time" value="">
+              <input type="hidden" name="reportingOfficer" value="">
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
+                <div class="col-md-4">
+                  <button id="submitWarrantCreation" name="reportingOfficerEmail" class="btn btn-primary" onclick="hideWarrantCreatePopover()" value=<%= user.user.email%>>Submit</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="clearWarrantModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="arrest-form" class="form-horizontal" action="/create-arrest-report" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>San Andreas Arrest Report</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="arrest-report-case-no">Case No:</label>
+                <div class="col-md-4">
+                  <input id="arrest-report-case-no" name="caseNumber" type="number" class="form-control input-md" readonly="readonly">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="arrest-report-date">Date of Violation:</label>
+                <div class="col-md-4">
+                  <input id="arrest-report-date" name="date" type="date" min="1900-01-01" max="2999-12-31" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="arrest-report-time">Time:</label>
+                <div class="col-md-4">
+                  <input id="arrest-report-time" name="time" type="time" placeholder="hh:mm" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="reporting-officer">Reporting Officer:</label>
+                <div class="col-md-4">
+                    <input id="reporting-officer" name="reportingOfficer" type="text" placeholder="Reporting Officer" class="form-control input-md" style="text-transform:capitalize;" value=<%= user.user.username%> required="" readonly="readonly">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="arrest-civ-first-name">First Name</label>
+                <div class="col-md-4">
+                    <input id="arrest-civ-first-name" name="accusedFirstName" type="text" placeholder="First Name" class="form-control input-md" style="text-transform:capitalize;" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                  <label class="col-md-4 control-label" for="arrest-civ-last-name">Last Name</label>
+                  <div class="col-md-4">
+                      <input id="arrest-civ-last-name" name="accusedLastName" type="text" placeholder="Last Name" class="form-control input-md" style="text-transform:capitalize;" required="">
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="arrest-civ-dob">DOB</label>
+                  <div class="col-md-4">
+                      <input id="arrest-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md" required="">
+                  </div>
+                </div>
+
+                <div class="form-group" id="searchArrestDiv">
+                  <label class="col-md-4 control-label" for=""></label>
+                  <div class="col-md-4">
+                    <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#arrestSearchModal"
+                    onclick="searchNameInDBArrest()" title="search">
+                    <span class="iconify" data-icon="ion:search-circle-outline" data-inline="false"></span></a>&nbsp;
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="civIDArrest">Selected ID</label>
+                  <div class="col-md-4">
+                      <input id="civIDArrest" name="accusedID" type="text" placeholder="Autofill from searching" class="form-control input-md disabled-color" data-trigger="arrest-id-popover" data-content="* ID is required, try using the search button above." required readonly="readonly">
+                  </div>
+                </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="charge">Charge(s)</label>
+                <div class="col-md-4">
+                  <input id="charge" name="charges" type="text" maxlength="500" placeholder="Charge(s)" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <hr/>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="detail">Detail of Event:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <div class="col-md-10 col-md-offset-1">
+                  <textarea id="detail" name="detailOfEvent" type="text" maxlength="500" placeholder="Detail" class="form-control input-md" required></textarea>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="actions-taken">Actions Taken:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <div class="col-md-10 col-md-offset-1">
+                  <textarea id="actions-taken" name="actionsTaken" type="text" maxlength="500" placeholder="Actions Taken" class="form-control input-md" required></textarea>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="summary">Summary:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <div class="col-md-10 col-md-offset-1">
+                  <textarea id="summary" name="summary" type="text" maxlength="500" placeholder="Summary" class="form-control input-md" required></textarea>
+                </div>
+              </div>
+
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submitArrestReport"></label>
+                <div class="col-md-4">
+                  <button id="submitArrestReport" name="reportingOfficerEmail" class="btn btn-primary" onclick="hideArrestReportPopover()" value=<%= user.user.email%>>Submit</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
   
   <% include 10-codes %> 
 </body>
@@ -1131,6 +1342,22 @@ function searchPlate() {
     $('#searchArrestDiv').hide()
   }
 
+  function OpenClearWarrant(firstName, lastName, id, dob) {
+    $('#warrant-civ-first-name').val(firstName)
+    $('#warrant-civ-last-name').val(lastName)
+    $('#civIDWarrant').val(id)
+    $('#warrant-civ-dob').val(dob)
+    $('#searchWarrantDiv').hide()
+  }
+
+  function OpenCreateWarrant(firstName, lastName, id, dob) {
+    $('#warrant-civ-first-name').val(firstName)
+    $('#warrant-civ-last-name').val(lastName)
+    $('#civIDWarrant').val(id)
+    $('#warrant-civ-dob').val(dob)
+    $('#searchWarrantDiv').hide()
+  }
+
   $('#ticketModal').on('hidden.bs.modal', function () {
     $('#civID').popover('hide')
   })
@@ -1153,6 +1380,14 @@ function searchPlate() {
 
   $('#arrestSearchModal').on('hidden.bs.modal', function (e) {
     $('body').addClass('modal-open');
+  })
+
+  $('#createWarrantModal').on('hidden.bs.modal', function () {
+    $('#civIDWarrant').popover('hide')
+  })
+
+  $('#clearWarrantModal').on('hidden.bs.modal', function () {
+    $('#civIDWarning').popover('hide')
   })
 
   // removes all the names from caching on the website when the modal is closed

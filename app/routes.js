@@ -5,6 +5,7 @@ var EmsVehicle = require('../app/models/emsVehicle');
 var Ticket = require('../app/models/ticket');
 var Ems = require('../app/models/ems');
 var ArrestReport = require('../app/models/arrestReport');
+var Warrant = require('../app/models/warrant');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
 var async = require('async');
@@ -466,6 +467,14 @@ module.exports = function (app, passport, server) {
     var myArrestReport = new ArrestReport()
     myArrestReport.updateArrestReport(req, res)
     myArrestReport.save(function (err) {
+      if (err) return console.error(err);
+    });
+  });
+
+  app.post('/create-warrant', function (req, res) {
+    var myWarrant = new Warrant()
+    myWarrant.createWarrant(req, res)
+    myWarrant.save(function (err) {
       if (err) return console.error(err);
     });
   });
