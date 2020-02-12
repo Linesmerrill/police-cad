@@ -176,7 +176,8 @@ module.exports = function (app, passport, server) {
         }, function (err, dbArrestReports) {
           Warrant.find({
             'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-            'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+            'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+            'warrant.status': true
           }, function (err, dbWarrants) {
         res.render('police-dashboard', {
           user: req.user,
