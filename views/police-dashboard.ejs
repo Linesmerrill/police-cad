@@ -152,6 +152,14 @@
                             <div class="panel-body">
                               
                               <% if (warrants != null) {%>
+                                <% if (warrants.length == 0) {%>
+                                  <div id="noWarrantMessage" class="alert alert-success alert-dismissible" style="display:block">
+                                    <strong>NCIC Warrant Check!</strong> Clean, No Warrants Found.
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                      <span aria-hidden="true">&times;</span>
+                                    </button>
+                                  </div>
+                                  <% } else {%>
                                 <span>(Click on warrant to clear)</span>
                                 <% for(var k=0; k<warrants.length; k++) {%>
                                   <% if ((warrants[k].warrant.accusedID == civilians[i]._id) && (warrants[k].warrant.status === true)) {%>
@@ -162,14 +170,10 @@
                                     </span>
                                 <% } %>
                                 <% } %>
-                              <% } else { %>
-                                <div id="noWarrantMessage" class="alert alert-success alert-dismissible" style="display:block">
-                                  <strong>NCIC Warrant Check!</strong> Clean, No Warrants Found.
-                                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                  </button>
-                                </div>
+                                <% } %>
                               <% } %>
+                                
+                              
 
 
 
