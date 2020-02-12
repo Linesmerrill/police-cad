@@ -150,10 +150,12 @@
                             <div id="collapse<%=i%>" class="panel-collapse collapse">
                           <% } %>
                             <div class="panel-body">
+                              
                               <% if (warrants != null) {%>
+                                <span>(Click on warrant to clear)</span>
                                 <% for(var k=0; k<warrants.length; k++) {%>
                                   <% if ((warrants[k].warrant.accusedID == civilians[i]._id) && (warrants[k].warrant.status === true)) {%>
-                                    <span id="confirmWarrantModal" data-toggle="modal" href="#confirmClearWarrantModal" onclick="clearWarrantWithValues('<%= warrants[k]._id %>')">
+                                    <span id="confirmWarrantModal" data-toggle="modal" href="#confirmClearWarrantModal" onclick="clearWarrantWithValues('<%= warrants[k]._id %>', '<%= warrants[k].warrant.reasons[0] %>')">
                                       <div id="warrantMessage" class="alert alert-danger alert-dismissible" style="display:block">
                                         <strong>Active Warrant!</strong> <%= warrants[k].warrant.reasons[0] %>
                                       </div>
@@ -978,6 +980,7 @@
               <h4>Clear Warrant?</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
+              <p id="warrant-reason"></p>
               <input id="warrant-clear-date" type="hidden" name="updatedDate" value="">
               <input id="warrant-clear-time" type="hidden" name="updatedTime" value="">
               <input id="warrant-clearingOfficer" type="hidden" name="clearingOfficer" value=<%= user.user.username%>>
@@ -1297,8 +1300,9 @@ function searchPlate() {
     $('#searchWarrantDiv').hide()
   }
 
-  function clearWarrantWithValues(warrantID) {
+  function clearWarrantWithValues(warrantID, warrantReason) {
     $('#warrant-ID').val(warrantID)
+    $('#warrant-reason').text(warrantReason)
     //Super gross date calculation, thx javascript
     let date = new Date()
     let yyyy = date.getFullYear().toString();                                    
