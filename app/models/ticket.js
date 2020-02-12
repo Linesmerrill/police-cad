@@ -23,7 +23,7 @@ var ticketSchema = mongoose.Schema({
 
 ticketSchema.methods.updateTicket = function (request, response) {
   //debug log showing the request body for the ticket request
-  // console.debug("ticket request body: ", request.body)
+  console.debug("ticket request body: ", request.body)
   rawNameAndDOB = request.body.civFirstName
   if (exists(request.body.civFirstName) && exists(request.body.civLastName)){
     if (request.body.civFirstName.trim().length > 1 && request.body.civLastName.length > 1) {
@@ -57,6 +57,8 @@ ticketSchema.methods.updateTicket = function (request, response) {
     if (exists(request.body.other) && Array.isArray(request.body.fines)) {
     otherIndex = request.body.fines.findIndex(element => element.includes("Other"));
     request.body.fines[otherIndex] = "Other - " + request.body.other.trim()
+    } else if (request.body.other.trim() != "") {
+      request.body.fines = "Other - " + request.body.other.trim()
     }
     this.ticket.violation = request.body.fines;
   }
