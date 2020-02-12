@@ -938,7 +938,7 @@
                     <option>Murder</option>
                     <option>Felony Evasion</option>
                     <option>Prison Escape</option>
-                    <option>Other</option>
+                    <option id="warrant-other-option">Other</option>
                   </select>
                 </div>
               </div>
@@ -1086,6 +1086,12 @@ $(document).ready(function() {
   $('#ticket-select').change(function(){
     if ($('#ticket-option-other').is(':selected')) {
       $('#ticket-other-div').show();
+    }
+  })
+
+  $('#warrant-select').change(function(){
+    if ($('#warrant-other-option').is(':selected')) {
+      $('#warrant-other-div').show();
     }
   })
 });

@@ -44,6 +44,10 @@ warrantSchema.methods.createWarrant = function (req, res) {
     this.warrant.accusedID = req.body.accusedID;
   }
   if (exists(req.body.reasons)){
+    //We check to see if they selected 'Other' and if so we need to grab the input value
+    if ((exists(req.body.other)) && (req.body.reasons == 'Other') && (req.body.other != ""))  {
+      req.body.reasons = "Other - " + req.body.other.trim()
+    }
     this.warrant.reasons = req.body.reasons;
   }
   this.warrant.status = true;
