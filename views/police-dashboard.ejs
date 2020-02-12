@@ -150,16 +150,28 @@
                             <div id="collapse<%=i%>" class="panel-collapse collapse">
                           <% } %>
                             <div class="panel-body">
-                              <% if (civilians[i].civilian.warrants == 2) {%>
-                                <div id="warrantMessage" class="alert alert-danger" style="display:block">
-                                    <strong>NCIC Warrant Check!</strong> Active Warrant for Individual.
-                                </div>
-                              <% } %>
-                              <% if (civilians[i].civilian.warrants == 1) {%>
-                                <div id="noWarrantMessage" class="alert alert-success" style="display:block">
+                              <% if (warrants != null) {%>
+                                <% for(var k=0; k<warrants.length; k++) {%>
+                                  <% if ((warrants[k].warrant.accusedID == civilians[i]._id) && (warrants[k].warrant.status === true)) {%>
+                                <div id="warrantMessage" class="alert alert-danger alert-dismissible" style="display:block">
+                                  <strong>Active Warrant!</strong> <%= warrants[k].warrant.reasons[0] %>
+                                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                              </div>
+                                <% } %>
+                                <% } %>
+                              <% } else { %>
+                                <div id="noWarrantMessage" class="alert alert-success alert-dismissible" style="display:block">
                                   <strong>NCIC Warrant Check!</strong> Clean, No Warrants Found.
+                                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
                                 </div>
                               <% } %>
+
+
+
                               <% if (civilians[i].civilian.licenseStatus == 3) {%>
                                 <div id="licenseRevokedMessage" class="alert alert-warning" style="display:block">
                                     <strong>Warning!</strong> License is Revoked.
@@ -169,8 +181,8 @@
                                   <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenCitation('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#date', '#time');">Issue Citation</button>
                                   <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
                                   <button data-toggle="modal" href="#arrestModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenArrest('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
-                                  <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button>
                                   <button data-toggle="modal" href="#createWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenCreateWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Create Warrant</button>
+                                  <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button>
                                 </div>
                                 <hr/>
                                 Driver's ID #: <%= civilians[i]._id%><br/>

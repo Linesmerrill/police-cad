@@ -156,6 +156,7 @@ module.exports = function (app, passport, server) {
       civilians: null,
       tickets: null,
       arrestReports: null,
+      warrants: null
     });
   });
 
@@ -173,17 +174,23 @@ module.exports = function (app, passport, server) {
           'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
           'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
         }, function (err, dbArrestReports) {
+          Warrant.find({
+            'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+            'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+          }, function (err, dbWarrants) {
         res.render('police-dashboard', {
           user: req.user,
           vehicles: null,
           civilians: dbCivilians,
           tickets: dbTickets,
-          arrestReports: dbArrestReports
+          arrestReports: dbArrestReports,
+          warrants: dbWarrants
         });
       })
       });
     });
   });
+})
 
   app.get('/plate-search', auth, function (req, res) {
     Vehicle.find({
@@ -194,7 +201,8 @@ module.exports = function (app, passport, server) {
         civilians: null,
         vehicles: dbVehicles,
         tickets: null,
-        arrestReports: null
+        arrestReports: null,
+        warrants: null
       });
     })
   });
