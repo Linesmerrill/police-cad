@@ -4,8 +4,12 @@ var warrantSchema = mongoose.Schema({
   warrant: {
     date: String,
     time: String,
+    updatedDate: String,
+    updatedTime: String,
     reportingOfficer: String,
     reportingOfficerEmail: String,
+    clearingOfficer: String,
+    clearingOfficerEmail: String,
     accusedFirstName: String,
     accusedLastName: String,
     accusedID: String,

@@ -153,12 +153,11 @@
                               <% if (warrants != null) {%>
                                 <% for(var k=0; k<warrants.length; k++) {%>
                                   <% if ((warrants[k].warrant.accusedID == civilians[i]._id) && (warrants[k].warrant.status === true)) {%>
-                                <div id="warrantMessage" class="alert alert-danger alert-dismissible" style="display:block">
-                                  <strong>Active Warrant!</strong> <%= warrants[k].warrant.reasons[0] %>
-                                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                  </button>
-                              </div>
+                                    <span id="confirmWarrantModal" data-toggle="modal" href="#confirmClearWarrantModal" onclick="clearWarrantWithValues('<%= warrants[k]._id %>')">
+                                      <div id="warrantMessage" class="alert alert-danger alert-dismissible" style="display:block">
+                                        <strong>Active Warrant!</strong> <%= warrants[k].warrant.reasons[0] %>
+                                      </div>
+                                    </span>
                                 <% } %>
                                 <% } %>
                               <% } else { %>
@@ -182,7 +181,7 @@
                                   <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
                                   <button data-toggle="modal" href="#arrestModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenArrest('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
                                   <button data-toggle="modal" href="#createWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenCreateWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Create Warrant</button>
-                                  <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button>
+                                  <!-- <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button> -->
                                 </div>
                                 <hr/>
                                 Driver's ID #: <%= civilians[i]._id%><br/>
@@ -968,6 +967,36 @@
     </div>
   </div>
 
+  <div id="confirmClearWarrantModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="warrant-clear-form" class="form-horizontal" action="/clear-warrant" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Clear Warrant?</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <input id="warrant-clear-date" type="hidden" name="updatedDate" value="">
+              <input id="warrant-clear-time" type="hidden" name="updatedTime" value="">
+              <input id="warrant-clearingOfficer" type="hidden" name="clearingOfficer" value=<%= user.user.username%>>
+              <input id="warrant-ID" type="hidden" name="warrantID" value="">
+               <!-- Button -->
+              
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
+                <div class="col-md-4">
+                  <button id="submitWarrantClearCreation" name="clearingOfficerEmail" class="btn btn-success" onclick="hideWarrantClearPopover()" value=<%= user.user.email%>>Yes</button>
+                  <button class="btn btn-danger" data-dismiss="modal">No</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
   
   
   <% include 10-codes %> 
@@ -1208,6 +1237,10 @@ function searchPlate() {
     $('#civ-last-name').popover('hide')
   }
 
+  function hideWarrantClearPopover() {
+    $('#confirmWarrantModal').hide()
+  }
+
   function OpenCitation(firstName, lastName, id, dob) {
     $('#ticket-civ-first-name').val(firstName)
     $('#ticket-civ-last-name').val(lastName)
@@ -1233,11 +1266,11 @@ function searchPlate() {
   }
 
   function OpenClearWarrant(firstName, lastName, id, dob) {
-    $('#warrant-civ-first-name').val(firstName)
-    $('#warrant-civ-last-name').val(lastName)
-    $('#civIDWarrant').val(id)
-    $('#warrant-civ-dob').val(dob)
-    $('#searchWarrantDiv').hide()
+    $('#warrant-clear-civ-first-name').val(firstName)
+    $('#warrant-clear-civ-last-name').val(lastName)
+    $('#civIDWarrantClear').val(id)
+    $('#warrant-clear-civ-dob').val(dob)
+    $('#searchWarrantClearDiv').hide()
   }
 
   function OpenCreateWarrant(firstName, lastName, id, dob) {
@@ -1256,6 +1289,20 @@ function searchPlate() {
     }))
     $('#warrant-civ-dob').val(dob)
     $('#searchWarrantDiv').hide()
+  }
+
+  function clearWarrantWithValues(warrantID) {
+    $('#warrant-ID').val(warrantID)
+    //Super gross date calculation, thx javascript
+    let date = new Date()
+    let yyyy = date.getFullYear().toString();                                    
+    let mm = (date.getMonth()+1).toString(); // getMonth() is zero-based         
+    let dd  = date.getDate().toString(); 
+    $('#warrant-clear-date').val(yyyy + '-' + (mm[1]?mm:"0"+mm[0]) + '-' + (dd[1]?dd:"0"+dd[0]))
+    $('#warrant-clear-time').val(new Date().toLocaleTimeString('en-GB', {
+      hour: "2-digit",
+      minute: "2-digit"
+    }))
   }
 
   $('#ticketModal').on('hidden.bs.modal', function () {

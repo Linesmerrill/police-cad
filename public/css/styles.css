@@ -838,3 +838,8 @@ a.link--inherit {
     color: #eee;
     background-color: #36333d;
 }
+
+/* To fix the scrolling modal issues */
+.modal {
+    overflow-y:auto;
+  }

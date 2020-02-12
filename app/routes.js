@@ -487,6 +487,25 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.post('/clear-warrant', function (req, res) {
+    Warrant.findByIdAndUpdate(
+      {
+      '_id': ObjectId(req.body.warrantID)
+      },
+      {
+        $set: {
+          'warrant.updatedDate': req.body.updatedDate, 
+          'warrant.updatedTime': req.body.updatedTime,
+          'warrant.clearingOfficer': req.body.clearingOfficer,
+          'warrant.clearingOfficerEmail': req.body.clearingOfficerEmail,
+          'warrant.status': false
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        res.redirect('/police-dashboard');
+      })
+  });
+
   app.post('/updateOrDeleteCiv', function (req, res) {
     if (req.body.action === "update") {
       var address
