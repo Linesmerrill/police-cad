@@ -23,7 +23,7 @@ var ticketSchema = mongoose.Schema({
 
 ticketSchema.methods.updateTicket = function (request, response) {
   //debug log showing the request body for the ticket request
-  console.debug("ticket request body: ", request.body)
+  // console.debug("ticket request body: ", request.body)
   rawNameAndDOB = request.body.civFirstName
   if (exists(request.body.civFirstName) && exists(request.body.civLastName)){
     if (request.body.civFirstName.trim().length > 1 && request.body.civLastName.length > 1) {
