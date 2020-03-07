@@ -76,6 +76,7 @@
           <!-- <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#warning-date', '#warning-time');openSearch()">Issue Warning</button> -->
           <!-- <button data-toggle="modal" href="#arrestModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#arrest-report-date', '#arrest-report-time');openSearch();generateCaseNo('#arrest-report-case-no');">Arrest Report</button> -->
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
+          <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
         </div>
       </div>
     </div>
@@ -1007,6 +1008,7 @@
   
   
   <% include 10-codes %> 
+  <% include notepad %>
 </body>
 </div>
 </div>
@@ -1317,6 +1319,10 @@ function searchPlate() {
       hour: "2-digit",
       minute: "2-digit"
     }))
+  }
+
+  function clearTextarea() {
+    $('#notepad-textarea').val('')
   }
 
   $('#ticketModal').on('hidden.bs.modal', function () {
