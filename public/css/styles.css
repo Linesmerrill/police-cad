@@ -816,6 +816,11 @@ a.link--inherit {
     background-color: #36333d;
 }
 
+#notepad-textarea {
+    color: #eee;
+    background-color: #36333d;
+}
+
 #warrant-select {
     color: #eee;
     background-color: #36333d;
@@ -842,4 +847,8 @@ a.link--inherit {
 /* To fix the scrolling modal issues */
 .modal {
     overflow-y:auto;
+  }
+
+  .width-100 {
+      width: 100%
   }
