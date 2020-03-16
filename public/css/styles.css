@@ -362,6 +362,14 @@ textarea {
     margin-top: 0;
 }
 
+.margin-top-1 {
+    margin-top: 1rem;
+}
+
+.margin-top-1-5 {
+    margin-top: 1.5rem;
+}
+
 .feature {
     margin: 50px auto 0;
     max-width: 400px;

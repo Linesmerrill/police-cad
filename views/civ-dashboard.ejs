@@ -43,15 +43,18 @@
       </div>
       <div class="navbar-collapse collapse" id="bs-navbar">
         <ul class="nav navbar-nav">
-
         </ul>
         <ul class="nav navbar-nav navbar-right">
-            <li>
-                <a> Hi, <%= user.user.username %></a>
-            </li>
-            <li>
-                <a href="/logout">Logout</a>
-            </li>
+          <li>
+            <button class="btn btn-primary btn-sm margin-top-1-5">Join Community <span class="badge"></span></button>
+            <!-- <a><%= user.user.communityName %></a> -->
+          </li>
+          <li>
+            <a>Hi, <%= user.user.username %></a>
+          </li>
+          <li>
+              <a href="/logout">Logout</a>
+          </li>
         </ul>
 
       </div>
