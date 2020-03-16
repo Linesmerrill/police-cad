@@ -19,7 +19,7 @@ module.exports = function (app, passport, server) {
     res.render('index', {
       message: req.flash('info')
     });
-    
+
   });
 
   app.get('/release-log', function (req, res) {
@@ -47,7 +47,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/ads.txt', (req, res) => {
-    fs.readFile('ads.txt', 'utf8', function(err, data) {
+    fs.readFile('ads.txt', 'utf8', function (err, data) {
       if (err) throw err;
       return res.json(data);
     })
@@ -179,19 +179,19 @@ module.exports = function (app, passport, server) {
             'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
             'warrant.status': true
           }, function (err, dbWarrants) {
-        res.render('police-dashboard', {
-          user: req.user,
-          vehicles: null,
-          civilians: dbCivilians,
-          tickets: dbTickets,
-          arrestReports: dbArrestReports,
-          warrants: dbWarrants
+            res.render('police-dashboard', {
+              user: req.user,
+              vehicles: null,
+              civilians: dbCivilians,
+              tickets: dbTickets,
+              arrestReports: dbArrestReports,
+              warrants: dbWarrants
+            });
+          })
         });
-      })
       });
     });
-  });
-})
+  })
 
   app.get('/plate-search', auth, function (req, res) {
     Vehicle.find({
@@ -489,22 +489,20 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/clear-warrant', function (req, res) {
-    Warrant.findByIdAndUpdate(
-      {
+    Warrant.findByIdAndUpdate({
       '_id': ObjectId(req.body.warrantID)
-      },
-      {
-        $set: {
-          'warrant.updatedDate': req.body.updatedDate, 
-          'warrant.updatedTime': req.body.updatedTime,
-          'warrant.clearingOfficer': req.body.clearingOfficer,
-          'warrant.clearingOfficerEmail': req.body.clearingOfficerEmail,
-          'warrant.status': false
-        }
-      }, function (err) {
-        if (err) return console.error(err);
-        res.redirect('/police-dashboard');
-      })
+    }, {
+      $set: {
+        'warrant.updatedDate': req.body.updatedDate,
+        'warrant.updatedTime': req.body.updatedTime,
+        'warrant.clearingOfficer': req.body.clearingOfficer,
+        'warrant.clearingOfficerEmail': req.body.clearingOfficerEmail,
+        'warrant.status': false
+      }
+    }, function (err) {
+      if (err) return console.error(err);
+      res.redirect('/police-dashboard');
+    })
   });
 
   app.post('/updateOrDeleteCiv', function (req, res) {
@@ -513,7 +511,7 @@ module.exports = function (app, passport, server) {
       var occupation
       var firearmLicense
       if (exists(req.body.address)) {
-          address = req.body.address.trim()
+        address = req.body.address.trim()
       }
       if (exists(req.body.occupation)) {
         occupation = req.body.occupation.trim()
@@ -638,51 +636,51 @@ module.exports = function (app, passport, server) {
       socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has disconnected');
     });
 
-    socket.on('find_user', function(firstName, lastName, dateOfBirth) {
+    socket.on('find_user', function (firstName, lastName, dateOfBirth) {
       if (firstName.trim().length < 1 || lastName.trim().length < 1) {
         socket.emit('find_user_result', {});
       } else {
-      Civilian.find({
-        'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1), 
-        'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
-        'civilian.birthday': dateOfBirth
-      }, function(err, user) {
-        if (err) throw err;
-        if (!user) socket.emit('find_user_result', {});
-        else socket.emit('find_user_result', user)
-      })
+        Civilian.find({
+          'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1),
+          'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
+          'civilian.birthday': dateOfBirth
+        }, function (err, user) {
+          if (err) throw err;
+          if (!user) socket.emit('find_user_result', {});
+          else socket.emit('find_user_result', user)
+        })
       }
     });
 
-    socket.on('find_user_warning', function(firstName, lastName, dateOfBirth) {
+    socket.on('find_user_warning', function (firstName, lastName, dateOfBirth) {
       if (firstName.trim().length < 1 || lastName.trim().length < 1) {
         socket.emit('find_user_result_warning', {});
       } else {
-      Civilian.find({
-        'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1), 
-        'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
-        'civilian.birthday': dateOfBirth
-      }, function(err, user) {
-        if (err) throw err;
-        if (!user) socket.emit('find_user_result_warning', {});
-        else socket.emit('find_user_result_warning', user)
-      })
+        Civilian.find({
+          'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1),
+          'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
+          'civilian.birthday': dateOfBirth
+        }, function (err, user) {
+          if (err) throw err;
+          if (!user) socket.emit('find_user_result_warning', {});
+          else socket.emit('find_user_result_warning', user)
+        })
       }
     });
 
-    socket.on('find_user_arrest', function(firstName, lastName, dateOfBirth) {
+    socket.on('find_user_arrest', function (firstName, lastName, dateOfBirth) {
       if (firstName.trim().length < 1 || lastName.trim().length < 1) {
         socket.emit('find_user_result_arrest', {});
       } else {
-      Civilian.find({
-        'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1), 
-        'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
-        'civilian.birthday': dateOfBirth
-      }, function(err, user) {
-        if (err) throw err;
-        if (!user) socket.emit('find_user_result_arrest', {});
-        else socket.emit('find_user_result_arrest', user)
-      })
+        Civilian.find({
+          'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1),
+          'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
+          'civilian.birthday': dateOfBirth
+        }, function (err, user) {
+          if (err) throw err;
+          if (!user) socket.emit('find_user_result_arrest', {});
+          else socket.emit('find_user_result_arrest', user)
+        })
       }
     });
   });
@@ -696,7 +694,7 @@ function auth(req, res, next) {
 }
 
 function authCivilian(req, res, next) {
-  
+
   if (req.isAuthenticated()) {
     return next();
   }
@@ -706,7 +704,7 @@ function authCivilian(req, res, next) {
 }
 
 function authPolice(req, res, next) {
-  
+
   if (req.isAuthenticated()) {
     return next();
   }
@@ -716,7 +714,7 @@ function authPolice(req, res, next) {
 }
 
 function authEms(req, res, next) {
-  
+
   if (req.isAuthenticated()) {
     return next();
   }
