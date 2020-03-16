@@ -46,7 +46,7 @@
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li>
-            <button class="btn btn-primary btn-sm margin-top-1-5">✨ Join Community ✨</button>
+            <button data-toggle="modal" href="#communitiesModal" class="btn btn-primary btn-sm margin-top-1-5">✨ Communities ✨</button>
             <!-- <a><%= user.user.communityName %></a> -->
           </li>
           <li>
@@ -509,6 +509,38 @@
                 <button type="submit" value="update" name="action" class="btn btn-info">Update Vehicle</button>
                 <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Vehicle</button>
             </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="communitiesModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/communities" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <h4>Communities Management</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="joinCommunity"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="joinCommunity" name="joinCommunity" value=<%= user._id %> class="btn btn-primary" onclick="createNewCiv()">Join</button>
+                <button id="createCommunity" name="createCommunity" value=<%= user._id %> class="btn btn-primary" onclick="createNewCiv()">Create</button>
+              </div>
+            </div>
+
+            <!-- list of current communities -->
+
+
+
             </fieldset>
           </form>
         </div>
