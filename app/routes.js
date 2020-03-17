@@ -128,13 +128,13 @@ module.exports = function (app, passport, server) {
         Community.find({
           'community.ownerID': req.user._id
         }, function (err, dbCommunities) {
-        res.render('civ-dashboard', {
-          user: req.user,
-          personas: dbPersonas,
-          vehicles: dbVehicles,
-          communities: dbCommunities
+          res.render('civ-dashboard', {
+            user: req.user,
+            personas: dbPersonas,
+            vehicles: dbVehicles,
+            communities: dbCommunities
+          });
         });
-      });
       });
     })
   });
@@ -425,7 +425,7 @@ module.exports = function (app, passport, server) {
 
       var myCiv = new Civilian()
       myCiv.updateCiv(req, res)
-      myCiv.save(function (err, fluffy) {
+      myCiv.save(function (err) {
         if (err) return console.error(err);
       });
 
@@ -439,7 +439,7 @@ module.exports = function (app, passport, server) {
 
       var myEms = new Ems()
       myEms.updateEms(req, res)
-      myEms.save(function (err, fluffy) {
+      myEms.save(function (err) {
         if (err) return console.error(err);
       });
     })
@@ -452,7 +452,7 @@ module.exports = function (app, passport, server) {
 
       var myVeh = new Vehicle()
       myVeh.updateVeh(req, res)
-      myVeh.save(function (err, fluffy) {
+      myVeh.save(function (err) {
         if (err) return console.error(err);
       });
     })
@@ -465,7 +465,7 @@ module.exports = function (app, passport, server) {
 
       var myVeh = new EmsVehicle()
       myVeh.updateVeh(req, res)
-      myVeh.save(function (err, fluffy) {
+      myVeh.save(function (err) {
         if (err) return console.error(err);
       });
     })
@@ -512,15 +512,50 @@ module.exports = function (app, passport, server) {
     })
   });
 
-  app.post('/joinCommunity', function(req, res) {
-    console.log("req.body.communityCode", req.body.communityCode)
+  app.post('/joinCommunity', function (req, res) {
+    var communityCode = req.body.communityCode.trim()
+    if (communityCode.length != 7) {
+      console.error("improper length for community code, route: /joinCommunity")
+      res.redirect('/civ-dashboard', {
+        message: req.flash('signuperror')
+      });
+      return
+    }
+    Community.findOne({
+      'community.code': req.body.communityCode.toUpperCase()
+    }, function (err, community) {
+      if (community == null) {
+        console.warn("no matching community found, route: /joinCommunity")
+        res.redirect('/civ-dashboard');
+        return
+      }
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.activeCommunity': community._id
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        res.redirect('/civ-dashboard');
+      })
+    })
   })
 
-  app.post('/createCommunity', function(req, res) {
+  app.post('/createCommunity', function (req, res) {
     var myCommunity = new Community()
     myCommunity.createCommunity(req, res)
-    myCommunity.save(function (err) {
+    myCommunity.save(function (err, result) {
       if (err) return console.error(err);
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.activeCommunity': result._id
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+      })
     });
   })
 

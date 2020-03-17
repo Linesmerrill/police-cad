@@ -536,7 +536,6 @@
               </div>
             </div>
 
-            <!-- list of current communities -->
             <div class="col-md-8 col-md-offset-2 name-table text-align-center margin-top-2">
               <table class="table table-hover" border="1" frame="box">
                 <thead>
@@ -548,7 +547,32 @@
                 </thead>
                   <tbody>
                     <% for(var i=0; i<communities.length; i++) {%>
-                    <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewVeh" onclick="loadVehData(<%=i%>)">
+                      <p><% user.user.activeCommunity %></p>
+                      <p><% i._id %></p>
+                      <% if (user.user.activeCommunity == communities[i]._id) {%>
+                    <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#" onclick="loadVehData(<%=i%>)">
+                      <td style="text-transform: capitalize;"><%= communities[i].community.name%></td>
+                      <td> <%= communities[i].community.code%></td>
+                    </tr>
+                    <% } %>
+                    <% } %>
+                  </tbody>
+              </table>
+            </div>
+
+            <!-- list of current communities -->
+            <div class="col-md-8 col-md-offset-2 name-table text-align-center margin-top-2">
+              <table class="table table-hover" border="1" frame="box">
+                <thead>
+                  <tr>
+                    Communities Owned by You
+                  </tr>
+                  <tr style="background-color: #2d2d2d;"><td>Name</td><td>Code</td></tr>
+            
+                </thead>
+                  <tbody>
+                    <% for(var i=0; i<communities.length; i++) {%>
+                    <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#" onclick="loadVehData(<%=i%>)">
                       <td style="text-transform: capitalize;"><%= communities[i].community.name%></td>
                       <td> <%= communities[i].community.code%></td>
                     </tr>
@@ -556,7 +580,6 @@
                   </tbody>
               </table>
             </div>
-
 
             </fieldset>
         </div>
@@ -588,7 +611,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="joinCommunity"></label>
               <div class="col-md-4 text-align-center">
-                <button id="joinCommunity" name="joinCommunity" value="<%user._id%>" class="btn btn-primary" onclick="createNewCiv()">Join</button>
+                <button id="joinCommunity" value="<%= user._id %>" name="userID"  class="btn btn-primary" onclick="createNewCiv()">Join</button>
               </div>
             </div>
             </fieldset>
@@ -622,8 +645,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="createCommunity"></label>
               <div class="col-md-4 text-align-center">
-                <!-- <input type="hidden" id="" value=<%= user._id %> name="userID"> -->
-                <button id="createCommunity" value=<%= user._id %> name="userID" class="btn btn-primary" onclick="createNewCiv()">Join</button>
+                <button id="createCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary" onclick="createNewCiv()">Join</button>
               </div>
             </div>
             </fieldset>
