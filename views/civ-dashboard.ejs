@@ -520,7 +520,6 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/communities" method="post">
             <fieldset>
 
             <!-- Form Name -->
@@ -532,15 +531,101 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="joinCommunity"></label>
               <div class="col-md-4 text-align-center">
-                <button id="joinCommunity" name="joinCommunity" value=<%= user._id %> class="btn btn-primary" onclick="createNewCiv()">Join</button>
-                <button id="createCommunity" name="createCommunity" value=<%= user._id %> class="btn btn-primary" onclick="createNewCiv()">Create</button>
+                <button data-toggle="modal" href="#joinCommunityModal" class="btn btn-primary">Join</button>
+                <button data-toggle="modal" href="#createCommunityModal" class="btn btn-primary">Create</button>
               </div>
             </div>
 
             <!-- list of current communities -->
+            <div class="col-md-8 col-md-offset-2 name-table text-align-center margin-top-2">
+              <table class="table table-hover" border="1" frame="box">
+                <thead>
+                  <tr>
+                    Active Community
+                  </tr>
+                  <tr style="background-color: #2d2d2d;"><td>Name</td><td>Code</td></tr>
+            
+                </thead>
+                  <tbody>
+                    <% for(var i=0; i<communities.length; i++) {%>
+                    <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewVeh" onclick="loadVehData(<%=i%>)">
+                      <td style="text-transform: capitalize;"><%= communities[i].community.name%></td>
+                      <td> <%= communities[i].community.code%></td>
+                    </tr>
+                    <% } %>
+                  </tbody>
+              </table>
+            </div>
 
 
+            </fieldset>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <div id="joinCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/joinCommunity" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <h4>Join an Existing Community</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="communityCode">Community Code:</label>
+              <div class="col-md-4">
+              <input id="communityCode" name="communityCode" style="text-transform: uppercase;" type="text" placeholder="Example: YRFGHHP" class="form-control input-md" minlength="7" maxlength="7" required>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="joinCommunity"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="joinCommunity" name="joinCommunity" value="<%user._id%>" class="btn btn-primary" onclick="createNewCiv()">Join</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="createCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/createCommunity" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <h4>Create a New Community</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="communityName">Community Name:</label>
+              <div class="col-md-4">
+              <input id="communityName" name="communityName" style="text-transform: capitalize;" type="text" placeholder="Community Name" class="form-control input-md" maxlength="25" required>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createCommunity"></label>
+              <div class="col-md-4 text-align-center">
+                <!-- <input type="hidden" id="" value=<%= user._id %> name="userID"> -->
+                <button id="createCommunity" value=<%= user._id %> name="userID" class="btn btn-primary" onclick="createNewCiv()">Join</button>
+              </div>
+            </div>
             </fieldset>
           </form>
         </div>
@@ -563,8 +648,6 @@
       </div>
     </div>
   </div>
-
-
 
   <!--scripts loaded here -->
   <script src="./js/jquery.min.js"></script>

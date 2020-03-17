@@ -6,6 +6,7 @@ var Ticket = require('../app/models/ticket');
 var Ems = require('../app/models/ems');
 var ArrestReport = require('../app/models/arrestReport');
 var Warrant = require('../app/models/warrants');
+var Community = require('../app/models/community');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
 var async = require('async');
@@ -124,11 +125,16 @@ module.exports = function (app, passport, server) {
       Vehicle.find({
         'vehicle.email': req.user.user.email.toLowerCase()
       }, function (err, dbVehicles) {
+        Community.find({
+          'community.ownerID': req.user._id
+        }, function (err, dbCommunities) {
         res.render('civ-dashboard', {
           user: req.user,
           personas: dbPersonas,
-          vehicles: dbVehicles
+          vehicles: dbVehicles,
+          communities: dbCommunities
         });
+      });
       });
     })
   });
@@ -156,7 +162,8 @@ module.exports = function (app, passport, server) {
       civilians: null,
       tickets: null,
       arrestReports: null,
-      warrants: null
+      warrants: null,
+      community: null
     });
   });
 
@@ -504,6 +511,18 @@ module.exports = function (app, passport, server) {
       res.redirect('/police-dashboard');
     })
   });
+
+  app.post('/joinCommunity', function(req, res) {
+    console.log("req.body.communityCode", req.body.communityCode)
+  })
+
+  app.post('/createCommunity', function(req, res) {
+    var myCommunity = new Community()
+    myCommunity.createCommunity(req, res)
+    myCommunity.save(function (err) {
+      if (err) return console.error(err);
+    });
+  })
 
   app.post('/updateOrDeleteCiv', function (req, res) {
     if (req.body.action === "update") {
