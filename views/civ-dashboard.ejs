@@ -34,11 +34,11 @@
     <div class="container-fluid">
       <div class="navbar-header">
         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
         <a class="navbar-brand page-scroll" href="/"><i class="ion-ios-analytics-outline"></i> Lines Police Server</a>
       </div>
       <div class="navbar-collapse collapse" id="bs-navbar">
@@ -46,7 +46,7 @@
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li>
-            <button data-toggle="modal" href="#communitiesModal" class="btn btn-primary btn-sm margin-top-1-5">✨ Communities ✨</button>
+            <button data-toggle="modal" href="#communitiesModal" class="btn btn-primary btn-sm margin-top-1-5 margin-left-1">✨ Communities ✨</button>
             <!-- <a><%= user.user.communityName %></a> -->
           </li>
           <li>
@@ -548,12 +548,29 @@
     </div>
   </div>
 
+  <div id="communitiesInfoModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+            <fieldset>
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <h4>Check out the New Communities Section!</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            <a data-toggle="modal" href="#communitiesModal" onclick="dismissCommunitiesInfoModal()"><img src="/images/communities-example.png" class="diagonal-arrow float-right" alt="communities example screenshot"></a>
+            <img src="/images/diagonal-arrow-white.png" class="diagonal-arrow" alt="diagonal arrow pointing to top right of page">
+            </fieldset>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
 
   <!--scripts loaded here -->
   <script src="./js/jquery.min.js"></script>
   <script src="./js/bootstrap.min.js"></script>
   <script src="./js/jquery.easing.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
   <script src="./js/wow.js"></script>
   <script src="./js/scripts.js"></script>
 </body>
@@ -610,8 +627,17 @@
     $('#lastName').popover('hide')
   }
 
+  function dismissCommunitiesInfoModal() {
+    $('#communitiesInfoModal').modal('hide');
+  }
+
   // prevents spaces from user input
   $(document).ready(function(){
+    if ($.cookie('pop') == null) {
+        $('#communitiesInfoModal').modal('show');
+         $.cookie('pop', '1');
+     }
+
 $("#civ-first-name").keydown(function(event) {
     if (event.keyCode == 32) {
         event.preventDefault();

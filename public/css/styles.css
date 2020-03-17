@@ -860,3 +860,15 @@ a.link--inherit {
   .width-100 {
       width: 100%
   }
+
+.diagonal-arrow {
+    width: 82%;
+}
+
+.float-right {
+    float: right;
+}
+
+.margin-left-1 {
+    margin-left: 1em;
+}
