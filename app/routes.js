@@ -119,14 +119,44 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/civ-dashboard', auth, function (req, res) {
+    if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+      Civilian.find({
+        'civilian.email': req.user.user.email.toLowerCase(),
+      }, function (err, dbPersonas) {
+        Vehicle.find({
+          'vehicle.email': req.user.user.email.toLowerCase(),
+        }, function (err, dbVehicles) {
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            res.render('civ-dashboard', {
+              user: req.user,
+              personas: dbPersonas,
+              vehicles: dbVehicles,
+              communities: dbCommunities
+            });
+          });
+        });
+      });
+    } else {
     Civilian.find({
-      'civilian.email': req.user.user.email.toLowerCase()
+      'civilian.email': req.user.user.email.toLowerCase(),
+      'civilian.activeCommunityID': req.user.user.activeCommunity
     }, function (err, dbPersonas) {
       Vehicle.find({
-        'vehicle.email': req.user.user.email.toLowerCase()
+        'vehicle.email': req.user.user.email.toLowerCase(),
+        'vehicle.activeCommunityID': req.user.user.activeCommunity
       }, function (err, dbVehicles) {
         Community.find({
-          'community.ownerID': req.user._id
+          '$or': [{
+            'community.ownerID': req.user._id
+          }, {
+            '_id': req.user.user.activeCommunity
+          }]
         }, function (err, dbCommunities) {
           res.render('civ-dashboard', {
             user: req.user,
@@ -136,7 +166,8 @@ module.exports = function (app, passport, server) {
           });
         });
       });
-    })
+    });
+  }
   });
 
   app.get('/ems-dashboard', auth, function (req, res) {

@@ -219,10 +219,10 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="submit-new-civ"></label>
               <div class="col-md-4">
-                <button id="submit-new-civ" name="submitNewCiv" value=<%= user.user.email %> class="btn btn-primary" onclick="createNewCiv()">Create</button>
+                <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submit-new-civ" name="submitNewCiv" value="<%=user.user.email%>" class="btn btn-primary" onclick="createNewCiv()">Create</button>
               </div>
             </div>
-
             </fieldset>
           </form>
         </div>
@@ -318,6 +318,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="create-vehicle"></label>
               <div class="col-md-4">
+                <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                 <button id="create-vehicle" name="submitNewVeh" value=<%= user.user.email %> class="btn btn-primary">Create</button>
               </div>
             </div>

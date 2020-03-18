@@ -10,7 +10,8 @@ var vehicleSchema = mongoose.Schema({
   validRegistration: String,
   validInsurance: String,
   registeredOwner: String,
-  isStolen: String
+  isStolen: String,
+  activeCommunityID: String
  }
 });
 
@@ -24,6 +25,7 @@ vehicleSchema.methods.updateVeh = function(request, response) {
  this.vehicle.registeredOwner = request.body.registeredOwner.trim();
  this.vehicle.isStolen = request.body.isStolen;
  this.vehicle.email = request.body.submitNewVeh.toLowerCase();
+ this.vehicle.activeCommunityID = request.body.activeCommunityID;
  response.redirect('/civ-dashboard');
 };
 
