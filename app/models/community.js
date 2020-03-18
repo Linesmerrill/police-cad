@@ -26,6 +26,38 @@ communitySchema.methods.createCommunity = function (req, res) {
   res.redirect('/civ-dashboard');
 };
 
+communitySchema.methods.createPoliceCommunity = function (req, res) {
+  // debug log showing the request body for the community request
+  // console.debug("community req body: ", req.body)
+  
+  if (exists(req.body.communityName)){
+    this.community.name = req.body.communityName.trim().toLowerCase();
+  }
+  if (exists(req.body.userID)){
+    this.community.ownerID = req.body.userID;
+  }
+  this.community.code = makeID(7);
+  this.community.createdAt = new Date();
+  
+  res.redirect('/police-dashboard');
+};
+
+communitySchema.methods.createEmsCommunity = function (req, res) {
+  // debug log showing the request body for the community request
+  // console.debug("community req body: ", req.body)
+  
+  if (exists(req.body.communityName)){
+    this.community.name = req.body.communityName.trim().toLowerCase();
+  }
+  if (exists(req.body.userID)){
+    this.community.ownerID = req.body.userID;
+  }
+  this.community.code = makeID(7);
+  this.community.createdAt = new Date();
+  
+  res.redirect('/ems-dashboard');
+};
+
 module.exports = mongoose.model('Community', communitySchema);
 
 function exists(v) {

@@ -636,9 +636,103 @@ module.exports = function (app, passport, server) {
     })
   })
 
+  app.post('/joinPoliceCommunity', function (req, res) {
+    var communityCode = req.body.communityCode.trim()
+    if (communityCode.length != 7) {
+      console.error("improper length for community code, route: /joinPoliceCommunity")
+      res.redirect('/police-dashboard', {
+        message: req.flash('signuperror')
+      });
+      return
+    }
+    Community.findOne({
+      'community.code': req.body.communityCode.toUpperCase()
+    }, function (err, community) {
+      if (community == null) {
+        console.warn("no matching community found, route: /joinPoliceCommunity")
+        res.redirect('/police-dashboard');
+        return
+      }
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.activeCommunity': community._id
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        res.redirect('/police-dashboard');
+      })
+    })
+  })
+
+  app.post('/joinEmsCommunity', function (req, res) {
+    var communityCode = req.body.communityCode.trim()
+    if (communityCode.length != 7) {
+      console.error("improper length for community code, route: /joinEmsCommunity")
+      res.redirect('/ems-dashboard', {
+        message: req.flash('signuperror')
+      });
+      return
+    }
+    Community.findOne({
+      'community.code': req.body.communityCode.toUpperCase()
+    }, function (err, community) {
+      if (community == null) {
+        console.warn("no matching community found, route: /joinEmsCommunity")
+        res.redirect('/ems-dashboard');
+        return
+      }
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.activeCommunity': community._id
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        res.redirect('/ems-dashboard');
+      })
+    })
+  })
+
   app.post('/createCommunity', function (req, res) {
     var myCommunity = new Community()
     myCommunity.createCommunity(req, res)
+    myCommunity.save(function (err, result) {
+      if (err) return console.error(err);
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.activeCommunity': result._id
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+      })
+    });
+  })
+
+  app.post('/createPoliceCommunity', function (req, res) {
+    var myCommunity = new Community()
+    myCommunity.createPoliceCommunity(req, res)
+    myCommunity.save(function (err, result) {
+      if (err) return console.error(err);
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.activeCommunity': result._id
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+      })
+    });
+  })
+
+  app.post('/createEmsCommunity', function (req, res) {
+    var myCommunity = new Community()
+    myCommunity.createEmsCommunity(req, res)
     myCommunity.save(function (err, result) {
       if (err) return console.error(err);
       User.findOneAndUpdate({

@@ -9,7 +9,8 @@ var emsSchema = mongoose.Schema({
   department: String,
   assignmentArea: String,
   station: String,
-  callSign: String
+  callSign: String,
+  activeCommunityID: String
  }
 });
 
@@ -22,6 +23,7 @@ emsSchema.methods.updateEms = function(request, response) {
  this.ems.station = request.body.station;
  this.ems.callSign = request.body.callSign;
  this.ems.email = request.body.submitNewEms.toLowerCase();
+ this.ems.activeCommunityID = request.body.activeCommunityID;
  response.redirect('/ems-dashboard');
 };
 
