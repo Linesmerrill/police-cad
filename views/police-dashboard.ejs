@@ -430,14 +430,14 @@
                   </div>
                 </div>
 
-                <div class="form-group" id="searchTicketDiv">
+                <!-- <div class="form-group" id="searchTicketDiv">
                   <label class="col-md-4 control-label" for=""></label>
                   <div class="col-md-4">
                     <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#ticketSearchModal"
                     onclick="searchNameInDB()" title="search">
                     <span class="iconify" data-icon="ion:search-circle-outline" data-inline="false"></span></a>&nbsp;
                   </div>
-                </div>
+                </div> -->
 
                 <div class="form-group required">
                   <label class="col-md-4 control-label" for="civID">Selected ID</label>
@@ -545,7 +545,7 @@
     </div>
   </div>
 
-  <div id="ticketSearchModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- <div id="ticketSearchModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
@@ -566,7 +566,7 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> -->
 
   <div id="warningModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -614,14 +614,14 @@
                   </div>
                 </div>
 
-                <div class="form-group" id="searchWarningDiv">
+                <!-- <div class="form-group" id="searchWarningDiv">
                   <label class="col-md-4 control-label" for=""></label>
                   <div class="col-md-4">
                     <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#warningSearchModal"
                     onclick="searchNameInDBWarning()" title="search">
                     <span class="iconify" data-icon="ion:search-circle-outline" data-inline="false"></span></a>&nbsp;
                   </div>
-                </div>
+                </div> -->
 
                 <div class="form-group required">
                   <label class="col-md-4 control-label" for="civIDWarning">Selected ID</label>
@@ -806,14 +806,14 @@
                   </div>
                 </div>
 
-                <div class="form-group" id="searchArrestDiv">
+                <!-- <div class="form-group" id="searchArrestDiv">
                   <label class="col-md-4 control-label" for=""></label>
                   <div class="col-md-4">
                     <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#arrestSearchModal"
                     onclick="searchNameInDBArrest()" title="search">
                     <span class="iconify" data-icon="ion:search-circle-outline" data-inline="false"></span></a>&nbsp;
                   </div>
-                </div>
+                </div> -->
 
                 <div class="form-group required">
                   <label class="col-md-4 control-label" for="civIDArrest">Selected ID</label>
@@ -1178,26 +1178,26 @@ function searchPlate() {
     $('#civIDArrest').popover('hide')
   }
 
-  function searchNameInDB() {
-    //clear out the old table
-    $("#ticket-search-result-table tr>td").remove();
+  // function searchNameInDB() {
+  //   //clear out the old table
+  //   $("#ticket-search-result-table tr>td").remove();
 
-    socket.emit('find_user', $("#ticket-civ-first-name").val(), $("#ticket-civ-last-name").val(), $("#ticket-civ-dob").val());
-  }
+  //   socket.emit('find_user', $("#ticket-civ-first-name").val(), $("#ticket-civ-last-name").val(), $("#ticket-civ-dob").val());
+  // }
 
-  function searchNameInDBWarning() {
-    //clear out the old table
-    $("#warning-search-result-table tr>td").remove();
+  // function searchNameInDBWarning() {
+  //   //clear out the old table
+  //   $("#warning-search-result-table tr>td").remove();
 
-    socket.emit('find_user_warning', $("#warning-civ-first-name").val(), $("#warning-civ-last-name").val(), $("#warning-civ-dob").val());
-  }
+  //   socket.emit('find_user_warning', $("#warning-civ-first-name").val(), $("#warning-civ-last-name").val(), $("#warning-civ-dob").val());
+  // }
 
-  function searchNameInDBArrest() {
-    //clear out the old table
-    $("#arrest-search-result-table tr>td").remove();
+  // function searchNameInDBArrest() {
+  //   //clear out the old table
+  //   $("#arrest-search-result-table tr>td").remove();
 
-    socket.emit('find_user_arrest', $("#arrest-civ-first-name").val(), $("#arrest-civ-last-name").val(), $("#arrest-civ-dob").val());
-  }
+  //   socket.emit('find_user_arrest', $("#arrest-civ-first-name").val(), $("#arrest-civ-last-name").val(), $("#arrest-civ-dob").val());
+  // }
 
   // prevents submit modal when pressing enter because it closes the entire window and does not submit.
   // we should fix the modals so this can work as expected.

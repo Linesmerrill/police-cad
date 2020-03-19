@@ -620,72 +620,72 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  var io = require('socket.io').listen(server);
+  // var io = require('socket.io').listen(server);
 
-  var usernames = {};
+  // var usernames = {};
 
-  io.sockets.on('connection', function (socket) {
+  // io.sockets.on('connection', function (socket) {
 
-    socket.on('adduser', function (username) {
-      socket.username = username;
-      usernames[username] = username;
-      io.sockets.emit('updateusers', usernames);
-    });
+  //   socket.on('adduser', function (username) {
+  //     socket.username = username;
+  //     usernames[username] = username;
+  //     io.sockets.emit('updateusers', usernames);
+  //   });
 
-    socket.on('disconnect', function () {
-      delete usernames[socket.username];
-      io.sockets.emit('updateusers', usernames);
-      socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has disconnected');
-    });
+  //   socket.on('disconnect', function () {
+  //     delete usernames[socket.username];
+  //     io.sockets.emit('updateusers', usernames);
+  //     socket.broadcast.emit('updatechat', 'SERVER', socket.username + ' has disconnected');
+  //   });
 
-    socket.on('find_user', function(firstName, lastName, dateOfBirth) {
-      if (firstName.trim().length < 1 || lastName.trim().length < 1) {
-        socket.emit('find_user_result', {});
-      } else {
-      Civilian.find({
-        'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1), 
-        'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
-        'civilian.birthday': dateOfBirth
-      }, function(err, user) {
-        if (err) throw err;
-        if (!user) socket.emit('find_user_result', {});
-        else socket.emit('find_user_result', user)
-      })
-      }
-    });
+  //   socket.on('find_user', function(firstName, lastName, dateOfBirth) {
+  //     if (firstName.trim().length < 1 || lastName.trim().length < 1) {
+  //       socket.emit('find_user_result', {});
+  //     } else {
+  //     Civilian.find({
+  //       'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1), 
+  //       'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
+  //       'civilian.birthday': dateOfBirth
+  //     }, function(err, user) {
+  //       if (err) throw err;
+  //       if (!user) socket.emit('find_user_result', {});
+  //       else socket.emit('find_user_result', user)
+  //     })
+  //     }
+  //   });
 
-    socket.on('find_user_warning', function(firstName, lastName, dateOfBirth) {
-      if (firstName.trim().length < 1 || lastName.trim().length < 1) {
-        socket.emit('find_user_result_warning', {});
-      } else {
-      Civilian.find({
-        'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1), 
-        'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
-        'civilian.birthday': dateOfBirth
-      }, function(err, user) {
-        if (err) throw err;
-        if (!user) socket.emit('find_user_result_warning', {});
-        else socket.emit('find_user_result_warning', user)
-      })
-      }
-    });
+  //   socket.on('find_user_warning', function(firstName, lastName, dateOfBirth) {
+  //     if (firstName.trim().length < 1 || lastName.trim().length < 1) {
+  //       socket.emit('find_user_result_warning', {});
+  //     } else {
+  //     Civilian.find({
+  //       'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1), 
+  //       'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
+  //       'civilian.birthday': dateOfBirth
+  //     }, function(err, user) {
+  //       if (err) throw err;
+  //       if (!user) socket.emit('find_user_result_warning', {});
+  //       else socket.emit('find_user_result_warning', user)
+  //     })
+  //     }
+  //   });
 
-    socket.on('find_user_arrest', function(firstName, lastName, dateOfBirth) {
-      if (firstName.trim().length < 1 || lastName.trim().length < 1) {
-        socket.emit('find_user_result_arrest', {});
-      } else {
-      Civilian.find({
-        'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1), 
-        'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
-        'civilian.birthday': dateOfBirth
-      }, function(err, user) {
-        if (err) throw err;
-        if (!user) socket.emit('find_user_result_arrest', {});
-        else socket.emit('find_user_result_arrest', user)
-      })
-      }
-    });
-  });
+  //   socket.on('find_user_arrest', function(firstName, lastName, dateOfBirth) {
+  //     if (firstName.trim().length < 1 || lastName.trim().length < 1) {
+  //       socket.emit('find_user_result_arrest', {});
+  //     } else {
+  //     Civilian.find({
+  //       'civilian.firstName': firstName.trim().charAt(0).toUpperCase() + firstName.trim().slice(1), 
+  //       'civilian.lastName': lastName.trim().charAt(0).toUpperCase() + lastName.trim().slice(1),
+  //       'civilian.birthday': dateOfBirth
+  //     }, function(err, user) {
+  //       if (err) throw err;
+  //       if (!user) socket.emit('find_user_result_arrest', {});
+  //       else socket.emit('find_user_result_arrest', user)
+  //     })
+  //     }
+  //   });
+  // });
 };
 
 function auth(req, res, next) {
