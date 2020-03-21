@@ -1037,7 +1037,7 @@
                   <tr>
                     Active Community
                   </tr>
-                  <tr style="background-color: #2d2d2d;"><td>Name</td><td>Code</td></tr>
+                  <tr style="background-color: #2d2d2d;"><td>Name</td><td>Code</td><td>Action</td></tr>
             
                 </thead>
                   <tbody>
@@ -1045,9 +1045,10 @@
                       <p><% user.user.activeCommunity %></p>
                       <p><% i._id %></p>
                       <% if (user.user.activeCommunity == communities[i]._id) {%>
-                    <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#" onclick="loadVehData(<%=i%>)">
+                    <tr>
                       <td style="text-transform: capitalize;"><%= communities[i].community.name%></td>
                       <td> <%= communities[i].community.code%></td>
+                      <td><button data-toggle="modal" href="#leaveActiveCommunityModal" class="btn btn-danger">Leave</button></td>
                     </tr>
                     <% } %>
                     <% } %>
@@ -1107,6 +1108,37 @@
               <label class="col-md-4 control-label" for="joinCommunity"></label>
               <div class="col-md-4 text-align-center">
                 <button id="joinCommunity" value="<%= user._id %>" name="userID"  class="btn btn-primary">Join</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="leaveActiveCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/leavePoliceActiveCommunity" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Leave Active Community</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <p>NOTE: All civilians and vehicles that were created in this community will no longer 
+              show up when searching after you leave.
+            </p>
+            <p>Are you sure you want to leave this community?</p>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="leaveActiveCommunity"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="leaveActiveCommunity" value="<%= user._id %>" name="userID"  class="btn btn-danger">Leave</button>
               </div>
             </div>
             </fieldset>

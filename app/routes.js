@@ -702,6 +702,19 @@ module.exports = function (app, passport, server) {
     })
   })
 
+  app.post('/leaveActiveCommunity', function (req, res) {
+    User.findOneAndUpdate({
+      '_id': ObjectId(req.body.userID),
+    }, {
+      $set: {
+        'user.activeCommunity': null
+      }
+    }, function (err) {
+      if (err) return console.error(err);
+      res.redirect('/civ-dashboard');
+    })
+  })
+
   app.post('/joinPoliceCommunity', function (req, res) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
@@ -732,6 +745,19 @@ module.exports = function (app, passport, server) {
     })
   })
 
+  app.post('/leavePoliceActiveCommunity', function (req, res) {
+    User.findOneAndUpdate({
+      '_id': ObjectId(req.body.userID),
+    }, {
+      $set: {
+        'user.activeCommunity': null
+      }
+    }, function (err) {
+      if (err) return console.error(err);
+      res.redirect('/police-dashboard');
+    })
+  })
+
   app.post('/joinEmsCommunity', function (req, res) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
@@ -759,6 +785,19 @@ module.exports = function (app, passport, server) {
         if (err) return console.error(err);
         res.redirect('/ems-dashboard');
       })
+    })
+  })
+
+  app.post('/leaveEmsActiveCommunity', function (req, res) {
+    User.findOneAndUpdate({
+      '_id': ObjectId(req.body.userID),
+    }, {
+      $set: {
+        'user.activeCommunity': null
+      }
+    }, function (err) {
+      if (err) return console.error(err);
+      res.redirect('/ems-dashboard');
     })
   })
 
