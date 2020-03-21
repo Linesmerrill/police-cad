@@ -6,6 +6,7 @@ var Ticket = require('../app/models/ticket');
 var Ems = require('../app/models/ems');
 var ArrestReport = require('../app/models/arrestReport');
 var Warrant = require('../app/models/warrants');
+var Community = require('../app/models/community');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
 var async = require('async');
@@ -19,7 +20,7 @@ module.exports = function (app, passport, server) {
     res.render('index', {
       message: req.flash('info')
     });
-    
+
   });
 
   app.get('/release-log', function (req, res) {
@@ -47,7 +48,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/ads.txt', (req, res) => {
-    fs.readFile('ads.txt', 'utf8', function(err, data) {
+    fs.readFile('ads.txt', 'utf8', function (err, data) {
       if (err) throw err;
       return res.json(data);
     })
@@ -118,94 +119,260 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/civ-dashboard', auth, function (req, res) {
-    Civilian.find({
-      'civilian.email': req.user.user.email.toLowerCase()
-    }, function (err, dbPersonas) {
-      Vehicle.find({
-        'vehicle.email': req.user.user.email.toLowerCase()
-      }, function (err, dbVehicles) {
-        res.render('civ-dashboard', {
-          user: req.user,
-          personas: dbPersonas,
-          vehicles: dbVehicles
+    if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+      Civilian.find({
+        'civilian.email': req.user.user.email.toLowerCase(),
+      }, function (err, dbPersonas) {
+        Vehicle.find({
+          'vehicle.email': req.user.user.email.toLowerCase(),
+        }, function (err, dbVehicles) {
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            res.render('civ-dashboard', {
+              user: req.user,
+              personas: dbPersonas,
+              vehicles: dbVehicles,
+              communities: dbCommunities
+            });
+          });
         });
       });
-    })
+    } else {
+      Civilian.find({
+        'civilian.email': req.user.user.email.toLowerCase(),
+        'civilian.activeCommunityID': req.user.user.activeCommunity
+      }, function (err, dbPersonas) {
+        Vehicle.find({
+          'vehicle.email': req.user.user.email.toLowerCase(),
+          'vehicle.activeCommunityID': req.user.user.activeCommunity
+        }, function (err, dbVehicles) {
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            res.render('civ-dashboard', {
+              user: req.user,
+              personas: dbPersonas,
+              vehicles: dbVehicles,
+              communities: dbCommunities
+            });
+          });
+        });
+      });
+    }
   });
 
   app.get('/ems-dashboard', auth, function (req, res) {
-    Ems.find({
-      'ems.email': req.user.user.email.toLowerCase()
-    }, function (err, dbPersonas) {
-      EmsVehicle.find({
-        'emsVehicle.email': req.user.user.email.toLowerCase()
-      }, function (err, dbVehicles) {
-        res.render('ems-dashboard', {
-          user: req.user,
-          personas: dbPersonas,
-          vehicles: dbVehicles
+    if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+      Ems.find({
+        'ems.email': req.user.user.email.toLowerCase(),
+      }, function (err, dbPersonas) {
+        EmsVehicle.find({
+          'emsVehicle.email': req.user.user.email.toLowerCase(),
+        }, function (err, dbVehicles) {
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            res.render('ems-dashboard', {
+              user: req.user,
+              personas: dbPersonas,
+              vehicles: dbVehicles,
+              communities: dbCommunities
+            });
+          });
         });
-      });
-    })
+      })
+    } else {
+      Ems.find({
+        'ems.email': req.user.user.email.toLowerCase(),
+        'ems.activeCommunityID': req.user.user.activeCommunity
+      }, function (err, dbPersonas) {
+        EmsVehicle.find({
+          'emsVehicle.email': req.user.user.email.toLowerCase(),
+          'emsVehicle.activeCommunityID': req.user.user.activeCommunity
+        }, function (err, dbVehicles) {
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            res.render('ems-dashboard', {
+              user: req.user,
+              personas: dbPersonas,
+              vehicles: dbVehicles,
+              communities: dbCommunities
+            });
+          });
+        });
+      })
+    }
   });
 
   app.get('/police-dashboard', auth, function (req, res) {
-    res.render('police-dashboard', {
-      user: req.user,
-      vehicles: null,
-      civilians: null,
-      tickets: null,
-      arrestReports: null,
-      warrants: null
+    Community.find({
+      '$or': [{
+        'community.ownerID': req.user._id
+      }, {
+        '_id': req.user.user.activeCommunity
+      }]
+    }, function (err, dbCommunities) {
+      res.render('police-dashboard', {
+        user: req.user,
+        vehicles: null,
+        civilians: null,
+        tickets: null,
+        arrestReports: null,
+        warrants: null,
+        communities: dbCommunities
+      });
     });
   });
 
   app.get('/name-search', auth, function (req, res) {
-    Civilian.find({
-      'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-      'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
-      'civilian.birthday': req.query.dateOfBirth
-    }, function (err, dbCivilians) {
-      Ticket.find({
-        'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-        'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
-      }, function (err, dbTickets) {
-        ArrestReport.find({
-          'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-          'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
-        }, function (err, dbArrestReports) {
-          Warrant.find({
-            'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-            'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
-            'warrant.status': true
-          }, function (err, dbWarrants) {
-        res.render('police-dashboard', {
-          user: req.user,
-          vehicles: null,
-          civilians: dbCivilians,
-          tickets: dbTickets,
-          arrestReports: dbArrestReports,
-          warrants: dbWarrants
+    if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+      Civilian.find({
+        'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+        'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+        'civilian.birthday': req.query.dateOfBirth
+      }, function (err, dbCivilians) {
+        Ticket.find({
+          'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+          'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+        }, function (err, dbTickets) {
+          ArrestReport.find({
+            'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+            'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+          }, function (err, dbArrestReports) {
+            Warrant.find({
+              'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+              'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+              'warrant.status': true
+            }, function (err, dbWarrants) {
+              Community.find({
+                '$or': [{
+                  'community.ownerID': req.user._id
+                }, {
+                  '_id': req.user.user.activeCommunity
+                }]
+              }, function (err, dbCommunities) {
+                res.render('police-dashboard', {
+                  user: req.user,
+                  vehicles: null,
+                  civilians: dbCivilians,
+                  tickets: dbTickets,
+                  arrestReports: dbArrestReports,
+                  warrants: dbWarrants,
+                  communities: dbCommunities
+                });
+              })
+            });
+          });
         });
-      })
       });
-    });
-  });
-})
+    } else {
+      Civilian.find({
+        'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+        'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+        'civilian.activeCommunityID': req.query.activeCommunityID
+      }, function (err, dbCivilians) {
+        Ticket.find({
+          'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+          'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+        }, function (err, dbTickets) {
+          ArrestReport.find({
+            'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+            'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+          }, function (err, dbArrestReports) {
+            Warrant.find({
+              'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+              'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+              'warrant.status': true
+            }, function (err, dbWarrants) {
+              Community.find({
+                '$or': [{
+                  'community.ownerID': req.user._id
+                }, {
+                  '_id': req.user.user.activeCommunity
+                }]
+              }, function (err, dbCommunities) {
+                res.render('police-dashboard', {
+                  user: req.user,
+                  vehicles: null,
+                  civilians: dbCivilians,
+                  tickets: dbTickets,
+                  arrestReports: dbArrestReports,
+                  warrants: dbWarrants,
+                  communities: dbCommunities
+                });
+              })
+            });
+          });
+        });
+      });
+    }
+  })
 
   app.get('/plate-search', auth, function (req, res) {
-    Vehicle.find({
-      'vehicle.plate': req.query.plateNumber.trim().toUpperCase()
-    }, function (err, dbVehicles) {
-      res.render('police-dashboard', {
-        user: req.user,
-        civilians: null,
-        vehicles: dbVehicles,
-        tickets: null,
-        arrestReports: null,
-        warrants: null
-      });
-    })
+    if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+      Vehicle.find({
+        'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
+      }, function (err, dbVehicles) {
+        Community.find({
+          '$or': [{
+            'community.ownerID': req.user._id
+          }, {
+            '_id': req.user.user.activeCommunity
+          }]
+        }, function (err, dbCommunities) {
+          res.render('police-dashboard', {
+            user: req.user,
+            civilians: null,
+            vehicles: dbVehicles,
+            tickets: null,
+            arrestReports: null,
+            warrants: null,
+            communities: dbCommunities
+          });
+        });
+      })
+    } else {
+      Vehicle.find({
+        'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
+        'vehicle.activeCommunityID': req.query.activeCommunityID
+      }, function (err, dbVehicles) {
+        Community.find({
+          '$or': [{
+            'community.ownerID': req.user._id
+          }, {
+            '_id': req.user.user.activeCommunity
+          }]
+        }, function (err, dbCommunities) {
+          res.render('police-dashboard', {
+            user: req.user,
+            civilians: null,
+            vehicles: dbVehicles,
+            tickets: null,
+            arrestReports: null,
+            warrants: null,
+            communities: dbCommunities
+          });
+        });
+      })
+    }
   });
 
   // Be sure to place all GET requests above this catchall
@@ -418,7 +585,7 @@ module.exports = function (app, passport, server) {
 
       var myCiv = new Civilian()
       myCiv.updateCiv(req, res)
-      myCiv.save(function (err, fluffy) {
+      myCiv.save(function (err) {
         if (err) return console.error(err);
       });
 
@@ -432,7 +599,7 @@ module.exports = function (app, passport, server) {
 
       var myEms = new Ems()
       myEms.updateEms(req, res)
-      myEms.save(function (err, fluffy) {
+      myEms.save(function (err) {
         if (err) return console.error(err);
       });
     })
@@ -445,7 +612,7 @@ module.exports = function (app, passport, server) {
 
       var myVeh = new Vehicle()
       myVeh.updateVeh(req, res)
-      myVeh.save(function (err, fluffy) {
+      myVeh.save(function (err) {
         if (err) return console.error(err);
       });
     })
@@ -458,7 +625,7 @@ module.exports = function (app, passport, server) {
 
       var myVeh = new EmsVehicle()
       myVeh.updateVeh(req, res)
-      myVeh.save(function (err, fluffy) {
+      myVeh.save(function (err) {
         if (err) return console.error(err);
       });
     })
@@ -489,23 +656,162 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/clear-warrant', function (req, res) {
-    Warrant.findByIdAndUpdate(
-      {
+    Warrant.findByIdAndUpdate({
       '_id': ObjectId(req.body.warrantID)
-      },
-      {
+    }, {
+      $set: {
+        'warrant.updatedDate': req.body.updatedDate,
+        'warrant.updatedTime': req.body.updatedTime,
+        'warrant.clearingOfficer': req.body.clearingOfficer,
+        'warrant.clearingOfficerEmail': req.body.clearingOfficerEmail,
+        'warrant.status': false
+      }
+    }, function (err) {
+      if (err) return console.error(err);
+      res.redirect('/police-dashboard');
+    })
+  });
+
+  app.post('/joinCommunity', function (req, res) {
+    var communityCode = req.body.communityCode.trim()
+    if (communityCode.length != 7) {
+      console.error("improper length for community code, route: /joinCommunity")
+      res.redirect('/civ-dashboard', {
+        message: req.flash('signuperror')
+      });
+      return
+    }
+    Community.findOne({
+      'community.code': req.body.communityCode.toUpperCase()
+    }, function (err, community) {
+      if (community == null) {
+        console.warn("no matching community found, route: /joinCommunity")
+        res.redirect('/civ-dashboard');
+        return
+      }
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
         $set: {
-          'warrant.updatedDate': req.body.updatedDate, 
-          'warrant.updatedTime': req.body.updatedTime,
-          'warrant.clearingOfficer': req.body.clearingOfficer,
-          'warrant.clearingOfficerEmail': req.body.clearingOfficerEmail,
-          'warrant.status': false
+          'user.activeCommunity': community._id
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        res.redirect('/civ-dashboard');
+      })
+    })
+  })
+
+  app.post('/joinPoliceCommunity', function (req, res) {
+    var communityCode = req.body.communityCode.trim()
+    if (communityCode.length != 7) {
+      console.error("improper length for community code, route: /joinPoliceCommunity")
+      res.redirect('/police-dashboard', {
+        message: req.flash('signuperror')
+      });
+      return
+    }
+    Community.findOne({
+      'community.code': req.body.communityCode.toUpperCase()
+    }, function (err, community) {
+      if (community == null) {
+        console.warn("no matching community found, route: /joinPoliceCommunity")
+        res.redirect('/police-dashboard');
+        return
+      }
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.activeCommunity': community._id
         }
       }, function (err) {
         if (err) return console.error(err);
         res.redirect('/police-dashboard');
       })
-  });
+    })
+  })
+
+  app.post('/joinEmsCommunity', function (req, res) {
+    var communityCode = req.body.communityCode.trim()
+    if (communityCode.length != 7) {
+      console.error("improper length for community code, route: /joinEmsCommunity")
+      res.redirect('/ems-dashboard', {
+        message: req.flash('signuperror')
+      });
+      return
+    }
+    Community.findOne({
+      'community.code': req.body.communityCode.toUpperCase()
+    }, function (err, community) {
+      if (community == null) {
+        console.warn("no matching community found, route: /joinEmsCommunity")
+        res.redirect('/ems-dashboard');
+        return
+      }
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.activeCommunity': community._id
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        res.redirect('/ems-dashboard');
+      })
+    })
+  })
+
+  app.post('/createCommunity', function (req, res) {
+    var myCommunity = new Community()
+    myCommunity.createCommunity(req, res)
+    myCommunity.save(function (err, result) {
+      if (err) return console.error(err);
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.activeCommunity': result._id
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+      })
+    });
+  })
+
+  app.post('/createPoliceCommunity', function (req, res) {
+    var myCommunity = new Community()
+    myCommunity.createPoliceCommunity(req, res)
+    myCommunity.save(function (err, result) {
+      if (err) return console.error(err);
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.activeCommunity': result._id
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+      })
+    });
+  })
+
+  app.post('/createEmsCommunity', function (req, res) {
+    var myCommunity = new Community()
+    myCommunity.createEmsCommunity(req, res)
+    myCommunity.save(function (err, result) {
+      if (err) return console.error(err);
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.activeCommunity': result._id
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+      })
+    });
+  })
 
   app.post('/updateOrDeleteCiv', function (req, res) {
     if (req.body.action === "update") {
@@ -513,7 +819,7 @@ module.exports = function (app, passport, server) {
       var occupation
       var firearmLicense
       if (exists(req.body.address)) {
-          address = req.body.address.trim()
+        address = req.body.address.trim()
       }
       if (exists(req.body.occupation)) {
         occupation = req.body.occupation.trim()
@@ -629,7 +935,7 @@ function auth(req, res, next) {
 }
 
 function authCivilian(req, res, next) {
-  
+
   if (req.isAuthenticated()) {
     return next();
   }
@@ -639,7 +945,7 @@ function authCivilian(req, res, next) {
 }
 
 function authPolice(req, res, next) {
-  
+
   if (req.isAuthenticated()) {
     return next();
   }
@@ -649,7 +955,7 @@ function authPolice(req, res, next) {
 }
 
 function authEms(req, res, next) {
-  
+
   if (req.isAuthenticated()) {
     return next();
   }

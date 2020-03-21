@@ -9,7 +9,8 @@ var userSchema = mongoose.Schema({
   name: String,
   address: String,
   resetPasswordToken: String,
-  resetPasswordExpires: Date
+  resetPasswordExpires: Date,
+  activeCommunity: String
  }
 });
 
