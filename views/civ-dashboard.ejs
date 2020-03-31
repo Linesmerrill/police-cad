@@ -764,16 +764,19 @@
     $('#lastName').popover('hide')
   }
 
-  function dismissCommunitiesInfoModal() {
-    $('#communitiesInfoModal').modal('hide');
-  }
+  // Communities info Modal deprecated 03/30
+  // function dismissCommunitiesInfoModal() {
+  //   $('#communitiesInfoModal').modal('hide');
+  // }
 
   // prevents spaces from user input
   $(document).ready(function(){
-    if ($.cookie('pop') == null) {
-        $('#communitiesInfoModal').modal('show');
-         $.cookie('pop', '1');
-     }
+
+    // Communities info Modal deprecated 03/30
+    // if ($.cookie('pop') == null) {
+    //     $('#communitiesInfoModal').modal('show');
+    //      $.cookie('pop', '1');
+    //  }
 
 $("#civ-first-name").keydown(function(event) {
     if (event.keyCode == 32) {
