@@ -3,6 +3,7 @@ var express = require('express');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
 var mongoose = require('mongoose');
 var passport = require('passport');
 var flash = require('connect-flash');
@@ -42,9 +43,14 @@ app.set('view engine', 'ejs');
 
 // Setup session storage.
 app.use(session({
+	store: new MongoStore({mongooseConnection: mongoose.connection}),
 	secret: 'knoldus',
 	resave: false,
-	saveUninitialized: true
+	saveUninitialized: true,
+	cookie: {
+		path: '/',
+		maxAge: 1000 * 60 * 60 * 24 // 1 day
+	}
 }));
 
 // Initialize passport.
