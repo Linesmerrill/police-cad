@@ -49,7 +49,7 @@
             <button data-toggle="modal" href="#communitiesModal" class="btn btn-primary btn-sm margin-top-1-5 margin-left-1">✨ Communities ✨</button>
           </li>
           <li>
-            <a>Hi, <%= user.user.username %></a>
+            <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()">Hi, <%= user.user.username %></a>
           </li>
           <li>
               <a href="/logout">Logout</a>
@@ -703,6 +703,95 @@
     </div>
   </div>
 
+  <div id="accountModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <!-- Modal Name -->
+          <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4>Manage Account</h4>
+          <hr style="width: 88%;max-width: 100rem;">
+
+          <form class="form-horizontal" action="/createCommunity" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <h5>Profile</h5>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountEmail">Email:</label>
+              <div class="col-md-6">
+              <input id="accountEmail" name="accountEmail" type="email" class="form-control input-md" readonly="readonly">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountUsername">Username:<br><small>Max 20 characters</small></label>
+              <div class="col-md-6">
+              <input id="accountUsername" name="accountUsername" type="text" class="form-control input-md" maxlength="20">
+              <div id="updateUsernameBtns" class="margin-top-1" style="display: none">
+                <button id="updateUsername" value="<%= user._id %>" name="updateUsername" class="btn btn-info">Update Username</button> <button type="button" class="btn btn-primary" onclick="cancelUsername()">Cancel</button>
+              </div>
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5>Password</h5>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="password">Current Password:</label>
+              <div class="col-md-6">
+              <input id="password" name="password" type="password" class="form-control input-md" placeholder="enter your current password">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="newPassword">New Password:</label>
+              <div class="col-md-6">
+              <input id="newPassword" name="newPassword" type="password" class="form-control input-md" placeholder="enter a new password">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="confirmNewPassword">Confirm New Password:</label>
+              <div class="col-md-6">
+              <input id="confirmNewPassword" name="confirmNewPassword" type="password" class="form-control input-md" placeholder="enter the password again">
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="updatePassword"></label>
+              <div class="col-md-6 text-align-center">
+                <button id="updatePassword" value="<%= user._id %>" name="updatePassword" class="btn btn-primary">Update Password</button>
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+
+          <h5 class="color-red">Close Account</h5>
+
+          <h6><strong>Warning:</strong> Deleting your account is irreversible.</h6>
+          <!-- Button -->
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="deleteAccount"></label>
+            <div class="col-md-6 text-align-center">
+              <button id="deleteAccount" value="<%= user._id %>" name="deleteAccount" class="btn btn-danger">Delete account</button>
+            </div>
+          </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!--scripts loaded here -->
   <script src="./js/jquery.min.js"></script>
   <script src="./js/bootstrap.min.js"></script>
@@ -764,52 +853,63 @@
     $('#lastName').popover('hide')
   }
 
-  // Communities info Modal deprecated 03/30
-  // function dismissCommunitiesInfoModal() {
-  //   $('#communitiesInfoModal').modal('hide');
-  // }
+  function fillAccountDetails() {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountEmail').val(myUser.user.email)
+    $('#accountUsername').val(myUser.user.username)
+  }
 
-  // prevents spaces from user input
+  function cancelUsername() {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountUsername').val(myUser.user.username)
+    $('#updateUsernameBtns').hide();
+  }
+
   $(document).ready(function(){
+    
+    // displays the Update Username and Cancel buttons for updating the username
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountUsername').on('keyup', function(e) {
+      if(e.target.value != myUser.user.username && e.target.value != '') {
+        $('#updateUsernameBtns').show();
+      } else {
+        $('#updateUsernameBtns').hide();
+      }
+    })
 
-    // Communities info Modal deprecated 03/30
-    // if ($.cookie('pop') == null) {
-    //     $('#communitiesInfoModal').modal('show');
-    //      $.cookie('pop', '1');
-    //  }
-
-$("#civ-first-name").keydown(function(event) {
-    if (event.keyCode == 32) {
-        event.preventDefault();
-        $('#civ-first-name').popover('show')
-    } else {
-      $('#civ-first-name').popover('hide')
-    }
-});
-$("#firstName").keydown(function(event) {
-    if (event.keyCode == 32) {
-        event.preventDefault();
-        $('#firstName').popover('show')
-    } else {
-      $('#firstName').popover('hide')
-    }
-});
-$("#civ-last-name").keydown(function(event) {
-    if (event.keyCode == 32) {
-        event.preventDefault();
-        $('#civ-last-name').popover('show')
-    } else {
-      $('#civ-last-name').popover('hide')
-    }
-});
-$("#lastName").keydown(function(event) {
-    if (event.keyCode == 32) {
-        event.preventDefault();
-        $('#lastName').popover('show')
-    } else {
-      $('#lastName').popover('hide')
-    }
-});
-});
+    // prevents spaces from user input
+    $("#civ-first-name").keydown(function(event) {
+        if (event.keyCode == 32) {
+            event.preventDefault();
+            $('#civ-first-name').popover('show')
+        } else {
+          $('#civ-first-name').popover('hide')
+        }
+    });
+    $("#firstName").keydown(function(event) {
+        if (event.keyCode == 32) {
+            event.preventDefault();
+            $('#firstName').popover('show')
+        } else {
+          $('#firstName').popover('hide')
+        }
+    });
+    $("#civ-last-name").keydown(function(event) {
+        if (event.keyCode == 32) {
+            event.preventDefault();
+            $('#civ-last-name').popover('show')
+        } else {
+          $('#civ-last-name').popover('hide')
+        }
+    });
+    $("#lastName").keydown(function(event) {
+        if (event.keyCode == 32) {
+            event.preventDefault();
+            $('#lastName').popover('show')
+        } else {
+          $('#lastName').popover('hide')
+        }
+    });
+  });
 
 </script>

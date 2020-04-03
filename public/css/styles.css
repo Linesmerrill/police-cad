@@ -760,7 +760,7 @@ a.link--inherit {
 }
 
 .color-red {
-    color: red;
+    color: #DE0A0A;
 }
 
 .color-green {
@@ -848,6 +848,11 @@ a.link--inherit {
 }
 
 #warrant-civ-dob {
+    color: #eee;
+    background-color: #36333d;
+}
+
+#accountEmail {
     color: #eee;
     background-color: #36333d;
 }
