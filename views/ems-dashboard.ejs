@@ -195,6 +195,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="submit-new-ems"></label>
               <div class="col-md-4">
+                <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                 <button id="submit-new-ems" name="submitNewEms" value=<%= user.user.email %> class="btn btn-primary" onclick="createNewEms()">Create</button>
               </div>
@@ -262,6 +263,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="create-vehicle"></label>
               <div class="col-md-4">
+                <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                 <button id="create-vehicle" name="submitNewVeh" value=<%= user.user.email %> class="btn btn-primary">Create</button>
               </div>
@@ -517,7 +519,7 @@
             <fieldset>
 
             <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Create a New Community</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
@@ -533,7 +535,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="createCommunity"></label>
               <div class="col-md-4 text-align-center">
-                <button id="createCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary" onclick="createNewCiv()">Join</button>
+                <button id="createCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary">Create</button>
               </div>
             </div>
             </fieldset>

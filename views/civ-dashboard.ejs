@@ -218,6 +218,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="submit-new-civ"></label>
               <div class="col-md-4">
+                <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                 <button id="submit-new-civ" name="submitNewCiv" value="<%=user.user.email%>" class="btn btn-primary" onclick="createNewCiv()">Create</button>
               </div>
@@ -317,7 +318,8 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="create-vehicle"></label>
               <div class="col-md-4">
-                <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="activeCommunityID" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
                 <button id="create-vehicle" name="submitNewVeh" value=<%= user.user.email %> class="btn btn-primary">Create</button>
               </div>
             </div>
@@ -677,7 +679,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="createCommunity"></label>
               <div class="col-md-4 text-align-center">
-                <button id="createCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary" onclick="createNewCiv()">Join</button>
+                <button id="createCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary" onclick="createNewCiv()">Create</button>
               </div>
             </div>
             </fieldset>
@@ -712,7 +714,7 @@
           <h4>Manage Account</h4>
           <hr style="width: 88%;max-width: 100rem;">
 
-          <form class="form-horizontal" action="/createCommunity" method="post">
+          <form class="form-horizontal" action="/manageAccount" method="post">
             <fieldset>
 
             <!-- Form Name -->
@@ -726,13 +728,14 @@
               </div>
             </div>
 
-            <!-- Text input-->
+            <!-- Update Username input-->
             <div class="form-group">
               <label class="col-md-4 control-label" for="accountUsername">Username:<br><small>Max 20 characters</small></label>
               <div class="col-md-6">
-              <input id="accountUsername" name="accountUsername" type="text" class="form-control input-md" maxlength="20">
+              <input id="accountUsername" name="accountUsername" type="text" class="form-control input-md" maxlength="20" autocomplete="off">
               <div id="updateUsernameBtns" class="margin-top-1" style="display: none">
-                <button id="updateUsername" value="<%= user._id %>" name="updateUsername" class="btn btn-info">Update Username</button> <button type="button" class="btn btn-primary" onclick="cancelUsername()">Cancel</button>
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <button id="updateUsername" value="updateUsername" name="action" class="btn btn-info">Update Username</button> <button type="button" class="btn btn-primary" onclick="cancelUsername()">Cancel</button>
               </div>
               </div>
             </div>
@@ -741,35 +744,11 @@
 
             <h5>Password</h5>
 
-            <!-- Text input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="password">Current Password:</label>
-              <div class="col-md-6">
-              <input id="password" name="password" type="password" class="form-control input-md" placeholder="enter your current password">
-              </div>
-            </div>
-
-            <!-- Text input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="newPassword">New Password:</label>
-              <div class="col-md-6">
-              <input id="newPassword" name="newPassword" type="password" class="form-control input-md" placeholder="enter a new password">
-              </div>
-            </div>
-
-            <!-- Text input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="confirmNewPassword">Confirm New Password:</label>
-              <div class="col-md-6">
-              <input id="confirmNewPassword" name="confirmNewPassword" type="password" class="form-control input-md" placeholder="enter the password again">
-              </div>
-            </div>
-
             <!-- Button -->
             <div class="form-group">
               <label class="col-md-4 control-label" for="updatePassword"></label>
               <div class="col-md-6 text-align-center">
-                <button id="updatePassword" value="<%= user._id %>" name="updatePassword" class="btn btn-primary">Update Password</button>
+                <button id="updatePassword" type="button" class="btn btn-primary" onclick="document.location.href='forgot-password'">Update Password</button>
               </div>
             </div>
 
@@ -782,9 +761,40 @@
           <div class="form-group">
             <label class="col-md-4 control-label" for="deleteAccount"></label>
             <div class="col-md-6 text-align-center">
-              <button id="deleteAccount" value="<%= user._id %>" name="deleteAccount" class="btn btn-danger">Delete account</button>
+              <button data-toggle="modal" type="button" href="#deleteAccountConfirmModal" class="btn btn-danger">Delete account</button>
             </div>
           </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteAccountConfirmModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/deleteAccount" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Delete Account</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <p>Warning: Once your account is deleted all created communities, civilians, vehicles, and citations 
+              from this account will be deleted. This is non-reversible.
+            </p>
+            <p>Are you sure you want to delete your account?</p>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="deleteAccount"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="deleteAccount" value="<%= user._id %>" name="userID"  class="btn btn-danger">Delete account</button>
+              </div>
+            </div>
             </fieldset>
           </form>
         </div>

@@ -10,10 +10,14 @@ var arrestReportSchema = mongoose.Schema({
     accusedFirstName: String,
     accusedLastName: String,
     accusedID: String,
-    charges: [{type: String}],
+    charges: [{
+      type: String
+    }],
     detailOfEvent: String,
     actionsTaken: String,
-    summary: String
+    summary: String,
+    createdAt: Date,
+    updatedAt: Date
   }
 });
 
@@ -21,17 +25,16 @@ arrestReportSchema.methods.updateArrestReport = function (req, res) {
   // debug log showing the request body for the ticket request
   // console.debug("arrest report req body: ", req.body)
 
-  if (exists(req.body.accusedFirstName) && exists(req.body.accusedLastName)){
+  if (exists(req.body.accusedFirstName) && exists(req.body.accusedLastName)) {
     if (req.body.accusedFirstName.trim().length > 1 && req.body.accusedLastName.length > 1) {
       this.arrestReport.accusedFirstName = req.body.accusedFirstName.trim().charAt(0).toUpperCase() + req.body.accusedFirstName.trim().slice(1);
       this.arrestReport.accusedLastName = req.body.accusedLastName.trim().charAt(0).toUpperCase() + req.body.accusedLastName.trim().slice(1);
-    } else { 
+    } else {
       console.error("cannot process empty values for accusedFirstName and accusedLastName");
       res.redirect('/police-dashboard');
       return
     }
-  }
-  else { 
+  } else {
     console.error("cannot process null values for accusedFirstName and accusedLastName");
     res.redirect('/police-dashboard');
     return
@@ -47,19 +50,20 @@ arrestReportSchema.methods.updateArrestReport = function (req, res) {
     this.arrestReport.reportingOfficerEmail = req.body.reportingOfficerEmail.toLowerCase();
   }
   this.arrestReport.accusedID = req.body.accusedID;
-  if (exists(req.body.charges)){
+  if (exists(req.body.charges)) {
     this.arrestReport.charges = req.body.charges.trim();
   }
-  if (exists(req.body.detailOfEvent)){
+  if (exists(req.body.detailOfEvent)) {
     this.arrestReport.detailOfEvent = req.body.detailOfEvent.trim();
   }
-  if (exists(req.body.actionsTaken)){
+  if (exists(req.body.actionsTaken)) {
     this.arrestReport.actionsTaken = req.body.actionsTaken.trim();
   }
-  if (exists(req.body.summary)){
+  if (exists(req.body.summary)) {
     this.arrestReport.summary = req.body.summary.trim();
   }
-  
+  this.arrestReport.createdAt = new Date();
+
   res.redirect('/police-dashboard');
 };
 

@@ -61,10 +61,11 @@ module.exports = function (passport) {
 							newUser.user.username = req.body.username;
 							newUser.user.email = email.toLowerCase();
 							newUser.user.password = newUser.generateHash(password);
-							newUser.user.name = ''
-							newUser.user.address = ''
-							newUser.user.resetPasswordToken = ''
-							newUser.user.resetPasswordExpires = ''
+							newUser.user.name = '';
+							newUser.user.address = '';
+							newUser.user.resetPasswordToken = '';
+							newUser.user.resetPasswordExpires = '';
+							newUser.user.createdAt = new Date();
 							newUser.save(function (err) {
 								if (err)
 									throw err;
