@@ -840,6 +840,7 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/manageAccount', function (req, res) {
+    var page = req.body.page;
     if (req.body.action === 'updateUsername') {
       var username
       if (exists(req.body.accountUsername)) {
@@ -854,15 +855,18 @@ module.exports = function (app, passport, server) {
           'user.updatedAt': new Date()
         }
       }, function (err) {
-        if (err) return console.error(err);
-        res.redirect('/civ-dashboard');
+        if (err) {
+          console.error(err);
+        }
+        res.redirect(page);
       })
     } else {
-      res.redirect('/civ-dashboard');
+      res.redirect(page);
     }
   })
 
   app.post('/deleteAccount', function (req, res) {
+    var page = req.body.page;
     // grab all civilians and delete arrest, tickets and warrants for each
     Civilian.find({
       'civilian.userID': req.body.userID
@@ -877,7 +881,10 @@ module.exports = function (app, passport, server) {
             Warrant.deleteMany({
               'warrant.accusedID': element._id
             }, function (err) {
-              if (err) return console.error(err);
+              if (err) {
+                console.error(err);
+                res.redirect(page);
+              }
             })
           })
         })
@@ -906,7 +913,10 @@ module.exports = function (app, passport, server) {
                 User.findByIdAndDelete({
                   '_id': ObjectId(req.body.userID),
                 }, function (err) {
-                  if (err) return console.error(err);
+                  if (err) {
+                    console.error(err);
+                    res.redirect(page);
+                  }
                   res.redirect('/');
                 })
               })

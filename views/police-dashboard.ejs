@@ -54,7 +54,7 @@
             <button data-toggle="modal" href="#communitiesModal" class="btn btn-primary btn-sm margin-top-1-5 margin-left-1">✨ Communities ✨</button>
           </li>
           <li>
-            <a> Hi, <%= user.user.username %></a>
+            <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()">Hi, <%= user.user.username %></a>
           </li>
           <li>
             <a href="/logout">Logout</a>
@@ -1198,6 +1198,105 @@
     </div>
   </div>
 
+  <div id="accountModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <!-- Modal Name -->
+          <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4>Manage Account</h4>
+          <hr style="width: 88%;max-width: 100rem;">
+
+          <form class="form-horizontal" action="/manageAccount" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <h5>Profile</h5>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountEmail">Email:</label>
+              <div class="col-md-6">
+              <input id="accountEmail" name="accountEmail" type="email" class="form-control input-md" readonly="readonly">
+              </div>
+            </div>
+
+            <!-- Update Username input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountUsername">Username:<br><small>Max 20 characters</small></label>
+              <div class="col-md-6">
+              <input id="accountUsername" name="accountUsername" type="text" class="form-control input-md" maxlength="20" autocomplete="off">
+              <div id="updateUsernameBtns" class="margin-top-1" style="display: none">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" name="page" value="/police-dashboard">
+                <button id="updateUsername" value="updateUsername" name="action" class="btn btn-info">Update Username</button> <button type="button" class="btn btn-primary" onclick="cancelUsername()">Cancel</button>
+              </div>
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5>Password</h5>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="updatePassword"></label>
+              <div class="col-md-6 text-align-center">
+                <button id="updatePassword" type="button" class="btn btn-primary" onclick="document.location.href='forgot-password'">Update Password</button>
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+
+          <h5 class="color-red">Close Account</h5>
+
+          <h6><strong>Warning:</strong> Deleting your account is irreversible.</h6>
+          <!-- Button -->
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="deleteAccount"></label>
+            <div class="col-md-6 text-align-center">
+              <button data-toggle="modal" type="button" href="#deleteAccountConfirmModal" class="btn btn-danger">Delete account</button>
+            </div>
+          </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteAccountConfirmModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/deleteAccount" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Delete Account</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <p>Warning: Once your account is deleted all created communities, civilians, vehicles, and citations 
+              from this account will be deleted. This is non-reversible.
+            </p>
+            <p>Are you sure you want to delete your account?</p>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="deleteAccount"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" name="page" value="/police-dashboard">
+                <button id="deleteAccount" value="<%= user._id %>" name="userID"  class="btn btn-danger">Delete account</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <% include 10-codes %> 
   <% include notepad %>
 </body>
@@ -1220,11 +1319,15 @@
 <script type="text/javascript">
 $(document).ready(function() {
 
-  // Communities info Modal deprecated 03/30
-  // if ($.cookie('pop') == null) {
-  //       $('#communitiesInfoModal').modal('show');
-  //        $.cookie('pop', '1');
-  //    }
+  // displays the Update Username and Cancel buttons for updating the username
+  var myUser = <%- JSON.stringify(user) %>;
+    $('#accountUsername').on('keyup', function(e) {
+      if(e.target.value != myUser.user.username && e.target.value != '') {
+        $('#updateUsernameBtns').show();
+      } else {
+        $('#updateUsernameBtns').hide();
+      }
+    })
 
   let allVehicles = <%-JSON.stringify(vehicles)%>;
   let allCivilians = <%-JSON.stringify(civilians)%>;
@@ -1474,10 +1577,17 @@ function searchPlate() {
     }))
   }
 
-  // Communities info Modal deprecated 03/30
-  // function dismissCommunitiesInfoModal() {
-  //   $('#communitiesInfoModal').modal('hide');
-  // }
+  function fillAccountDetails() {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountEmail').val(myUser.user.email)
+    $('#accountUsername').val(myUser.user.username)
+  }
+
+  function cancelUsername() {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountUsername').val(myUser.user.username)
+    $('#updateUsernameBtns').hide();
+  }
 
   function clearTextarea() {
     $('#notepad-textarea').val('')

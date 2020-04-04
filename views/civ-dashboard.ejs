@@ -735,6 +735,7 @@
               <input id="accountUsername" name="accountUsername" type="text" class="form-control input-md" maxlength="20" autocomplete="off">
               <div id="updateUsernameBtns" class="margin-top-1" style="display: none">
                 <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" name="page" value="/civ-dashboard">
                 <button id="updateUsername" value="updateUsername" name="action" class="btn btn-info">Update Username</button> <button type="button" class="btn btn-primary" onclick="cancelUsername()">Cancel</button>
               </div>
               </div>
@@ -792,6 +793,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="deleteAccount"></label>
               <div class="col-md-4 text-align-center">
+                <input type="hidden" name="page" value="/civ-dashboard">
                 <button id="deleteAccount" value="<%= user._id %>" name="userID"  class="btn btn-danger">Delete account</button>
               </div>
             </div>
