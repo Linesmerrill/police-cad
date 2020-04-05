@@ -137,7 +137,8 @@ module.exports = function (app, passport, server) {
               user: req.user,
               personas: dbPersonas,
               vehicles: dbVehicles,
-              communities: dbCommunities
+              communities: dbCommunities,
+              message: null
             });
           });
         });
@@ -162,7 +163,8 @@ module.exports = function (app, passport, server) {
               user: req.user,
               personas: dbPersonas,
               vehicles: dbVehicles,
-              communities: dbCommunities
+              communities: dbCommunities,
+              message: null
             });
           });
         });
@@ -593,42 +595,27 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-ems', function (req, res) {
-    User.findOne({
-      'user.email': req.body.submitNewEms.toLowerCase()
-    }, function (err, user) {
-
-      var myEms = new Ems()
-      myEms.updateEms(req, res)
-      myEms.save(function (err) {
-        if (err) return console.error(err);
-      });
-    })
+    var myEms = new Ems()
+    myEms.create(req, res)
+    myEms.save(function (err) {
+      if (err) return console.error(err);
+    });
   });
 
   app.post('/create-vehicle', function (req, res) {
-    User.findOne({
-      'user.email': req.body.submitNewVeh.toLowerCase()
-    }, function (err, user) {
-
-      var myVeh = new Vehicle()
-      myVeh.updateVeh(req, res)
-      myVeh.save(function (err) {
-        if (err) return console.error(err);
-      });
-    })
+    var myVeh = new Vehicle()
+    myVeh.createVeh(req, res)
+    myVeh.save(function (err) {
+      if (err) return console.error(err);
+    });
   });
 
   app.post('/create-ems-vehicle', function (req, res) {
-    User.findOne({
-      'user.email': req.body.submitNewVeh.toLowerCase()
-    }, function (err, user) {
-
-      var myVeh = new EmsVehicle()
-      myVeh.updateVeh(req, res)
-      myVeh.save(function (err) {
-        if (err) return console.error(err);
-      });
-    })
+    var myVeh = new EmsVehicle()
+    myVeh.createVeh(req, res)
+    myVeh.save(function (err) {
+      if (err) return console.error(err);
+    });
   });
 
   app.post('/create-ticket', function (req, res) {
@@ -852,6 +839,94 @@ module.exports = function (app, passport, server) {
     });
   })
 
+  app.post('/manageAccount', function (req, res) {
+    var page = req.body.page;
+    if (req.body.action === 'updateUsername') {
+      var username
+      if (exists(req.body.accountUsername)) {
+        username = req.body.accountUsername.trim()
+      }
+
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.username': username,
+          'user.updatedAt': new Date()
+        }
+      }, function (err) {
+        if (err) {
+          console.error(err);
+        }
+        res.redirect(page);
+      })
+    } else {
+      res.redirect(page);
+    }
+  })
+
+  app.post('/deleteAccount', function (req, res) {
+    var page = req.body.page;
+    // grab all civilians and delete arrest, tickets and warrants for each
+    Civilian.find({
+      'civilian.userID': req.body.userID
+    }, function (err, cursor) {
+      cursor.forEach(element => {
+        ArrestReport.deleteMany({
+          'arrestReport.accusedID': element._id
+        }, function (err) {
+          Ticket.deleteMany({
+            'ticket.civID': element._id
+          }, function (err) {
+            Warrant.deleteMany({
+              'warrant.accusedID': element._id
+            }, function (err) {
+              if (err) {
+                console.error(err);
+                res.redirect(page);
+              }
+            })
+          })
+        })
+      });
+      // delete civilians
+      Civilian.deleteMany({
+        'civilian.userID': req.body.userID
+      }, function (err) {
+        // delete communities
+        Community.deleteMany({
+          'community.ownerID': req.body.userID
+        }, function (err) {
+          // delete ems
+          Ems.deleteMany({
+            'ems.userID': req.body.userID
+          }, function (err) {
+            // delete emsVehicles
+            EmsVehicle.deleteMany({
+              'emsVehicle.userID': req.body.userID
+            }, function (err) {
+              // delete vehicles
+              Vehicle.deleteMany({
+                'vehicle.userID': req.body.userID
+              }, function (err) {
+                // delete user
+                User.findByIdAndDelete({
+                  '_id': ObjectId(req.body.userID),
+                }, function (err) {
+                  if (err) {
+                    console.error(err);
+                    res.redirect(page);
+                  }
+                  res.redirect('/');
+                })
+              })
+            })
+          })
+        })
+      })
+    })
+  })
+
   app.post('/updateOrDeleteCiv', function (req, res) {
     if (req.body.action === "update") {
       var address
@@ -878,7 +953,8 @@ module.exports = function (app, passport, server) {
           'civilian.licenseStatus': req.body.licenseStatus,
           'civilian.address': address,
           'civilian.occupation': occupation,
-          'civilian.firearmLicense': firearmLicense
+          'civilian.firearmLicense': firearmLicense,
+          'civilian.updatedAt': new Date()
         }
       }, function (err) {
         if (err) return console.error(err);
@@ -932,7 +1008,8 @@ module.exports = function (app, passport, server) {
           'vehicle.validRegistration': req.body.validRegView,
           'vehicle.validInsurance': req.body.validInsView,
           'vehicle.registeredOwner': req.body.roVeh.trim(),
-          'vehicle.isStolen': req.body.stolenView
+          'vehicle.isStolen': req.body.stolenView,
+          'vehicle.updatedAt': new Date()
         }
       }, function (err) {
         if (err) return console.error(err);
