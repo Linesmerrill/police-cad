@@ -59,10 +59,17 @@
       </div>
     </div>
   </nav>
+  
   <header id="second" style='background-image: url("/images/civ-bkground.jpg");'>
+
     <div class="header-content">
+
       <div class="inner">
         <h4>San Andreas - Civilian Operations</h4>
+        
+        <!-- imports the community specific alerts -->
+        <% include community-alerts %>
+        
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-lg margin-top-2">Add New Civilian</button>
           <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-lg margin-top-2">Add New Vehicle</button>

@@ -1,0 +1,36 @@
+<% if (context == "noCommunityFound") {%>
+  <div class="alert alert-danger alert-dismissible show" role="alert">
+    <strong>Alert!</strong> No matching communities found with that ID
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+<% } else if (context == "improperCommunityCodeLength") {%>
+  <div class="alert alert-danger alert-dismissible show" role="alert">
+    <strong>Alert!</strong> You must enter 7 digits and/or numbers
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+<% } else if (context == "createCommunitySuccess") {%>
+  <div class="alert alert-success alert-dismissible show" role="alert">
+    <strong>Success!</strong> Community created successfully, adding you to that community now
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+<% } else if (context == "leaveCommunitySuccess") {%>
+  <div class="alert alert-success alert-dismissible show" role="alert">
+    <strong>Success!</strong> Left community successfully
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+<% } else if (context == "joinCommunitySuccess") {%>
+  <div class="alert alert-success alert-dismissible show" role="alert">
+    <strong>Success!</strong> Joined community successfully
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+<% } %>
