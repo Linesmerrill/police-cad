@@ -80,6 +80,13 @@ ticketSchema.methods.updateTicket = function (request, response) {
     this.ticket.civID = request.body.civID.trim();
   }
   this.ticket.createdAt = new Date();
+
+  // for alert message to show up on dashboard after a redirect
+  if (request.body.isWarning) {
+    request.app.locals.specialContext = "createWarningSuccess"  
+  } else {
+    request.app.locals.specialContext = "createTicketSuccess"
+  }
   response.redirect('/police-dashboard');
 };
 

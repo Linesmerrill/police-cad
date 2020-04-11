@@ -119,6 +119,8 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/civ-dashboard', auth, function (req, res) {
+    var context = req.app.locals.specialContext;
+    req.app.locals.specialContext = null;
     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
       Civilian.find({
         'civilian.email': req.user.user.email.toLowerCase(),
@@ -138,7 +140,7 @@ module.exports = function (app, passport, server) {
               personas: dbPersonas,
               vehicles: dbVehicles,
               communities: dbCommunities,
-              message: null
+              context: context
             });
           });
         });
@@ -164,7 +166,7 @@ module.exports = function (app, passport, server) {
               personas: dbPersonas,
               vehicles: dbVehicles,
               communities: dbCommunities,
-              message: null
+              context: context
             });
           });
         });
@@ -173,6 +175,8 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/ems-dashboard', auth, function (req, res) {
+    var context = req.app.locals.specialContext;
+    req.app.locals.specialContext = null;
     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
       Ems.find({
         'ems.email': req.user.user.email.toLowerCase(),
@@ -191,7 +195,8 @@ module.exports = function (app, passport, server) {
               user: req.user,
               personas: dbPersonas,
               vehicles: dbVehicles,
-              communities: dbCommunities
+              communities: dbCommunities,
+              context: context
             });
           });
         });
@@ -216,7 +221,8 @@ module.exports = function (app, passport, server) {
               user: req.user,
               personas: dbPersonas,
               vehicles: dbVehicles,
-              communities: dbCommunities
+              communities: dbCommunities,
+              context: context
             });
           });
         });
@@ -225,6 +231,8 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/police-dashboard', auth, function (req, res) {
+    var context = req.app.locals.specialContext;
+    req.app.locals.specialContext = null;
     Community.find({
       '$or': [{
         'community.ownerID': req.user._id
@@ -239,7 +247,8 @@ module.exports = function (app, passport, server) {
         tickets: null,
         arrestReports: null,
         warrants: null,
-        communities: dbCommunities
+        communities: dbCommunities,
+        context: context
       });
     });
   });
@@ -278,7 +287,8 @@ module.exports = function (app, passport, server) {
                   tickets: dbTickets,
                   arrestReports: dbArrestReports,
                   warrants: dbWarrants,
-                  communities: dbCommunities
+                  communities: dbCommunities,
+                  context: null
                 });
               })
             });
@@ -318,7 +328,8 @@ module.exports = function (app, passport, server) {
                   tickets: dbTickets,
                   arrestReports: dbArrestReports,
                   warrants: dbWarrants,
-                  communities: dbCommunities
+                  communities: dbCommunities,
+                  context: null
                 });
               })
             });
@@ -347,7 +358,8 @@ module.exports = function (app, passport, server) {
             tickets: null,
             arrestReports: null,
             warrants: null,
-            communities: dbCommunities
+            communities: dbCommunities,
+            context: null
           });
         });
       })
@@ -370,7 +382,8 @@ module.exports = function (app, passport, server) {
             tickets: null,
             arrestReports: null,
             warrants: null,
-            communities: dbCommunities
+            communities: dbCommunities,
+            context: null
           });
         });
       })
@@ -662,17 +675,15 @@ module.exports = function (app, passport, server) {
   app.post('/joinCommunity', function (req, res) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
-      console.error("improper length for community code, route: /joinCommunity")
-      res.redirect('/civ-dashboard', {
-        message: req.flash('signuperror')
-      });
+      req.app.locals.specialContext = "improperCommunityCodeLength";
+      res.redirect('/civ-dashboard');
       return
     }
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
     }, function (err, community) {
       if (community == null) {
-        console.warn("no matching community found, route: /joinCommunity")
+        req.app.locals.specialContext = "noCommunityFound";
         res.redirect('/civ-dashboard');
         return
       }
@@ -684,6 +695,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
+        req.app.locals.specialContext = "joinCommunitySuccess";
         res.redirect('/civ-dashboard');
       })
     })
@@ -698,6 +710,7 @@ module.exports = function (app, passport, server) {
       }
     }, function (err) {
       if (err) return console.error(err);
+      req.app.locals.specialContext = "leaveCommunitySuccess";
       res.redirect('/civ-dashboard');
     })
   })
@@ -705,17 +718,15 @@ module.exports = function (app, passport, server) {
   app.post('/joinPoliceCommunity', function (req, res) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
-      console.error("improper length for community code, route: /joinPoliceCommunity")
-      res.redirect('/police-dashboard', {
-        message: req.flash('signuperror')
-      });
+      req.app.locals.specialContext = "improperCommunityCodeLength";
+      res.redirect('/police-dashboard')
       return
     }
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
     }, function (err, community) {
       if (community == null) {
-        console.warn("no matching community found, route: /joinPoliceCommunity")
+        req.app.locals.specialContext = "noCommunityFound";
         res.redirect('/police-dashboard');
         return
       }
@@ -727,6 +738,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
+        req.app.locals.specialContext = "joinCommunitySuccess";
         res.redirect('/police-dashboard');
       })
     })
@@ -741,6 +753,7 @@ module.exports = function (app, passport, server) {
       }
     }, function (err) {
       if (err) return console.error(err);
+      req.app.locals.specialContext = "leaveCommunitySuccess";
       res.redirect('/police-dashboard');
     })
   })
@@ -748,17 +761,15 @@ module.exports = function (app, passport, server) {
   app.post('/joinEmsCommunity', function (req, res) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
-      console.error("improper length for community code, route: /joinEmsCommunity")
-      res.redirect('/ems-dashboard', {
-        message: req.flash('signuperror')
-      });
+      req.app.locals.specialContext = "improperCommunityCodeLength";
+      res.redirect('/ems-dashboard');
       return
     }
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
     }, function (err, community) {
       if (community == null) {
-        console.warn("no matching community found, route: /joinEmsCommunity")
+        req.app.locals.specialContext = "noCommunityFound";
         res.redirect('/ems-dashboard');
         return
       }
@@ -770,6 +781,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
+        req.app.locals.specialContext = "joinCommunitySuccess";
         res.redirect('/ems-dashboard');
       })
     })
@@ -784,6 +796,7 @@ module.exports = function (app, passport, server) {
       }
     }, function (err) {
       if (err) return console.error(err);
+      req.app.locals.specialContext = "leaveCommunitySuccess";
       res.redirect('/ems-dashboard');
     })
   })
@@ -801,6 +814,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
+        req.app.locals.specialContext = "createCommunitySuccess"
       })
     });
   })
@@ -818,6 +832,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
+        req.app.locals.specialContext = "createCommunitySuccess";
       })
     });
   })
@@ -835,6 +850,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
+        req.app.locals.specialContext = "createCommunitySuccess";
       })
     });
   })

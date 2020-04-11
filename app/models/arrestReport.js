@@ -63,7 +63,7 @@ arrestReportSchema.methods.updateArrestReport = function (req, res) {
     this.arrestReport.summary = req.body.summary.trim();
   }
   this.arrestReport.createdAt = new Date();
-
+  req.app.locals.specialContext = "createArrestSuccess"
   res.redirect('/police-dashboard');
 };
 

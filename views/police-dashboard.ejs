@@ -65,10 +65,43 @@
     </div>
   </nav>
   <header id="second" style='background-image: url("/images/hway_bkground.jpg");'>
-    
     <div class="header-content">
       <div class="inner">
         <h4>San Andreas - Police Operations</h4>
+
+        <% if (context == "createTicketSuccess") {%>
+          <div class="alert alert-success alert-dismissible show" role="alert">
+            <strong>Success!</strong> Ticket created successfully
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <% } else if (context == "createWarningSuccess") {%>
+          <div class="alert alert-success alert-dismissible show" role="alert">
+            <strong>Success!</strong> Warning created successfully
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <% } else if (context == "createArrestSuccess") {%>
+          <div class="alert alert-success alert-dismissible show" role="alert">
+            <strong>Success!</strong> Arrest created successfully
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <% } else if (context == "createWarrantSuccess") {%>
+          <div class="alert alert-success alert-dismissible show" role="alert">
+            <strong>Success!</strong> Warrant created successfully
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <% } %>
+
+        <!-- imports the community specific alerts -->
+        <% include community-alerts %>
+
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <p>** Now you can access Citations, Warnings and Arrest Reports after finding a civilian in the Name Database **</p>
           <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database <span class="badge">!</span></button>
@@ -82,6 +115,8 @@
       </div>
     </div>
   </header>
+
+
 
   <% include footer %>  
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
@@ -1318,7 +1353,6 @@
 
 <script type="text/javascript">
 $(document).ready(function() {
-
   // displays the Update Username and Cancel buttons for updating the username
   var myUser = <%- JSON.stringify(user) %>;
     $('#accountUsername').on('keyup', function(e) {

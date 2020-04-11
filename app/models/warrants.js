@@ -57,6 +57,7 @@ warrantSchema.methods.createWarrant = function (req, res) {
   this.warrant.status = true;
   this.warrant.createdAt = new Date();
 
+  req.app.locals.specialContext = "createWarrantSuccess"
   res.redirect('/police-dashboard');
 };
 
