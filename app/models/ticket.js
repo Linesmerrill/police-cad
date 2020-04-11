@@ -82,7 +82,7 @@ ticketSchema.methods.updateTicket = function (request, response) {
   this.ticket.createdAt = new Date();
 
   // for alert message to show up on dashboard after a redirect
-  if (request.body.isWarning) {
+  if (request.body.isWarning == "true") {
     request.app.locals.specialContext = "createWarningSuccess"  
   } else {
     request.app.locals.specialContext = "createTicketSuccess"
