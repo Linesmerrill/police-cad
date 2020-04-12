@@ -258,7 +258,12 @@ module.exports = function (app, passport, server) {
       Civilian.find({
         'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
         'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
-        'civilian.birthday': req.query.dateOfBirth
+        'civilian.birthday': req.query.dateOfBirth,
+        '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+          'civilian.activeCommunityID': ''
+        }, {
+          'civilian.activeCommunityID': null
+        }]
       }, function (err, dbCivilians) {
         Ticket.find({
           'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
