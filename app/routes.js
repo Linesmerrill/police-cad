@@ -395,6 +395,24 @@ module.exports = function (app, passport, server) {
     }
   });
 
+  app.get('/tickets', function(req, res) {
+    Ticket.find({
+      'ticket.civID': req.query.civID
+    },
+      function (err, dbTickets) {
+        res.send(dbTickets)
+      });
+  })
+
+  app.get('/arrests', function(req, res) {
+    ArrestReport.find({
+      'arrestReport.accusedID': req.query.civID
+    },
+      function (err, dbArrests) {
+        res.send(dbArrests)
+      });
+  })
+
   // Be sure to place all GET requests above this catchall
   app.get('*', function (req, res) {
     res.render('page-not-found');
