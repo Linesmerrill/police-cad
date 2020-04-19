@@ -248,52 +248,61 @@
                                 <% } %>
                                 Address: <%= civilians[i].civilian.address%><br/>
                                 Occupation: <%= civilians[i].civilian.occupation%><br/>
-                                <!-- Table for Tickets -->
-                                <div class="col-md-5 name-table text-align-center">
-                                  <table id="ticket-table" class="table table-hover" border="1" frame="box">
-                                    <thead>
-                                      <tr>
-                                        Tickets:
-                                      </tr>
-                                      </thead>
-                                      <tbody id="ticket-body">
-                                          <% if (tickets != null) {%>
-                                            <% for(var j=0; j<tickets.length; j++) {%>
-                                                <tr>
-                                              <% if ((tickets[j].ticket.civID == civilians[i]._id) && (!tickets[j].ticket.isWarning)) {%>
-                                                <td><%= tickets[j].ticket.violation %></td>
-                                                <td><%= tickets[j].ticket.date %></td>
-                                                <% } %>
-                                                <% if ((i == 0) && (tickets[j].ticket.civID == null) && (!tickets[j].ticket.isWarning)) {%>
-                                                  <td><%= tickets[j].ticket.violation %></td>
+                                <hr style="width: 88%;max-width: 100rem;">
+                                <h4>Criminal History</h4>
+                                <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
+                                  <li class="nav-item active">
+                                    <a class="nav-link active" id="pills-citations-tab" data-toggle="pill" href="#pills-citations" role="tab" aria-controls="pills-citations" aria-selected="true">Citations</a>
+                                  </li>
+                                  <li class="nav-item">
+                                    <a class="nav-link" id="pills-warnings-tab" data-toggle="pill" href="#pills-warnings" role="tab" aria-controls="pills-warnings" aria-selected="false">Warnings</a>
+                                  </li>
+                                  <li class="nav-item">
+                                    <a class="nav-link" id="pills-arrests-tab" data-toggle="pill" href="#pills-arrests" role="tab" aria-controls="pills-arrests" aria-selected="false">Arrests</a>
+                                  </li>
+                                </ul>
+                                <div class="tab-content" id="pills-tabContent">
+                                  <div class="tab-pane fade active in" id="pills-citations" role="tabpanel" aria-labelledby="pills-citations-tab">
+                                    <table id="ticket-table" class="table table-hover" border="1" frame="box">
+                                      <thead>
+                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Violation</td><td>Amount</td></tr>
+                                        </thead>
+                                        <tbody id="ticket-body">
+                                            <% if (tickets != null) {%>
+                                              <% for(var j=0; j<tickets.length; j++) {%>
+                                                  <tr>
+                                                <% if ((tickets[j].ticket.civID == civilians[i]._id) && (!tickets[j].ticket.isWarning)) {%>
                                                   <td><%= tickets[j].ticket.date %></td>
+                                                  <td><%= tickets[j].ticket.violation %></td>
+                                                  <td>$<%= tickets[j].ticket.amount %></td>
                                                   <% } %>
-                                              </tr>
+                                                  <% if ((i == 0) && (tickets[j].ticket.civID == null) && (!tickets[j].ticket.isWarning)) {%>
+                                                    <td><%= tickets[j].ticket.date %></td>
+                                                    <td><%= tickets[j].ticket.violation %></td>
+                                                    <td>$<%= tickets[j].ticket.amount %></td>
+                                                    <% } %>
+                                                </tr>
+                                              <% } %>
                                             <% } %>
-                                          <% } %>
-                                        </tbody>
-                                    </table>
+                                          </tbody>
+                                      </table>
                                   </div>
-
-                                  <!-- Table for Warnings  -->
-                                  <div class="col-md-5 name-table text-align-center">
+                                  <div class="tab-pane fade" id="pills-warnings" role="tabpanel" aria-labelledby="pills-warnings-tab">
                                     <table id="warning-table" class="table table-hover" border="1" frame="box">
                                       <thead>
-                                        <tr>
-                                          Warnings:
-                                        </tr>
+                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Warning</td></tr>
                                       </thead>
                                       <tbody id="warning-body">
                                           <% if (tickets != null) {%>
                                             <% for(var j=0; j<tickets.length; j++) {%>
                                                 <tr>
                                               <% if ((tickets[j].ticket.civID == civilians[i]._id) && (tickets[j].ticket.isWarning)) {%>
-                                                <td><%= tickets[j].ticket.violation %></td>
                                                 <td><%= tickets[j].ticket.date %></td>
+                                                <td><%= tickets[j].ticket.violation %></td>
                                                 <% } %>
                                                 <% if ((i == 0) && (tickets[j].ticket.civID == null) && (tickets[j].ticket.isWarning)) {%>
-                                                  <td><%= tickets[j].ticket.violation %></td>
                                                   <td><%= tickets[j].ticket.date %></td>
+                                                  <td><%= tickets[j].ticket.violation %></td>
                                                   <% } %>
                                               </tr>
                                             <% } %>
@@ -301,23 +310,19 @@
                                         </tbody>
                                     </table>
                                   </div>
-
-                                  <!-- Table for Arrests  -->
-                                  <div class="col-md-5 name-table text-align-center">
+                                  <div class="tab-pane fade" id="pills-arrests" role="tabpanel" aria-labelledby="pills-arrests-tab">
                                     <table id="arrest-table" class="table table-hover" border="1" frame="box">
                                       <thead>
-                                        <tr>
-                                          Arrests:
-                                        </tr>
+                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Charges</td><td>Summary</td></tr>
                                       </thead>
                                       <tbody id="arrest-body">
                                           <% if (arrestReports != null) {%>
                                             <% for(var j=0; j<arrestReports.length; j++) {%>
                                                 <tr>
                                               <% if (arrestReports[j].arrestReport.accusedID == civilians[i]._id) {%>
+                                                <td><%= arrestReports[j].arrestReport.date %></td>
                                                 <td><%= arrestReports[j].arrestReport.charges %></td>
                                                 <td><%= arrestReports[j].arrestReport.summary %></td>
-                                                <td><%= arrestReports[j].arrestReport.date %></td>
                                                 <% } %>
                                               </tr>
                                             <% } %>
@@ -325,6 +330,7 @@
                                         </tbody>
                                     </table>
                                   </div>
+                                </div>
                             </div>
                           </div>
                           
