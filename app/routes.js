@@ -7,6 +7,7 @@ var Ems = require('../app/models/ems');
 var ArrestReport = require('../app/models/arrestReport');
 var Warrant = require('../app/models/warrants');
 var Community = require('../app/models/community');
+var Bolo = require('../app/models/bolos');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
 var async = require('async');
@@ -693,6 +694,14 @@ module.exports = function (app, passport, server) {
       if (err) return console.error(err);
       res.redirect('/police-dashboard');
     })
+  });
+
+  app.post('/create-bolo', function (req, res) {
+    var myBolo = new Bolo()
+    myBolo.createBolo(req, res)
+    myBolo.save(function (err) {
+      if (err) return console.error(err);
+    });
   });
 
   app.post('/joinCommunity', function (req, res) {
