@@ -97,7 +97,14 @@
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
-        <% } %>
+        <% } else if (context == "createBoloSuccess") {%>
+          <div class="alert alert-success alert-dismissible show" role="alert">
+            <strong>Success!</strong> Bolo created successfully
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <%}%>
 
         <!-- imports the community specific alerts -->
         <% include community-alerts %>
@@ -112,11 +119,42 @@
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
           <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
         </div>
+        <div class="col-lg-10 col-lg-offset-1 margin-top-2">
+          <% if (bolos != null && bolos.length > 0) {%>
+            <h4>Active BOLOs:</h4>
+            <% for(var i=0; i<bolos.length; i++) {%>
+              <% if (bolos[i].bolo.status == true) {%>
+                <% if (bolos[i].bolo.boloType === "vehicle") {%>
+          <div class="alert alert-danger alert-dismissible show" role="alert">
+            <span class="iconify" data-icon="ion:car-sport" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <%} else if (bolos[i].bolo.boloType === "person") {%>
+            <div class="alert alert-danger alert-dismissible show" role="alert">
+              <span class="iconify" data-icon="ion:person" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <%} else {%>
+              <div class="alert alert-danger alert-dismissible show" role="alert">
+                <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <%}%>
+            <%}%>
+          <%}%>
+          <%}%>
+        </div>
       </div>
     </div>
   </header>
-
-
+  
+  
 
   <% include footer %>  
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">

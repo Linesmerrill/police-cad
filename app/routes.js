@@ -241,15 +241,20 @@ module.exports = function (app, passport, server) {
         '_id': req.user.user.activeCommunity
       }]
     }, function (err, dbCommunities) {
-      res.render('police-dashboard', {
-        user: req.user,
-        vehicles: null,
-        civilians: null,
-        tickets: null,
-        arrestReports: null,
-        warrants: null,
-        communities: dbCommunities,
-        context: context
+      Bolo.find({
+        'bolo.communityID': req.user.user.activeCommunity
+      }, function (err, dbBolos) {
+        res.render('police-dashboard', {
+          user: req.user,
+          vehicles: null,
+          civilians: null,
+          tickets: null,
+          arrestReports: null,
+          warrants: null,
+          communities: dbCommunities,
+          bolos: dbBolos,
+          context: context
+        });
       });
     });
   });
@@ -286,17 +291,22 @@ module.exports = function (app, passport, server) {
                   '_id': req.user.user.activeCommunity
                 }]
               }, function (err, dbCommunities) {
-                res.render('police-dashboard', {
-                  user: req.user,
-                  vehicles: null,
-                  civilians: dbCivilians,
-                  tickets: dbTickets,
-                  arrestReports: dbArrestReports,
-                  warrants: dbWarrants,
-                  communities: dbCommunities,
-                  context: null
+                Bolo.find({
+                  'bolo.communityID': req.user.user.activeCommunity
+                }, function (err, dbBolos) {
+                  res.render('police-dashboard', {
+                    user: req.user,
+                    vehicles: null,
+                    civilians: dbCivilians,
+                    tickets: dbTickets,
+                    arrestReports: dbArrestReports,
+                    warrants: dbWarrants,
+                    communities: dbCommunities,
+                    bolos: dbBolos,
+                    context: null
+                  });
                 });
-              })
+              });
             });
           });
         });
@@ -327,17 +337,22 @@ module.exports = function (app, passport, server) {
                   '_id': req.user.user.activeCommunity
                 }]
               }, function (err, dbCommunities) {
-                res.render('police-dashboard', {
-                  user: req.user,
-                  vehicles: null,
-                  civilians: dbCivilians,
-                  tickets: dbTickets,
-                  arrestReports: dbArrestReports,
-                  warrants: dbWarrants,
-                  communities: dbCommunities,
-                  context: null
+                Bolo.find({
+                  'bolo.communityID': req.user.user.activeCommunity
+                }, function (err, dbBolos) {
+                  res.render('police-dashboard', {
+                    user: req.user,
+                    vehicles: null,
+                    civilians: dbCivilians,
+                    tickets: dbTickets,
+                    arrestReports: dbArrestReports,
+                    warrants: dbWarrants,
+                    communities: dbCommunities,
+                    bolos: dbBolos,
+                    context: null
+                  });
                 });
-              })
+              });
             });
           });
         });
@@ -357,15 +372,20 @@ module.exports = function (app, passport, server) {
             '_id': req.user.user.activeCommunity
           }]
         }, function (err, dbCommunities) {
-          res.render('police-dashboard', {
-            user: req.user,
-            civilians: null,
-            vehicles: dbVehicles,
-            tickets: null,
-            arrestReports: null,
-            warrants: null,
-            communities: dbCommunities,
-            context: null
+          Bolo.find({
+            'bolo.communityID': req.user.user.activeCommunity
+          }, function (err, dbBolos) {
+            res.render('police-dashboard', {
+              user: req.user,
+              civilians: null,
+              vehicles: dbVehicles,
+              tickets: null,
+              arrestReports: null,
+              warrants: null,
+              communities: dbCommunities,
+              bolos: dbBolos,
+              context: null
+            });
           });
         });
       })
@@ -381,34 +401,39 @@ module.exports = function (app, passport, server) {
             '_id': req.user.user.activeCommunity
           }]
         }, function (err, dbCommunities) {
-          res.render('police-dashboard', {
-            user: req.user,
-            civilians: null,
-            vehicles: dbVehicles,
-            tickets: null,
-            arrestReports: null,
-            warrants: null,
-            communities: dbCommunities,
-            context: null
+          Bolo.find({
+            'bolo.communityID': req.user.user.activeCommunity
+          }, function (err, dbBolos) {
+            res.render('police-dashboard', {
+              user: req.user,
+              civilians: null,
+              vehicles: dbVehicles,
+              tickets: null,
+              arrestReports: null,
+              warrants: null,
+              communities: dbCommunities,
+              bolos: dbBolos,
+              context: null
+            });
           });
         });
       })
     }
   });
 
-  app.get('/tickets', function(req, res) {
+  app.get('/tickets', function (req, res) {
     Ticket.find({
-      'ticket.civID': req.query.civID
-    },
+        'ticket.civID': req.query.civID
+      },
       function (err, dbTickets) {
         res.send(dbTickets)
       });
   })
 
-  app.get('/arrests', function(req, res) {
+  app.get('/arrests', function (req, res) {
     ArrestReport.find({
-      'arrestReport.accusedID': req.query.civID
-    },
+        'arrestReport.accusedID': req.query.civID
+      },
       function (err, dbArrests) {
         res.send(dbArrests)
       });
