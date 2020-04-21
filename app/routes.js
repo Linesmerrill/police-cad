@@ -729,6 +729,16 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.post('/clear-bolo', function (req, res) {
+    Bolo.findByIdAndDelete({
+      '_id': ObjectId(req.body.boloID)
+    }, function(err){
+      if (err) return console.error(err);
+      req.app.locals.specialContext = "clearBoloSuccess"
+      res.redirect('/police-dashboard');
+    })
+  });
+
   app.post('/joinCommunity', function (req, res) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {

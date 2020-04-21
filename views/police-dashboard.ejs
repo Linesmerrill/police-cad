@@ -127,21 +127,21 @@
                 <% if (bolos[i].bolo.boloType === "vehicle") {%>
           <div class="alert alert-danger alert-dismissible show" role="alert">
             <span class="iconify" data-icon="ion:car-sport" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
           <%} else if (bolos[i].bolo.boloType === "person") {%>
             <div class="alert alert-danger alert-dismissible show" role="alert">
               <span class="iconify" data-icon="ion:person" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
             <%} else {%>
               <div class="alert alert-danger alert-dismissible show" role="alert">
-                <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span class="iconify" data-icon="ion:alert-circle" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
+                <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>
               </div>
@@ -411,7 +411,7 @@
                     class="form-control input-md" list="plates" style="text-transform: uppercase;" required>
                 </div>
                 <div class="col-md-4">
-                  <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                  <input type="hidden" id="active-community-id" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                   <button type="submit" onclick="searchPlate()" class="btn btn-info">Search</button>
                 </div>
               </div>
@@ -1040,6 +1040,38 @@
     </div>
   </div>
 
+  <div id="confirmClearBoloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="bolo-clear-form" class="form-horizontal" action="/clear-bolo" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Clear Bolo?</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <p id="bolo-reason"></p>
+              <input id="bolo-clear-date" type="hidden" name="updatedAt" value="">
+              <input id="bolo-clearingOfficerID" type="hidden" name="clearingOfficerID" value=<%= user._id%>>
+              <input id="bolo-clearingOfficerUsername" type="hidden" name="clearingOfficerUsername" value=<%= user.user.username%>>
+              <input id="bolo-ID" type="hidden" name="boloID" value="">
+               
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submit-bolo-clear-creation"></label>
+                <div class="col-md-4">
+                  <button id="submit-bolo-clear-creation" class="btn btn-success">Yes</button>
+                  <button class="btn btn-danger" data-dismiss="modal">No</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="communitiesModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1578,6 +1610,11 @@ function searchPlate() {
       hour: "2-digit",
       minute: "2-digit"
     }))
+  }
+
+  function clearBolo(boloID) {
+    $('#bolo-ID').val(boloID)
+    $('#bolo-clear-date').val(new Date())
   }
 
   function fillAccountDetails() {
