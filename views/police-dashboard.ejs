@@ -111,11 +111,13 @@
 
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <p>** Now you can access Citations, Warnings and Arrest Reports after finding a civilian in the Name Database **</p>
-          <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database <span class="badge">!</span></button>
+          <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
           <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2">Create Bolo</button>
-          <% } %>
+          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2">Create Bolo <span class="iconify" data-icon="ion-sunny-outline" data-inline="false" style="color: #00aced;"></span></button>
+          <% } else {%>
+            <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create Bolo</button>
+            <% } %>
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
           <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
         </div>
@@ -1040,6 +1042,26 @@
     </div>
   </div>
 
+  <div id="nonCommunityBoloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="modal-body">
+        		<h2 class="text-center">I'm sorry! ;(</h2>
+            <p class="text-center">Looks like you are not in a community yet, so this feature is not enabled. </p>
+            <p>To join or
+              create a community for free, click on the communities button under the top right menu, or at the top
+              right of your screen.</p> 
+              <p>Or just click here: <a data-toggle="modal" href="#communitiesModal">Communities</a>
+            </p>
+        		<br/>
+        		<button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK <i class="ion-android-close"></i></button>
+        	</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="confirmClearBoloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1079,7 +1101,7 @@
             <fieldset>
 
             <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Communities Management</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
