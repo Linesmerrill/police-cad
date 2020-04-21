@@ -110,13 +110,12 @@
         <% include community-alerts %>
 
         <div class="col-lg-10 col-lg-offset-1 text-center">
-          <p>** Now you can access Citations, Warnings and Arrest Reports after finding a civilian in the Name Database **</p>
           <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
           <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2">Create Bolo <span class="iconify" data-icon="ion-sunny-outline" data-inline="false" style="color: #00aced;"></span></button>
+          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2">Create BOLO <span class="iconify" data-icon="ion-sunny-outline" data-inline="false" style="color: #00aced;"></span></button>
           <% } else {%>
-            <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create Bolo</button>
+            <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
             <% } %>
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
           <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
