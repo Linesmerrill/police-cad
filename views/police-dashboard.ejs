@@ -121,26 +121,26 @@
         </div>
         <div class="col-lg-10 col-lg-offset-1 margin-top-2">
           <% if (bolos != null && bolos.length > 0) {%>
-            <h4>Active BOLOs:</h4>
+            <h4>Active BOLOs: <a href="/police-dashboard"><span class="iconify icon" data-icon="ion:refresh" data-inline="false"></span></a></h4>
             <% for(var i=0; i<bolos.length; i++) {%>
               <% if (bolos[i].bolo.status == true) {%>
                 <% if (bolos[i].bolo.boloType === "vehicle") {%>
           <div class="alert alert-danger alert-dismissible show" role="alert">
-            <span class="iconify" data-icon="ion:car-sport" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
+            <span class="iconify icon" data-icon="ion:car-sport" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
             <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
           <%} else if (bolos[i].bolo.boloType === "person") {%>
             <div class="alert alert-danger alert-dismissible show" role="alert">
-              <span class="iconify" data-icon="ion:person" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
+              <span class="iconify icon" data-icon="ion:person" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
               <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
             <%} else {%>
               <div class="alert alert-danger alert-dismissible show" role="alert">
-                <span class="iconify" data-icon="ion:alert-circle" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
+                <span class="iconify icon" data-icon="ion:alert-circle" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
                 <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>

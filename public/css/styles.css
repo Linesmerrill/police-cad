@@ -877,3 +877,7 @@ a.link--inherit {
 .margin-left-1 {
     margin-left: 1em;
 }
+
+.icon {
+    vertical-align: text-top;
+}
