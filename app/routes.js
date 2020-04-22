@@ -1010,6 +1010,52 @@ module.exports = function (app, passport, server) {
     })
   })
 
+  app.post('/updateOrDeleteBolo', function(req, res) {
+    if (req.body.action === "delete") {
+      var boloID
+      if (exists(req.body.boloID)) {
+        boloID = req.body.boloID
+      }
+      Bolo.findByIdAndDelete({
+        '_id': ObjectId(boloID)
+      }, function(err){
+        if (err) return console.error(err);
+        res.redirect('/police-dashboard');
+      })
+    } else {
+      var boloType
+      var location
+      var description
+      var boloID
+      if (exists(req.body.boloType)) {
+        boloType = req.body.boloType.trim().toLowerCase()
+      }
+      if (exists(req.body.location)) {
+        location = req.body.location.trim()
+      }
+      if (exists(req.body.description)) {
+        description = req.body.description.trim()
+      }
+      if (exists(req.body.boloID)) {
+        boloID = req.body.boloID
+      }
+      
+      Bolo.findOneAndUpdate({
+        '_id': ObjectId(boloID)
+      }, {
+        $set: {
+          'bolo.boloType': boloType,
+          'bolo.location': location,
+          'bolo.description': description,
+          'bolo.updatedAt': new Date()
+        }
+      }, function(err) {
+        if (err) return console.error(err);
+        res.redirect('/police-dashboard');
+      })
+    }
+  })
+
   app.post('/updateOrDeleteCiv', function (req, res) {
     if (req.body.action === "update") {
       var address

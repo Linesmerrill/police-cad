@@ -126,26 +126,33 @@
             <% for(var i=0; i<bolos.length; i++) {%>
               <% if (bolos[i].bolo.status == true) {%>
                 <% if (bolos[i].bolo.boloType === "vehicle") {%>
+                  <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
           <div class="alert alert-danger alert-dismissible show" role="alert">
             <span class="iconify icon" data-icon="ion:car-sport" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
             <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
+        </a>
           <%} else if (bolos[i].bolo.boloType === "person") {%>
+            <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
             <div class="alert alert-danger alert-dismissible show" role="alert">
               <span class="iconify icon" data-icon="ion:person" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
               <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
               </button>
             </div>
+            </a>
+          
             <%} else {%>
+              <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
               <div class="alert alert-danger alert-dismissible show" role="alert">
                 <span class="iconify icon" data-icon="ion:alert-circle" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
                 <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>
               </div>
+            </a>
               <%}%>
             <%}%>
           <%}%>
@@ -1041,6 +1048,61 @@
     </div>
   </div>
 
+  <div id="boloDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/updateOrDeleteBolo" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>View BOLO Alert</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="boloType">Type:</label>
+              <div class="col-md-4">
+                <select id="boloTypeDetail" name="boloType" class="form-control" selected="selected" required>
+                  <option value="person">Person</option>
+                  <option value="vehicle">Vehicle</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="location">Last Seen Around:</label>
+              <div class="col-md-4">
+              <input id="locationDetail" name="location" style="text-transform: capitalize;" type="text" placeholder="location" class="form-control input-md" maxlength="50" required>
+              </div>
+            </div>
+
+            <!-- Text Area input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="description">Description:</label>
+              <div class="col-md-8 col-md-offset-2">
+                <textarea id="descriptionDetail" name="description" type="text" rows="4" maxlength="500" placeholder="description" class="form-control input-md" required></textarea>
+              </div>
+            </div>
+            
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="updateBolo"></label>
+              <div class="col-md-4 text-align-center">
+                <input id="boloIDDetail" type="hidden" name="boloID" value="">
+                <button id="updateBolo" type="submit" name="action" value="update"  class="btn btn-info">Update</button>
+                <button id="deleteBolo" type="submit" name="action" value="delete"  class="btn btn-danger">Delete</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="nonCommunityBoloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1648,6 +1710,14 @@ function searchPlate() {
     var myUser = <%- JSON.stringify(user) %>;
     $('#accountUsername').val(myUser.user.username)
     $('#updateUsernameBtns').hide();
+  }
+
+  function populateBoloDetails(i) {
+    var myBolo = <%- JSON.stringify(bolos) %>;
+    $('#boloTypeDetail').val(myBolo[i].bolo.boloType)
+    $('#locationDetail').val(myBolo[i].bolo.location)
+    $('#descriptionDetail').val(myBolo[i].bolo.description)
+    $('#boloIDDetail').val(myBolo[i]._id)
   }
 
   function clearTextarea() {
