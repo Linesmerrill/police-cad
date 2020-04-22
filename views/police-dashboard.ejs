@@ -123,6 +123,7 @@
         <div class="col-lg-10 col-lg-offset-1 margin-top-2">
           <% if (bolos != null && bolos.length > 0) {%>
             <h4>Active BOLOs: <a href="/police-dashboard"><span class="iconify icon" data-icon="ion:refresh" data-inline="false"></span></a></h4>
+            <h5>Click for details</h5>
             <% for(var i=0; i<bolos.length; i++) {%>
               <% if (bolos[i].bolo.status == true) {%>
                 <% if (bolos[i].bolo.boloType === "vehicle") {%>
@@ -1057,8 +1058,32 @@
 
             <!-- Form Name -->
             <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-            <h4>View BOLO Alert</h4>
+            <h4>BOLO Details</h4>
             <hr style="width: 88%;max-width: 100rem;">
+
+             <!-- Text input-->
+             <div class="form-group">
+              <label class="col-md-4 control-label" for="createdBy">Created By:</label>
+              <div class="col-md-4">
+              <h5 id="createdByDetail"></h5>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createdBy">Created At:</label>
+              <div class="col-md-4">
+              <h5 id="createdAtDetail"></h5>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
+              <div class="col-md-4">
+              <h5 id="updatedAtDetail"></h5>
+              </div>
+            </div>
 
             <div class="form-group required">
               <label class="col-md-4 control-label" for="boloType">Type:</label>
@@ -1718,6 +1743,11 @@ function searchPlate() {
     $('#locationDetail').val(myBolo[i].bolo.location)
     $('#descriptionDetail').val(myBolo[i].bolo.description)
     $('#boloIDDetail').val(myBolo[i]._id)
+    $('#createdByDetail').text(myBolo[i].bolo.reportingOfficerUsername)
+    var createdDate = new Date(myBolo[i].bolo.createdAt)
+    $('#createdAtDetail').text(createdDate.toLocaleString())
+    var updatedDate = new Date(myBolo[i].bolo.updatedAt)
+    $('#updatedAtDetail').text(updatedDate.toLocaleString())
   }
 
   function clearTextarea() {
