@@ -97,26 +97,73 @@
               <span aria-hidden="true">&times;</span>
             </button>
           </div>
-        <% } %>
+        <% } else if (context == "createBoloSuccess") {%>
+          <div class="alert alert-success alert-dismissible show" role="alert">
+            <strong>Success!</strong> Bolo created successfully
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <%}%>
 
         <!-- imports the community specific alerts -->
         <% include community-alerts %>
 
         <div class="col-lg-10 col-lg-offset-1 text-center">
-          <p>** Now you can access Citations, Warnings and Arrest Reports after finding a civilian in the Name Database **</p>
-          <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database <span class="badge">!</span></button>
+          <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
-          <!-- <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#date', '#time');openSearch()">Issue Citation</button> -->
-          <!-- <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#warning-date', '#warning-time');openSearch()">Issue Warning</button> -->
-          <!-- <button data-toggle="modal" href="#arrestModal" class="btn btn-primary btn-lg margin-top-2" onclick="setDateAndTime('#arrest-report-date', '#arrest-report-time');openSearch();generateCaseNo('#arrest-report-case-no');">Arrest Report</button> -->
+          <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2">Create BOLO <span class="iconify" data-icon="ion-sunny-outline" data-inline="false" style="color: #00aced;"></span></button>
+          <% } else {%>
+            <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
+            <% } %>
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
           <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
+        </div>
+        <div class="col-lg-10 col-lg-offset-1 margin-top-2">
+          <% if (bolos != null && bolos.length > 0) {%>
+            <h4>Active BOLOs: <a href="/police-dashboard"><span class="iconify icon" data-icon="ion:refresh" data-inline="false"></span></a></h4>
+            <h5>Click for details</h5>
+            <% for(var i=0; i<bolos.length; i++) {%>
+              <% if (bolos[i].bolo.status == true) {%>
+                <% if (bolos[i].bolo.boloType === "vehicle") {%>
+                  <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
+          <div class="alert alert-danger alert-dismissible show" role="alert">
+            <span class="iconify icon" data-icon="ion:car-sport" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
+            <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        </a>
+          <%} else if (bolos[i].bolo.boloType === "person") {%>
+            <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
+            <div class="alert alert-danger alert-dismissible show" role="alert">
+              <span class="iconify icon" data-icon="ion:person" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
+              <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            </a>
+          
+            <%} else {%>
+              <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
+              <div class="alert alert-danger alert-dismissible show" role="alert">
+                <span class="iconify icon" data-icon="ion:alert-circle" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
+                <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+            </a>
+              <%}%>
+            <%}%>
+          <%}%>
+          <%}%>
         </div>
       </div>
     </div>
   </header>
-
-
+  
+  
 
   <% include footer %>  
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
@@ -143,7 +190,7 @@
             <fieldset>
 
               <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
               <h4>Person Database</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
@@ -361,7 +408,7 @@
             <fieldset>
 
               <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
               <h4>Vehicle Database</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
@@ -373,7 +420,7 @@
                     class="form-control input-md" list="plates" style="text-transform: uppercase;" required>
                 </div>
                 <div class="col-md-4">
-                  <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                  <input type="hidden" id="active-community-id" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                   <button type="submit" onclick="searchPlate()" class="btn btn-info">Search</button>
                 </div>
               </div>
@@ -437,7 +484,7 @@
           <form id="ticket-form" class="form-horizontal" action="/create-ticket" method="POST">
             <fieldset>
 
-              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
               <h4>San Andreas Traffic Ticket</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
@@ -475,15 +522,6 @@
                       <input id="ticket-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md" required="">
                   </div>
                 </div>
-
-                <!-- <div class="form-group" id="searchTicketDiv">
-                  <label class="col-md-4 control-label" for=""></label>
-                  <div class="col-md-4">
-                    <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#ticketSearchModal"
-                    onclick="searchNameInDB()" title="search">
-                    <span class="iconify" data-icon="ion:search-circle-outline" data-inline="false"></span></a>&nbsp;
-                  </div>
-                </div> -->
 
                 <div class="form-group required">
                   <label class="col-md-4 control-label" for="civID">Selected ID</label>
@@ -591,29 +629,6 @@
     </div>
   </div>
 
-  <!-- <div id="ticketSearchModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
-          <h4>Search Results from Database (select one):</h4>
-          <hr style="width: 88%;max-width: 100rem;">
-          <table id="ticket-search-result-table" class="table table-hover" border="1" frame="box">
-            <thead>
-               <tr>
-                  <th>Name</th>
-                  <th>DOB</th>
-                  <th>ID #</th>
-               </tr>
-            </thead>
-            <tbody id="search-result-tbody">
-            </tbody>
-         </table>
-        </div>
-      </div>
-    </div>
-  </div> -->
-
   <div id="warningModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -621,7 +636,7 @@
           <form id="warning-form" class="form-horizontal" action="/create-ticket" method="POST">
             <fieldset>
 
-              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
               <h4>San Andreas Traffic Warning</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
@@ -659,15 +674,6 @@
                       <input id="warning-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md" required="">
                   </div>
                 </div>
-
-                <!-- <div class="form-group" id="searchWarningDiv">
-                  <label class="col-md-4 control-label" for=""></label>
-                  <div class="col-md-4">
-                    <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#warningSearchModal"
-                    onclick="searchNameInDBWarning()" title="search">
-                    <span class="iconify" data-icon="ion:search-circle-outline" data-inline="false"></span></a>&nbsp;
-                  </div>
-                </div> -->
 
                 <div class="form-group required">
                   <label class="col-md-4 control-label" for="civIDWarning">Selected ID</label>
@@ -769,29 +775,6 @@
     </div>
   </div>
 
-  <div id="warningSearchModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
-          <h4>Search Results from Database (select one):</h4>
-          <hr style="width: 88%;max-width: 100rem;">
-          <table id="warning-search-result-table" class="table table-hover" border="1" frame="box">
-            <thead>
-               <tr>
-                  <th>Name</th>
-                  <th>DOB</th>
-                  <th>ID #</th>
-               </tr>
-            </thead>
-            <tbody id="warning-search-result-tbody">
-            </tbody>
-         </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div id="arrestModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -799,7 +782,7 @@
           <form id="arrest-form" class="form-horizontal" action="/create-arrest-report" method="POST">
             <fieldset>
 
-              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
               <h4>San Andreas Arrest Report</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
@@ -852,15 +835,6 @@
                   </div>
                 </div>
 
-                <!-- <div class="form-group" id="searchArrestDiv">
-                  <label class="col-md-4 control-label" for=""></label>
-                  <div class="col-md-4">
-                    <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#arrestSearchModal"
-                    onclick="searchNameInDBArrest()" title="search">
-                    <span class="iconify" data-icon="ion:search-circle-outline" data-inline="false"></span></a>&nbsp;
-                  </div>
-                </div> -->
-
                 <div class="form-group required">
                   <label class="col-md-4 control-label" for="civIDArrest">Selected ID</label>
                   <div class="col-md-4">
@@ -912,29 +886,6 @@
     </div>
   </div>
 
-  <div id="arrestSearchModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
-          <h4>Search Results from Database (select one):</h4>
-          <hr style="width: 88%;max-width: 100rem;">
-          <table id="arrest-search-result-table" class="table table-hover" border="1" frame="box">
-            <thead>
-               <tr>
-                  <th>Name</th>
-                  <th>DOB</th>
-                  <th>ID #</th>
-               </tr>
-            </thead>
-            <tbody id="search-result-tbody">
-            </tbody>
-         </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div id="createWarrantModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -942,7 +893,7 @@
           <form id="warrant-form" class="form-horizontal" action="/create-warrant" method="POST">
             <fieldset>
 
-              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
               <h4>Create Warrant</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
@@ -966,15 +917,6 @@
                       <input id="warrant-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md" required="" readonly="readonly">
                   </div>
                 </div>
-
-                <!-- <div class="form-group" id="searchWarrantDiv">
-                  <label class="col-md-4 control-label" for=""></label>
-                  <div class="col-md-4">
-                    <a class="font-size-3" rel="nofollow" data-toggle="modal" data-target="#arrestSearchModal"
-                    onclick="searchNameInDBArrest()" title="search">
-                    <span class="iconify" data-icon="ion:search-circle-outline" data-inline="false"></span></a>&nbsp;
-                  </div>
-                </div> -->
 
                 <div class="form-group required">
                   <label class="col-md-4 control-label" for="civIDWarrant">Selected ID</label>
@@ -1027,7 +969,7 @@
           <form id="warrant-clear-form" class="form-horizontal" action="/clear-warrant" method="POST">
             <fieldset>
 
-              <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
               <h4>Clear Warrant?</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
@@ -1052,6 +994,192 @@
     </div>
   </div>
   
+  <div id="boloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-bolo" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Create BOLO Alert</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="type">Type:</label>
+              <div class="col-md-4">
+                <select id="type" name="boloType" class="form-control" selected="selected" required>
+                  <option value="person">Person</option>
+                  <option value="vehicle">Vehicle</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="location">Last Seen Around:</label>
+              <div class="col-md-4">
+              <input id="location" name="location" style="text-transform: capitalize;" type="text" placeholder="location" class="form-control input-md" maxlength="50" required>
+              </div>
+            </div>
+
+            <!-- Text Area input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="description">Description:</label>
+              <div class="col-md-8 col-md-offset-2">
+                <textarea id="description" name="description" type="text" rows="4" maxlength="500" placeholder="description" class="form-control input-md" required></textarea>
+              </div>
+            </div>
+            
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createBolo"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" name="reportingOfficerUsername" value="<%= user.user.username %>">
+                <input type="hidden" name="reportingOfficerID" value="<%= user._id %>">
+                <button id="createBolo" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"  class="btn btn-primary">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="boloDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/updateOrDeleteBolo" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>BOLO Details</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+             <!-- Text input-->
+             <div class="form-group">
+              <label class="col-md-4 control-label" for="createdBy">Created By:</label>
+              <div class="col-md-4">
+              <h5 id="createdByDetail"></h5>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createdBy">Created At:</label>
+              <div class="col-md-4">
+              <h5 id="createdAtDetail"></h5>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
+              <div class="col-md-4">
+              <h5 id="updatedAtDetail"></h5>
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="boloType">Type:</label>
+              <div class="col-md-4">
+                <select id="boloTypeDetail" name="boloType" class="form-control" selected="selected" required>
+                  <option value="person">Person</option>
+                  <option value="vehicle">Vehicle</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="location">Last Seen Around:</label>
+              <div class="col-md-4">
+              <input id="locationDetail" name="location" style="text-transform: capitalize;" type="text" placeholder="location" class="form-control input-md" maxlength="50" required>
+              </div>
+            </div>
+
+            <!-- Text Area input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="description">Description:</label>
+              <div class="col-md-8 col-md-offset-2">
+                <textarea id="descriptionDetail" name="description" type="text" rows="4" maxlength="500" placeholder="description" class="form-control input-md" required></textarea>
+              </div>
+            </div>
+            
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="updateBolo"></label>
+              <div class="col-md-4 text-align-center">
+                <input id="boloIDDetail" type="hidden" name="boloID" value="">
+                <button id="updateBolo" type="submit" name="action" value="update"  class="btn btn-info">Update</button>
+                <button id="deleteBolo" type="submit" name="action" value="delete"  class="btn btn-danger">Delete</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="nonCommunityBoloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="modal-body">
+        		<h2 class="text-center">I'm sorry! ;(</h2>
+            <p class="text-center">Looks like you are not in a community yet, so this feature is not enabled. </p>
+            <p>To join or
+              create a community for free, click on the communities button under the top right menu, or at the top
+              right of your screen.</p> 
+              <p>Or just click here: <a data-toggle="modal" href="#communitiesModal">Communities</a>
+            </p>
+        		<br/>
+        		<button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK <i class="ion-android-close"></i></button>
+        	</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmClearBoloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="bolo-clear-form" class="form-horizontal" action="/clear-bolo" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Clear Bolo?</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <p id="bolo-reason"></p>
+              <input id="bolo-clear-date" type="hidden" name="updatedAt" value="">
+              <input id="bolo-clearingOfficerID" type="hidden" name="clearingOfficerID" value=<%= user._id%>>
+              <input id="bolo-clearingOfficerUsername" type="hidden" name="clearingOfficerUsername" value=<%= user.user.username%>>
+              <input id="bolo-ID" type="hidden" name="boloID" value="">
+               
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submit-bolo-clear-creation"></label>
+                <div class="col-md-4">
+                  <button id="submit-bolo-clear-creation" class="btn btn-success">Yes</button>
+                  <button class="btn btn-danger" data-dismiss="modal">No</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="communitiesModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1059,7 +1187,7 @@
             <fieldset>
 
             <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Communities Management</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
@@ -1117,7 +1245,6 @@
                   </tbody>
               </table>
             </div>
-
             </fieldset>
         </div>
       </div>
@@ -1132,7 +1259,7 @@
             <fieldset>
 
             <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Join an Existing Community</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
@@ -1166,7 +1293,7 @@
             <fieldset>
 
             <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Leave Active Community</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
@@ -1197,7 +1324,7 @@
             <fieldset>
 
             <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Create a New Community</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
@@ -1228,7 +1355,7 @@
       <div class="modal-content">
         <div class="modal-body">
             <fieldset>
-            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Check out the New Communities Section!</h4>
             <hr style="width: 88%;max-width: 100rem;">
             <a data-toggle="modal" href="#communitiesModal" onclick="dismissCommunitiesInfoModal()"><img src="/images/communities-example.png" class="diagonal-arrow float-right" alt="communities example screenshot"></a>
@@ -1244,7 +1371,7 @@
       <div class="modal-content">
         <div class="modal-body">
           <!-- Modal Name -->
-          <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
           <h4>Manage Account</h4>
           <hr style="width: 88%;max-width: 100rem;">
 
@@ -1314,7 +1441,7 @@
             <fieldset>
 
             <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" data-dismiss="modal" aria-hidden="true">X</button>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Delete Account</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
@@ -1477,30 +1604,6 @@ function searchPlate() {
     $('#searchTicketDiv').show()
   }
 
-  function selectSearchTable(userID) {
-    $('#ticketSearchModal').modal('toggle');
-    $('#civID').val(userID);
-    $('#civID').popover('hide')
-  }
-
-  function selectSearchTableWarning(userID) {
-    $('#warningSearchModal').modal('toggle');
-    $('#civIDWarning').val(userID);
-    $('#civIDWarning').popover('hide')
-  }
-
-  function selectSearchTableArrest(userID) {
-    $('#arrestSearchModal').modal('toggle');
-    $('#civIDArrest').val(userID);
-    $('#civIDArrest').popover('hide')
-  }
-
-  // prevents submit modal when pressing enter because it closes the entire window and does not submit.
-  // we should fix the modals so this can work as expected.
-  $(document).on("keypress", "form", function (event) {
-    return event.keyCode != 13;
-  });
-
   function setDateAndTime(dateElement, timeElement) {
     $(dateElement)[0].valueAsDate = new Date();
     $(timeElement)[0].value = new Date().toLocaleTimeString('en-GB', {
@@ -1617,6 +1720,11 @@ function searchPlate() {
     }))
   }
 
+  function clearBolo(boloID) {
+    $('#bolo-ID').val(boloID)
+    $('#bolo-clear-date').val(new Date())
+  }
+
   function fillAccountDetails() {
     var myUser = <%- JSON.stringify(user) %>;
     $('#accountEmail').val(myUser.user.email)
@@ -1629,6 +1737,19 @@ function searchPlate() {
     $('#updateUsernameBtns').hide();
   }
 
+  function populateBoloDetails(i) {
+    var myBolo = <%- JSON.stringify(bolos) %>;
+    $('#boloTypeDetail').val(myBolo[i].bolo.boloType)
+    $('#locationDetail').val(myBolo[i].bolo.location)
+    $('#descriptionDetail').val(myBolo[i].bolo.description)
+    $('#boloIDDetail').val(myBolo[i]._id)
+    $('#createdByDetail').text(myBolo[i].bolo.reportingOfficerUsername)
+    var createdDate = new Date(myBolo[i].bolo.createdAt)
+    $('#createdAtDetail').text(createdDate.toLocaleString())
+    var updatedDate = new Date(myBolo[i].bolo.updatedAt)
+    $('#updatedAtDetail').text(updatedDate.toLocaleString())
+  }
+
   function clearTextarea() {
     $('#notepad-textarea').val('')
   }
@@ -1637,24 +1758,12 @@ function searchPlate() {
     $('#civID').popover('hide')
   })
 
-  $('#ticketSearchModal').on('hidden.bs.modal', function (e) {
-    $('body').addClass('modal-open');
-  })
-
   $('#warningModal').on('hidden.bs.modal', function () {
     $('#civIDWarning').popover('hide')
   })
 
-  $('#warningSearchModal').on('hidden.bs.modal', function (e) {
-    $('body').addClass('modal-open');
-  })
-
   $('#arrestModal').on('hidden.bs.modal', function () {
     $('#civIDArrest').popover('hide')
-  })
-
-  $('#arrestSearchModal').on('hidden.bs.modal', function (e) {
-    $('body').addClass('modal-open');
   })
 
   $('#createWarrantModal').on('hidden.bs.modal', function () {

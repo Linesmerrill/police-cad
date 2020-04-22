@@ -7,6 +7,7 @@ var Ems = require('../app/models/ems');
 var ArrestReport = require('../app/models/arrestReport');
 var Warrant = require('../app/models/warrants');
 var Community = require('../app/models/community');
+var Bolo = require('../app/models/bolos');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
 var async = require('async');
@@ -240,15 +241,20 @@ module.exports = function (app, passport, server) {
         '_id': req.user.user.activeCommunity
       }]
     }, function (err, dbCommunities) {
-      res.render('police-dashboard', {
-        user: req.user,
-        vehicles: null,
-        civilians: null,
-        tickets: null,
-        arrestReports: null,
-        warrants: null,
-        communities: dbCommunities,
-        context: context
+      Bolo.find({
+        'bolo.communityID': req.user.user.activeCommunity
+      }, function (err, dbBolos) {
+        res.render('police-dashboard', {
+          user: req.user,
+          vehicles: null,
+          civilians: null,
+          tickets: null,
+          arrestReports: null,
+          warrants: null,
+          communities: dbCommunities,
+          bolos: dbBolos,
+          context: context
+        });
       });
     });
   });
@@ -285,17 +291,22 @@ module.exports = function (app, passport, server) {
                   '_id': req.user.user.activeCommunity
                 }]
               }, function (err, dbCommunities) {
-                res.render('police-dashboard', {
-                  user: req.user,
-                  vehicles: null,
-                  civilians: dbCivilians,
-                  tickets: dbTickets,
-                  arrestReports: dbArrestReports,
-                  warrants: dbWarrants,
-                  communities: dbCommunities,
-                  context: null
+                Bolo.find({
+                  'bolo.communityID': req.user.user.activeCommunity
+                }, function (err, dbBolos) {
+                  res.render('police-dashboard', {
+                    user: req.user,
+                    vehicles: null,
+                    civilians: dbCivilians,
+                    tickets: dbTickets,
+                    arrestReports: dbArrestReports,
+                    warrants: dbWarrants,
+                    communities: dbCommunities,
+                    bolos: dbBolos,
+                    context: null
+                  });
                 });
-              })
+              });
             });
           });
         });
@@ -326,17 +337,22 @@ module.exports = function (app, passport, server) {
                   '_id': req.user.user.activeCommunity
                 }]
               }, function (err, dbCommunities) {
-                res.render('police-dashboard', {
-                  user: req.user,
-                  vehicles: null,
-                  civilians: dbCivilians,
-                  tickets: dbTickets,
-                  arrestReports: dbArrestReports,
-                  warrants: dbWarrants,
-                  communities: dbCommunities,
-                  context: null
+                Bolo.find({
+                  'bolo.communityID': req.user.user.activeCommunity
+                }, function (err, dbBolos) {
+                  res.render('police-dashboard', {
+                    user: req.user,
+                    vehicles: null,
+                    civilians: dbCivilians,
+                    tickets: dbTickets,
+                    arrestReports: dbArrestReports,
+                    warrants: dbWarrants,
+                    communities: dbCommunities,
+                    bolos: dbBolos,
+                    context: null
+                  });
                 });
-              })
+              });
             });
           });
         });
@@ -356,15 +372,20 @@ module.exports = function (app, passport, server) {
             '_id': req.user.user.activeCommunity
           }]
         }, function (err, dbCommunities) {
-          res.render('police-dashboard', {
-            user: req.user,
-            civilians: null,
-            vehicles: dbVehicles,
-            tickets: null,
-            arrestReports: null,
-            warrants: null,
-            communities: dbCommunities,
-            context: null
+          Bolo.find({
+            'bolo.communityID': req.user.user.activeCommunity
+          }, function (err, dbBolos) {
+            res.render('police-dashboard', {
+              user: req.user,
+              civilians: null,
+              vehicles: dbVehicles,
+              tickets: null,
+              arrestReports: null,
+              warrants: null,
+              communities: dbCommunities,
+              bolos: dbBolos,
+              context: null
+            });
           });
         });
       })
@@ -380,34 +401,39 @@ module.exports = function (app, passport, server) {
             '_id': req.user.user.activeCommunity
           }]
         }, function (err, dbCommunities) {
-          res.render('police-dashboard', {
-            user: req.user,
-            civilians: null,
-            vehicles: dbVehicles,
-            tickets: null,
-            arrestReports: null,
-            warrants: null,
-            communities: dbCommunities,
-            context: null
+          Bolo.find({
+            'bolo.communityID': req.user.user.activeCommunity
+          }, function (err, dbBolos) {
+            res.render('police-dashboard', {
+              user: req.user,
+              civilians: null,
+              vehicles: dbVehicles,
+              tickets: null,
+              arrestReports: null,
+              warrants: null,
+              communities: dbCommunities,
+              bolos: dbBolos,
+              context: null
+            });
           });
         });
       })
     }
   });
 
-  app.get('/tickets', function(req, res) {
+  app.get('/tickets', function (req, res) {
     Ticket.find({
-      'ticket.civID': req.query.civID
-    },
+        'ticket.civID': req.query.civID
+      },
       function (err, dbTickets) {
         res.send(dbTickets)
       });
   })
 
-  app.get('/arrests', function(req, res) {
+  app.get('/arrests', function (req, res) {
     ArrestReport.find({
-      'arrestReport.accusedID': req.query.civID
-    },
+        'arrestReport.accusedID': req.query.civID
+      },
       function (err, dbArrests) {
         res.send(dbArrests)
       });
@@ -695,6 +721,24 @@ module.exports = function (app, passport, server) {
     })
   });
 
+  app.post('/create-bolo', function (req, res) {
+    var myBolo = new Bolo()
+    myBolo.createBolo(req, res)
+    myBolo.save(function (err) {
+      if (err) return console.error(err);
+    });
+  });
+
+  app.post('/clear-bolo', function (req, res) {
+    Bolo.findByIdAndDelete({
+      '_id': ObjectId(req.body.boloID)
+    }, function(err){
+      if (err) return console.error(err);
+      req.app.locals.specialContext = "clearBoloSuccess"
+      res.redirect('/police-dashboard');
+    })
+  });
+
   app.post('/joinCommunity', function (req, res) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
@@ -964,6 +1008,52 @@ module.exports = function (app, passport, server) {
         })
       })
     })
+  })
+
+  app.post('/updateOrDeleteBolo', function(req, res) {
+    if (req.body.action === "delete") {
+      var boloID
+      if (exists(req.body.boloID)) {
+        boloID = req.body.boloID
+      }
+      Bolo.findByIdAndDelete({
+        '_id': ObjectId(boloID)
+      }, function(err){
+        if (err) return console.error(err);
+        res.redirect('/police-dashboard');
+      })
+    } else {
+      var boloType
+      var location
+      var description
+      var boloID
+      if (exists(req.body.boloType)) {
+        boloType = req.body.boloType.trim().toLowerCase()
+      }
+      if (exists(req.body.location)) {
+        location = req.body.location.trim()
+      }
+      if (exists(req.body.description)) {
+        description = req.body.description.trim()
+      }
+      if (exists(req.body.boloID)) {
+        boloID = req.body.boloID
+      }
+      
+      Bolo.findOneAndUpdate({
+        '_id': ObjectId(boloID)
+      }, {
+        $set: {
+          'bolo.boloType': boloType,
+          'bolo.location': location,
+          'bolo.description': description,
+          'bolo.updatedAt': new Date()
+        }
+      }, function(err) {
+        if (err) return console.error(err);
+        res.redirect('/police-dashboard');
+      })
+    }
   })
 
   app.post('/updateOrDeleteCiv', function (req, res) {
