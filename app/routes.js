@@ -32,6 +32,10 @@ module.exports = function (app, passport, server) {
     res.render('about');
   });
 
+  app.get('/health', function (req, res) {
+    res.render('health');
+  });
+
   app.get('/rules', function (req, res) {
     res.render('rules');
   });
