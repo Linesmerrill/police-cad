@@ -775,6 +775,10 @@ a.link--inherit {
     color: black;
 }
 
+.color-gray {
+    color: gray;
+}
+
 .form-group.required .control-label:after {
     content: "*";
     color: red;
@@ -782,6 +786,10 @@ a.link--inherit {
 
 .font-size-5 {
     font-size: 5em;
+}
+
+.font-size-1 {
+    font-size: 1em;
 }
 
 #arrest-report-case-no {
