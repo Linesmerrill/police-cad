@@ -295,18 +295,16 @@
               </div>
             </div>
 
-            <datalist id="names">
-              <% for(var i=0; i<personas.length; i++) {%>
-           <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%>">
-          <% } %>
-            </datalist>
-
             <!-- Search input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="registered-owner">Registered Owner</label>
+              <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
               <div class="col-md-4">
-                <input id="registered-owner" name="registeredOwner" type="search" placeholder="Registered Owner" list="names" class="form-control input-md" required="">
-
+                <select id="registeredOwner" name="registeredOwner" class="form-control">
+                  <option value="N/A">N/A</option>
+                  <% for(var i=0; i<personas.length; i++) {%>
+                    <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                   <% } %>
+                </select>
               </div>
             </div>
 
@@ -531,16 +529,15 @@
                 </div>
               </div>
 
-              <datalist id="names">
-                  <% for(var i=0; i<personas.length; i++) {%>
-               <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%>">
-              <% } %>
-                </datalist>
-
             <div class="form-group">
                 <label class="col-md-4 control-label" for="roVeh">Registered Owner:</label>
                 <div class="col-md-4">
-                  <input id="roVeh" name="roVeh" type="search" placeholder="Registered Owner" list="names" class="form-control input-md" required="">
+                  <select id="roVeh" name="roVeh" class="form-control" selected="selected">
+                    <option value="N/A">N/A</option>
+                    <% for(var i=0; i<personas.length; i++) {%>
+                      <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                     <% } %>
+                  </select>
                 </div>
               </div>
 
