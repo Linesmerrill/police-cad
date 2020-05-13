@@ -556,6 +556,10 @@ img::-moz-selection {
     background-color: #00aced;
 }
 
+.table-hover>tbody>tr.no-hover:hover {
+    background-color: transparent;
+}
+
 .margin-bottom-1 {
     margin-bottom: 1rem;
 }

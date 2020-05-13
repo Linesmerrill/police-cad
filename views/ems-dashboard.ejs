@@ -425,7 +425,7 @@
                       <p><% user.user.activeCommunity %></p>
                       <p><% i._id %></p>
                       <% if (user.user.activeCommunity == communities[i]._id) {%>
-                    <tr>
+                    <tr class="no-hover">
                       <td style="text-transform: capitalize;"><%= communities[i].community.name%></td>
                       <td> <%= communities[i].community.code%></td>
                       <td><button data-toggle="modal" href="#leaveActiveCommunityModal" class="btn btn-danger">Leave</button></td>
@@ -443,14 +443,15 @@
                   <tr>
                     Communities Owned by You
                   </tr>
-                  <tr style="background-color: #2d2d2d;"><td>Name</td><td>Code</td></tr>
+                  <tr style="background-color: #2d2d2d;"><td>Name</td><td>Code</td><td>Manage</td></tr>
             
                 </thead>
                   <tbody>
                     <% for(var i=0; i<communities.length; i++) {%>
-                    <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#" onclick="loadVehData(<%=i%>)">
+                    <tr class="gray-hover no-hover" data-toggle="modal" data-id=<%=i%> data-target="#" onclick="loadVehData(<%=i%>)">
                       <td style="text-transform: capitalize;"><%= communities[i].community.name%></td>
                       <td> <%= communities[i].community.code%></td>
+                      <td><a href="/communities/<%=communities[i]._id%>/<%=user._id%>"><span class="iconify" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></a></td>
                     </tr>
                     <% } %>
                   </tbody>

@@ -98,6 +98,38 @@ module.exports = function (app, passport, server) {
     res.redirect('/');
   });
 
+  app.get('/communities/:communityID/:userID', auth, function (req, res) {
+    Community.findOne({
+      '_id': ObjectId(req.params.communityID),
+      'community.ownerID': req.params.userID
+    }, function (err, dbCommunities) {
+      User.find({
+        'user.activeCommunity': req.params.communityID
+      }, function (err, dbMembers) {
+        if (err) return console.error(err);
+        res.render('communities', {
+          members: dbMembers,
+          communities: dbCommunities,
+          userID: req.params.userID
+          // context: context
+        });
+      })
+    })
+  })
+
+  app.get('/communities/:userID', auth, function (req, res) {
+    Community.find({
+      'community.ownerID': req.params.userID
+    }, function (err, dbCommunities) {
+      if (err) return console.error(err);
+      res.render('communities-list', {
+        communities: dbCommunities,
+        userID: req.params.userID
+        // context: context
+      });
+    })
+  })
+
   app.get('/forgot-password', function (req, res) {
     res.render('forgot-password', {
       user: req.user,
@@ -736,7 +768,7 @@ module.exports = function (app, passport, server) {
   app.post('/clear-bolo', function (req, res) {
     Bolo.findByIdAndDelete({
       '_id': ObjectId(req.body.boloID)
-    }, function(err){
+    }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "clearBoloSuccess"
       res.redirect('/police-dashboard');
@@ -1014,7 +1046,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/updateOrDeleteBolo', function(req, res) {
+  app.post('/updateOrDeleteBolo', function (req, res) {
     if (req.body.action === "delete") {
       var boloID
       if (exists(req.body.boloID)) {
@@ -1022,7 +1054,7 @@ module.exports = function (app, passport, server) {
       }
       Bolo.findByIdAndDelete({
         '_id': ObjectId(boloID)
-      }, function(err){
+      }, function (err) {
         if (err) return console.error(err);
         res.redirect('/police-dashboard');
       })
@@ -1043,7 +1075,7 @@ module.exports = function (app, passport, server) {
       if (exists(req.body.boloID)) {
         boloID = req.body.boloID
       }
-      
+
       Bolo.findOneAndUpdate({
         '_id': ObjectId(boloID)
       }, {
@@ -1053,7 +1085,7 @@ module.exports = function (app, passport, server) {
           'bolo.description': description,
           'bolo.updatedAt': new Date()
         }
-      }, function(err) {
+      }, function (err) {
         if (err) return console.error(err);
         res.redirect('/police-dashboard');
       })
@@ -1174,7 +1206,38 @@ module.exports = function (app, passport, server) {
       res.redirect('/ems-dashboard');
     })
   })
-};
+
+  app.post('/community', function (req, res) {
+    User.findByIdAndUpdate({
+      '_id': ObjectId(req.body.memberID)
+    }, {
+      $set: {
+        'user.activeCommunity': null
+      }
+    }, function (err) {
+      if (err) return console.error(err);
+      res.redirect('back')
+    })
+  })
+
+  app.post('/delete-community', function (req, res) {
+    User.updateMany({
+      'user.activeCommunity': req.body.communityID
+    }, {
+      $set: {
+        'user.activeCommunity': null
+      }
+    }, function (err) {
+      Community.findByIdAndDelete({
+        '_id': ObjectId(req.body.communityID)
+      }, function (err) {
+        if (err) return console.error(err);
+        res.redirect('back')
+      })
+    })
+  })
+
+}; //end of routes
 
 function auth(req, res, next) {
   if (req.isAuthenticated()) {
