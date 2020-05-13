@@ -94,7 +94,7 @@
               <div class="tab-content" id="pills-tabContent">
                 <div class="tab-pane fade active in" id="pills-manage-community" role="tabpanel" aria-labelledby="pills-manage-community-tab">
                     </br>
-                    <h2 style="text-transform: capitalize;" class="text-align-center"><%=communities['community']['name']%> </h2>
+                    <h2 style="text-transform: capitalize;" class="text-align-center"><%=communities['community']['name']%> <span data-toggle="modal" href="#communityNameModal" class="iconify" style="color:#337ab7;cursor:pointer" data-icon="jam:write" data-inline="false" data-width="20" data-height="20"></span></h2>
                     <input id="link" type="text" name="communityID" value="<%=communities['community']['code']%>" style="opacity: 0;">
                     <h2 class="text-align-center"><%=communities['community']['code']%><span class="iconify" data-icon="ant-design:copy-outlined" data-inline="false" style="color:#337ab7;cursor:pointer" data-width="25" data-height="25" onclick="copyText('#link')"></span></h2>
                         
@@ -165,7 +165,35 @@
         </div>
         
     </header>
-
+    <!-- Modify Community Name Modal -->
+    <div id="communityNameModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-body">
+              <form class="form-horizontal" action="/updateCommunityName" method="post">
+                <fieldset>
+    
+                <!-- Form Name -->
+                <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+                <h4>Modify Community Name</h4>
+                <hr style="width: 88%;max-width: 100rem;">
+    
+                <!-- Text input-->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="communityName">Community Name:<br><small>Max 25 characters</small></label>
+                    <div class="col-md-6">
+                    <input id="communityName" value="<%= communities.community.name %>" name="updatedName" type="text" class="form-control input-md" style="text-transform: capitalize;" maxlength="25" autocomplete="off" required>
+                    <div id="updateCommunityNameBtns" class="margin-top-1" style="display: none">
+                      <button id="updateCommunityName" value="<%= communities._id%>" name="communityID" class="btn btn-info">Update Name</button> <button type="button" class="btn btn-primary" onclick="cancelCommunityName()">Cancel</button>
+                    </div>
+                    </div>
+                  </div>
+                </fieldset>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
         <section>
             <div id="google-ads-1">
                 <p class="text-align-center color-gray font-size-1">Advertisement</p>
@@ -214,11 +242,27 @@
 <script type="text/javascript">
 $(document).ready(function () {
     $('#example').DataTable();
+
+    // displays the Update and Cancel buttons for updating the community name
+    var myCommunities = <%- JSON.stringify(communities) %>;
+    $('#communityName').on('keyup', function(e) {
+      if(e.target.value != myCommunities.community.name && e.target.value != '') {
+        $('#updateCommunityNameBtns').show();
+      } else {
+        $('#updateCommunityNameBtns').hide();
+      }
+    })
 });
 
 function copyText(element) {
     $(element).select();
     document.execCommand("copy");
 }
+
+function cancelCommunityName() {
+    var myCommunities = <%- JSON.stringify(communities) %>;
+    $('#communityName').val(myCommunities.community.name)
+    $('#updateCommunityNameBtns').hide();
+  }
 </script>
 <!-- IE needs 512+ bytes: https://blogs.msdn.microsoft.com/ieinternals/2010/08/18/friendly-http-error-pages/ -->

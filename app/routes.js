@@ -1237,6 +1237,19 @@ module.exports = function (app, passport, server) {
     })
   })
 
+  app.post('/updateCommunityName', function (req, res) {
+    Community.findByIdAndUpdate({
+      '_id': ObjectId(req.body.communityID)
+    }, {
+      $set: {
+        'community.name': req.body.updatedName
+      }
+    }, function(err) {
+      if (err) return console.error(err);
+      res.redirect('back')
+    })
+  })
+
 }; //end of routes
 
 function auth(req, res, next) {
