@@ -912,3 +912,7 @@ a.link--inherit {
     box-shadow: none;
     opacity: .65;
 }
+
+.nav-link:hover {
+    color: black;
+}

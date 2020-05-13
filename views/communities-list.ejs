@@ -110,9 +110,8 @@
                         <tbody>
                             <% for(var i=0; i<communities.length; i++) {%>
                                 <input id="link" type="text" name="communityID" value="<%=communities[i].community.code%>" style="opacity: 0;">
-                                    
                                     <tr>
-                                        <td><%=communities[i].community.name%></td>
+                                        <td style="text-transform: capitalize;"><%=communities[i].community.name%></td>
                                         <td>
                                             
                                             <%=communities[i].community.code%><span class="iconify" data-icon="ant-design:copy-outlined" data-inline="false" style="color:#337ab7;cursor:pointer" data-width="15" data-height="15" onclick="copyText('#link')"></span></td>
