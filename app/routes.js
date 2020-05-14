@@ -1073,6 +1073,9 @@ module.exports = function (app, passport, server) {
       }
       if (exists(req.body.boloID)) {
         boloID = req.body.boloID
+      } else {
+        console.warn("cannot update or delete non-existent boloID: ", req.body.boloID);
+        res.redirect('/police-dashboard');
       }
 
       Bolo.findOneAndUpdate({
@@ -1161,6 +1164,10 @@ module.exports = function (app, passport, server) {
 
   app.post('/updateOrDeleteVeh', function (req, res) {
     if (req.body.action === "update") {
+      if(!exists(req.body.vehicleID) || !exists(req.body.emailVeh)) {
+        console.warn("cannot update vehicle with empty vehicleID or emailVeh")
+        res.redirect('/civ-dashboard');
+      }
       Vehicle.findOneAndUpdate({
         '_id': ObjectId(req.body.vehicleID),
         'vehicle.email': req.body.emailVeh.toLowerCase()
@@ -1180,6 +1187,10 @@ module.exports = function (app, passport, server) {
         res.redirect('/civ-dashboard');
       })
     } else {
+      if(!exists(req.body.vehicleID)) {
+        console.warn("cannot delete vehicle with empty vehicleID")
+        res.redirect('/civ-dashboard');
+      }
       Vehicle.deleteOne({
         '_id': ObjectId(req.body.vehicleID),
         'vehicle.email': req.body.emailVeh.toLowerCase()
