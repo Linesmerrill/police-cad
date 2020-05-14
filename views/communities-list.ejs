@@ -100,13 +100,11 @@
                     </br>
                     
                     <h4>Owned Communities:</h4>
-                    <form id="actionForm" class="row" action="/delete-community" method="post">
                     <table id="example" class="table table-bordered" style="width:100%">
                         <thead>
                             <tr>
                                 <th>Name</th>
                                 <th>Code</th>
-                                <!-- <th>Title</th> -->
                                 <th>Manage</th>
                                 <th>Action</th>
                             </tr>
@@ -116,22 +114,16 @@
                                 <input id="link" type="text" name="communityID" value="<%=communities[i].community.code%>" style="opacity: 0;">
                                     <tr>
                                         <td style="text-transform: capitalize;"><%=communities[i].community.name%></td>
-                                        <td>
-                                            
-                                            <%=communities[i].community.code%><span class="iconify" data-icon="ant-design:copy-outlined" data-inline="false" style="color:#337ab7;cursor:pointer" data-width="15" data-height="15" onclick="copyText('#link')"></span></td>
-                                        <!-- <td>-</td> -->
+                                        <td><%=communities[i].community.code%><span class="iconify" data-icon="ant-design:copy-outlined" data-inline="false" style="color:#337ab7;cursor:pointer" data-width="15" data-height="15" onclick="copyText('#link')"></span></td>
                                         <td class="text-align-center"><a href="/communities/<%=communities[i]._id%>/<%=userID%>"><span class="iconify" data-icon="jam:write" data-inline="false" data-width="25" data-height="25"></span></a></td>
                                         <td class="text-align-center">
-                                            <!-- <input type="hidden" name="communityID" value="<%= communities._id %>"> -->
-                                            <button type="submit" value="<%= communities[i]._id %>" name="communityID" class="btn btn-md btn-danger">Delete</button>
+                                            <button class="btn btn-md btn-danger" data-toggle="modal" href="#deleteCommunityModal" onclick="populateCommunityID('<%=communities[i]._id%>')">Delete</button>
                                         </td>
                                     </tr>
                             <%}%>
                         </tbody>
                     </table>
-                    </form>
                 </div>
-                <!-- <div class="tab-pane fade" id="pills-owned-communities" role="tabpanel" aria-labelledby="pills-owned-communities-tab">
                   <table id="warningTable" class="table table-hover" border="1" frame="box">
                     <thead>
                       <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Warning</td></tr>
@@ -155,6 +147,36 @@
             
         </div>
     </header>
+    <!-- Modify Community Name Modal -->
+    <div id="deleteCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-body">
+              <form class="form-horizontal" action="/delete-community" method="post">
+                <fieldset>
+    
+                <!-- Form Name -->
+                <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+                <h4>Delete Community</h4>
+                <hr style="width: 88%;max-width: 100rem;">
+                <p>Warning: This will remove all members and then delete the community.
+                    This is non-reversible.
+                </p>
+                <p>Are you sure you want to delete this community?</p>
+                <!-- Button-->
+                <div class="form-group">
+                    <label class="col-md-4 control-label" for="deleteAccount"></label>
+                    <div class="col-md-4 text-align-center">
+                    <input id="communityID" type="hidden" name="communityID" value="">
+                    <button type="submit" class="btn btn-md btn-danger">Delete</button>
+                    </div>
+                  </div>
+                </fieldset>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
         <section>
             <div id="google-ads-1">
                 <p class="text-align-center color-gray font-size-1">Advertisement</p>
@@ -209,6 +231,10 @@ function copyText(element) {
     $(element).select();
     document.execCommand("copy");
     $('#successCopyMessage').show();
+}
+
+function populateCommunityID(communityID) {
+    $('#communityID').val(communityID)
 }
 </script>
 <!-- IE needs 512+ bytes: https://blogs.msdn.microsoft.com/ieinternals/2010/08/18/friendly-http-error-pages/ -->
