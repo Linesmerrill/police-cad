@@ -106,6 +106,13 @@ module.exports = function (app, passport, server) {
         'user.activeCommunity': req.params.communityID
       }, function (err, dbMembers) {
         if (err) return console.error(err);
+        console.log('dbMembers', dbMembers)
+        console.log('dbCommunities', dbCommunities)
+        console.log('req.params.userID', req.params.userID)
+        if (dbCommunities == null) {
+          res.redirect('back')
+          return
+        }
         res.render('communities', {
           members: dbMembers,
           communities: dbCommunities,
@@ -121,6 +128,10 @@ module.exports = function (app, passport, server) {
       'community.ownerID': req.params.userID
     }, function (err, dbCommunities) {
       if (err) return console.error(err);
+      if (dbCommunities == null) {
+        res.redirect('back')
+        return
+      }
       res.render('communities-list', {
         communities: dbCommunities,
         userID: req.params.userID
@@ -1073,6 +1084,9 @@ module.exports = function (app, passport, server) {
       }
       if (exists(req.body.boloID)) {
         boloID = req.body.boloID
+      } else {
+        console.warn("cannot update or delete non-existent boloID: ", req.body.boloID);
+        res.redirect('/police-dashboard');
       }
 
       Bolo.findOneAndUpdate({
@@ -1161,6 +1175,10 @@ module.exports = function (app, passport, server) {
 
   app.post('/updateOrDeleteVeh', function (req, res) {
     if (req.body.action === "update") {
+      if (!exists(req.body.vehicleID) || !exists(req.body.emailVeh)) {
+        console.warn("cannot update vehicle with empty vehicleID or emailVeh")
+        res.redirect('/civ-dashboard');
+      }
       Vehicle.findOneAndUpdate({
         '_id': ObjectId(req.body.vehicleID),
         'vehicle.email': req.body.emailVeh.toLowerCase()
@@ -1180,6 +1198,10 @@ module.exports = function (app, passport, server) {
         res.redirect('/civ-dashboard');
       })
     } else {
+      if (!exists(req.body.vehicleID)) {
+        console.warn("cannot delete vehicle with empty vehicleID")
+        res.redirect('/civ-dashboard');
+      }
       Vehicle.deleteOne({
         '_id': ObjectId(req.body.vehicleID),
         'vehicle.email': req.body.emailVeh.toLowerCase()
@@ -1243,7 +1265,7 @@ module.exports = function (app, passport, server) {
       $set: {
         'community.name': req.body.updatedName
       }
-    }, function(err) {
+    }, function (err) {
       if (err) return console.error(err);
       res.redirect('back')
     })
