@@ -239,7 +239,7 @@ header {
     color: #fff;
     width: 100%;
     background-color: #c9c9c9;
-    background-image: url("/images/gta-landing-page.jpg");
+    background-image: url("/static/images/gta-landing-page.jpg");
     background-position: center;
     -webkit-background-size: cover;
     -moz-background-size: cover;
@@ -556,6 +556,10 @@ img::-moz-selection {
     background-color: #00aced;
 }
 
+.table-hover>tbody>tr.no-hover:hover {
+    background-color: transparent;
+}
+
 .margin-bottom-1 {
     margin-bottom: 1rem;
 }
@@ -736,6 +740,17 @@ a.link--inherit {
     opacity: .6;
 }
 
+#third::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-image: linear-gradient(to bottom, black, black);
+    opacity: .8;
+}
+
 .padding-left-0 {
     padding-left: 0px;
 }
@@ -896,4 +911,8 @@ a.link--inherit {
     -webkit-box-shadow: none;
     box-shadow: none;
     opacity: .65;
+}
+
+.nav-link:hover {
+    color: black;
 }

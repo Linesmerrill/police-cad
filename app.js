@@ -61,7 +61,7 @@ app.use(passport.session());
 app.use(flash());
 
 // Static serving of public files.
-app.use(express.static(path.join(__dirname, 'public')));
+app.use('/static', express.static(path.join(__dirname, 'public')))
 
 app.use(function forceLiveDomain(req, res, next) {
 	var host = req.get('Host')
