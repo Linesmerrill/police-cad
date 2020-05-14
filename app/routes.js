@@ -54,7 +54,7 @@ module.exports = function (app, passport, server) {
 
   app.get('/ads.txt', (req, res) => {
     fs.readFile('ads.txt', 'utf8', function (err, data) {
-      if (err) throw err;
+      if (err) console.error("failed to perform route", err);
       return res.json(data);
     })
   })
