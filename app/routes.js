@@ -53,10 +53,9 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/ads.txt', (req, res) => {
-    fs.readFile('ads.txt', 'utf8', function (err, data) {
-      if (err) console.error("failed to perform route", err);
-      return res.json(data);
-    })
+    res.set('Content-Type', 'text');
+    let message = 'google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0'
+    return res.send(new Buffer.alloc(message.length, 'google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0'))
   })
 
   app.get('/login', function (req, res) {
