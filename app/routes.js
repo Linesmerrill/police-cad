@@ -99,7 +99,7 @@ module.exports = function (app, passport, server) {
 
   app.get('/communities', auth, function (req, res) {
     if (!exists(req.session.communityID)){
-      console.warn("cannot use empty communityID")
+      console.warn("cannot render empty communityID, route: /communities")
         res.redirect('back')
         return
     }
@@ -108,7 +108,7 @@ module.exports = function (app, passport, server) {
       'community.ownerID': req.session.passport.user
     }, function (err, dbCommunities) {
       if (!exists(dbCommunities)) {
-        console.warn("cannot use empty communityID")
+        console.warn("cannot render empty communityID after searching community, route: /communities")
         res.redirect('back')
         return
       }
@@ -116,6 +116,11 @@ module.exports = function (app, passport, server) {
         'user.activeCommunity': req.session.communityID
       }, function (err, dbMembers) {
         if (err) return console.error(err);
+        if (dbCommunities == null) {
+          console.warn("cannot render empty communityID after searching users, route: /communities")
+          res.redirect('back')
+          return
+        }
         res.render('communities', {
           members: dbMembers,
           communities: dbCommunities,
@@ -130,6 +135,10 @@ module.exports = function (app, passport, server) {
       'community.ownerID': req.session.passport.user
     }, function (err, dbCommunities) {
       if (err) return console.error(err);
+      if (!exists(dbCommunities)) {
+        console.warn("cannot render empty dbCommunity, route: /owned-communities")
+        return res.redirect('back')
+      }
       res.render('communities-owned', {
         communities: dbCommunities,
         userID: req.session.passport.user
@@ -1081,6 +1090,9 @@ module.exports = function (app, passport, server) {
       }
       if (exists(req.body.boloID)) {
         boloID = req.body.boloID
+      } else {
+        console.warn("cannot update or delete non-existent boloID: ", req.body.boloID);
+        res.redirect('/police-dashboard');
       }
 
       Bolo.findOneAndUpdate({
@@ -1169,6 +1181,10 @@ module.exports = function (app, passport, server) {
 
   app.post('/updateOrDeleteVeh', function (req, res) {
     if (req.body.action === "update") {
+      if (!exists(req.body.vehicleID) || !exists(req.body.emailVeh)) {
+        console.warn("cannot update vehicle with empty vehicleID or emailVeh, route: /updateOrDeleteVeh")
+        res.redirect('/civ-dashboard');
+      }
       Vehicle.findOneAndUpdate({
         '_id': ObjectId(req.body.vehicleID),
         'vehicle.email': req.body.emailVeh.toLowerCase()
@@ -1188,6 +1204,10 @@ module.exports = function (app, passport, server) {
         res.redirect('/civ-dashboard');
       })
     } else {
+      if (!exists(req.body.vehicleID)) {
+        console.warn("cannot delete vehicle with empty vehicleID, route: /updateOrDeleteVeh")
+        res.redirect('/civ-dashboard');
+      }
       Vehicle.deleteOne({
         '_id': ObjectId(req.body.vehicleID),
         'vehicle.email': req.body.emailVeh.toLowerCase()
@@ -1251,7 +1271,7 @@ module.exports = function (app, passport, server) {
       $set: {
         'community.name': req.body.updatedName
       }
-    }, function(err) {
+    }, function (err) {
       if (err) return console.error(err);
       res.redirect('back')
     })
