@@ -97,34 +97,42 @@ module.exports = function (app, passport, server) {
     res.redirect('/');
   });
 
-  app.get('/communities/:communityID/:userID', auth, function (req, res) {
+  app.get('/communities', auth, function (req, res) {
+    if (!exists(req.session.communityID)){
+      console.warn("cannot use empty communityID")
+        res.redirect('back')
+        return
+    }
     Community.findOne({
-      '_id': ObjectId(req.params.communityID),
-      'community.ownerID': req.params.userID
+      '_id': ObjectId(req.session.communityID),
+      'community.ownerID': req.session.passport.user
     }, function (err, dbCommunities) {
+      if (!exists(dbCommunities)) {
+        console.warn("cannot use empty communityID")
+        res.redirect('back')
+        return
+      }
       User.find({
-        'user.activeCommunity': req.params.communityID
+        'user.activeCommunity': req.session.communityID
       }, function (err, dbMembers) {
         if (err) return console.error(err);
         res.render('communities', {
           members: dbMembers,
           communities: dbCommunities,
-          userID: req.params.userID
-          // context: context
+          userID: req.session.passport.user
         });
       })
     })
   })
 
-  app.get('/communities/:userID', auth, function (req, res) {
+  app.get('/owned-communities', auth, function (req, res) {
     Community.find({
-      'community.ownerID': req.params.userID
+      'community.ownerID': req.session.passport.user
     }, function (err, dbCommunities) {
       if (err) return console.error(err);
-      res.render('communities-list', {
+      res.render('communities-owned', {
         communities: dbCommunities,
-        userID: req.params.userID
-        // context: context
+        userID: req.session.passport.user
       });
     })
   })
@@ -1247,6 +1255,11 @@ module.exports = function (app, passport, server) {
       if (err) return console.error(err);
       res.redirect('back')
     })
+  })
+
+  app.post('/communities', function (req, res) {
+    req.session.communityID = req.body.communityID
+    res.redirect('communities')
   })
 
 }; //end of routes
