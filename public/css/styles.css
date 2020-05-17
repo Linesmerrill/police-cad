@@ -882,12 +882,12 @@ a.link--inherit {
 
 /* To fix the scrolling modal issues */
 .modal {
-    overflow-y:auto;
-  }
+    overflow-y: auto;
+}
 
-  .width-100 {
-      width: 100%
-  }
+.width-100 {
+    width: 100%
+}
 
 .diagonal-arrow {
     width: 82%;
@@ -915,4 +915,21 @@ a.link--inherit {
 
 .nav-link:hover {
     color: black;
+}
+
+.hide-button-outline { 
+    padding: 0 !important;
+    border: none !important;
+    background: none !important;
+}
+
+.path-arrow {
+    margin-top: 0.2em;
+    margin-left: -1em;
+}
+
+.arrow-button:hover {
+    color: #337ab7;
+    background-color: transparent !important;
+    cursor: default;
 }

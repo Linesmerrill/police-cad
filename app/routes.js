@@ -53,10 +53,9 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/ads.txt', (req, res) => {
-    fs.readFile('ads.txt', 'utf8', function (err, data) {
-      if (err) throw err;
-      return res.json(data);
-    })
+    res.set('Content-Type', 'text');
+    let message = 'google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0'
+    return res.send(new Buffer.alloc(message.length, 'google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0'))
   })
 
   app.get('/login', function (req, res) {
@@ -98,34 +97,51 @@ module.exports = function (app, passport, server) {
     res.redirect('/');
   });
 
-  app.get('/communities/:communityID/:userID', auth, function (req, res) {
+  app.get('/communities', auth, function (req, res) {
+    if (!exists(req.session.communityID)){
+      console.warn("cannot render empty communityID, route: /communities")
+        res.redirect('back')
+        return
+    }
     Community.findOne({
-      '_id': ObjectId(req.params.communityID),
-      'community.ownerID': req.params.userID
+      '_id': ObjectId(req.session.communityID),
+      'community.ownerID': req.session.passport.user
     }, function (err, dbCommunities) {
+      if (!exists(dbCommunities)) {
+        console.warn("cannot render empty communityID after searching community, route: /communities")
+        res.redirect('back')
+        return
+      }
       User.find({
-        'user.activeCommunity': req.params.communityID
+        'user.activeCommunity': req.session.communityID
       }, function (err, dbMembers) {
         if (err) return console.error(err);
+        if (dbCommunities == null) {
+          console.warn("cannot render empty communityID after searching users, route: /communities")
+          res.redirect('back')
+          return
+        }
         res.render('communities', {
           members: dbMembers,
           communities: dbCommunities,
-          userID: req.params.userID
-          // context: context
+          userID: req.session.passport.user
         });
       })
     })
   })
 
-  app.get('/communities/:userID', auth, function (req, res) {
+  app.get('/owned-communities', auth, function (req, res) {
     Community.find({
-      'community.ownerID': req.params.userID
+      'community.ownerID': req.session.passport.user
     }, function (err, dbCommunities) {
       if (err) return console.error(err);
-      res.render('communities-list', {
+      if (!exists(dbCommunities)) {
+        console.warn("cannot render empty dbCommunity, route: /owned-communities")
+        return res.redirect('back')
+      }
+      res.render('communities-owned', {
         communities: dbCommunities,
-        userID: req.params.userID
-        // context: context
+        userID: req.session.passport.user
       });
     })
   })
@@ -1074,6 +1090,9 @@ module.exports = function (app, passport, server) {
       }
       if (exists(req.body.boloID)) {
         boloID = req.body.boloID
+      } else {
+        console.warn("cannot update or delete non-existent boloID: ", req.body.boloID);
+        res.redirect('/police-dashboard');
       }
 
       Bolo.findOneAndUpdate({
@@ -1162,6 +1181,10 @@ module.exports = function (app, passport, server) {
 
   app.post('/updateOrDeleteVeh', function (req, res) {
     if (req.body.action === "update") {
+      if (!exists(req.body.vehicleID) || !exists(req.body.emailVeh)) {
+        console.warn("cannot update vehicle with empty vehicleID or emailVeh, route: /updateOrDeleteVeh")
+        res.redirect('/civ-dashboard');
+      }
       Vehicle.findOneAndUpdate({
         '_id': ObjectId(req.body.vehicleID),
         'vehicle.email': req.body.emailVeh.toLowerCase()
@@ -1181,6 +1204,10 @@ module.exports = function (app, passport, server) {
         res.redirect('/civ-dashboard');
       })
     } else {
+      if (!exists(req.body.vehicleID)) {
+        console.warn("cannot delete vehicle with empty vehicleID, route: /updateOrDeleteVeh")
+        res.redirect('/civ-dashboard');
+      }
       Vehicle.deleteOne({
         '_id': ObjectId(req.body.vehicleID),
         'vehicle.email': req.body.emailVeh.toLowerCase()
@@ -1244,10 +1271,15 @@ module.exports = function (app, passport, server) {
       $set: {
         'community.name': req.body.updatedName
       }
-    }, function(err) {
+    }, function (err) {
       if (err) return console.error(err);
       res.redirect('back')
     })
+  })
+
+  app.post('/communities', function (req, res) {
+    req.session.communityID = req.body.communityID
+    res.redirect('communities')
   })
 
 }; //end of routes
