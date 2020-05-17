@@ -812,8 +812,13 @@
 
 <script type="text/javascript">
   $(document).ready(function(){
-  $('#personas-table').DataTable()
-  $('#vehicle-table').DataTable()
+    
+  $('#personas-table').DataTable({
+    "bLengthChange": false,
+  })
+  $('#vehicle-table').DataTable({
+    "bLengthChange": false,
+  })
 
 // displays the Update Username and Cancel buttons for updating the username
 var myUser = <%- JSON.stringify(user) %>;
