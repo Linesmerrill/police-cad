@@ -50,7 +50,7 @@
         </thead>
           <tbody>
             <% for(var i=0; i<communities.length; i++) {%>
-            <tr class="gray-hover no-hover" data-toggle="modal" data-id=<%=i%> data-target="#"">
+            <tr class="gray-hover no-hover" data-toggle="modal" data-id=<%=i%>">
               <td style="text-transform: capitalize;"><%= communities[i].community.name%></td>
               <td> <%= communities[i].community.code%></td>
               <td><button type="submit" name="communityID" value="<%= communities[i]._id %>" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>
