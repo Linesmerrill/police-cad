@@ -1282,6 +1282,14 @@ module.exports = function (app, passport, server) {
     res.redirect('communities')
   })
 
+  var io = require('socket.io').listen(server);
+
+  io.on('connection', (socket) => {
+    socket.on('chat message', (msg) => {
+      io.emit('chat message', msg);
+    });
+  });
+
 }; //end of routes
 
 function auth(req, res, next) {
@@ -1328,3 +1336,4 @@ function exists(v) {
     return false
   }
 }
+

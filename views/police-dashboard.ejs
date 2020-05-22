@@ -1425,6 +1425,7 @@
 </div>
 
 <!--scripts loaded here -->
+<script src="/socket.io/socket.io.js"></script>
 <script src="/static/js/jquery.min.js"></script>
 <script src="/static/js/bootstrap.min.js"></script>
 <script src="/static/js/jquery.easing.min.js"></script>
@@ -1434,7 +1435,20 @@
 </body>
 
 </html>
-
+<script>
+  $(function () {
+    var socket = io();
+    // $('form').submit(function(e){
+    //   e.preventDefault(); // prevents page reloading
+    //   socket.emit('chat message', $('#m').val());
+    //   $('#m').val('');
+    //   return false;
+    // });
+    socket.on('chat message', function(msg){
+      $('#panic').append($('<li>').text(msg));
+    });
+  });
+</script>
 <script type="text/javascript">
 $(document).ready(function() {
   // displays the Update Username and Cancel buttons for updating the username
