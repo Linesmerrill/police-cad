@@ -1184,6 +1184,10 @@ module.exports = function (app, passport, server) {
       if (!exists(req.body.vehicleID) || !exists(req.body.emailVeh)) {
         console.warn("cannot update vehicle with empty vehicleID or emailVeh, route: /updateOrDeleteVeh")
         res.redirect('/civ-dashboard');
+        return
+      }
+      if (!exists(req.body.roVeh)) {
+        req.body.roVeh = 'N/A'
       }
       Vehicle.findOneAndUpdate({
         '_id': ObjectId(req.body.vehicleID),
