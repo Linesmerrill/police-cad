@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>LPS - Dispatch Dashboard</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Codeply">
+  <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/static/css/animate.min.css" />
+  <link rel="stylesheet" href="/static/css/ionicons.min.css" />
+  <link rel="stylesheet" href="/static/css/tail.select-dark.min.css" />
+  <link rel="stylesheet" href="/static/css/awesomplete.css" />
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <!-- for FF, Chrome, Opera -->
+  <link rel="icon" type="image/png" href="data:image/png;base64,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" sizes="16x16">
+  <link rel="icon" type="image/png" href="data:image/png;base64,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" sizes="32x32">
+  <!-- for IE -->
+  <link rel="icon" type="image/x-icon" href="data:image/png;base64,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">
+  <link rel="shortcut icon" type="image/x-icon" href="data:image/png;base64,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" />
+  <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
+  <script type="text/javascript" src="static/js/tail.select.min.js"></script>
+  <!-- Global Site Tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-107735203-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag('js', new Date());
+    gtag('config', 'UA-107735203-1');
+  </script>
+  <script data-ad-client="ca-pub-3842696805773142" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+</head>
+
+<body>
+  <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand page-scroll" href="/"><i class="ion-ios-analytics-outline"></i> Lines Police Server</a>
+      </div>
+      <div class="navbar-collapse collapse" id="bs-navbar">
+        <ul class="nav navbar-nav">
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li>
+            <button data-toggle="modal" href="#communitiesModal" class="btn btn-primary btn-sm margin-top-1-5 margin-left-1">✨ Communities ✨</button>
+          </li>
+          <li>
+            <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()">Hi, <%= user.user.username %></a>
+          </li>
+          <li>
+            <a href="/logout">Logout</a>
+          </li>
+        </ul>
+
+      </div>
+    </div>
+  </nav>
+  <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
+    <div class="header-content">
+      <div class="inner">
+        <h4>San Andreas - Dispatch Operations</h4>
+
+        <% if (context == "createTicketSuccess") {%>
+          <div class="alert alert-success alert-dismissible show" role="alert">
+            <strong>Success!</strong> Citation created successfully
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <% } else if (context == "createWarningSuccess") {%>
+          <div class="alert alert-success alert-dismissible show" role="alert">
+            <strong>Success!</strong> Warning created successfully
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <% } else if (context == "createArrestSuccess") {%>
+          <div class="alert alert-success alert-dismissible show" role="alert">
+            <strong>Success!</strong> Arrest created successfully
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <% } else if (context == "createWarrantSuccess") {%>
+          <div class="alert alert-success alert-dismissible show" role="alert">
+            <strong>Success!</strong> Warrant created successfully
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <% } else if (context == "createBoloSuccess") {%>
+          <div class="alert alert-success alert-dismissible show" role="alert">
+            <strong>Success!</strong> Bolo created successfully
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <%}%>
+
+        <!-- imports the community specific alerts -->
+        <% include community-alerts %>
+
+        <div class="col-lg-10 col-lg-offset-1 text-center">
+          <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
+          <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
+          <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2">Create BOLO <span class="iconify" data-icon="ion-sunny-outline" data-inline="false" style="color: #00aced;"></span></button>
+          <% } else {%>
+            <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
+            <% } %>
+          <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
+          <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
+        </div>
+        <div class="col-lg-10 col-lg-offset-1 margin-top-2">
+          <% if (bolos != null && bolos.length > 0) {%>
+            <h4>Active BOLOs: <a href="/dispatch-dashboard"><span class="iconify icon" data-icon="ion:refresh" data-inline="false"></span></a></h4>
+            <h5>Click for details</h5>
+            <% for(var i=0; i<bolos.length; i++) {%>
+              <% if (bolos[i].bolo.status == true) {%>
+                <% if (bolos[i].bolo.boloType === "vehicle") {%>
+                  <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
+          <div class="alert alert-danger alert-dismissible show" role="alert">
+            <span class="iconify icon" data-icon="ion:car-sport" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
+            <!-- <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button> -->
+          </div>
+        </a>
+          <%} else if (bolos[i].bolo.boloType === "person") {%>
+            <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
+            <div class="alert alert-danger alert-dismissible show" role="alert">
+              <span class="iconify icon" data-icon="ion:person" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
+              <!-- <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button> -->
+            </div>
+            </a>
+          
+            <%} else {%>
+              <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
+              <div class="alert alert-danger alert-dismissible show" role="alert">
+                <span class="iconify icon" data-icon="ion:alert-circle" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
+                <!-- <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button> -->
+              </div>
+            </a>
+              <%}%>
+            <%}%>
+          <%}%>
+          <%}%>
+        </div>
+        <div class="col-lg-10 col-lg-offset-1">
+          <% if (commUsers == null) {%>
+            <h4>Looks like you are not in a community, click here to get started!</h4>
+            <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
+            <%} else {%>
+          <table id="example" class="table table-bordered" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <!-- <th>Code</th> -->
+                    <th>Status</th>
+                    <th>Manage</th>
+                </tr>
+            </thead>
+            <tbody>
+                    <input id="link" type="text" value="" style="opacity: 0;">
+                
+                
+                <% for(var i=0; i<commUsers.length; i++) {%>
+                        <tr>
+                            <td style="text-transform: capitalize;"><%=commUsers[i].user.username%></td>
+                            <% if (commUsers[i].user.dispatchStatus == '' || commUsers[i].user.dispatchStatus == null) {%>
+                              <td>-</td>
+                              <%} else {%>
+                            <td><%=commUsers[i].user.dispatchStatus%></td>
+                            <%}%>
+                            <td><button type="button" data-toggle="modal" href="#manageUserDispatchStatusModal" onclick="setDispatchModalValues('<%=i%>')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>
+                        </tr>
+                <%}%>
+            </tbody>
+        </table>
+        <%}%>
+        </div>
+      </div>
+    </div>
+  </header>
+  
+  <div id="google-ads-1">
+    <p class="text-align-center color-gray font-size-1">Advertisement</p>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <!-- Basic horizontal ads -->
+    <ins class="adsbygoogle"
+        style="display:block"
+        data-ad-client="ca-pub-3842696805773142"
+        data-ad-slot="4338952373"
+        data-ad-format="auto"
+        data-full-width-responsive="true"></ins>
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+</div>
+  <% include footer %>  
+  <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-body">
+          <img src="" id="galleryImage" class="img-responsive" />
+          <p>
+            <br/>
+            <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i class="ion-android-close"></i></button>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="nameDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div id="civilianNotFound" class="alert alert-warning" style="display:none">
+          <strong>Not Found!</strong> Person not found in police database.
+        </div>
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" name="findCivilian" action="/name-search" method="get">
+            <fieldset>
+
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Person Database</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Text input-->
+              <div class="form-group">
+                <div class="col-md-12">
+                  <div class="col-md-4">
+                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-first-name">First Name</label>
+                    <input id="civ-first-name" name="firstName" type="text" placeholder="First Name" class="form-control input-md col-md-offset-1" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-last-name">Last Name</label>
+                    <input id="civ-last-name" name="lastName" type="text" placeholder="Last Name" class="form-control input-md col-md-offset-1" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
+                  </div>
+                  <% if (user.user.activeCommunity == '' || user.user.activeCommunity == null) { %>
+                  <div class="col-md-4">
+                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-dob">Date of Birth</label>
+                    <input id="civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md col-md-offset-1" required="">
+                  </div>
+                  <% } %>
+                  <div class="col-md-4">
+                      <br>
+                      <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                      <button type="submit" class="btn btn-info" onclick="searchNames()">Search</button>
+                    </div>
+                </div>
+              </div>
+
+              <!-- List of Civilians -->
+              <div id="civDetails" style="display:none">
+                <div class="panel-group" id="accordion">
+                  <% if (civilians != null) {%>
+                    <% for(var i=0; i<civilians.length; i++) {%>
+                      <div class="panel panel-default background-transparent">
+                          <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion" href="#collapse<%=i%>"
+                            <h4 class="panel-title">
+                              <a class="blue-hover">
+                                  <%= civilians[i].civilian.firstName %> <%= civilians[i].civilian.lastName %> | <%= civilians[i]._id %></a>
+                            </h4>
+                          </div>
+                          <% if (i === 0) {%>
+                            <div id="collapse<%=i%>" class="panel-collapse collapse in">
+                          <% } else {%>
+                            <div id="collapse<%=i%>" class="panel-collapse collapse">
+                          <% } %>
+                            <div class="panel-body">
+                              
+                              <% if (warrants != null) {%>
+                                <% if (warrants.length == 0) {%>
+                                  <div id="noWarrantMessage" class="alert alert-success alert-dismissible" style="display:block">
+                                    <strong>NCIC Warrant Check!</strong> Clean, No Warrants Found.
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                      <span aria-hidden="true">&times;</span>
+                                    </button>
+                                  </div>
+                                  <% } else {%>
+                                <span>(Click on warrant to clear)</span>
+                                <% for(var k=0; k<warrants.length; k++) {%>
+                                  <% if ((warrants[k].warrant.accusedID == civilians[i]._id) && (warrants[k].warrant.status === true)) {%>
+                                    <span id="confirmWarrantModal" data-toggle="modal" href="#confirmClearWarrantModal" onclick="clearWarrantWithValues('<%= warrants[k]._id %>', '<%= warrants[k].warrant.reasons[0] %>')">
+                                      <div id="warrantMessage" class="alert alert-danger alert-dismissible" style="display:block">
+                                        <strong>Active Warrant!</strong> <%= warrants[k].warrant.reasons[0] %>
+                                      </div>
+                                    </span>
+                                <% } %>
+                                <% } %>
+                                <% } %>
+                              <% } %>
+                                
+                              
+
+
+
+                              <% if (civilians[i].civilian.licenseStatus == 3) {%>
+                                <div id="licenseRevokedMessage" class="alert alert-warning" style="display:block">
+                                    <strong>Warning!</strong> License is Revoked.
+                                  </div>
+                                <% } %>
+                                <div class="text-align-center">
+                                  <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenCitation('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#date', '#time');">Issue Citation</button>
+                                  <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
+                                  <button data-toggle="modal" href="#arrestModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenArrest('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
+                                  <button data-toggle="modal" href="#createWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenCreateWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Create Warrant</button>
+                                  <!-- <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button> -->
+                                </div>
+                                <hr/>
+                                Driver's ID #: <%= civilians[i]._id%><br/>
+                                Date of Birth: <%= civilians[i].civilian.birthday%><br/>
+                                <% if (civilians[i].civilian.licenseStatus == 1) {%>
+                                  <p class="plate-body-text">Driver's License Status: Valid <i class="ion-checkmark-circled color-green"></i></p>
+                                  <% } else if (civilians[i].civilian.licenseStatus == 3) {%>
+                                    <p class="plate-body-text">Driver's License Status: Revoked <i class="ion-alert-circled color-yellow"></i></p>
+                                    <% } else {%>
+                                  <p class="plate-body-text">Driver's License Status: Invalid <i class="ion-alert-circled color-red"></i></p>
+                                <% } %>
+                                <% if (civilians[i].civilian.firearmLicense == 2) {%>
+                                  <p class="plate-body-text">Firearm License: Valid <i class="ion-checkmark-circled color-green"></i></p>
+                                  <% } else if (civilians[i].civilian.firearmLicense == 3) {%>
+                                    <p class="plate-body-text">Firearm License: Revoked <i class="ion-alert-circled color-red"></i></p>
+                                    <% } else {%>
+                                      <p class="plate-body-text">Firearm License: None <i class="ion-alert-circled color-yellow"></i></p>
+                                <% } %>
+                                Address: <%= civilians[i].civilian.address%><br/>
+                                Occupation: <%= civilians[i].civilian.occupation%><br/>
+                                <hr style="width: 88%;max-width: 100rem;">
+                                <h4>Criminal History</h4>
+                                <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
+                                  <li class="nav-item active">
+                                    <a class="nav-link active" id="pills-citations-tab" data-toggle="pill" href="#pills-citations" role="tab" aria-controls="pills-citations" aria-selected="true">Citations</a>
+                                  </li>
+                                  <li class="nav-item">
+                                    <a class="nav-link" id="pills-warnings-tab" data-toggle="pill" href="#pills-warnings" role="tab" aria-controls="pills-warnings" aria-selected="false">Warnings</a>
+                                  </li>
+                                  <li class="nav-item">
+                                    <a class="nav-link" id="pills-arrests-tab" data-toggle="pill" href="#pills-arrests" role="tab" aria-controls="pills-arrests" aria-selected="false">Arrests</a>
+                                  </li>
+                                </ul>
+                                <div class="tab-content" id="pills-tabContent">
+                                  <div class="tab-pane fade active in" id="pills-citations" role="tabpanel" aria-labelledby="pills-citations-tab">
+                                    <table id="ticket-table" class="table table-hover" border="1" frame="box">
+                                      <thead>
+                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Violation</td><td>Amount</td></tr>
+                                        </thead>
+                                        <tbody id="ticket-body">
+                                            <% if (tickets != null) {%>
+                                              <% for(var j=0; j<tickets.length; j++) {%>
+                                                  <tr>
+                                                <% if ((tickets[j].ticket.civID == civilians[i]._id) && (!tickets[j].ticket.isWarning)) {%>
+                                                  <td><%= tickets[j].ticket.date %></td>
+                                                  <td><%= tickets[j].ticket.violation %></td>
+                                                  <td>$<%= tickets[j].ticket.amount %></td>
+                                                  <% } %>
+                                                  <% if ((i == 0) && (tickets[j].ticket.civID == null) && (!tickets[j].ticket.isWarning)) {%>
+                                                    <td><%= tickets[j].ticket.date %></td>
+                                                    <td><%= tickets[j].ticket.violation %></td>
+                                                    <td>$<%= tickets[j].ticket.amount %></td>
+                                                    <% } %>
+                                                </tr>
+                                              <% } %>
+                                            <% } %>
+                                          </tbody>
+                                      </table>
+                                  </div>
+                                  <div class="tab-pane fade" id="pills-warnings" role="tabpanel" aria-labelledby="pills-warnings-tab">
+                                    <table id="warning-table" class="table table-hover" border="1" frame="box">
+                                      <thead>
+                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Warning</td></tr>
+                                      </thead>
+                                      <tbody id="warning-body">
+                                          <% if (tickets != null) {%>
+                                            <% for(var j=0; j<tickets.length; j++) {%>
+                                                <tr>
+                                              <% if ((tickets[j].ticket.civID == civilians[i]._id) && (tickets[j].ticket.isWarning)) {%>
+                                                <td><%= tickets[j].ticket.date %></td>
+                                                <td><%= tickets[j].ticket.violation %></td>
+                                                <% } %>
+                                                <% if ((i == 0) && (tickets[j].ticket.civID == null) && (tickets[j].ticket.isWarning)) {%>
+                                                  <td><%= tickets[j].ticket.date %></td>
+                                                  <td><%= tickets[j].ticket.violation %></td>
+                                                  <% } %>
+                                              </tr>
+                                            <% } %>
+                                          <% } %>
+                                        </tbody>
+                                    </table>
+                                  </div>
+                                  <div class="tab-pane fade" id="pills-arrests" role="tabpanel" aria-labelledby="pills-arrests-tab">
+                                    <table id="arrest-table" class="table table-hover" border="1" frame="box">
+                                      <thead>
+                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Charges</td><td>Summary</td></tr>
+                                      </thead>
+                                      <tbody id="arrest-body">
+                                          <% if (arrestReports != null) {%>
+                                            <% for(var j=0; j<arrestReports.length; j++) {%>
+                                                <tr>
+                                              <% if (arrestReports[j].arrestReport.accusedID == civilians[i]._id) {%>
+                                                <td><%= arrestReports[j].arrestReport.date %></td>
+                                                <td><%= arrestReports[j].arrestReport.charges %></td>
+                                                <td><%= arrestReports[j].arrestReport.summary %></td>
+                                                <% } %>
+                                              </tr>
+                                            <% } %>
+                                          <% } %>
+                                        </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                            </div>
+                          </div>
+                          
+                        </div>
+                        
+                        <% } %>
+                        
+                      <% } %>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="plateDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      
+      <div id="vehicleNotFound" class="alert alert-warning" style="display:none">
+        <strong>Not Found!</strong> Vehicle not found in police database.
+      </div>
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" name="findVehicle" action="/plate-search" method="get">
+            <fieldset>
+
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Vehicle Database</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4" for="plateNumber">Plate Number</label>
+                <div class="col-md-4 margin-bottom-1">
+                  <input id="plateNumber" name="plateNumber" type="text" maxlength="8" placeholder="License Plate #"
+                    class="form-control input-md" list="plates" style="text-transform: uppercase;" required>
+                </div>
+                <div class="col-md-4">
+                  <input type="hidden" id="active-community-id" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                  <button type="submit" onclick="searchPlate()" class="btn btn-info">Search</button>
+                </div>
+              </div>
+
+              <!-- List of Plates -->
+              <div id="plateDetails" style="display:none">
+                <div class="panel-group" id="accordion">
+                  <% if (vehicles != null) {%>
+                    <% for(var i=0; i<vehicles.length; i++) {%>
+                      <div class="panel panel-default background-transparent">
+                          <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion" href="#collapse<%=i%>"
+                            <h4 class="panel-title">
+                              <a class="blue-hover">
+                                  <%= vehicles[i].vehicle.plate%> | <%= vehicles[i].vehicle.registeredOwner%></a>
+                            </h4>
+                          </div>
+                          <% if (i === 0) {%>
+                          <div id="collapse<%=i%>" class="panel-collapse collapse in">
+                              <% } else {%>
+                                <div id="collapse<%=i%>" class="panel-collapse collapse">
+                                <% } %>
+                            <div class="panel-body">
+                              <% if (vehicles[i].vehicle.isStolen == 2) {%>
+                                <div id="stolenMessage" class="alert alert-danger" style="display:block">
+                                    <strong>Danger!</strong> Vehicle reported as stolen.
+                                </div>
+                              <% } %>
+                                License Plate #: <%= vehicles[i].vehicle.plate%><br/>
+                                Registered Owner: <%= vehicles[i].vehicle.registeredOwner%><br/>
+                                Color: <%= vehicles[i].vehicle.color%><br/>
+                                Model: <%= vehicles[i].vehicle.model%><br/>
+                                <% if (vehicles[i].vehicle.validInsurance == 1) {%>
+                                  <p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i></p>
+                                  <% } else {%>
+                                  <p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>
+                                <% } %>
+                                <% if (vehicles[i].vehicle.validRegistration == 1) {%>
+                                  <p class="plate-body-text">Registration: Valid <i class="ion-checkmark-circled color-green"></i></p>
+                                  <% } else {%>
+                                    <p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>
+                                <% } %>
+                            </div>
+                          </div>
+                        </div>
+                        <% } %>
+                      <% } %>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="ticketModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="ticket-form" class="form-horizontal" action="/create-ticket" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>San Andreas Traffic Ticket</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="plate">Date of Violation</label>
+                <div class="col-md-4">
+                  <input id="date" name="date" type="date" min="1900-01-01" max="2999-12-31" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="time">Time</label>
+                <div class="col-md-4">
+                  <input id="time" name="time" type="time" placeholder="hh:mm" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="ticket-civ-first-name">First Name</label>
+                <div class="col-md-4">
+                    <input id="ticket-civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* Please select from dropdown." style="text-transform:capitalize;" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                  <label class="col-md-4 control-label" for="ticket-civ-last-name">Last Name</label>
+                  <div class="col-md-4">
+                      <input id="ticket-civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." style="text-transform:capitalize;" required="">
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="ticket-civ-dob">DOB</label>
+                  <div class="col-md-4">
+                      <input id="ticket-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md" required="">
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="civID">Selected ID</label>
+                  <div class="col-md-4">
+                      <input id="civID" name="civID" type="text" placeholder="Autofill from searching" class="form-control input-md disabled-color" data-trigger="id-popover" data-content="* ID is required, try using the search button above." required readonly="readonly">
+                  </div>
+                </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="plate">Plate</label>
+                <div class="col-md-4">
+                  <input id="plate" name="plate" type="text" maxlength="8" placeholder="plate" class="form-control input-md">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="model">Model</label>
+                <div class="col-md-4">
+                  <input id="model" name="model" type="text" placeholder="model" class="form-control input-md" style="text-transform:capitalize;">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="color">Color</label>
+                <div class="col-md-4">
+                  <input id="color" name="color" type="text" placeholder="color" class="form-control input-md" style="text-transform:capitalize;">
+                </div>
+              </div>
+
+              <!-- Multiple Checkboxes (inline) -->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="fines">Fines</label>
+                <div class="col-md-4">
+
+              <select id="ticket-select" name="fines" class="select-move" multiple required>
+                <optgroup label="Moving Violations: may result in suspended or revoked license">
+                  <option>Speeding 5-10 over the posted speed limit</option>
+                  <option>Speeding 10-39 over the posted speed limit</option>
+                  <option>Running a stop sign or red light</option>
+                  <option>Not yielding to pedestrian</option>
+                  <option>Illegal U-Turn</option>
+                  <option>Failure to yield</option>
+                  <option>Driving on suspended license</option>
+                  <option>Reckless or dangerous driving</option>
+                  <option>Operating motor vehicle while intoxicated</option>
+                  <option>Road rage</option>
+                  <option>Racing on public street</option>
+                  <option>Vehicular homicide</option>
+                </optgroup>
+                <optgroup label="Non-Moving Violations: fix-it ticket">
+                  <option>Parking in front of fire hydrant</option>
+                  <option>Parking in no-parking zone</option>
+                  <option>Parking in front of an expired meter</option>
+                  <option>Blocking sidewalk</option>
+                  <option>Double parking</option>
+                  <option>Excessive muffler noise</option>
+                  <option>No license plate</option>
+                  <option>Driving with expired registration tags</option>
+                  <option>Headlights or tail-lights not working</option>
+                  <option>Cracked windshield</option>
+                  <option>Illegal lights installed on vehicle</option>
+                  <option>Window tint darker than allowed</option>
+                </optgroup>
+                <optgroup label="Misdemeanors: fine, jail sentence or both">
+                  <option>Driving under the influence (DUI)</option>
+                  <option>Driving on suspended or revoked license</option>
+                  <option>Speeding 40mph or more in excess of speed limit</option>
+                  <option>Drag racing</option>
+                  <option>Reckless driving</option>
+                  <option>Leaving the scene of an accident</option>
+                </optgroup>
+                <optgroup label="Crime not listed">
+                  <option id="ticket-option-other">Other</option>
+                </optgroup>
+            </select>
+          </div>
+          </div>
+
+          <div id="ticket-other-div" class="form-group required" style="display:none">
+            <label class="col-md-4 control-label" for="ticket-other">Other</label>
+            <div class="col-md-4">
+              <input id="ticket-other" name="other" type="text" placeholder="other" class="form-control input-md" style="text-transform:capitalize;">
+            </div>
+          </div>
+
+              <!-- Text input-->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="amount">Fine Amount</label>
+                <div class="col-md-4">
+                  <input id="amount" name="amount" type="number" placeholder="$ amount" max="999999" class="form-control input-md" required="">
+                </div>
+              </div>
+              <input type="hidden" name="isWarning" value="false">
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submitTicket"></label>
+                <div class="col-md-4">
+                  <button id="submitTicket" name="officerEmail" class="btn btn-primary" onclick="hideTicketCivPopover()" value=<%= user.user.email%>>Submit</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="warningModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="warning-form" class="form-horizontal" action="/create-ticket" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>San Andreas Traffic Warning</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="warning-date">Date of Violation</label>
+                <div class="col-md-4">
+                  <input id="warning-date" name="date" type="date" min="1900-01-01" max="2999-12-31" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="warning-time">Time</label>
+                <div class="col-md-4">
+                  <input id="warning-time" name="time" type="time" placeholder="hh:mm" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="warning-civ-first-name">First Name</label>
+                <div class="col-md-4">
+                    <input id="warning-civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" style="text-transform:capitalize;" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                  <label class="col-md-4 control-label" for="warning-civ-last-name">Last Name</label>
+                  <div class="col-md-4">
+                      <input id="warning-civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" style="text-transform:capitalize;" required="">
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="warning-civ-dob">DOB</label>
+                  <div class="col-md-4">
+                      <input id="warning-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md" required="">
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="civIDWarning">Selected ID</label>
+                  <div class="col-md-4">
+                      <input id="civIDWarning" name="civID" type="text" placeholder="Autofill from searching" class="form-control input-md disabled-color" data-trigger="warning-id-popover" data-content="* ID is required, try using the search button above." required readonly="readonly">
+                  </div>
+                </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="warning-plate">Plate</label>
+                <div class="col-md-4">
+                  <input id="warning-plate" name="plate" type="text" maxlength="8" placeholder="plate" class="form-control input-md">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="warning-model">Model</label>
+                <div class="col-md-4">
+                  <input id="warning-model" name="model" type="text" placeholder="model" class="form-control input-md" style="text-transform:capitalize;">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="warning-color">Color</label>
+                <div class="col-md-4">
+                  <input id="warning-color" name="color" type="text" placeholder="color" class="form-control input-md" style="text-transform:capitalize;">
+                </div>
+              </div>
+
+              <!-- Multiple Checkboxes (inline) -->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="fines">Violation</label>
+                <div class="col-md-4">
+
+              <select id="warning-select" name="fines" class="select-move" multiple required>
+                <optgroup label="Moving Violations: may result in suspended or revoked license">
+                  <option>Speeding 5-10 over the posted speed limit</option>
+                  <option>Speeding 10-39 over the posted speed limit</option>
+                  <option>Running a stop sign or red light</option>
+                  <option>Not yielding to pedestrian</option>
+                  <option>Illegal U-Turn</option>
+                  <option>Failure to yield</option>
+                  <option>Driving on suspended license</option>
+                  <option>Reckless or dangerous driving</option>
+                  <option>Operating motor vehicle while intoxicated</option>
+                  <option>Road rage</option>
+                  <option>Racing on public street</option>
+                  <option>Vehicular homicide</option>
+                </optgroup>
+                <optgroup label="Non-Moving Violations: fix-it ticket">
+                  <option>Parking in front of fire hydrant</option>
+                  <option>Parking in no-parking zone</option>
+                  <option>Parking in front of an expired meter</option>
+                  <option>Blocking sidewalk</option>
+                  <option>Double parking</option>
+                  <option>Excessive muffler noise</option>
+                  <option>No license plate</option>
+                  <option>Driving with expired registration tags</option>
+                  <option>Headlights or tail-lights not working</option>
+                  <option>Cracked windshield</option>
+                  <option>Illegal lights installed on vehicle</option>
+                  <option>Window tint darker than allowed</option>
+                </optgroup>
+                <optgroup label="Misdemeanors: fine, jail sentence or both">
+                  <option>Driving under the influence (DUI)</option>
+                  <option>Driving on suspended or revoked license</option>
+                  <option>Speeding 40mph or more in excess of speed limit</option>
+                  <option>Drag racing</option>
+                  <option>Reckless driving</option>
+                  <option>Leaving the scene of an accident</option>
+                </optgroup>
+                <optgroup label="Crime not listed">
+                  <option id="warning-option-other">Other</option>
+                </optgroup>
+            </select>
+          </div>
+          </div>
+
+          <div id="warning-other-div" class="form-group required" style="display:none">
+            <label class="col-md-4 control-label" for="warning-other">Other</label>
+            <div class="col-md-4">
+              <input id="warning-other" name="other" type="text" placeholder="other" class="form-control input-md" style="text-transform:capitalize;">
+            </div>
+          </div>
+
+              <input type="hidden" name="isWarning" value="true">
+              <input type="hidden" name="amount" value="0">
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submitWarning"></label>
+                <div class="col-md-4">
+                  <button id="submitWarning" name="officerEmail" class="btn btn-primary" onclick="hideWarningCivPopover()" value=<%= user.user.email%>>Submit</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="arrestModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="arrest-form" class="form-horizontal" action="/create-arrest-report" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>San Andreas Arrest Report</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="arrest-report-case-no">Case No:</label>
+                <div class="col-md-4">
+                  <input id="arrest-report-case-no" name="caseNumber" type="number" class="form-control input-md" readonly="readonly">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="arrest-report-date">Date of Violation:</label>
+                <div class="col-md-4">
+                  <input id="arrest-report-date" name="date" type="date" min="1900-01-01" max="2999-12-31" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="arrest-report-time">Time:</label>
+                <div class="col-md-4">
+                  <input id="arrest-report-time" name="time" type="time" placeholder="hh:mm" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="reporting-officer">Reporting Officer:</label>
+                <div class="col-md-4">
+                    <input id="reporting-officer" name="reportingOfficer" type="text" placeholder="Reporting Officer" class="form-control input-md" style="text-transform:capitalize;" value=<%= user.user.username%> required="" readonly="readonly">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="arrest-civ-first-name">First Name</label>
+                <div class="col-md-4">
+                    <input id="arrest-civ-first-name" name="accusedFirstName" type="text" placeholder="First Name" class="form-control input-md" style="text-transform:capitalize;" required="">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                  <label class="col-md-4 control-label" for="arrest-civ-last-name">Last Name</label>
+                  <div class="col-md-4">
+                      <input id="arrest-civ-last-name" name="accusedLastName" type="text" placeholder="Last Name" class="form-control input-md" style="text-transform:capitalize;" required="">
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="arrest-civ-dob">DOB</label>
+                  <div class="col-md-4">
+                      <input id="arrest-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md" required="">
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="civIDArrest">Selected ID</label>
+                  <div class="col-md-4">
+                      <input id="civIDArrest" name="accusedID" type="text" placeholder="Autofill from searching" class="form-control input-md disabled-color" data-trigger="arrest-id-popover" data-content="* ID is required, try using the search button above." required readonly="readonly">
+                  </div>
+                </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="charge">Charge(s)</label>
+                <div class="col-md-4">
+                  <input id="charge" name="charges" type="text" maxlength="500" placeholder="Charge(s)" class="form-control input-md" required="">
+                </div>
+              </div>
+
+              <hr/>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="detail">Detail of Event:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <div class="col-md-10 col-md-offset-1">
+                  <textarea id="detail" name="detailOfEvent" type="text" maxlength="500" placeholder="Detail" class="form-control input-md" required></textarea>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="actions-taken">Actions Taken:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <div class="col-md-10 col-md-offset-1">
+                  <textarea id="actions-taken" name="actionsTaken" type="text" maxlength="500" placeholder="Actions Taken" class="form-control input-md" required></textarea>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="summary">Summary:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <div class="col-md-10 col-md-offset-1">
+                  <textarea id="summary" name="summary" type="text" maxlength="500" placeholder="Summary" class="form-control input-md" required></textarea>
+                </div>
+              </div>
+
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submitArrestReport"></label>
+                <div class="col-md-4">
+                  <button id="submitArrestReport" name="reportingOfficerEmail" class="btn btn-primary" onclick="hideArrestReportPopover()" value=<%= user.user.email%>>Submit</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="createWarrantModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="warrant-form" class="form-horizontal" action="/create-warrant" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Create Warrant</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="warrant-civ-first-name">First Name</label>
+                <div class="col-md-4">
+                    <input id="warrant-civ-first-name" name="accusedFirstName" type="text" placeholder="First Name" class="form-control input-md" style="text-transform:capitalize;" required="" readonly="readonly">
+                </div>
+              </div>
+
+              <div class="form-group required">
+                  <label class="col-md-4 control-label" for="warrant-civ-last-name">Last Name</label>
+                  <div class="col-md-4">
+                      <input id="warrant-civ-last-name" name="accusedLastName" type="text" placeholder="Last Name" class="form-control input-md" style="text-transform:capitalize;" required="" readonly="readonly">
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="warrant-civ-dob">DOB</label>
+                  <div class="col-md-4">
+                      <input id="warrant-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md" required="" readonly="readonly">
+                  </div>
+                </div>
+
+                <div class="form-group required">
+                  <label class="col-md-4 control-label" for="civIDWarrant">Selected ID</label>
+                  <div class="col-md-4">
+                      <input id="civIDWarrant" name="accusedID" type="text" placeholder="Autofill from searching" class="form-control input-md disabled-color" data-trigger="warrant-id-popover" data-content="* ID is required, try using the search button above." required readonly="readonly">
+                  </div>
+                </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="charge">Warrant Reason</label>
+                <div class="col-md-4">
+                  <select id="warrant-select" name="reasons">
+                    <option>Failure to Appear</option>
+                    <option>Murder</option>
+                    <option>Felony Evasion</option>
+                    <option>Prison Escape</option>
+                    <option id="warrant-other-option">Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="warrant-other-div" class="form-group required" style="display:none">
+                <label class="col-md-4 control-label" for="warrant-other">Other</label>
+                <div class="col-md-4">
+                  <input id="warrant-other" name="other" type="text" placeholder="other" class="form-control input-md" style="text-transform:capitalize;">
+                </div>
+              </div>
+
+              <input id="warrant-date" type="hidden" name="date" value="">
+              <input id="warrant-time" type="hidden" name="time" value="">
+              <input id="warrant-reportingOfficer" type="hidden" name="reportingOfficer" value=<%= user.user.username%>>
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
+                <div class="col-md-4">
+                  <button id="submitWarrantCreation" name="reportingOfficerEmail" class="btn btn-primary" onclick="hideWarrantCreatePopover()" value=<%= user.user.email%>>Submit</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmClearWarrantModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="warrant-clear-form" class="form-horizontal" action="/clear-warrant" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Clear Warrant?</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <p id="warrant-reason"></p>
+              <input id="warrant-clear-date" type="hidden" name="updatedDate" value="">
+              <input id="warrant-clear-time" type="hidden" name="updatedTime" value="">
+              <input id="warrant-clearingOfficer" type="hidden" name="clearingOfficer" value=<%= user.user.username%>>
+              <input id="warrant-ID" type="hidden" name="warrantID" value="">
+               <!-- Button -->
+              
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
+                <div class="col-md-4">
+                  <button id="submitWarrantClearCreation" name="clearingOfficerEmail" class="btn btn-success" onclick="hideWarrantClearPopover()" value=<%= user.user.email%>>Yes</button>
+                  <button class="btn btn-danger" data-dismiss="modal">No</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="boloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-bolo" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Create BOLO Alert</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="type">Type:</label>
+              <div class="col-md-4">
+                <select id="type" name="boloType" class="form-control" selected="selected" required>
+                  <option value="person">Person</option>
+                  <option value="vehicle">Vehicle</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="location">Last Seen Around:</label>
+              <div class="col-md-4">
+              <input id="location" name="location" style="text-transform: capitalize;" type="text" placeholder="location" class="form-control input-md" maxlength="50" required>
+              </div>
+            </div>
+
+            <!-- Text Area input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="description">Description:</label>
+              <div class="col-md-8 col-md-offset-2">
+                <textarea id="description" name="description" type="text" rows="4" maxlength="500" placeholder="description" class="form-control input-md" required></textarea>
+              </div>
+            </div>
+            
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createBolo"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" name="reportingOfficerUsername" value="<%= user.user.username %>">
+                <input type="hidden" name="reportingOfficerID" value="<%= user._id %>">
+                <button id="createBolo" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"  class="btn btn-primary">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="boloDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/updateOrDeleteBolo" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>BOLO Details</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+             <!-- Text input-->
+             <div class="form-group">
+              <label class="col-md-4 control-label" for="createdBy">Created By:</label>
+              <div class="col-md-4">
+              <h5 id="createdByDetail"></h5>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createdBy">Created At:</label>
+              <div class="col-md-4">
+              <h5 id="createdAtDetail"></h5>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
+              <div class="col-md-4">
+              <h5 id="updatedAtDetail"></h5>
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="boloType">Type:</label>
+              <div class="col-md-4">
+                <select id="boloTypeDetail" name="boloType" class="form-control" selected="selected" required>
+                  <option value="person">Person</option>
+                  <option value="vehicle">Vehicle</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="location">Last Seen Around:</label>
+              <div class="col-md-4">
+              <input id="locationDetail" name="location" style="text-transform: capitalize;" type="text" placeholder="location" class="form-control input-md" maxlength="50" required>
+              </div>
+            </div>
+
+            <!-- Text Area input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="description">Description:</label>
+              <div class="col-md-8 col-md-offset-2">
+                <textarea id="descriptionDetail" name="description" type="text" rows="4" maxlength="500" placeholder="description" class="form-control input-md" required></textarea>
+              </div>
+            </div>
+            
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="updateBolo"></label>
+              <div class="col-md-4 text-align-center">
+                <input id="boloIDDetail" type="hidden" name="boloID" value="">
+                <button id="updateBolo" type="submit" name="action" value="update"  class="btn btn-info">Update</button>
+                <button id="deleteBolo" type="submit" name="action" value="delete"  class="btn btn-danger">Delete</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="nonCommunityBoloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="modal-body">
+        		<h2 class="text-center">I'm sorry! ;(</h2>
+            <p class="text-center">Looks like you are not in a community yet, so this feature is not enabled. </p>
+            <p>To join or
+              create a community for free, click on the communities button under the top right menu, or at the top
+              right of your screen.</p> 
+              <p>Or just click here: <a data-toggle="modal" href="#communitiesModal">Communities</a>
+            </p>
+        		<br/>
+        		<button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK <i class="ion-android-close"></i></button>
+        	</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmClearBoloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="bolo-clear-form" class="form-horizontal" action="/clear-bolo" method="POST">
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Clear Bolo?</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <p id="bolo-reason"></p>
+              <input id="bolo-clear-date" type="hidden" name="updatedAt" value="">
+              <input id="bolo-clearingOfficerID" type="hidden" name="clearingOfficerID" value=<%= user._id%>>
+              <input id="bolo-clearingOfficerUsername" type="hidden" name="clearingOfficerUsername" value=<%= user.user.username%>>
+              <input id="bolo-ID" type="hidden" name="boloID" value="">
+               
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submit-bolo-clear-creation"></label>
+                <div class="col-md-4">
+                  <button id="submit-bolo-clear-creation" class="btn btn-success">Yes</button>
+                  <button class="btn btn-danger" data-dismiss="modal">No</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="communitiesModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+            <% include community-management %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="joinCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/joinPoliceCommunity" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Join an Existing Community</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="communityCode">Community Code:</label>
+              <div class="col-md-4">
+              <input id="communityCode" name="communityCode" style="text-transform: uppercase;" type="text" placeholder="Example: YRFGHHP" class="form-control input-md" minlength="7" maxlength="7" required>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="joinCommunity"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="joinCommunity" value="<%= user._id %>" name="userID"  class="btn btn-primary">Join</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="leaveActiveCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/leavePoliceActiveCommunity" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Leave Active Community</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <p>NOTE: All civilians and vehicles that were created in this community will no longer 
+              show up when searching after you leave.
+            </p>
+            <p>Are you sure you want to leave this community?</p>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="leaveActiveCommunity"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="leaveActiveCommunity" value="<%= user._id %>" name="userID"  class="btn btn-danger">Leave</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="createCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/createPoliceCommunity" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Create a New Community</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="communityName">Community Name:</label>
+              <div class="col-md-4">
+              <input id="communityName" name="communityName" style="text-transform: capitalize;" type="text" placeholder="Community Name" class="form-control input-md" maxlength="25" required>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createCommunity"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="createCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="communitiesInfoModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+            <fieldset>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Check out the New Communities Section!</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            <a data-toggle="modal" href="#communitiesModal" onclick="dismissCommunitiesInfoModal()"><img src="/images/communities-example.png" class="diagonal-arrow float-right" alt="communities example screenshot"></a>
+            <img src="/static/images/diagonal-arrow-white.png" class="diagonal-arrow" alt="diagonal arrow pointing to top right of page">
+            </fieldset>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="accountModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <!-- Modal Name -->
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4>Manage Account</h4>
+          <hr style="width: 88%;max-width: 100rem;">
+
+          <form class="form-horizontal" action="/manageAccount" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <h5>Profile</h5>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountEmail">Email:</label>
+              <div class="col-md-6">
+              <input id="accountEmail" name="accountEmail" type="email" class="form-control input-md" readonly="readonly">
+              </div>
+            </div>
+
+            <!-- Update Username input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountUsername">Username:<br><small>Max 20 characters</small></label>
+              <div class="col-md-6">
+              <input id="accountUsername" name="accountUsername" type="text" class="form-control input-md" maxlength="20" autocomplete="off" required>
+              <div id="updateUsernameBtns" class="margin-top-1" style="display: none">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" name="page" value="/dispatch-dashboard">
+                <button id="updateUsername" value="updateUsername" name="action" class="btn btn-info">Update Username</button> <button type="button" class="btn btn-primary" onclick="cancelUsername()">Cancel</button>
+              </div>
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5>Password</h5>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="updatePassword"></label>
+              <div class="col-md-6 text-align-center">
+                <button id="updatePassword" type="button" class="btn btn-primary" onclick="document.location.href='forgot-password'">Update Password</button>
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+
+          <h5 class="color-red">Close Account</h5>
+
+          <h6><strong>Warning:</strong> Deleting your account is irreversible.</h6>
+          <!-- Button -->
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="deleteAccount"></label>
+            <div class="col-md-6 text-align-center">
+              <button data-toggle="modal" type="button" href="#deleteAccountConfirmModal" class="btn btn-danger">Delete account</button>
+            </div>
+          </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteAccountConfirmModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/deleteAccount" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Delete Account</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <p>Warning: Once your account is deleted all created communities, civilians, vehicles, and citations 
+              from this account will be deleted. This is non-reversible.
+            </p>
+            <p>Are you sure you want to delete your account?</p>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="deleteAccount"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" name="page" value="/dispatch-dashboard">
+                <button id="deleteAccount" value="<%= user._id %>" name="userID"  class="btn btn-danger">Delete account</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="manageUserDispatchStatusModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <!-- Modal Name -->
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4>Manage User Status</h4>
+          <hr style="width: 88%;max-width: 100rem;">
+
+          <form class="form-horizontal" action="/updateUserDispatchStatus" method="post">
+          <fieldset>
+            
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountUsername">Username:</label>
+              <div class="col-md-6">
+                <h5 id="usernameDispatch" style="text-transform: capitalize;"></h5>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountUsername">Active Status:</label>
+              <div class="col-md-6">
+                <h5 id="statusDispatch"></h5>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountUsername">Set By:</label>
+              <div class="col-md-6">
+                <h5 id="setByDispatch" style="text-transform: capitalize;"></h5>
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+            <input id="userIDDispatch" type="hidden" name="userID" value="">
+          <div class="col-md-12 text-align-center margin-bottom-1">
+              <button type="submit" name="status" value="10-8" class="btn btn-primary">10-8</button>
+              <button type="submit" name="status" value="10-6" class="btn btn-primary">10-6</button>
+              <button type="submit" name="status" value="10-7" class="btn btn-primary">10-7</button>
+              <button type="submit" name="status" value="10-11" class="btn btn-primary">10-11</button>
+              <button type="submit" name="status" value="10-23" class="btn btn-primary">10-23</button>
+              <button type="submit" name="status" value="10-97" class="btn btn-primary">10-97</button>
+              <button type="submit" name="status" value="10-15" class="btn btn-primary">10-15</button>
+            </div>
+              <div class="col-md-12 text-align-center">
+              <button type="submit" name="status" value="10-42" class="btn btn-danger btn-md">10-42</button>
+              <button type="submit" name="status" value="10-41" class="btn btn-primary btn-md">10-41</button>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% include 10-codes %> 
+  <% include notepad %>
+</body>
+</div>
+</div>
+</div>
+</div>
+
+<!--scripts loaded here -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/static/js/jquery.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
+<script src="/static/js/bootstrap.min.js"></script>
+<script src="/static/js/jquery.easing.min.js"></script>
+<script src="/static/js/wow.js"></script>
+<script src="/static/js/scripts.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
+</body>
+
+</html>
+<script>
+  $(function () {
+    var socket = io();
+    // $('form').submit(function(e){
+    //   e.preventDefault(); // prevents page reloading
+    //   socket.emit('chat message', $('#m').val());
+    //   $('#m').val('');
+    //   return false;
+    // });
+    socket.on('chat message', function(msg){
+      $('#panic').append($('<li>').text(msg));
+    });
+  });
+</script>
+<script type="text/javascript">
+$(document).ready(function() {
+  $('#example').DataTable();
+
+  // displays the Update Username and Cancel buttons for updating the username
+  var myUser = <%- JSON.stringify(user) %>;
+    $('#accountUsername').on('keyup', function(e) {
+      if(e.target.value != myUser.user.username && e.target.value != '') {
+        $('#updateUsernameBtns').show();
+      } else {
+        $('#updateUsernameBtns').hide();
+      }
+    })
+
+  let allVehicles = <%-JSON.stringify(vehicles)%>;
+  let allCivilians = <%-JSON.stringify(civilians)%>;
+  if ( allVehicles != null) {
+    $('#plateDetails').show()
+    $('#plateDatabaseModal').modal('toggle');
+    searchPlate()
+  } else if (allCivilians != null) {
+    $('#civDetails').show()
+    $('#nameDatabaseModal').modal('toggle');
+    searchNames()
+  }
+  else {
+    $('#plateDetails').removeAttr("style").hide()
+    $('#civDetails').removeAttr("style").hide()
+  }
+
+  $("#civ-first-name").keydown(function(event) {
+    if (event.keyCode == 32) {
+        event.preventDefault();
+        $('#civ-first-name').popover('show')
+    } else {
+      $('#civ-first-name').popover('hide')
+    }
+  });
+
+  $("#civ-last-name").keydown(function(event) {
+      if (event.keyCode == 32) {
+          event.preventDefault();
+          $('#civ-last-name').popover('show')
+      } else {
+        $('#civ-last-name').popover('hide')
+      }
+  });
+
+  $('#warning-select').change(function(){
+    if ($('#warning-option-other').is(':selected')) {
+      $('#warning-other-div').show();
+    }
+  })
+
+  $('#ticket-select').change(function(){
+    if ($('#ticket-option-other').is(':selected')) {
+      $('#ticket-other-div').show();
+    }
+  })
+
+  $('#warrant-select').change(function(){
+    if ($('#warrant-other-option').is(':selected')) {
+      $('#warrant-other-div').show();
+    }
+  })
+});
+
+
+document.addEventListener("DOMContentLoaded", function(){
+  tail.select(".select-move", {
+    search: true,
+    descriptions: true,
+    hideSelected: false,
+    hideDisabled: true,
+    multiShowCount: false,
+    multiContainer: true
+  });
+});
+
+function searchPlate() {
+  let x = document.getElementById('plateDetails');
+  if (x.style.display === 'none') {
+    x.style.display = 'block';
+  } else {}
+
+  let myValue = $('#plateName').val();
+  let myVar = <%-JSON.stringify(vehicles)%>;
+  if (myVar === null) {
+    return
+  }
+  if (myVar.length === 0) {
+    $('#plateDetails').removeAttr("style").hide()
+    $('#vehicleNotFound').show()
+    return
+  }
+}
+
+  function searchNames() {
+    let x = document.getElementById('civDetails');
+    if (x.style.display === 'none') {
+      x.style.display = 'block';
+    } else {}
+    let myCiv = <%-JSON.stringify(civilians)%>;
+    let myTicket = <%-JSON.stringify(tickets)%>;
+    if (myCiv === null || myTicket === null) {
+      hideCivPopover();
+      return
+    } else if (myCiv.length === 0) {
+      let civDetails = document.getElementById('civDetails')
+      civDetails.style.display = 'none'
+      let civNotFoundMsg = document.getElementById('civilianNotFound')
+      civNotFoundMsg.style.display = 'block'
+      hideCivPopover();
+      return
+    }
+    hideCivPopover();
+  }
+
+  function openSearch() {
+    $('#searchTicketDiv').show()
+  }
+
+  function setDateAndTime(dateElement, timeElement) {
+    $(dateElement)[0].valueAsDate = new Date();
+    $(timeElement)[0].value = new Date().toLocaleTimeString('en-GB', {
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  }
+
+  function generateCaseNo(elementName) {
+    $(elementName).val(Math.round(Math.random() * 10000000000))
+  }
+
+  function hideTicketCivPopover() {
+    if ($('#civID').val().length < 1) {
+      $('#civID').popover('show')
+      $('#ticket-form').attr('onsubmit','return false;');
+    } else {
+      $('#civID').popover('hide')
+      $('#ticket-form').attr('onsubmit','return true;');
+    }
+  }
+
+  function hideWarningCivPopover() {
+    if ($('#civIDWarning').val().length < 1) {
+      $('#civIDWarning').popover('show')
+      $('#warning-form').attr('onsubmit','return false;');
+    } else {
+      $('#civIDWarning').popover('hide')
+      $('#warning-form').attr('onsubmit','return true;');
+    }
+  }
+
+  function hideArrestReportPopover() {
+    if ($('#civIDArrest').val().length < 1) {
+      $('#civIDArrest').popover('show')
+      $('#arrest-form').attr('onsubmit','return false;');
+    } else {
+      $('#civIDArrest').popover('hide')
+      $('#arrest-form').attr('onsubmit','return true;');
+    }
+  }
+
+  function hideCivPopover() {
+    $('#civ-first-name').popover('hide')
+    $('#civ-last-name').popover('hide')
+  }
+
+  function hideWarrantClearPopover() {
+    $('#confirmWarrantModal').hide()
+  }
+
+  function OpenCitation(firstName, lastName, id, dob) {
+    $('#ticket-civ-first-name').val(firstName)
+    $('#ticket-civ-last-name').val(lastName)
+    $('#civID').val(id)
+    $('#ticket-civ-dob').val(dob)
+    $('#searchTicketDiv').hide()
+  }
+
+  function OpenWarning(firstName, lastName, id, dob) {
+    $('#warning-civ-first-name').val(firstName)
+    $('#warning-civ-last-name').val(lastName)
+    $('#civIDWarning').val(id)
+    $('#warning-civ-dob').val(dob)
+    $('#searchWarningDiv').hide()
+  }
+
+  function OpenArrest(firstName, lastName, id, dob) {
+    $('#arrest-civ-first-name').val(firstName)
+    $('#arrest-civ-last-name').val(lastName)
+    $('#civIDArrest').val(id)
+    $('#arrest-civ-dob').val(dob)
+    $('#searchArrestDiv').hide()
+  }
+
+  function OpenClearWarrant(firstName, lastName, id, dob) {
+    $('#warrant-clear-civ-first-name').val(firstName)
+    $('#warrant-clear-civ-last-name').val(lastName)
+    $('#civIDWarrantClear').val(id)
+    $('#warrant-clear-civ-dob').val(dob)
+    $('#searchWarrantClearDiv').hide()
+  }
+
+  function OpenCreateWarrant(firstName, lastName, id, dob) {
+    $('#warrant-civ-first-name').val(firstName)
+    $('#warrant-civ-last-name').val(lastName)
+    $('#civIDWarrant').val(id)
+    //Super gross date calculation, thx javascript
+    let date = new Date()
+    let yyyy = date.getFullYear().toString();                                    
+    let mm = (date.getMonth()+1).toString(); // getMonth() is zero-based         
+    let dd  = date.getDate().toString(); 
+    $('#warrant-date').val(yyyy + '-' + (mm[1]?mm:"0"+mm[0]) + '-' + (dd[1]?dd:"0"+dd[0]))
+    $('#warrant-time').val(new Date().toLocaleTimeString('en-GB', {
+      hour: "2-digit",
+      minute: "2-digit"
+    }))
+    $('#warrant-civ-dob').val(dob)
+    $('#searchWarrantDiv').hide()
+  }
+
+  function clearWarrantWithValues(warrantID, warrantReason) {
+    $('#warrant-ID').val(warrantID)
+    $('#warrant-reason').text(warrantReason)
+    //Super gross date calculation, thx javascript
+    let date = new Date()
+    let yyyy = date.getFullYear().toString();                                    
+    let mm = (date.getMonth()+1).toString(); // getMonth() is zero-based         
+    let dd  = date.getDate().toString(); 
+    $('#warrant-clear-date').val(yyyy + '-' + (mm[1]?mm:"0"+mm[0]) + '-' + (dd[1]?dd:"0"+dd[0]))
+    $('#warrant-clear-time').val(new Date().toLocaleTimeString('en-GB', {
+      hour: "2-digit",
+      minute: "2-digit"
+    }))
+  }
+
+  function clearBolo(boloID) {
+    $('#bolo-ID').val(boloID)
+    $('#bolo-clear-date').val(new Date())
+  }
+
+  function fillAccountDetails() {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountEmail').val(myUser.user.email)
+    $('#accountUsername').val(myUser.user.username)
+  }
+
+  function cancelUsername() {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountUsername').val(myUser.user.username)
+    $('#updateUsernameBtns').hide();
+  }
+
+  function populateBoloDetails(i) {
+    var myBolo = <%- JSON.stringify(bolos) %>;
+    $('#boloTypeDetail').val(myBolo[i].bolo.boloType)
+    $('#locationDetail').val(myBolo[i].bolo.location)
+    $('#descriptionDetail').val(myBolo[i].bolo.description)
+    $('#boloIDDetail').val(myBolo[i]._id)
+    $('#createdByDetail').text(myBolo[i].bolo.reportingOfficerUsername)
+    var createdDate = new Date(myBolo[i].bolo.createdAt)
+    $('#createdAtDetail').text(createdDate.toLocaleString())
+    if (myBolo[i].bolo.updatedAt == null || myBolo[i].bolo.updatedAt == '') {
+      $('#updatedAtDetail').text('')
+    } else {
+      var updatedDate= new Date(myBolo[i].bolo.updatedAt)
+      $('#updatedAtDetail').text(updatedDate.toLocaleString())
+    }
+  }
+
+  function setDispatchModalValues(i) {
+    var myCommUsers = <%- JSON.stringify(commUsers) %>;
+    $('#usernameDispatch').text(myCommUsers[i].user.username)
+    if (myCommUsers[i].user.dispatchStatus == "" || myCommUsers[i].user.dispatchStatus ==  undefined) {
+      $('#statusDispatch').text("-")
+    } else {
+      $('#statusDispatch').text(myCommUsers[i].user.dispatchStatus)
+    }
+    if (myCommUsers[i].user.dispatchStatusSetBy == "" || myCommUsers[i].user.dispatchStatusSetBy ==  undefined) {
+      $('#setByDispatch').text("-")
+    } else {
+      $('#setByDispatch').text(myCommUsers[i].user.dispatchStatusSetBy)
+    }
+    $('#userIDDispatch').val(myCommUsers[i]._id)
+  }
+
+  function clearTextarea() {
+    $('#notepad-textarea').val('')
+  }
+
+  $('#ticketModal').on('hidden.bs.modal', function () {
+    $('#civID').popover('hide')
+  })
+
+  $('#warningModal').on('hidden.bs.modal', function () {
+    $('#civIDWarning').popover('hide')
+  })
+
+  $('#arrestModal').on('hidden.bs.modal', function () {
+    $('#civIDArrest').popover('hide')
+  })
+
+  $('#createWarrantModal').on('hidden.bs.modal', function () {
+    $('#civIDWarrant').popover('hide')
+  })
+
+  $('#clearWarrantModal').on('hidden.bs.modal', function () {
+    $('#civIDWarning').popover('hide')
+  })
+
+  // removes all the names from caching on the website when the modal is closed
+  $('#nameDatabaseModal').on('hidden.bs.modal', function (e) {
+    let civDetails = document.getElementById('civDetails')
+      civDetails.style.display = 'none'
+  })
+
+  $('#plateDatabaseModal').on('hidden.bs.modal', function () {
+    $(this).find('form').trigger('reset');
+    $('#plateDetails').removeAttr("style").hide()
+    $('#stolenMessage').removeAttr("style").hide()
+  })
+</script>

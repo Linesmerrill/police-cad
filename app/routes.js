@@ -74,6 +74,10 @@ module.exports = function (app, passport, server) {
     res.redirect('/ems-dashboard')
   });
 
+  app.get('/login-dispatch', authDispatch, function (req, res) {
+    res.redirect('/dispatch-dashboard')
+  });
+
   app.get('/signup-civ', function (req, res) {
     res.render('signup-civ', {
       message: req.flash('signuperror')
@@ -92,16 +96,22 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.get('/signup-dispatch', function (req, res) {
+    res.render('signup-dispatch', {
+      message: req.flash('signuperror')
+    });
+  });
+
   app.get('/logout', function (req, res) {
     req.logout();
     res.redirect('/');
   });
 
   app.get('/communities', auth, function (req, res) {
-    if (!exists(req.session.communityID)){
+    if (!exists(req.session.communityID)) {
       console.warn("cannot render empty communityID, route: /communities")
-        res.redirect('back')
-        return
+      res.redirect('back')
+      return
     }
     Community.findOne({
       '_id': ObjectId(req.session.communityID),
@@ -311,6 +321,54 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.get('/dispatch-dashboard', auth, function (req, res) {
+    var context = req.app.locals.specialContext;
+    req.app.locals.specialContext = null;
+    Community.find({
+      '$or': [{
+        'community.ownerID': req.user._id
+      }, {
+        '_id': req.user.user.activeCommunity
+      }]
+    }, function (err, dbCommunities) {
+      Bolo.find({
+        'bolo.communityID': req.user.user.activeCommunity
+      }, function (err, dbBolos) {
+        if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+          res.render('dispatch-dashboard', {
+            user: req.user,
+            vehicles: null,
+            civilians: null,
+            tickets: null,
+            arrestReports: null,
+            warrants: null,
+            communities: dbCommunities,
+            bolos: dbBolos,
+            commUsers: null,
+            context: context
+          });
+        } else {
+          User.find({
+            'user.activeCommunity': req.user.user.activeCommunity
+          }, function (err, dbCommUsers) {
+            res.render('dispatch-dashboard', {
+              user: req.user,
+              vehicles: null,
+              civilians: null,
+              tickets: null,
+              arrestReports: null,
+              warrants: null,
+              communities: dbCommunities,
+              bolos: dbBolos,
+              commUsers: dbCommUsers,
+              context: context
+            });
+          });
+        }
+      });
+    });
+  });
+
   app.get('/name-search', auth, function (req, res) {
     if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
       Civilian.find({
@@ -514,6 +572,12 @@ module.exports = function (app, passport, server) {
     failureFlash: true
   }));
 
+  app.post('/login-dispatch', passport.authenticate('login', {
+    successRedirect: '/dispatch-dashboard',
+    failureRedirect: '/login-dispatch',
+    failureFlash: true
+  }));
+
   app.post('/signup-civ', passport.authenticate('signup', {
     successRedirect: '/civ-dashboard',
     failureRedirect: '/signup-civ',
@@ -529,6 +593,12 @@ module.exports = function (app, passport, server) {
   app.post('/signup-ems', passport.authenticate('signup', {
     successRedirect: '/ems-dashboard',
     failureRedirect: '/signup-ems',
+    failureFlash: true
+  }));
+
+  app.post('/signup-dispatch', passport.authenticate('signup', {
+    successRedirect: '/dispatch-dashboard',
+    failureRedirect: '/signup-dispatch',
     failureFlash: true
   }));
 
@@ -1222,6 +1292,27 @@ module.exports = function (app, passport, server) {
     }
   })
 
+  app.post('/updateUserDispatchStatus', function (req, res) {
+    if (!exists(req.body.userID) || req.body.userID == '') {
+      console.error('cannot update an empty userID')
+      return res.redirect('back');
+    } else if (!exists(req.body.status) || req.body.status == '') {
+      console.error('cannot update an empty status')
+      return res.redirect('back');
+    }
+    User.findByIdAndUpdate({
+      '_id': ObjectId(req.body.userID)
+    }, {
+      $set: {
+        'user.dispatchStatus': req.body.status,
+        'user.dispatchStatusSetBy': 'dispatch'
+      }
+    }, function (err) {
+      if (err) return console.error(err)
+      res.redirect('back')
+    })
+  })
+
   app.post('/deleteEmsVeh', function (req, res) {
     var roName = req.body.roVeh
     var modelName = req.body.modelVeh
@@ -1333,6 +1424,15 @@ function authEms(req, res, next) {
   });
 }
 
+function authDispatch(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.render('login-dispatch', {
+    message: req.flash('error')
+  });
+}
+
 function exists(v) {
   if (v !== undefined) {
     return true
@@ -1340,4 +1440,3 @@ function exists(v) {
     return false
   }
 }
-

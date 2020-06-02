@@ -11,6 +11,8 @@ var userSchema = mongoose.Schema({
         resetPasswordToken: String,
         resetPasswordExpires: Date,
         activeCommunity: String,
+        dispatchStatus: String,
+        dispatchStatusSetBy: String,
         createdAt: Date,
         updatedAt: Date
     }
