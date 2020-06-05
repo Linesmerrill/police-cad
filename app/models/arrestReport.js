@@ -31,12 +31,12 @@ arrestReportSchema.methods.updateArrestReport = function (req, res) {
       this.arrestReport.accusedLastName = req.body.accusedLastName.trim().charAt(0).toUpperCase() + req.body.accusedLastName.trim().slice(1);
     } else {
       console.error("cannot process empty values for accusedFirstName and accusedLastName");
-      res.redirect('/police-dashboard');
+      res.redirect('/'+req.body.route);
       return
     }
   } else {
     console.error("cannot process null values for accusedFirstName and accusedLastName");
-    res.redirect('/police-dashboard');
+    res.redirect('/'+req.body.route);
     return
   }
 
@@ -64,7 +64,7 @@ arrestReportSchema.methods.updateArrestReport = function (req, res) {
   }
   this.arrestReport.createdAt = new Date();
   req.app.locals.specialContext = "createArrestSuccess"
-  res.redirect('/police-dashboard');
+  res.redirect('/'+req.body.route);
 };
 
 module.exports = mongoose.model('ArrestReport', arrestReportSchema);

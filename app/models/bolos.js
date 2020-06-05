@@ -43,7 +43,7 @@ boloSchema.methods.createBolo = function (req, res) {
   this.bolo.createdAt = new Date();
 
   req.app.locals.specialContext = "createBoloSuccess"
-  res.redirect('/police-dashboard');
+  res.redirect('/'+req.body.route);
 };
 
 module.exports = mongoose.model('Bolo', boloSchema);

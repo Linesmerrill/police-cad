@@ -631,6 +631,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitTicket"></label>
                 <div class="col-md-4">
+                  <input type="hidden" name="route" value="police-dashboard">
                   <button id="submitTicket" name="officerEmail" class="btn btn-primary" onclick="hideTicketCivPopover()" value=<%= user.user.email%>>Submit</button>
                 </div>
               </div>
@@ -777,6 +778,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitWarning"></label>
                 <div class="col-md-4">
+                  <input type="hidden" name="route" value="police-dashboard">
                   <button id="submitWarning" name="officerEmail" class="btn btn-primary" onclick="hideWarningCivPopover()" value=<%= user.user.email%>>Submit</button>
                 </div>
               </div>
@@ -888,6 +890,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitArrestReport"></label>
                 <div class="col-md-4">
+                  <input type="hidden" name="route" value="police-dashboard">
                   <button id="submitArrestReport" name="reportingOfficerEmail" class="btn btn-primary" onclick="hideArrestReportPopover()" value=<%= user.user.email%>>Submit</button>
                 </div>
               </div>
@@ -964,6 +967,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
                 <div class="col-md-4">
+                  <input type="hidden" name="route" value="police-dashboard">
                   <button id="submitWarrantCreation" name="reportingOfficerEmail" class="btn btn-primary" onclick="hideWarrantCreatePopover()" value=<%= user.user.email%>>Submit</button>
                 </div>
               </div>
@@ -995,6 +999,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
                 <div class="col-md-4">
+                  <input type="hidden" name="route" value="police-dashboard">
                   <button id="submitWarrantClearCreation" name="clearingOfficerEmail" class="btn btn-success" onclick="hideWarrantClearPopover()" value=<%= user.user.email%>>Yes</button>
                   <button class="btn btn-danger" data-dismiss="modal">No</button>
                 </div>
@@ -1049,6 +1054,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="createBolo"></label>
               <div class="col-md-4 text-align-center">
+                <input type="hidden" name="route" value="police-dashboard">
                 <input type="hidden" name="reportingOfficerUsername" value="<%= user.user.username %>">
                 <input type="hidden" name="reportingOfficerID" value="<%= user._id %>">
                 <button id="createBolo" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"  class="btn btn-primary">Create</button>
@@ -1128,6 +1134,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="updateBolo"></label>
               <div class="col-md-4 text-align-center">
+                <input type="hidden" name="route" value="police-dashboard">
                 <input id="boloIDDetail" type="hidden" name="boloID" value="">
                 <button id="updateBolo" type="submit" name="action" value="update"  class="btn btn-info">Update</button>
                 <button id="deleteBolo" type="submit" name="action" value="delete"  class="btn btn-danger">Delete</button>
@@ -1181,6 +1188,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submit-bolo-clear-creation"></label>
                 <div class="col-md-4">
+                  <input type="hidden" name="route" value="police-dashboard">
                   <button id="submit-bolo-clear-creation" class="btn btn-success">Yes</button>
                   <button class="btn btn-danger" data-dismiss="modal">No</button>
                 </div>
@@ -1226,6 +1234,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="joinCommunity"></label>
               <div class="col-md-4 text-align-center">
+                <input type="hidden" name="route" value="police-dashboard">
                 <button id="joinCommunity" value="<%= user._id %>" name="userID"  class="btn btn-primary">Join</button>
               </div>
             </div>
@@ -1257,6 +1266,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="leaveActiveCommunity"></label>
               <div class="col-md-4 text-align-center">
+                <input type="hidden" name="route" value="police-dashboard">
                 <button id="leaveActiveCommunity" value="<%= user._id %>" name="userID"  class="btn btn-danger">Leave</button>
               </div>
             </div>
@@ -1291,6 +1301,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="createCommunity"></label>
               <div class="col-md-4 text-align-center">
+                <input type="hidden" name="route" value="police-dashboard">
                 <button id="createCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary">Create</button>
               </div>
             </div>
