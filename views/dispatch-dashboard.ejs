@@ -181,11 +181,11 @@
                         <tr>
                             <td style="text-transform: capitalize;"><%=commUsers[i].user.username%></td>
                             <% if (commUsers[i].user.dispatchStatus == '' || commUsers[i].user.dispatchStatus == null) {%>
-                              <td>-</td>
+                              <td id="<%=commUsers[i]._id%>-status">-</td>
                               <%} else {%>
-                            <td><%=commUsers[i].user.dispatchStatus%></td>
+                            <td id="<%=commUsers[i]._id%>-status"><%=commUsers[i].user.dispatchStatus%></td>
                             <%}%>
-                            <td><button type="button" data-toggle="modal" href="#manageUserDispatchStatusModal" onclick="setDispatchModalValues('<%=i%>')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>
+                            <td><button type="button" data-toggle="modal" href="#manageUserDispatchStatusModal" onclick="setDispatchModalValues('<%=commUsers[i]._id%>')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>
                         </tr>
                 <%}%>
             </tbody>
@@ -1485,17 +1485,17 @@
             <hr style="width: 88%;max-width: 100rem;">
             <input id="userIDDispatch" type="hidden" name="userID" value="">
           <div class="col-md-12 text-align-center margin-bottom-1">
-              <button type="submit" name="status" value="10-8" class="btn btn-primary">10-8</button>
-              <button type="submit" name="status" value="10-6" class="btn btn-primary">10-6</button>
-              <button type="submit" name="status" value="10-7" class="btn btn-primary">10-7</button>
-              <button type="submit" name="status" value="10-11" class="btn btn-primary">10-11</button>
-              <button type="submit" name="status" value="10-23" class="btn btn-primary">10-23</button>
-              <button type="submit" name="status" value="10-97" class="btn btn-primary">10-97</button>
-              <button type="submit" name="status" value="10-15" class="btn btn-primary">10-15</button>
+              <button type="submit" name="status" value="10-8" class="btn btn-primary" onclick="updateStatus('10-8')">10-8</button>
+              <button type="submit" name="status" value="10-6" class="btn btn-primary" onclick="updateStatus('10-6')">10-6</button>
+              <button type="submit" name="status" value="10-7" class="btn btn-primary" onclick="updateStatus('10-7')">10-7</button>
+              <button type="submit" name="status" value="10-11" class="btn btn-primary" onclick="updateStatus('10-11')">10-11</button>
+              <button type="submit" name="status" value="10-23" class="btn btn-primary" onclick="updateStatus('10-23')">10-23</button>
+              <button type="submit" name="status" value="10-97" class="btn btn-primary" onclick="updateStatus('10-97')">10-97</button>
+              <button type="submit" name="status" value="10-15" class="btn btn-primary" onclick="updateStatus('10-15')">10-15</button>
             </div>
               <div class="col-md-12 text-align-center">
-              <button type="submit" name="status" value="10-42" class="btn btn-danger btn-md">10-42</button>
-              <button type="submit" name="status" value="10-41" class="btn btn-primary btn-md">10-41</button>
+              <button type="submit" name="status" value="10-42" class="btn btn-danger btn-md" onclick="updateStatus('10-42')">10-42</button>
+              <button type="submit" name="status" value="10-41" class="btn btn-primary btn-md" onclick="updateStatus('10-41')">10-41</button>
               </div>
             </fieldset>
           </form>
@@ -1528,21 +1528,15 @@
 <script>
   $(function () {
     var socket = io();
-    // $('form').submit(function(e){
-    //   e.preventDefault(); // prevents page reloading
-    //   socket.emit('chat message', $('#m').val());
-    //   $('#m').val('');
-    //   return false;
-    // });
-    socket.on('chat message', function(msg){
-      $('#panic').append($('<li>').text(msg));
-    });
+    socket.on('updated_status', res => {
+      $('#'+res.userID+"-status").text(res.status)
+    })
   });
 </script>
 <script type="text/javascript">
 $(document).ready(function() {
   $('#example').DataTable();
-
+  
   // displays the Update Username and Cancel buttons for updating the username
   var myUser = <%- JSON.stringify(user) %>;
     $('#accountUsername').on('keyup', function(e) {
@@ -1811,20 +1805,46 @@ function searchPlate() {
     }
   }
 
-  function setDispatchModalValues(i) {
-    var myCommUsers = <%- JSON.stringify(commUsers) %>;
-    $('#usernameDispatch').text(myCommUsers[i].user.username)
-    if (myCommUsers[i].user.dispatchStatus == "" || myCommUsers[i].user.dispatchStatus ==  undefined) {
-      $('#statusDispatch').text("-")
-    } else {
-      $('#statusDispatch').text(myCommUsers[i].user.dispatchStatus)
+  function setDispatchModalValues(id) {
+    var socket = io();
+    socket.emit('load_statuses', <%- JSON.stringify(user) %>)
+    socket.on('load_status_result', (res) => {
+    for (const i in res) {
+      if (res[i]._id != id) {
+        continue
+      } else if (res[i]._id == id) {
+        $('#usernameDispatch').text(res[i].user.username)
+        if (res[i].user.dispatchStatus == "" || res[i].user.dispatchStatus ==  undefined) {
+          $('#statusDispatch').text("-")
+        } else {
+          $('#statusDispatch').text(res[i].user.dispatchStatus)
+        }
+        if (res[i].user.dispatchStatusSetBy == "" || res[i].user.dispatchStatusSetBy ==  undefined) {
+          $('#setByDispatch').text("-")
+        } else {
+          $('#setByDispatch').text(res[i].user.dispatchStatusSetBy)
+        }
+        $('#userIDDispatch').val(res[i]._id)
+      } else {
+        //IDK we have issues
+      }
     }
-    if (myCommUsers[i].user.dispatchStatusSetBy == "" || myCommUsers[i].user.dispatchStatusSetBy ==  undefined) {
-      $('#setByDispatch').text("-")
-    } else {
-      $('#setByDispatch').text(myCommUsers[i].user.dispatchStatusSetBy)
-    }
-    $('#userIDDispatch').val(myCommUsers[i]._id)
+  })
+  }
+
+  function updateStatus(status) {
+    var socket = io();
+    $('form').submit(function(e) {
+      e.preventDefault(); //prevents page from reloading
+      myReq = {
+        userID: $('#userIDDispatch').val(),
+        status: status
+      }
+      socket.emit('update_status', myReq)
+      
+      return true;
+    })
+    $('#manageUserDispatchStatusModal').modal('hide')
   }
 
   function clearTextarea() {

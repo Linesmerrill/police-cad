@@ -1293,6 +1293,7 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/updateUserDispatchStatus', function (req, res) {
+    // console.debug(req.body)
     if (!exists(req.body.userID) || req.body.userID == '') {
       console.error('cannot update an empty userID')
       return res.redirect('back');
@@ -1379,10 +1380,56 @@ module.exports = function (app, passport, server) {
 
   var io = require('socket.io').listen(server);
 
-  io.on('connection', (socket) => {
+  io.sockets.on('connection', (socket) => {
     socket.on('chat message', (msg) => {
       io.emit('chat message', msg);
     });
+
+    socket.on('load_statuses', (user) => {
+      Community.find({
+        '$or': [{
+          'community.ownerID': user._id
+        }, {
+          '_id': user.user.activeCommunity
+        }]
+      }, function (err, dbCommunities) {
+        Bolo.find({
+          'bolo.communityID': user.user.activeCommunity
+        }, function (err, dbBolos) {
+          if (user.user.activeCommunity == '' || user.user.activeCommunity == null) {
+            socket.emit('load_status_result', dbCommUsers)
+          } else {
+            User.find({
+              'user.activeCommunity': user.user.activeCommunity
+            }, function (err, dbCommUsers) {
+              socket.emit('load_status_result', dbCommUsers)
+            });
+          }
+        });
+      });
+    })
+
+    socket.on('update_status', (req) => {
+      // console.debug(req)
+    if (!exists(req.userID) || req.userID == '') {
+      console.error('cannot update an empty userID')
+      return
+    } else if (!exists(req.status) || req.status == '') {
+      console.error('cannot update an empty status')
+      return
+    }
+    User.findByIdAndUpdate({
+      '_id': ObjectId(req.userID)
+    }, {
+      $set: {
+        'user.dispatchStatus': req.status,
+        'user.dispatchStatusSetBy': 'dispatch'
+      }
+    }, function (err) {
+      if (err) return console.error(err)
+      socket.broadcast.emit('updated_status', req)
+    })
+    })
   });
 
 }; //end of routes
