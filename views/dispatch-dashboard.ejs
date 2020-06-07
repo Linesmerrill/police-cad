@@ -121,7 +121,7 @@
           <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
         </div>
         <div class="col-lg-10 col-lg-offset-1 margin-top-2">
-          <% if (bolos != null && bolos.length > 0) {%>
+          
             <h4>Active BOLOs:</h4>
             <table id="boloTable" class="table table-bordered" style="width:100%">
               <thead>
@@ -135,7 +135,7 @@
               <tbody>
                       <input id="link" type="text" value="" style="opacity: 0;">
                   
-                  
+                      <% if (bolos != null && bolos.length > 0) {%>
                   <% for(var i=0; i<bolos.length; i++) {%>
                           <tr id="<%=bolos[i]._id%>-row">
                               <td id="<%=bolos[i]._id%>-type" style="text-transform: capitalize;"><%=bolos[i].bolo.boloType%></td>
@@ -144,10 +144,11 @@
                               <td><button type="button" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=bolos[i]._id%>')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>
                           </tr>
                   <%}%>
+                  <%}%>
               </tbody>
           </table>
             
-          <%}%>
+          
         </div>
         <div class="col-lg-10 col-lg-offset-1">
           <% if (commUsers == null) {%>
@@ -1551,17 +1552,29 @@
     })
 
     socket.on('deleted_bolo', res => {
-      $('#'+res.boloID+'-row').remove();
+      $('#'+res.boloID+'-row').remove().fadeOut(1, function() {
+        $(this).remove();
+      })
     })
 
     socket.on('created_bolo', res => {
+      var containsEmptyRow = $('#boloTable tr>td').hasClass('dataTables_empty');
+      console.log('rowCount: ', containsEmptyRow)
+      if (containsEmptyRow) {
+        $('#boloTable tbody>tr:first').fadeOut(1, function(){
+          $(this).remove();
+        })
+      }
       $('#boloTable tr:last').after(
                           '<tr id="'+res._id+'-row">'+
                               '<td id="'+res._id+'-type" style="text-transform: capitalize;">'+res.bolo.boloType+'</td>'+
                               '<td id="'+res._id+'-location">'+res.bolo.location+'</td>'+
                               '<td id="'+res._id+'-description">'+res.bolo.description+'</td>'+
                               '<td><button type="button" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails(\''+res._id+'\')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>'+
-                          '</tr>')
+                          '</tr>').fadeTo(1, function() {
+                            $(this).add();
+                          })
+
     })
   });
 </script>
