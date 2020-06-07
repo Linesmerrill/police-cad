@@ -67,7 +67,7 @@
   <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
     <div class="header-content">
       <div class="inner">
-        <h4>San Andreas - Dispatch Operations</h4>
+        <h4 class="title-content">San Andreas - Dispatch Operations</h4>
 
         <% if (context == "createTicketSuccess") {%>
           <div class="alert alert-success alert-dismissible show" role="alert">
@@ -113,7 +113,7 @@
           <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
           <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2">Create BOLO <span class="iconify" data-icon="ion-sunny-outline" data-inline="false" style="color: #00aced;"></span></button>
+          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO <span class="iconify" data-icon="ion-sunny-outline" data-inline="false" style="color: #00aced;"></span></button>
           <% } else {%>
             <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
             <% } %>
@@ -122,31 +122,31 @@
         </div>
         <div class="col-lg-10 col-lg-offset-1 margin-top-2">
           <% if (bolos != null && bolos.length > 0) {%>
-            <h4>Active BOLOs: <a href="/dispatch-dashboard"><span class="iconify icon" data-icon="ion:refresh" data-inline="false"></span></a></h4>
-            <h5>Click for details</h5>
-            <% for(var i=0; i<bolos.length; i++) {%>
-              <% if (bolos[i].bolo.status == true) {%>
-                <% if (bolos[i].bolo.boloType === "vehicle") {%>
-                  <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
-                  <div class="alert alert-danger alert-dismissible show" role="alert">
-                    <span class="iconify icon" data-icon="ion:car-sport" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
-                  </div>
-                </a>
-                <%} else if (bolos[i].bolo.boloType === "person") {%>
-                  <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
-                  <div class="alert alert-danger alert-dismissible show" role="alert">
-                    <span class="iconify icon" data-icon="ion:person" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
-                  </div>
-                  </a>
-                <%} else {%>
-                  <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
-                  <div class="alert alert-danger alert-dismissible show" role="alert">
-                    <span class="iconify icon" data-icon="ion:alert-circle" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
-                  </div>
-                </a>
-                <%}%>
-              <%}%>
-            <%}%>
+            <h4>Active BOLOs:</h4>
+            <table id="boloTable" class="table table-bordered" style="width:100%">
+              <thead>
+                  <tr>
+                      <th>Type</th>
+                      <th>Location</th>
+                      <th>Description</th>
+                      <th>Manage</th>
+                  </tr>
+              </thead>
+              <tbody>
+                      <input id="link" type="text" value="" style="opacity: 0;">
+                  
+                  
+                  <% for(var i=0; i<bolos.length; i++) {%>
+                          <tr id="<%=bolos[i]._id%>-row">
+                              <td id="<%=bolos[i]._id%>-type" style="text-transform: capitalize;"><%=bolos[i].bolo.boloType%></td>
+                              <td id="<%=bolos[i]._id%>-location"><%=bolos[i].bolo.location%></td>
+                              <td id="<%=bolos[i]._id%>-description"><%=bolos[i].bolo.description%></td>
+                              <td><button type="button" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=bolos[i]._id%>')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>
+                          </tr>
+                  <%}%>
+              </tbody>
+          </table>
+            
           <%}%>
         </div>
         <div class="col-lg-10 col-lg-offset-1">
@@ -1037,7 +1037,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/create-bolo" method="post">
+          <form id="create-bolo-form" class="form-horizontal" action="/create-bolo" method="post">
             <fieldset>
 
             <!-- Form Name -->
@@ -1079,7 +1079,7 @@
                 <input type="hidden" name="route" value="dispatch-dashboard">
                 <input type="hidden" name="reportingOfficerUsername" value="<%= user.user.username %>">
                 <input type="hidden" name="reportingOfficerID" value="<%= user._id %>">
-                <button id="createBolo" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"  class="btn btn-primary">Create</button>
+                <button id="createBolo" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"  class="btn btn-primary" onclick="hideModal('boloModal')">Create</button>
               </div>
             </div>
             </fieldset>
@@ -1093,7 +1093,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/updateOrDeleteBolo" method="post">
+          <form id="update-bolo-form" class="form-horizontal" action="/updateOrDeleteBolo" method="post">
             <fieldset>
 
             <!-- Form Name -->
@@ -1158,10 +1158,22 @@
               <div class="col-md-4 text-align-center">
                 <input type="hidden" name="route" value="dispatch-dashboard">
                 <input id="boloIDDetail" type="hidden" name="boloID" value="">
-                <button id="updateBolo" type="submit" name="action" value="update"  class="btn btn-info">Update</button>
-                <button id="deleteBolo" type="submit" name="action" value="delete"  class="btn btn-danger">Delete</button>
+                <button id="updateBolo" type="submit" name="action" value="update" class="btn btn-info" onclick="hideModal('boloDetailModal')">Update</button>
+                
               </div>
             </div>
+            </fieldset>
+          </form>
+          <form id="delete-bolo-form">
+            <fieldset>
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="updateBolo"></label>
+                <div class="col-md-4 text-align-center">
+                  <input type="hidden" name="route" value="dispatch-dashboard">
+                  <input id="boloIDDetail" type="hidden" name="boloID" value="">
+                  <button id="deleteBolo" type="submit" name="action" value="delete" class="btn btn-danger" onclick="hideModal('boloDetailModal')">Delete</button>
+                </div>
+              </div>
             </fieldset>
           </form>
         </div>
@@ -1458,7 +1470,7 @@
           <h4>Manage User Status</h4>
           <hr style="width: 88%;max-width: 100rem;">
 
-          <form class="form-horizontal" action="/updateUserDispatchStatus" method="post">
+          <form id="update-user-dispatch-status-form" class="form-horizontal" action="/updateUserDispatchStatus" method="post">
           <fieldset>
             
             <div class="form-group">
@@ -1485,17 +1497,17 @@
             <hr style="width: 88%;max-width: 100rem;">
             <input id="userIDDispatch" type="hidden" name="userID" value="">
           <div class="col-md-12 text-align-center margin-bottom-1">
-              <button type="submit" name="status" value="10-8" class="btn btn-primary" onclick="updateStatus('10-8')">10-8</button>
-              <button type="submit" name="status" value="10-6" class="btn btn-primary" onclick="updateStatus('10-6')">10-6</button>
-              <button type="submit" name="status" value="10-7" class="btn btn-primary" onclick="updateStatus('10-7')">10-7</button>
-              <button type="submit" name="status" value="10-11" class="btn btn-primary" onclick="updateStatus('10-11')">10-11</button>
-              <button type="submit" name="status" value="10-23" class="btn btn-primary" onclick="updateStatus('10-23')">10-23</button>
-              <button type="submit" name="status" value="10-97" class="btn btn-primary" onclick="updateStatus('10-97')">10-97</button>
-              <button type="submit" name="status" value="10-15" class="btn btn-primary" onclick="updateStatus('10-15')">10-15</button>
+              <button type="submit" name="status" value="10-8" class="btn btn-primary" onclick="updateStatus('10-8'); this.onclick=null;">10-8</button>
+              <button type="submit" name="status" value="10-6" class="btn btn-primary" onclick="updateStatus('10-6'); this.onclick=null;">10-6</button>
+              <button type="submit" name="status" value="10-7" class="btn btn-primary" onclick="updateStatus('10-7'); this.onclick=null;">10-7</button>
+              <button type="submit" name="status" value="10-11" class="btn btn-primary" onclick="updateStatus('10-11'); this.onclick=null;">10-11</button>
+              <button type="submit" name="status" value="10-23" class="btn btn-primary" onclick="updateStatus('10-23'); this.onclick=null;">10-23</button>
+              <button type="submit" name="status" value="10-97" class="btn btn-primary" onclick="updateStatus('10-97'); this.onclick=null;">10-97</button>
+              <button type="submit" name="status" value="10-15" class="btn btn-primary" onclick="updateStatus('10-15'); this.onclick=null;">10-15</button>
             </div>
               <div class="col-md-12 text-align-center">
-              <button type="submit" name="status" value="10-42" class="btn btn-danger btn-md" onclick="updateStatus('10-42')">10-42</button>
-              <button type="submit" name="status" value="10-41" class="btn btn-primary btn-md" onclick="updateStatus('10-41')">10-41</button>
+              <button type="submit" name="status" value="10-42" class="btn btn-danger btn-md" onclick="updateStatus('10-42'); this.onclick=null;">10-42</button>
+              <button type="submit" name="status" value="10-41" class="btn btn-primary btn-md" onclick="updateStatus('10-41'); this.onclick=null;">10-41</button>
               </div>
             </fieldset>
           </form>
@@ -1531,12 +1543,33 @@
     socket.on('updated_status', res => {
       $('#'+res.userID+"-status").text(res.status)
     })
+
+    socket.on('updated_bolo', res => {
+      $('#'+res.boloID+"-type").text(res.boloType)
+      $('#'+res.boloID+"-location").text(res.location)
+      $('#'+res.boloID+"-description").text(res.description)
+    })
+
+    socket.on('deleted_bolo', res => {
+      $('#'+res.boloID+'-row').remove();
+    })
+
+    socket.on('created_bolo', res => {
+      $('#boloTable tr:last').after(
+                          '<tr id="'+res._id+'-row">'+
+                              '<td id="'+res._id+'-type" style="text-transform: capitalize;">'+res.bolo.boloType+'</td>'+
+                              '<td id="'+res._id+'-location">'+res.bolo.location+'</td>'+
+                              '<td id="'+res._id+'-description">'+res.bolo.description+'</td>'+
+                              '<td><button type="button" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails(\''+res._id+'\')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>'+
+                          '</tr>')
+    })
   });
 </script>
 <script type="text/javascript">
 $(document).ready(function() {
   $('#example').DataTable();
-  
+  $('#boloTable').DataTable();
+
   // displays the Update Username and Cancel buttons for updating the username
   var myUser = <%- JSON.stringify(user) %>;
     $('#accountUsername').on('keyup', function(e) {
@@ -1788,21 +1821,32 @@ function searchPlate() {
     $('#updateUsernameBtns').hide();
   }
 
-  function populateBoloDetails(i) {
-    var myBolo = <%- JSON.stringify(bolos) %>;
-    $('#boloTypeDetail').val(myBolo[i].bolo.boloType)
-    $('#locationDetail').val(myBolo[i].bolo.location)
-    $('#descriptionDetail').val(myBolo[i].bolo.description)
-    $('#boloIDDetail').val(myBolo[i]._id)
-    $('#createdByDetail').text(myBolo[i].bolo.reportingOfficerUsername)
-    var createdDate = new Date(myBolo[i].bolo.createdAt)
-    $('#createdAtDetail').text(createdDate.toLocaleString())
-    if (myBolo[i].bolo.updatedAt == null || myBolo[i].bolo.updatedAt == '') {
-      $('#updatedAtDetail').text('')
-    } else {
-      var updatedDate= new Date(myBolo[i].bolo.updatedAt)
-      $('#updatedAtDetail').text(updatedDate.toLocaleString())
-    }
+  function populateBoloDetails(id) {
+    var socket = io();
+    socket.emit('load_dispatch_bolos', <%- JSON.stringify(user) %>)
+    socket.on('load_dispatch_bolos_result', (res) => {
+      for (const i in res) {
+        if (res[i]._id != id) {
+          continue
+        } else if (res[i]._id == id) {
+          $('#boloTypeDetail').val(res[i].bolo.boloType)
+          $('#locationDetail').val(res[i].bolo.location)
+          $('#descriptionDetail').val(res[i].bolo.description)
+          $('#boloIDDetail').val(res[i]._id)
+          $('#createdByDetail').text(res[i].bolo.reportingOfficerUsername)
+          var createdDate = new Date(res[i].bolo.createdAt)
+          $('#createdAtDetail').text(createdDate.toLocaleString())
+          if (res[i].bolo.updatedAt == null || res[i].bolo.updatedAt == '') {
+            $('#updatedAtDetail').text('')
+          } else {
+            var updatedDate= new Date(res[i].bolo.updatedAt)
+            $('#updatedAtDetail').text(updatedDate.toLocaleString())
+          }
+        } else {
+          //IDK we have issues
+        }
+      }
+    })
   }
 
   function setDispatchModalValues(id) {
@@ -1832,9 +1876,75 @@ function searchPlate() {
   })
   }
 
+  $('#updateBolo').one('click', function() {
+    var val = $(this).attr('value')
+    var socket = io();
+    $('#update-bolo-form').submit(function(e) {
+      e.preventDefault(); //prevents page from reloading
+      
+      if (val == 'update') {
+        var myReq = {
+        action: 'update',
+        boloID: $('#boloIDDetail').val(),
+        boloType: $('#boloTypeDetail').val(),
+        location: $('#locationDetail').val(),
+        description: $('#descriptionDetail').val()
+      }
+      socket.emit('update_bolo_info', myReq)
+      }
+      return true;
+    })
+    
+  })
+
+  $('#deleteBolo').one('click', function() {
+    var val = $(this).attr('value')
+    var socket = io();
+    $('#delete-bolo-form').submit(function(e) {
+      e.preventDefault(); //prevents page from reloading
+      
+      if (val == 'delete') {
+        var myReq = {
+        action: 'delete',
+        boloID: $('#boloIDDetail').val(),
+        boloType: $('#boloTypeDetail').val(),
+        location: $('#locationDetail').val(),
+        description: $('#descriptionDetail').val()
+      }
+      socket.emit('delete_bolo_info', myReq)
+      }
+      
+      return true;
+    })
+    $('#boloDetailModal').modal('hide')
+  })
+
+  $('#createBolo').one('click', function() {
+    var socket = io();
+    myUser = <%- JSON.stringify(user) %>
+    $('#create-bolo-form').submit(function(e) {
+      e.preventDefault(); //prevents page from reloading
+      var myCreateReq = {
+        boloType: $('#type option:selected').text(),
+        location: $('#location').val(),
+        communityID: myUser.user.activeCommunity,
+        description: $('#description').val(),
+        reportingOfficerUsername: myUser.user.username,
+        reportingOfficerID: myUser._id
+      }
+      socket.emit('create_bolo', myCreateReq)
+      return true;
+    })
+    $('#boloModal').modal('hide')
+  })
+
+  function createBolo() {
+    
+  }
+
   function updateStatus(status) {
     var socket = io();
-    $('form').submit(function(e) {
+    $('#update-user-dispatch-status-form').submit(function(e) {
       e.preventDefault(); //prevents page from reloading
       myReq = {
         userID: $('#userIDDispatch').val(),
@@ -1845,6 +1955,17 @@ function searchPlate() {
       return true;
     })
     $('#manageUserDispatchStatusModal').modal('hide')
+  }
+
+  
+
+  //Clears bolo form on button press because we are using sockets
+  function clearBoloForm() {
+    document.getElementById("create-bolo-form").reset();
+  }
+
+  function hideModal(modalID) {
+    $('#'+modalID).modal('hide')
   }
 
   function clearTextarea() {

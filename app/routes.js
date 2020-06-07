@@ -713,65 +713,65 @@ module.exports = function (app, passport, server) {
         })
       }
     } else {
-    if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
-      Vehicle.find({
-        'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
-      }, function (err, dbVehicles) {
-        Community.find({
-          '$or': [{
-            'community.ownerID': req.user._id
-          }, {
-            '_id': req.user.user.activeCommunity
-          }]
-        }, function (err, dbCommunities) {
-          Bolo.find({
-            'bolo.communityID': req.user.user.activeCommunity
-          }, function (err, dbBolos) {
-            res.render('police-dashboard', {
-              user: req.user,
-              civilians: null,
-              vehicles: dbVehicles,
-              tickets: null,
-              arrestReports: null,
-              warrants: null,
-              communities: dbCommunities,
-              bolos: dbBolos,
-              context: null
+      if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+        Vehicle.find({
+          'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
+        }, function (err, dbVehicles) {
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              res.render('police-dashboard', {
+                user: req.user,
+                civilians: null,
+                vehicles: dbVehicles,
+                tickets: null,
+                arrestReports: null,
+                warrants: null,
+                communities: dbCommunities,
+                bolos: dbBolos,
+                context: null
+              });
             });
           });
-        });
-      })
-    } else {
-      Vehicle.find({
-        'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
-        'vehicle.activeCommunityID': req.query.activeCommunityID
-      }, function (err, dbVehicles) {
-        Community.find({
-          '$or': [{
-            'community.ownerID': req.user._id
-          }, {
-            '_id': req.user.user.activeCommunity
-          }]
-        }, function (err, dbCommunities) {
-          Bolo.find({
-            'bolo.communityID': req.user.user.activeCommunity
-          }, function (err, dbBolos) {
-            res.render('police-dashboard', {
-              user: req.user,
-              civilians: null,
-              vehicles: dbVehicles,
-              tickets: null,
-              arrestReports: null,
-              warrants: null,
-              communities: dbCommunities,
-              bolos: dbBolos,
-              context: null
+        })
+      } else {
+        Vehicle.find({
+          'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
+          'vehicle.activeCommunityID': req.query.activeCommunityID
+        }, function (err, dbVehicles) {
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              res.render('police-dashboard', {
+                user: req.user,
+                civilians: null,
+                vehicles: dbVehicles,
+                tickets: null,
+                arrestReports: null,
+                warrants: null,
+                communities: dbCommunities,
+                bolos: dbBolos,
+                context: null
+              });
             });
           });
-        });
-      })
+        })
+      }
     }
-  }
   });
 
   app.get('/tickets', function (req, res) {
@@ -1082,7 +1082,7 @@ module.exports = function (app, passport, server) {
       }
     }, function (err) {
       if (err) return console.error(err);
-      res.redirect('/'+req.body.route);
+      res.redirect('/' + req.body.route);
     })
   });
 
@@ -1100,7 +1100,7 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "clearBoloSuccess"
-      res.redirect('/'+req.body.route);
+      res.redirect('/' + req.body.route);
     })
   });
 
@@ -1151,7 +1151,7 @@ module.exports = function (app, passport, server) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
-      res.redirect('/'+req.body.route)
+      res.redirect('/' + req.body.route)
       return
     }
     Community.findOne({
@@ -1159,7 +1159,7 @@ module.exports = function (app, passport, server) {
     }, function (err, community) {
       if (community == null) {
         req.app.locals.specialContext = "noCommunityFound";
-        res.redirect('/'+req.body.route);
+        res.redirect('/' + req.body.route);
         return
       }
       User.findOneAndUpdate({
@@ -1171,7 +1171,7 @@ module.exports = function (app, passport, server) {
       }, function (err) {
         if (err) return console.error(err);
         req.app.locals.specialContext = "joinCommunitySuccess";
-        res.redirect('/'+req.body.route);
+        res.redirect('/' + req.body.route);
       })
     })
   })
@@ -1186,7 +1186,7 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "leaveCommunitySuccess";
-      res.redirect('/'+req.body.route);
+      res.redirect('/' + req.body.route);
     })
   })
 
@@ -1385,7 +1385,7 @@ module.exports = function (app, passport, server) {
         '_id': ObjectId(boloID)
       }, function (err) {
         if (err) return console.error(err);
-        res.redirect('/'+req.body.route);
+        res.redirect('/' + req.body.route);
       })
     } else {
       var boloType
@@ -1405,7 +1405,7 @@ module.exports = function (app, passport, server) {
         boloID = req.body.boloID
       } else {
         console.warn("cannot update or delete non-existent boloID: ", req.body.boloID);
-        res.redirect('/'+req.body.route);
+        res.redirect('/' + req.body.route);
       }
 
       Bolo.findOneAndUpdate({
@@ -1419,7 +1419,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        res.redirect('/'+req.body.route);
+        res.redirect('/' + req.body.route);
       })
     }
   })
@@ -1624,36 +1624,86 @@ module.exports = function (app, passport, server) {
   var io = require('socket.io').listen(server);
 
   io.sockets.on('connection', (socket) => {
-    socket.on('chat message', (msg) => {
-      io.emit('chat message', msg);
+
+    socket.on("disconnect", function () {
     });
 
     socket.on('load_statuses', (user) => {
-      Community.find({
-        '$or': [{
-          'community.ownerID': user._id
-        }, {
-          '_id': user.user.activeCommunity
-        }]
-      }, function (err, dbCommunities) {
-        Bolo.find({
-          'bolo.communityID': user.user.activeCommunity
-        }, function (err, dbBolos) {
-          if (user.user.activeCommunity == '' || user.user.activeCommunity == null) {
-            socket.emit('load_status_result', dbCommUsers)
-          } else {
-            User.find({
-              'user.activeCommunity': user.user.activeCommunity
-            }, function (err, dbCommUsers) {
-              socket.emit('load_status_result', dbCommUsers)
-            });
-          }
+      if (user.user.activeCommunity == '' || user.user.activeCommunity == null) {
+        socket.emit('load_status_result', dbCommUsers)
+      } else {
+        User.find({
+          'user.activeCommunity': user.user.activeCommunity
+        }, function (err, dbCommUsers) {
+          socket.emit('load_status_result', dbCommUsers)
         });
+      }
+    })
+
+    socket.on('load_dispatch_bolos', (user) => {
+      Bolo.find({
+        'bolo.communityID': user.user.activeCommunity
+      }, function (err, dbBolos) {
+        socket.emit('load_dispatch_bolos_result', dbBolos)
       });
+    });
+
+    socket.on('update_bolo_info', (req) => {
+      // console.debug('update req backend: ', req)
+      var boloType
+      var location
+      var description
+      var boloID
+      if (exists(req.boloType)) {
+        boloType = req.boloType.trim().toLowerCase()
+      }
+      if (exists(req.location)) {
+        location = req.location.trim()
+      }
+      if (exists(req.description)) {
+        description = req.description.trim()
+      }
+      if (exists(req.boloID)) {
+        boloID = req.boloID
+      } else {
+        console.warn("cannot update or delete non-existent boloID: ", req.boloID);
+        return
+      }
+
+      Bolo.findOneAndUpdate({
+        '_id': ObjectId(boloID)
+      }, {
+        $set: {
+          'bolo.boloType': boloType,
+          'bolo.location': location,
+          'bolo.description': description,
+          'bolo.updatedAt': new Date()
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        socket.broadcast.emit('updated_bolo', req)
+        return
+      })
+
+    })
+
+    socket.on('delete_bolo_info', (req) => {
+      // console.debug('delete req backend: ', req)
+      var boloID
+      if (exists(req.boloID)) {
+        boloID = req.boloID
+      }
+      Bolo.findByIdAndDelete({
+        '_id': ObjectId(boloID)
+      }, function (err) {
+        if (err) return console.error(err);
+        socket.broadcast.emit('deleted_bolo', req)
+        return
+      })
     })
 
     socket.on('update_status', (req) => {
-      // console.debug(req)
+      // console.debug('update req: ', req)
       if (!exists(req.userID) || req.userID == '') {
         console.error('cannot update an empty userID')
         return
@@ -1673,6 +1723,17 @@ module.exports = function (app, passport, server) {
         socket.broadcast.emit('updated_status', req)
       })
     })
+
+    socket.on('create_bolo', (req) => {
+      // console.debug('create bolo server: ', req)
+      var myBolo = new Bolo()
+      myBolo.socketCreateBolo(req)
+      myBolo.save(function (err, dbBolos) {
+        if (err) return console.error(err);
+        socket.broadcast.emit('created_bolo', dbBolos)
+      });
+    })
+
   });
 
 }; //end of routes
