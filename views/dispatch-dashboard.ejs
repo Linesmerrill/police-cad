@@ -1559,7 +1559,6 @@
 
     socket.on('created_bolo', res => {
       var containsEmptyRow = $('#boloTable tr>td').hasClass('dataTables_empty');
-      console.log('rowCount: ', containsEmptyRow)
       if (containsEmptyRow) {
         $('#boloTable tbody>tr:first').fadeOut(1, function(){
           $(this).remove();
@@ -1961,7 +1960,8 @@ function searchPlate() {
       e.preventDefault(); //prevents page from reloading
       myReq = {
         userID: $('#userIDDispatch').val(),
-        status: status
+        status: status,
+        setBy: 'Dispatch'
       }
       socket.emit('update_status', myReq)
       

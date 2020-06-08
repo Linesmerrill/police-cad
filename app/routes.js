@@ -1716,7 +1716,7 @@ module.exports = function (app, passport, server) {
       }, {
         $set: {
           'user.dispatchStatus': req.status,
-          'user.dispatchStatusSetBy': 'dispatch'
+          'user.dispatchStatusSetBy': req.setBy
         }
       }, function (err) {
         if (err) return console.error(err)

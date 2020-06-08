@@ -108,7 +108,17 @@
 
         <!-- imports the community specific alerts -->
         <% include community-alerts %>
-
+        <h4 id="currentStatus" class="text-align-center">Your Current Status: <%=user.user.dispatchStatus%></h4>
+        <h5 id="statusSetBy" class="text-align-center">Set By: <%=user.user.dispatchStatusSetBy%></h5>
+        <div class="col-lg-10 col-lg-offset-1 text-center">
+          <button data-toggle="modal" class="btn btn-primary btn-lg margin-top-2" title="In Service" onclick="updateStatus('10-8')">10-8</button>
+          <button data-toggle="modal" class="btn btn-primary btn-lg margin-top-2" title="Busy" onclick="updateStatus('10-6')">10-6</button>
+          <button data-toggle="modal" class="btn btn-primary btn-lg margin-top-2" title="Out of Service" onclick="updateStatus('10-7')">10-7</button>
+          <button data-toggle="modal" class="btn btn-primary btn-lg margin-top-2" title="Traffic Stop" onclick="updateStatus('10-11')">10-11</button>
+          <button data-toggle="modal" class="btn btn-primary btn-lg margin-top-2" title="Arrive on Scene" onclick="updateStatus('10-23')">10-23</button>
+          <button data-toggle="modal" class="btn btn-primary btn-lg margin-top-2" title="In Route" onclick="updateStatus('10-97')">10-97</button>
+          <button data-toggle="modal" class="btn btn-primary btn-lg margin-top-2" title="Subject in Custody" onclick="updateStatus('10-15')">10-15</button>
+        </div>
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
@@ -119,6 +129,11 @@
             <% } %>
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
           <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
+        </div>
+        <div class="col-lg-10 col-lg-offset-1 text-center">
+          <button data-toggle="modal" class="btn btn-warning btn-lg margin-top-2" title="Ending Tour of Duty" onclick="updateStatus('10-42')">10-42</button>
+          <button data-toggle="modal" class="btn btn-primary btn-lg margin-top-2" title="Beginning Tour of Duty" onclick="updateStatus('10-41')">10-41</button>
+          <button data-toggle="modal" class="btn btn-danger btn-lg margin-top-2" title="Beginning Tour of Duty" onclick="updateStatus('Panic')">Panic</button>
         </div>
         <div class="col-lg-10 col-lg-offset-1 margin-top-2">
           <% if (bolos != null && bolos.length > 0) {%>
@@ -1449,15 +1464,14 @@
 <script>
   $(function () {
     var socket = io();
-    // $('form').submit(function(e){
-    //   e.preventDefault(); // prevents page reloading
-    //   socket.emit('chat message', $('#m').val());
-    //   $('#m').val('');
-    //   return false;
-    // });
-    socket.on('chat message', function(msg){
-      $('#panic').append($('<li>').text(msg));
-    });
+    
+    socket.on('updated_status', res => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (res.userID == myUser._id) {
+      $('#currentStatus').text('Your Current Status: '+ res.status)
+      $('#statusSetBy').text('Set By: ' + res.setBy)
+      }
+    })
   });
 </script>
 <script type="text/javascript">
@@ -1728,6 +1742,17 @@ function searchPlate() {
       var updatedDate= new Date(myBolo[i].bolo.updatedAt)
       $('#updatedAtDetail').text(updatedDate.toLocaleString())
     }
+  }
+
+  function updateStatus(status) {
+    var myUser = <%- JSON.stringify(user) %>;
+    var socket = io();
+    myReq = {
+      userID: myUser._id,
+      status: status,
+      setBy: 'Self'
+    }
+    socket.emit('update_status', myReq)
   }
 
   function clearTextarea() {
