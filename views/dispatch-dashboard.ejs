@@ -120,8 +120,8 @@
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
           <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
         </div>
+        <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
         <div class="col-lg-10 col-lg-offset-1 margin-top-2">
-          
             <h4>Active BOLOs:</h4>
             <table id="boloTable" class="table table-bordered" style="width:100%">
               <thead>
@@ -147,10 +147,9 @@
                   <%}%>
               </tbody>
           </table>
-            
-          
         </div>
-        <div class="col-lg-10 col-lg-offset-1">
+        <% } %>
+        <div class="col-lg-10 col-lg-offset-1 margin-top-2">
           <% if (commUsers == null) {%>
             <h4>Looks like you are not in a community, click here to get started!</h4>
             <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
@@ -1160,7 +1159,6 @@
                 <input type="hidden" name="route" value="dispatch-dashboard">
                 <input id="boloIDDetail" type="hidden" name="boloID" value="">
                 <button id="updateBolo" type="submit" name="action" value="update" class="btn btn-info" onclick="hideModal('boloDetailModal')">Update</button>
-                
               </div>
             </div>
             </fieldset>
@@ -1168,7 +1166,7 @@
           <form id="delete-bolo-form">
             <fieldset>
               <div class="form-group">
-                <label class="col-md-4 control-label" for="updateBolo"></label>
+                <label class="col-md-4 control-label" for="deleteBolo"></label>
                 <div class="col-md-4 text-align-center">
                   <input type="hidden" name="route" value="dispatch-dashboard">
                   <input id="boloIDDetail" type="hidden" name="boloID" value="">
@@ -1906,7 +1904,6 @@ function searchPlate() {
       }
       return true;
     })
-    
   })
 
   $('#deleteBolo').one('click', function() {
@@ -1949,10 +1946,6 @@ function searchPlate() {
     })
     $('#boloModal').modal('hide')
   })
-
-  function createBolo() {
-    
-  }
 
   function updateStatus(status) {
     var socket = io();

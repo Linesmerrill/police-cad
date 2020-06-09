@@ -1648,6 +1648,14 @@ module.exports = function (app, passport, server) {
       });
     });
 
+    socket.on('load_police_bolos', (user) => {
+      Bolo.find({
+        'bolo.communityID': user.user.activeCommunity
+      }, function (err, dbBolos) {
+        socket.emit('load_police_bolos_result', dbBolos)
+      });
+    });
+
     socket.on('update_bolo_info', (req) => {
       // console.debug('update req backend: ', req)
       var boloType

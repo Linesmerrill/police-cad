@@ -108,6 +108,7 @@
 
         <!-- imports the community specific alerts -->
         <% include community-alerts %>
+        <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
         <h4 id="currentStatus" class="text-align-center">Your Current Status: <%=user.user.dispatchStatus%></h4>
         <h5 id="statusSetBy" class="text-align-center">Set By: <%=user.user.dispatchStatusSetBy%></h5>
         <div class="col-lg-10 col-lg-offset-1 text-center">
@@ -119,61 +120,46 @@
           <button data-toggle="modal" class="btn btn-primary btn-lg margin-top-2" title="In Route" onclick="updateStatus('10-97')">10-97</button>
           <button data-toggle="modal" class="btn btn-primary btn-lg margin-top-2" title="Subject in Custody" onclick="updateStatus('10-15')">10-15</button>
         </div>
+        <% } %>
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
           <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2">Create BOLO <span class="iconify" data-icon="ion-sunny-outline" data-inline="false" style="color: #00aced;"></span></button>
+          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO <span class="iconify" data-icon="ion-sunny-outline" data-inline="false" style="color: #00aced;"></span></button>
           <% } else {%>
             <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
             <% } %>
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
           <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
         </div>
+        <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" class="btn btn-warning btn-lg margin-top-2" title="Ending Tour of Duty" onclick="updateStatus('10-42')">10-42</button>
           <button data-toggle="modal" class="btn btn-primary btn-lg margin-top-2" title="Beginning Tour of Duty" onclick="updateStatus('10-41')">10-41</button>
           <button data-toggle="modal" class="btn btn-danger btn-lg margin-top-2" title="Beginning Tour of Duty" onclick="updateStatus('Panic')">Panic</button>
         </div>
-        <div class="col-lg-10 col-lg-offset-1 margin-top-2">
-          <% if (bolos != null && bolos.length > 0) {%>
-            <h4>Active BOLOs: <a href="/police-dashboard"><span class="iconify icon" data-icon="ion:refresh" data-inline="false"></span></a></h4>
+        
+        <div id="active-bolo-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
+            <h4>Active BOLOs: </h4>
             <h5>Click for details</h5>
+          <% if (bolos != null && bolos.length > 0) {%>
             <% for(var i=0; i<bolos.length; i++) {%>
               <% if (bolos[i].bolo.status == true) {%>
-                <% if (bolos[i].bolo.boloType === "vehicle") {%>
-                  <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
+                  <a id="<%=bolos[i]._id%>-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=bolos[i]._id%>')">
           <div class="alert alert-danger alert-dismissible show" role="alert">
-            <span class="iconify icon" data-icon="ion:car-sport" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
-            <!-- <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button> -->
+            <strong>BOLO! </strong> <span id="<%=bolos[i]._id%>-type" style="text-transform:capitalize"><%=bolos[i].bolo.boloType%></span>  Last Seen: <span id="<%=bolos[i]._id%>-location"><%=bolos[i].bolo.location%></span> | Description: <span id="<%=bolos[i]._id%>-description"><%=bolos[i].bolo.description%></span>
           </div>
         </a>
-          <%} else if (bolos[i].bolo.boloType === "person") {%>
-            <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
-            <div class="alert alert-danger alert-dismissible show" role="alert">
-              <span class="iconify icon" data-icon="ion:person" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
-              <!-- <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button> -->
-            </div>
-            </a>
-          
-            <%} else {%>
-              <a data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=i%>')">
-              <div class="alert alert-danger alert-dismissible show" role="alert">
-                <span class="iconify icon" data-icon="ion:alert-circle" data-inline="false"></span> <strong>BOLO!</strong> Last Seen: <%= bolos[i].bolo.location %> | Description: <%= bolos[i].bolo.description %>
-                <!-- <button type="button" class="close" data-toggle="modal" href="#confirmClearBoloModal" onclick="clearBolo('<%= bolos[i]._id %>')" aria-label="Close">
-                  <span aria-hidden="true">&times;</span>
-                </button> -->
-              </div>
-            </a>
-              <%}%>
             <%}%>
           <%}%>
           <%}%>
         </div>
+        <% } else {%>
+          <div class="col-lg-10 col-lg-offset-1 margin-top-2">
+          <h4>Looks like you are not in a community, click here to get started!</h4>
+            <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
+          </div>
+        <% } %>
       </div>
     </div>
   </header>
@@ -1030,7 +1016,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/create-bolo" method="post">
+          <form id="create-bolo-form" class="form-horizontal" action="/create-bolo" method="post">
             <fieldset>
 
             <!-- Form Name -->
@@ -1072,7 +1058,7 @@
                 <input type="hidden" name="route" value="police-dashboard">
                 <input type="hidden" name="reportingOfficerUsername" value="<%= user.user.username %>">
                 <input type="hidden" name="reportingOfficerID" value="<%= user._id %>">
-                <button id="createBolo" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"  class="btn btn-primary">Create</button>
+                <button id="createBolo" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"  class="btn btn-primary" onclick="hideModal('boloModal')">Create</button>
               </div>
             </div>
             </fieldset>
@@ -1086,7 +1072,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/updateOrDeleteBolo" method="post">
+          <form id="update-bolo-form" class="form-horizontal" action="/updateOrDeleteBolo" method="post">
             <fieldset>
 
             <!-- Form Name -->
@@ -1151,10 +1137,21 @@
               <div class="col-md-4 text-align-center">
                 <input type="hidden" name="route" value="police-dashboard">
                 <input id="boloIDDetail" type="hidden" name="boloID" value="">
-                <button id="updateBolo" type="submit" name="action" value="update"  class="btn btn-info">Update</button>
-                <button id="deleteBolo" type="submit" name="action" value="delete"  class="btn btn-danger">Delete</button>
+                <button id="updateBolo" type="submit" name="action" value="update"  class="btn btn-info" onclick="hideModal('boloDetailModal')">Update</button>
               </div>
             </div>
+            </fieldset>
+          </form>
+          <form id="delete-bolo-form">
+            <fieldset>
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="deleteBolo"></label>
+                <div class="col-md-4 text-align-center">
+                  <input type="hidden" name="route" value="dispatch-dashboard">
+                  <!-- <input id="boloIDDetail" type="hidden" name="boloID" value=""> -->
+                  <button id="deleteBolo" type="submit" name="action" value="delete" class="btn btn-danger" onclick="hideModal('boloDetailModal')">Delete</button>
+                </div>
+              </div>
             </fieldset>
           </form>
         </div>
@@ -1472,6 +1469,31 @@
       $('#statusSetBy').text('Set By: ' + res.setBy)
       }
     })
+
+    socket.on('updated_bolo', res => {
+      $('#'+res.boloID+"-type").text(res.boloType)
+      $('#'+res.boloID+"-location").text(res.location)
+      $('#'+res.boloID+"-description").text(res.description)
+    })
+
+    socket.on('deleted_bolo', res => {
+      $('#'+res.boloID+'-row').remove().fadeOut(1, function() {
+        $(this).remove();
+      })
+    })
+
+    socket.on('created_bolo', res => {
+      $('#active-bolo-container').append(
+        '<a id="'+res._id+'-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails(\''+res._id+'\')">'+
+            '<div class="alert alert-danger alert-dismissible show" role="alert">'+
+              '<strong>BOLO! </strong> <span id="'+res._id+'-type" style="text-transform:capitalize">'+res.bolo.boloType+'</span> Last Seen: <span id="'+res._id+'-location">'+res.bolo.location+'</span> | Description: <span id="'+res._id+'-description">'+res.bolo.description+
+            '</div>'+
+          '</a>'
+      ).fadeTo(1, function() {
+        $(this).add();
+      })
+    })
+
   });
 </script>
 <script type="text/javascript">
@@ -1727,21 +1749,32 @@ function searchPlate() {
     $('#updateUsernameBtns').hide();
   }
 
-  function populateBoloDetails(i) {
-    var myBolo = <%- JSON.stringify(bolos) %>;
-    $('#boloTypeDetail').val(myBolo[i].bolo.boloType)
-    $('#locationDetail').val(myBolo[i].bolo.location)
-    $('#descriptionDetail').val(myBolo[i].bolo.description)
-    $('#boloIDDetail').val(myBolo[i]._id)
-    $('#createdByDetail').text(myBolo[i].bolo.reportingOfficerUsername)
-    var createdDate = new Date(myBolo[i].bolo.createdAt)
-    $('#createdAtDetail').text(createdDate.toLocaleString())
-    if (myBolo[i].bolo.updatedAt == null || myBolo[i].bolo.updatedAt == '') {
-      $('#updatedAtDetail').text('')
-    } else {
-      var updatedDate= new Date(myBolo[i].bolo.updatedAt)
-      $('#updatedAtDetail').text(updatedDate.toLocaleString())
-    }
+  function populateBoloDetails(id) {
+    var socket = io();
+    socket.emit('load_police_bolos', <%- JSON.stringify(user) %>)
+    socket.on('load_police_bolos_result', (res) => {
+      for (const i in res) {
+        if (res[i]._id != id) {
+          continue
+        } else if (res[i]._id == id) {
+          $('#boloTypeDetail').val(res[i].bolo.boloType)
+          $('#locationDetail').val(res[i].bolo.location)
+          $('#descriptionDetail').val(res[i].bolo.description)
+          $('#boloIDDetail').val(res[i]._id)
+          $('#createdByDetail').text(res[i].bolo.reportingOfficerUsername)
+          var createdDate = new Date(res[i].bolo.createdAt)
+          $('#createdAtDetail').text(createdDate.toLocaleString())
+          if (res[i].bolo.updatedAt == null || res[i].bolo.updatedAt == '') {
+            $('#updatedAtDetail').text('')
+          } else {
+            var updatedDate= new Date(res[i].bolo.updatedAt)
+            $('#updatedAtDetail').text(updatedDate.toLocaleString())
+          }
+        } else {
+          //IDK we have issues
+        }
+      }
+    })
   }
 
   function updateStatus(status) {
@@ -1753,6 +1786,76 @@ function searchPlate() {
       setBy: 'Self'
     }
     socket.emit('update_status', myReq)
+  }
+
+  $('#updateBolo').one('click', function() {
+    var val = $(this).attr('value')
+    var socket = io();
+    $('#update-bolo-form').submit(function(e) {
+      e.preventDefault(); //prevents page from reloading
+      
+      if (val == 'update') {
+        var myReq = {
+        action: 'update',
+        boloID: $('#boloIDDetail').val(),
+        boloType: $('#boloTypeDetail').val(),
+        location: $('#locationDetail').val(),
+        description: $('#descriptionDetail').val()
+      }
+      socket.emit('update_bolo_info', myReq)
+      }
+      return true;
+    })
+  })
+
+  $('#createBolo').one('click', function() {
+    var socket = io();
+    myUser = <%- JSON.stringify(user) %>
+    $('#create-bolo-form').submit(function(e) {
+      e.preventDefault(); //prevents page from reloading
+      var myCreateReq = {
+        boloType: $('#type option:selected').text(),
+        location: $('#location').val(),
+        communityID: myUser.user.activeCommunity,
+        description: $('#description').val(),
+        reportingOfficerUsername: myUser.user.username,
+        reportingOfficerID: myUser._id
+      }
+      socket.emit('create_bolo', myCreateReq)
+      return true;
+    })
+    $('#boloModal').modal('hide')
+  })
+
+  $('#deleteBolo').one('click', function() {
+    var val = $(this).attr('value')
+    var socket = io();
+    $('#delete-bolo-form').submit(function(e) {
+      e.preventDefault(); //prevents page from reloading
+      
+      if (val == 'delete') {
+        var myReq = {
+        action: 'delete',
+        boloID: $('#boloIDDetail').val(),
+        boloType: $('#boloTypeDetail').val(),
+        location: $('#locationDetail').val(),
+        description: $('#descriptionDetail').val()
+      }
+      socket.emit('delete_bolo_info', myReq)
+      }
+      
+      return true;
+    })
+    $('#boloDetailModal').modal('hide')
+  })
+
+  function hideModal(modalID) {
+    $('#'+modalID).modal('hide')
+  }
+
+  //Clears bolo form on button press because we are using sockets
+  function clearBoloForm() {
+    document.getElementById("create-bolo-form").reset();
   }
 
   function clearTextarea() {
