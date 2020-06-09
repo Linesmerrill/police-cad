@@ -1732,6 +1732,14 @@ module.exports = function (app, passport, server) {
       })
     })
 
+    socket.on('panic_button_update', (req) => {
+      socket.broadcast.emit('panic_button_updated', req)
+    })
+
+    socket.on('clear_panic', (req) => {
+      socket.broadcast.emit('cleared_panic', req)
+    })
+
     socket.on('create_bolo', (req) => {
       // console.debug('create bolo server: ', req)
       var myBolo = new Bolo()

@@ -67,6 +67,7 @@
   <header id="second" style='background-image: url("/static/images/hway_bkground.jpg");'>
     <div class="header-content">
       <div class="inner">
+        <div id="panic-placeholder"></div>
         <h4>San Andreas - Police Operations</h4>
 
         <% if (context == "createTicketSuccess") {%>
@@ -108,6 +109,7 @@
 
         <!-- imports the community specific alerts -->
         <% include community-alerts %>
+
         <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
         <h4 id="currentStatus" class="text-align-center">Your Current Status: <%=user.user.dispatchStatus%></h4>
         <h5 id="statusSetBy" class="text-align-center">Set By: <%=user.user.dispatchStatusSetBy%></h5>
@@ -136,7 +138,7 @@
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" class="btn btn-warning btn-lg margin-top-2" title="Ending Tour of Duty" onclick="updateStatus('10-42')">10-42</button>
           <button data-toggle="modal" class="btn btn-primary btn-lg margin-top-2" title="Beginning Tour of Duty" onclick="updateStatus('10-41')">10-41</button>
-          <button data-toggle="modal" class="btn btn-danger btn-lg margin-top-2" title="Beginning Tour of Duty" onclick="updateStatus('Panic')">Panic</button>
+          <button data-toggle="modal" class="btn btn-danger btn-lg margin-top-2" title="Panic" onclick="updateStatus('Panic');panicButtonPressed()">Panic</button>
         </div>
         
         <div id="active-bolo-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
@@ -146,7 +148,7 @@
             <% for(var i=0; i<bolos.length; i++) {%>
               <% if (bolos[i].bolo.status == true) {%>
                   <a id="<%=bolos[i]._id%>-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=bolos[i]._id%>')">
-          <div class="alert alert-danger alert-dismissible show" role="alert">
+          <div class="alert alert-warning alert-dismissible show" role="alert">
             <strong>BOLO! </strong> <span id="<%=bolos[i]._id%>-type" style="text-transform:capitalize"><%=bolos[i].bolo.boloType%></span>  Last Seen: <span id="<%=bolos[i]._id%>-location"><%=bolos[i].bolo.location%></span> | Description: <span id="<%=bolos[i]._id%>-description"><%=bolos[i].bolo.description%></span>
           </div>
         </a>
@@ -1439,6 +1441,33 @@
     </div>
   </div>
 
+  <div id="panicDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="clear-panic-form" class="form-horizontal" action="" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Clear Panic</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="deleteAccount"></label>
+              <div class="col-md-4 text-align-center">
+                <input id="panic-id" type="hidden" name="panic-id" value="">
+                <button id="clearPanic" class="btn btn-danger" onclick="hideModal('panicDetailModal')">Clear</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <% include 10-codes %> 
   <% include notepad %>
 </body>
@@ -1470,6 +1499,24 @@
       }
     })
 
+    socket.on('panic_button_updated', res => {
+      $('#panic-placeholder').append(
+        '<a id="'+res.userID+'-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\''+res.userID+'\')">'+
+            '<div class="alert alert-danger alert-dismissible show" role="alert">'+
+              '<strong>Panic! </strong> Triggered by: <span id="'+res.userID+'-panic-username">'+res.userUsername+'</span>'+
+            '</div>'+
+          '</a>'
+      ).fadeTo(1, function() {
+        $(this).add();
+      })
+    })
+
+    socket.on('cleared_panic', res => {
+      $('#'+res.panicID+'-panic-row').remove().fadeOut(1, function() {
+        $(this).remove();
+      })
+    })
+
     socket.on('updated_bolo', res => {
       $('#'+res.boloID+"-type").text(res.boloType)
       $('#'+res.boloID+"-location").text(res.location)
@@ -1485,7 +1532,7 @@
     socket.on('created_bolo', res => {
       $('#active-bolo-container').append(
         '<a id="'+res._id+'-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails(\''+res._id+'\')">'+
-            '<div class="alert alert-danger alert-dismissible show" role="alert">'+
+            '<div class="alert alert-warning alert-dismissible show" role="alert">'+
               '<strong>BOLO! </strong> <span id="'+res._id+'-type" style="text-transform:capitalize">'+res.bolo.boloType+'</span> Last Seen: <span id="'+res._id+'-location">'+res.bolo.location+'</span> | Description: <span id="'+res._id+'-description">'+res.bolo.description+
             '</div>'+
           '</a>'
@@ -1777,6 +1824,10 @@ function searchPlate() {
     })
   }
 
+  function populatePanicDetails(id) {
+    $('#panic-id').val(id)
+  }
+
   function updateStatus(status) {
     var myUser = <%- JSON.stringify(user) %>;
     var socket = io();
@@ -1786,6 +1837,17 @@ function searchPlate() {
       setBy: 'Self'
     }
     socket.emit('update_status', myReq)
+  }
+
+  function panicButtonPressed() {
+    var myUser = <%- JSON.stringify(user) %>;
+    var socket = io();
+    myReq = {
+      userID: myUser._id,
+      userUsername: myUser.user.username
+    }
+    
+    socket.emit('panic_button_update', myReq)
   }
 
   $('#updateBolo').one('click', function() {
@@ -1847,6 +1909,19 @@ function searchPlate() {
       return true;
     })
     $('#boloDetailModal').modal('hide')
+  })
+
+  $('#clearPanic').one('click', function() {
+    var socket = io();
+    $('#clear-panic-form').submit(function(e) {
+      e.preventDefault(); //prevents page from reloading
+        var myReq = {
+          panicID: $('#panic-id').val()
+      }
+      socket.emit('clear_panic', myReq)
+      return true;
+    })
+    $('#panicDetailModal').modal('hide')
   })
 
   function hideModal(modalID) {
