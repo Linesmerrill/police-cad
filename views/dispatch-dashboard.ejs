@@ -179,7 +179,11 @@
                             <% if (commUsers[i].user.dispatchStatus == '' || commUsers[i].user.dispatchStatus == null) {%>
                               <td id="<%=commUsers[i]._id%>-status">-</td>
                               <%} else {%>
-                            <td id="<%=commUsers[i]._id%>-status"><%=commUsers[i].user.dispatchStatus%></td>
+                                <% if (commUsers[i].user.dispatchStatus == 'Panic') {%>
+                                  <td id="<%=commUsers[i]._id%>-status">🚨 <%=commUsers[i].user.dispatchStatus%>🚨</td>
+                            <%} else {%>
+                              <td id="<%=commUsers[i]._id%>-status"><%=commUsers[i].user.dispatchStatus%></td>  
+                              <%}%>
                             <%}%>
                             <td><button type="button" data-toggle="modal" href="#manageUserDispatchStatusModal" onclick="setDispatchModalValues('<%=commUsers[i]._id%>')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>
                         </tr>
@@ -1550,7 +1554,11 @@
       } else if (!res.onDuty && res.updateDuty) {
         $('#'+res.userID+"-duty").attr('style', 'background-color: #d9534f !important')  
       }
-      $('#'+res.userID+"-status").text(res.status)
+      if (res.status == "Panic") {
+        $('#'+res.userID+"-status").text("🚨 "+res.status+ " 🚨")
+      } else {
+        $('#'+res.userID+"-status").text(res.status)
+      }
     })
 
     socket.on('updated_bolo', res => {
