@@ -933,3 +933,19 @@ a.link--inherit {
     background-color: transparent !important;
     cursor: default;
 }
+
+.red-dot {
+    height: 15px;
+    width: 15px;
+    background-color: #d9534f;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .green-dot {
+    height: 15px;
+    width: 15px;
+    background-color: #5cb85c;
+    border-radius: 50%;
+    display: inline-block;
+  }

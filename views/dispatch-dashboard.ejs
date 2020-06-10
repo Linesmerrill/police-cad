@@ -157,8 +157,8 @@
           <table id="example" class="table table-bordered" style="width:100%">
             <thead>
                 <tr>
+                    <th>On/Off Duty</th>
                     <th>Username</th>
-                    <!-- <th>Code</th> -->
                     <th>Status</th>
                     <th>Manage</th>
                 </tr>
@@ -169,6 +169,12 @@
                 
                 <% for(var i=0; i<commUsers.length; i++) {%>
                         <tr>
+                          <% if (!commUsers[i].user.dispatchOnDuty) {%>
+                            <td><span id="<%=commUsers[i]._id%>-duty" class="red-dot"></span></td>
+                          <%} else if (commUsers[i].user.dispatchOnDuty) {%>
+                          <td><span id="<%=commUsers[i]._id%>-duty" class="green-dot"></span></td>
+                          <%}%>
+                            
                             <td style="text-transform: capitalize;"><%=commUsers[i].user.username%></td>
                             <% if (commUsers[i].user.dispatchStatus == '' || commUsers[i].user.dispatchStatus == null) {%>
                               <td id="<%=commUsers[i]._id%>-status">-</td>
@@ -1468,8 +1474,7 @@
           <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
           <h4>Manage User Status</h4>
           <hr style="width: 88%;max-width: 100rem;">
-
-          <form id="update-user-dispatch-status-form" class="form-horizontal" action="/updateUserDispatchStatus" method="post">
+          <div class="form-horizontal">
           <fieldset>
             
             <div class="form-group">
@@ -1496,20 +1501,20 @@
             <hr style="width: 88%;max-width: 100rem;">
             <input id="userIDDispatch" type="hidden" name="userID" value="">
           <div class="col-md-12 text-align-center margin-bottom-1">
-              <button type="submit" name="status" value="10-8" class="btn btn-primary" onclick="updateStatus('10-8'); this.onclick=null;">10-8</button>
-              <button type="submit" name="status" value="10-6" class="btn btn-primary" onclick="updateStatus('10-6'); this.onclick=null;">10-6</button>
-              <button type="submit" name="status" value="10-7" class="btn btn-primary" onclick="updateStatus('10-7'); this.onclick=null;">10-7</button>
-              <button type="submit" name="status" value="10-11" class="btn btn-primary" onclick="updateStatus('10-11'); this.onclick=null;">10-11</button>
-              <button type="submit" name="status" value="10-23" class="btn btn-primary" onclick="updateStatus('10-23'); this.onclick=null;">10-23</button>
-              <button type="submit" name="status" value="10-97" class="btn btn-primary" onclick="updateStatus('10-97'); this.onclick=null;">10-97</button>
-              <button type="submit" name="status" value="10-15" class="btn btn-primary" onclick="updateStatus('10-15'); this.onclick=null;">10-15</button>
+              <button type="submit" name="status" value="10-8" class="btn btn-primary" title="In Service" onclick="updateStatus('10-8')">10-8</button>
+              <button type="submit" name="status" value="10-6" class="btn btn-primary" title="Busy" onclick="updateStatus('10-6')">10-6</button>
+              <button type="submit" name="status" value="10-7" class="btn btn-primary" title="Out of Service" onclick="updateStatus('10-7')">10-7</button>
+              <button type="submit" name="status" value="10-11" class="btn btn-primary" title="Traffic Stop" onclick="updateStatus('10-11')">10-11</button>
+              <button type="submit" name="status" value="10-23" class="btn btn-primary" title="Arrived on Scene" onclick="updateStatus('10-23')">10-23</button>
+              <button type="submit" name="status" value="10-97" class="btn btn-primary" title="In Route" onclick="updateStatus('10-97')">10-97</button>
+              <button type="submit" name="status" value="10-15" class="btn btn-primary" title="Subject in Custody" onclick="updateStatus('10-15')">10-15</button>
             </div>
               <div class="col-md-12 text-align-center">
-              <button type="submit" name="status" value="10-42" class="btn btn-danger btn-md" onclick="updateStatus('10-42'); this.onclick=null;">10-42</button>
-              <button type="submit" name="status" value="10-41" class="btn btn-primary btn-md" onclick="updateStatus('10-41'); this.onclick=null;">10-41</button>
+              <button type="submit" name="status" value="10-42" class="btn btn-danger btn-md" title="Ending Tour of Duty" onclick="updateStatus('10-42')">10-42</button>
+              <button type="submit" name="status" value="10-41" class="btn btn-primary btn-md" title="Beginning Tour of Duty" onclick="updateStatus('10-41')">10-41</button>
               </div>
             </fieldset>
-          </form>
+        </div>
         </div>
       </div>
     </div>
@@ -1540,6 +1545,11 @@
   $(function () {
     var socket = io();
     socket.on('updated_status', res => {
+      if (res.onDuty && res.updateDuty) {
+        $('#'+res.userID+"-duty").attr('style', 'background-color: #5cb85c !important')  
+      } else if (!res.onDuty && res.updateDuty) {
+        $('#'+res.userID+"-duty").attr('style', 'background-color: #d9534f !important')  
+      }
       $('#'+res.userID+"-status").text(res.status)
     })
 
@@ -1556,6 +1566,8 @@
     })
 
     socket.on('created_bolo', res => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (res.bolo.communityID == myUser.user.activeCommunity) {
       var containsEmptyRow = $('#boloTable tr>td').hasClass('dataTables_empty');
       if (containsEmptyRow) {
         $('#boloTable tbody>tr:first').fadeOut(1, function(){
@@ -1571,7 +1583,7 @@
                           '</tr>').fadeTo(1, function() {
                             $(this).add();
                           })
-
+                        }
     })
   });
 </script>
@@ -1949,17 +1961,24 @@ function searchPlate() {
 
   function updateStatus(status) {
     var socket = io();
-    $('#update-user-dispatch-status-form').submit(function(e) {
-      e.preventDefault(); //prevents page from reloading
+      var onDuty = null
+      var updateDuty = false
+      if (status == '10-41') {
+        onDuty = true
+        updateDuty = true
+      } else if (status == '10-42') {
+        onDuty = false
+        updateDuty = true
+      }
       myReq = {
         userID: $('#userIDDispatch').val(),
         status: status,
-        setBy: 'Dispatch'
+        setBy: 'Dispatch',
+        onDuty: onDuty,
+        updateDuty: updateDuty
       }
       socket.emit('update_status', myReq)
       
-      return true;
-    })
     $('#manageUserDispatchStatusModal').modal('hide')
   }
 

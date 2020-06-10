@@ -1530,6 +1530,8 @@
     })
 
     socket.on('created_bolo', res => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (res.bolo.communityID == myUser.user.activeCommunity) {
       $('#active-bolo-container').append(
         '<a id="'+res._id+'-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails(\''+res._id+'\')">'+
             '<div class="alert alert-warning alert-dismissible show" role="alert">'+
@@ -1539,7 +1541,9 @@
       ).fadeTo(1, function() {
         $(this).add();
       })
+    }
     })
+  
 
   });
 </script>

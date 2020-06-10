@@ -1718,18 +1718,34 @@ module.exports = function (app, passport, server) {
       } else if (!exists(req.status) || req.status == '') {
         console.error('cannot update an empty status')
         return
+      } 
+      if (req.updateDuty) {
+        User.findByIdAndUpdate({
+          '_id': ObjectId(req.userID)
+        }, {
+          $set: {
+            'user.dispatchStatus': req.status,
+            'user.dispatchStatusSetBy': req.setBy,
+            'user.dispatchOnDuty': req.onDuty
+          }
+        }, function (err) {
+          if (err) return console.error(err)
+          socket.broadcast.emit('updated_status', req)
+        })
+      } else {
+        User.findByIdAndUpdate({
+          '_id': ObjectId(req.userID)
+        }, {
+          $set: {
+            'user.dispatchStatus': req.status,
+            'user.dispatchStatusSetBy': req.setBy,
+          }
+        }, function (err) {
+          if (err) return console.error(err)
+          socket.broadcast.emit('updated_status', req)
+        })
       }
-      User.findByIdAndUpdate({
-        '_id': ObjectId(req.userID)
-      }, {
-        $set: {
-          'user.dispatchStatus': req.status,
-          'user.dispatchStatusSetBy': req.setBy
-        }
-      }, function (err) {
-        if (err) return console.error(err)
-        socket.broadcast.emit('updated_status', req)
-      })
+      
     })
 
     socket.on('panic_button_update', (req) => {

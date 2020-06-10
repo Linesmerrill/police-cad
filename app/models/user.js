@@ -13,6 +13,7 @@ var userSchema = mongoose.Schema({
         activeCommunity: String,
         dispatchStatus: String,
         dispatchStatusSetBy: String,
+        dispatchOnDuty: Boolean,
         createdAt: Date,
         updatedAt: Date
     }
