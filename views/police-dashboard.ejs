@@ -111,6 +111,11 @@
         <% include community-alerts %>
 
         <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+          <% if (!user.user.dispatchOnDuty) {%>
+            <h4><span id="<%=user._id%>-duty" class="red-dot"></span> <span id="<%=user._id%>-duty-text"> Off Duty</span></h4>
+          <%} else if (user.user.dispatchOnDuty) {%>
+            <h4><span id="<%=user._id%>-duty" class="green-dot"></span> <span id="<%=user._id%>-duty-text"> On Duty</span></h4>
+          <%}%>
         <h4 id="currentStatus" class="text-align-center">Your Current Status: <%=user.user.dispatchStatus%></h4>
         <h5 id="statusSetBy" class="text-align-center">Set By: <%=user.user.dispatchStatusSetBy%></h5>
         <div class="col-lg-10 col-lg-offset-1 text-center">
@@ -1494,8 +1499,16 @@
     socket.on('updated_status', res => {
       var myUser = <%- JSON.stringify(user) %>;
       if (res.userID == myUser._id) {
+        if (res.onDuty && res.updateDuty) {
+        $('#'+res.userID+"-duty").attr('style', 'background-color: #5cb85c !important');
+        $('#'+res.userID+"-duty-text").text(' On Duty');
+      } else if (!res.onDuty && res.updateDuty) {
+        $('#'+res.userID+"-duty").attr('style', 'background-color: #d9534f !important');
+        $('#'+res.userID+"-duty-text").text(' Off Duty');
+      }
       $('#currentStatus').text('Your Current Status: '+ res.status)
       $('#statusSetBy').text('Set By: ' + res.setBy)
+
       }
     })
 
@@ -1835,11 +1848,25 @@ function searchPlate() {
   function updateStatus(status) {
     var myUser = <%- JSON.stringify(user) %>;
     var socket = io();
+    var onDuty = null
+    var updateDuty = false
+    if (status == '10-41') {
+      onDuty = true
+      updateDuty = true
+      status = 'Online'
+    } else if (status == '10-42') {
+      onDuty = false
+      updateDuty = true
+      status = 'Offline'
+    }
     myReq = {
       userID: myUser._id,
       status: status,
-      setBy: 'Self'
+      setBy: 'Self',
+      onDuty: onDuty,
+      updateDuty: updateDuty
     }
+
     socket.emit('update_status', myReq)
   }
 

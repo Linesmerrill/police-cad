@@ -1961,23 +1961,25 @@ function searchPlate() {
 
   function updateStatus(status) {
     var socket = io();
-      var onDuty = null
-      var updateDuty = false
-      if (status == '10-41') {
-        onDuty = true
-        updateDuty = true
-      } else if (status == '10-42') {
-        onDuty = false
-        updateDuty = true
-      }
-      myReq = {
-        userID: $('#userIDDispatch').val(),
-        status: status,
-        setBy: 'Dispatch',
-        onDuty: onDuty,
-        updateDuty: updateDuty
-      }
-      socket.emit('update_status', myReq)
+    var onDuty = null
+    var updateDuty = false
+    if (status == '10-41') {
+      onDuty = true
+      updateDuty = true
+      status = "Online"
+    } else if (status == '10-42') {
+      onDuty = false
+      updateDuty = true
+      status = "Offline"
+    }
+    myReq = {
+      userID: $('#userIDDispatch').val(),
+      status: status,
+      setBy: 'Dispatch',
+      onDuty: onDuty,
+      updateDuty: updateDuty
+    }
+    socket.emit('update_status', myReq)
       
     $('#manageUserDispatchStatusModal').modal('hide')
   }
