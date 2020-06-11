@@ -591,6 +591,10 @@ img::-moz-selection {
     text-align: center;
 }
 
+.text-align-left {
+    text-align: left;
+}
+
 .popover {
     color: black;
     width: 80%;
