@@ -1763,7 +1763,11 @@ module.exports = function (app, passport, server) {
           '_id': ObjectId(req.activeCommunity)
         }, function (err, resp) {
           if (err) return console.error(err)
-          socket.broadcast.emit('load_panic_status_update', resp.community.activePanics, req)
+          if (resp != null) {
+            if (resp.community != null) {
+              socket.broadcast.emit('load_panic_status_update', resp.community.activePanics, req)
+            }
+          }
         })
       }
     })
