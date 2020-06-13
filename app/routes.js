@@ -1105,6 +1105,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/joinCommunity', function (req, res) {
+    req.app.locals.specialContext = null;
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
@@ -1148,6 +1149,7 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/joinPoliceCommunity', function (req, res) {
+    req.app.locals.specialContext = null;
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
@@ -1191,6 +1193,7 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/joinEmsCommunity', function (req, res) {
+    req.app.locals.specialContext = null;
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
@@ -1220,6 +1223,7 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/leaveEmsActiveCommunity', function (req, res) {
+    req.app.locals.specialContext = null;
     User.findOneAndUpdate({
       '_id': ObjectId(req.body.userID),
     }, {
@@ -1234,6 +1238,7 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/createCommunity', function (req, res) {
+    req.app.locals.specialContext = null;
     var myCommunity = new Community()
     myCommunity.createCommunity(req, res)
     myCommunity.save(function (err, result) {
@@ -1252,6 +1257,7 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/createPoliceCommunity', function (req, res) {
+    req.app.locals.specialContext = null;
     var myCommunity = new Community()
     myCommunity.createPoliceCommunity(req, res)
     myCommunity.save(function (err, result) {
@@ -1270,6 +1276,7 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/createEmsCommunity', function (req, res) {
+    req.app.locals.specialContext = null;
     var myCommunity = new Community()
     myCommunity.createEmsCommunity(req, res)
     myCommunity.save(function (err, result) {
