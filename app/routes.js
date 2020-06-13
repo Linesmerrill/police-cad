@@ -1786,41 +1786,45 @@ module.exports = function (app, passport, server) {
           '_id': ObjectId(req.activeCommunity)
         }, function (err, resp) {
           if (err) return console.error(err)
-          if (resp.community.activePanics == undefined || resp.community.activePanics == null) {
-            var mapInsert = new Map();
-            mapInsert.set(req.userID, values)
-            Community.findByIdAndUpdate({
-              '_id': ObjectId(req.activeCommunity)
-            }, {
-              $set: {
-                'community.activePanics': mapInsert
-              }
-            }, function (err) {
-              if (err) return console.error(err)
-              socket.broadcast.emit('panic_button_updated', mapInsert, req)
-              return
-            })
-          } else {
+          if (resp != null) {
+            if (resp.community != null) {
+              if (resp.community.activePanics == undefined || resp.community.activePanics == null) {
+                var mapInsert = new Map();
+                mapInsert.set(req.userID, values)
+                Community.findByIdAndUpdate({
+                  '_id': ObjectId(req.activeCommunity)
+                }, {
+                  $set: {
+                    'community.activePanics': mapInsert
+                  }
+                }, function (err) {
+                  if (err) return console.error(err)
+                  socket.broadcast.emit('panic_button_updated', mapInsert, req)
+                  return
+                })
+              } else {
 
-            if (resp.community.activePanics.get(req.userID) == undefined) {
-              resp.community.activePanics.set(req.userID, values)
+                if (resp.community.activePanics.get(req.userID) == undefined) {
+                  resp.community.activePanics.set(req.userID, values)
 
-              Community.findByIdAndUpdate({
-                '_id': ObjectId(req.activeCommunity)
-              }, {
-                $set: {
-                  'community.activePanics': resp.community.activePanics
+                  Community.findByIdAndUpdate({
+                    '_id': ObjectId(req.activeCommunity)
+                  }, {
+                    $set: {
+                      'community.activePanics': resp.community.activePanics
+                    }
+                  }, function (err) {
+                    if (err) return console.error(err)
+                    socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
+                    return
+                  })
+                } else {
+                  socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
+                  return
                 }
-              }, function (err) {
-                if (err) return console.error(err)
-                socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
-                return
-              })
-            } else {
-              socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
-              return
-            }
 
+              }
+            }
           }
         })
       }
@@ -1833,18 +1837,23 @@ module.exports = function (app, passport, server) {
           '_id': ObjectId(req.communityID)
         }, function (err, resp) {
           if (err) return console.error(err);
-          resp.community.activePanics.delete(req.userID)
-          Community.findByIdAndUpdate({
-            '_id': ObjectId(req.communityID)
-          }, {
-            $set: {
-              'community.activePanics': resp.community.activePanics
+          if (resp != null) {
+            if (resp.community != null) {
+              if (resp.community.activePanics != null) {
+                resp.community.activePanics.delete(req.userID)
+                Community.findByIdAndUpdate({
+                  '_id': ObjectId(req.communityID)
+                }, {
+                  $set: {
+                    'community.activePanics': resp.community.activePanics
+                  }
+                }, function (err) {
+                  if (err) return console.error(err);
+                  socket.broadcast.emit('cleared_panic', req)
+                })
+              }
             }
-          }, function (err) {
-            if (err) return console.error(err);
-            socket.broadcast.emit('cleared_panic', req)
-          })
-
+          }
         })
       }
     })
