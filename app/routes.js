@@ -1704,9 +1704,9 @@ module.exports = function (app, passport, server) {
     })
 
     socket.on('delete_bolo_info', (req) => {
-      // console.debug('delete req backend: ', req)
+      console.debug('delete req backend: ', req)
       var boloID
-      if (exists(req.boloID)) {
+      if (exists(req.boloID) && req.boloID.length != 0) {
         boloID = req.boloID
       }
       Bolo.findByIdAndDelete({
@@ -1780,7 +1780,6 @@ module.exports = function (app, passport, server) {
           username: req.userUsername,
           activeCommunityID: req.activeCommunity
         };
-
 
         Community.findById({
           '_id': ObjectId(req.activeCommunity)
