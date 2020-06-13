@@ -67,7 +67,12 @@
   <header id="second" style='background-image: url("/static/images/hway_bkground.jpg");'>
     <div class="header-content">
       <div class="inner">
-        <div id="panic-placeholder"></div>
+        <% for(var i=0; i<communities.length; i++) {%>
+          <% if (communities[i]._id == user.user.activeCommunity) {%>
+            <div id="panic-placeholder"></div>
+            <div id="panic-placeholder-socket"></div>
+          <%}%>
+        <%}%>
         <h4>San Andreas - Police Operations</h4>
 
         <% if (context == "createTicketSuccess") {%>
@@ -143,7 +148,7 @@
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" class="btn btn-warning btn-lg margin-top-2" title="Ending Tour of Duty" onclick="updateStatus('10-42')">10-42</button>
           <button data-toggle="modal" class="btn btn-primary btn-lg margin-top-2" title="Beginning Tour of Duty" onclick="updateStatus('10-41')">10-41</button>
-          <button data-toggle="modal" class="btn btn-danger btn-lg margin-top-2" title="Panic" onclick="updateStatus('Panic');panicButtonPressed()">Panic</button>
+          <button id="panicButton" data-toggle="modal" class="btn btn-danger btn-lg margin-top-2" title="Panic" onclick="updateStatus('Panic');panicButtonPressed()">Panic</button>
         </div>
         
         <div id="active-bolo-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
@@ -1495,7 +1500,7 @@
 <script>
   $(function () {
     var socket = io();
-    
+
     socket.on('updated_status', res => {
       var myUser = <%- JSON.stringify(user) %>;
       if (res.userID == myUser._id) {
@@ -1512,20 +1517,60 @@
       }
     })
 
-    socket.on('panic_button_updated', res => {
-      $('#panic-placeholder').append(
-        '<a id="'+res.userID+'-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\''+res.userID+'\')">'+
-            '<div class="alert alert-danger alert-dismissible show" role="alert">'+
-              '<strong>Panic! </strong> Triggered by: <span id="'+res.userID+'-panic-username">'+res.userUsername+'</span>'+
-            '</div>'+
-          '</a>'
-      ).fadeTo(1, function() {
-        $(this).add();
-      })
+    socket.on('load_panic_status_update', (map, origReq) => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (myUser.user.activeCommunity == origReq.activeCommunity) {
+        $('#panic-placeholder-socket').empty();
+        $('#panic-placeholder').append(
+          '<div id="panic-placeholder-socket"></div>'
+        ).fadeTo(1, function() {
+          $(this).add();
+        })
+        for (var m in map) {
+          $('#panic-placeholder-socket').append(
+          '<a id="'+map[m].userId+'-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\''+map[m].userId+'\')">'+
+              '<div class="alert alert-danger alert-dismissible show" role="alert">'+
+                '<strong>Panic! </strong> Triggered by: <span id="'+map[m].userId+'-panic-username">'+map[m].username+'</span>'+
+                '<button type="button" type="button" class="close" aria-label="Close">'+
+                  '<span aria-hidden="true">&times;</span>'+
+                '</button>'+
+              '</div>'+
+            '</a>'
+        ).fadeTo(1, function() {
+          $(this).add();
+        })
+        }
+      }
+    })
+
+    socket.on('panic_button_updated', (map, origReq) => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (myUser.user.activeCommunity == origReq.activeCommunity) {
+        $('#panic-placeholder-socket').empty();
+        $('#panic-placeholder').append(
+          '<div id="panic-placeholder-socket"></div>'
+        ).fadeTo(1, function() {
+          $(this).add();
+        })
+        for (var m in map) {
+          $('#panic-placeholder-socket').append(
+          '<a id="'+map[m].userId+'-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\''+map[m].userId+'\')">'+
+              '<div class="alert alert-danger alert-dismissible show" role="alert">'+
+                '<strong>Panic! </strong> Triggered by: <span id="'+map[m].userId+'-panic-username">'+map[m].username+'</span>'+
+                '<button type="button" type="button" class="close" aria-label="Close">'+
+                  '<span aria-hidden="true">&times;</span>'+
+                '</button>'+
+              '</div>'+
+            '</a>'
+        ).fadeTo(1, function() {
+          $(this).add();
+        })
+        }
+      }
     })
 
     socket.on('cleared_panic', res => {
-      $('#'+res.panicID+'-panic-row').remove().fadeOut(1, function() {
+      $('#'+res.userID+'-panic-row').remove().fadeOut(1, function() {
         $(this).remove();
       })
     })
@@ -1636,6 +1681,17 @@ document.addEventListener("DOMContentLoaded", function(){
     multiContainer: true
   });
 });
+
+window.onload = function() {
+  var socket = io();
+  var myUser = <%- JSON.stringify(user) %>;
+    var myReq = {
+      userID: myUser._id,
+      userUsername: myUser.user.username,
+      activeCommunity: myUser.user.activeCommunity
+    }
+    socket.emit('load_panic_statuses', myReq)
+}
 
 function searchPlate() {
   let x = document.getElementById('plateDetails');
@@ -1870,15 +1926,21 @@ function searchPlate() {
     socket.emit('update_status', myReq)
   }
 
+  var panicButtonEnabled = true
+
   function panicButtonPressed() {
+    if (panicButtonEnabled) {
     var myUser = <%- JSON.stringify(user) %>;
     var socket = io();
     myReq = {
       userID: myUser._id,
-      userUsername: myUser.user.username
+      userUsername: myUser.user.username,
+      activeCommunity: myUser.user.activeCommunity
     }
     
     socket.emit('panic_button_update', myReq)
+    panicButtonEnabled = false
+    }
   }
 
   $('#updateBolo').one('click', function() {
@@ -1943,13 +2005,25 @@ function searchPlate() {
   })
 
   $('#clearPanic').one('click', function() {
+    myUser = <%- JSON.stringify(user) %>
     var socket = io();
     $('#clear-panic-form').submit(function(e) {
       e.preventDefault(); //prevents page from reloading
         var myReq = {
-          panicID: $('#panic-id').val()
+          userID: $('#panic-id').val(),
+          communityID: myUser.user.activeCommunity
       }
       socket.emit('clear_panic', myReq)
+      panicButtonEnabled = true
+
+      var myUpdateReq = {
+      userID: $('#panic-id').val(),
+      status: '10-8',
+      setBy: 'System',
+      onDuty: null,
+      updateDuty: false
+    }
+    socket.emit('update_status', myUpdateReq)
       return true;
     })
     $('#panicDetailModal').modal('hide')

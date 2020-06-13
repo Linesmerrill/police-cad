@@ -67,6 +67,12 @@
   <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
     <div class="header-content">
       <div class="inner">
+        <% for(var i=0; i<communities.length; i++) {%>
+          <% if (communities[i]._id == user.user.activeCommunity) {%>
+            <div id="panic-placeholder"></div>
+            <div id="panic-placeholder-socket"></div>
+          <%}%>
+        <%}%>
         <h4 class="title-content">San Andreas - Dispatch Operations</h4>
 
         <% if (context == "createTicketSuccess") {%>
@@ -1524,6 +1530,33 @@
     </div>
   </div>
 
+  <div id="panicDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="clear-panic-form" class="form-horizontal" action="" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Clear Panic</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="deleteAccount"></label>
+              <div class="col-md-4 text-align-center">
+                <input id="panic-id" type="hidden" name="panic-id" value="">
+                <button id="clearPanic" class="btn btn-danger" onclick="hideModal('panicDetailModal')">Clear</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <% include 10-codes %> 
   <% include notepad %>
 </body>
@@ -1559,6 +1592,64 @@
       } else {
         $('#'+res.userID+"-status").text(res.status)
       }
+    })
+
+    socket.on('load_panic_status_update', (map, origReq) => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (myUser.user.activeCommunity == origReq.activeCommunity) {
+        $('#panic-placeholder-socket').empty();
+        $('#panic-placeholder').append(
+          '<div id="panic-placeholder-socket"></div>'
+        ).fadeTo(1, function() {
+          $(this).add();
+        })
+        for (var m in map) {
+          $('#panic-placeholder-socket').append(
+          '<a id="'+map[m].userId+'-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\''+map[m].userId+'\')">'+
+              '<div class="alert alert-danger alert-dismissible show" role="alert">'+
+                '<strong>Panic! </strong> Triggered by: <span id="'+map[m].userId+'-panic-username">'+map[m].username+'</span>'+
+                '<button type="button" type="button" class="close" aria-label="Close">'+
+                  '<span aria-hidden="true">&times;</span>'+
+                '</button>'+
+              '</div>'+
+            '</a>'
+        ).fadeTo(1, function() {
+          $(this).add();
+        })
+        }
+      }
+    })
+
+    socket.on('panic_button_updated', (map, origReq) => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (myUser.user.activeCommunity == origReq.activeCommunity) {
+        $('#panic-placeholder-socket').empty();
+        $('#panic-placeholder').append(
+          '<div id="panic-placeholder-socket"></div>'
+        ).fadeTo(1, function() {
+          $(this).add();
+        })
+        for (var m in map) {
+          $('#panic-placeholder-socket').append(
+          '<a id="'+map[m].userId+'-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\''+map[m].userId+'\')">'+
+              '<div class="alert alert-danger alert-dismissible show" role="alert">'+
+                '<strong>Panic! </strong> Triggered by: <span id="'+map[m].userId+'-panic-username">'+map[m].username+'</span>'+
+                '<button type="button" type="button" class="close" aria-label="Close">'+
+                  '<span aria-hidden="true">&times;</span>'+
+                '</button>'+
+              '</div>'+
+            '</a>'
+        ).fadeTo(1, function() {
+          $(this).add();
+        })
+        }
+      }
+    })
+
+    socket.on('cleared_panic', res => {
+      $('#'+res.userID+'-panic-row').remove().fadeOut(1, function() {
+        $(this).remove();
+      })
     })
 
     socket.on('updated_bolo', res => {
@@ -1674,6 +1765,17 @@ document.addEventListener("DOMContentLoaded", function(){
     multiContainer: true
   });
 });
+
+window.onload = function() {
+  var socket = io();
+  var myUser = <%- JSON.stringify(user) %>;
+    var myReq = {
+      userID: myUser._id,
+      userUsername: myUser.user.username,
+      activeCommunity: myUser.user.activeCommunity
+    }
+    socket.emit('load_panic_statuses', myReq)
+}
 
 function searchPlate() {
   let x = document.getElementById('plateDetails');
@@ -1992,7 +2094,34 @@ function searchPlate() {
     $('#manageUserDispatchStatusModal').modal('hide')
   }
 
-  
+  $('#clearPanic').one('click', function() {
+    myUser = <%- JSON.stringify(user) %>
+    var socket = io();
+    $('#clear-panic-form').submit(function(e) {
+      e.preventDefault(); //prevents page from reloading
+        var myReq = {
+          userID: $('#panic-id').val(),
+          communityID: myUser.user.activeCommunity
+      }
+      socket.emit('clear_panic', myReq)
+      panicButtonEnabled = true
+
+      var myUpdateReq = {
+      userID: $('#panic-id').val(),
+      status: '10-8',
+      setBy: 'System',
+      onDuty: null,
+      updateDuty: false
+    }
+    socket.emit('update_status', myUpdateReq)
+      return true;
+    })
+    $('#panicDetailModal').modal('hide')
+  })
+
+  function populatePanicDetails(id) {
+    $('#panic-id').val(id)
+  }
 
   //Clears bolo form on button press because we are using sockets
   function clearBoloForm() {

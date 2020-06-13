@@ -5,6 +5,7 @@ var communitySchema = mongoose.Schema({
     name: String,
     ownerID: String,
     code: String,
+    activePanics: Map,
     createdAt: Date,
     updatedAt: Date
   }
