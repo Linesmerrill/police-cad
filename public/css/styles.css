@@ -798,6 +798,10 @@ a.link--inherit {
     color: gray;
 }
 
+.color-white {
+    color: white;
+}
+
 .form-group.required .control-label:after {
     content: "*";
     color: red;
@@ -921,7 +925,7 @@ a.link--inherit {
     color: black;
 }
 
-.hide-button-outline { 
+.hide-button-outline {
     padding: 0 !important;
     border: none !important;
     background: none !important;
@@ -944,12 +948,19 @@ a.link--inherit {
     background-color: #d9534f;
     border-radius: 50%;
     display: inline-block;
-  }
+}
 
-  .green-dot {
+.green-dot {
     height: 15px;
     width: 15px;
     background-color: #5cb85c;
     border-radius: 50%;
     display: inline-block;
-  }
+}
+
+#scrollToTop:hover {
+    text-decoration: none;
+    opacity: 0.7;
+    border-color: #00aced;
+    color: #00aced;
+}

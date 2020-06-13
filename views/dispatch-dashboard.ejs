@@ -119,7 +119,7 @@
           <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
           <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO <span class="iconify" data-icon="ion-sunny-outline" data-inline="false" style="color: #00aced;"></span></button>
+          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
           <% } else {%>
             <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
             <% } %>
@@ -128,7 +128,7 @@
         </div>
         <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
         <div class="col-lg-10 col-lg-offset-1 margin-top-2">
-            <h4>Active BOLOs:</h4>
+            <h5>Active BOLOs:</h5>
             <table id="boloTable" class="table table-bordered" style="width:100%">
               <thead>
                   <tr>
@@ -139,8 +139,6 @@
                   </tr>
               </thead>
               <tbody>
-                      <input id="link" type="text" value="" style="opacity: 0;">
-                  
                       <% if (bolos != null && bolos.length > 0) {%>
                   <% for(var i=0; i<bolos.length; i++) {%>
                           <tr id="<%=bolos[i]._id%>-row">
@@ -160,6 +158,7 @@
             <h4>Looks like you are not in a community, click here to get started!</h4>
             <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
             <%} else {%>
+          <h5>Officer List:</h5>
           <table id="example" class="table table-bordered" style="width:100%">
             <thead>
                 <tr>
@@ -170,9 +169,6 @@
                 </tr>
             </thead>
             <tbody>
-                    <input id="link" type="text" value="" style="opacity: 0;">
-                
-                
                 <% for(var i=0; i<commUsers.length; i++) {%>
                         <tr>
                           <% if (!commUsers[i].user.dispatchOnDuty) {%>
@@ -1486,7 +1482,6 @@
           <hr style="width: 88%;max-width: 100rem;">
           <div class="form-horizontal">
           <fieldset>
-            
             <div class="form-group">
               <label class="col-md-4 control-label" for="accountUsername">Username:</label>
               <div class="col-md-6">
@@ -1507,7 +1502,6 @@
                 <h5 id="setByDispatch" style="text-transform: capitalize;"></h5>
               </div>
             </div>
-
             <hr style="width: 88%;max-width: 100rem;">
             <input id="userIDDispatch" type="hidden" name="userID" value="">
           <div class="col-md-12 text-align-center margin-bottom-1">
@@ -1520,8 +1514,8 @@
               <button type="submit" name="status" value="10-15" class="btn btn-primary" title="Subject in Custody" onclick="updateStatus('10-15')">10-15</button>
             </div>
               <div class="col-md-12 text-align-center">
-              <button type="submit" name="status" value="10-42" class="btn btn-danger btn-md" title="Ending Tour of Duty" onclick="updateStatus('10-42')">10-42</button>
-              <button type="submit" name="status" value="10-41" class="btn btn-primary btn-md" title="Beginning Tour of Duty" onclick="updateStatus('10-41')">10-41</button>
+              <button type="submit" name="status" value="10-42" class="btn btn-warning btn-md" title="Log out of CAD" onclick="updateStatus('10-42')">10-42</button>
+              <button type="submit" name="status" value="10-41" class="btn btn-success btn-md" title="Log in to CAD" onclick="updateStatus('10-41')">10-41</button>
               </div>
             </fieldset>
         </div>
@@ -1688,8 +1682,12 @@
 </script>
 <script type="text/javascript">
 $(document).ready(function() {
-  $('#example').DataTable();
-  $('#boloTable').DataTable();
+  $('#example').DataTable({
+    "bLengthChange": false,
+  });
+  $('#boloTable').DataTable({
+    "bLengthChange": false,
+  });
 
   // displays the Update Username and Cancel buttons for updating the username
   var myUser = <%- JSON.stringify(user) %>;
