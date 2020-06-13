@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>LPS - Police Dashboard</title>
+  <title>LPS - Dispatch Dashboard</title>
   <meta charset="utf-8">
   <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -64,7 +64,7 @@
       </div>
     </div>
   </nav>
-  <header id="second" style='background-image: url("/static/images/hway_bkground.jpg");'>
+  <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
     <div class="header-content">
       <div class="inner">
         <% for(var i=0; i<communities.length; i++) {%>
@@ -73,7 +73,7 @@
             <div id="panic-placeholder-socket"></div>
           <%}%>
         <%}%>
-        <h4>San Andreas - Police Operations</h4>
+        <h4 class="title-content">San Andreas - Dispatch Operations</h4>
 
         <% if (context == "createTicketSuccess") {%>
           <div class="alert alert-success alert-dismissible show" role="alert">
@@ -115,24 +115,6 @@
         <!-- imports the community specific alerts -->
         <% include community-alerts %>
 
-        <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-          <% if (!user.user.dispatchOnDuty) {%>
-            <h4><span id="<%=user._id%>-duty" class="red-dot"></span> <span id="<%=user._id%>-duty-text"> Off Duty</span></h4>
-          <%} else if (user.user.dispatchOnDuty) {%>
-            <h4><span id="<%=user._id%>-duty" class="green-dot"></span> <span id="<%=user._id%>-duty-text"> On Duty</span></h4>
-          <%}%>
-        <h4 id="currentStatus" class="text-align-center">Your Current Status: <%=user.user.dispatchStatus%></h4>
-        <h5 id="statusSetBy" class="text-align-center">Set By: <%=user.user.dispatchStatusSetBy%></h5>
-        <div class="col-lg-10 col-lg-offset-1 text-center">
-          <button class="btn btn-primary btn-lg margin-top-2" title="In Service" onclick="updateStatus('10-8')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-8</a></button>
-          <button class="btn btn-primary btn-lg margin-top-2" title="Busy" onclick="updateStatus('10-6')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-6</a></button>
-          <button class="btn btn-primary btn-lg margin-top-2" title="Out of Service" onclick="updateStatus('10-7')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-7</a></button>
-          <button class="btn btn-primary btn-lg margin-top-2" title="Traffic Stop" onclick="updateStatus('10-11')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-11</a></button>
-          <button class="btn btn-primary btn-lg margin-top-2" title="Arrive on Scene" onclick="updateStatus('10-23')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-23</a></button>
-          <button class="btn btn-primary btn-lg margin-top-2" title="In Route" onclick="updateStatus('10-97')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-97</a></button>
-          <button class="btn btn-primary btn-lg margin-top-2" title="Subject in Custody" onclick="updateStatus('10-15')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-15</a></button>
-        </div>
-        <% } %>
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
@@ -145,35 +127,73 @@
           <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
         </div>
         <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-        <div class="col-lg-10 col-lg-offset-1 text-center">
-          <button class="btn btn-warning btn-lg margin-top-2" title="Log out of CAD" onclick="updateStatus('10-42')"><a id="scrollToTop" class="page-scroll color-white" href="#second">10-42</a></button>
-          <button class="btn btn-success btn-lg margin-top-2" title="Log in to CAD" onclick="updateStatus('10-41')"><a id="scrollToTop" class="page-scroll color-white" href="#second">10-41</a></button>
+        <div class="col-lg-10 col-lg-offset-1 margin-top-2">
+            <h5>Active BOLOs:</h5>
+            <table id="boloTable" class="table table-bordered" style="width:100%">
+              <thead>
+                  <tr>
+                      <th>Type</th>
+                      <th>Location</th>
+                      <th>Description</th>
+                      <th>Manage</th>
+                  </tr>
+              </thead>
+              <tbody>
+                      <% if (bolos != null && bolos.length > 0) {%>
+                  <% for(var i=0; i<bolos.length; i++) {%>
+                          <tr id="<%=bolos[i]._id%>-row">
+                              <td id="<%=bolos[i]._id%>-type" style="text-transform: capitalize;"><%=bolos[i].bolo.boloType%></td>
+                              <td id="<%=bolos[i]._id%>-location"><%=bolos[i].bolo.location%></td>
+                              <td id="<%=bolos[i]._id%>-description"><%=bolos[i].bolo.description%></td>
+                              <td><button type="button" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=bolos[i]._id%>')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>
+                          </tr>
+                  <%}%>
+                  <%}%>
+              </tbody>
+          </table>
         </div>
-        <div class="col-lg-10 col-lg-offset-1 text-center">
-          <button id="panicButton" class="btn btn-danger btn-lg margin-top-2 page-scroll" title="Panic" onclick="updateStatus('Panic');panicButtonPressed()"><a id="scrollToTop" class="page-scroll color-white" href="#second">Panic</a></button>
-        </div>
-        
-        <div id="active-bolo-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
-            <h4>Active BOLOs: </h4>
-            <h5>Click for details</h5>
-          <% if (bolos != null && bolos.length > 0) {%>
-            <% for(var i=0; i<bolos.length; i++) {%>
-              <% if (bolos[i].bolo.status == true) {%>
-                  <a id="<%=bolos[i]._id%>-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=bolos[i]._id%>')">
-          <div class="alert alert-warning alert-dismissible show" role="alert">
-            <strong>BOLO! </strong> <span id="<%=bolos[i]._id%>-type" style="text-transform:capitalize"><%=bolos[i].bolo.boloType%></span>  Last Seen: <span id="<%=bolos[i]._id%>-location"><%=bolos[i].bolo.location%></span> | Description: <span id="<%=bolos[i]._id%>-description"><%=bolos[i].bolo.description%></span>
-          </div>
-        </a>
-            <%}%>
-          <%}%>
-          <%}%>
-        </div>
-        <% } else {%>
-          <div class="col-lg-10 col-lg-offset-1 margin-top-2">
-          <h4>Looks like you are not in a community, click here to get started!</h4>
-            <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
-          </div>
         <% } %>
+        <div class="col-lg-10 col-lg-offset-1 margin-top-2">
+          <% if (commUsers == null) {%>
+            <h4>Looks like you are not in a community, click here to get started!</h4>
+            <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
+            <%} else {%>
+          <h5>Officer List:</h5>
+          <table id="example" class="table table-bordered" style="width:100%">
+            <thead>
+                <tr>
+                    <th>On/Off Duty</th>
+                    <th>Username</th>
+                    <th>Status</th>
+                    <th>Manage</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% for(var i=0; i<commUsers.length; i++) {%>
+                        <tr>
+                          <% if (!commUsers[i].user.dispatchOnDuty) {%>
+                            <td><span id="<%=commUsers[i]._id%>-duty" class="red-dot"></span></td>
+                          <%} else if (commUsers[i].user.dispatchOnDuty) {%>
+                          <td><span id="<%=commUsers[i]._id%>-duty" class="green-dot"></span></td>
+                          <%}%>
+                            
+                            <td style="text-transform: capitalize;"><%=commUsers[i].user.username%></td>
+                            <% if (commUsers[i].user.dispatchStatus == '' || commUsers[i].user.dispatchStatus == null) {%>
+                              <td id="<%=commUsers[i]._id%>-status">-</td>
+                              <%} else {%>
+                                <% if (commUsers[i].user.dispatchStatus == 'Panic') {%>
+                                  <td id="<%=commUsers[i]._id%>-status">🚨 <%=commUsers[i].user.dispatchStatus%>🚨</td>
+                            <%} else {%>
+                              <td id="<%=commUsers[i]._id%>-status"><%=commUsers[i].user.dispatchStatus%></td>  
+                              <%}%>
+                            <%}%>
+                            <td><button type="button" data-toggle="modal" href="#manageUserDispatchStatusModal" onclick="setDispatchModalValues('<%=commUsers[i]._id%>')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>
+                        </tr>
+                <%}%>
+            </tbody>
+        </table>
+        <%}%>
+        </div>
       </div>
     </div>
   </header>
@@ -240,6 +260,7 @@
                   <% } %>
                   <div class="col-md-4">
                       <br>
+                      <input type="hidden" name="route" value="dispatch-dashboard">
                       <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                       <button type="submit" class="btn btn-info" onclick="searchNames()">Search</button>
                     </div>
@@ -407,11 +428,8 @@
                                 </div>
                             </div>
                           </div>
-                          
                         </div>
-                        
                         <% } %>
-                        
                       <% } %>
                   </div>
                 </div>
@@ -447,6 +465,7 @@
                     class="form-control input-md" list="plates" style="text-transform: uppercase;" required>
                 </div>
                 <div class="col-md-4">
+                  <input type="hidden" name="route" value="dispatch-dashboard">
                   <input type="hidden" id="active-community-id" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                   <button type="submit" onclick="searchPlate()" class="btn btn-info">Search</button>
                 </div>
@@ -646,7 +665,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitTicket"></label>
                 <div class="col-md-4">
-                  <input type="hidden" name="route" value="police-dashboard">
+                  <input type="hidden" name="route" value="dispatch-dashboard">
                   <button id="submitTicket" name="officerEmail" class="btn btn-primary" onclick="hideTicketCivPopover()" value=<%= user.user.email%>>Submit</button>
                 </div>
               </div>
@@ -793,7 +812,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitWarning"></label>
                 <div class="col-md-4">
-                  <input type="hidden" name="route" value="police-dashboard">
+                  <input type="hidden" name="route" value="dispatch-dashboard">
                   <button id="submitWarning" name="officerEmail" class="btn btn-primary" onclick="hideWarningCivPopover()" value=<%= user.user.email%>>Submit</button>
                 </div>
               </div>
@@ -905,7 +924,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitArrestReport"></label>
                 <div class="col-md-4">
-                  <input type="hidden" name="route" value="police-dashboard">
+                  <input type="hidden" name="route" value="dispatch-dashboard">
                   <button id="submitArrestReport" name="reportingOfficerEmail" class="btn btn-primary" onclick="hideArrestReportPopover()" value=<%= user.user.email%>>Submit</button>
                 </div>
               </div>
@@ -982,7 +1001,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
                 <div class="col-md-4">
-                  <input type="hidden" name="route" value="police-dashboard">
+                  <input type="hidden" name="route" value="dispatch-dashboard">
                   <button id="submitWarrantCreation" name="reportingOfficerEmail" class="btn btn-primary" onclick="hideWarrantCreatePopover()" value=<%= user.user.email%>>Submit</button>
                 </div>
               </div>
@@ -1014,7 +1033,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
                 <div class="col-md-4">
-                  <input type="hidden" name="route" value="police-dashboard">
+                  <input type="hidden" name="route" value="dispatch-dashboard">
                   <button id="submitWarrantClearCreation" name="clearingOfficerEmail" class="btn btn-success" onclick="hideWarrantClearPopover()" value=<%= user.user.email%>>Yes</button>
                   <button class="btn btn-danger" data-dismiss="modal">No</button>
                 </div>
@@ -1069,7 +1088,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="createBolo"></label>
               <div class="col-md-4 text-align-center">
-                <input type="hidden" name="route" value="police-dashboard">
+                <input type="hidden" name="route" value="dispatch-dashboard">
                 <input type="hidden" name="reportingOfficerUsername" value="<%= user.user.username %>">
                 <input type="hidden" name="reportingOfficerID" value="<%= user._id %>">
                 <button id="createBolo" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"  class="btn btn-primary" onclick="hideModal('boloModal')">Create</button>
@@ -1149,9 +1168,9 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="updateBolo"></label>
               <div class="col-md-4 text-align-center">
-                <input type="hidden" name="route" value="police-dashboard">
+                <input type="hidden" name="route" value="dispatch-dashboard">
                 <input id="boloIDDetail" type="hidden" name="boloID" value="">
-                <button id="updateBolo" type="submit" name="action" value="update"  class="btn btn-info" onclick="hideModal('boloDetailModal')">Update</button>
+                <button id="updateBolo" type="submit" name="action" value="update" class="btn btn-info" onclick="hideModal('boloDetailModal')">Update</button>
               </div>
             </div>
             </fieldset>
@@ -1162,7 +1181,7 @@
                 <label class="col-md-4 control-label" for="deleteBolo"></label>
                 <div class="col-md-4 text-align-center">
                   <input type="hidden" name="route" value="dispatch-dashboard">
-                  <!-- <input id="boloIDDetail" type="hidden" name="boloID" value=""> -->
+                  <input id="boloIDDetail" type="hidden" name="boloID" value="">
                   <button id="deleteBolo" type="submit" name="action" value="delete" class="btn btn-danger" onclick="hideModal('boloDetailModal')">Delete</button>
                 </div>
               </div>
@@ -1214,7 +1233,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submit-bolo-clear-creation"></label>
                 <div class="col-md-4">
-                  <input type="hidden" name="route" value="police-dashboard">
+                  <input type="hidden" name="route" value="dispatch-dashboard">
                   <button id="submit-bolo-clear-creation" class="btn btn-success">Yes</button>
                   <button class="btn btn-danger" data-dismiss="modal">No</button>
                 </div>
@@ -1260,7 +1279,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="joinCommunity"></label>
               <div class="col-md-4 text-align-center">
-                <input type="hidden" name="route" value="police-dashboard">
+                <input type="hidden" name="route" value="dispatch-dashboard">
                 <button id="joinCommunity" value="<%= user._id %>" name="userID"  class="btn btn-primary">Join</button>
               </div>
             </div>
@@ -1292,7 +1311,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="leaveActiveCommunity"></label>
               <div class="col-md-4 text-align-center">
-                <input type="hidden" name="route" value="police-dashboard">
+                <input type="hidden" name="route" value="dispatch-dashboard">
                 <button id="leaveActiveCommunity" value="<%= user._id %>" name="userID"  class="btn btn-danger">Leave</button>
               </div>
             </div>
@@ -1327,7 +1346,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="createCommunity"></label>
               <div class="col-md-4 text-align-center">
-                <input type="hidden" name="route" value="police-dashboard">
+                <input type="hidden" name="route" value="dispatch-dashboard">
                 <button id="createCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary">Create</button>
               </div>
             </div>
@@ -1384,7 +1403,7 @@
               <input id="accountUsername" name="accountUsername" type="text" class="form-control input-md" maxlength="20" autocomplete="off" required>
               <div id="updateUsernameBtns" class="margin-top-1" style="display: none">
                 <input type="hidden" name="userID" value="<%= user._id %>">
-                <input type="hidden" name="page" value="/police-dashboard">
+                <input type="hidden" name="page" value="/dispatch-dashboard">
                 <button id="updateUsername" value="updateUsername" name="action" class="btn btn-info">Update Username</button> <button type="button" class="btn btn-primary" onclick="cancelUsername()">Cancel</button>
               </div>
               </div>
@@ -1442,12 +1461,64 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="deleteAccount"></label>
               <div class="col-md-4 text-align-center">
-                <input type="hidden" name="page" value="/police-dashboard">
+                <input type="hidden" name="page" value="/dispatch-dashboard">
                 <button id="deleteAccount" value="<%= user._id %>" name="userID"  class="btn btn-danger">Delete account</button>
               </div>
             </div>
             </fieldset>
           </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="manageUserDispatchStatusModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <!-- Modal Name -->
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4>Manage User Status</h4>
+          <hr style="width: 88%;max-width: 100rem;">
+          <div class="form-horizontal">
+          <fieldset>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountUsername">Username:</label>
+              <div class="col-md-6">
+                <h5 id="usernameDispatch" style="text-transform: capitalize;"></h5>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountUsername">Active Status:</label>
+              <div class="col-md-6">
+                <h5 id="statusDispatch"></h5>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountUsername">Set By:</label>
+              <div class="col-md-6">
+                <h5 id="setByDispatch" style="text-transform: capitalize;"></h5>
+              </div>
+            </div>
+            <hr style="width: 88%;max-width: 100rem;">
+            <input id="userIDDispatch" type="hidden" name="userID" value="">
+          <div class="col-md-12 text-align-center margin-bottom-1">
+              <button type="submit" name="status" value="10-8" class="btn btn-primary" title="In Service" onclick="updateStatus('10-8')">10-8</button>
+              <button type="submit" name="status" value="10-6" class="btn btn-primary" title="Busy" onclick="updateStatus('10-6')">10-6</button>
+              <button type="submit" name="status" value="10-7" class="btn btn-primary" title="Out of Service" onclick="updateStatus('10-7')">10-7</button>
+              <button type="submit" name="status" value="10-11" class="btn btn-primary" title="Traffic Stop" onclick="updateStatus('10-11')">10-11</button>
+              <button type="submit" name="status" value="10-23" class="btn btn-primary" title="Arrived on Scene" onclick="updateStatus('10-23')">10-23</button>
+              <button type="submit" name="status" value="10-97" class="btn btn-primary" title="In Route" onclick="updateStatus('10-97')">10-97</button>
+              <button type="submit" name="status" value="10-15" class="btn btn-primary" title="Subject in Custody" onclick="updateStatus('10-15')">10-15</button>
+            </div>
+              <div class="col-md-12 text-align-center">
+              <button type="submit" name="status" value="10-42" class="btn btn-warning btn-md" title="Log out of CAD" onclick="updateStatus('10-42')">10-42</button>
+              <button type="submit" name="status" value="10-41" class="btn btn-success btn-md" title="Log in to CAD" onclick="updateStatus('10-41')">10-41</button>
+              </div>
+            </fieldset>
+        </div>
         </div>
       </div>
     </div>
@@ -1491,6 +1562,8 @@
 <!--scripts loaded here -->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/static/js/jquery.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
 <script src="/static/js/bootstrap.min.js"></script>
 <script src="/static/js/jquery.easing.min.js"></script>
 <script src="/static/js/wow.js"></script>
@@ -1502,20 +1575,16 @@
 <script>
   $(function () {
     var socket = io();
-
     socket.on('updated_status', res => {
-      var myUser = <%- JSON.stringify(user) %>;
-      if (res.userID == myUser._id) {
-        if (res.onDuty && res.updateDuty) {
-        $('#'+res.userID+"-duty").attr('style', 'background-color: #5cb85c !important');
-        $('#'+res.userID+"-duty-text").text(' On Duty');
+      if (res.onDuty && res.updateDuty) {
+        $('#'+res.userID+"-duty").attr('style', 'background-color: #5cb85c !important')  
       } else if (!res.onDuty && res.updateDuty) {
-        $('#'+res.userID+"-duty").attr('style', 'background-color: #d9534f !important');
-        $('#'+res.userID+"-duty-text").text(' Off Duty');
+        $('#'+res.userID+"-duty").attr('style', 'background-color: #d9534f !important')  
       }
-      $('#currentStatus').text('Your Current Status: '+ res.status)
-      $('#statusSetBy').text('Set By: ' + res.setBy)
-
+      if (res.status == "Panic") {
+        $('#'+res.userID+"-status").text("🚨 "+res.status+ " 🚨")
+      } else {
+        $('#'+res.userID+"-status").text(res.status)
       }
     })
 
@@ -1592,23 +1661,34 @@
     socket.on('created_bolo', res => {
       var myUser = <%- JSON.stringify(user) %>;
       if (res.bolo.communityID == myUser.user.activeCommunity) {
-      $('#active-bolo-container').append(
-        '<a id="'+res._id+'-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails(\''+res._id+'\')">'+
-            '<div class="alert alert-warning alert-dismissible show" role="alert">'+
-              '<strong>BOLO! </strong> <span id="'+res._id+'-type" style="text-transform:capitalize">'+res.bolo.boloType+'</span> Last Seen: <span id="'+res._id+'-location">'+res.bolo.location+'</span> | Description: <span id="'+res._id+'-description">'+res.bolo.description+
-            '</div>'+
-          '</a>'
-      ).fadeTo(1, function() {
-        $(this).add();
-      })
-    }
+      var containsEmptyRow = $('#boloTable tr>td').hasClass('dataTables_empty');
+      if (containsEmptyRow) {
+        $('#boloTable tbody>tr:first').fadeOut(1, function(){
+          $(this).remove();
+        })
+      }
+      $('#boloTable tr:last').after(
+                          '<tr id="'+res._id+'-row">'+
+                              '<td id="'+res._id+'-type" style="text-transform: capitalize;">'+res.bolo.boloType+'</td>'+
+                              '<td id="'+res._id+'-location">'+res.bolo.location+'</td>'+
+                              '<td id="'+res._id+'-description">'+res.bolo.description+'</td>'+
+                              '<td><button type="button" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails(\''+res._id+'\')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>'+
+                          '</tr>').fadeTo(1, function() {
+                            $(this).add();
+                          })
+                        }
     })
-  
-
   });
 </script>
 <script type="text/javascript">
 $(document).ready(function() {
+  $('#example').DataTable({
+    "bLengthChange": false,
+  });
+  $('#boloTable').DataTable({
+    "bLengthChange": false,
+  });
+
   // displays the Update Username and Cancel buttons for updating the username
   var myUser = <%- JSON.stringify(user) %>;
     $('#accountUsername').on('keyup', function(e) {
@@ -1873,8 +1953,8 @@ function searchPlate() {
 
   function populateBoloDetails(id) {
     var socket = io();
-    socket.emit('load_police_bolos', <%- JSON.stringify(user) %>)
-    socket.on('load_police_bolos_result', (res) => {
+    socket.emit('load_dispatch_bolos', <%- JSON.stringify(user) %>)
+    socket.on('load_dispatch_bolos_result', (res) => {
       for (const i in res) {
         if (res[i]._id != id) {
           continue
@@ -1899,50 +1979,31 @@ function searchPlate() {
     })
   }
 
-  function populatePanicDetails(id) {
-    $('#panic-id').val(id)
-  }
-
-  function updateStatus(status) {
-    var myUser = <%- JSON.stringify(user) %>;
+  function setDispatchModalValues(id) {
     var socket = io();
-    var onDuty = null
-    var updateDuty = false
-    if (status == '10-41') {
-      onDuty = true
-      updateDuty = true
-      status = 'Online'
-    } else if (status == '10-42') {
-      onDuty = false
-      updateDuty = true
-      status = 'Offline'
+    socket.emit('load_statuses', <%- JSON.stringify(user) %>)
+    socket.on('load_status_result', (res) => {
+    for (const i in res) {
+      if (res[i]._id != id) {
+        continue
+      } else if (res[i]._id == id) {
+        $('#usernameDispatch').text(res[i].user.username)
+        if (res[i].user.dispatchStatus == "" || res[i].user.dispatchStatus ==  undefined) {
+          $('#statusDispatch').text("-")
+        } else {
+          $('#statusDispatch').text(res[i].user.dispatchStatus)
+        }
+        if (res[i].user.dispatchStatusSetBy == "" || res[i].user.dispatchStatusSetBy ==  undefined) {
+          $('#setByDispatch').text("-")
+        } else {
+          $('#setByDispatch').text(res[i].user.dispatchStatusSetBy)
+        }
+        $('#userIDDispatch').val(res[i]._id)
+      } else {
+        //IDK we have issues
+      }
     }
-    myReq = {
-      userID: myUser._id,
-      status: status,
-      setBy: 'Self',
-      onDuty: onDuty,
-      updateDuty: updateDuty
-    }
-
-    socket.emit('update_status', myReq)
-  }
-
-  var panicButtonEnabled = true
-
-  function panicButtonPressed() {
-    if (panicButtonEnabled) {
-    var myUser = <%- JSON.stringify(user) %>;
-    var socket = io();
-    myReq = {
-      userID: myUser._id,
-      userUsername: myUser.user.username,
-      activeCommunity: myUser.user.activeCommunity
-    }
-    
-    socket.emit('panic_button_update', myReq)
-    panicButtonEnabled = false
-    }
+  })
   }
 
   $('#updateBolo').one('click', function() {
@@ -1963,25 +2024,6 @@ function searchPlate() {
       }
       return true;
     })
-  })
-
-  $('#createBolo').one('click', function() {
-    var socket = io();
-    myUser = <%- JSON.stringify(user) %>
-    $('#create-bolo-form').submit(function(e) {
-      e.preventDefault(); //prevents page from reloading
-      var myCreateReq = {
-        boloType: $('#type option:selected').text(),
-        location: $('#location').val(),
-        communityID: myUser.user.activeCommunity,
-        description: $('#description').val(),
-        reportingOfficerUsername: myUser.user.username,
-        reportingOfficerID: myUser._id
-      }
-      socket.emit('create_bolo', myCreateReq)
-      return true;
-    })
-    $('#boloModal').modal('hide')
   })
 
   $('#deleteBolo').one('click', function() {
@@ -2005,6 +2047,50 @@ function searchPlate() {
     })
     $('#boloDetailModal').modal('hide')
   })
+
+  $('#createBolo').one('click', function() {
+    var socket = io();
+    myUser = <%- JSON.stringify(user) %>
+    $('#create-bolo-form').submit(function(e) {
+      e.preventDefault(); //prevents page from reloading
+      var myCreateReq = {
+        boloType: $('#type option:selected').text(),
+        location: $('#location').val(),
+        communityID: myUser.user.activeCommunity,
+        description: $('#description').val(),
+        reportingOfficerUsername: myUser.user.username,
+        reportingOfficerID: myUser._id
+      }
+      socket.emit('create_bolo', myCreateReq)
+      return true;
+    })
+    $('#boloModal').modal('hide')
+  })
+
+  function updateStatus(status) {
+    var socket = io();
+    var onDuty = null
+    var updateDuty = false
+    if (status == '10-41') {
+      onDuty = true
+      updateDuty = true
+      status = "Online"
+    } else if (status == '10-42') {
+      onDuty = false
+      updateDuty = true
+      status = "Offline"
+    }
+    myReq = {
+      userID: $('#userIDDispatch').val(),
+      status: status,
+      setBy: 'Dispatch',
+      onDuty: onDuty,
+      updateDuty: updateDuty
+    }
+    socket.emit('update_status', myReq)
+      
+    $('#manageUserDispatchStatusModal').modal('hide')
+  }
 
   $('#clearPanic').one('click', function() {
     myUser = <%- JSON.stringify(user) %>
@@ -2031,13 +2117,17 @@ function searchPlate() {
     $('#panicDetailModal').modal('hide')
   })
 
-  function hideModal(modalID) {
-    $('#'+modalID).modal('hide')
+  function populatePanicDetails(id) {
+    $('#panic-id').val(id)
   }
 
   //Clears bolo form on button press because we are using sockets
   function clearBoloForm() {
     document.getElementById("create-bolo-form").reset();
+  }
+
+  function hideModal(modalID) {
+    $('#'+modalID).modal('hide')
   }
 
   function clearTextarea() {

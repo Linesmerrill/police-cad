@@ -58,7 +58,7 @@ warrantSchema.methods.createWarrant = function (req, res) {
   this.warrant.createdAt = new Date();
 
   req.app.locals.specialContext = "createWarrantSuccess"
-  res.redirect('/police-dashboard');
+  res.redirect('/'+req.body.route);
 };
 
 module.exports = mongoose.model('Warrant', warrantSchema);

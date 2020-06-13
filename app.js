@@ -8,6 +8,7 @@ var mongoose = require('mongoose');
 var passport = require('passport');
 var flash = require('connect-flash');
 var path = require('path');
+var http = require('http').createServer(express);
 
 var newBaseURL = process.env.NEW_BASE_URL || 'http://localhost:8080';
 var redirectStatus = parseInt(process.env.REDIRECT_STATUS || 302);

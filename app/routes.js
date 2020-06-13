@@ -74,6 +74,10 @@ module.exports = function (app, passport, server) {
     res.redirect('/ems-dashboard')
   });
 
+  app.get('/login-dispatch', authDispatch, function (req, res) {
+    res.redirect('/dispatch-dashboard')
+  });
+
   app.get('/signup-civ', function (req, res) {
     res.render('signup-civ', {
       message: req.flash('signuperror')
@@ -92,16 +96,22 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.get('/signup-dispatch', function (req, res) {
+    res.render('signup-dispatch', {
+      message: req.flash('signuperror')
+    });
+  });
+
   app.get('/logout', function (req, res) {
     req.logout();
     res.redirect('/');
   });
 
   app.get('/communities', auth, function (req, res) {
-    if (!exists(req.session.communityID)){
+    if (!exists(req.session.communityID)) {
       console.warn("cannot render empty communityID, route: /communities")
-        res.redirect('back')
-        return
+      res.redirect('back')
+      return
     }
     Community.findOne({
       '_id': ObjectId(req.session.communityID),
@@ -311,165 +321,456 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.get('/dispatch-dashboard', auth, function (req, res) {
+    var context = req.app.locals.specialContext;
+    req.app.locals.specialContext = null;
+    Community.find({
+      '$or': [{
+        'community.ownerID': req.user._id
+      }, {
+        '_id': req.user.user.activeCommunity
+      }]
+    }, function (err, dbCommunities) {
+      Bolo.find({
+        'bolo.communityID': req.user.user.activeCommunity
+      }, function (err, dbBolos) {
+        if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+          res.render('dispatch-dashboard', {
+            user: req.user,
+            vehicles: null,
+            civilians: null,
+            tickets: null,
+            arrestReports: null,
+            warrants: null,
+            communities: dbCommunities,
+            bolos: dbBolos,
+            commUsers: null,
+            context: context
+          });
+        } else {
+          User.find({
+            'user.activeCommunity': req.user.user.activeCommunity
+          }, function (err, dbCommUsers) {
+            res.render('dispatch-dashboard', {
+              user: req.user,
+              vehicles: null,
+              civilians: null,
+              tickets: null,
+              arrestReports: null,
+              warrants: null,
+              communities: dbCommunities,
+              bolos: dbBolos,
+              commUsers: dbCommUsers,
+              context: context
+            });
+          });
+        }
+      });
+    });
+  });
+
+  //This is gross and I know it :yolo:
   app.get('/name-search', auth, function (req, res) {
-    if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
-      Civilian.find({
-        'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-        'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
-        'civilian.birthday': req.query.dateOfBirth,
-        '$or': [{ // some are stored as empty strings and others as null so we need to check for both
-          'civilian.activeCommunityID': ''
-        }, {
-          'civilian.activeCommunityID': null
-        }]
-      }, function (err, dbCivilians) {
-        Ticket.find({
-          'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-          'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
-        }, function (err, dbTickets) {
-          ArrestReport.find({
-            'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-            'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
-          }, function (err, dbArrestReports) {
-            Warrant.find({
-              'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-              'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
-              'warrant.status': true
-            }, function (err, dbWarrants) {
-              Community.find({
-                '$or': [{
-                  'community.ownerID': req.user._id
-                }, {
-                  '_id': req.user.user.activeCommunity
-                }]
-              }, function (err, dbCommunities) {
-                Bolo.find({
-                  'bolo.communityID': req.user.user.activeCommunity
-                }, function (err, dbBolos) {
-                  res.render('police-dashboard', {
-                    user: req.user,
-                    vehicles: null,
-                    civilians: dbCivilians,
-                    tickets: dbTickets,
-                    arrestReports: dbArrestReports,
-                    warrants: dbWarrants,
-                    communities: dbCommunities,
-                    bolos: dbBolos,
-                    context: null
+    if (req.query.route == 'dispatch-dashboard') {
+      if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+        Civilian.find({
+          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          'civilian.birthday': req.query.dateOfBirth,
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'civilian.activeCommunityID': ''
+          }, {
+            'civilian.activeCommunityID': null
+          }]
+        }, function (err, dbCivilians) {
+          Ticket.find({
+            'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+            'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+          }, function (err, dbTickets) {
+            ArrestReport.find({
+              'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+              'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+            }, function (err, dbArrestReports) {
+              Warrant.find({
+                'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+                'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+                'warrant.status': true
+              }, function (err, dbWarrants) {
+                Community.find({
+                  '$or': [{
+                    'community.ownerID': req.user._id
+                  }, {
+                    '_id': req.user.user.activeCommunity
+                  }]
+                }, function (err, dbCommunities) {
+                  Bolo.find({
+                    'bolo.communityID': req.user.user.activeCommunity
+                  }, function (err, dbBolos) {
+                    if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+                      res.render('dispatch-dashboard', {
+                        user: req.user,
+                        vehicles: null,
+                        civilians: dbCivilians,
+                        tickets: dbTickets,
+                        arrestReports: dbArrestReports,
+                        warrants: dbWarrants,
+                        communities: dbCommunities,
+                        commUsers: null,
+                        bolos: dbBolos,
+                        context: null
+                      });
+                    } else {
+                      User.find({
+                        'user.activeCommunity': req.user.user.activeCommunity
+                      }, function (err, dbCommUsers) {
+                        res.render('dispatch-dashboard', {
+                          user: req.user,
+                          vehicles: null,
+                          civilians: dbCivilians,
+                          tickets: dbTickets,
+                          arrestReports: dbArrestReports,
+                          warrants: dbWarrants,
+                          communities: dbCommunities,
+                          commUsers: dbCommUsers,
+                          bolos: dbBolos,
+                          context: null
+                        });
+                      });
+                    }
                   });
-                });
+                })
               });
             });
           });
         });
-      });
+      } else {
+        Civilian.find({
+          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          'civilian.activeCommunityID': req.query.activeCommunityID
+        }, function (err, dbCivilians) {
+          Ticket.find({
+            'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+            'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+          }, function (err, dbTickets) {
+            ArrestReport.find({
+              'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+              'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+            }, function (err, dbArrestReports) {
+              Warrant.find({
+                'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+                'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+                'warrant.status': true
+              }, function (err, dbWarrants) {
+                Community.find({
+                  '$or': [{
+                    'community.ownerID': req.user._id
+                  }, {
+                    '_id': req.user.user.activeCommunity
+                  }]
+                }, function (err, dbCommunities) {
+                  Bolo.find({
+                    'bolo.communityID': req.user.user.activeCommunity
+                  }, function (err, dbBolos) {
+                    if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+                      res.render('dispatch-dashboard', {
+                        user: req.user,
+                        vehicles: null,
+                        civilians: dbCivilians,
+                        tickets: dbTickets,
+                        arrestReports: dbArrestReports,
+                        warrants: dbWarrants,
+                        communities: dbCommunities,
+                        commUsers: null,
+                        bolos: dbBolos,
+                        context: null
+                      });
+                    } else {
+                      User.find({
+                        'user.activeCommunity': req.user.user.activeCommunity
+                      }, function (err, dbCommUsers) {
+                        res.render('dispatch-dashboard', {
+                          user: req.user,
+                          vehicles: null,
+                          civilians: dbCivilians,
+                          tickets: dbTickets,
+                          arrestReports: dbArrestReports,
+                          warrants: dbWarrants,
+                          communities: dbCommunities,
+                          commUsers: dbCommUsers,
+                          bolos: dbBolos,
+                          context: null
+                        });
+                      });
+                    }
+                  });
+                })
+              });
+            });
+          });
+        });
+      }
     } else {
-      Civilian.find({
-        'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-        'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
-        'civilian.activeCommunityID': req.query.activeCommunityID
-      }, function (err, dbCivilians) {
-        Ticket.find({
-          'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-          'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
-        }, function (err, dbTickets) {
-          ArrestReport.find({
-            'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-            'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
-          }, function (err, dbArrestReports) {
-            Warrant.find({
-              'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-              'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
-              'warrant.status': true
-            }, function (err, dbWarrants) {
-              Community.find({
-                '$or': [{
-                  'community.ownerID': req.user._id
-                }, {
-                  '_id': req.user.user.activeCommunity
-                }]
-              }, function (err, dbCommunities) {
-                Bolo.find({
-                  'bolo.communityID': req.user.user.activeCommunity
-                }, function (err, dbBolos) {
-                  res.render('police-dashboard', {
-                    user: req.user,
-                    vehicles: null,
-                    civilians: dbCivilians,
-                    tickets: dbTickets,
-                    arrestReports: dbArrestReports,
-                    warrants: dbWarrants,
-                    communities: dbCommunities,
-                    bolos: dbBolos,
-                    context: null
+      if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+        Civilian.find({
+          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          'civilian.birthday': req.query.dateOfBirth,
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'civilian.activeCommunityID': ''
+          }, {
+            'civilian.activeCommunityID': null
+          }]
+        }, function (err, dbCivilians) {
+          Ticket.find({
+            'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+            'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+          }, function (err, dbTickets) {
+            ArrestReport.find({
+              'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+              'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+            }, function (err, dbArrestReports) {
+              Warrant.find({
+                'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+                'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+                'warrant.status': true
+              }, function (err, dbWarrants) {
+                Community.find({
+                  '$or': [{
+                    'community.ownerID': req.user._id
+                  }, {
+                    '_id': req.user.user.activeCommunity
+                  }]
+                }, function (err, dbCommunities) {
+                  Bolo.find({
+                    'bolo.communityID': req.user.user.activeCommunity
+                  }, function (err, dbBolos) {
+                    res.render('police-dashboard', {
+                      user: req.user,
+                      vehicles: null,
+                      civilians: dbCivilians,
+                      tickets: dbTickets,
+                      arrestReports: dbArrestReports,
+                      warrants: dbWarrants,
+                      communities: dbCommunities,
+                      bolos: dbBolos,
+                      context: null
+                    });
                   });
                 });
               });
             });
           });
         });
-      });
+      } else {
+        Civilian.find({
+          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          'civilian.activeCommunityID': req.query.activeCommunityID
+        }, function (err, dbCivilians) {
+          Ticket.find({
+            'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+            'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+          }, function (err, dbTickets) {
+            ArrestReport.find({
+              'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+              'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+            }, function (err, dbArrestReports) {
+              Warrant.find({
+                'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+                'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+                'warrant.status': true
+              }, function (err, dbWarrants) {
+                Community.find({
+                  '$or': [{
+                    'community.ownerID': req.user._id
+                  }, {
+                    '_id': req.user.user.activeCommunity
+                  }]
+                }, function (err, dbCommunities) {
+                  Bolo.find({
+                    'bolo.communityID': req.user.user.activeCommunity
+                  }, function (err, dbBolos) {
+                    res.render('police-dashboard', {
+                      user: req.user,
+                      vehicles: null,
+                      civilians: dbCivilians,
+                      tickets: dbTickets,
+                      arrestReports: dbArrestReports,
+                      warrants: dbWarrants,
+                      communities: dbCommunities,
+                      bolos: dbBolos,
+                      context: null
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      }
     }
   })
 
   app.get('/plate-search', auth, function (req, res) {
-    if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
-      Vehicle.find({
-        'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
-      }, function (err, dbVehicles) {
-        Community.find({
-          '$or': [{
-            'community.ownerID': req.user._id
-          }, {
-            '_id': req.user.user.activeCommunity
-          }]
-        }, function (err, dbCommunities) {
-          Bolo.find({
-            'bolo.communityID': req.user.user.activeCommunity
-          }, function (err, dbBolos) {
-            res.render('police-dashboard', {
-              user: req.user,
-              civilians: null,
-              vehicles: dbVehicles,
-              tickets: null,
-              arrestReports: null,
-              warrants: null,
-              communities: dbCommunities,
-              bolos: dbBolos,
-              context: null
+    if (req.query.route == 'dispatch-dashboard') {
+      if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+        Vehicle.find({
+          'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
+        }, function (err, dbVehicles) {
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+                res.render('dispatch-dashboard', {
+                  user: req.user,
+                  vehicles: dbVehicles,
+                  civilians: null,
+                  tickets: null,
+                  arrestReports: null,
+                  warrants: null,
+                  communities: dbCommunities,
+                  commUsers: null,
+                  bolos: dbBolos,
+                  context: null
+                });
+              } else {
+                User.find({
+                  'user.activeCommunity': req.user.user.activeCommunity
+                }, function (err, dbCommUsers) {
+                  res.render('dispatch-dashboard', {
+                    user: req.user,
+                    vehicles: dbVehicles,
+                    civilians: null,
+                    tickets: null,
+                    arrestReports: null,
+                    warrants: null,
+                    communities: dbCommunities,
+                    commUsers: dbCommUsers,
+                    bolos: dbBolos,
+                    context: null
+                  });
+                });
+              }
             });
           });
-        });
-      })
+        })
+      } else {
+        Vehicle.find({
+          'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
+          'vehicle.activeCommunityID': req.query.activeCommunityID
+        }, function (err, dbVehicles) {
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+                res.render('dispatch-dashboard', {
+                  user: req.user,
+                  vehicles: dbVehicles,
+                  civilians: null,
+                  tickets: null,
+                  arrestReports: null,
+                  warrants: null,
+                  communities: dbCommunities,
+                  commUsers: null,
+                  bolos: dbBolos,
+                  context: null
+                });
+              } else {
+                User.find({
+                  'user.activeCommunity': req.user.user.activeCommunity
+                }, function (err, dbCommUsers) {
+                  res.render('dispatch-dashboard', {
+                    user: req.user,
+                    vehicles: dbVehicles,
+                    civilians: null,
+                    tickets: null,
+                    arrestReports: null,
+                    warrants: null,
+                    communities: dbCommunities,
+                    commUsers: dbCommUsers,
+                    bolos: dbBolos,
+                    context: null
+                  });
+                });
+              }
+            });
+          });
+        })
+      }
     } else {
-      Vehicle.find({
-        'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
-        'vehicle.activeCommunityID': req.query.activeCommunityID
-      }, function (err, dbVehicles) {
-        Community.find({
-          '$or': [{
-            'community.ownerID': req.user._id
-          }, {
-            '_id': req.user.user.activeCommunity
-          }]
-        }, function (err, dbCommunities) {
-          Bolo.find({
-            'bolo.communityID': req.user.user.activeCommunity
-          }, function (err, dbBolos) {
-            res.render('police-dashboard', {
-              user: req.user,
-              civilians: null,
-              vehicles: dbVehicles,
-              tickets: null,
-              arrestReports: null,
-              warrants: null,
-              communities: dbCommunities,
-              bolos: dbBolos,
-              context: null
+      if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+        Vehicle.find({
+          'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
+        }, function (err, dbVehicles) {
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              res.render('police-dashboard', {
+                user: req.user,
+                civilians: null,
+                vehicles: dbVehicles,
+                tickets: null,
+                arrestReports: null,
+                warrants: null,
+                communities: dbCommunities,
+                bolos: dbBolos,
+                context: null
+              });
             });
           });
-        });
-      })
+        })
+      } else {
+        Vehicle.find({
+          'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
+          'vehicle.activeCommunityID': req.query.activeCommunityID
+        }, function (err, dbVehicles) {
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              res.render('police-dashboard', {
+                user: req.user,
+                civilians: null,
+                vehicles: dbVehicles,
+                tickets: null,
+                arrestReports: null,
+                warrants: null,
+                communities: dbCommunities,
+                bolos: dbBolos,
+                context: null
+              });
+            });
+          });
+        })
+      }
     }
   });
 
@@ -514,6 +815,12 @@ module.exports = function (app, passport, server) {
     failureFlash: true
   }));
 
+  app.post('/login-dispatch', passport.authenticate('login', {
+    successRedirect: '/dispatch-dashboard',
+    failureRedirect: '/login-dispatch',
+    failureFlash: true
+  }));
+
   app.post('/signup-civ', passport.authenticate('signup', {
     successRedirect: '/civ-dashboard',
     failureRedirect: '/signup-civ',
@@ -529,6 +836,12 @@ module.exports = function (app, passport, server) {
   app.post('/signup-ems', passport.authenticate('signup', {
     successRedirect: '/ems-dashboard',
     failureRedirect: '/signup-ems',
+    failureFlash: true
+  }));
+
+  app.post('/signup-dispatch', passport.authenticate('signup', {
+    successRedirect: '/dispatch-dashboard',
+    failureRedirect: '/signup-dispatch',
     failureFlash: true
   }));
 
@@ -769,7 +1082,7 @@ module.exports = function (app, passport, server) {
       }
     }, function (err) {
       if (err) return console.error(err);
-      res.redirect('/police-dashboard');
+      res.redirect('/' + req.body.route);
     })
   });
 
@@ -787,7 +1100,7 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "clearBoloSuccess"
-      res.redirect('/police-dashboard');
+      res.redirect('/' + req.body.route);
     })
   });
 
@@ -838,7 +1151,7 @@ module.exports = function (app, passport, server) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
-      res.redirect('/police-dashboard')
+      res.redirect('/' + req.body.route)
       return
     }
     Community.findOne({
@@ -846,7 +1159,7 @@ module.exports = function (app, passport, server) {
     }, function (err, community) {
       if (community == null) {
         req.app.locals.specialContext = "noCommunityFound";
-        res.redirect('/police-dashboard');
+        res.redirect('/' + req.body.route);
         return
       }
       User.findOneAndUpdate({
@@ -858,7 +1171,7 @@ module.exports = function (app, passport, server) {
       }, function (err) {
         if (err) return console.error(err);
         req.app.locals.specialContext = "joinCommunitySuccess";
-        res.redirect('/police-dashboard');
+        res.redirect('/' + req.body.route);
       })
     })
   })
@@ -873,7 +1186,7 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "leaveCommunitySuccess";
-      res.redirect('/police-dashboard');
+      res.redirect('/' + req.body.route);
     })
   })
 
@@ -1072,7 +1385,7 @@ module.exports = function (app, passport, server) {
         '_id': ObjectId(boloID)
       }, function (err) {
         if (err) return console.error(err);
-        res.redirect('/police-dashboard');
+        res.redirect('/' + req.body.route);
       })
     } else {
       var boloType
@@ -1092,7 +1405,7 @@ module.exports = function (app, passport, server) {
         boloID = req.body.boloID
       } else {
         console.warn("cannot update or delete non-existent boloID: ", req.body.boloID);
-        res.redirect('/police-dashboard');
+        res.redirect('/' + req.body.route);
       }
 
       Bolo.findOneAndUpdate({
@@ -1106,7 +1419,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        res.redirect('/police-dashboard');
+        res.redirect('/' + req.body.route);
       })
     }
   })
@@ -1222,6 +1535,28 @@ module.exports = function (app, passport, server) {
     }
   })
 
+  app.post('/updateUserDispatchStatus', function (req, res) {
+    // console.debug(req.body)
+    if (!exists(req.body.userID) || req.body.userID == '') {
+      console.error('cannot update an empty userID')
+      return res.redirect('back');
+    } else if (!exists(req.body.status) || req.body.status == '') {
+      console.error('cannot update an empty status')
+      return res.redirect('back');
+    }
+    User.findByIdAndUpdate({
+      '_id': ObjectId(req.body.userID)
+    }, {
+      $set: {
+        'user.dispatchStatus': req.body.status,
+        'user.dispatchStatusSetBy': 'dispatch'
+      }
+    }, function (err) {
+      if (err) return console.error(err)
+      res.redirect('back')
+    })
+  })
+
   app.post('/deleteEmsVeh', function (req, res) {
     var roName = req.body.roVeh
     var modelName = req.body.modelVeh
@@ -1286,6 +1621,229 @@ module.exports = function (app, passport, server) {
     res.redirect('communities')
   })
 
+  var io = require('socket.io').listen(server);
+
+  io.sockets.on('connection', (socket) => {
+
+    socket.on("disconnect", function () {});
+
+    socket.on('load_statuses', (user) => {
+      if (user.user.activeCommunity == '' || user.user.activeCommunity == null) {
+        socket.emit('load_status_result', dbCommUsers)
+      } else {
+        User.find({
+          'user.activeCommunity': user.user.activeCommunity
+        }, function (err, dbCommUsers) {
+          socket.emit('load_status_result', dbCommUsers)
+        });
+      }
+    })
+
+    socket.on('load_dispatch_bolos', (user) => {
+      Bolo.find({
+        'bolo.communityID': user.user.activeCommunity
+      }, function (err, dbBolos) {
+        socket.emit('load_dispatch_bolos_result', dbBolos)
+      });
+    });
+
+    socket.on('load_police_bolos', (user) => {
+      Bolo.find({
+        'bolo.communityID': user.user.activeCommunity
+      }, function (err, dbBolos) {
+        socket.emit('load_police_bolos_result', dbBolos)
+      });
+    });
+
+    socket.on('update_bolo_info', (req) => {
+      // console.debug('update req backend: ', req)
+      var boloType
+      var location
+      var description
+      var boloID
+      if (exists(req.boloType)) {
+        boloType = req.boloType.trim().toLowerCase()
+      }
+      if (exists(req.location)) {
+        location = req.location.trim()
+      }
+      if (exists(req.description)) {
+        description = req.description.trim()
+      }
+      if (exists(req.boloID)) {
+        boloID = req.boloID
+      } else {
+        console.warn("cannot update or delete non-existent boloID: ", req.boloID);
+        return
+      }
+
+      Bolo.findOneAndUpdate({
+        '_id': ObjectId(boloID)
+      }, {
+        $set: {
+          'bolo.boloType': boloType,
+          'bolo.location': location,
+          'bolo.description': description,
+          'bolo.updatedAt': new Date()
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        socket.broadcast.emit('updated_bolo', req)
+        return
+      })
+
+    })
+
+    socket.on('delete_bolo_info', (req) => {
+      // console.debug('delete req backend: ', req)
+      var boloID
+      if (exists(req.boloID)) {
+        boloID = req.boloID
+      }
+      Bolo.findByIdAndDelete({
+        '_id': ObjectId(boloID)
+      }, function (err) {
+        if (err) return console.error(err);
+        socket.broadcast.emit('deleted_bolo', req)
+        return
+      })
+    })
+
+    socket.on('update_status', (req) => {
+      // console.debug('update req: ', req)
+      if (!exists(req.userID) || req.userID == '') {
+        console.error('cannot update an empty userID')
+        return
+      } else if (!exists(req.status) || req.status == '') {
+        console.error('cannot update an empty status')
+        return
+      }
+      if (req.updateDuty) {
+        User.findByIdAndUpdate({
+          '_id': ObjectId(req.userID)
+        }, {
+          $set: {
+            'user.dispatchStatus': req.status,
+            'user.dispatchStatusSetBy': req.setBy,
+            'user.dispatchOnDuty': req.onDuty
+          }
+        }, function (err) {
+          if (err) return console.error(err)
+          socket.broadcast.emit('updated_status', req)
+        })
+      } else {
+        User.findByIdAndUpdate({
+          '_id': ObjectId(req.userID)
+        }, {
+          $set: {
+            'user.dispatchStatus': req.status,
+            'user.dispatchStatusSetBy': req.setBy,
+          }
+        }, function (err) {
+          if (err) return console.error(err)
+          socket.broadcast.emit('updated_status', req)
+        })
+      }
+
+    })
+
+    socket.on('load_panic_statuses', (req) => {
+      // console.debug('load panic status req: ', req)
+      Community.findById({
+        '_id': ObjectId(req.activeCommunity)
+      }, function (err, resp) {
+        if (err) return console.error(err)
+        socket.broadcast.emit('load_panic_status_update', resp.community.activePanics, req)
+      })
+    })
+
+    socket.on('panic_button_update', (req) => {
+      // console.debug('panic button update req: ', req)
+      var values = {
+        userId: req.userID,
+        username: req.userUsername,
+        activeCommunityID: req.activeCommunity
+      };
+
+
+      Community.findById({
+        '_id': ObjectId(req.activeCommunity)
+      }, function (err, resp) {
+        if (err) return console.error(err)
+        if (resp.community.activePanics == undefined || resp.community.activePanics == null) {
+          var mapInsert = new Map();
+          mapInsert.set(req.userID, values)
+          Community.findByIdAndUpdate({
+            '_id': ObjectId(req.activeCommunity)
+          }, {
+            $set: {
+              'community.activePanics': mapInsert
+            }
+          }, function (err) {
+            if (err) return console.error(err)
+            socket.broadcast.emit('panic_button_updated', mapInsert, req)
+            return
+          })
+        } else {
+
+          if (resp.community.activePanics.get(req.userID) == undefined) {
+            resp.community.activePanics.set(req.userID, values)
+
+            Community.findByIdAndUpdate({
+              '_id': ObjectId(req.activeCommunity)
+            }, {
+              $set: {
+                'community.activePanics': resp.community.activePanics
+              }
+            }, function (err) {
+              if (err) return console.error(err)
+              socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
+              return
+            })
+          } else {
+            socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
+            return
+          }
+
+        }
+      })
+
+    })
+
+    socket.on('clear_panic', (req) => {
+      // console.debug("clear req", req)
+      Community.findById({
+        '_id': ObjectId(req.communityID)
+      }, function (err, resp) {
+        if (err) return console.error(err);
+        resp.community.activePanics.delete(req.userID)
+        Community.findByIdAndUpdate({
+          '_id': ObjectId(req.communityID)
+        }, {
+          $set: {
+            'community.activePanics': resp.community.activePanics
+          }
+        }, function (err) {
+          if (err) return console.error(err);
+          socket.broadcast.emit('cleared_panic', req)
+        })
+
+      })
+
+    })
+
+    socket.on('create_bolo', (req) => {
+      // console.debug('create bolo server: ', req)
+      var myBolo = new Bolo()
+      myBolo.socketCreateBolo(req)
+      myBolo.save(function (err, dbBolos) {
+        if (err) return console.error(err);
+        socket.broadcast.emit('created_bolo', dbBolos)
+      });
+    })
+
+  });
+
 }; //end of routes
 
 function auth(req, res, next) {
@@ -1321,6 +1879,15 @@ function authEms(req, res, next) {
     return next();
   }
   res.render('login-ems', {
+    message: req.flash('error')
+  });
+}
+
+function authDispatch(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.render('login-dispatch', {
     message: req.flash('error')
   });
 }

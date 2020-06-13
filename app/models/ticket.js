@@ -87,7 +87,7 @@ ticketSchema.methods.updateTicket = function (request, response) {
   } else {
     request.app.locals.specialContext = "createTicketSuccess"
   }
-  response.redirect('/police-dashboard');
+  response.redirect('/'+request.body.route);
 };
 
 module.exports = mongoose.model('Ticket', ticketSchema);
