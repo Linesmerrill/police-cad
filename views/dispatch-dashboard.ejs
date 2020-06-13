@@ -1765,14 +1765,16 @@ document.addEventListener("DOMContentLoaded", function(){
 });
 
 window.onload = function() {
-  var socket = io();
   var myUser = <%- JSON.stringify(user) %>;
+  if (myUser.user.activeCommunity != null && myUser.user.activeCommunity != undefined) {
+  var socket = io();
     var myReq = {
       userID: myUser._id,
       userUsername: myUser.user.username,
       activeCommunity: myUser.user.activeCommunity
     }
     socket.emit('load_panic_statuses', myReq)
+  }
 }
 
 function searchPlate() {

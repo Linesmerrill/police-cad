@@ -1628,9 +1628,7 @@ module.exports = function (app, passport, server) {
     socket.on("disconnect", function () {});
 
     socket.on('load_statuses', (user) => {
-      if (user.user.activeCommunity == '' || user.user.activeCommunity == null) {
-        socket.emit('load_status_result', dbCommUsers)
-      } else {
+      if (user.user.activeCommunity != null && user.user.activeCommunity != undefined) {
         User.find({
           'user.activeCommunity': user.user.activeCommunity
         }, function (err, dbCommUsers) {
@@ -1640,19 +1638,23 @@ module.exports = function (app, passport, server) {
     })
 
     socket.on('load_dispatch_bolos', (user) => {
-      Bolo.find({
-        'bolo.communityID': user.user.activeCommunity
-      }, function (err, dbBolos) {
-        socket.emit('load_dispatch_bolos_result', dbBolos)
-      });
+      if (user.user.activeCommunity != null && user.user.activeCommunity != undefined) {
+        Bolo.find({
+          'bolo.communityID': user.user.activeCommunity
+        }, function (err, dbBolos) {
+          socket.emit('load_dispatch_bolos_result', dbBolos)
+        });
+      }
     });
 
     socket.on('load_police_bolos', (user) => {
-      Bolo.find({
-        'bolo.communityID': user.user.activeCommunity
-      }, function (err, dbBolos) {
-        socket.emit('load_police_bolos_result', dbBolos)
-      });
+      if (user.user.activeCommunity != null && user.user.activeCommunity != undefined) {
+        Bolo.find({
+          'bolo.communityID': user.user.activeCommunity
+        }, function (err, dbBolos) {
+          socket.emit('load_police_bolos_result', dbBolos)
+        });
+      }
     });
 
     socket.on('update_bolo_info', (req) => {
@@ -1749,87 +1751,91 @@ module.exports = function (app, passport, server) {
 
     socket.on('load_panic_statuses', (req) => {
       // console.debug('load panic status req: ', req)
-      Community.findById({
-        '_id': ObjectId(req.activeCommunity)
-      }, function (err, resp) {
-        if (err) return console.error(err)
-        socket.broadcast.emit('load_panic_status_update', resp.community.activePanics, req)
-      })
+      if (req.activeCommunity != null && req.activeCommunity != undefined) {
+        Community.findById({
+          '_id': ObjectId(req.activeCommunity)
+        }, function (err, resp) {
+          if (err) return console.error(err)
+          socket.broadcast.emit('load_panic_status_update', resp.community.activePanics, req)
+        })
+      }
     })
 
     socket.on('panic_button_update', (req) => {
       // console.debug('panic button update req: ', req)
-      var values = {
-        userId: req.userID,
-        username: req.userUsername,
-        activeCommunityID: req.activeCommunity
-      };
+      if (req.activeCommunity != null && req.activeCommunity != undefined) {
+        var values = {
+          userId: req.userID,
+          username: req.userUsername,
+          activeCommunityID: req.activeCommunity
+        };
 
 
-      Community.findById({
-        '_id': ObjectId(req.activeCommunity)
-      }, function (err, resp) {
-        if (err) return console.error(err)
-        if (resp.community.activePanics == undefined || resp.community.activePanics == null) {
-          var mapInsert = new Map();
-          mapInsert.set(req.userID, values)
-          Community.findByIdAndUpdate({
-            '_id': ObjectId(req.activeCommunity)
-          }, {
-            $set: {
-              'community.activePanics': mapInsert
-            }
-          }, function (err) {
-            if (err) return console.error(err)
-            socket.broadcast.emit('panic_button_updated', mapInsert, req)
-            return
-          })
-        } else {
-
-          if (resp.community.activePanics.get(req.userID) == undefined) {
-            resp.community.activePanics.set(req.userID, values)
-
+        Community.findById({
+          '_id': ObjectId(req.activeCommunity)
+        }, function (err, resp) {
+          if (err) return console.error(err)
+          if (resp.community.activePanics == undefined || resp.community.activePanics == null) {
+            var mapInsert = new Map();
+            mapInsert.set(req.userID, values)
             Community.findByIdAndUpdate({
               '_id': ObjectId(req.activeCommunity)
             }, {
               $set: {
-                'community.activePanics': resp.community.activePanics
+                'community.activePanics': mapInsert
               }
             }, function (err) {
               if (err) return console.error(err)
-              socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
+              socket.broadcast.emit('panic_button_updated', mapInsert, req)
               return
             })
           } else {
-            socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
-            return
+
+            if (resp.community.activePanics.get(req.userID) == undefined) {
+              resp.community.activePanics.set(req.userID, values)
+
+              Community.findByIdAndUpdate({
+                '_id': ObjectId(req.activeCommunity)
+              }, {
+                $set: {
+                  'community.activePanics': resp.community.activePanics
+                }
+              }, function (err) {
+                if (err) return console.error(err)
+                socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
+                return
+              })
+            } else {
+              socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
+              return
+            }
+
           }
-
-        }
-      })
-
+        })
+      }
     })
 
     socket.on('clear_panic', (req) => {
       // console.debug("clear req", req)
-      Community.findById({
-        '_id': ObjectId(req.communityID)
-      }, function (err, resp) {
-        if (err) return console.error(err);
-        resp.community.activePanics.delete(req.userID)
-        Community.findByIdAndUpdate({
+      if (req.communityID != null && req.communityID != undefined) {
+        Community.findById({
           '_id': ObjectId(req.communityID)
-        }, {
-          $set: {
-            'community.activePanics': resp.community.activePanics
-          }
-        }, function (err) {
+        }, function (err, resp) {
           if (err) return console.error(err);
-          socket.broadcast.emit('cleared_panic', req)
+          resp.community.activePanics.delete(req.userID)
+          Community.findByIdAndUpdate({
+            '_id': ObjectId(req.communityID)
+          }, {
+            $set: {
+              'community.activePanics': resp.community.activePanics
+            }
+          }, function (err) {
+            if (err) return console.error(err);
+            socket.broadcast.emit('cleared_panic', req)
+          })
+
         })
-
-      })
-
+      }
     })
 
     socket.on('create_bolo', (req) => {
