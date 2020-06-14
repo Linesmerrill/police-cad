@@ -4,6 +4,7 @@ var bcrypt = require('bcrypt-nodejs');
 var firearmSchema = mongoose.Schema({
     firearm: {
         email: String,
+        serialNumber: String,
         weaponType: String,
         registeredOwner: String,
         isStolen: String,
@@ -16,6 +17,7 @@ var firearmSchema = mongoose.Schema({
 
 firearmSchema.methods.createFirearm = function (request, response) {
     console.debug("request body: ", request.body)
+    this.firearm.serialNumber = request.body.serialNumber;
     this.firearm.weaponType = request.body.weaponType;
     this.firearm.registeredOwner = request.body.registeredOwner.trim();
     this.firearm.isStolen = request.body.isStolen;

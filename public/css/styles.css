@@ -819,8 +819,24 @@ a.link--inherit {
     background-color: #36333d;
 }
 
+#arrest-report-case-no:hover {
+    cursor: not-allowed;
+}
+
 #reporting-officer {
     background-color: #36333d;
+}
+
+#reporting-officer:hover {
+    cursor: not-allowed;
+}
+
+#serial-number {
+    background-color: #36333d;
+}
+
+#serial-number:hover {
+    cursor: not-allowed;
 }
 
 .font-size-3 {
