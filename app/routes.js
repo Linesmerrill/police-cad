@@ -110,6 +110,7 @@ module.exports = function (app, passport, server) {
   app.get('/communities', auth, function (req, res) {
     if (!exists(req.session.communityID)) {
       console.warn("cannot render empty communityID, route: /communities")
+      res.status(400)
       res.redirect('back')
       return
     }
@@ -117,8 +118,10 @@ module.exports = function (app, passport, server) {
       '_id': ObjectId(req.session.communityID),
       'community.ownerID': req.session.passport.user
     }, function (err, dbCommunities) {
+      if (err) return console.error(err);
       if (!exists(dbCommunities)) {
         console.warn("cannot render empty communityID after searching community, route: /communities")
+        res.status(400)
         res.redirect('back')
         return
       }
@@ -128,6 +131,7 @@ module.exports = function (app, passport, server) {
         if (err) return console.error(err);
         if (dbCommunities == null) {
           console.warn("cannot render empty communityID after searching users, route: /communities")
+          res.status(400)
           res.redirect('back')
           return
         }
@@ -147,6 +151,7 @@ module.exports = function (app, passport, server) {
       if (err) return console.error(err);
       if (!exists(dbCommunities)) {
         console.warn("cannot render empty dbCommunity, route: /owned-communities")
+        res.status(400)
         return res.redirect('back')
       }
       res.render('communities-owned', {
@@ -170,6 +175,7 @@ module.exports = function (app, passport, server) {
         $gt: Date.now()
       }
     }, function (err, user) {
+      if (err) return console.error(err);
       if (!user) {
         req.flash('emailSend', 'Password reset token is invalid or has expired.');
         return res.redirect('/forgot-password');
@@ -188,9 +194,11 @@ module.exports = function (app, passport, server) {
       Civilian.find({
         'civilian.email': req.user.user.email.toLowerCase(),
       }, function (err, dbPersonas) {
+        if (err) return console.error(err);
         Vehicle.find({
           'vehicle.email': req.user.user.email.toLowerCase(),
         }, function (err, dbVehicles) {
+          if (err) return console.error(err);
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -198,6 +206,7 @@ module.exports = function (app, passport, server) {
               '_id': req.user.user.activeCommunity
             }]
           }, function (err, dbCommunities) {
+            if (err) return console.error(err);
             res.render('civ-dashboard', {
               user: req.user,
               personas: dbPersonas,
@@ -213,10 +222,12 @@ module.exports = function (app, passport, server) {
         'civilian.email': req.user.user.email.toLowerCase(),
         'civilian.activeCommunityID': req.user.user.activeCommunity
       }, function (err, dbPersonas) {
+        if (err) return console.error(err);
         Vehicle.find({
           'vehicle.email': req.user.user.email.toLowerCase(),
           'vehicle.activeCommunityID': req.user.user.activeCommunity
         }, function (err, dbVehicles) {
+          if (err) return console.error(err);
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -224,6 +235,7 @@ module.exports = function (app, passport, server) {
               '_id': req.user.user.activeCommunity
             }]
           }, function (err, dbCommunities) {
+            if (err) return console.error(err);
             res.render('civ-dashboard', {
               user: req.user,
               personas: dbPersonas,
@@ -244,9 +256,11 @@ module.exports = function (app, passport, server) {
       Ems.find({
         'ems.email': req.user.user.email.toLowerCase(),
       }, function (err, dbPersonas) {
+        if (err) return console.error(err);
         EmsVehicle.find({
           'emsVehicle.email': req.user.user.email.toLowerCase(),
         }, function (err, dbVehicles) {
+          if (err) return console.error(err);
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -254,6 +268,7 @@ module.exports = function (app, passport, server) {
               '_id': req.user.user.activeCommunity
             }]
           }, function (err, dbCommunities) {
+            if (err) return console.error(err);
             res.render('ems-dashboard', {
               user: req.user,
               personas: dbPersonas,
@@ -269,10 +284,12 @@ module.exports = function (app, passport, server) {
         'ems.email': req.user.user.email.toLowerCase(),
         'ems.activeCommunityID': req.user.user.activeCommunity
       }, function (err, dbPersonas) {
+        if (err) return console.error(err);
         EmsVehicle.find({
           'emsVehicle.email': req.user.user.email.toLowerCase(),
           'emsVehicle.activeCommunityID': req.user.user.activeCommunity
         }, function (err, dbVehicles) {
+          if (err) return console.error(err);
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -280,6 +297,7 @@ module.exports = function (app, passport, server) {
               '_id': req.user.user.activeCommunity
             }]
           }, function (err, dbCommunities) {
+            if (err) return console.error(err);
             res.render('ems-dashboard', {
               user: req.user,
               personas: dbPersonas,
@@ -303,9 +321,11 @@ module.exports = function (app, passport, server) {
         '_id': req.user.user.activeCommunity
       }]
     }, function (err, dbCommunities) {
+      if (err) return console.error(err);
       Bolo.find({
         'bolo.communityID': req.user.user.activeCommunity
       }, function (err, dbBolos) {
+        if (err) return console.error(err);
         res.render('police-dashboard', {
           user: req.user,
           vehicles: null,
@@ -331,9 +351,11 @@ module.exports = function (app, passport, server) {
         '_id': req.user.user.activeCommunity
       }]
     }, function (err, dbCommunities) {
+      if (err) return console.error(err);
       Bolo.find({
         'bolo.communityID': req.user.user.activeCommunity
       }, function (err, dbBolos) {
+        if (err) return console.error(err);
         if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
           res.render('dispatch-dashboard', {
             user: req.user,
@@ -351,6 +373,7 @@ module.exports = function (app, passport, server) {
           User.find({
             'user.activeCommunity': req.user.user.activeCommunity
           }, function (err, dbCommUsers) {
+            if (err) return console.error(err);
             res.render('dispatch-dashboard', {
               user: req.user,
               vehicles: null,
@@ -372,7 +395,17 @@ module.exports = function (app, passport, server) {
   //This is gross and I know it :yolo:
   app.get('/name-search', auth, function (req, res) {
     if (req.query.route == 'dispatch-dashboard') {
+      if (req.query.firstName == undefined || req.query.lastName == undefined) {
+        res.status(400)
+        res.redirect('/dispatch-dashboard')
+        return
+      }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+        if (req.query.dateOfBirth == undefined) {
+          res.status(400)
+          res.redirect('/dispatch-dashboard')
+          return
+        }
         Civilian.find({
           'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
           'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
@@ -383,19 +416,23 @@ module.exports = function (app, passport, server) {
             'civilian.activeCommunityID': null
           }]
         }, function (err, dbCivilians) {
+          if (err) return console.error(err);
           Ticket.find({
             'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
             'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
           }, function (err, dbTickets) {
+            if (err) return console.error(err);
             ArrestReport.find({
               'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
               'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
             }, function (err, dbArrestReports) {
+              if (err) return console.error(err);
               Warrant.find({
                 'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
                 'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
                 'warrant.status': true
               }, function (err, dbWarrants) {
+                if (err) return console.error(err);
                 Community.find({
                   '$or': [{
                     'community.ownerID': req.user._id
@@ -403,9 +440,11 @@ module.exports = function (app, passport, server) {
                     '_id': req.user.user.activeCommunity
                   }]
                 }, function (err, dbCommunities) {
+                  if (err) return console.error(err);
                   Bolo.find({
                     'bolo.communityID': req.user.user.activeCommunity
                   }, function (err, dbBolos) {
+                    if (err) return console.error(err);
                     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
                       res.render('dispatch-dashboard', {
                         user: req.user,
@@ -423,6 +462,7 @@ module.exports = function (app, passport, server) {
                       User.find({
                         'user.activeCommunity': req.user.user.activeCommunity
                       }, function (err, dbCommUsers) {
+                        if (err) return console.error(err);
                         res.render('dispatch-dashboard', {
                           user: req.user,
                           vehicles: null,
@@ -449,19 +489,23 @@ module.exports = function (app, passport, server) {
           'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
           'civilian.activeCommunityID': req.query.activeCommunityID
         }, function (err, dbCivilians) {
+          if (err) return console.error(err);
           Ticket.find({
             'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
             'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
           }, function (err, dbTickets) {
+            if (err) return console.error(err);
             ArrestReport.find({
               'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
               'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
             }, function (err, dbArrestReports) {
+              if (err) return console.error(err);
               Warrant.find({
                 'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
                 'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
                 'warrant.status': true
               }, function (err, dbWarrants) {
+                if (err) return console.error(err);
                 Community.find({
                   '$or': [{
                     'community.ownerID': req.user._id
@@ -469,9 +513,11 @@ module.exports = function (app, passport, server) {
                     '_id': req.user.user.activeCommunity
                   }]
                 }, function (err, dbCommunities) {
+                  if (err) return console.error(err);
                   Bolo.find({
                     'bolo.communityID': req.user.user.activeCommunity
                   }, function (err, dbBolos) {
+                    if (err) return console.error(err);
                     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
                       res.render('dispatch-dashboard', {
                         user: req.user,
@@ -489,6 +535,7 @@ module.exports = function (app, passport, server) {
                       User.find({
                         'user.activeCommunity': req.user.user.activeCommunity
                       }, function (err, dbCommUsers) {
+                        if (err) return console.error(err);
                         res.render('dispatch-dashboard', {
                           user: req.user,
                           vehicles: null,
@@ -511,7 +558,17 @@ module.exports = function (app, passport, server) {
         });
       }
     } else {
+      if (req.query.firstName == undefined || req.query.lastName == undefined) {
+        res.status(400)
+        res.redirect('/police-dashboard')
+        return
+      }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+        if (req.query.dateOfBirth == undefined) {
+          res.status(400)
+          res.redirect('/police-dashboard')
+          return
+        }
         Civilian.find({
           'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
           'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
@@ -522,19 +579,23 @@ module.exports = function (app, passport, server) {
             'civilian.activeCommunityID': null
           }]
         }, function (err, dbCivilians) {
+          if (err) return console.error(err);
           Ticket.find({
             'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
             'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
           }, function (err, dbTickets) {
+            if (err) return console.error(err);
             ArrestReport.find({
               'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
               'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
             }, function (err, dbArrestReports) {
+              if (err) return console.error(err);
               Warrant.find({
                 'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
                 'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
                 'warrant.status': true
               }, function (err, dbWarrants) {
+                if (err) return console.error(err);
                 Community.find({
                   '$or': [{
                     'community.ownerID': req.user._id
@@ -542,9 +603,11 @@ module.exports = function (app, passport, server) {
                     '_id': req.user.user.activeCommunity
                   }]
                 }, function (err, dbCommunities) {
+                  if (err) return console.error(err);
                   Bolo.find({
                     'bolo.communityID': req.user.user.activeCommunity
                   }, function (err, dbBolos) {
+                    if (err) return console.error(err);
                     res.render('police-dashboard', {
                       user: req.user,
                       vehicles: null,
@@ -568,19 +631,23 @@ module.exports = function (app, passport, server) {
           'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
           'civilian.activeCommunityID': req.query.activeCommunityID
         }, function (err, dbCivilians) {
+          if (err) return console.error(err);
           Ticket.find({
             'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
             'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
           }, function (err, dbTickets) {
+            if (err) return console.error(err);
             ArrestReport.find({
               'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
               'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
             }, function (err, dbArrestReports) {
+              if (err) return console.error(err);
               Warrant.find({
                 'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
                 'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
                 'warrant.status': true
               }, function (err, dbWarrants) {
+                if (err) return console.error(err);
                 Community.find({
                   '$or': [{
                     'community.ownerID': req.user._id
@@ -588,9 +655,11 @@ module.exports = function (app, passport, server) {
                     '_id': req.user.user.activeCommunity
                   }]
                 }, function (err, dbCommunities) {
+                  if (err) return console.error(err);
                   Bolo.find({
                     'bolo.communityID': req.user.user.activeCommunity
                   }, function (err, dbBolos) {
+                    if (err) return console.error(err);
                     res.render('police-dashboard', {
                       user: req.user,
                       vehicles: null,
@@ -614,10 +683,16 @@ module.exports = function (app, passport, server) {
 
   app.get('/plate-search', auth, function (req, res) {
     if (req.query.route == 'dispatch-dashboard') {
+      if (req.query.plateNumber == undefined) {
+        res.status(400)
+        res.redirect('/dispatch-dashboard')
+        return
+      }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Vehicle.find({
           'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
         }, function (err, dbVehicles) {
+          if (err) return console.error(err);
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -625,9 +700,11 @@ module.exports = function (app, passport, server) {
               '_id': req.user.user.activeCommunity
             }]
           }, function (err, dbCommunities) {
+            if (err) return console.error(err);
             Bolo.find({
               'bolo.communityID': req.user.user.activeCommunity
             }, function (err, dbBolos) {
+              if (err) return console.error(err);
               if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
                 res.render('dispatch-dashboard', {
                   user: req.user,
@@ -645,6 +722,7 @@ module.exports = function (app, passport, server) {
                 User.find({
                   'user.activeCommunity': req.user.user.activeCommunity
                 }, function (err, dbCommUsers) {
+                  if (err) return console.error(err);
                   res.render('dispatch-dashboard', {
                     user: req.user,
                     vehicles: dbVehicles,
@@ -667,6 +745,7 @@ module.exports = function (app, passport, server) {
           'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
           'vehicle.activeCommunityID': req.query.activeCommunityID
         }, function (err, dbVehicles) {
+          if (err) return console.error(err);
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -674,9 +753,11 @@ module.exports = function (app, passport, server) {
               '_id': req.user.user.activeCommunity
             }]
           }, function (err, dbCommunities) {
+            if (err) return console.error(err);
             Bolo.find({
               'bolo.communityID': req.user.user.activeCommunity
             }, function (err, dbBolos) {
+              if (err) return console.error(err);
               if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
                 res.render('dispatch-dashboard', {
                   user: req.user,
@@ -694,6 +775,7 @@ module.exports = function (app, passport, server) {
                 User.find({
                   'user.activeCommunity': req.user.user.activeCommunity
                 }, function (err, dbCommUsers) {
+                  if (err) return console.error(err);
                   res.render('dispatch-dashboard', {
                     user: req.user,
                     vehicles: dbVehicles,
@@ -713,20 +795,28 @@ module.exports = function (app, passport, server) {
         })
       }
     } else {
+      if (req.query.plateNumber == undefined) {
+        res.status(400)
+        res.redirect('/police-dashboard')
+        return
+      }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Vehicle.find({
           'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
         }, function (err, dbVehicles) {
+          if (err) return console.error(err);
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
             }, {
-              '_id': req.user.user.activeCommunity
+              '_id': ObjectId(req.user.user.activeCommunity)
             }]
           }, function (err, dbCommunities) {
+            if (err) return console.error(err);
             Bolo.find({
               'bolo.communityID': req.user.user.activeCommunity
             }, function (err, dbBolos) {
+              if (err) return console.error(err);
               res.render('police-dashboard', {
                 user: req.user,
                 civilians: null,
@@ -746,16 +836,19 @@ module.exports = function (app, passport, server) {
           'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
           'vehicle.activeCommunityID': req.query.activeCommunityID
         }, function (err, dbVehicles) {
+          if (err) return console.error(err);
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
             }, {
-              '_id': req.user.user.activeCommunity
+              '_id': ObjectId(req.user.user.activeCommunity)
             }]
           }, function (err, dbCommunities) {
+            if (err) return console.error(err);
             Bolo.find({
               'bolo.communityID': req.user.user.activeCommunity
             }, function (err, dbBolos) {
+              if (err) return console.error(err);
               res.render('police-dashboard', {
                 user: req.user,
                 civilians: null,
@@ -779,6 +872,7 @@ module.exports = function (app, passport, server) {
         'ticket.civID': req.query.civID
       },
       function (err, dbTickets) {
+        if (err) return console.error(err);
         res.send(dbTickets)
       });
   })
@@ -788,6 +882,7 @@ module.exports = function (app, passport, server) {
         'arrestReport.accusedID': req.query.civID
       },
       function (err, dbArrests) {
+        if (err) return console.error(err);
         res.send(dbArrests)
       });
   })
@@ -857,6 +952,7 @@ module.exports = function (app, passport, server) {
         User.findOne({
           'user.email': req.body.email.toLowerCase()
         }, function (err, users) {
+          if (err) return console.error(err);
           if (!users) {
             req.flash('emailSend', 'No account with that email address exists.');
             return res.redirect('/forgot-password');
@@ -966,6 +1062,7 @@ module.exports = function (app, passport, server) {
             $gt: Date.now()
           }
         }, function (err, users) {
+          if (err) return console.error(err);
           if (!users) {
             req.flash('resetSend', 'Password reset token is invalid or has expired.');
             return res.redirect('back');
@@ -976,9 +1073,7 @@ module.exports = function (app, passport, server) {
           user.user.resetPasswordExpires = undefined;
 
           user.save(function (err) {
-            // req.logIn(user, function(err) {
             done(err, user);
-            // });
           });
         });
       },
@@ -1011,7 +1106,7 @@ module.exports = function (app, passport, server) {
     User.findOne({
       'user.email': req.body.submitNewCiv.toLowerCase()
     }, function (err, user) {
-
+      if (err) return console.error(err);
       var myCiv = new Civilian()
       myCiv.updateCiv(req, res)
       myCiv.save(function (err) {
@@ -1115,6 +1210,7 @@ module.exports = function (app, passport, server) {
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
     }, function (err, community) {
+      if (err) return console.error(err);
       if (community == null) {
         req.app.locals.specialContext = "noCommunityFound";
         res.redirect('/civ-dashboard');
@@ -1159,6 +1255,7 @@ module.exports = function (app, passport, server) {
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
     }, function (err, community) {
+      if (err) return console.error(err);
       if (community == null) {
         req.app.locals.specialContext = "noCommunityFound";
         res.redirect('/' + req.body.route);
@@ -1203,6 +1300,7 @@ module.exports = function (app, passport, server) {
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
     }, function (err, community) {
+      if (err) return console.error(err);
       if (community == null) {
         req.app.locals.specialContext = "noCommunityFound";
         res.redirect('/ems-dashboard');
@@ -1326,13 +1424,16 @@ module.exports = function (app, passport, server) {
     Civilian.find({
       'civilian.userID': req.body.userID
     }, function (err, cursor) {
+      if (err) return console.error(err);
       cursor.forEach(element => {
         ArrestReport.deleteMany({
           'arrestReport.accusedID': element._id
         }, function (err) {
+          if (err) return console.error(err);
           Ticket.deleteMany({
             'ticket.civID': element._id
           }, function (err) {
+            if (err) return console.error(err);
             Warrant.deleteMany({
               'warrant.accusedID': element._id
             }, function (err) {
@@ -1546,9 +1647,11 @@ module.exports = function (app, passport, server) {
     // console.debug(req.body)
     if (!exists(req.body.userID) || req.body.userID == '') {
       console.error('cannot update an empty userID')
+      res.status(400)
       return res.redirect('back');
     } else if (!exists(req.body.status) || req.body.status == '') {
       console.error('cannot update an empty status')
+      res.status(400)
       return res.redirect('back');
     }
     User.findByIdAndUpdate({
@@ -1639,6 +1742,7 @@ module.exports = function (app, passport, server) {
         User.find({
           'user.activeCommunity': user.user.activeCommunity
         }, function (err, dbCommUsers) {
+          if (err) return console.error(err);
           socket.emit('load_status_result', dbCommUsers)
         });
       }
@@ -1649,6 +1753,7 @@ module.exports = function (app, passport, server) {
         Bolo.find({
           'bolo.communityID': user.user.activeCommunity
         }, function (err, dbBolos) {
+          if (err) return console.error(err);
           socket.emit('load_dispatch_bolos_result', dbBolos)
         });
       }
@@ -1659,6 +1764,7 @@ module.exports = function (app, passport, server) {
         Bolo.find({
           'bolo.communityID': user.user.activeCommunity
         }, function (err, dbBolos) {
+          if (err) return console.error(err);
           socket.emit('load_police_bolos_result', dbBolos)
         });
       }
