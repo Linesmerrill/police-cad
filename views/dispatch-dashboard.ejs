@@ -1659,6 +1659,7 @@
     })
 
     socket.on('created_bolo', res => {
+      
       var myUser = <%- JSON.stringify(user) %>;
       if (res.bolo.communityID == myUser.user.activeCommunity) {
       var containsEmptyRow = $('#boloTable tr>td').hasClass('dataTables_empty');
@@ -1684,9 +1685,11 @@
 $(document).ready(function() {
   $('#example').DataTable({
     "bLengthChange": false,
+    "pageLength": 5
   });
   $('#boloTable').DataTable({
     "bLengthChange": false,
+    "pageLength": 5
   });
 
   // displays the Update Username and Cancel buttons for updating the username
@@ -2030,6 +2033,7 @@ function searchPlate() {
 
   $('#deleteBolo').one('click', function() {
     var val = $(this).attr('value')
+    location.reload();
     var socket = io();
     $('#delete-bolo-form').submit(function(e) {
       e.preventDefault(); //prevents page from reloading
@@ -2051,6 +2055,7 @@ function searchPlate() {
   })
 
   $('#createBolo').one('click', function() {
+    location.reload();
     var socket = io();
     myUser = <%- JSON.stringify(user) %>
     $('#create-bolo-form').submit(function(e) {
