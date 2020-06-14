@@ -1,6 +1,7 @@
 var User = require('../app/models/user');
 var Civilian = require('../app/models/civilian');
 var Vehicle = require('../app/models/vehicle');
+var Firearm = require('../app/models/firearm');
 var EmsVehicle = require('../app/models/emsVehicle');
 var Ticket = require('../app/models/ticket');
 var Ems = require('../app/models/ems');
@@ -1128,6 +1129,14 @@ module.exports = function (app, passport, server) {
     var myVeh = new Vehicle()
     myVeh.createVeh(req, res)
     myVeh.save(function (err) {
+      if (err) return console.error(err);
+    });
+  });
+
+  app.post('/create-firearm', function (req, res) {
+    var myFirearm = new Firearm()
+    myFirearm.createFirearm(req, res)
+    myFirearm.save(function (err) {
       if (err) return console.error(err);
     });
   });

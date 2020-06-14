@@ -77,6 +77,7 @@
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-lg margin-top-2">Add New Civilian</button>
           <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-lg margin-top-2">Add New Vehicle</button>
+          <button data-toggle="modal" href="#newFirearmModal"  class="btn btn-primary btn-lg margin-top-2">Add New Firearm</button>
         </div>
       </div>
       <hr style="width: 88%;max-width: 100rem;">
@@ -335,6 +336,70 @@
                 <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-veh-activeCommunityID" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
                 <button id="create-vehicle" name="submitNewVeh" value=<%= user.user.email %> class="btn btn-primary">Create</button>
+              </div>
+            </div>
+            </fieldset>
+            </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newFirearmModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-firearm" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Add a New Firearm</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Select Basic -->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="weapon-type">Weapon Type</label>
+              <div class="col-md-4">
+                <select id="weapon-type" name="weaponType" class="form-control">
+                  <option value="handgun">Handgun</option>
+                  <option value="long gun">Long Gun</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Search input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
+              <div class="col-md-4">
+                <select id="registeredOwner" name="registeredOwner" class="form-control">
+                  <option value="N/A">N/A</option>
+                  <% for(var i=0; i<personas.length; i++) {%>
+                    <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                   <% } %>
+                </select>
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
+              <div class="col-md-4">
+                <select id="is-stolen" name="isStolen" class="form-control">
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="create-firearm"></label>
+              <div class="col-md-4">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-veh-activeCommunityID" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
+                <button id="create-firearm" name="submitNewFirearm" value=<%= user.user.email %> class="btn btn-primary">Create</button>
               </div>
             </div>
             </fieldset>
