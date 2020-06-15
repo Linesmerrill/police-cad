@@ -35,7 +35,13 @@
 </head>
 
 <body>
+  
   <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
+    <div class="panel panel-danger">
+      <div class="panel-heading">
+        <h3 class="panel-title text-align-center">🚨🚨🚨   Signal 100 In Effect!   🚨🚨🚨</h3>
+      </div>
+    </div>
     <div class="container-fluid">
       <div class="navbar-header">
         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
@@ -64,16 +70,14 @@
       </div>
     </div>
   </nav>
+  
   <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
+    <form class="">
+      <fieldset class="">
     <div class="header-content">
       <div class="inner">
-        <% for(var i=0; i<communities.length; i++) {%>
-          <% if (communities[i]._id == user.user.activeCommunity) {%>
-            <div id="panic-placeholder"></div>
-            <div id="panic-placeholder-socket"></div>
-          <%}%>
-        <%}%>
-        <h4 class="title-content">San Andreas - Dispatch Operations</h4>
+        
+        <h1 class="cursive">San Andreas - Dispatch Operations</h1>
 
         <% if (context == "createTicketSuccess") {%>
           <div class="alert alert-success alert-dismissible show" role="alert">
@@ -116,16 +120,35 @@
         <% include community-alerts %>
 
         <div class="col-lg-10 col-lg-offset-1 text-center">
-          <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
-          <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
+          <button type="button" data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
+          <button type="button" data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
           <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
+          <button type="button" data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
           <% } else {%>
-            <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
+            <button type="button" data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
             <% } %>
-          <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
-          <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
+          <button type="button" data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
+          <button type="button" data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
         </div>
+        <div class="col-lg-10 col-lg-offset-1 text-center">
+          <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+          <button type="button" href="#" class="btn btn-primary btn-lg margin-top-2">Active Bolos</button>
+          <button type="button" href="#" class="btn btn-primary btn-lg margin-top-2">Officer List</button>
+          <% } %>
+        </div>
+        <div class="col-lg-10 col-lg-offset-1 margin-top-1">
+          <% for(var i=0; i<communities.length; i++) {%>
+            <% if (communities[i]._id == user.user.activeCommunity) {%>
+              <div id="panic-placeholder"></div>
+              <div id="panic-placeholder-socket"></div>
+            <%}%>
+          <%}%>
+        </div>
+      </fieldset>
+    </form>
+    </header>
+    <section>
+      <div class="container">
         <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
         <div class="col-lg-10 col-lg-offset-1 margin-top-2">
             <h5>Active BOLOs:</h5>
@@ -196,8 +219,8 @@
         </div>
       </div>
     </div>
-  </header>
-  
+  </div>
+  </section>
   <div id="google-ads-1">
     <p class="text-align-center color-gray font-size-1">Advertisement</p>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
@@ -2033,7 +2056,7 @@ function searchPlate() {
 
   $('#deleteBolo').one('click', function() {
     var val = $(this).attr('value')
-    location.reload();
+    location.assign('/dispatch-dashboard')
     var socket = io();
     $('#delete-bolo-form').submit(function(e) {
       e.preventDefault(); //prevents page from reloading
@@ -2055,7 +2078,7 @@ function searchPlate() {
   })
 
   $('#createBolo').one('click', function() {
-    location.reload();
+    location.assign('/dispatch-dashboard')
     var socket = io();
     myUser = <%- JSON.stringify(user) %>
     $('#create-bolo-form').submit(function(e) {
