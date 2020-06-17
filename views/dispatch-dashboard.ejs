@@ -37,11 +37,11 @@
 <body>
   
   <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
-    <div class="panel panel-danger">
+    <!-- <div class="panel panel-danger">
       <div class="panel-heading">
         <h3 class="panel-title text-align-center">🚨🚨🚨   Signal 100 In Effect!   🚨🚨🚨</h3>
       </div>
-    </div>
+    </div> -->
     <div class="container-fluid">
       <div class="navbar-header">
         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
@@ -66,7 +66,6 @@
             <a href="/logout">Logout</a>
           </li>
         </ul>
-
       </div>
     </div>
   </nav>
@@ -132,8 +131,8 @@
         </div>
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-          <button type="button" href="#" class="btn btn-primary btn-lg margin-top-2">Active Bolos</button>
-          <button type="button" href="#" class="btn btn-primary btn-lg margin-top-2">Officer List</button>
+          <button type="button" class="btn btn-primary btn-lg margin-top-2"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#active-bolos">Active Bolos</a></button>
+          <button type="button" class="btn btn-primary btn-lg margin-top-2"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#officer-list">Officer List</a></button>
           <% } %>
         </div>
         <div class="col-lg-10 col-lg-offset-1 margin-top-1">
@@ -151,7 +150,7 @@
       <div class="container">
         <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
         <div class="col-lg-10 col-lg-offset-1 margin-top-2">
-            <h5>Active BOLOs:</h5>
+            <h4 id="active-bolos">Active BOLOs:</h4>
             <table id="boloTable" class="table table-bordered" style="width:100%">
               <thead>
                   <tr>
@@ -181,7 +180,7 @@
             <h4>Looks like you are not in a community, click here to get started!</h4>
             <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
             <%} else {%>
-          <h5>Officer List:</h5>
+          <h4 id="officer-list">Officer List:</h4>
           <table id="example" class="table table-bordered" style="width:100%">
             <thead>
                 <tr>
