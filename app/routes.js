@@ -1195,7 +1195,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-bolo', function (req, res) {
-    console.debug('create bolo req: ', req.body)
+    // console.debug('create bolo req: ', req.body)
     var myBolo = new Bolo()
     myBolo.createBolo(req, res)
     myBolo.save(function (err) {
@@ -2128,7 +2128,7 @@ module.exports = function (app, passport, server) {
     })
 
     socket.on('create_bolo', (req) => {
-      console.debug('create bolo socket: ', req)
+      // console.debug('create bolo socket: ', req)
       var myBolo = new Bolo()
       myBolo.socketCreateBolo(req)
       myBolo.save(function (err, dbBolos) {

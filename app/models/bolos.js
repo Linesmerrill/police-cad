@@ -18,7 +18,7 @@ var boloSchema = mongoose.Schema({
 
 boloSchema.methods.createBolo = function (req, res) {
   // debug log showing the request body for the bolo request
-  console.debug("bolo req body: ", req.body)
+  // console.debug("bolo req body: ", req.body)
 
   if (exists(req.body.boloType)) {
     this.bolo.boloType = req.body.boloType.toLowerCase();
@@ -48,7 +48,7 @@ boloSchema.methods.createBolo = function (req, res) {
 
 boloSchema.methods.socketCreateBolo = function (req, res) {
    // debug log showing the request body for the bolo request
-   console.debug("bolo req body: ", req)
+  //  console.debug("bolo req body: ", req)
 
    if (exists(req.boloType)) {
      this.bolo.boloType = req.boloType.toLowerCase();

@@ -1018,7 +1018,7 @@ a.link--inherit {
 }
 #top-link-block.affix {
     position: fixed; /* keeps it on the bottom once in view */
-    bottom: 50px; /* height of link element */
+    bottom: 245px; /* height of link element */
     right: 10px; /* padding from the left side of the window */
     z-index: 3;
 }

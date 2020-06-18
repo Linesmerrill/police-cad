@@ -1690,7 +1690,6 @@
     })
 
     socket.on('created_bolo', res => {
-      
       var myUser = <%- JSON.stringify(user) %>;
       if (res.bolo.communityID == myUser.user.activeCommunity) {
       var containsEmptyRow = $('#boloTable tr>td').hasClass('dataTables_empty');
@@ -2071,7 +2070,7 @@ function searchPlate() {
 
   $('#deleteBolo').one('click', function() {
     var val = $(this).attr('value')
-    location.assign('/dispatch-dashboard')
+    // location.assign('/dispatch-dashboard')
     var socket = io();
     $('#delete-bolo-form').submit(function(e) {
       e.preventDefault(); //prevents page from reloading
@@ -2093,7 +2092,7 @@ function searchPlate() {
   })
 
   $('#createBolo').one('click', function() {
-    location.assign('/dispatch-dashboard')
+    // location.assign('/dispatch-dashboard')
     var socket = io();
     myUser = <%- JSON.stringify(user) %>
     $('#create-bolo-form').submit(function(e) {
