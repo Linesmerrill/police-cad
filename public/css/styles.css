@@ -1010,3 +1010,15 @@ a.link--inherit {
     border-color: #00aced;
     color: #00aced;
 }
+
+#top-link-block.affix-top {
+    position: absolute; /* allows it to "slide" up into view */
+    bottom: -82px; /* negative of the offset - height of link element */
+    right: 10px; /* padding from the left side of the window */
+}
+#top-link-block.affix {
+    position: fixed; /* keeps it on the bottom once in view */
+    bottom: 50px; /* height of link element */
+    right: 10px; /* padding from the left side of the window */
+    z-index: 3;
+}

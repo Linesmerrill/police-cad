@@ -150,7 +150,7 @@
       <div class="container">
         <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
         <div class="col-lg-10 col-lg-offset-1 margin-top-2">
-            <h4 id="active-bolos">Active BOLOs:</h4>
+            <h4 id="active-bolos">Active BOLOs:</h4> <button type="button" data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
             <table id="boloTable" class="table table-bordered" style="width:100%">
               <thead>
                   <tr>
@@ -218,7 +218,13 @@
         </div>
       </div>
     </div>
+    <span id="top-link-block" class="hidden">
+      <a href="#topNav" class="well well-sm"  onclick="$('html,body').animate({scrollTop:0},'slow');return false;">
+          <i class="glyphicon glyphicon-chevron-up"></i> Back to Top
+      </a>
+  </span><!-- /top-link-block -->
   </div>
+  
   </section>
   <div id="google-ads-1">
     <p class="text-align-center color-gray font-size-1">Advertisement</p>
@@ -233,6 +239,7 @@
     <script>
         (adsbygoogle = window.adsbygoogle || []).push({});
     </script>
+    
 </div>
   <% include footer %>  
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
@@ -1573,6 +1580,8 @@
     </div>
   </div>
 
+  
+
   <% include 10-codes %> 
   <% include notepad %>
 </body>
@@ -1713,6 +1722,13 @@ $(document).ready(function() {
     "bLengthChange": false,
     "pageLength": 5
   });
+
+  if ( ($(window).height() + 100) < $(document).height() ) {
+    $('#top-link-block').removeClass('hidden').affix({
+        // how far to scroll down before link "slides" into view
+        offset: {top:100}
+    });
+}
 
   // displays the Update Username and Cancel buttons for updating the username
   var myUser = <%- JSON.stringify(user) %>;
