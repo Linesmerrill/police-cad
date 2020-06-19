@@ -8,6 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="Codeply">
   <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap.min.css" />
   <link rel="stylesheet" href="/static/css/animate.min.css" />
   <link rel="stylesheet" href="/static/css/ionicons.min.css" />
   <link rel="stylesheet" href="/static/css/tail.select-dark.min.css" />
@@ -35,7 +37,13 @@
 </head>
 
 <body>
+  
   <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
+    <!-- <div class="panel panel-danger">
+      <div class="panel-heading">
+        <h3 class="panel-title text-align-center">🚨🚨🚨   Signal 100 In Effect!   🚨🚨🚨</h3>
+      </div>
+    </div> -->
     <div class="container-fluid">
       <div class="navbar-header">
         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
@@ -60,20 +68,17 @@
             <a href="/logout">Logout</a>
           </li>
         </ul>
-
       </div>
     </div>
   </nav>
+  
   <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
+    <form class="">
+      <fieldset class="">
     <div class="header-content">
       <div class="inner">
-        <% for(var i=0; i<communities.length; i++) {%>
-          <% if (communities[i]._id == user.user.activeCommunity) {%>
-            <div id="panic-placeholder"></div>
-            <div id="panic-placeholder-socket"></div>
-          <%}%>
-        <%}%>
-        <h4 class="title-content">San Andreas - Dispatch Operations</h4>
+        
+        <h1 class="cursive"><a href="/dispatch-dashboard">San Andreas - Dispatch Operations</a></h1>
 
         <% if (context == "createTicketSuccess") {%>
           <div class="alert alert-success alert-dismissible show" role="alert">
@@ -116,19 +121,38 @@
         <% include community-alerts %>
 
         <div class="col-lg-10 col-lg-offset-1 text-center">
-          <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
-          <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
+          <button type="button" data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
+          <button type="button" data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
           <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
+          <button type="button" data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
           <% } else {%>
-            <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
+            <button type="button" data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
             <% } %>
-          <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
-          <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
+          <button type="button" data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
+          <button type="button" data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
         </div>
+        <div class="col-lg-10 col-lg-offset-1 text-center">
+          <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+          <button type="button" class="btn btn-primary btn-lg margin-top-2"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#active-bolos">Active Bolos</a></button>
+          <button type="button" class="btn btn-primary btn-lg margin-top-2"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#officer-list">Officer List</a></button>
+          <% } %>
+        </div>
+        <div class="col-lg-10 col-lg-offset-1 margin-top-1">
+          <% for(var i=0; i<communities.length; i++) {%>
+            <% if (communities[i]._id == user.user.activeCommunity) {%>
+              <div id="panic-placeholder"></div>
+              <div id="panic-placeholder-socket"></div>
+            <%}%>
+          <%}%>
+        </div>
+      </fieldset>
+    </form>
+    </header>
+    <section style='background-image: url("/static/images/hi-rise.jpg");'>
+      <div class="container">
         <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
         <div class="col-lg-10 col-lg-offset-1 margin-top-2">
-            <h5>Active BOLOs:</h5>
+            <h4 id="active-bolos">Active BOLOs:</h4> <button type="button" data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
             <table id="boloTable" class="table table-bordered" style="width:100%">
               <thead>
                   <tr>
@@ -158,8 +182,8 @@
             <h4>Looks like you are not in a community, click here to get started!</h4>
             <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
             <%} else {%>
-          <h5>Officer List:</h5>
-          <table id="example" class="table table-bordered" style="width:100%">
+          <h4 id="officer-list">Officer List:</h4>
+          <table id="example" class="table table-bordered style="width:100%">
             <thead>
                 <tr>
                     <th>On/Off Duty</th>
@@ -172,9 +196,9 @@
                 <% for(var i=0; i<commUsers.length; i++) {%>
                         <tr>
                           <% if (!commUsers[i].user.dispatchOnDuty) {%>
-                            <td><span id="<%=commUsers[i]._id%>-duty" class="red-dot"></span></td>
+                            <td><span title="100" id="<%=commUsers[i]._id%>-duty" class="red-dot"></span></td>
                           <%} else if (commUsers[i].user.dispatchOnDuty) {%>
-                          <td><span id="<%=commUsers[i]._id%>-duty" class="green-dot"></span></td>
+                          <td><span title="1" id="<%=commUsers[i]._id%>-duty" class="green-dot"></span></td>
                           <%}%>
                             
                             <td style="text-transform: capitalize;"><%=commUsers[i].user.username%></td>
@@ -196,8 +220,14 @@
         </div>
       </div>
     </div>
-  </header>
+    <span id="top-link-block" class="hidden">
+      <a id="scroll-top-block" href="#topNav" class="well well-sm"  onclick="$('html,body').animate({scrollTop:0},'slow');return false;">
+          <i class="glyphicon glyphicon-chevron-up"></i>
+      </a>
+  </span><!-- /top-link-block -->
+  </div>
   
+  </section>
   <div id="google-ads-1">
     <p class="text-align-center color-gray font-size-1">Advertisement</p>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
@@ -211,6 +241,7 @@
     <script>
         (adsbygoogle = window.adsbygoogle || []).push({});
     </script>
+    
 </div>
   <% include footer %>  
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
@@ -1551,6 +1582,8 @@
     </div>
   </div>
 
+  
+
   <% include 10-codes %> 
   <% include notepad %>
 </body>
@@ -1561,7 +1594,7 @@
 
 <!--scripts loaded here -->
 <script src="/socket.io/socket.io.js"></script>
-<script src="/static/js/jquery.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
 <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
 <script src="/static/js/bootstrap.min.js"></script>
@@ -1659,7 +1692,6 @@
     })
 
     socket.on('created_bolo', res => {
-      
       var myUser = <%- JSON.stringify(user) %>;
       if (res.bolo.communityID == myUser.user.activeCommunity) {
       var containsEmptyRow = $('#boloTable tr>td').hasClass('dataTables_empty');
@@ -1685,12 +1717,22 @@
 $(document).ready(function() {
   $('#example').DataTable({
     "bLengthChange": false,
-    "pageLength": 5
+    "pageLength": 5,
+    columnDefs: [
+       { type: 'title-numeric', targets: 0 }
+     ]
   });
   $('#boloTable').DataTable({
     "bLengthChange": false,
-    "pageLength": 5
+    "pageLength": 5,
   });
+
+  if ( ($(window).height() + 100) < $(document).height() ) {
+    $('#top-link-block').removeClass('hidden').affix({
+        // how far to scroll down before link "slides" into view
+        offset: {top:100}
+    });
+}
 
   // displays the Update Username and Cancel buttons for updating the username
   var myUser = <%- JSON.stringify(user) %>;
@@ -2033,7 +2075,7 @@ function searchPlate() {
 
   $('#deleteBolo').one('click', function() {
     var val = $(this).attr('value')
-    location.reload();
+    // location.assign('/dispatch-dashboard')
     var socket = io();
     $('#delete-bolo-form').submit(function(e) {
       e.preventDefault(); //prevents page from reloading
@@ -2055,7 +2097,7 @@ function searchPlate() {
   })
 
   $('#createBolo').one('click', function() {
-    location.reload();
+    // location.assign('/dispatch-dashboard')
     var socket = io();
     myUser = <%- JSON.stringify(user) %>
     $('#create-bolo-form').submit(function(e) {
