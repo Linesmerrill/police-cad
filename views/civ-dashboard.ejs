@@ -442,6 +442,66 @@
     </div>
   </div>
 
+  <div id="addMedicationModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-medication" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <h4>Add a New Medication</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="startDate">Start Date</label>
+              <div class="col-md-4">
+              <input id="startDate" name="startDate" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="medicationName">Medication Name</label>
+              <div class="col-md-4">
+                <input id="medicationName" name="medicationName" type="text" placeholder="medication name" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="dosage">Dosage</label>
+              <div class="col-md-4">
+                <input id="dosage" name="dosage" type="text" placeholder="dosage (e.g. 2 pills)" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="frequency">Frequency of Dosage</label>
+              <div class="col-md-4">
+                <input id="frequency" name="frequency" type="text" placeholder="frequency (e.g. twice a day)" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="submit-new-civ"></label>
+              <div class="col-md-4">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submit-new-civ" name="submitNewCiv" value="<%=user.user.email%>" class="btn btn-primary" onclick="createNewCiv()">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="viewCiv" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -576,6 +636,52 @@
                   </tbody>
               </table>
             </div>
+          </div>
+          <hr style="width: 88%;max-width: 100rem;">
+          <h4>Medical History</h4>
+          <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
+            <li class="nav-item active">
+              <a class="nav-link active" id="pills-reports-tab" data-toggle="pill" href="#pills-reports" role="tab" aria-controls="pills-reports" aria-selected="true">Reports</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="pills-medications-tab" data-toggle="pill" href="#pills-medications" role="tab" aria-controls="pills-medications" aria-selected="false">Medications</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="pills-pre-existing-conditions-tab" data-toggle="pill" href="#pills-pre-existing-conditions" role="tab" aria-controls="pills-pre-existing-conditions" aria-selected="false">Pre-Existing Conditions</a>
+            </li>
+          </ul>
+          <div class="tab-content" id="pills-tabContent">
+            <div class="tab-pane fade active in" id="pills-reports" role="tabpanel" aria-labelledby="pills-reports-tab">
+              <table id="reportsTable" class="table table-hover" border="1" frame="box">
+                <thead>
+                  <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td></tr>
+                </thead>
+                  <tbody>
+                  </tbody>
+              </table>
+            </div>
+            <div class="tab-pane fade" id="pills-medications" role="tabpanel" aria-labelledby="pills-medications-tab">
+              <button data-toggle="modal" href="#addMedicationModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Medication</button>
+              <br/><br/>
+              <table id="medicationsTable" class="table table-hover" border="1" frame="box">
+                <thead>
+                  <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Amount</td><td>Frequency</td></tr>
+                </thead>
+                  <tbody>
+                  </tbody>
+              </table>
+            </div>
+            <div class="tab-pane fade" id="pills-pre-existing-conditions" role="tabpanel" aria-labelledby="pills-pre-existing-conditions-tab">
+              <button data-toggle="modal" href="#addConditionModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Condition</button>
+              <br/><br/>
+              <table id="conditionsTable" class="table table-hover" border="1" frame="box">
+                <thead>
+                  <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td></tr>
+                </thead>
+                  <tbody>
+                  </tbody>
+              </table>
+          </div>
           </div>
         </div>
       </div>

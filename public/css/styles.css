@@ -1026,3 +1026,7 @@ a.link--inherit {
 #firearm-table:hover {
     cursor: pointer;
 }
+
+#addMedicationModal {
+    z-index: 9001 /* ITS OVER 9000!! */
+}
