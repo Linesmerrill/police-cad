@@ -980,3 +980,29 @@ a.link--inherit {
     border-color: #00aced;
     color: #00aced;
 }
+
+.well-sm {
+    border-radius: 50%;
+}
+
+#top-link-block.affix-top {
+    position: absolute; /* allows it to "slide" up into view */
+    bottom: -82px; /* negative of the offset - height of link element */
+    right: 10px; /* padding from the left side of the window */
+}
+#top-link-block.affix {
+    position: fixed; /* keeps it on the bottom once in view */
+    bottom: 245px; /* height of link element */
+    right: 10px; /* padding from the left side of the window */
+    z-index: 3;
+}
+
+#scroll-top-block:hover, #scroll-top-block:focus {
+    color: #23527c;
+    text-decoration: underline;
+}
+
+#scroll-top-block:focus {
+    color: #00aced;
+    text-decoration: underline;
+}

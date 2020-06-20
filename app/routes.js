@@ -60,60 +60,65 @@ module.exports = function (app, passport, server) {
   })
 
   app.get('/login', function (req, res) {
-    res.redirect('/');
+    return res.redirect('/');
   });
 
   app.get('/login-civ', authCivilian, function (req, res) {
-    res.redirect('civ-dashboard');
+    return res.redirect('civ-dashboard');
   });
 
   app.get('/login-police', authPolice, function (req, res) {
-    res.redirect('/police-dashboard')
+    return res.redirect('/police-dashboard')
   });
 
   app.get('/login-ems', authEms, function (req, res) {
-    res.redirect('/ems-dashboard')
+    return res.redirect('/ems-dashboard')
   });
 
   app.get('/login-dispatch', authDispatch, function (req, res) {
-    res.redirect('/dispatch-dashboard')
+    return res.redirect('/dispatch-dashboard')
   });
 
   app.get('/signup-civ', function (req, res) {
-    res.render('signup-civ', {
+    return res.render('signup-civ', {
       message: req.flash('signuperror')
     });
   });
 
   app.get('/signup-police', function (req, res) {
-    res.render('signup-police', {
+    return res.render('signup-police', {
       message: req.flash('signuperror')
     });
   });
 
   app.get('/signup-ems', function (req, res) {
-    res.render('signup-ems', {
+    return res.render('signup-ems', {
       message: req.flash('signuperror')
     });
   });
 
   app.get('/signup-dispatch', function (req, res) {
-    res.render('signup-dispatch', {
+    return res.render('signup-dispatch', {
       message: req.flash('signuperror')
     });
   });
 
   app.get('/logout', function (req, res) {
     req.logout();
-    res.redirect('/');
+    return res.redirect('/');
   });
 
   app.get('/communities', auth, function (req, res) {
+    req.app.locals.specialContext = null;
     if (!exists(req.session.communityID)) {
       console.warn("cannot render empty communityID, route: /communities")
       res.status(400)
-      res.redirect('back')
-      return
+      return res.redirect('back')
+    }
+    var isValid = isValidObjectIdLength(req.session.communityID, "cannot lookup invalid length communityID, route: /communities")
+    if (!isValid) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect('back')
     }
     Community.findOne({
       '_id': ObjectId(req.session.communityID),
@@ -123,8 +128,7 @@ module.exports = function (app, passport, server) {
       if (!exists(dbCommunities)) {
         console.warn("cannot render empty communityID after searching community, route: /communities")
         res.status(400)
-        res.redirect('back')
-        return
+        return res.redirect('back')
       }
       User.find({
         'user.activeCommunity': req.session.communityID
@@ -133,10 +137,9 @@ module.exports = function (app, passport, server) {
         if (dbCommunities == null) {
           console.warn("cannot render empty communityID after searching users, route: /communities")
           res.status(400)
-          res.redirect('back')
-          return
+          return res.redirect('back')
         }
-        res.render('communities', {
+        return res.render('communities', {
           members: dbMembers,
           communities: dbCommunities,
           userID: req.session.passport.user
@@ -155,7 +158,7 @@ module.exports = function (app, passport, server) {
         res.status(400)
         return res.redirect('back')
       }
-      res.render('communities-owned', {
+      return res.render('communities-owned', {
         communities: dbCommunities,
         userID: req.session.passport.user
       });
@@ -163,7 +166,7 @@ module.exports = function (app, passport, server) {
   })
 
   app.get('/forgot-password', function (req, res) {
-    res.render('forgot-password', {
+    return res.render('forgot-password', {
       user: req.user,
       message: req.flash('emailSend')
     });
@@ -181,7 +184,7 @@ module.exports = function (app, passport, server) {
         req.flash('emailSend', 'Password reset token is invalid or has expired.');
         return res.redirect('/forgot-password');
       }
-      res.render('reset', {
+      return res.render('reset', {
         user: req.user,
         message: req.flash('resetSend')
       });
@@ -208,7 +211,7 @@ module.exports = function (app, passport, server) {
             }]
           }, function (err, dbCommunities) {
             if (err) return console.error(err);
-            res.render('civ-dashboard', {
+            return res.render('civ-dashboard', {
               user: req.user,
               personas: dbPersonas,
               vehicles: dbVehicles,
@@ -237,7 +240,7 @@ module.exports = function (app, passport, server) {
             }]
           }, function (err, dbCommunities) {
             if (err) return console.error(err);
-            res.render('civ-dashboard', {
+            return res.render('civ-dashboard', {
               user: req.user,
               personas: dbPersonas,
               vehicles: dbVehicles,
@@ -270,7 +273,7 @@ module.exports = function (app, passport, server) {
             }]
           }, function (err, dbCommunities) {
             if (err) return console.error(err);
-            res.render('ems-dashboard', {
+            return res.render('ems-dashboard', {
               user: req.user,
               personas: dbPersonas,
               vehicles: dbVehicles,
@@ -299,7 +302,7 @@ module.exports = function (app, passport, server) {
             }]
           }, function (err, dbCommunities) {
             if (err) return console.error(err);
-            res.render('ems-dashboard', {
+            return res.render('ems-dashboard', {
               user: req.user,
               personas: dbPersonas,
               vehicles: dbVehicles,
@@ -327,7 +330,7 @@ module.exports = function (app, passport, server) {
         'bolo.communityID': req.user.user.activeCommunity
       }, function (err, dbBolos) {
         if (err) return console.error(err);
-        res.render('police-dashboard', {
+        return res.render('police-dashboard', {
           user: req.user,
           vehicles: null,
           civilians: null,
@@ -358,7 +361,7 @@ module.exports = function (app, passport, server) {
       }, function (err, dbBolos) {
         if (err) return console.error(err);
         if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-          res.render('dispatch-dashboard', {
+          return res.render('dispatch-dashboard', {
             user: req.user,
             vehicles: null,
             civilians: null,
@@ -375,7 +378,7 @@ module.exports = function (app, passport, server) {
             'user.activeCommunity': req.user.user.activeCommunity
           }, function (err, dbCommUsers) {
             if (err) return console.error(err);
-            res.render('dispatch-dashboard', {
+            return res.render('dispatch-dashboard', {
               user: req.user,
               vehicles: null,
               civilians: null,
@@ -398,14 +401,12 @@ module.exports = function (app, passport, server) {
     if (req.query.route == 'dispatch-dashboard') {
       if (req.query.firstName == undefined || req.query.lastName == undefined) {
         res.status(400)
-        res.redirect('/dispatch-dashboard')
-        return
+        return res.redirect('/dispatch-dashboard')
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         if (req.query.dateOfBirth == undefined) {
           res.status(400)
-          res.redirect('/dispatch-dashboard')
-          return
+          return res.redirect('/dispatch-dashboard')
         }
         Civilian.find({
           'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
@@ -447,7 +448,7 @@ module.exports = function (app, passport, server) {
                   }, function (err, dbBolos) {
                     if (err) return console.error(err);
                     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-                      res.render('dispatch-dashboard', {
+                      return res.render('dispatch-dashboard', {
                         user: req.user,
                         vehicles: null,
                         civilians: dbCivilians,
@@ -464,7 +465,7 @@ module.exports = function (app, passport, server) {
                         'user.activeCommunity': req.user.user.activeCommunity
                       }, function (err, dbCommUsers) {
                         if (err) return console.error(err);
-                        res.render('dispatch-dashboard', {
+                        return res.render('dispatch-dashboard', {
                           user: req.user,
                           vehicles: null,
                           civilians: dbCivilians,
@@ -520,7 +521,7 @@ module.exports = function (app, passport, server) {
                   }, function (err, dbBolos) {
                     if (err) return console.error(err);
                     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-                      res.render('dispatch-dashboard', {
+                      return res.render('dispatch-dashboard', {
                         user: req.user,
                         vehicles: null,
                         civilians: dbCivilians,
@@ -537,7 +538,7 @@ module.exports = function (app, passport, server) {
                         'user.activeCommunity': req.user.user.activeCommunity
                       }, function (err, dbCommUsers) {
                         if (err) return console.error(err);
-                        res.render('dispatch-dashboard', {
+                        return res.render('dispatch-dashboard', {
                           user: req.user,
                           vehicles: null,
                           civilians: dbCivilians,
@@ -561,14 +562,12 @@ module.exports = function (app, passport, server) {
     } else {
       if (req.query.firstName == undefined || req.query.lastName == undefined) {
         res.status(400)
-        res.redirect('/police-dashboard')
-        return
+        return res.redirect('/police-dashboard')
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         if (req.query.dateOfBirth == undefined) {
           res.status(400)
-          res.redirect('/police-dashboard')
-          return
+          return res.redirect('/police-dashboard')
         }
         Civilian.find({
           'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
@@ -609,7 +608,7 @@ module.exports = function (app, passport, server) {
                     'bolo.communityID': req.user.user.activeCommunity
                   }, function (err, dbBolos) {
                     if (err) return console.error(err);
-                    res.render('police-dashboard', {
+                    return res.render('police-dashboard', {
                       user: req.user,
                       vehicles: null,
                       civilians: dbCivilians,
@@ -661,7 +660,7 @@ module.exports = function (app, passport, server) {
                     'bolo.communityID': req.user.user.activeCommunity
                   }, function (err, dbBolos) {
                     if (err) return console.error(err);
-                    res.render('police-dashboard', {
+                    return res.render('police-dashboard', {
                       user: req.user,
                       vehicles: null,
                       civilians: dbCivilians,
@@ -686,8 +685,7 @@ module.exports = function (app, passport, server) {
     if (req.query.route == 'dispatch-dashboard') {
       if (req.query.plateNumber == undefined) {
         res.status(400)
-        res.redirect('/dispatch-dashboard')
-        return
+        return res.redirect('/dispatch-dashboard')
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Vehicle.find({
@@ -707,7 +705,7 @@ module.exports = function (app, passport, server) {
             }, function (err, dbBolos) {
               if (err) return console.error(err);
               if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-                res.render('dispatch-dashboard', {
+                return res.render('dispatch-dashboard', {
                   user: req.user,
                   vehicles: dbVehicles,
                   civilians: null,
@@ -724,7 +722,7 @@ module.exports = function (app, passport, server) {
                   'user.activeCommunity': req.user.user.activeCommunity
                 }, function (err, dbCommUsers) {
                   if (err) return console.error(err);
-                  res.render('dispatch-dashboard', {
+                  return res.render('dispatch-dashboard', {
                     user: req.user,
                     vehicles: dbVehicles,
                     civilians: null,
@@ -760,7 +758,7 @@ module.exports = function (app, passport, server) {
             }, function (err, dbBolos) {
               if (err) return console.error(err);
               if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-                res.render('dispatch-dashboard', {
+                return res.render('dispatch-dashboard', {
                   user: req.user,
                   vehicles: dbVehicles,
                   civilians: null,
@@ -777,7 +775,7 @@ module.exports = function (app, passport, server) {
                   'user.activeCommunity': req.user.user.activeCommunity
                 }, function (err, dbCommUsers) {
                   if (err) return console.error(err);
-                  res.render('dispatch-dashboard', {
+                  return res.render('dispatch-dashboard', {
                     user: req.user,
                     vehicles: dbVehicles,
                     civilians: null,
@@ -798,14 +796,18 @@ module.exports = function (app, passport, server) {
     } else {
       if (req.query.plateNumber == undefined) {
         res.status(400)
-        res.redirect('/police-dashboard')
-        return
+        return res.redirect('/police-dashboard')
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Vehicle.find({
           'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
+          var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
+          if (!isValid) {
+            req.app.locals.specialContext = "invalidRequest";
+            return res.redirect('/police-dashboard')
+          }
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -818,7 +820,7 @@ module.exports = function (app, passport, server) {
               'bolo.communityID': req.user.user.activeCommunity
             }, function (err, dbBolos) {
               if (err) return console.error(err);
-              res.render('police-dashboard', {
+              return res.render('police-dashboard', {
                 user: req.user,
                 civilians: null,
                 vehicles: dbVehicles,
@@ -838,6 +840,11 @@ module.exports = function (app, passport, server) {
           'vehicle.activeCommunityID': req.query.activeCommunityID
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
+          var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
+          if (!isValid) {
+            req.app.locals.specialContext = "invalidRequest";
+            return res.redirect('/police-dashboard')
+          }
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -850,7 +857,7 @@ module.exports = function (app, passport, server) {
               'bolo.communityID': req.user.user.activeCommunity
             }, function (err, dbBolos) {
               if (err) return console.error(err);
-              res.render('police-dashboard', {
+              return res.render('police-dashboard', {
                 user: req.user,
                 civilians: null,
                 vehicles: dbVehicles,
@@ -1099,7 +1106,7 @@ module.exports = function (app, passport, server) {
         });
       }
     ], function (err) {
-      res.redirect('/');
+      return res.redirect('/');
     });
   });
 
@@ -1174,6 +1181,12 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/clear-warrant', function (req, res) {
+    req.app.locals.specialContext = null;
+    var isValid = isValidObjectIdLength(req.body.warrantID, "cannot lookup invalid length warrantID, route: /clear-warrant")
+    if (!isValid) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect('/' + req.body.route)
+    }
     Warrant.findByIdAndUpdate({
       '_id': ObjectId(req.body.warrantID)
     }, {
@@ -1186,11 +1199,12 @@ module.exports = function (app, passport, server) {
       }
     }, function (err) {
       if (err) return console.error(err);
-      res.redirect('/' + req.body.route);
+      return res.redirect('/' + req.body.route);
     })
   });
 
   app.post('/create-bolo', function (req, res) {
+    // console.debug('create bolo req: ', req.body)
     var myBolo = new Bolo()
     myBolo.createBolo(req, res)
     myBolo.save(function (err) {
@@ -1199,12 +1213,18 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/clear-bolo', function (req, res) {
+    req.app.locals.specialContext = null;
+    var isValid = isValidObjectIdLength(req.body.boloID, "cannot lookup invalid length boloID, route: /clear-bolo")
+    if (!isValid) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect('/' + req.body.route)
+    }
     Bolo.findByIdAndDelete({
       '_id': ObjectId(req.body.boloID)
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "clearBoloSuccess"
-      res.redirect('/' + req.body.route);
+      return res.redirect('/' + req.body.route);
     })
   });
 
@@ -1213,8 +1233,7 @@ module.exports = function (app, passport, server) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
-      res.redirect('/civ-dashboard');
-      return
+      return res.redirect('/civ-dashboard');
     }
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
@@ -1222,8 +1241,12 @@ module.exports = function (app, passport, server) {
       if (err) return console.error(err);
       if (community == null) {
         req.app.locals.specialContext = "noCommunityFound";
-        res.redirect('/civ-dashboard');
-        return
+        return res.redirect('/civ-dashboard');
+      }
+      var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /joinCommunity")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect("/civ-dashboard")
       }
       User.findOneAndUpdate({
         '_id': ObjectId(req.body.userID),
@@ -1234,12 +1257,18 @@ module.exports = function (app, passport, server) {
       }, function (err) {
         if (err) return console.error(err);
         req.app.locals.specialContext = "joinCommunitySuccess";
-        res.redirect('/civ-dashboard');
+        return res.redirect('/civ-dashboard');
       })
     })
   })
 
   app.post('/leaveActiveCommunity', function (req, res) {
+    req.app.locals.specialContext = null;
+    var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /leaveActiveCommunity")
+    if (!isValid) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect("/civ-dashboard")
+    }
     User.findOneAndUpdate({
       '_id': ObjectId(req.body.userID),
     }, {
@@ -1249,7 +1278,7 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "leaveCommunitySuccess";
-      res.redirect('/civ-dashboard');
+      return res.redirect('/civ-dashboard');
     })
   })
 
@@ -1258,8 +1287,7 @@ module.exports = function (app, passport, server) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
-      res.redirect('/' + req.body.route)
-      return
+      return res.redirect('/' + req.body.route)
     }
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
@@ -1267,8 +1295,12 @@ module.exports = function (app, passport, server) {
       if (err) return console.error(err);
       if (community == null) {
         req.app.locals.specialContext = "noCommunityFound";
-        res.redirect('/' + req.body.route);
-        return
+        return res.redirect('/' + req.body.route);
+      }
+      var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /joinPoliceCommunity")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect(req.body.route)
       }
       User.findOneAndUpdate({
         '_id': ObjectId(req.body.userID),
@@ -1279,12 +1311,18 @@ module.exports = function (app, passport, server) {
       }, function (err) {
         if (err) return console.error(err);
         req.app.locals.specialContext = "joinCommunitySuccess";
-        res.redirect('/' + req.body.route);
+        return res.redirect('/' + req.body.route);
       })
     })
   })
 
   app.post('/leavePoliceActiveCommunity', function (req, res) {
+    req.app.locals.specialContext = null;
+    var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /leavePoliceActiveCommunity")
+    if (!isValid) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect(req.body.route)
+    }
     User.findOneAndUpdate({
       '_id': ObjectId(req.body.userID),
     }, {
@@ -1294,7 +1332,7 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "leaveCommunitySuccess";
-      res.redirect('/' + req.body.route);
+      return res.redirect('/' + req.body.route);
     })
   })
 
@@ -1303,8 +1341,7 @@ module.exports = function (app, passport, server) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
-      res.redirect('/ems-dashboard');
-      return
+      return res.redirect('/ems-dashboard');
     }
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
@@ -1312,8 +1349,12 @@ module.exports = function (app, passport, server) {
       if (err) return console.error(err);
       if (community == null) {
         req.app.locals.specialContext = "noCommunityFound";
-        res.redirect('/ems-dashboard');
-        return
+        return res.redirect('/ems-dashboard');
+      }
+      var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /leavePoliceActiveCommunity")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/ems-dashboard')
       }
       User.findOneAndUpdate({
         '_id': ObjectId(req.body.userID),
@@ -1324,13 +1365,18 @@ module.exports = function (app, passport, server) {
       }, function (err) {
         if (err) return console.error(err);
         req.app.locals.specialContext = "joinCommunitySuccess";
-        res.redirect('/ems-dashboard');
+        return res.redirect('/ems-dashboard');
       })
     })
   })
 
   app.post('/leaveEmsActiveCommunity', function (req, res) {
     req.app.locals.specialContext = null;
+    var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /leaveEmsActiveCommunity")
+    if (!isValid) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect("/ems-dashboard")
+    }
     User.findOneAndUpdate({
       '_id': ObjectId(req.body.userID),
     }, {
@@ -1340,7 +1386,7 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "leaveCommunitySuccess";
-      res.redirect('/ems-dashboard');
+      return res.redirect('/ems-dashboard');
     })
   })
 
@@ -1350,6 +1396,10 @@ module.exports = function (app, passport, server) {
     myCommunity.createCommunity(req, res)
     myCommunity.save(function (err, result) {
       if (err) return console.error(err);
+      var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /createCommunity")
+      if (!isValid) {
+        return req.app.locals.specialContext = "invalidRequest";
+      }
       User.findOneAndUpdate({
         '_id': ObjectId(req.body.userID),
       }, {
@@ -1358,7 +1408,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        req.app.locals.specialContext = "createCommunitySuccess"
+        return req.app.locals.specialContext = "createCommunitySuccess"
       })
     });
   })
@@ -1369,6 +1419,10 @@ module.exports = function (app, passport, server) {
     myCommunity.createPoliceCommunity(req, res)
     myCommunity.save(function (err, result) {
       if (err) return console.error(err);
+      var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /createPoliceCommunity")
+      if (!isValid) {
+        return req.app.locals.specialContext = "invalidRequest";
+      }
       User.findOneAndUpdate({
         '_id': ObjectId(req.body.userID),
       }, {
@@ -1377,7 +1431,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        req.app.locals.specialContext = "createCommunitySuccess";
+        return req.app.locals.specialContext = "createCommunitySuccess";
       })
     });
   })
@@ -1388,6 +1442,10 @@ module.exports = function (app, passport, server) {
     myCommunity.createEmsCommunity(req, res)
     myCommunity.save(function (err, result) {
       if (err) return console.error(err);
+      var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /createEmsCommunity")
+      if (!isValid) {
+        return req.app.locals.specialContext = "invalidRequest";
+      }
       User.findOneAndUpdate({
         '_id': ObjectId(req.body.userID),
       }, {
@@ -1396,19 +1454,24 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        req.app.locals.specialContext = "createCommunitySuccess";
+        return req.app.locals.specialContext = "createCommunitySuccess";
       })
     });
   })
 
   app.post('/manageAccount', function (req, res) {
+    req.app.locals.specialContext = null;
     var page = req.body.page;
     if (req.body.action === 'updateUsername') {
       var username
       if (exists(req.body.accountUsername)) {
         username = req.body.accountUsername.trim()
       }
-
+      var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /manageAccount")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect(page)
+      }
       User.findOneAndUpdate({
         '_id': ObjectId(req.body.userID),
       }, {
@@ -1420,14 +1483,15 @@ module.exports = function (app, passport, server) {
         if (err) {
           console.error(err);
         }
-        res.redirect(page);
+        return res.redirect(page);
       })
     } else {
-      res.redirect(page);
+      return res.redirect(page);
     }
   })
 
   app.post('/deleteAccount', function (req, res) {
+    req.app.locals.specialContext = null;
     var page = req.body.page;
     // grab all civilians and delete arrest, tickets and warrants for each
     Civilian.find({
@@ -1448,7 +1512,7 @@ module.exports = function (app, passport, server) {
             }, function (err) {
               if (err) {
                 console.error(err);
-                res.redirect(page);
+                return res.redirect(page);
               }
             })
           })
@@ -1475,14 +1539,19 @@ module.exports = function (app, passport, server) {
                 'vehicle.userID': req.body.userID
               }, function (err) {
                 // delete user
+                var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /deleteAccount")
+                if (!isValid) {
+                  req.app.locals.specialContext = "invalidRequest";
+                  return res.redirect('/')
+                }
                 User.findByIdAndDelete({
                   '_id': ObjectId(req.body.userID),
                 }, function (err) {
                   if (err) {
                     console.error(err);
-                    res.redirect(page);
+                    return res.redirect(page);
                   }
-                  res.redirect('/');
+                  return res.redirect('/');
                 })
               })
             })
@@ -1493,16 +1562,22 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/updateOrDeleteBolo', function (req, res) {
+    req.app.locals.specialContext = null;
     if (req.body.action === "delete") {
       var boloID
       if (exists(req.body.boloID)) {
         boloID = req.body.boloID
       }
+      var isValid = isValidObjectIdLength(boloID, "cannot lookup invalid length boloID, route: /updateOrDeleteBolo")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/' + req.body.route)
+      }
       Bolo.findByIdAndDelete({
         '_id': ObjectId(boloID)
       }, function (err) {
         if (err) return console.error(err);
-        res.redirect('/' + req.body.route);
+        return res.redirect('/' + req.body.route);
       })
     } else {
       var boloType
@@ -1522,9 +1597,14 @@ module.exports = function (app, passport, server) {
         boloID = req.body.boloID
       } else {
         console.warn("cannot update or delete non-existent boloID: ", req.body.boloID);
-        res.redirect('/' + req.body.route);
-      }
+        return res.redirect('/' + req.body.route);
 
+      }
+      var isValid = isValidObjectIdLength(boloID, "cannot lookup invalid length boloID, route: /updateOrDeleteBolo")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/' + req.body.route);
+      }
       Bolo.findOneAndUpdate({
         '_id': ObjectId(boloID)
       }, {
@@ -1536,12 +1616,13 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        res.redirect('/' + req.body.route);
+        return res.redirect('/' + req.body.route);
       })
     }
   })
 
   app.post('/updateOrDeleteCiv', function (req, res) {
+    req.app.locals.specialContext = null;
     if (req.body.action === "update") {
       var address
       var occupation
@@ -1554,6 +1635,11 @@ module.exports = function (app, passport, server) {
       }
       if (exists(req.body.firearmLicense)) {
         firearmLicense = req.body.firearmLicense
+      }
+      var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/civ-dashboard')
       }
       Civilian.findOneAndUpdate({
         '_id': ObjectId(req.body.civilianID),
@@ -1572,9 +1658,14 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        res.redirect('/civ-dashboard');
+        return res.redirect('/civ-dashboard');
       })
     } else {
+      var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/civ-dashboard')
+      }
       Civilian.deleteOne({
         '_id': ObjectId(req.body.civilianID),
         'civilian.email': req.body.email.toLowerCase(),
@@ -1589,7 +1680,7 @@ module.exports = function (app, passport, server) {
             'ticket.civLastName': req.body.lastName
           }, function (err) {
             if (err) return console.error(err);
-            res.redirect('/civ-dashboard');
+            return res.redirect('/civ-dashboard');
           })
         })
       })
@@ -1610,14 +1701,23 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/updateOrDeleteVeh', function (req, res) {
+    req.app.locals.specialContext = null;
     if (req.body.action === "update") {
       if (!exists(req.body.vehicleID) || !exists(req.body.emailVeh)) {
         console.warn("cannot update vehicle with empty vehicleID or emailVeh, route: /updateOrDeleteVeh")
-        res.redirect('/civ-dashboard');
-        return
+        return res.redirect('/civ-dashboard');
       }
       if (!exists(req.body.roVeh)) {
         req.body.roVeh = 'N/A'
+      }
+      if (req.body.vehicleID.length != 24) {
+        console.warn("cannot delete vehicle with invalid vehicleID, route: /updateOrDeleteVeh", req.body.vehicleID)
+        return res.redirect('/civ-dashboard');
+      }
+      var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /updateOrDeleteVeh")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/civ-dashboard')
       }
       Vehicle.findOneAndUpdate({
         '_id': ObjectId(req.body.vehicleID),
@@ -1635,25 +1735,35 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        res.redirect('/civ-dashboard');
+        return res.redirect('/civ-dashboard');
       })
     } else {
       if (!exists(req.body.vehicleID)) {
         console.warn("cannot delete vehicle with empty vehicleID, route: /updateOrDeleteVeh")
-        res.redirect('/civ-dashboard');
+        return res.redirect('/civ-dashboard');
+      }
+      if (req.body.vehicleID.length != 24) {
+        console.warn("cannot delete vehicle with invalid vehicleID, route: /updateOrDeleteVeh", req.body.vehicleID)
+        return res.redirect('/civ-dashboard');
+      }
+      var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /updateOrDeleteVeh")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/civ-dashboard')
       }
       Vehicle.deleteOne({
         '_id': ObjectId(req.body.vehicleID),
         'vehicle.email': req.body.emailVeh.toLowerCase()
       }, function (err) {
         if (err) return console.error(err);
-        res.redirect('/civ-dashboard');
+        return res.redirect('/civ-dashboard');
       })
     }
   })
 
   app.post('/updateUserDispatchStatus', function (req, res) {
     // console.debug(req.body)
+    req.app.locals.specialContext = null;
     if (!exists(req.body.userID) || req.body.userID == '') {
       console.error('cannot update an empty userID')
       res.status(400)
@@ -1662,6 +1772,11 @@ module.exports = function (app, passport, server) {
       console.error('cannot update an empty status')
       res.status(400)
       return res.redirect('back');
+    }
+    var isValid = isValidObjectIdLength(req.body.userID, "cannot delete vehicle with invalid userID, route: /updateUserDispatchStatus")
+    if (!isValid) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect('back')
     }
     User.findByIdAndUpdate({
       '_id': ObjectId(req.body.userID)
@@ -1672,7 +1787,7 @@ module.exports = function (app, passport, server) {
       }
     }, function (err) {
       if (err) return console.error(err)
-      res.redirect('back')
+      return res.redirect('back')
     })
   })
 
@@ -1688,11 +1803,18 @@ module.exports = function (app, passport, server) {
       'emsVehicle.plate': plateName
     }, function (err) {
       if (err) return console.error(err);
-      res.redirect('/ems-dashboard');
+      return res.redirect('/ems-dashboard');
     })
   })
 
   app.post('/community', function (req, res) {
+    // console.debug("community req: ", req.body)
+    req.app.locals.specialContext = null;
+    var isValid = isValidObjectIdLength(req.body.memberID, "cannot lookup invalid length memberID, route: /community")
+    if (!isValid) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect('back')
+    }
     User.findByIdAndUpdate({
       '_id': ObjectId(req.body.memberID)
     }, {
@@ -1701,11 +1823,12 @@ module.exports = function (app, passport, server) {
       }
     }, function (err) {
       if (err) return console.error(err);
-      res.redirect('back')
+      return res.redirect('back')
     })
   })
 
   app.post('/delete-community', function (req, res) {
+    req.app.locals.specialContext = null;
     User.updateMany({
       'user.activeCommunity': req.body.communityID
     }, {
@@ -1713,16 +1836,28 @@ module.exports = function (app, passport, server) {
         'user.activeCommunity': null
       }
     }, function (err) {
+      if (err) return console.error(err);
+      var isValid = isValidObjectIdLength(req.body.communityID, "cannot lookup invalid length communityID, route: /delete-community")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('back')
+      }
       Community.findByIdAndDelete({
         '_id': ObjectId(req.body.communityID)
       }, function (err) {
         if (err) return console.error(err);
-        res.redirect('back')
+        return res.redirect('back')
       })
     })
   })
 
   app.post('/updateCommunityName', function (req, res) {
+    req.app.locals.specialContext = null;
+    var isValid = isValidObjectIdLength(req.body.communityID, "cannot lookup invalid length communityID, route: /updateCommunityName")
+    if (!isValid) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect('back')
+    }
     Community.findByIdAndUpdate({
       '_id': ObjectId(req.body.communityID)
     }, {
@@ -1731,13 +1866,13 @@ module.exports = function (app, passport, server) {
       }
     }, function (err) {
       if (err) return console.error(err);
-      res.redirect('back')
+      return res.redirect('back')
     })
   })
 
   app.post('/communities', function (req, res) {
     req.session.communityID = req.body.communityID
-    res.redirect('communities')
+    return res.redirect('communities')
   })
 
   var io = require('socket.io').listen(server);
@@ -1752,7 +1887,7 @@ module.exports = function (app, passport, server) {
           'user.activeCommunity': user.user.activeCommunity
         }, function (err, dbCommUsers) {
           if (err) return console.error(err);
-          socket.emit('load_status_result', dbCommUsers)
+          return socket.emit('load_status_result', dbCommUsers)
         });
       }
     })
@@ -1763,7 +1898,7 @@ module.exports = function (app, passport, server) {
           'bolo.communityID': user.user.activeCommunity
         }, function (err, dbBolos) {
           if (err) return console.error(err);
-          socket.emit('load_dispatch_bolos_result', dbBolos)
+          return socket.emit('load_dispatch_bolos_result', dbBolos)
         });
       }
     });
@@ -1774,7 +1909,7 @@ module.exports = function (app, passport, server) {
           'bolo.communityID': user.user.activeCommunity
         }, function (err, dbBolos) {
           if (err) return console.error(err);
-          socket.emit('load_police_bolos_result', dbBolos)
+          return socket.emit('load_police_bolos_result', dbBolos)
         });
       }
     });
@@ -1797,10 +1932,12 @@ module.exports = function (app, passport, server) {
       if (exists(req.boloID)) {
         boloID = req.boloID
       } else {
-        console.warn("cannot update or delete non-existent boloID: ", req.boloID);
+        return console.warn("cannot update or delete non-existent boloID: ", req.boloID);
+      }
+      var isValid = isValidObjectIdLength(boloID, "cannot lookup invalid length boloID, socket: update_bolo_info")
+      if (!isValid) {
         return
       }
-
       Bolo.findOneAndUpdate({
         '_id': ObjectId(boloID)
       }, {
@@ -1812,37 +1949,42 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        socket.broadcast.emit('updated_bolo', req)
-        return
+        return socket.broadcast.emit('updated_bolo', req)
       })
 
     })
 
     socket.on('delete_bolo_info', (req) => {
-      console.debug('delete req backend: ', req)
+      // console.debug('delete req backend: ', req)
       var boloID
       if (exists(req.boloID) && req.boloID.length != 0) {
         boloID = req.boloID
+      }
+      var isValid = isValidObjectIdLength(boloID, "cannot lookup invalid length boloID, socket: delete_bolo_info")
+      if (!isValid) {
+        return
+
       }
       Bolo.findByIdAndDelete({
         '_id': ObjectId(boloID)
       }, function (err) {
         if (err) return console.error(err);
-        socket.broadcast.emit('deleted_bolo', req)
-        return
+        return socket.broadcast.emit('deleted_bolo', req)
       })
     })
 
     socket.on('update_status', (req) => {
       // console.debug('update req: ', req)
       if (!exists(req.userID) || req.userID == '') {
-        console.error('cannot update an empty userID')
-        return
+        return console.error('cannot update an empty userID')
       } else if (!exists(req.status) || req.status == '') {
-        console.error('cannot update an empty status')
-        return
+        return console.error('cannot update an empty status')
       }
       if (req.updateDuty) {
+        var isValid = isValidObjectIdLength(req.userID, "cannot lookup invalid length userID, socket: update_status")
+        if (!isValid) {
+          return
+        }
         User.findByIdAndUpdate({
           '_id': ObjectId(req.userID)
         }, {
@@ -1853,9 +1995,13 @@ module.exports = function (app, passport, server) {
           }
         }, function (err) {
           if (err) return console.error(err)
-          socket.broadcast.emit('updated_status', req)
+          return socket.broadcast.emit('updated_status', req)
         })
       } else {
+        var isValid = isValidObjectIdLength(req.userID, "cannot lookup invalid length userID, socket: update_status")
+        if (!isValid) {
+          return
+        }
         User.findByIdAndUpdate({
           '_id': ObjectId(req.userID)
         }, {
@@ -1865,22 +2011,25 @@ module.exports = function (app, passport, server) {
           }
         }, function (err) {
           if (err) return console.error(err)
-          socket.broadcast.emit('updated_status', req)
+          return socket.broadcast.emit('updated_status', req)
         })
       }
-
     })
 
     socket.on('load_panic_statuses', (req) => {
       // console.debug('load panic status req: ', req)
       if (req.activeCommunity != null && req.activeCommunity != undefined) {
+        var isValid = isValidObjectIdLength(req.activeCommunity, "cannot lookup invalid length activeCommunity, socket: load_panic_statuses")
+        if (!isValid) {
+          return
+        }
         Community.findById({
           '_id': ObjectId(req.activeCommunity)
         }, function (err, resp) {
           if (err) return console.error(err)
           if (resp != null) {
             if (resp.community != null) {
-              socket.broadcast.emit('load_panic_status_update', resp.community.activePanics, req)
+              return socket.broadcast.emit('load_panic_status_update', resp.community.activePanics, req)
             }
           }
         })
@@ -1895,7 +2044,10 @@ module.exports = function (app, passport, server) {
           username: req.userUsername,
           activeCommunityID: req.activeCommunity
         };
-
+        var isValid = isValidObjectIdLength(req.activeCommunity, "cannot lookup invalid length activeCommunity, socket: panic_button_update")
+        if (!isValid) {
+          return
+        }
         Community.findById({
           '_id': ObjectId(req.activeCommunity)
         }, function (err, resp) {
@@ -1905,6 +2057,10 @@ module.exports = function (app, passport, server) {
               if (resp.community.activePanics == undefined || resp.community.activePanics == null) {
                 var mapInsert = new Map();
                 mapInsert.set(req.userID, values)
+                var isValid = isValidObjectIdLength(req.activeCommunity, "cannot lookup invalid length activeCommunity, socket: panic_button_update")
+                if (!isValid) {
+                  return
+                }
                 Community.findByIdAndUpdate({
                   '_id': ObjectId(req.activeCommunity)
                 }, {
@@ -1913,14 +2069,15 @@ module.exports = function (app, passport, server) {
                   }
                 }, function (err) {
                   if (err) return console.error(err)
-                  socket.broadcast.emit('panic_button_updated', mapInsert, req)
-                  return
+                  return socket.broadcast.emit('panic_button_updated', mapInsert, req)
                 })
               } else {
-
                 if (resp.community.activePanics.get(req.userID) == undefined) {
                   resp.community.activePanics.set(req.userID, values)
-
+                  var isValid = isValidObjectIdLength(req.activeCommunity, "cannot lookup invalid length activeCommunity, socket: panic_button_update")
+                  if (!isValid) {
+                    return
+                  }
                   Community.findByIdAndUpdate({
                     '_id': ObjectId(req.activeCommunity)
                   }, {
@@ -1929,12 +2086,11 @@ module.exports = function (app, passport, server) {
                     }
                   }, function (err) {
                     if (err) return console.error(err)
-                    socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
-                    return
+                    return socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
+
                   })
                 } else {
-                  socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
-                  return
+                  return socket.broadcast.emit('panic_button_updated', resp.community.activePanics, req)
                 }
 
               }
@@ -1947,6 +2103,10 @@ module.exports = function (app, passport, server) {
     socket.on('clear_panic', (req) => {
       // console.debug("clear req", req)
       if (req.communityID != null && req.communityID != undefined) {
+        var isValid = isValidObjectIdLength(req.communityID, "cannot lookup invalid length communityID, socket: clear_panic")
+        if (!isValid) {
+          return
+        }
         Community.findById({
           '_id': ObjectId(req.communityID)
         }, function (err, resp) {
@@ -1955,6 +2115,10 @@ module.exports = function (app, passport, server) {
             if (resp.community != null) {
               if (resp.community.activePanics != null) {
                 resp.community.activePanics.delete(req.userID)
+                var isValid = isValidObjectIdLength(req.communityID, "cannot lookup invalid length communityID, socket: clear_panic")
+                if (!isValid) {
+                  return
+                }
                 Community.findByIdAndUpdate({
                   '_id': ObjectId(req.communityID)
                 }, {
@@ -1963,7 +2127,7 @@ module.exports = function (app, passport, server) {
                   }
                 }, function (err) {
                   if (err) return console.error(err);
-                  socket.broadcast.emit('cleared_panic', req)
+                  return socket.broadcast.emit('cleared_panic', req)
                 })
               }
             }
@@ -1973,15 +2137,14 @@ module.exports = function (app, passport, server) {
     })
 
     socket.on('create_bolo', (req) => {
-      // console.debug('create bolo server: ', req)
+      // console.debug('create bolo socket: ', req)
       var myBolo = new Bolo()
       myBolo.socketCreateBolo(req)
       myBolo.save(function (err, dbBolos) {
         if (err) return console.error(err);
-        socket.broadcast.emit('created_bolo', dbBolos)
+        return socket.broadcast.emit('created_bolo', dbBolos)
       });
     })
-
   });
 
 }; //end of routes
@@ -1990,7 +2153,7 @@ function auth(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   }
-  res.redirect('/login')
+  return res.redirect('/login')
 }
 
 function authCivilian(req, res, next) {
@@ -2036,6 +2199,20 @@ function exists(v) {
   if (v !== undefined) {
     return true
   } else {
+    return false
+  }
+}
+
+function isValidObjectIdLength(value, errorMessage) {
+  if (value != null && value != undefined) {
+    if (value.length != 24) {
+      console.warn(errorMessage + ",", "id: " + value)
+      return false
+    } else {
+      return true
+    }
+  } else {
+    console.warn("cannot check length of null value: ", value)
     return false
   }
 }
