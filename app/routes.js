@@ -9,6 +9,7 @@ var ArrestReport = require('../app/models/arrestReport');
 var Warrant = require('../app/models/warrants');
 var Community = require('../app/models/community');
 var Bolo = require('../app/models/bolos');
+var Medication = require('../app/models/medication');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
 var async = require('async');
@@ -207,24 +208,24 @@ module.exports = function (app, passport, server) {
             'firearm.userID': req.user._id,
           }, function (err, dbFirearms) {
             if (err) return console.error(err);
-          Community.find({
-            '$or': [{
-              'community.ownerID': req.user._id
-            }, {
-              '_id': req.user.user.activeCommunity
-            }]
-          }, function (err, dbCommunities) {
-            if (err) return console.error(err);
-            return res.render('civ-dashboard', {
-              user: req.user,
-              personas: dbPersonas,
-              vehicles: dbVehicles,
-              firearms: dbFirearms,
-              communities: dbCommunities,
-              context: context
+            Community.find({
+              '$or': [{
+                'community.ownerID': req.user._id
+              }, {
+                '_id': req.user.user.activeCommunity
+              }]
+            }, function (err, dbCommunities) {
+              if (err) return console.error(err);
+              return res.render('civ-dashboard', {
+                user: req.user,
+                personas: dbPersonas,
+                vehicles: dbVehicles,
+                firearms: dbFirearms,
+                communities: dbCommunities,
+                context: context
+              });
             });
           });
-        });
         });
       });
     } else {
@@ -238,30 +239,31 @@ module.exports = function (app, passport, server) {
           'vehicle.activeCommunityID': req.user.user.activeCommunity
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
+
           Firearm.find({
             'firearm.userID': req.user._id,
             'firearm.activeCommunityID': req.user.user.activeCommunity
           }, function (err, dbFirearms) {
             if (err) return console.error(err);
-          Community.find({
-            '$or': [{
-              'community.ownerID': req.user._id
-            }, {
-              '_id': req.user.user.activeCommunity
-            }]
-          }, function (err, dbCommunities) {
-            if (err) return console.error(err);
-            return res.render('civ-dashboard', {
-              user: req.user,
-              personas: dbPersonas,
-              vehicles: dbVehicles,
-              firearms: dbFirearms,
-              communities: dbCommunities,
-              context: context
+            Community.find({
+              '$or': [{
+                'community.ownerID': req.user._id
+              }, {
+                '_id': req.user.user.activeCommunity
+              }]
+            }, function (err, dbCommunities) {
+              if (err) return console.error(err);
+              return res.render('civ-dashboard', {
+                user: req.user,
+                personas: dbPersonas,
+                vehicles: dbVehicles,
+                firearms: dbFirearms,
+                communities: dbCommunities,
+                context: context
+              });
             });
           });
         });
-      });
       });
     }
   });
@@ -1123,6 +1125,16 @@ module.exports = function (app, passport, server) {
       });
   })
 
+  app.get('/medications', function (req, res) {
+    Medication.find({
+        'medication.civilianID': req.query.civID,
+      },
+      function (err, dbMedications) {
+        if (err) return console.error(err);
+        res.send(dbMedications)
+      });
+  })
+
   // Be sure to place all GET requests above this catchall
   app.get('*', function (req, res) {
     res.render('page-not-found');
@@ -1388,6 +1400,14 @@ module.exports = function (app, passport, server) {
     var myTicket = new Ticket()
     myTicket.updateTicket(req, res)
     myTicket.save(function (err) {
+      if (err) return console.error(err);
+    });
+  });
+
+  app.post('/create-medication', function (req, res) {
+    var myMedication = new Medication()
+    myMedication.createMedication(req, res)
+    myMedication.save(function (err) {
       if (err) return console.error(err);
     });
   });

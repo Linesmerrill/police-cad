@@ -95,7 +95,7 @@
         </thead>
         <tbody>
           <% for(var i=0; i<personas.length; i++) {%>
-            <tr data-toggle="modal" data-id=<%=i%> data-target="#viewCiv" onclick="loadCivData(<%=i%>);loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>')">
+            <tr data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>')">
               <td><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td>
             </tr>
             <% } %>
@@ -466,7 +466,7 @@
             <div class="form-group required">
               <label class="col-md-4 control-label" for="medicationName">Medication Name</label>
               <div class="col-md-4">
-                <input id="medicationName" name="medicationName" type="text" placeholder="medication name" class="form-control input-md" required>
+                <input id="medicationName" name="name" type="text" placeholder="medication name" class="form-control input-md" required>
               </div>
             </div>
 
@@ -490,9 +490,10 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="submit-new-civ"></label>
               <div class="col-md-4">
+                <input type="hidden" id="medication-civilian-id" name="civilianID" value="">
                 <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
-                <button id="submit-new-civ" name="submitNewCiv" value="<%=user.user.email%>" class="btn btn-primary" onclick="createNewCiv()">Create</button>
+                <button id="submit-new-civ" class="btn btn-primary" onclick="createNewCiv()">Create</button>
               </div>
             </div>
             </fieldset>
@@ -665,10 +666,9 @@
               <br/><br/>
               <table id="medicationsTable" class="table table-hover" border="1" frame="box">
                 <thead>
-                  <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Amount</td><td>Frequency</td></tr>
+                  <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Dosage</td><td>Frequency</td></tr>
                 </thead>
-                  <tbody>
-                  </tbody>
+                  <tbody></tbody>
               </table>
             </div>
             <div class="tab-pane fade" id="pills-pre-existing-conditions" role="tabpanel" aria-labelledby="pills-pre-existing-conditions-tab">
@@ -1187,6 +1187,18 @@ $("#lastName").keydown(function(event) {
          data.forEach(function(e){
           var newRowContent = "<tr><td>"+e.arrestReport.date+"</td><td>"+e.arrestReport.charges+"</td><td>"+e.arrestReport.summary+"</td></tr>"
           $("#arrestTable tbody").append(newRowContent)
+         });
+     });
+  }
+
+  function loadMedications(index) {
+    $('#medication-civilian-id').val(index)
+    $("#medicationsTable tbody").empty()
+    var parameters = { civID: index };
+       $.get('/medications',parameters, function(data) {
+         data.forEach(function(e){
+          var newRowContent = "<tr><td>"+e.medication.startDate+"</td><td>"+e.medication.name+"</td><td>"+e.medication.dosage+"</td><td>"+e.medication.frequency+"</td></tr>"
+          $("#medicationsTable tbody").append(newRowContent)
          });
      });
   }
