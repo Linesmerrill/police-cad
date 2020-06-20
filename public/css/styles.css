@@ -839,6 +839,14 @@ a.link--inherit {
     cursor: not-allowed;
 }
 
+#serial-number-details {
+    background-color: #36333d;
+}
+
+#serial-number-details:hover {
+    cursor: not-allowed;
+}
+
 .font-size-3 {
     font-size: 3em;
 }
@@ -1005,4 +1013,16 @@ a.link--inherit {
 #scroll-top-block:focus {
     color: #00aced;
     text-decoration: underline;
+}
+
+#personas-table:hover {
+    cursor: pointer;
+}
+
+#vehicle-table:hover {
+    cursor: pointer;
+}
+
+#firearm-table:hover {
+    cursor: pointer;
 }

@@ -203,6 +203,10 @@ module.exports = function (app, passport, server) {
           'vehicle.email': req.user.user.email.toLowerCase(),
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
+          Firearm.find({
+            'firearm.userID': req.user._id,
+          }, function (err, dbFirearms) {
+            if (err) return console.error(err);
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -215,10 +219,12 @@ module.exports = function (app, passport, server) {
               user: req.user,
               personas: dbPersonas,
               vehicles: dbVehicles,
+              firearms: dbFirearms,
               communities: dbCommunities,
               context: context
             });
           });
+        });
         });
       });
     } else {
@@ -232,6 +238,11 @@ module.exports = function (app, passport, server) {
           'vehicle.activeCommunityID': req.user.user.activeCommunity
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
+          Firearm.find({
+            'firearm.userID': req.user._id,
+            'firearm.activeCommunityID': req.user.user.activeCommunity
+          }, function (err, dbFirearms) {
+            if (err) return console.error(err);
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -244,11 +255,13 @@ module.exports = function (app, passport, server) {
               user: req.user,
               personas: dbPersonas,
               vehicles: dbVehicles,
+              firearms: dbFirearms,
               communities: dbCommunities,
               context: context
             });
           });
         });
+      });
       });
     }
   });
@@ -1754,6 +1767,55 @@ module.exports = function (app, passport, server) {
       Vehicle.deleteOne({
         '_id': ObjectId(req.body.vehicleID),
         'vehicle.email': req.body.emailVeh.toLowerCase()
+      }, function (err) {
+        if (err) return console.error(err);
+        return res.redirect('/civ-dashboard');
+      })
+    }
+  })
+
+  app.post('/updateOrDeleteFirearm', function (req, res) {
+    // console.debug('update or delete firearm body: ', req.body)
+    req.app.locals.specialContext = null;
+    if (req.body.action === "update") {
+      if (!exists(req.body.firearmID)) {
+        console.warn("cannot update firearm with empty firearmID, route: /updateOrDeleteFirearm")
+        return res.redirect('/civ-dashboard');
+      }
+      if (!exists(req.body.registeredOwner)) {
+        req.body.registeredOwner = 'N/A'
+      }
+      var isValid = isValidObjectIdLength(req.body.firearmID, "cannot lookup invalid length firearmID, route: /updateOrDeleteFirearm")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/civ-dashboard')
+      }
+      Firearm.findOneAndUpdate({
+        '_id': ObjectId(req.body.firearmID),
+      }, {
+        $set: {
+          "firearm.serialNumber": req.body.serialNumber,
+          "firearm.weaponType": req.body.weaponType,
+          'firearm.registeredOwner': req.body.registeredOwner,
+          'firearm.isStolen': req.body.isStolen,
+          'firearm.updatedAt': new Date()
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        return res.redirect('/civ-dashboard');
+      })
+    } else {
+      if (!exists(req.body.firearmID)) {
+        console.warn("cannot delete firearm with empty firearmID, route: /updateOrDeleteFirearm")
+        return res.redirect('/civ-dashboard');
+      }
+      var isValid = isValidObjectIdLength(req.body.firearmID, "cannot lookup invalid length firearmID, route: /updateOrDeleteFirearm")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/civ-dashboard')
+      }
+      Firearm.deleteOne({
+        '_id': ObjectId(req.body.firearmID),
       }, function (err) {
         if (err) return console.error(err);
         return res.redirect('/civ-dashboard');

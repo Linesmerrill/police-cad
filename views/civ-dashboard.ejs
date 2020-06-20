@@ -77,11 +77,11 @@
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-lg margin-top-2">Add New Civilian</button>
           <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-lg margin-top-2">Add New Vehicle</button>
-          <button data-toggle="modal" href="#newFirearmModal"  class="btn btn-primary btn-lg margin-top-2" onclick="generateSerialNumber(8, 'serial-number')">Add New Firearm</button>
+          <button data-toggle="modal" href="#newFirearmModal"  class="btn btn-primary btn-lg margin-top-2" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button>
         </div>
       </div>
       <hr style="width: 88%;max-width: 100rem;">
-
+      <br/>
       <!--Table for Personas  -->
       <div class="col-md-5 col-md-offset-0.75">
       <table id="personas-table" class="table table-hover table-bordered">
@@ -118,6 +118,27 @@
           <td><%= vehicles[i].vehicle.plate%></td>
           <td> <%= vehicles[i].vehicle.model%></td>
           <td> <%= vehicles[i].vehicle.color%></td>
+        </tr>
+        <% } %>
+      </tbody>
+  </table>
+</div>
+<br/>
+<!--Table for Firearms  -->
+<div class="col-md-5 col-md-offset-1">
+  <table id="firearm-table" class="table table-hover table-bordered">
+    <thead>
+      <tr>
+        Firearms: (Click for Details)
+      </tr>
+      <tr><th>Serial #</th><th>Type</th><th>Registered to</th></tr>
+    </thead>
+      <tbody>
+        <% for(var i=0; i<firearms.length; i++) {%>
+        <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewFirearm" onclick="loadFirearmData(<%=i%>)">
+          <td><%= firearms[i].firearm.serialNumber%></td>
+          <td style="text-transform: capitalize;"> <%= firearms[i].firearm.weaponType%></td>
+          <td> <%= firearms[i].firearm.registeredOwner%></td>
         </tr>
         <% } %>
       </tbody>
@@ -410,7 +431,7 @@
               <div class="col-md-4">
                 <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-veh-activeCommunityID" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
-                <button id="create-firearm" name="submitNewFirearm" value=<%= user.user.email %> class="btn btn-primary">Create</button>
+                <button id="create-firearm" class="btn btn-primary">Create</button>
               </div>
             </div>
             </fieldset>
@@ -641,6 +662,73 @@
                 <input type="hidden" id="vehicleID" name="vehicleID">
                 <button type="submit" value="update" name="action" class="btn btn-info">Update Vehicle</button>
                 <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Vehicle</button>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewFirearm" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+            <form class="form-horizontal" action="/updateOrDeleteFirearm" method="post">
+              <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Firearm Details</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="serial-number">Serial Number</label>
+              <div class="col-md-4">
+                <input id="serial-number-details" name="serialNumber" type="text" minlength="8" maxlength="8" placeholder="serial number" class="form-control input-md" required="" readonly="readonly">
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="weapon-type">Weapon Type</label>
+              <div class="col-md-4">
+                <select id="weapon-type-details" name="weaponType" class="form-control">
+                  <option value="handgun">Handgun</option>
+                  <option value="long gun">Long Gun</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Search input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
+              <div class="col-md-4">
+                <select id="registeredOwner-details" name="registeredOwner" class="form-control">
+                  <option value="N/A">N/A</option>
+                  <% for(var i=0; i<personas.length; i++) {%>
+                    <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                   <% } %>
+                </select>
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
+              <div class="col-md-4">
+                <select id="is-stolen-details" name="isStolen" class="form-control">
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col-md-12 text-align-center">
+                <input type="hidden" id="firearmID" name="firearmID">
+                <button type="submit" value="update" name="action" class="btn btn-info">Update Firearm</button>
+                <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Firearm</button>
             </div>
             </fieldset>
           </form>
@@ -895,6 +983,9 @@
   $('#vehicle-table').DataTable({
     "bLengthChange": false,
   })
+  $('#firearm-table').DataTable({
+    "bLengthChange": false,
+  })
 
 // displays the Update Username and Cancel buttons for updating the username
 var myUser = <%- JSON.stringify(user) %>;
@@ -1006,6 +1097,15 @@ $("#lastName").keydown(function(event) {
     $('#validInsView').val(myVar[index].vehicle.validInsurance)
     $('#roVeh').val(myVar[index].vehicle.registeredOwner)
     $('#stolenView').val(myVar[index].vehicle.isStolen)
+  }
+
+  function loadFirearmData(index) {
+    var myVar = <%- JSON.stringify(firearms) %>;
+    $('#firearmID').val(myVar[index]._id)
+    $('#serial-number-details').val(myVar[index].firearm.serialNumber)
+    $('#weapon-type-details').val(myVar[index].firearm.weaponType)
+    $('#registeredOwner-details').val(myVar[index].firearm.registeredOwner)
+    $('#is-stolen-details').val(myVar[index].firearm.isStolen)
   }
 
   function createNewCiv() {
