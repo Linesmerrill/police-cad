@@ -15,7 +15,7 @@ var firearmSchema = mongoose.Schema({
 });
 
 firearmSchema.methods.createFirearm = function (request, response) {
-    console.debug("request body: ", request.body)
+    // console.debug("request body: ", request.body)
     this.firearm.serialNumber = request.body.serialNumber;
     this.firearm.weaponType = request.body.weaponType;
     this.firearm.registeredOwner = request.body.registeredOwner.trim();
