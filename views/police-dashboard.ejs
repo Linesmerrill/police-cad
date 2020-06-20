@@ -136,6 +136,7 @@
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
+          <button data-toggle="modal" href="#firearmDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Firearm Database</button>
           <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
           <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
           <% } else {%>
@@ -489,6 +490,76 @@
                                   <% } else {%>
                                     <p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>
                                 <% } %>
+                            </div>
+                          </div>
+                        </div>
+                        <% } %>
+                      <% } %>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="firearmDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      
+      <div id="firearmNotFound" class="alert alert-warning" style="display:none">
+        <strong>Not Found!</strong> Firearm not found in police database.
+      </div>
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" name="findFirearm" action="/firearm-search" method="get">
+            <fieldset>
+
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Vehicle Database</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4" for="serialNumber">Serial Number</label>
+                <div class="col-md-4 margin-bottom-1">
+                  <input id="serialNumber" name="serialNumber" type="text" maxlength="8" placeholder="Serial #"
+                    class="form-control input-md" list="firearms" style="text-transform: uppercase;" required>
+                </div>
+                <div class="col-md-4">
+                  <input type="hidden" id="active-community-id" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                  <button type="submit" onclick="searchFirearm()" class="btn btn-info">Search</button>
+                </div>
+              </div>
+
+              <!-- List of Plates -->
+              <div id="firearmDetails" style="display:none">
+                <div class="panel-group" id="accordion">
+                  <% if (firearms != null) {%>
+                    <% for(var i=0; i<firearms.length; i++) {%>
+                      <div class="panel panel-default background-transparent">
+                          <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion" href="#collapse<%=i%>"
+                            <h4 class="panel-title">
+                              <a class="blue-hover">
+                                  <%= firearms[i].firearm.serialNumber%> | <%= firearms[i].firearm.registeredOwner%></a>
+                            </h4>
+                          </div>
+                          <% if (i === 0) {%>
+                          <div id="collapse<%=i%>" class="panel-collapse collapse in">
+                              <% } else {%>
+                                <div id="collapse<%=i%>" class="panel-collapse collapse">
+                                <% } %>
+                            <div class="panel-body">
+                              <% if (firearms[i].firearm.isStolen == 'true') {%>
+                                <div id="stolenMessage" class="alert alert-danger" style="display:block">
+                                    <strong>Danger!</strong> Firearm reported as stolen.
+                                </div>
+                              <% } %>
+                                Serial #: <%= firearms[i].firearm.serialNumber%><br/>
+                                Registered Owner: <%= firearms[i].firearm.registeredOwner%><br/>
+                                <span style="text-transform: capitalize;">Type: <%= firearms[i].firearm.weaponType%></span><br/>
                             </div>
                           </div>
                         </div>
@@ -1621,6 +1692,7 @@ $(document).ready(function() {
 
   let allVehicles = <%-JSON.stringify(vehicles)%>;
   let allCivilians = <%-JSON.stringify(civilians)%>;
+  let allFirearms = <%-JSON.stringify(firearms)%>;
   if ( allVehicles != null) {
     $('#plateDetails').show()
     $('#plateDatabaseModal').modal('toggle');
@@ -1629,10 +1701,15 @@ $(document).ready(function() {
     $('#civDetails').show()
     $('#nameDatabaseModal').modal('toggle');
     searchNames()
+  } else if (allFirearms != null) {
+    $('#firearmDetails').show()
+    $('#firearmDatabaseModal').modal('toggle');
+    searchFirearm()
   }
   else {
     $('#plateDetails').removeAttr("style").hide()
     $('#civDetails').removeAttr("style").hide()
+    $('#firearmDetails').removeAttr("style").hide()
   }
 
   $("#civ-first-name").keydown(function(event) {
@@ -1701,7 +1778,6 @@ function searchPlate() {
     x.style.display = 'block';
   } else {}
 
-  let myValue = $('#plateName').val();
   let myVar = <%-JSON.stringify(vehicles)%>;
   if (myVar === null) {
     return
@@ -1709,6 +1785,23 @@ function searchPlate() {
   if (myVar.length === 0) {
     $('#plateDetails').removeAttr("style").hide()
     $('#vehicleNotFound').show()
+    return
+  }
+}
+
+function searchFirearm() {
+  let x = document.getElementById('firearmDetails');
+  if (x.style.display === 'none') {
+    x.style.display = 'block';
+  } else {}
+
+  let myVar = <%-JSON.stringify(firearms)%>;
+  if (myVar === null) {
+    return
+  }
+  if (myVar.length === 0) {
+    $('#firearmDetails').removeAttr("style").hide()
+    $('#firearmNotFound').show()
     return
   }
 }

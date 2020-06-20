@@ -347,6 +347,7 @@ module.exports = function (app, passport, server) {
           user: req.user,
           vehicles: null,
           civilians: null,
+          firearms: null,
           tickets: null,
           arrestReports: null,
           warrants: null,
@@ -378,6 +379,7 @@ module.exports = function (app, passport, server) {
             user: req.user,
             vehicles: null,
             civilians: null,
+            firearms: null,
             tickets: null,
             arrestReports: null,
             warrants: null,
@@ -395,6 +397,7 @@ module.exports = function (app, passport, server) {
               user: req.user,
               vehicles: null,
               civilians: null,
+              firearms: null,
               tickets: null,
               arrestReports: null,
               warrants: null,
@@ -465,6 +468,7 @@ module.exports = function (app, passport, server) {
                         user: req.user,
                         vehicles: null,
                         civilians: dbCivilians,
+                        firearms: null,
                         tickets: dbTickets,
                         arrestReports: dbArrestReports,
                         warrants: dbWarrants,
@@ -482,6 +486,7 @@ module.exports = function (app, passport, server) {
                           user: req.user,
                           vehicles: null,
                           civilians: dbCivilians,
+                          firearms: null,
                           tickets: dbTickets,
                           arrestReports: dbArrestReports,
                           warrants: dbWarrants,
@@ -538,6 +543,7 @@ module.exports = function (app, passport, server) {
                         user: req.user,
                         vehicles: null,
                         civilians: dbCivilians,
+                        firearms: null,
                         tickets: dbTickets,
                         arrestReports: dbArrestReports,
                         warrants: dbWarrants,
@@ -555,6 +561,7 @@ module.exports = function (app, passport, server) {
                           user: req.user,
                           vehicles: null,
                           civilians: dbCivilians,
+                          firearms: null,
                           tickets: dbTickets,
                           arrestReports: dbArrestReports,
                           warrants: dbWarrants,
@@ -625,6 +632,7 @@ module.exports = function (app, passport, server) {
                       user: req.user,
                       vehicles: null,
                       civilians: dbCivilians,
+                      firearms: null,
                       tickets: dbTickets,
                       arrestReports: dbArrestReports,
                       warrants: dbWarrants,
@@ -677,6 +685,7 @@ module.exports = function (app, passport, server) {
                       user: req.user,
                       vehicles: null,
                       civilians: dbCivilians,
+                      firearms: null,
                       tickets: dbTickets,
                       arrestReports: dbArrestReports,
                       warrants: dbWarrants,
@@ -722,6 +731,7 @@ module.exports = function (app, passport, server) {
                   user: req.user,
                   vehicles: dbVehicles,
                   civilians: null,
+                  firearms: null,
                   tickets: null,
                   arrestReports: null,
                   warrants: null,
@@ -739,6 +749,7 @@ module.exports = function (app, passport, server) {
                     user: req.user,
                     vehicles: dbVehicles,
                     civilians: null,
+                    firearms: null,
                     tickets: null,
                     arrestReports: null,
                     warrants: null,
@@ -775,6 +786,7 @@ module.exports = function (app, passport, server) {
                   user: req.user,
                   vehicles: dbVehicles,
                   civilians: null,
+                  firearms: null,
                   tickets: null,
                   arrestReports: null,
                   warrants: null,
@@ -792,6 +804,7 @@ module.exports = function (app, passport, server) {
                     user: req.user,
                     vehicles: dbVehicles,
                     civilians: null,
+                    firearms: null,
                     tickets: null,
                     arrestReports: null,
                     warrants: null,
@@ -837,6 +850,7 @@ module.exports = function (app, passport, server) {
                 user: req.user,
                 civilians: null,
                 vehicles: dbVehicles,
+                firearms: null,
                 tickets: null,
                 arrestReports: null,
                 warrants: null,
@@ -874,6 +888,207 @@ module.exports = function (app, passport, server) {
                 user: req.user,
                 civilians: null,
                 vehicles: dbVehicles,
+                firearms: null,
+                tickets: null,
+                arrestReports: null,
+                warrants: null,
+                communities: dbCommunities,
+                bolos: dbBolos,
+                context: null
+              });
+            });
+          });
+        })
+      }
+    }
+  });
+
+  app.get('/firearm-search', auth, function (req, res) {
+    if (req.query.route == 'dispatch-dashboard') {
+      if (req.query.serialNumber == undefined) {
+        res.status(400)
+        return res.redirect('/dispatch-dashboard')
+      }
+      if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+        Firearm.find({
+          'firearm.serialNumber': req.query.serialNumber.trim().toUpperCase(),
+        }, function (err, dbFirearms) {
+          if (err) return console.error(err);
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            if (err) return console.error(err);
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              if (err) return console.error(err);
+              if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+                return res.render('dispatch-dashboard', {
+                  user: req.user,
+                  vehicles: null,
+                  civilians: null,
+                  firearms: dbFirearms,
+                  tickets: null,
+                  arrestReports: null,
+                  warrants: null,
+                  communities: dbCommunities,
+                  commUsers: null,
+                  bolos: dbBolos,
+                  context: null
+                });
+              } else {
+                User.find({
+                  'user.activeCommunity': req.user.user.activeCommunity
+                }, function (err, dbCommUsers) {
+                  if (err) return console.error(err);
+                  return res.render('dispatch-dashboard', {
+                    user: req.user,
+                    vehicles: null,
+                    firearms: dbFirearms,
+                    civilians: null,
+                    tickets: null,
+                    arrestReports: null,
+                    warrants: null,
+                    communities: dbCommunities,
+                    commUsers: dbCommUsers,
+                    bolos: dbBolos,
+                    context: null
+                  });
+                });
+              }
+            });
+          });
+        })
+      } else {
+        Firearm.find({
+          'firearm.serialNumber': req.query.serialNumber.trim().toUpperCase(),
+          'firearm.activeCommunityID': req.query.activeCommunityID
+        }, function (err, dbFirearms) {
+          if (err) return console.error(err);
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            if (err) return console.error(err);
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              if (err) return console.error(err);
+              if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+                return res.render('dispatch-dashboard', {
+                  user: req.user,
+                  vehicles: null,
+                  firearms: dbFirearms,
+                  civilians: null,
+                  tickets: null,
+                  arrestReports: null,
+                  warrants: null,
+                  communities: dbCommunities,
+                  commUsers: null,
+                  bolos: dbBolos,
+                  context: null
+                });
+              } else {
+                User.find({
+                  'user.activeCommunity': req.user.user.activeCommunity
+                }, function (err, dbCommUsers) {
+                  if (err) return console.error(err);
+                  return res.render('dispatch-dashboard', {
+                    user: req.user,
+                    vehicles: null,
+                    firearms: dbFirearms,
+                    civilians: null,
+                    tickets: null,
+                    arrestReports: null,
+                    warrants: null,
+                    communities: dbCommunities,
+                    commUsers: dbCommUsers,
+                    bolos: dbBolos,
+                    context: null
+                  });
+                });
+              }
+            });
+          });
+        })
+      }
+    } else {
+      if (req.query.serialNumber == undefined) {
+        res.status(400)
+        return res.redirect('/police-dashboard')
+      }
+      if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+        Firearm.find({
+          'firearm.serialNumber': req.query.serialNumber.trim().toUpperCase(),
+        }, function (err, dbFirearms) {
+          if (err) return console.error(err);
+          var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
+          if (!isValid) {
+            req.app.locals.specialContext = "invalidRequest";
+            return res.redirect('/police-dashboard')
+          }
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': ObjectId(req.user.user.activeCommunity)
+            }]
+          }, function (err, dbCommunities) {
+            if (err) return console.error(err);
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              if (err) return console.error(err);
+              return res.render('police-dashboard', {
+                user: req.user,
+                civilians: null,
+                vehicles: null,
+                firearms: dbFirearms,
+                tickets: null,
+                arrestReports: null,
+                warrants: null,
+                communities: dbCommunities,
+                bolos: dbBolos,
+                context: null
+              });
+            });
+          });
+        })
+      } else {
+        Firearm.find({
+          'firearm.serialNumber': req.query.serialNumber.trim().toUpperCase(),
+          'firearm.activeCommunityID': req.query.activeCommunityID
+        }, function (err, dbFirearms) {
+          if (err) return console.error(err);
+          var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
+          if (!isValid) {
+            req.app.locals.specialContext = "invalidRequest";
+            return res.redirect('/police-dashboard')
+          }
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': ObjectId(req.user.user.activeCommunity)
+            }]
+          }, function (err, dbCommunities) {
+            if (err) return console.error(err);
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              if (err) return console.error(err);
+              return res.render('police-dashboard', {
+                user: req.user,
+                civilians: null,
+                vehicles: null,
+                firearms: dbFirearms,
                 tickets: null,
                 arrestReports: null,
                 warrants: null,
