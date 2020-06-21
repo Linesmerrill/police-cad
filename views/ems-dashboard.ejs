@@ -70,6 +70,7 @@
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-lg margin-top-2">Add New Persona</button>
           <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-lg margin-top-2">Add New Vehicle</button>
+          <button data-toggle="modal" href="#searchMedicalRecords"  class="btn btn-primary btn-lg margin-top-2">Medical Database</button>
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
         </div>
       </div>
@@ -287,6 +288,57 @@
             </div>
             </fieldset>
             </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="searchMedicalRecords" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      
+      <div id="firearmNotFound" class="alert alert-warning" style="display:none">
+        <strong>Not Found!</strong> Person not found in police database.
+      </div>
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" name="findFirearm" action="/medical-search" method="get">
+            <fieldset>
+
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Medical Database</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Text input-->
+              <div class="form-group">
+                <div class="col-md-12">
+                  <div class="col-md-4">
+                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-first-name">First Name</label>
+                    <input id="civ-first-name" name="firstName" type="text" placeholder="First Name" class="form-control input-md col-md-offset-1" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-last-name">Last Name</label>
+                    <input id="civ-last-name" name="lastName" type="text" placeholder="Last Name" class="form-control input-md col-md-offset-1" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
+                  </div>
+                  <% if (user.user.activeCommunity == '' || user.user.activeCommunity == null) { %>
+                  <div class="col-md-4">
+                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-dob">Date of Birth</label>
+                    <input id="civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md col-md-offset-1" required="">
+                  </div>
+                  <% } %>
+                  <div class="col-md-4">
+                      <br>
+                      <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                      <button type="submit" class="btn btn-info" onclick="searchNames()">Search</button>
+                    </div>
+                </div>
+              </div>
+
+              <!-- List of Plates -->
+              
+              </div>
+            </fieldset>
+          </form>
         </div>
       </div>
     </div>
