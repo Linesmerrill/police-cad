@@ -1105,6 +1105,8 @@ module.exports = function (app, passport, server) {
     }
   });
 
+  
+
   app.get('/tickets', function (req, res) {
     Ticket.find({
         'ticket.civID': req.query.civID
@@ -1132,6 +1134,17 @@ module.exports = function (app, passport, server) {
       function (err, dbMedications) {
         if (err) return console.error(err);
         res.send(dbMedications)
+      });
+  })
+
+  app.delete('/medications/:id', function (req, res) {
+    // console.debug("req params: ", req.params)
+    Medication.findByIdAndDelete({
+        '_id': ObjectId(req.params.id),
+      },
+      function (err, status) {
+        if (err) return console.error(err);
+        res.send(status)
       });
   })
 

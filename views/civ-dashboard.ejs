@@ -653,7 +653,7 @@
           </ul>
           <div class="tab-content" id="pills-tabContent">
             <div class="tab-pane fade active in" id="pills-reports" role="tabpanel" aria-labelledby="pills-reports-tab">
-              <table id="reportsTable" class="table table-hover" border="1" frame="box">
+              <table id="reportsTable" class="table" border="1" frame="box">
                 <thead>
                   <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td></tr>
                 </thead>
@@ -664,9 +664,9 @@
             <div class="tab-pane fade" id="pills-medications" role="tabpanel" aria-labelledby="pills-medications-tab">
               <button data-toggle="modal" href="#addMedicationModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Medication</button>
               <br/><br/>
-              <table id="medicationsTable" class="table table-hover" border="1" frame="box">
+              <table id="medicationsTable" class="table" border="1" frame="box">
                 <thead>
-                  <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Dosage</td><td>Frequency</td></tr>
+                  <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Dosage</td><td>Frequency</td><td>Delete</td></tr>
                 </thead>
                   <tbody></tbody>
               </table>
@@ -674,7 +674,7 @@
             <div class="tab-pane fade" id="pills-pre-existing-conditions" role="tabpanel" aria-labelledby="pills-pre-existing-conditions-tab">
               <button data-toggle="modal" href="#addConditionModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Condition</button>
               <br/><br/>
-              <table id="conditionsTable" class="table table-hover" border="1" frame="box">
+              <table id="conditionsTable" class="table" border="1" frame="box">
                 <thead>
                   <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td></tr>
                 </thead>
@@ -1138,6 +1138,23 @@ $("#lastName").keydown(function(event) {
 });
 });
 
+// add in a delete function as it is not supported as of jQuery {whatever-version-we-have}
+$.delete = function(url, data, callback, type){
+ if ( $.isFunction(data) ){
+   type = type || callback,
+       callback = data,
+       data = {}
+ }
+
+ return $.ajax({
+   url: url,
+   type: 'DELETE',
+   success: callback,
+   data: data,
+   contentType: type
+ });
+}
+
   function loadCivData(index) {
     var myVar = <%- JSON.stringify(personas) %>;
     
@@ -1197,10 +1214,17 @@ $("#lastName").keydown(function(event) {
     var parameters = { civID: index };
        $.get('/medications',parameters, function(data) {
          data.forEach(function(e){
-          var newRowContent = "<tr><td>"+e.medication.startDate+"</td><td>"+e.medication.name+"</td><td>"+e.medication.dosage+"</td><td>"+e.medication.frequency+"</td></tr>"
+          var newRowContent = "<tr id=\""+e._id+"\"><td>"+e.medication.startDate+"</td><td>"+e.medication.name+"</td><td>"+e.medication.dosage+"</td><td>"+e.medication.frequency+"</td><td class=\"text-align-center\"><a class='clickable' onclick=\"deleteRecord('"+e._id+"')\"><i class=\"glyphicon glyphicon-remove-circle color-alert-red\"></i></a></td></tr>"
           $("#medicationsTable tbody").append(newRowContent)
          });
      });
+  }
+
+  function deleteRecord(id) {
+    var parameters = { medicationID: id };
+    $.delete('/medications/'+id, parameters, function(data) {
+      $('table#medicationsTable tr#'+id).remove()
+    })
   }
 
   function loadVehData(index) {

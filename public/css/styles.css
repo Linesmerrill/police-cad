@@ -782,6 +782,10 @@ a.link--inherit {
     color: #DE0A0A;
 }
 
+.color-alert-red {
+    color: #d9534f
+}
+
 .color-green {
     color: green;
 }
@@ -1029,4 +1033,8 @@ a.link--inherit {
 
 #addMedicationModal {
     z-index: 9001 /* ITS OVER 9000!! */
+}
+
+.clickable:hover {
+    cursor: pointer;
 }
