@@ -10,6 +10,7 @@ var Warrant = require('../app/models/warrants');
 var Community = require('../app/models/community');
 var Bolo = require('../app/models/bolos');
 var Medication = require('../app/models/medication');
+var Condition = require('../app/models/medicalCondition');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
 var async = require('async');
@@ -1137,9 +1138,36 @@ module.exports = function (app, passport, server) {
       });
   })
 
+  app.get('/conditions', function (req, res) {
+    Condition.find({
+        'condition.civilianID': req.query.civID,
+      },
+      function (err, dbConditions) {
+        if (err) return console.error(err);
+        res.send(dbConditions)
+      });
+  })
+
   app.delete('/medications/:id', function (req, res) {
     // console.debug("req params: ", req.params)
+    if (!isValidObjectIdLength(req.params.id, "cannot lookup invalid length condition id, route: /medications/:id")) {
+      return
+    }
     Medication.findByIdAndDelete({
+        '_id': ObjectId(req.params.id),
+      },
+      function (err, status) {
+        if (err) return console.error(err);
+        res.send(status)
+      });
+  })
+
+  app.delete('/conditions/:id', function (req, res) {
+    // console.debug("req params: ", req.params)
+    if (!isValidObjectIdLength(req.params.id, "cannot lookup invalid length condition id, route: /conditions/:id")) {
+      return
+    }
+    Condition.findByIdAndDelete({
         '_id': ObjectId(req.params.id),
       },
       function (err, status) {
@@ -1421,6 +1449,14 @@ module.exports = function (app, passport, server) {
     var myMedication = new Medication()
     myMedication.createMedication(req, res)
     myMedication.save(function (err) {
+      if (err) return console.error(err);
+    });
+  });
+
+  app.post('/create-condition', function (req, res) {
+    var myCondition = new Condition()
+    myCondition.createCondition(req, res)
+    myCondition.save(function (err) {
       if (err) return console.error(err);
     });
   });

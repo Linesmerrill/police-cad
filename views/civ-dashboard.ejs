@@ -95,7 +95,7 @@
         </thead>
         <tbody>
           <% for(var i=0; i<personas.length; i++) {%>
-            <tr data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>')">
+            <tr data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
               <td><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td>
             </tr>
             <% } %>
@@ -503,6 +503,59 @@
     </div>
   </div>
 
+  <div id="addConditionModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-condition" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Add a New Medication</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="dateOccurred">Date Occurred</label>
+              <div class="col-md-4">
+              <input id="dateOccurred" name="dateOccurred" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="conditionName">Condition Name</label>
+              <div class="col-md-4">
+                <input id="conditionName" name="name" type="text" placeholder="condition name" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="details">Details</label>
+              <div class="col-md-4">
+                <input id="details" name="details" type="text" placeholder="details" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="submit-new-civ"></label>
+              <div class="col-md-4">
+                <input type="hidden" id="condition-civilian-id" name="civilianID" value="">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submit-new-civ" class="btn btn-primary">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="viewCiv" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -676,7 +729,7 @@
               <br/><br/>
               <table id="conditionsTable" class="table" border="1" frame="box">
                 <thead>
-                  <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td></tr>
+                  <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td><td>Delete</td></tr>
                 </thead>
                   <tbody>
                   </tbody>
@@ -1214,16 +1267,35 @@ $.delete = function(url, data, callback, type){
     var parameters = { civID: index };
        $.get('/medications',parameters, function(data) {
          data.forEach(function(e){
-          var newRowContent = "<tr id=\""+e._id+"\"><td>"+e.medication.startDate+"</td><td>"+e.medication.name+"</td><td>"+e.medication.dosage+"</td><td>"+e.medication.frequency+"</td><td class=\"text-align-center\"><a class='clickable' onclick=\"deleteRecord('"+e._id+"')\"><i class=\"glyphicon glyphicon-remove-circle color-alert-red\"></i></a></td></tr>"
+          var newRowContent = "<tr id=\""+e._id+"\"><td>"+e.medication.startDate+"</td><td>"+e.medication.name+"</td><td>"+e.medication.dosage+"</td><td>"+e.medication.frequency+"</td><td class=\"text-align-center\"><a class='clickable' onclick=\"deleteMedication('"+e._id+"')\"><i class=\"glyphicon glyphicon-remove-circle color-alert-red\"></i></a></td></tr>"
           $("#medicationsTable tbody").append(newRowContent)
          });
      });
   }
 
-  function deleteRecord(id) {
+  function loadConditions(index) {
+    $('#condition-civilian-id').val(index)
+    $("#conditionsTable tbody").empty()
+    var parameters = { civID: index };
+       $.get('/conditions',parameters, function(data) {
+         data.forEach(function(e){
+          var newRowContent = "<tr id=\""+e._id+"\"><td>"+e.condition.dateOccurred+"</td><td>"+e.condition.name+"</td><td>"+e.condition.details+"</td><td class=\"text-align-center\"><a class='clickable' onclick=\"deleteCondition('"+e._id+"')\"><i class=\"glyphicon glyphicon-remove-circle color-alert-red\"></i></a></td></tr>"
+          $("#conditionsTable tbody").append(newRowContent)
+         });
+     });
+  }
+
+  function deleteMedication(id) {
     var parameters = { medicationID: id };
     $.delete('/medications/'+id, parameters, function(data) {
       $('table#medicationsTable tr#'+id).remove()
+    })
+  }
+
+  function deleteCondition(id) {
+    var parameters = { conditionID: id };
+    $.delete('/conditions/'+id, parameters, function(data) {
+      $('table#conditionsTable tr#'+id).remove()
     })
   }
 

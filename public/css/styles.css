@@ -1035,6 +1035,10 @@ a.link--inherit {
     z-index: 9001 /* ITS OVER 9000!! */
 }
 
+#addConditionModal {
+    z-index: 9001 /* ITS OVER 9000!! */
+}
+
 .clickable:hover {
     cursor: pointer;
 }
