@@ -301,7 +301,7 @@
       </div>
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" name="findFirearm" action="/medical-search" method="get">
+          <!-- <form class="form-horizontal" name="findFirearm" action="/medical-search" method="get"> -->
             <fieldset>
 
               <!-- Form Name -->
@@ -329,16 +329,22 @@
                   <div class="col-md-4">
                       <br>
                       <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
-                      <button type="submit" class="btn btn-info" onclick="searchNames()">Search</button>
+                      <button type="submit" class="btn btn-info" onclick="searchMedicalNames()">Search</button>
                     </div>
                 </div>
               </div>
 
-              <!-- List of Plates -->
-              
+                <!-- List of Plates -->
+                <div id="medicalDetails">
+                  <div class="panel-group" id="accordion">
+                    <div>
+
+                    </div>
+                  </div>
+                </div>
               </div>
             </fieldset>
-          </form>
+          <!-- </form> -->
         </div>
       </div>
     </div>
@@ -736,6 +742,110 @@
     var myUser = <%- JSON.stringify(user) %>;
     $('#accountUsername').val(myUser.user.username)
     $('#updateUsernameBtns').hide();
+  }
+
+  function searchMedicalNames() {
+    var myUser = <%- JSON.stringify(user) %>;
+    var activeCommunityID
+    $("#accordion div").empty()
+    if (myUser.user.activeCommunity != "" && myUser.user.activeCommunity != null) {
+      activeCommunityID = myUser.user.activeCommunity
+    }
+    var parameters = { 
+      firstName: $('#civ-first-name').val(),
+      lastName: $('#civ-last-name').val(),
+      activeCommunityID: activeCommunityID
+      };
+       $.get('/medical-database',parameters, function(data) {
+         console.log("data: ", data)
+         var i = 0
+         data.forEach(function(e){
+           console.log("resp for medical database: ", e)
+          var newRowContent = `
+          <!-- List of Civilians -->
+              
+                      <div class="panel panel-default background-transparent">
+                          <div class="panel-heading" data-toggle="collapse" data-id="`+i+`" data-parent="#accordion" href="#collapse`+i+`"
+                            <h4 class="panel-title">
+                              <a class="blue-hover">
+                                  `+e.civilian.civilian.firstName+` `+ e.civilian.civilian.lastName+ ` | `+e.civilian._id+`</a>
+                            </h4>
+                          </div>
+                          
+                            <div id="collapse`+i+`" class="panel-collapse">
+                          
+                            <div class="panel-body">
+                                <div class="text-align-center">
+                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenCitation('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`');setDateAndTime('#date', '#time');">Create Report</button>
+                                </div>
+                                <hr/>
+                                Driver's ID #: `+e.civilian._id+`<br/>
+                                Date of Birth: `+e.civilian.civilian.birthday+`<br/>
+                                Address: `+e.civilian.civilian.address+`<br/>
+                                Occupation: `+e.civilian.civilian.occupation+`<br/>
+                                <hr style="width: 88%;max-width: 100rem;">
+                                <h4>Medical History</h4>
+                                <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
+                                  <li class="nav-item active">
+                                    <a class="nav-link active" id="pills-citations-tab" data-toggle="pill" href="#pills-citations" role="tab" aria-controls="pills-citations" aria-selected="true">Reports</a>
+                                  </li>
+                                  <li class="nav-item">
+                                    <a class="nav-link" id="pills-warnings-tab" data-toggle="pill" href="#pills-warnings" role="tab" aria-controls="pills-warnings" aria-selected="false">Medications</a>
+                                  </li>
+                                  <li class="nav-item">
+                                    <a class="nav-link" id="pills-arrests-tab" data-toggle="pill" href="#pills-arrests" role="tab" aria-controls="pills-arrests" aria-selected="false">Pre-Existing Conditions</a>
+                                  </li>
+                                </ul>
+                                <div class="tab-content" id="pills-tabContent">
+                                  <div class="tab-pane fade active in" id="pills-citations" role="tabpanel" aria-labelledby="pills-citations-tab">
+                                    <table id="reports-table" class="table table-hover" border="1" frame="box">
+                                      <thead>
+                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Violation</td><td>Amount</td></tr>
+                                        </thead>
+                                        <tbody>
+                                          <!-- List of Reports -->
+                                          </tbody>
+                                      </table>
+                                  </div>
+                                  <div class="tab-pane fade" id="pills-warnings" role="tabpanel" aria-labelledby="pills-warnings-tab">
+                                    <table id="medications-table" class="table table-hover" border="1" frame="box">
+                                      <thead>
+                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Warning</td></tr>
+                                      </thead>
+                                      <tbody id="warning-body">
+                                        <!-- List of Medications -->
+                                        </tbody>
+                                    </table>
+                                  </div>
+                                  <div class="tab-pane fade" id="pills-arrests" role="tabpanel" aria-labelledby="pills-arrests-tab">
+                                    <table id="conditions-table" class="table table-hover" border="1" frame="box">
+                                      <thead>
+                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Charges</td><td>Summary</td></tr>
+                                      </thead>
+                                      <tbody>
+                                        <!-- List of Pre-Existing Conditions -->
+                                        </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                            </div>
+                          </div>
+                        </div>
+          `
+          $("#accordion div").append(newRowContent)
+          //loop through all reports, medications and conditions for this civ
+          if (e.conditions != null) {
+          e.conditions.forEach(function(c){
+            console.log("resp for conditions: ", c)
+            var newReportContent = `
+            <tr id="`+c._id+`"><td>"`+c.condition.dateOccurred+`"</td><td style='text-transform: capitalize;'>"`+c.condition.name+`"</td><td>"`+c.condition.details+`"</td><td class="text-align-center"><a class='clickable' onclick="deleteCondition('`+c._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+            `
+            $("#reports-table tbody").append(newReportContent)
+          });
+        }
+         });
+
+     });
   }
 
   $(document).ready(function(){

@@ -11,6 +11,7 @@ var Community = require('../app/models/community');
 var Bolo = require('../app/models/bolos');
 var Medication = require('../app/models/medication');
 var Condition = require('../app/models/medicalCondition');
+var MedicalReport = require('../app/models/medicalReport');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
 var async = require('async');
@@ -1146,6 +1147,71 @@ module.exports = function (app, passport, server) {
         if (err) return console.error(err);
         res.send(dbConditions)
       });
+  })
+
+  app.get('/medical-database', function (req, res) {
+    console.debug("medical database server: ", req.query)
+    if (req.query.activeCommunityID == "" || req.query.activeCommunityID == null) {
+      Civilian.find({
+        'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+        'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+        'civilian.birthday': req.query.dob
+      },
+      function (err, dbCivilians) {
+        if (err) return console.error(err);
+        res.send(dbCivilians)
+      });
+    } else {
+    Civilian.find({
+        'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+        'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+        'civilian.activeCommunityID': req.query.activeCommunityID
+      },
+      function (err, dbCivilians) {
+        if (err) return console.error(err);
+        var data = []
+        
+        dbCivilians.forEach(function(r){
+          var medicalInfo = {
+            civilian: null,
+            reports: null,
+            medications: null,
+            conditions: null
+          }
+          //TODO for each civilian we find, we need to compile all the Reports, Medications and Conditions
+          console.log("one civilian: ", r)
+          medicalInfo.civilian = r
+          Medication.find({
+            'medication.civilianID': r._id,
+          },
+          function (err, dbMedications) {
+            if (err) return console.error(err);
+            // res.send(dbMedications)
+            medicalInfo.medications = dbMedications
+          });
+
+          Condition.find({
+            'condition.civilianID': r._id,
+          },
+          function (err, dbConditions) {
+            if (err) return console.error(err);
+            medicalInfo.conditions = dbConditions
+          });
+
+          MedicalReport.find({
+            'report.civilianID': r._id,
+          },
+          function (err, dbReport) {
+            if (err) return console.error(err);
+            medicalInfo.reports = dbReport
+          });
+          data.push(medicalInfo)
+          
+        })
+        console.log("new data", data)
+        res.send(data)
+      });
+    }
   })
 
   app.delete('/medications/:id', function (req, res) {

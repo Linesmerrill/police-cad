@@ -1042,3 +1042,7 @@ a.link--inherit {
 .clickable:hover {
     cursor: pointer;
 }
+
+#medicalDetails {
+    margin-top: 7em;
+}
