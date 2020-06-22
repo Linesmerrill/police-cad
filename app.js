@@ -9,6 +9,7 @@ var passport = require('passport');
 var flash = require('connect-flash');
 var path = require('path');
 var http = require('http').createServer(express);
+var rateLimit = require("express-rate-limit");
 
 var newBaseURL = process.env.NEW_BASE_URL || 'http://localhost:8080';
 var redirectStatus = parseInt(process.env.REDIRECT_STATUS || 302);
@@ -30,6 +31,14 @@ require('./config/passport')(passport);
 
 // Use cookie parser.
 app.use(cookieParser());
+
+// Setup rate limited for all routes
+const limiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 100 // limit each IP to 100 requests per windowMs
+  });
+// apply to all requests
+app.use(limiter);
 
 app.use(bodyParser.urlencoded({
 	extended: false,
