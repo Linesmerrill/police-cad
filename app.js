@@ -37,8 +37,8 @@ var limiter = new RateLimit({
 	store: new MongoLimitStore({
 	  uri: process.env.MONGODB_URI || 'mongodb://localhost/knoldus',
 	}),
-	max: 100,
-	windowMs: 15 * 60 * 1000
+	max: 100, // limit each IP to 100 requests per windowMs
+	windowMs: 15 * 60 * 1000 // 15 minutes
   });
 // apply to all requests
 app.use(limiter);
