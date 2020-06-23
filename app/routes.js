@@ -924,6 +924,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/firearm-search', auth, function (req, res) {
+    // console.debug(req.query)
     if (req.query.route == 'dispatch-dashboard') {
       if (req.query.serialNumber == undefined) {
         res.status(400)
@@ -1059,11 +1060,6 @@ module.exports = function (app, passport, server) {
           }]
         }, function (err, dbFirearms) {
           if (err) return console.error(err);
-          var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
-          if (!isValid) {
-            req.app.locals.specialContext = "invalidRequest";
-            return res.redirect('/police-dashboard')
-          }
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -1133,7 +1129,7 @@ module.exports = function (app, passport, server) {
     }
   });
 
-  app.get('/tickets', function (req, res) {
+  app.get('/tickets', auth, function (req, res) {
     Ticket.find({
         'ticket.civID': req.query.civID
       },
@@ -1143,7 +1139,7 @@ module.exports = function (app, passport, server) {
       });
   })
 
-  app.get('/arrests', function (req, res) {
+  app.get('/arrests', auth, function (req, res) {
     ArrestReport.find({
         'arrestReport.accusedID': req.query.civID
       },
