@@ -1,6 +1,7 @@
 var User = require('../app/models/user');
 var Civilian = require('../app/models/civilian');
 var Vehicle = require('../app/models/vehicle');
+var Firearm = require('../app/models/firearm');
 var EmsVehicle = require('../app/models/emsVehicle');
 var Ticket = require('../app/models/ticket');
 var Ems = require('../app/models/ems');
@@ -196,12 +197,31 @@ module.exports = function (app, passport, server) {
     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
       Civilian.find({
         'civilian.email': req.user.user.email.toLowerCase(),
+        '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+          'civilian.activeCommunityID': ''
+        }, {
+          'civilian.activeCommunityID': null
+        }]
       }, function (err, dbPersonas) {
         if (err) return console.error(err);
         Vehicle.find({
           'vehicle.email': req.user.user.email.toLowerCase(),
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'vehicle.activeCommunityID': ''
+          }, {
+            'vehicle.activeCommunityID': null
+          }]
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
+          Firearm.find({
+            'firearm.userID': req.user._id,
+            '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+              'firearm.activeCommunityID': ''
+            }, {
+              'firearm.activeCommunityID': null
+            }]
+          }, function (err, dbFirearms) {
+            if (err) return console.error(err);
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -214,10 +234,12 @@ module.exports = function (app, passport, server) {
               user: req.user,
               personas: dbPersonas,
               vehicles: dbVehicles,
+              firearms: dbFirearms,
               communities: dbCommunities,
               context: context
             });
           });
+        });
         });
       });
     } else {
@@ -231,6 +253,11 @@ module.exports = function (app, passport, server) {
           'vehicle.activeCommunityID': req.user.user.activeCommunity
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
+          Firearm.find({
+            'firearm.userID': req.user._id,
+            'firearm.activeCommunityID': req.user.user.activeCommunity
+          }, function (err, dbFirearms) {
+            if (err) return console.error(err);
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -243,11 +270,13 @@ module.exports = function (app, passport, server) {
               user: req.user,
               personas: dbPersonas,
               vehicles: dbVehicles,
+              firearms: dbFirearms,
               communities: dbCommunities,
               context: context
             });
           });
         });
+      });
       });
     }
   });
@@ -333,6 +362,7 @@ module.exports = function (app, passport, server) {
           user: req.user,
           vehicles: null,
           civilians: null,
+          firearms: null,
           tickets: null,
           arrestReports: null,
           warrants: null,
@@ -364,6 +394,7 @@ module.exports = function (app, passport, server) {
             user: req.user,
             vehicles: null,
             civilians: null,
+            firearms: null,
             tickets: null,
             arrestReports: null,
             warrants: null,
@@ -381,6 +412,7 @@ module.exports = function (app, passport, server) {
               user: req.user,
               vehicles: null,
               civilians: null,
+              firearms: null,
               tickets: null,
               arrestReports: null,
               warrants: null,
@@ -451,6 +483,7 @@ module.exports = function (app, passport, server) {
                         user: req.user,
                         vehicles: null,
                         civilians: dbCivilians,
+                        firearms: null,
                         tickets: dbTickets,
                         arrestReports: dbArrestReports,
                         warrants: dbWarrants,
@@ -468,6 +501,7 @@ module.exports = function (app, passport, server) {
                           user: req.user,
                           vehicles: null,
                           civilians: dbCivilians,
+                          firearms: null,
                           tickets: dbTickets,
                           arrestReports: dbArrestReports,
                           warrants: dbWarrants,
@@ -524,6 +558,7 @@ module.exports = function (app, passport, server) {
                         user: req.user,
                         vehicles: null,
                         civilians: dbCivilians,
+                        firearms: null,
                         tickets: dbTickets,
                         arrestReports: dbArrestReports,
                         warrants: dbWarrants,
@@ -541,6 +576,7 @@ module.exports = function (app, passport, server) {
                           user: req.user,
                           vehicles: null,
                           civilians: dbCivilians,
+                          firearms: null,
                           tickets: dbTickets,
                           arrestReports: dbArrestReports,
                           warrants: dbWarrants,
@@ -611,6 +647,7 @@ module.exports = function (app, passport, server) {
                       user: req.user,
                       vehicles: null,
                       civilians: dbCivilians,
+                      firearms: null,
                       tickets: dbTickets,
                       arrestReports: dbArrestReports,
                       warrants: dbWarrants,
@@ -663,6 +700,7 @@ module.exports = function (app, passport, server) {
                       user: req.user,
                       vehicles: null,
                       civilians: dbCivilians,
+                      firearms: null,
                       tickets: dbTickets,
                       arrestReports: dbArrestReports,
                       warrants: dbWarrants,
@@ -689,6 +727,11 @@ module.exports = function (app, passport, server) {
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Vehicle.find({
           'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'vehicle.activeCommunityID': ''
+          }, {
+            'vehicle.activeCommunityID': null
+          }]
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
           Community.find({
@@ -708,6 +751,7 @@ module.exports = function (app, passport, server) {
                   user: req.user,
                   vehicles: dbVehicles,
                   civilians: null,
+                  firearms: null,
                   tickets: null,
                   arrestReports: null,
                   warrants: null,
@@ -725,6 +769,7 @@ module.exports = function (app, passport, server) {
                     user: req.user,
                     vehicles: dbVehicles,
                     civilians: null,
+                    firearms: null,
                     tickets: null,
                     arrestReports: null,
                     warrants: null,
@@ -761,6 +806,7 @@ module.exports = function (app, passport, server) {
                   user: req.user,
                   vehicles: dbVehicles,
                   civilians: null,
+                  firearms: null,
                   tickets: null,
                   arrestReports: null,
                   warrants: null,
@@ -778,6 +824,7 @@ module.exports = function (app, passport, server) {
                     user: req.user,
                     vehicles: dbVehicles,
                     civilians: null,
+                    firearms: null,
                     tickets: null,
                     arrestReports: null,
                     warrants: null,
@@ -800,13 +847,13 @@ module.exports = function (app, passport, server) {
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Vehicle.find({
           'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'vehicle.activeCommunityID': ''
+          }, {
+            'vehicle.activeCommunityID': null
+          }]
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
-          var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
-          if (!isValid) {
-            req.app.locals.specialContext = "invalidRequest";
-            return res.redirect('/police-dashboard')
-          }
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -823,6 +870,7 @@ module.exports = function (app, passport, server) {
                 user: req.user,
                 civilians: null,
                 vehicles: dbVehicles,
+                firearms: null,
                 tickets: null,
                 arrestReports: null,
                 warrants: null,
@@ -860,6 +908,217 @@ module.exports = function (app, passport, server) {
                 user: req.user,
                 civilians: null,
                 vehicles: dbVehicles,
+                firearms: null,
+                tickets: null,
+                arrestReports: null,
+                warrants: null,
+                communities: dbCommunities,
+                bolos: dbBolos,
+                context: null
+              });
+            });
+          });
+        })
+      }
+    }
+  });
+
+  app.get('/firearm-search', auth, function (req, res) {
+    if (req.query.route == 'dispatch-dashboard') {
+      if (req.query.serialNumber == undefined) {
+        res.status(400)
+        return res.redirect('/dispatch-dashboard')
+      }
+      if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+        Firearm.find({
+          'firearm.serialNumber': req.query.serialNumber.trim().toUpperCase(),
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'firearm.activeCommunityID': ''
+          }, {
+            'firearm.activeCommunityID': null
+          }]
+        }, function (err, dbFirearms) {
+          if (err) return console.error(err);
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            if (err) return console.error(err);
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              if (err) return console.error(err);
+              if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+                return res.render('dispatch-dashboard', {
+                  user: req.user,
+                  vehicles: null,
+                  civilians: null,
+                  firearms: dbFirearms,
+                  tickets: null,
+                  arrestReports: null,
+                  warrants: null,
+                  communities: dbCommunities,
+                  commUsers: null,
+                  bolos: dbBolos,
+                  context: null
+                });
+              } else {
+                User.find({
+                  'user.activeCommunity': req.user.user.activeCommunity
+                }, function (err, dbCommUsers) {
+                  if (err) return console.error(err);
+                  return res.render('dispatch-dashboard', {
+                    user: req.user,
+                    vehicles: null,
+                    firearms: dbFirearms,
+                    civilians: null,
+                    tickets: null,
+                    arrestReports: null,
+                    warrants: null,
+                    communities: dbCommunities,
+                    commUsers: dbCommUsers,
+                    bolos: dbBolos,
+                    context: null
+                  });
+                });
+              }
+            });
+          });
+        })
+      } else {
+        Firearm.find({
+          'firearm.serialNumber': req.query.serialNumber.trim().toUpperCase(),
+          'firearm.activeCommunityID': req.query.activeCommunityID
+        }, function (err, dbFirearms) {
+          if (err) return console.error(err);
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            if (err) return console.error(err);
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              if (err) return console.error(err);
+              if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+                return res.render('dispatch-dashboard', {
+                  user: req.user,
+                  vehicles: null,
+                  firearms: dbFirearms,
+                  civilians: null,
+                  tickets: null,
+                  arrestReports: null,
+                  warrants: null,
+                  communities: dbCommunities,
+                  commUsers: null,
+                  bolos: dbBolos,
+                  context: null
+                });
+              } else {
+                User.find({
+                  'user.activeCommunity': req.user.user.activeCommunity
+                }, function (err, dbCommUsers) {
+                  if (err) return console.error(err);
+                  return res.render('dispatch-dashboard', {
+                    user: req.user,
+                    vehicles: null,
+                    firearms: dbFirearms,
+                    civilians: null,
+                    tickets: null,
+                    arrestReports: null,
+                    warrants: null,
+                    communities: dbCommunities,
+                    commUsers: dbCommUsers,
+                    bolos: dbBolos,
+                    context: null
+                  });
+                });
+              }
+            });
+          });
+        })
+      }
+    } else {
+      if (req.query.serialNumber == undefined) {
+        res.status(400)
+        return res.redirect('/police-dashboard')
+      }
+      if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+        Firearm.find({
+          'firearm.serialNumber': req.query.serialNumber.trim().toUpperCase(),
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'firearm.activeCommunityID': ''
+          }, {
+            'firearm.activeCommunityID': null
+          }]
+        }, function (err, dbFirearms) {
+          if (err) return console.error(err);
+          var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
+          if (!isValid) {
+            req.app.locals.specialContext = "invalidRequest";
+            return res.redirect('/police-dashboard')
+          }
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': ObjectId(req.user.user.activeCommunity)
+            }]
+          }, function (err, dbCommunities) {
+            if (err) return console.error(err);
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              if (err) return console.error(err);
+              return res.render('police-dashboard', {
+                user: req.user,
+                civilians: null,
+                vehicles: null,
+                firearms: dbFirearms,
+                tickets: null,
+                arrestReports: null,
+                warrants: null,
+                communities: dbCommunities,
+                bolos: dbBolos,
+                context: null
+              });
+            });
+          });
+        })
+      } else {
+        Firearm.find({
+          'firearm.serialNumber': req.query.serialNumber.trim().toUpperCase(),
+          'firearm.activeCommunityID': req.query.activeCommunityID
+        }, function (err, dbFirearms) {
+          if (err) return console.error(err);
+          var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
+          if (!isValid) {
+            req.app.locals.specialContext = "invalidRequest";
+            return res.redirect('/police-dashboard')
+          }
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': ObjectId(req.user.user.activeCommunity)
+            }]
+          }, function (err, dbCommunities) {
+            if (err) return console.error(err);
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              if (err) return console.error(err);
+              return res.render('police-dashboard', {
+                user: req.user,
+                civilians: null,
+                vehicles: null,
+                firearms: dbFirearms,
                 tickets: null,
                 arrestReports: null,
                 warrants: null,
@@ -1135,6 +1394,14 @@ module.exports = function (app, passport, server) {
     var myVeh = new Vehicle()
     myVeh.createVeh(req, res)
     myVeh.save(function (err) {
+      if (err) return console.error(err);
+    });
+  });
+
+  app.post('/create-firearm', function (req, res) {
+    var myFirearm = new Firearm()
+    myFirearm.createFirearm(req, res)
+    myFirearm.save(function (err) {
       if (err) return console.error(err);
     });
   });
@@ -1745,6 +2012,55 @@ module.exports = function (app, passport, server) {
       Vehicle.deleteOne({
         '_id': ObjectId(req.body.vehicleID),
         'vehicle.email': req.body.emailVeh.toLowerCase()
+      }, function (err) {
+        if (err) return console.error(err);
+        return res.redirect('/civ-dashboard');
+      })
+    }
+  })
+
+  app.post('/updateOrDeleteFirearm', function (req, res) {
+    // console.debug('update or delete firearm body: ', req.body)
+    req.app.locals.specialContext = null;
+    if (req.body.action === "update") {
+      if (!exists(req.body.firearmID)) {
+        console.warn("cannot update firearm with empty firearmID, route: /updateOrDeleteFirearm")
+        return res.redirect('/civ-dashboard');
+      }
+      if (!exists(req.body.registeredOwner)) {
+        req.body.registeredOwner = 'N/A'
+      }
+      var isValid = isValidObjectIdLength(req.body.firearmID, "cannot lookup invalid length firearmID, route: /updateOrDeleteFirearm")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/civ-dashboard')
+      }
+      Firearm.findOneAndUpdate({
+        '_id': ObjectId(req.body.firearmID),
+      }, {
+        $set: {
+          "firearm.serialNumber": req.body.serialNumber,
+          "firearm.weaponType": req.body.weaponType,
+          'firearm.registeredOwner': req.body.registeredOwner,
+          'firearm.isStolen': req.body.isStolen,
+          'firearm.updatedAt': new Date()
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        return res.redirect('/civ-dashboard');
+      })
+    } else {
+      if (!exists(req.body.firearmID)) {
+        console.warn("cannot delete firearm with empty firearmID, route: /updateOrDeleteFirearm")
+        return res.redirect('/civ-dashboard');
+      }
+      var isValid = isValidObjectIdLength(req.body.firearmID, "cannot lookup invalid length firearmID, route: /updateOrDeleteFirearm")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/civ-dashboard')
+      }
+      Firearm.deleteOne({
+        '_id': ObjectId(req.body.firearmID),
       }, function (err) {
         if (err) return console.error(err);
         return res.redirect('/civ-dashboard');
