@@ -197,14 +197,29 @@ module.exports = function (app, passport, server) {
     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
       Civilian.find({
         'civilian.email': req.user.user.email.toLowerCase(),
+        '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+          'civilian.activeCommunityID': ''
+        }, {
+          'civilian.activeCommunityID': null
+        }]
       }, function (err, dbPersonas) {
         if (err) return console.error(err);
         Vehicle.find({
           'vehicle.email': req.user.user.email.toLowerCase(),
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'vehicle.activeCommunityID': ''
+          }, {
+            'vehicle.activeCommunityID': null
+          }]
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
           Firearm.find({
             'firearm.userID': req.user._id,
+            '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+              'firearm.activeCommunityID': ''
+            }, {
+              'firearm.activeCommunityID': null
+            }]
           }, function (err, dbFirearms) {
             if (err) return console.error(err);
           Community.find({
