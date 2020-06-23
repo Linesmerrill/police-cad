@@ -712,6 +712,11 @@ module.exports = function (app, passport, server) {
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Vehicle.find({
           'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'vehicle.activeCommunityID': ''
+          }, {
+            'vehicle.activeCommunityID': null
+          }]
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
           Community.find({
@@ -827,13 +832,13 @@ module.exports = function (app, passport, server) {
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Vehicle.find({
           'vehicle.plate': req.query.plateNumber.trim().toUpperCase(),
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'vehicle.activeCommunityID': ''
+          }, {
+            'vehicle.activeCommunityID': null
+          }]
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
-          var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
-          if (!isValid) {
-            req.app.locals.specialContext = "invalidRequest";
-            return res.redirect('/police-dashboard')
-          }
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -912,6 +917,11 @@ module.exports = function (app, passport, server) {
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Firearm.find({
           'firearm.serialNumber': req.query.serialNumber.trim().toUpperCase(),
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'firearm.activeCommunityID': ''
+          }, {
+            'firearm.activeCommunityID': null
+          }]
         }, function (err, dbFirearms) {
           if (err) return console.error(err);
           Community.find({
@@ -1027,6 +1037,11 @@ module.exports = function (app, passport, server) {
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Firearm.find({
           'firearm.serialNumber': req.query.serialNumber.trim().toUpperCase(),
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'firearm.activeCommunityID': ''
+          }, {
+            'firearm.activeCommunityID': null
+          }]
         }, function (err, dbFirearms) {
           if (err) return console.error(err);
           var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
