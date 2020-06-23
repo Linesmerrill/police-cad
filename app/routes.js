@@ -1185,11 +1185,55 @@ module.exports = function (app, passport, server) {
       Civilian.find({
         'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
         'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
-        'civilian.birthday': req.query.dob
+        '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+          'civilian.activeCommunityID': ''
+        }, {
+          'civilian.activeCommunityID': null
+        }]
       },
       function (err, dbCivilians) {
         if (err) return console.error(err);
-        res.send(dbCivilians)
+        var data = []
+        
+        dbCivilians.forEach(function(r){
+          var medicalInfo = {
+            civilian: null,
+            reports: null,
+            medications: null,
+            conditions: null
+          }
+          //TODO for each civilian we find, we need to compile all the Reports, Medications and Conditions
+          console.log("one civilian: ", r)
+          medicalInfo.civilian = r
+          Medication.find({
+            'medication.civilianID': r._id,
+          },
+          function (err, dbMedications) {
+            if (err) return console.error(err);
+            // res.send(dbMedications)
+            medicalInfo.medications = dbMedications
+          });
+
+          Condition.find({
+            'condition.civilianID': r._id,
+          },
+          function (err, dbConditions) {
+            if (err) return console.error(err);
+            medicalInfo.conditions = dbConditions
+          });
+
+          MedicalReport.find({
+            'report.civilianID': r._id,
+          },
+          function (err, dbReport) {
+            if (err) return console.error(err);
+            medicalInfo.reports = dbReport
+          });
+          data.push(medicalInfo)
+          
+        })
+        console.log("new data", data)
+        res.send(data)
       });
     } else {
     Civilian.find({
