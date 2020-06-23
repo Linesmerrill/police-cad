@@ -11,6 +11,8 @@ var path = require('path');
 var http = require('http').createServer(express);
 var RateLimit = require("express-rate-limit");
 var MongoLimitStore = require('rate-limit-mongo');
+var realFs = require('fs')
+var gracefulFs = require('graceful-fs')
 
 var newBaseURL = process.env.NEW_BASE_URL || 'http://localhost:8080';
 var redirectStatus = parseInt(process.env.REDIRECT_STATUS || 302);
@@ -22,6 +24,9 @@ dotenv.config();
  * Express application.t
  */
 const app = express();
+
+// graceful-fs: in order to delay on EMFILE errors from any fs-using dependencies
+gracefulFs.gracefulify(realFs)
 
 // Connect to MongoDB database.
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/knoldus' );
