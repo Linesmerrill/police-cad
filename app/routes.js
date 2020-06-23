@@ -1185,6 +1185,7 @@ module.exports = function (app, passport, server) {
       Civilian.find({
         'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
         'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+        'civilian.birthday': req.query.dateOfBirth,
         '$or': [{ // some are stored as empty strings and others as null so we need to check for both
           'civilian.activeCommunityID': ''
         }, {
@@ -1193,8 +1194,10 @@ module.exports = function (app, passport, server) {
       },
       function (err, dbCivilians) {
         if (err) return console.error(err);
-        var data = []
         
+        
+        let dbPromise = new Promise((resolve, reject) => {
+          var data = []
         dbCivilians.forEach(function(r){
           var medicalInfo = {
             civilian: null,
@@ -1210,6 +1213,7 @@ module.exports = function (app, passport, server) {
           },
           function (err, dbMedications) {
             if (err) return console.error(err);
+            console.debug('all medications', dbMedications)
             // res.send(dbMedications)
             medicalInfo.medications = dbMedications
           });
@@ -1229,11 +1233,16 @@ module.exports = function (app, passport, server) {
             if (err) return console.error(err);
             medicalInfo.reports = dbReport
           });
+          console.debug("all medical info: ", medicalInfo)
           data.push(medicalInfo)
           
         })
-        console.log("new data", data)
-        res.send(data)
+        resolve(data)
+      });
+      dbPromise.then((myData) => {
+        console.log("new data", myData)
+        res.send(myData)
+      })
       });
     } else {
     Civilian.find({

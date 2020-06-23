@@ -752,6 +752,7 @@
     var parameters = { 
       firstName: $('#civ-first-name').val(),
       lastName: $('#civ-last-name').val(),
+      dateOfBirth: $('#civ-dob').val(),
       activeCommunityID: activeCommunityID
       };
        $.get('/medical-database',parameters, function(data) {
