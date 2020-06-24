@@ -142,48 +142,52 @@
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button id="panicButton" class="btn btn-danger btn-lg margin-top-2 page-scroll" title="Panic" onclick="updateStatus('Panic');panicButtonPressed()"><a id="scrollToTop" class="page-scroll color-white" href="#second">Panic</a></button>
         </div>
-      </header>
-      <section style='background-image: url("/static/images/hi-rise.jpg");'>
-        <div class="container">
-          <div class="col-lg-10 col-lg-offset-1 text-center">
-            <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
-            <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
-            <button data-toggle="modal" href="#firearmDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Firearm Database</button>
-            <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-            <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
-            <% } else {%>
-              <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
-              <% } %>
-            <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
-            <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
-          </div>
-        </div>
-        <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
-        <div class="container">
-        <div id="active-bolo-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
-            <h4>Active BOLOs: </h4>
-            <h5>Click for details</h5>
-          <% if (bolos != null && bolos.length > 0) {%>
-            <% for(var i=0; i<bolos.length; i++) {%>
-              <% if (bolos[i].bolo.status == true) {%>
-                  <a id="<%=bolos[i]._id%>-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=bolos[i]._id%>')">
-          <div class="alert alert-warning alert-dismissible show" role="alert">
-            <strong>BOLO! </strong> <span id="<%=bolos[i]._id%>-type" style="text-transform:capitalize"><%=bolos[i].bolo.boloType%></span>  Last Seen: <span id="<%=bolos[i]._id%>-location"><%=bolos[i].bolo.location%></span> | Description: <span id="<%=bolos[i]._id%>-description"><%=bolos[i].bolo.description%></span>
-          </div>
-        </a>
-            <%}%>
-          <%}%>
-          <%}%>
-        </div>
-        <% } else {%>
-          <div class="col-lg-10 col-lg-offset-1 margin-top-2">
-          <h4>Looks like you are not in a community, click here to get started!</h4>
-            <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
-          </div>
         <% } %>
       </div>
     </div>
-  </section>
+  </header>
+  <section style='background-image: url("/static/images/hi-rise.jpg");'>
+    <div class="container">
+      <div class="col-lg-10 col-lg-offset-1 text-center">
+        <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
+        <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
+        <button data-toggle="modal" href="#firearmDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Firearm Database</button>
+        <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+        <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
+        <% } else {%>
+          <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
+          <% } %>
+        <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
+        <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
+      </div>
+    </div>
+    <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
+    <div class="container">
+    <div id="active-bolo-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
+      <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+        <h4>Active BOLOs: </h4>
+        <h5>Click for details</h5>
+      <% if (bolos != null && bolos.length > 0) {%>
+        <% for(var i=0; i<bolos.length; i++) {%>
+          <% if (bolos[i].bolo.status == true) {%>
+              <a id="<%=bolos[i]._id%>-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=bolos[i]._id%>')">
+      <div class="alert alert-warning alert-dismissible show" role="alert">
+        <strong>BOLO! </strong> <span id="<%=bolos[i]._id%>-type" style="text-transform:capitalize"><%=bolos[i].bolo.boloType%></span>  Last Seen: <span id="<%=bolos[i]._id%>-location"><%=bolos[i].bolo.location%></span> | Description: <span id="<%=bolos[i]._id%>-description"><%=bolos[i].bolo.description%></span>
+      </div>
+    </a>
+        <%}%>
+      <%}%>
+      <%}%>
+      <%}%>
+      <% if (user.user.activeCommunity == '' || user.user.activeCommunity == null) {%>
+      <div class="col-lg-10 col-lg-offset-1 margin-top-2 text-center">
+      <h4>Looks like you are not in a community, click here to get started!</h4>
+        <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
+      </div>
+    <% } %>
+  </div>
+  </div>
+</section>
   
   <div id="google-ads-1">
     <p class="text-align-center color-gray font-size-1">Advertisement</p>
