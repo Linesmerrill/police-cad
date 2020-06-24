@@ -73,8 +73,6 @@
   </nav>
   
   <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
-    <form class="">
-      <fieldset class="">
     <div class="header-content">
       <div class="inner">
         
@@ -119,8 +117,24 @@
 
         <!-- imports the community specific alerts -->
         <% include community-alerts %>
-
-        <div class="col-lg-10 col-lg-offset-1 text-center">
+    
+        
+      </div>
+    </div>
+    </header>
+    <section style='background-image: url("/static/images/hi-rise.jpg");'>
+      <div class="container">
+        <div class="col-lg-10 col-lg-offset-1 margin-top-1">
+          <% for(var i=0; i<communities.length; i++) {%>
+            <% if (communities[i]._id == user.user.activeCommunity) {%>
+              <div id="panic-placeholder"></div>
+              <div id="panic-placeholder-socket"></div>
+            <%}%>
+          <%}%>
+        </div>
+      </div>
+      <div class="container">
+        <div class="col-md-10 col-md-offset-1 text-center">
           <button type="button" data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button type="button" data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
           <button type="button" data-toggle="modal" href="#firearmDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Firearm Database</button>
@@ -132,70 +146,51 @@
           <button type="button" data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
           <button type="button" data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
         </div>
-        <div class="col-lg-10 col-lg-offset-1 text-center">
-          <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-          <button type="button" class="btn btn-primary btn-lg margin-top-2"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#active-bolos">Active Bolos</a></button>
-          <button type="button" class="btn btn-primary btn-lg margin-top-2"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#officer-list">Officer List</a></button>
-          <% } %>
-        </div>
-        <div class="col-lg-10 col-lg-offset-1 margin-top-1">
-          <% for(var i=0; i<communities.length; i++) {%>
-            <% if (communities[i]._id == user.user.activeCommunity) {%>
-              <div id="panic-placeholder"></div>
-              <div id="panic-placeholder-socket"></div>
-            <%}%>
-          <%}%>
-        </div>
-      </fieldset>
-    </form>
-    </header>
-    <section style='background-image: url("/static/images/hi-rise.jpg");'>
+      </div>
+      <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
       <div class="container">
+        <div id="active-bolo-container" class="col-md-12 col-md-offset-0.75 margin-top-2">
         <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-        <div class="col-lg-10 col-lg-offset-1 margin-top-2">
-            <h4 id="active-bolos">Active BOLOs:</h4> <button type="button" data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
-            <table id="boloTable" class="table table-bordered" style="width:100%">
+            <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Active BOLOs:</span> <button type="button" data-toggle="modal" href="#boloModal" class="btn btn-primary btn-md pull-right margin-bottom-1" onclick="clearBoloForm()">Create BOLO</button>
+            <table id="boloTable" class="table table-hover table-bordered">
               <thead>
                   <tr>
                       <th>Type</th>
                       <th>Location</th>
                       <th>Description</th>
-                      <th>Manage</th>
                   </tr>
               </thead>
               <tbody>
                       <% if (bolos != null && bolos.length > 0) {%>
                   <% for(var i=0; i<bolos.length; i++) {%>
-                          <tr id="<%=bolos[i]._id%>-row">
+                          <tr id="<%=bolos[i]._id%>-row" class="gray-hover" data-toggle="modal" data-id="<%=i%>" data-target="#boloDetailModal" onclick="populateBoloDetails('<%=bolos[i]._id%>')">
                               <td id="<%=bolos[i]._id%>-type" style="text-transform: capitalize;"><%=bolos[i].bolo.boloType%></td>
                               <td id="<%=bolos[i]._id%>-location"><%=bolos[i].bolo.location%></td>
                               <td id="<%=bolos[i]._id%>-description"><%=bolos[i].bolo.description%></td>
-                              <td><button type="button" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=bolos[i]._id%>')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>
                           </tr>
                   <%}%>
                   <%}%>
               </tbody>
           </table>
-        </div>
         <% } %>
+        </div>
         <div class="col-lg-10 col-lg-offset-1 margin-top-2">
           <% if (commUsers == null) {%>
             <h4>Looks like you are not in a community, click here to get started!</h4>
             <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
             <%} else {%>
           <h4 id="officer-list">Officer List:</h4>
-          <table id="example" class="table table-bordered style="width:100%">
+          <table id="example" class="table table-hover table-bordered">
             <thead>
                 <tr>
                     <th>On/Off Duty</th>
                     <th>Username</th>
                     <th>Status</th>
-                    <th>Manage</th>
                 </tr>
             </thead>
             <tbody>
                 <% for(var i=0; i<commUsers.length; i++) {%>
-                        <tr>
+                        <tr class="gray-hover" data-toggle="modal" data-id="<%=i%>" data-target="#manageUserDispatchStatusModal" onclick="setDispatchModalValues('<%=commUsers[i]._id%>')">
                           <% if (!commUsers[i].user.dispatchOnDuty) {%>
                             <td><span title="100" id="<%=commUsers[i]._id%>-duty" class="red-dot"></span></td>
                           <%} else if (commUsers[i].user.dispatchOnDuty) {%>
@@ -212,22 +207,13 @@
                               <td id="<%=commUsers[i]._id%>-status"><%=commUsers[i].user.dispatchStatus%></td>  
                               <%}%>
                             <%}%>
-                            <td><button type="button" data-toggle="modal" href="#manageUserDispatchStatusModal" onclick="setDispatchModalValues('<%=commUsers[i]._id%>')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>
                         </tr>
                 <%}%>
             </tbody>
         </table>
         <%}%>
         </div>
-      </div>
     </div>
-    <span id="top-link-block" class="hidden">
-      <a id="scroll-top-block" href="#topNav" class="well well-sm"  onclick="$('html,body').animate({scrollTop:0},'slow');return false;">
-          <i class="glyphicon glyphicon-chevron-up"></i>
-      </a>
-  </span><!-- /top-link-block -->
-  </div>
-  
   </section>
   <div id="google-ads-1">
     <p class="text-align-center color-gray font-size-1">Advertisement</p>
@@ -1773,11 +1759,10 @@
         })
       }
       $('#boloTable tr:last').after(
-                          '<tr id="'+res._id+'-row">'+
+                          `<tr id="`+res._id+`-row" class="gray-hover" data-toggle="modal" data-target="#boloDetailModal" onclick="populateBoloDetails('`+res._id+`')">`+
                               '<td id="'+res._id+'-type" style="text-transform: capitalize;">'+res.bolo.boloType+'</td>'+
                               '<td id="'+res._id+'-location">'+res.bolo.location+'</td>'+
                               '<td id="'+res._id+'-description">'+res.bolo.description+'</td>'+
-                              '<td><button type="button" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails(\''+res._id+'\')" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" style="color: #337ab7" data-icon="ion:arrow-forward-circle-outline" data-inline="false" data-width="25" data-height="25"></span></button></td>'+
                           '</tr>').fadeTo(1, function() {
                             $(this).add();
                           })
