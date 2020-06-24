@@ -117,8 +117,11 @@
 
         <!-- imports the community specific alerts -->
         <% include community-alerts %>
-    
-        
+        <div class="col-md-10 col-md-offset-1 text-center">
+        <button type="button" data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
+          <button type="button" data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
+          <button type="button" data-toggle="modal" href="#firearmDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Firearm Database</button>
+        </div>
       </div>
     </div>
     </header>
@@ -135,9 +138,7 @@
       </div>
       <div class="container">
         <div class="col-md-10 col-md-offset-1 text-center">
-          <button type="button" data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
-          <button type="button" data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
-          <button type="button" data-toggle="modal" href="#firearmDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Firearm Database</button>
+          
           <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
           <button type="button" data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
           <% } else {%>
@@ -174,7 +175,7 @@
           </table>
         <% } %>
         </div>
-        <div class="col-lg-10 col-lg-offset-1 margin-top-2">
+        <div class="col-md-12 col-md-offset-0.75 margin-top-2">
           <% if (commUsers == null) {%>
             <h4>Looks like you are not in a community, click here to get started!</h4>
             <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
