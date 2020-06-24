@@ -177,8 +177,10 @@
         </div>
         <div class="col-md-12 col-md-offset-0.75 margin-top-2">
           <% if (commUsers == null) {%>
+            <div class="text-center">
             <h4>Looks like you are not in a community, click here to get started!</h4>
             <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
+          </div>
             <%} else {%>
           <h4 id="officer-list">Officer List:</h4>
           <table id="example" class="table table-hover table-bordered">
