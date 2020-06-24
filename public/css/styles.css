@@ -1035,3 +1035,13 @@ a.link--inherit {
 #firearm-table:hover {
     cursor: pointer;
 }
+
+.facebook-logo {
+    margin-right: 4em;
+}
+
+.patreon-logo {
+    position: absolute;
+    bottom: 10px;
+    right: 6px;
+}
