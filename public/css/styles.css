@@ -370,6 +370,10 @@ textarea {
     margin-top: 1.5rem;
 }
 
+.margin-right-1 {
+    margin-right: 1em;
+}
+
 .feature {
     margin: 50px auto 0;
     max-width: 400px;
@@ -742,6 +746,11 @@ a.link--inherit {
     left: 0;
     background-image: linear-gradient(to bottom, black, black);
     opacity: .6;
+    
+}
+
+#second {
+    min-height: 50%;
 }
 
 #third::before {
@@ -1041,4 +1050,15 @@ a.link--inherit {
 
 .clickable:hover {
     cursor: pointer;
+
+}
+
+.facebook-logo {
+    margin-right: 4em;
+}
+
+.patreon-logo {
+    position: absolute;
+    bottom: 10px;
+    right: 6px;
 }

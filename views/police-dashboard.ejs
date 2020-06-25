@@ -73,7 +73,7 @@
             <div id="panic-placeholder-socket"></div>
           <%}%>
         <%}%>
-        <h4>San Andreas - Police Operations</h4>
+        <h1 class="cursive"><a href="/police-dashboard">San Andreas - Police Operations</a></h1>
 
         <% if (context == "createTicketSuccess") {%>
           <div class="alert alert-success alert-dismissible show" role="alert">
@@ -115,69 +115,85 @@
         <!-- imports the community specific alerts -->
         <% include community-alerts %>
 
-        <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-          <% if (!user.user.dispatchOnDuty) {%>
-            <h4><span id="<%=user._id%>-duty" class="red-dot"></span> <span id="<%=user._id%>-duty-text"> Off Duty</span></h4>
-          <%} else if (user.user.dispatchOnDuty) {%>
-            <h4><span id="<%=user._id%>-duty" class="green-dot"></span> <span id="<%=user._id%>-duty-text"> On Duty</span></h4>
-          <%}%>
-        <h4 id="currentStatus" class="text-align-center">Your Current Status: <%=user.user.dispatchStatus%></h4>
-        <h5 id="statusSetBy" class="text-align-center">Set By: <%=user.user.dispatchStatusSetBy%></h5>
         <div class="col-lg-10 col-lg-offset-1 text-center">
-          <button class="btn btn-primary btn-lg margin-top-2" title="In Service" onclick="updateStatus('10-8')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-8</a></button>
-          <button class="btn btn-primary btn-lg margin-top-2" title="Busy" onclick="updateStatus('10-6')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-6</a></button>
-          <button class="btn btn-primary btn-lg margin-top-2" title="Out of Service" onclick="updateStatus('10-7')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-7</a></button>
-          <button class="btn btn-primary btn-lg margin-top-2" title="Traffic Stop" onclick="updateStatus('10-11')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-11</a></button>
-          <button class="btn btn-primary btn-lg margin-top-2" title="Arrive on Scene" onclick="updateStatus('10-23')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-23</a></button>
-          <button class="btn btn-primary btn-lg margin-top-2" title="In Route" onclick="updateStatus('10-97')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-97</a></button>
-          <button class="btn btn-primary btn-lg margin-top-2" title="Subject in Custody" onclick="updateStatus('10-15')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-15</a></button>
-        </div>
-        <% } %>
-        <div class="col-lg-10 col-lg-offset-1 text-center">
-          <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
-          <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
-          <button data-toggle="modal" href="#firearmDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Firearm Database</button>
-          <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-          <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
-          <% } else {%>
-            <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
-            <% } %>
-          <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
-          <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
-        </div>
-        <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-        <div class="col-lg-10 col-lg-offset-1 text-center">
-          <button class="btn btn-warning btn-lg margin-top-2" title="Log out of CAD" onclick="updateStatus('10-42')"><a id="scrollToTop" class="page-scroll color-white" href="#second">10-42</a></button>
-          <button class="btn btn-success btn-lg margin-top-2" title="Log in to CAD" onclick="updateStatus('10-41')"><a id="scrollToTop" class="page-scroll color-white" href="#second">10-41</a></button>
-        </div>
-        <div class="col-lg-10 col-lg-offset-1 text-center">
-          <button id="panicButton" class="btn btn-danger btn-lg margin-top-2 page-scroll" title="Panic" onclick="updateStatus('Panic');panicButtonPressed()"><a id="scrollToTop" class="page-scroll color-white" href="#second">Panic</a></button>
-        </div>
-        
-        <div id="active-bolo-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
-            <h4>Active BOLOs: </h4>
-            <h5>Click for details</h5>
-          <% if (bolos != null && bolos.length > 0) {%>
-            <% for(var i=0; i<bolos.length; i++) {%>
-              <% if (bolos[i].bolo.status == true) {%>
-                  <a id="<%=bolos[i]._id%>-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=bolos[i]._id%>')">
-          <div class="alert alert-warning alert-dismissible show" role="alert">
-            <strong>BOLO! </strong> <span id="<%=bolos[i]._id%>-type" style="text-transform:capitalize"><%=bolos[i].bolo.boloType%></span>  Last Seen: <span id="<%=bolos[i]._id%>-location"><%=bolos[i].bolo.location%></span> | Description: <span id="<%=bolos[i]._id%>-description"><%=bolos[i].bolo.description%></span>
-          </div>
-        </a>
-            <%}%>
-          <%}%>
-          <%}%>
-        </div>
-        <% } else {%>
-          <div class="col-lg-10 col-lg-offset-1 margin-top-2">
-          <h4>Looks like you are not in a community, click here to get started!</h4>
-            <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
-          </div>
-        <% } %>
+        <button data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
+        <button data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
+        <button data-toggle="modal" href="#firearmDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Firearm Database</button>
+      </div>
       </div>
     </div>
   </header>
+  <section style='background-image: url("/static/images/hi-rise.jpg");'>
+    <div class="container text-center">
+      <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+        <% if (!user.user.dispatchOnDuty) {%>
+          <h4><span id="<%=user._id%>-duty" class="red-dot"></span> <span id="<%=user._id%>-duty-text"> Off Duty</span></h4>
+        <%} else if (user.user.dispatchOnDuty) {%>
+          <h4><span id="<%=user._id%>-duty" class="green-dot"></span> <span id="<%=user._id%>-duty-text"> On Duty</span></h4>
+        <%}%>
+      <h4 id="currentStatus" class="text-align-center">Your Current Status: <%=user.user.dispatchStatus%></h4>
+      <h5 id="statusSetBy" class="text-align-center">Set By: <%=user.user.dispatchStatusSetBy%></h5>
+      <div class="col-lg-10 col-lg-offset-1 text-center">
+        <button class="btn btn-primary btn-lg margin-top-2" title="In Service" onclick="updateStatus('10-8')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-8</a></button>
+        <button class="btn btn-primary btn-lg margin-top-2" title="Busy" onclick="updateStatus('10-6')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-6</a></button>
+        <button class="btn btn-primary btn-lg margin-top-2" title="Out of Service" onclick="updateStatus('10-7')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-7</a></button>
+        <button class="btn btn-primary btn-lg margin-top-2" title="Traffic Stop" onclick="updateStatus('10-11')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-11</a></button>
+        <button class="btn btn-primary btn-lg margin-top-2" title="Arrive on Scene" onclick="updateStatus('10-23')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-23</a></button>
+        <button class="btn btn-primary btn-lg margin-top-2" title="In Route" onclick="updateStatus('10-97')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-97</a></button>
+        <button class="btn btn-primary btn-lg margin-top-2" title="Subject in Custody" onclick="updateStatus('10-15')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-15</a></button>
+      </div>
+      <% } %>
+      
+      <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+      <div class="col-lg-10 col-lg-offset-1 text-center">
+        <button class="btn btn-warning btn-lg margin-top-2" title="Log out of CAD" onclick="updateStatus('10-42')"><a id="scrollToTop" class="page-scroll color-white" href="#second">10-42</a></button>
+        <button class="btn btn-success btn-lg margin-top-2" title="Log in to CAD" onclick="updateStatus('10-41')"><a id="scrollToTop" class="page-scroll color-white" href="#second">10-41</a></button>
+      </div>
+      <div class="col-lg-10 col-lg-offset-1 text-center">
+        <button id="panicButton" class="btn btn-danger btn-lg margin-top-2 page-scroll" title="Panic" onclick="updateStatus('Panic');panicButtonPressed()"><a id="scrollToTop" class="page-scroll color-white" href="#second">Panic</a></button>
+      </div>
+      <% } %>
+    </div>
+    <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
+    <div class="container">
+      <div class="col-lg-10 col-lg-offset-1 text-center">
+        
+        <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+        <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
+        <% } else {%>
+          <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
+          <% } %>
+        <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
+        <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
+      </div>
+    </div>
+    <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
+    <div class="container">
+    <div id="active-bolo-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
+      <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+        <h4>Active BOLOs: </h4>
+        <h5>Click for details</h5>
+      <% if (bolos != null && bolos.length > 0) {%>
+        <% for(var i=0; i<bolos.length; i++) {%>
+          <% if (bolos[i].bolo.status == true) {%>
+              <a id="<%=bolos[i]._id%>-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=bolos[i]._id%>')">
+      <div class="alert alert-warning alert-dismissible show" role="alert">
+        <strong>BOLO! </strong> <span id="<%=bolos[i]._id%>-type" style="text-transform:capitalize"><%=bolos[i].bolo.boloType%></span>  Last Seen: <span id="<%=bolos[i]._id%>-location"><%=bolos[i].bolo.location%></span> | Description: <span id="<%=bolos[i]._id%>-description"><%=bolos[i].bolo.description%></span>
+      </div>
+    </a>
+        <%}%>
+      <%}%>
+      <%}%>
+      <%}%>
+      <% if (user.user.activeCommunity == '' || user.user.activeCommunity == null) {%>
+      <div class="col-lg-10 col-lg-offset-1 margin-top-2 text-center">
+      <h4>Looks like you are not in a community, click here to get started!</h4>
+        <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
+      </div>
+    <% } %>
+  </div>
+  </div>
+</section>
   
   <div id="google-ads-1">
     <p class="text-align-center color-gray font-size-1">Advertisement</p>

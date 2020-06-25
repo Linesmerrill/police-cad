@@ -69,7 +69,7 @@
     <div class="header-content">
 
       <div class="inner">
-        <h4>San Andreas - Civilian Operations</h4>
+        <h1 class="cursive"><a href="/civ-dashboard">San Andreas - Civilian Operations</a></h1>
         
         <!-- imports the community specific alerts -->
         <% include community-alerts %>
@@ -80,36 +80,42 @@
           <button data-toggle="modal" href="#newFirearmModal"  class="btn btn-primary btn-lg margin-top-2" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button>
         </div>
       </div>
-      <hr style="width: 88%;max-width: 100rem;">
-      <br/>
+    </div>
+  </header>
+  <section style='background-image: url("/static/images/hi-rise.jpg");'>
+    <div class="container">
+
+  
       <!--Table for Personas  -->
-      <div class="col-md-5 col-md-offset-0.75">
+      <div class="col-md-12 col-md-offset-0.75">
+        <div class="margin-bottom-1">
+          <span id="active-bolos margin-right-1" style="font-size: 18px;">Civilians:</span> <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Civilian</button>
+        </div>
       <table id="personas-table" class="table table-hover table-bordered">
         <thead>
           <tr>
-            Personas: (Click for Details)
-          </tr>
-          <tr>
             <th>Civilian Name</th>
+            <th>Date of Birth</th>
           </tr>
         </thead>
         <tbody>
           <% for(var i=0; i<personas.length; i++) {%>
             <tr data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
               <td><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td>
+              <td><%= personas[i].civilian.birthday%></td>
             </tr>
             <% } %>
         </tbody>
     </table>
     </div>
-
+    <hr class="margin-top-1" style="width: 88%;max-width: 100rem;">
 <!--Table for Vehicles  -->
-<div class="col-md-5 col-md-offset-1">
+<div class="col-md-12 col-md-offset-0.75 margin-top-2">
+  <div class="margin-bottom-1">
+    <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Vehicle</button>
+  </div>
   <table id="vehicle-table" class="table table-hover table-bordered">
     <thead>
-      <tr>
-        Vehicles: (Click for Details)
-      </tr>
       <tr><th>Plate</th><th>Model</th><th>Color</th></tr>
     </thead>
       <tbody>
@@ -123,14 +129,14 @@
       </tbody>
   </table>
 </div>
-<br/>
+<hr class="margin-top-1" style="width: 88%;max-width: 100rem;">
 <!--Table for Firearms  -->
-<div class="col-md-5 col-md-offset-1">
+<div class="col-md-12 col-md-offset-0.75 margin-top-2">
+  <div class="margin-bottom-1">
+    <span id="active-bolos margin-right-1" style="font-size: 18px;">Firearms:</span> <button data-toggle="modal" href="#newFirearmModal"  class="btn btn-primary btn-md pull-right margin-bottom-1" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button>
+  </div>
   <table id="firearm-table" class="table table-hover table-bordered">
     <thead>
-      <tr>
-        Firearms: (Click for Details)
-      </tr>
       <tr><th>Serial #</th><th>Type</th><th>Registered to</th></tr>
     </thead>
       <tbody>
@@ -146,7 +152,7 @@
 </div>
 
     </div>
-  </header>
+  </section>
   <div id="google-ads-1">
     <p class="text-align-center color-gray font-size-1">Advertisement</p>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>

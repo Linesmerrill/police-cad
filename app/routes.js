@@ -928,6 +928,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/firearm-search', auth, function (req, res) {
+    // console.debug(req.query)
     if (req.query.route == 'dispatch-dashboard') {
       if (req.query.serialNumber == undefined) {
         res.status(400)
@@ -1063,11 +1064,6 @@ module.exports = function (app, passport, server) {
           }]
         }, function (err, dbFirearms) {
           if (err) return console.error(err);
-          var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
-          if (!isValid) {
-            req.app.locals.specialContext = "invalidRequest";
-            return res.redirect('/police-dashboard')
-          }
           Community.find({
             '$or': [{
               'community.ownerID': req.user._id
@@ -1137,9 +1133,7 @@ module.exports = function (app, passport, server) {
     }
   });
 
-  
-
-  app.get('/tickets', function (req, res) {
+  app.get('/tickets', auth, function (req, res) {
     Ticket.find({
         'ticket.civID': req.query.civID
       },
@@ -1149,7 +1143,7 @@ module.exports = function (app, passport, server) {
       });
   })
 
-  app.get('/arrests', function (req, res) {
+  app.get('/arrests', auth, function (req, res) {
     ArrestReport.find({
         'arrestReport.accusedID': req.query.civID
       },
@@ -1540,7 +1534,7 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.post('/create-civ', function (req, res) {
+  app.post('/create-civ', auth, function (req, res) {
     User.findOne({
       'user.email': req.body.submitNewCiv.toLowerCase()
     }, function (err, user) {
@@ -1554,7 +1548,7 @@ module.exports = function (app, passport, server) {
     })
   });
 
-  app.post('/create-ems', function (req, res) {
+  app.post('/create-ems', auth, function (req, res) {
     var myEms = new Ems()
     myEms.create(req, res)
     myEms.save(function (err) {
@@ -1562,7 +1556,7 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.post('/create-vehicle', function (req, res) {
+  app.post('/create-vehicle', auth, function (req, res) {
     var myVeh = new Vehicle()
     myVeh.createVeh(req, res)
     myVeh.save(function (err) {
@@ -1570,7 +1564,7 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.post('/create-firearm', function (req, res) {
+  app.post('/create-firearm', auth, function (req, res) {
     var myFirearm = new Firearm()
     myFirearm.createFirearm(req, res)
     myFirearm.save(function (err) {
@@ -1578,7 +1572,7 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.post('/create-ems-vehicle', function (req, res) {
+  app.post('/create-ems-vehicle', auth, function (req, res) {
     var myVeh = new EmsVehicle()
     myVeh.createVeh(req, res)
     myVeh.save(function (err) {
@@ -1586,7 +1580,7 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.post('/create-ticket', function (req, res) {
+  app.post('/create-ticket', auth, function (req, res) {
     var myTicket = new Ticket()
     myTicket.updateTicket(req, res)
     myTicket.save(function (err) {
@@ -1594,7 +1588,7 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.post('/create-medication', function (req, res) {
+  app.post('/create-medication', auth, function (req, res) {
     var myMedication = new Medication()
     myMedication.createMedication(req, res)
     myMedication.save(function (err) {
@@ -1602,7 +1596,7 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.post('/create-condition', function (req, res) {
+  app.post('/create-condition', auth, function (req, res) {
     var myCondition = new Condition()
     myCondition.createCondition(req, res)
     myCondition.save(function (err) {
@@ -1610,7 +1604,7 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.post('/create-arrest-report', function (req, res) {
+  app.post('/create-arrest-report', auth, function (req, res) {
     var myArrestReport = new ArrestReport()
     myArrestReport.updateArrestReport(req, res)
     myArrestReport.save(function (err) {
@@ -1618,7 +1612,7 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.post('/create-warrant', function (req, res) {
+  app.post('/create-warrant', auth, function (req, res) {
     var myWarrant = new Warrant()
     myWarrant.createWarrant(req, res)
     myWarrant.save(function (err) {
@@ -1626,7 +1620,7 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.post('/clear-warrant', function (req, res) {
+  app.post('/clear-warrant', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(req.body.warrantID, "cannot lookup invalid length warrantID, route: /clear-warrant")
     if (!isValid) {
@@ -1649,7 +1643,7 @@ module.exports = function (app, passport, server) {
     })
   });
 
-  app.post('/create-bolo', function (req, res) {
+  app.post('/create-bolo', auth, function (req, res) {
     // console.debug('create bolo req: ', req.body)
     var myBolo = new Bolo()
     myBolo.createBolo(req, res)
@@ -1658,7 +1652,7 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.post('/clear-bolo', function (req, res) {
+  app.post('/clear-bolo', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(req.body.boloID, "cannot lookup invalid length boloID, route: /clear-bolo")
     if (!isValid) {
@@ -1674,7 +1668,7 @@ module.exports = function (app, passport, server) {
     })
   });
 
-  app.post('/joinCommunity', function (req, res) {
+  app.post('/joinCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
@@ -1708,7 +1702,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/leaveActiveCommunity', function (req, res) {
+  app.post('/leaveActiveCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /leaveActiveCommunity")
     if (!isValid) {
@@ -1728,7 +1722,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/joinPoliceCommunity', function (req, res) {
+  app.post('/joinPoliceCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
@@ -1762,7 +1756,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/leavePoliceActiveCommunity', function (req, res) {
+  app.post('/leavePoliceActiveCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /leavePoliceActiveCommunity")
     if (!isValid) {
@@ -1782,7 +1776,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/joinEmsCommunity', function (req, res) {
+  app.post('/joinEmsCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
@@ -1816,7 +1810,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/leaveEmsActiveCommunity', function (req, res) {
+  app.post('/leaveEmsActiveCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /leaveEmsActiveCommunity")
     if (!isValid) {
@@ -1836,7 +1830,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/createCommunity', function (req, res) {
+  app.post('/createCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var myCommunity = new Community()
     myCommunity.createCommunity(req, res)
@@ -1859,7 +1853,7 @@ module.exports = function (app, passport, server) {
     });
   })
 
-  app.post('/createPoliceCommunity', function (req, res) {
+  app.post('/createPoliceCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var myCommunity = new Community()
     myCommunity.createPoliceCommunity(req, res)
@@ -1882,7 +1876,7 @@ module.exports = function (app, passport, server) {
     });
   })
 
-  app.post('/createEmsCommunity', function (req, res) {
+  app.post('/createEmsCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var myCommunity = new Community()
     myCommunity.createEmsCommunity(req, res)
@@ -1905,7 +1899,7 @@ module.exports = function (app, passport, server) {
     });
   })
 
-  app.post('/manageAccount', function (req, res) {
+  app.post('/manageAccount', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var page = req.body.page;
     if (req.body.action === 'updateUsername') {
@@ -1936,7 +1930,7 @@ module.exports = function (app, passport, server) {
     }
   })
 
-  app.post('/deleteAccount', function (req, res) {
+  app.post('/deleteAccount', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var page = req.body.page;
     // grab all civilians and delete arrest, tickets and warrants for each
@@ -2007,7 +2001,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/updateOrDeleteBolo', function (req, res) {
+  app.post('/updateOrDeleteBolo', auth, function (req, res) {
     req.app.locals.specialContext = null;
     if (req.body.action === "delete") {
       var boloID
@@ -2067,7 +2061,7 @@ module.exports = function (app, passport, server) {
     }
   })
 
-  app.post('/updateOrDeleteCiv', function (req, res) {
+  app.post('/updateOrDeleteCiv', auth, function (req, res) {
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
       var address
@@ -2133,7 +2127,7 @@ module.exports = function (app, passport, server) {
     }
   })
 
-  app.post('/deleteEms', function (req, res) {
+  app.post('/deleteEms', auth, function (req, res) {
     var nameArray = req.body.removeEms.split(' ')
     var firstName = nameArray[0]
     var lastName = nameArray[1]
@@ -2146,7 +2140,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/updateOrDeleteVeh', function (req, res) {
+  app.post('/updateOrDeleteVeh', auth, function (req, res) {
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
       if (!exists(req.body.vehicleID) || !exists(req.body.emailVeh)) {
@@ -2207,7 +2201,7 @@ module.exports = function (app, passport, server) {
     }
   })
 
-  app.post('/updateOrDeleteFirearm', function (req, res) {
+  app.post('/updateOrDeleteFirearm', auth, function (req, res) {
     // console.debug('update or delete firearm body: ', req.body)
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
@@ -2256,7 +2250,7 @@ module.exports = function (app, passport, server) {
     }
   })
 
-  app.post('/updateUserDispatchStatus', function (req, res) {
+  app.post('/updateUserDispatchStatus', auth, function (req, res) {
     // console.debug(req.body)
     req.app.locals.specialContext = null;
     if (!exists(req.body.userID) || req.body.userID == '') {
@@ -2286,7 +2280,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/deleteEmsVeh', function (req, res) {
+  app.post('/deleteEmsVeh', auth, function (req, res) {
     var roName = req.body.roVeh
     var modelName = req.body.modelVeh
     var emailName = req.body.emailVeh.toLowerCase()
@@ -2302,7 +2296,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/community', function (req, res) {
+  app.post('/community', auth, function (req, res) {
     // console.debug("community req: ", req.body)
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(req.body.memberID, "cannot lookup invalid length memberID, route: /community")
@@ -2322,7 +2316,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/delete-community', function (req, res) {
+  app.post('/delete-community', auth, function (req, res) {
     req.app.locals.specialContext = null;
     User.updateMany({
       'user.activeCommunity': req.body.communityID
@@ -2346,7 +2340,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/updateCommunityName', function (req, res) {
+  app.post('/updateCommunityName', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(req.body.communityID, "cannot lookup invalid length communityID, route: /updateCommunityName")
     if (!isValid) {
@@ -2365,7 +2359,7 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/communities', function (req, res) {
+  app.post('/communities', auth, function (req, res) {
     req.session.communityID = req.body.communityID
     return res.redirect('communities')
   })
