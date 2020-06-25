@@ -8,6 +8,9 @@ var conditionSchema = mongoose.Schema({
         civilianID: String,
         activeCommunityID: String,
         userID: String,
+        firstName: String,
+        lastName: String,
+        dateOfBirth: String,
         createdAt: Date,
         updatedAt: Date
     }
@@ -21,6 +24,9 @@ conditionSchema.methods.createCondition = function (request, response) {
     this.condition.civilianID = request.body.civilianID;
     this.condition.activeCommunityID = request.body.activeCommunityID; // we set this when submitting the from so it should not be null
     this.condition.userID = request.body.userID; // we set this when submitting the from so it should not be null
+    this.condition.firstName = request.body.firstName.trim().toLowerCase()
+    this.condition.lastName = request.body.lastName.trim().toLowerCase()
+    this.condition.dateOfBirth = request.body.dateOfBirth.trim()
     this.condition.createdAt = new Date();
     response.redirect('/civ-dashboard');
 };

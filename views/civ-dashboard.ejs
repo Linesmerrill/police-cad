@@ -497,6 +497,9 @@
               <label class="col-md-4 control-label" for="submit-new-civ"></label>
               <div class="col-md-4">
                 <input type="hidden" id="medication-civilian-id" name="civilianID" value="">
+                <input type="hidden" id="medication-civ-first-name" name="firstName" value="">
+                <input type="hidden" id="medication-civ-last-name" name="lastName" value="">
+                <input type="hidden" id="medication-civ-date-of-birth" name="dateOfBirth" value="">
                 <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                 <button id="submit-new-civ" class="btn btn-primary" onclick="createNewCiv()">Create</button>
@@ -550,6 +553,9 @@
               <label class="col-md-4 control-label" for="submit-new-civ"></label>
               <div class="col-md-4">
                 <input type="hidden" id="condition-civilian-id" name="civilianID" value="">
+                <input type="hidden" id="condition-civ-first-name" name="firstName" value="">
+                <input type="hidden" id="condition-civ-last-name" name="lastName" value="">
+                <input type="hidden" id="condition-civ-date-of-birth" name="dateOfBirth" value="">
                 <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                 <button id="submit-new-civ" class="btn btn-primary">Create</button>
@@ -1231,6 +1237,16 @@ $.delete = function(url, data, callback, type){
     $('#firearmLicenseView').val(myVar[index].civilian.firearmLicense)
     $('#addressView').val(myVar[index].civilian.address)
     $('#occupationView').val(myVar[index].civilian.occupation)
+
+    // data to be set for condition form
+    $('#condition-civ-first-name').val(firstName)
+    $('#condition-civ-last-name').val(lastName)
+    $('#condition-civ-date-of-birth').val(birthday)
+
+    // data to be set for medication form
+    $('#medication-civ-first-name').val(firstName)
+    $('#medication-civ-last-name').val(lastName)
+    $('#medication-civ-date-of-birth').val(birthday)
 
     // data to be sent to db for civ deletion
     $('#firstName').val(firstName)

@@ -1174,120 +1174,110 @@ module.exports = function (app, passport, server) {
   })
 
   app.get('/medical-database', function (req, res) {
-    console.debug("medical database server: ", req.query)
+    // console.debug("medical database server: ", req.query)
     if (req.query.activeCommunityID == "" || req.query.activeCommunityID == null) {
       Civilian.find({
-        'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-        'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
-        'civilian.birthday': req.query.dateOfBirth,
-        '$or': [{ // some are stored as empty strings and others as null so we need to check for both
-          'civilian.activeCommunityID': ''
-        }, {
-          'civilian.activeCommunityID': null
-        }]
-      },
-      function (err, dbCivilians) {
-        if (err) return console.error(err);
-        
-        
-        let dbPromise = new Promise((resolve, reject) => {
-          var data = []
-        dbCivilians.forEach(function(r){
-          var medicalInfo = {
-            civilian: null,
-            reports: null,
-            medications: null,
-            conditions: null
-          }
-          //TODO for each civilian we find, we need to compile all the Reports, Medications and Conditions
-          console.log("one civilian: ", r)
-          medicalInfo.civilian = r
+          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          'civilian.birthday': req.query.dateOfBirth,
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'civilian.activeCommunityID': ''
+          }, {
+            'civilian.activeCommunityID': null
+          }]
+        },
+        function (err, dbCivilians) {
+          if (err) return console.error(err);
+
           Medication.find({
-            'medication.civilianID': r._id,
-          },
-          function (err, dbMedications) {
-            if (err) return console.error(err);
-            console.debug('all medications', dbMedications)
-            // res.send(dbMedications)
-            medicalInfo.medications = dbMedications
-          });
+              'medication.firstName': req.query.firstName.trim().toLowerCase(),
+              'medication.lastName': req.query.lastName.trim().toLowerCase(),
+              'medication.dateOfBirth': req.query.dateOfBirth.trim(),
+              '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+                'civilian.activeCommunityID': ''
+              }, {
+                'civilian.activeCommunityID': null
+              }]
+            },
+            function (err, dbMedications) {
+              if (err) return console.error(err);
 
-          Condition.find({
-            'condition.civilianID': r._id,
-          },
-          function (err, dbConditions) {
-            if (err) return console.error(err);
-            medicalInfo.conditions = dbConditions
-          });
+              Condition.find({
+                  'condition.firstName': req.query.firstName.trim().toLowerCase(),
+                  'condition.lastName': req.query.lastName.trim().toLowerCase(),
+                  'condition.dateOfBirth': req.query.dateOfBirth.trim(),
+                  '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+                    'civilian.activeCommunityID': ''
+                  }, {
+                    'civilian.activeCommunityID': null
+                  }]
+                },
+                function (err, dbConditions) {
+                  if (err) return console.error(err);
 
-          MedicalReport.find({
-            'report.civilianID': r._id,
-          },
-          function (err, dbReport) {
-            if (err) return console.error(err);
-            medicalInfo.reports = dbReport
-          });
-          console.debug("all medical info: ", medicalInfo)
-          data.push(medicalInfo)
-          
+                  MedicalReport.find({
+                      'report.firstName': req.query.firstName.trim().toLowerCase(),
+                      'report.lastName': req.query.lastName.trim().toLowerCase(),
+                      'report.dateOfBirth': req.query.dateOfBirth.trim(),
+                      '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+                        'civilian.activeCommunityID': ''
+                      }, {
+                        'civilian.activeCommunityID': null
+                      }]
+                    },
+                    function (err, dbReports) {
+                      if (err) return console.error(err);
+                      data = {
+                        civilians: dbCivilians,
+                        medications: dbMedications,
+                        conditions: dbConditions,
+                        reports: dbReports
+                      }
+                      res.send(data)
+                    });
+                });
+            });
         })
-        resolve(data)
-      });
-      dbPromise.then((myData) => {
-        console.log("new data", myData)
-        res.send(myData)
-      })
-      });
     } else {
-    Civilian.find({
-        'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-        'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
-        'civilian.activeCommunityID': req.query.activeCommunityID
-      },
-      function (err, dbCivilians) {
-        if (err) return console.error(err);
-        var data = []
-        
-        dbCivilians.forEach(function(r){
-          var medicalInfo = {
-            civilian: null,
-            reports: null,
-            medications: null,
-            conditions: null
-          }
-          //TODO for each civilian we find, we need to compile all the Reports, Medications and Conditions
-          console.log("one civilian: ", r)
-          medicalInfo.civilian = r
+      Civilian.find({
+          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          'civilian.activeCommunityID': req.query.activeCommunityID,
+        },
+        function (err, dbCivilians) {
+          if (err) return console.error(err);
           Medication.find({
-            'medication.civilianID': r._id,
-          },
-          function (err, dbMedications) {
-            if (err) return console.error(err);
-            // res.send(dbMedications)
-            medicalInfo.medications = dbMedications
-          });
-
-          Condition.find({
-            'condition.civilianID': r._id,
-          },
-          function (err, dbConditions) {
-            if (err) return console.error(err);
-            medicalInfo.conditions = dbConditions
-          });
-
-          MedicalReport.find({
-            'report.civilianID': r._id,
-          },
-          function (err, dbReport) {
-            if (err) return console.error(err);
-            medicalInfo.reports = dbReport
-          });
-          data.push(medicalInfo)
-          
+              'medication.firstName': req.query.firstName.trim().toLowerCase(),
+              'medication.lastName': req.query.lastName.trim().toLowerCase(),
+              'medication.activeCommunityID': req.query.activeCommunityID,
+            },
+            function (err, dbMedications) {
+              if (err) return console.error(err);
+              Condition.find({
+                  'condition.firstName': req.query.firstName.trim().toLowerCase(),
+                  'condition.lastName': req.query.lastName.trim().toLowerCase(),
+                  'condition.activeCommunityID': req.query.activeCommunityID,
+                },
+                function (err, dbConditions) {
+                  if (err) return console.error(err);
+                  MedicalReport.find({
+                      'report.firstName': req.query.firstName.trim().toLowerCase(),
+                      'report.lastName': req.query.lastName.trim().toLowerCase(),
+                      'report.activeCommunityID': req.query.activeCommunityID,
+                    },
+                    function (err, dbReports) {
+                      if (err) return console.error(err);
+                      data = {
+                        civilians: dbCivilians,
+                        medications: dbMedications,
+                        conditions: dbConditions,
+                        reports: dbReports
+                      }
+                      res.send(data)
+                    });
+                });
+            });
         })
-        console.log("new data", data)
-        res.send(data)
-      });
     }
   })
 

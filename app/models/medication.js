@@ -9,6 +9,9 @@ var medicationSchema = mongoose.Schema({
         civilianID: String,
         activeCommunityID: String,
         userID: String,
+        firstName: String,
+        lastName: String,
+        dateOfBirth: String,
         createdAt: Date,
         updatedAt: Date
     }
@@ -23,6 +26,9 @@ medicationSchema.methods.createMedication = function (request, response) {
     this.medication.civilianID = request.body.civilianID;
     this.medication.activeCommunityID = request.body.activeCommunityID; // we set this when submitting the from so it should not be null
     this.medication.userID = request.body.userID; // we set this when submitting the from so it should not be null
+    this.medication.firstName = request.body.firstName.trim().toLowerCase()
+    this.medication.lastName = request.body.lastName.trim().toLowerCase()
+    this.medication.dateOfBirth = request.body.dateOfBirth.trim()
     this.medication.createdAt = new Date();
     response.redirect('/civ-dashboard');
 };

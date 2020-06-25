@@ -758,7 +758,7 @@
        $.get('/medical-database',parameters, function(data) {
          console.log("data: ", data)
          var i = 0
-         data.forEach(function(e){
+         data.civilians.forEach(function(e){
            console.log("resp for medical database: ", e)
           var newRowContent = `
           <!-- List of Civilians -->
@@ -767,7 +767,7 @@
                           <div class="panel-heading" data-toggle="collapse" data-id="`+i+`" data-parent="#accordion" href="#collapse`+i+`"
                             <h4 class="panel-title">
                               <a class="blue-hover">
-                                  `+e.civilian.civilian.firstName+` `+ e.civilian.civilian.lastName+ ` | `+e.civilian._id+`</a>
+                                  `+e.civilian.firstName+` `+ e.civilian.lastName+ ` | `+e._id+`</a>
                             </h4>
                           </div>
                           
@@ -778,10 +778,10 @@
                                   <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenCitation('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`');setDateAndTime('#date', '#time');">Create Report</button>
                                 </div>
                                 <hr/>
-                                Driver's ID #: `+e.civilian._id+`<br/>
-                                Date of Birth: `+e.civilian.civilian.birthday+`<br/>
-                                Address: `+e.civilian.civilian.address+`<br/>
-                                Occupation: `+e.civilian.civilian.occupation+`<br/>
+                                Driver's ID #: `+e._id+`<br/>
+                                Date of Birth: `+e.civilian.birthday+`<br/>
+                                Address: `+e.civilian.address+`<br/>
+                                Occupation: `+e.civilian.occupation+`<br/>
                                 <hr style="width: 88%;max-width: 100rem;">
                                 <h4>Medical History</h4>
                                 <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
@@ -799,7 +799,7 @@
                                   <div class="tab-pane fade active in" id="pills-citations" role="tabpanel" aria-labelledby="pills-citations-tab">
                                     <table id="reports-table" class="table table-hover" border="1" frame="box">
                                       <thead>
-                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Violation</td><td>Amount</td></tr>
+                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td></tr>
                                         </thead>
                                         <tbody>
                                           <!-- List of Reports -->
@@ -807,11 +807,11 @@
                                       </table>
                                   </div>
                                   <div class="tab-pane fade" id="pills-warnings" role="tabpanel" aria-labelledby="pills-warnings-tab">
-                                    <table id="medications-table" class="table table-hover" border="1" frame="box">
+                                    <table id="medications-table" class="table" border="1" frame="box">
                                       <thead>
-                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Warning</td></tr>
+                                        <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Dosage</td><td>Frequency</td><td>Delete</td></tr>
                                       </thead>
-                                      <tbody id="warning-body">
+                                      <tbody>
                                         <!-- List of Medications -->
                                         </tbody>
                                     </table>
@@ -819,7 +819,7 @@
                                   <div class="tab-pane fade" id="pills-arrests" role="tabpanel" aria-labelledby="pills-arrests-tab">
                                     <table id="conditions-table" class="table table-hover" border="1" frame="box">
                                       <thead>
-                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Charges</td><td>Summary</td></tr>
+                                        <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td><td>Delete</td></tr>
                                       </thead>
                                       <tbody>
                                         <!-- List of Pre-Existing Conditions -->
@@ -833,15 +833,35 @@
           `
           $("#accordion div").append(newRowContent)
           //loop through all reports, medications and conditions for this civ
-          if (e.conditions != null) {
-          e.conditions.forEach(function(c){
-            console.log("resp for conditions: ", c)
+          
+          data.reports.forEach(function(r){
+            if (e._id == r.report.civilianID) {
+            var newReportContent = `
+            <tr id="`+r._id+`"><td>"`+r.report.date+`"</td><td style='text-transform: capitalize;'>"`+r.report.hospitalized+`"</td><td>"`+r.report.details+`"</td><td class="text-align-center"><a class='clickable' onclick="deleteReport('`+r._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+            `
+            $("#reports-table tbody").append(newReportContent)
+            }
+          });
+
+          data.medications.forEach(function(m){
+            if (e._id == m.medication.civilianID) {
+            var newReportContent = `
+            <tr id="`+m._id+`"><td>"`+m.medication.startDate+`"</td><td style='text-transform: capitalize;'>"`+m.medication.name+`"</td><td>"`+m.medication.dosage+`"</td><td>"`+m.medication.frequency+`"</td><td class="text-align-center"><a class='clickable' onclick="deleteMedication('`+m._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+            `
+            $("#medications-table tbody").append(newReportContent)
+            }
+          });
+
+          data.conditions.forEach(function(c){
+            if (e._id == c.condition.civilianID) {
             var newReportContent = `
             <tr id="`+c._id+`"><td>"`+c.condition.dateOccurred+`"</td><td style='text-transform: capitalize;'>"`+c.condition.name+`"</td><td>"`+c.condition.details+`"</td><td class="text-align-center"><a class='clickable' onclick="deleteCondition('`+c._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
             `
-            $("#reports-table tbody").append(newReportContent)
+            $("#conditions-table tbody").append(newReportContent)
+            }
           });
-        }
+        
+        
          });
 
      });
