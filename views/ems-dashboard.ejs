@@ -154,23 +154,23 @@
             <hr style="width: 88%;max-width: 100rem;">
 
             <!-- Text input-->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="first-name">First Name</label>
               <div class="col-md-4">
-                <input id="first-name" name="emsFirstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
+                <input id="first-name" name="emsFirstName" type="text" placeholder="first name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
               </div>
             </div>
 
             <!-- Text input-->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="last-name">Last Name</label>
               <div class="col-md-4">
-                <input id="last-name" name="emsLastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
+                <input id="last-name" name="emsLastName" type="text" placeholder="last name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
               </div>
             </div>
 
             <!-- Select Basic -->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="department">Department</label>
               <div class="col-md-4">
                 <select id="department" name="department" class="form-control">
@@ -181,7 +181,7 @@
             </div>
 
             <!-- Text input-->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="assignment-area">Assignment Area</label>
               <div class="col-md-4">
               <input id="assignment-area" name="assignmentArea" type="text" placeholder="assignment area" maxlength="50" class="form-control input-md" required>
@@ -190,17 +190,17 @@
 
             <!-- Text input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="station">Station (optional)</label>
+              <label class="col-md-4 control-label" for="station">Station</label>
               <div class="col-md-4">
-              <input id="station" name="station" type="number" placeholder="station #" maxlength="5" class="form-control input-md">
+              <input id="station" name="station" type="number" placeholder="station # (optional)" maxlength="5" class="form-control input-md">
               </div>
             </div>
 
             <!-- Text input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="call-sign">Call Sign (optional)</label>
+              <label class="col-md-4 control-label" for="call-sign">Call Sign</label>
               <div class="col-md-4">
-              <input id="call-sign" name="callSign" type="text" placeholder="call sign" maxlength="10" class="form-control input-md">
+              <input id="call-sign" name="callSign" type="text" placeholder="call sign (optional)" maxlength="10" class="form-control input-md">
               </div>
             </div>
 
@@ -233,42 +233,40 @@
             <hr style="width: 88%;max-width: 100rem;">
 
             <!-- Text input-->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="plate">Plate</label>
               <div class="col-md-4">
-              <input id="plate" name="plate" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
+              <input id="plate" name="plate" type="text" maxlength="8" placeholder="plate" class="form-control input-md" required="">
 
               </div>
             </div>
 
             <!-- Search input-->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="model">Model</label>
               <div class="col-md-4">
-                <input id="model" name="model" type="search" placeholder="Model" class="form-control input-md" required="">
+                <input id="model" name="model" type="search" placeholder="model" class="form-control input-md" required="">
               </div>
             </div>
 
             <!-- Text input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="color">Color (optional)</label>
+              <label class="col-md-4 control-label" for="color">Color</label>
               <div class="col-md-4">
-              <input id="color" name="color" type="text" placeholder="Color" class="form-control input-md">
+              <input id="color" name="color" type="text" placeholder="color (optional)" class="form-control input-md">
               </div>
             </div>
 
-            <datalist id="names">
-              <% for(var i=0; i<personas.length; i++) {%>
-           <option value="<%= personas[i].ems.firstName %> <%= personas[i].ems.lastName%>">
-          <% } %>
-            </datalist>
-
             <!-- Search input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="registered-owner">Registered Owner</label>
+              <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
               <div class="col-md-4">
-                <input id="registered-owner" name="registeredOwner" type="search" placeholder="Registered Owner" list="names" class="form-control input-md" required="">
-
+                <select id="registeredOwner" name="registeredOwner" class="form-control">
+                  <option value="N/A">N/A</option>
+                  <% for(var i=0; i<personas.length; i++) {%>
+                    <option value="<%= personas[i].ems.firstName %> <%= personas[i].ems.lastName%>"><%= personas[i].ems.firstName %> <%= personas[i].ems.lastName%></option>
+                   <% } %>
+                </select>
               </div>
             </div>
 
