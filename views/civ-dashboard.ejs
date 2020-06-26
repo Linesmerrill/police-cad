@@ -100,7 +100,7 @@
         </thead>
         <tbody>
           <% for(var i=0; i<personas.length; i++) {%>
-            <tr data-toggle="modal" data-id=<%=i%> data-target="#viewCiv" onclick="loadCivData(<%=i%>);loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>')">
+            <tr data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
               <td><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td>
               <td><%= personas[i].civilian.birthday%></td>
             </tr>
@@ -448,6 +448,126 @@
     </div>
   </div>
 
+  <div id="addMedicationModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-medication" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <h4>Add a New Medication</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="startDate">Start Date</label>
+              <div class="col-md-4">
+              <input id="startDate" name="startDate" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="medicationName">Medication Name</label>
+              <div class="col-md-4">
+                <input id="medicationName" name="name" type="text" placeholder="medication name" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="dosage">Dosage</label>
+              <div class="col-md-4">
+                <input id="dosage" name="dosage" type="text" placeholder="dosage (e.g. 2 pills)" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="frequency">Frequency of Dosage</label>
+              <div class="col-md-4">
+                <input id="frequency" name="frequency" type="text" placeholder="frequency (e.g. twice a day)" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="submit-new-civ"></label>
+              <div class="col-md-4">
+                <input type="hidden" id="medication-civilian-id" name="civilianID" value="">
+                <input type="hidden" id="medication-civ-first-name" name="firstName" value="">
+                <input type="hidden" id="medication-civ-last-name" name="lastName" value="">
+                <input type="hidden" id="medication-civ-date-of-birth" name="dateOfBirth" value="">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submit-new-civ" class="btn btn-primary" onclick="createNewCiv()">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="addConditionModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-condition" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Add a New Medication</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="dateOccurred">Date Occurred</label>
+              <div class="col-md-4">
+              <input id="dateOccurred" name="dateOccurred" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="conditionName">Condition Name</label>
+              <div class="col-md-4">
+                <input id="conditionName" name="name" type="text" placeholder="condition name" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="details">Details</label>
+              <div class="col-md-4">
+                <input id="details" name="details" type="text" placeholder="details" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="submit-new-civ"></label>
+              <div class="col-md-4">
+                <input type="hidden" id="condition-civilian-id" name="civilianID" value="">
+                <input type="hidden" id="condition-civ-first-name" name="firstName" value="">
+                <input type="hidden" id="condition-civ-last-name" name="lastName" value="">
+                <input type="hidden" id="condition-civ-date-of-birth" name="dateOfBirth" value="">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submit-new-civ" class="btn btn-primary">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="viewCiv" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -497,16 +617,6 @@
                 <input id="delBirthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
               </div>
             </div>
-
-            <!-- <div class="form-group">
-                <label class="col-md-4 control-label" for="warrantsView">Warrants?</label>
-                <div class="col-md-4">
-                  <select id="warrantsView" name="warrants" class="form-control" selected="selected">
-                    <option value="2">Yes</option>
-                    <option value="1">No</option>
-                  </select>
-                </div>
-              </div> -->
 
             <div class="form-group">
               <label class="col-md-4 control-label" for="firearmLicenseView">Firearm License:</label>
@@ -582,6 +692,51 @@
                   </tbody>
               </table>
             </div>
+          </div>
+          <hr style="width: 88%;max-width: 100rem;">
+          <h4>Medical History</h4>
+          <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
+            <li class="nav-item active">
+              <a class="nav-link active" id="pills-reports-tab" data-toggle="pill" href="#pills-reports" role="tab" aria-controls="pills-reports" aria-selected="true">Reports</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="pills-medications-tab" data-toggle="pill" href="#pills-medications" role="tab" aria-controls="pills-medications" aria-selected="false">Medications</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" id="pills-pre-existing-conditions-tab" data-toggle="pill" href="#pills-pre-existing-conditions" role="tab" aria-controls="pills-pre-existing-conditions" aria-selected="false">Pre-Existing Conditions</a>
+            </li>
+          </ul>
+          <div class="tab-content" id="pills-tabContent">
+            <div class="tab-pane fade active in" id="pills-reports" role="tabpanel" aria-labelledby="pills-reports-tab">
+              <table id="reportsTable" class="table" border="1" frame="box">
+                <thead>
+                  <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td><td>Delete</td></tr>
+                </thead>
+                  <tbody>
+                  </tbody>
+              </table>
+            </div>
+            <div class="tab-pane fade" id="pills-medications" role="tabpanel" aria-labelledby="pills-medications-tab">
+              <button data-toggle="modal" href="#addMedicationModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Medication</button>
+              <br/><br/>
+              <table id="medicationsTable" class="table" border="1" frame="box">
+                <thead>
+                  <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Dosage</td><td>Frequency</td><td>Delete</td></tr>
+                </thead>
+                  <tbody></tbody>
+              </table>
+            </div>
+            <div class="tab-pane fade" id="pills-pre-existing-conditions" role="tabpanel" aria-labelledby="pills-pre-existing-conditions-tab">
+              <button data-toggle="modal" href="#addConditionModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Condition</button>
+              <br/><br/>
+              <table id="conditionsTable" class="table" border="1" frame="box">
+                <thead>
+                  <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td><td>Delete</td></tr>
+                </thead>
+                  <tbody>
+                  </tbody>
+              </table>
+          </div>
           </div>
         </div>
       </div>
@@ -1038,6 +1193,23 @@ $("#lastName").keydown(function(event) {
 });
 });
 
+// add in a delete function as it is not supported as of jQuery {whatever-version-we-have}
+$.delete = function(url, data, callback, type){
+ if ( $.isFunction(data) ){
+   type = type || callback,
+       callback = data,
+       data = {}
+ }
+
+ return $.ajax({
+   url: url,
+   type: 'DELETE',
+   success: callback,
+   data: data,
+   contentType: type
+ });
+}
+
   function loadCivData(index) {
     var myVar = <%- JSON.stringify(personas) %>;
     
@@ -1055,6 +1227,16 @@ $("#lastName").keydown(function(event) {
     $('#firearmLicenseView').val(myVar[index].civilian.firearmLicense)
     $('#addressView').val(myVar[index].civilian.address)
     $('#occupationView').val(myVar[index].civilian.occupation)
+
+    // data to be set for condition form
+    $('#condition-civ-first-name').val(firstName)
+    $('#condition-civ-last-name').val(lastName)
+    $('#condition-civ-date-of-birth').val(birthday)
+
+    // data to be set for medication form
+    $('#medication-civ-first-name').val(firstName)
+    $('#medication-civ-last-name').val(lastName)
+    $('#medication-civ-date-of-birth').val(birthday)
 
     // data to be sent to db for civ deletion
     $('#firstName').val(firstName)
@@ -1089,6 +1271,62 @@ $("#lastName").keydown(function(event) {
           $("#arrestTable tbody").append(newRowContent)
          });
      });
+  }
+
+  function loadReports(index) {
+    $("#reportsTable tbody").empty()
+    var parameters = { civID: index };
+       $.get('/medical-reports',parameters, function(data) {
+         data.forEach(function(e){
+          var newRowContent = `<tr id="`+e._id+`"><td>`+e.report.date+`</td><td style='text-transform: capitalize;'>`+e.report.hospitalized+`</td><td style='text-transform: capitalize;'>`+e.report.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteReport('`+e._id+`', '`+e.report.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>`
+          $("#reportsTable tbody").append(newRowContent)
+         });
+     });
+  }
+
+  function loadMedications(index) {
+    $('#medication-civilian-id').val(index)
+    $("#medicationsTable tbody").empty()
+    var parameters = { civID: index };
+       $.get('/medications',parameters, function(data) {
+         data.forEach(function(e){
+          var newRowContent = "<tr id=\""+e._id+"\"><td>"+e.medication.startDate+"</td><td style='text-transform: capitalize;'>"+e.medication.name+"</td><td>"+e.medication.dosage+"</td><td>"+e.medication.frequency+"</td><td class=\"text-align-center\"><a class='clickable' onclick=\"deleteMedication('"+e._id+"')\"><i class=\"glyphicon glyphicon-remove-circle color-alert-red\"></i></a></td></tr>"
+          $("#medicationsTable tbody").append(newRowContent)
+         });
+     });
+  }
+
+  function loadConditions(index) {
+    $('#condition-civilian-id').val(index)
+    $("#conditionsTable tbody").empty()
+    var parameters = { civID: index };
+       $.get('/conditions',parameters, function(data) {
+         data.forEach(function(e){
+          var newRowContent = "<tr id=\""+e._id+"\"><td>"+e.condition.dateOccurred+"</td><td style='text-transform: capitalize;'>"+e.condition.name+"</td><td>"+e.condition.details+"</td><td class=\"text-align-center\"><a class='clickable' onclick=\"deleteCondition('"+e._id+"')\"><i class=\"glyphicon glyphicon-remove-circle color-alert-red\"></i></a></td></tr>"
+          $("#conditionsTable tbody").append(newRowContent)
+         });
+     });
+  }
+
+  function deleteReport(id, civilianID) {
+    var parameters = { reportID: id };
+    $.delete('/reports/'+id, parameters, function(data) {
+      $(`table#reportsTable tr#`+id).remove()
+    })
+  }
+
+  function deleteMedication(id) {
+    var parameters = { medicationID: id };
+    $.delete('/medications/'+id, parameters, function(data) {
+      $('table#medicationsTable tr#'+id).remove()
+    })
+  }
+
+  function deleteCondition(id) {
+    var parameters = { conditionID: id };
+    $.delete('/conditions/'+id, parameters, function(data) {
+      $('table#conditionsTable tr#'+id).remove()
+    })
   }
 
   function loadVehData(index) {

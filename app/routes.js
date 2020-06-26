@@ -9,6 +9,9 @@ var ArrestReport = require('../app/models/arrestReport');
 var Warrant = require('../app/models/warrants');
 var Community = require('../app/models/community');
 var Bolo = require('../app/models/bolos');
+var Medication = require('../app/models/medication');
+var Condition = require('../app/models/medicalCondition');
+var MedicalReport = require('../app/models/medicalReport');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
 var async = require('async');
@@ -222,24 +225,24 @@ module.exports = function (app, passport, server) {
             }]
           }, function (err, dbFirearms) {
             if (err) return console.error(err);
-          Community.find({
-            '$or': [{
-              'community.ownerID': req.user._id
-            }, {
-              '_id': req.user.user.activeCommunity
-            }]
-          }, function (err, dbCommunities) {
-            if (err) return console.error(err);
-            return res.render('civ-dashboard', {
-              user: req.user,
-              personas: dbPersonas,
-              vehicles: dbVehicles,
-              firearms: dbFirearms,
-              communities: dbCommunities,
-              context: context
+            Community.find({
+              '$or': [{
+                'community.ownerID': req.user._id
+              }, {
+                '_id': req.user.user.activeCommunity
+              }]
+            }, function (err, dbCommunities) {
+              if (err) return console.error(err);
+              return res.render('civ-dashboard', {
+                user: req.user,
+                personas: dbPersonas,
+                vehicles: dbVehicles,
+                firearms: dbFirearms,
+                communities: dbCommunities,
+                context: context
+              });
             });
           });
-        });
         });
       });
     } else {
@@ -253,30 +256,31 @@ module.exports = function (app, passport, server) {
           'vehicle.activeCommunityID': req.user.user.activeCommunity
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
+
           Firearm.find({
             'firearm.userID': req.user._id,
             'firearm.activeCommunityID': req.user.user.activeCommunity
           }, function (err, dbFirearms) {
             if (err) return console.error(err);
-          Community.find({
-            '$or': [{
-              'community.ownerID': req.user._id
-            }, {
-              '_id': req.user.user.activeCommunity
-            }]
-          }, function (err, dbCommunities) {
-            if (err) return console.error(err);
-            return res.render('civ-dashboard', {
-              user: req.user,
-              personas: dbPersonas,
-              vehicles: dbVehicles,
-              firearms: dbFirearms,
-              communities: dbCommunities,
-              context: context
+            Community.find({
+              '$or': [{
+                'community.ownerID': req.user._id
+              }, {
+                '_id': req.user.user.activeCommunity
+              }]
+            }, function (err, dbCommunities) {
+              if (err) return console.error(err);
+              return res.render('civ-dashboard', {
+                user: req.user,
+                personas: dbPersonas,
+                vehicles: dbVehicles,
+                firearms: dbFirearms,
+                communities: dbCommunities,
+                context: context
+              });
             });
           });
         });
-      });
       });
     }
   });
@@ -1149,6 +1153,186 @@ module.exports = function (app, passport, server) {
       });
   })
 
+  app.get('/medical-reports', function (req, res) {
+    MedicalReport.find({
+        'report.civilianID': req.query.civID,
+      },
+      function (err, dbReports) {
+        if (err) return console.error(err);
+        res.send(dbReports)
+      });
+  })
+
+  app.get('/medications', function (req, res) {
+    Medication.find({
+        'medication.civilianID': req.query.civID,
+      },
+      function (err, dbMedications) {
+        if (err) return console.error(err);
+        res.send(dbMedications)
+      });
+  })
+
+  app.get('/conditions', function (req, res) {
+    Condition.find({
+        'condition.civilianID': req.query.civID,
+      },
+      function (err, dbConditions) {
+        if (err) return console.error(err);
+        res.send(dbConditions)
+      });
+  })
+
+  app.get('/medical-database', function (req, res) {
+    // console.debug("medical database server: ", req.query)
+    if (req.query.activeCommunityID == "" || req.query.activeCommunityID == null) {
+      Civilian.find({
+          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          'civilian.birthday': req.query.dateOfBirth,
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'civilian.activeCommunityID': ''
+          }, {
+            'civilian.activeCommunityID': null
+          }]
+        },
+        function (err, dbCivilians) {
+          if (err) return console.error(err);
+
+          Medication.find({
+              'medication.firstName': req.query.firstName.trim().toLowerCase(),
+              'medication.lastName': req.query.lastName.trim().toLowerCase(),
+              'medication.dateOfBirth': req.query.dateOfBirth.trim(),
+              '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+                'civilian.activeCommunityID': ''
+              }, {
+                'civilian.activeCommunityID': null
+              }]
+            },
+            function (err, dbMedications) {
+              if (err) return console.error(err);
+
+              Condition.find({
+                  'condition.firstName': req.query.firstName.trim().toLowerCase(),
+                  'condition.lastName': req.query.lastName.trim().toLowerCase(),
+                  'condition.dateOfBirth': req.query.dateOfBirth.trim(),
+                  '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+                    'civilian.activeCommunityID': ''
+                  }, {
+                    'civilian.activeCommunityID': null
+                  }]
+                },
+                function (err, dbConditions) {
+                  if (err) return console.error(err);
+
+                  MedicalReport.find({
+                      'report.firstName': req.query.firstName.trim().toLowerCase(),
+                      'report.lastName': req.query.lastName.trim().toLowerCase(),
+                      'report.dateOfBirth': req.query.dateOfBirth.trim(),
+                      '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+                        'civilian.activeCommunityID': ''
+                      }, {
+                        'civilian.activeCommunityID': null
+                      }]
+                    },
+                    function (err, dbReports) {
+                      if (err) return console.error(err);
+                      data = {
+                        civilians: dbCivilians,
+                        medications: dbMedications,
+                        conditions: dbConditions,
+                        reports: dbReports
+                      }
+                      res.send(data)
+                    });
+                });
+            });
+        })
+    } else {
+      Civilian.find({
+          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
+          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          'civilian.activeCommunityID': req.query.activeCommunityID,
+        },
+        function (err, dbCivilians) {
+          if (err) return console.error(err);
+          Medication.find({
+              'medication.firstName': req.query.firstName.trim().toLowerCase(),
+              'medication.lastName': req.query.lastName.trim().toLowerCase(),
+              'medication.activeCommunityID': req.query.activeCommunityID,
+            },
+            function (err, dbMedications) {
+              if (err) return console.error(err);
+              Condition.find({
+                  'condition.firstName': req.query.firstName.trim().toLowerCase(),
+                  'condition.lastName': req.query.lastName.trim().toLowerCase(),
+                  'condition.activeCommunityID': req.query.activeCommunityID,
+                },
+                function (err, dbConditions) {
+                  if (err) return console.error(err);
+                  MedicalReport.find({
+                      'report.firstName': req.query.firstName.trim().toLowerCase(),
+                      'report.lastName': req.query.lastName.trim().toLowerCase(),
+                      'report.activeCommunityID': req.query.activeCommunityID,
+                    },
+                    function (err, dbReports) {
+                      if (err) return console.error(err);
+                      data = {
+                        civilians: dbCivilians,
+                        medications: dbMedications,
+                        conditions: dbConditions,
+                        reports: dbReports
+                      }
+                      res.send(data)
+                    });
+                });
+            });
+        })
+    }
+  })
+
+  app.delete('/reports/:id', auth, function (req, res) {
+    // console.debug("req params: ", req.params)
+    if (!isValidObjectIdLength(req.params.id, "cannot lookup invalid length condition id, route: /reports/:id")) {
+      return
+    }
+    MedicalReport.findByIdAndDelete({
+        '_id': ObjectId(req.params.id),
+      },
+      function (err, status) {
+        if (err) return console.error(err);
+        res.send(status)
+      });
+  })
+
+  app.delete('/medications/:id', auth, function (req, res) {
+    // console.debug("req params: ", req.params)
+    if (!isValidObjectIdLength(req.params.id, "cannot lookup invalid length condition id, route: /medications/:id")) {
+      return
+    }
+    Medication.findByIdAndDelete({
+        '_id': ObjectId(req.params.id),
+      },
+      function (err, status) {
+        if (err) return console.error(err);
+        res.send(status)
+      });
+  })
+
+  app.delete('/conditions/:id', auth, function (req, res) {
+    // console.debug("req params: ", req.params)
+    if (!isValidObjectIdLength(req.params.id, "cannot lookup invalid length condition id, route: /conditions/:id")) {
+      return
+    }
+    Condition.findByIdAndDelete({
+        '_id': ObjectId(req.params.id),
+      },
+      function (err, status) {
+        if (err) return console.error(err);
+        res.send(status)
+      });
+  })
+
   // Be sure to place all GET requests above this catchall
   app.get('*', function (req, res) {
     res.render('page-not-found');
@@ -1414,6 +1598,30 @@ module.exports = function (app, passport, server) {
     var myTicket = new Ticket()
     myTicket.updateTicket(req, res)
     myTicket.save(function (err) {
+      if (err) return console.error(err);
+    });
+  });
+
+  app.post('/create-medication', auth, function (req, res) {
+    var myMedication = new Medication()
+    myMedication.createMedication(req, res)
+    myMedication.save(function (err) {
+      if (err) return console.error(err);
+    });
+  });
+
+  app.post('/create-condition', auth, function (req, res) {
+    var myCondition = new Condition()
+    myCondition.createCondition(req, res)
+    myCondition.save(function (err) {
+      if (err) return console.error(err);
+    });
+  });
+
+  app.post('/create-medical-report', auth, function (req, res) {
+    var myReport = new MedicalReport()
+    myReport.createReport(req, res)
+    myReport.save(function (err) {
       if (err) return console.error(err);
     });
   });

@@ -59,10 +59,11 @@
       </div>
     </div>
   </nav>
+
   <header id="second" style='background-image: url("/static/images/ems-bkground.png");'>
     <div class="header-content">
       <div class="inner">
-        <h4>San Andreas - Fire/EMS Operations</h4>
+        <h1 class="cursive"><a href="/ems-dashboard">San Andreas - Fire/EMS Operations</a></h1>
 
         <!-- imports the community specific alerts -->
         <% include community-alerts %>
@@ -70,23 +71,32 @@
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-lg margin-top-2">Add New Persona</button>
           <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-lg margin-top-2">Add New Vehicle</button>
+          <button data-toggle="modal" href="#searchMedicalRecords"  class="btn btn-primary btn-lg margin-top-2">Medical Database</button>
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
         </div>
       </div>
-      <hr style="width: 88%;max-width: 100rem;">
+      </div>
+  </header>
+<section style='background-image: url("/static/images/hi-rise.jpg");'>
+<div class="container">
 
 <!--Table for Personas  -->
-      <div class="col-md-4 col-md-offset-1 name-table">
-      <table class="table table-hover" border="1" frame="box">
+      <div class="col-md-12 col-md-offset-0.75">
+        <div class="margin-bottom-1">
+          <span id="active-bolos margin-right-1" style="font-size: 18px;">Personnel:</span> <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Persona</button>
+        </div>
+      <table id="persona-table" class="table table-hover table-bordered">
     <thead>
       <tr>
-        Personas: (Click for Details)
+        <th>Persona Name</th>
+        <th>Department</th>
       </tr>
     </thead>
     <tbody>
       <% for(var i=0; i<personas.length; i++) {%>
    <tr data-toggle="modal" data-id=<%=i%> data-target="#viewEms" onclick="loadEmsData(<%=i%>)">
      <td><%= personas[i].ems.firstName%> <%= personas[i].ems.lastName%></td>
+     <td><%= personas[i].ems.department%></td>
    </tr>
   <% } %>
     </tbody>
@@ -94,42 +104,28 @@
 </div>
 
 <!--Table for Vehicles  -->
-<div class="col-md-5 col-md-offset-1 name-table">
-  <table class="table table-hover" border="1" frame="box">
+<div class="col-md-12 col-md-offset-0.75 margin-top-2">
+  <div class="margin-bottom-1">
+    <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Vehicle</button>
+  </div>
+  <table id="vehicle-table" class="table table-hover table-bordered">
     <thead>
-      <tr>
-        Vehicles: (Click for Details)
-      </tr>
-      <tr style="background-color: #2d2d2d;"><td>Plate</td><td>Model</td></tr>
-
+      <tr><th>Plate</th><th>Model</th><th>Color</th></tr>
     </thead>
       <tbody>
         <% for(var i=0; i<vehicles.length; i++) {%>
         <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewVeh" onclick="loadVehData(<%=i%>)">
           <td><%= vehicles[i].emsVehicle.plate%></td>
           <td> <%= vehicles[i].emsVehicle.model%></td>
+          <td> <%= vehicles[i].emsVehicle.color%></td>
         </tr>
         <% } %>
       </tbody>
   </table>
 </div>
-
-    </div>
-  </header>
-  <div id="google-ads-1">
-    <p class="text-align-center color-gray font-size-1">Advertisement</p>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-    <!-- Basic horizontal ads -->
-    <ins class="adsbygoogle"
-        style="display:block"
-        data-ad-client="ca-pub-3842696805773142"
-        data-ad-slot="4338952373"
-        data-ad-format="auto"
-        data-full-width-responsive="true"></ins>
-    <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
 </div>
+  </section>
+  <div class="google-ad"></div>
   <% include footer %>
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -158,23 +154,23 @@
             <hr style="width: 88%;max-width: 100rem;">
 
             <!-- Text input-->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="first-name">First Name</label>
               <div class="col-md-4">
-                <input id="first-name" name="emsFirstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
+                <input id="first-name" name="emsFirstName" type="text" placeholder="first name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
               </div>
             </div>
 
             <!-- Text input-->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="last-name">Last Name</label>
               <div class="col-md-4">
-                <input id="last-name" name="emsLastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
+                <input id="last-name" name="emsLastName" type="text" placeholder="last name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
               </div>
             </div>
 
             <!-- Select Basic -->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="department">Department</label>
               <div class="col-md-4">
                 <select id="department" name="department" class="form-control">
@@ -185,7 +181,7 @@
             </div>
 
             <!-- Text input-->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="assignment-area">Assignment Area</label>
               <div class="col-md-4">
               <input id="assignment-area" name="assignmentArea" type="text" placeholder="assignment area" maxlength="50" class="form-control input-md" required>
@@ -194,17 +190,17 @@
 
             <!-- Text input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="station">Station (optional)</label>
+              <label class="col-md-4 control-label" for="station">Station</label>
               <div class="col-md-4">
-              <input id="station" name="station" type="number" placeholder="station #" maxlength="5" class="form-control input-md">
+              <input id="station" name="station" type="number" placeholder="station # (optional)" maxlength="5" class="form-control input-md">
               </div>
             </div>
 
             <!-- Text input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="call-sign">Call Sign (optional)</label>
+              <label class="col-md-4 control-label" for="call-sign">Call Sign</label>
               <div class="col-md-4">
-              <input id="call-sign" name="callSign" type="text" placeholder="call sign" maxlength="10" class="form-control input-md">
+              <input id="call-sign" name="callSign" type="text" placeholder="call sign (optional)" maxlength="10" class="form-control input-md">
               </div>
             </div>
 
@@ -237,42 +233,40 @@
             <hr style="width: 88%;max-width: 100rem;">
 
             <!-- Text input-->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="plate">Plate</label>
               <div class="col-md-4">
-              <input id="plate" name="plate" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
+              <input id="plate" name="plate" type="text" maxlength="8" placeholder="plate" class="form-control input-md" required="">
 
               </div>
             </div>
 
             <!-- Search input-->
-            <div class="form-group">
+            <div class="form-group required">
               <label class="col-md-4 control-label" for="model">Model</label>
               <div class="col-md-4">
-                <input id="model" name="model" type="search" placeholder="Model" class="form-control input-md" required="">
+                <input id="model" name="model" type="search" placeholder="model" class="form-control input-md" required="">
               </div>
             </div>
 
             <!-- Text input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="color">Color (optional)</label>
+              <label class="col-md-4 control-label" for="color">Color</label>
               <div class="col-md-4">
-              <input id="color" name="color" type="text" placeholder="Color" class="form-control input-md">
+              <input id="color" name="color" type="text" placeholder="color (optional)" class="form-control input-md">
               </div>
             </div>
 
-            <datalist id="names">
-              <% for(var i=0; i<personas.length; i++) {%>
-           <option value="<%= personas[i].ems.firstName %> <%= personas[i].ems.lastName%>">
-          <% } %>
-            </datalist>
-
             <!-- Search input-->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="registered-owner">Registered Owner</label>
+              <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
               <div class="col-md-4">
-                <input id="registered-owner" name="registeredOwner" type="search" placeholder="Registered Owner" list="names" class="form-control input-md" required="">
-
+                <select id="registeredOwner" name="registeredOwner" class="form-control">
+                  <option value="N/A">N/A</option>
+                  <% for(var i=0; i<personas.length; i++) {%>
+                    <option value="<%= personas[i].ems.firstName %> <%= personas[i].ems.lastName%>"><%= personas[i].ems.firstName %> <%= personas[i].ems.lastName%></option>
+                   <% } %>
+                </select>
               </div>
             </div>
 
@@ -287,6 +281,69 @@
             </div>
             </fieldset>
             </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="searchMedicalRecords" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div id="personNotFound" class="alert alert-warning" style="display:none">
+        <strong>Not Found!</strong> Person not found in medical database.
+      </div>
+      <div id="firstNameRequired" class="alert alert-warning" style="display:none">
+        <strong>First Name is Required!</strong>
+      </div>
+      <div id="lastNameRequired" class="alert alert-warning" style="display:none">
+        <strong>Last Name is Required!</strong>
+      </div>
+      <div id="dateOfBirthRequired" class="alert alert-warning" style="display:none">
+        <strong>Date of Birth is Required!</strong>
+      </div>
+      <div class="modal-content">
+        <div class="modal-body">
+          <!-- <form class="form-horizontal" name="findFirearm" action="/medical-search" method="get"> -->
+            <fieldset>
+              <div class="">
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Medical Database</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Text input-->
+              <div id="medical-input-area" class="form-group">
+                <div class="col-md-12">
+                  <div class="col-md-4">
+                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-first-name">First Name</label>
+                    <input id="civ-first-name" name="firstName" type="text" placeholder="First Name" class="form-control input-md col-md-offset-1" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-last-name">Last Name</label>
+                    <input id="civ-last-name" name="lastName" type="text" placeholder="Last Name" class="form-control input-md col-md-offset-1" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required>
+                  </div>
+                  <% if (user.user.activeCommunity == '' || user.user.activeCommunity == null) { %>
+                  <div class="col-md-4">
+                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-dob">Date of Birth</label>
+                    <input id="civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy" class="form-control input-md col-md-offset-1" required="">
+                  </div>
+                  <% } %>
+                  <div class="col-md-4">
+                      <br>
+                      <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                      <button type="submit" class="btn btn-info" onclick="searchMedicalNames()">Search</button>
+                    </div>
+                </div>
+              </div>
+              </div>
+                <!-- List of Plates -->
+                <div id="medicalDetails" class="col-md-12 margin-top-2">
+                  <div class="panel-group" id="accordion">
+                    <div></div>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          <!-- </form> -->
         </div>
       </div>
     </div>
@@ -383,6 +440,108 @@
 
             <div class="col-md-12 text-align-center">
               <button id="emailVeh" type="submit" name="emailVeh" class="btn btn-danger">Delete Vehicle</button>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="createReportModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-medical-report" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <h4>Create a New Report</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5>Patient Info:</h5>
+
+            
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="civilianID">Drivers License #</label>
+              <div class="col-md-6">
+                <input id="new-report-civilianID" name="civilianID" type="text" class="form-control input-md disabled-color" required readonly="readonly">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="firstName">First Name</label>
+              <div class="col-md-6">
+                <input id="new-report-firstName" name="firstName" type="text" class="form-control input-md disabled-color" required readonly="readonly">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="lastName">Last Name</label>
+              <div class="col-md-6">
+                <input id="new-report-lastName" name="lastName" type="text" class="form-control input-md disabled-color" required readonly="readonly">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="dateOfBirth">Date of Birth</label>
+              <div class="col-md-6">
+                <input id="new-report-dateOfBirth" name="dateOfBirth" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md disabled-color" required readonly="readonly">
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5>Incident Information:</h5>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="reportDate">Date</label>
+              <div class="col-md-6">
+              <input id="new-report-reportDate" name="reportDate" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="reportingEmsID">Fire/EMS ID</label>
+              <div class="col-md-6">
+              <input id="new-report-reportingEmsID" name="reportingEmsID" type="text" class="form-control input-md disabled-color" required readonly="readonly">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="hospitalized">Hospitalized</label>
+              <div class="col-md-6">
+                <select id="new-report-hospitalized" name="hospitalized" class="form-control" selected="selected">
+                  <option value="no">No</option>
+                  <option value="yes">Yes</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="details">Details</label>
+              <div class="col-md-10 col-md-offset-1">
+                <textarea id="new-report-details" name="details" type="text" maxlength="500" placeholder="incident details" class="form-control input-md" required></textarea>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="submit-new-civ"></label>
+              <div class="col-md-4 text-center">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submit-new-civ" class="btn btn-primary" onclick="createNewMedicalReport()">Create</button>
+              </div>
             </div>
             </fieldset>
           </form>
@@ -619,7 +778,9 @@
 
 
   <!--scripts loaded here -->
-  <script src="/static/js/jquery.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+  <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
   <script src="/static/js/bootstrap.min.js"></script>
   <script src="/static/js/jquery.easing.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
@@ -630,6 +791,22 @@
 </html>
 
 <script type="text/javascript">
+$.delete = function(url, data, callback, type){
+ if ( $.isFunction(data) ){
+   type = type || callback,
+       callback = data,
+       data = {}
+ }
+
+ return $.ajax({
+   url: url,
+   type: 'DELETE',
+   success: callback,
+   data: data,
+   contentType: type
+ });
+}
+
   function loadEmsData(index) {
     var myVar = <%- JSON.stringify(personas) %>;
 
@@ -686,7 +863,227 @@
     $('#updateUsernameBtns').hide();
   }
 
+  function setDateAndTime(dateElement, timeElement) {
+    $(dateElement)[0].valueAsDate = new Date();
+    $(timeElement)[0].value = new Date().toLocaleTimeString('en-GB', {
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  }
+
+  function CreateReport(firstName, lastName, civilianID, dateOfBirth) {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#new-report-civilianID').val(civilianID);
+    $('#new-report-firstName').val(firstName);
+    $('#new-report-lastName').val(lastName);
+    $('#new-report-dateOfBirth').val(dateOfBirth);
+    $('#new-report-reportingEmsID').val(myUser._id);
+  }
+
+  function searchMedicalNames() {
+    if (!document.getElementById('civ-first-name').validity.valid) {
+      $('#firstNameRequired').show()
+      return
+    } else {
+      $('#firstNameRequired').hide()
+    }
+    if (!document.getElementById('civ-last-name').validity.valid) {
+      $('#lastNameRequired').show()
+      return
+    } else {
+      $('#lastNameRequired').hide()
+    }
+    if (!document.getElementById('civ-dob').validity.valid) {
+      $('#dateOfBirthRequired').show()
+      return
+    } else {
+      $('#dateOfBirthRequired').hide()
+    }
+    var myUser = <%- JSON.stringify(user) %>;
+    var activeCommunityID
+    $("#accordion").empty()
+    if (myUser.user.activeCommunity != "" && myUser.user.activeCommunity != null) {
+      activeCommunityID = myUser.user.activeCommunity
+    }
+    var parameters = { 
+      firstName: $('#civ-first-name').val(),
+      lastName: $('#civ-last-name').val(),
+      dateOfBirth: $('#civ-dob').val(),
+      activeCommunityID: activeCommunityID
+      };
+       $.get('/medical-database',parameters, function(data) {
+         var i = 0
+        if (data.civilians.length < 1) {
+          $('#personNotFound').show()
+          return
+        }
+        $('#personNotFound').hide()
+         data.civilians.forEach(function(e){
+           var collapsed
+           if (i == 0) {
+             collapsed = "in"
+           } else {
+            collapsed = ""
+           }
+          var newRowContent
+          newRowContent = `
+          <!-- List of Civilians -->
+              
+                      <div class="panel panel-default background-transparent">
+                          <div class="panel-heading" data-toggle="collapse" data-id="`+i+`" data-parent="#accordion" href="#collapse`+i+`"
+                            <h4 class="panel-title">
+                              <a class="blue-hover">
+                                  `+e.civilian.firstName+` `+ e.civilian.lastName+ ` | `+e._id+`</a>
+                            </h4>
+                          </div>
+                          
+                            <div id="collapse`+i+`" class="panel-collapse collapse `+collapsed+`">
+                          
+                            <div class="panel-body">
+                                <div class="text-align-center">
+                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`');setDateAndTime('#new-report-reportDate', '');">Create Report</button>
+                                </div>
+                                <hr/>
+                                Driver's ID #: `+e._id+`<br/>
+                                Date of Birth: `+e.civilian.birthday+`<br/>
+                                Address: `+e.civilian.address+`<br/>
+                                Occupation: `+e.civilian.occupation+`<br/>
+                                <hr style="width: 88%;max-width: 100rem;">
+                                <h4>Medical History</h4>
+                                <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
+                                  <li class="nav-item active">
+                                    <a class="nav-link active" id="pills-reports-tab-`+e._id+`" data-toggle="pill" href="#pills-reports-`+e._id+`" role="tab" aria-controls="pills-reports-`+e._id+`" aria-selected="true">Reports</a>
+                                  </li>
+                                  <li class="nav-item">
+                                    <a class="nav-link" id="pills-medications-tab-`+e._id+`" data-toggle="pill" href="#pills-medications-`+e._id+`" role="tab" aria-controls="pills-medications-`+e._id+`" aria-selected="false">Medications</a>
+                                  </li>
+                                  <li class="nav-item">
+                                    <a class="nav-link" id="pills-conditions-tab-`+e._id+`" data-toggle="pill" href="#pills-conditions-`+e._id+`" role="tab" aria-controls="pills-conditions-`+e._id+`" aria-selected="false">Pre-Existing Conditions</a>
+                                  </li>
+                                </ul>
+                                <div class="tab-content" id="pills-tabContent">
+                                  <div class="tab-pane fade active in" id="pills-reports-`+e._id+`" role="tabpanel" aria-labelledby="pills-reports-tab-`+e._id+`">
+                                    <table id="reports-table-`+e._id+`" class="table" border="1" frame="box">
+                                      <thead>
+                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td><td>Delete</td></tr>
+                                        </thead>
+                                        <tbody>
+                                          <!-- List of Reports -->
+                                          </tbody>
+                                      </table>
+                                  </div>
+                                  <div class="tab-pane fade" id="pills-medications-`+e._id+`" role="tabpanel" aria-labelledby="pills-medications-tab-`+e._id+`">
+                                    <table id="medications-table-`+e._id+`" class="table" border="1" frame="box">
+                                      <thead>
+                                        <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Dosage</td><td>Frequency</td><td>Delete</td></tr>
+                                      </thead>
+                                      <tbody>
+                                        <!-- List of Medications -->
+                                        </tbody>
+                                    </table>
+                                  </div>
+                                  <div class="tab-pane fade" id="pills-conditions-`+e._id+`" role="tabpanel" aria-labelledby="pills-conditions-tab-`+e._id+`">
+                                    <table id="conditions-table-`+e._id+`" class="table" border="1" frame="box">
+                                      <thead>
+                                        <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td><td>Delete</td></tr>
+                                      </thead>
+                                      <tbody>
+                                        <!-- List of Pre-Existing Conditions -->
+                                        </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                            </div>
+                          </div>
+                        </div>
+          `
+          $("#accordion").append(newRowContent)
+          i++
+        });
+          //loop through all reports, medications and conditions for this civ
+          data.civilians.forEach(function(e){
+          data.reports.forEach(function(r){
+            if (e._id == r.report.civilianID) {
+              var newReportContent
+            newReportContent = `
+            <tr id="`+r._id+`"><td>`+r.report.date+`</td><td style='text-transform: capitalize;'>`+r.report.hospitalized+`</td><td style='text-transform: capitalize;'>`+r.report.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteReport('`+r._id+`', '`+r.report.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+            `
+            $("#reports-table-"+r.report.civilianID+" tbody").append(newReportContent)
+            }
+          });
+
+          data.medications.forEach(function(m){
+            if (e._id == m.medication.civilianID) {
+              var newReportContent
+            newReportContent = `
+            <tr id="`+m._id+`"><td>`+m.medication.startDate+`</td><td style='text-transform: capitalize;'>`+m.medication.name+`</td><td>`+m.medication.dosage+`</td><td style='text-transform: capitalize;'>`+m.medication.frequency+`</td><td class="text-align-center"><a class='clickable' onclick="deleteMedication('`+m._id+`', '`+m.medication.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+            `
+            $("#medications-table-"+m.medication.civilianID+" tbody").append(newReportContent)
+            }
+          });
+
+          data.conditions.forEach(function(c){
+            if (e._id == c.condition.civilianID) {
+              var newReportContent
+            newReportContent = `
+            <tr id="`+c._id+`"><td>`+c.condition.dateOccurred+`</td><td style='text-transform: capitalize;'>`+c.condition.name+`</td><td style='text-transform: capitalize;'>`+c.condition.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteCondition('`+c._id+`', '`+c.condition.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+            `
+            $("#conditions-table-"+c.condition.civilianID+" tbody").append(newReportContent)
+            }
+          });
+        
+        });
+     });
+  }
+
+  function deleteReport(id, civilianID) {
+    var parameters = { reportID: id };
+    $.delete('/reports/'+id, parameters, function(data) {
+      $(`table#reports-table-`+civilianID+` tr#`+id).remove()
+    })
+  }
+
+  function deleteMedication(id, civilianID) {
+    var parameters = { medicationID: id };
+    $.delete('/medications/'+id, parameters, function(data) {
+      $(`table#medications-table-`+civilianID+` tr#`+id).remove()
+    })
+  }
+  
+
+  function deleteCondition(id, civilianID) {
+    var parameters = { conditionID: id };
+    $.delete('/conditions/'+id, parameters, function(data) {
+      $(`table#conditions-table-`+civilianID+` tr#`+id).remove()
+    })
+  }
+
+  $("#civ-first-name").keydown(function(event) {
+    if (event.keyCode == 32) {
+        event.preventDefault();
+        $('#civ-first-name').popover('show')
+    } else {
+      $('#civ-first-name').popover('hide')
+    }
+  });
+
+  $("#civ-last-name").keydown(function(event) {
+      if (event.keyCode == 32) {
+          event.preventDefault();
+          $('#civ-last-name').popover('show')
+      } else {
+        $('#civ-last-name').popover('hide')
+      }
+  });
+
   $(document).ready(function(){
+
+    $('#persona-table').DataTable({
+      "bLengthChange": false,
+    })
+    $('#vehicle-table').DataTable({
+      "bLengthChange": false,
+    })
 
     // displays the Update Username and Cancel buttons for updating the username
     var myUser = <%- JSON.stringify(user) %>;

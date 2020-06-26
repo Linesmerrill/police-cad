@@ -355,7 +355,7 @@ footer {
 }
 
 textarea {
-    resize: none;
+    resize: vertical;
 }
 
 .margin-top-0 {
@@ -791,6 +791,10 @@ a.link--inherit {
     color: #DE0A0A;
 }
 
+.color-alert-red {
+    color: #d9534f
+}
+
 .color-green {
     color: green;
 }
@@ -868,6 +872,12 @@ a.link--inherit {
     margin-bottom: 0.5em
 }
 
+.disabled-color {
+    color: #eee !important;
+    background-color: #36333d !important;
+    cursor: not-allowed;
+}
+
 #civID {
     color: #eee;
     background-color: #36333d;
@@ -892,6 +902,11 @@ a.link--inherit {
     color: #eee;
     background-color: #36333d;
 }
+
+/* #new-report-civilianID {
+    color: #eee;
+    background-color: #36333d;
+} */
 
 #warrant-select {
     color: #eee;
@@ -1034,6 +1049,19 @@ a.link--inherit {
 
 #firearm-table:hover {
     cursor: pointer;
+}
+
+#addMedicationModal {
+    z-index: 9001 /* ITS OVER 9000!! */
+}
+
+#addConditionModal {
+    z-index: 9001 /* ITS OVER 9000!! */
+}
+
+.clickable:hover {
+    cursor: pointer;
+
 }
 
 .facebook-logo {
