@@ -134,23 +134,23 @@
       <h4 id="currentStatus" class="text-align-center">Your Current Status: <%=user.user.dispatchStatus%></h4>
       <h5 id="statusSetBy" class="text-align-center">Set By: <%=user.user.dispatchStatusSetBy%></h5>
       <div class="col-lg-10 col-lg-offset-1 text-center">
-        <button class="btn btn-primary btn-lg margin-top-2" title="In Service" onclick="updateStatus('10-8')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-8</a></button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="Busy" onclick="updateStatus('10-6')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-6</a></button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="Out of Service" onclick="updateStatus('10-7')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-7</a></button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="Traffic Stop" onclick="updateStatus('10-11')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-11</a></button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="Arrive on Scene" onclick="updateStatus('10-23')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-23</a></button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="In Route" onclick="updateStatus('10-97')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-97</a></button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="Subject in Custody" onclick="updateStatus('10-15')"><a id="scrollToTop" class="page-scroll text-decoration-none color-white" href="#second">10-15</a></button>
+        <button class="btn btn-primary btn-lg margin-top-2" title="In Service" onclick="updateStatus('10-8')">10-8</button>
+        <button class="btn btn-primary btn-lg margin-top-2" title="Busy" onclick="updateStatus('10-6')">10-6</button>
+        <button class="btn btn-primary btn-lg margin-top-2" title="Out of Service" onclick="updateStatus('10-7')">10-7</button>
+        <button class="btn btn-primary btn-lg margin-top-2" title="Traffic Stop" onclick="updateStatus('10-11')">10-11</button>
+        <button class="btn btn-primary btn-lg margin-top-2" title="Arrive on Scene" onclick="updateStatus('10-23')">10-23</button>
+        <button class="btn btn-primary btn-lg margin-top-2" title="In Route" onclick="updateStatus('10-97')">10-97</button>
+        <button class="btn btn-primary btn-lg margin-top-2" title="Subject in Custody" onclick="updateStatus('10-15')">10-15</button>
       </div>
       <% } %>
       
       <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
       <div class="col-lg-10 col-lg-offset-1 text-center">
-        <button class="btn btn-warning btn-lg margin-top-2" title="Log out of CAD" onclick="updateStatus('10-42')"><a id="scrollToTop" class="page-scroll color-white" href="#second">10-42</a></button>
-        <button class="btn btn-success btn-lg margin-top-2" title="Log in to CAD" onclick="updateStatus('10-41')"><a id="scrollToTop" class="page-scroll color-white" href="#second">10-41</a></button>
+        <button class="btn btn-warning btn-lg margin-top-2" title="Log out of CAD" onclick="updateStatus('10-42')">10-42</button>
+        <button class="btn btn-success btn-lg margin-top-2" title="Log in to CAD" onclick="updateStatus('10-41')">10-41</button>
       </div>
       <div class="col-lg-10 col-lg-offset-1 text-center">
-        <button id="panicButton" class="btn btn-danger btn-lg margin-top-2 page-scroll" title="Panic" onclick="updateStatus('Panic');panicButtonPressed()"><a id="scrollToTop" class="page-scroll color-white" href="#second">Panic</a></button>
+        <button id="panicButton" class="btn btn-danger btn-lg margin-top-2 page-scroll" title="Panic" onclick="updateStatus('Panic');panicButtonPressed()">Panic</button>
       </div>
       <% } %>
     </div>
