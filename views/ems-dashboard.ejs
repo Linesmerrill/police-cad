@@ -59,10 +59,11 @@
       </div>
     </div>
   </nav>
+
   <header id="second" style='background-image: url("/static/images/ems-bkground.png");'>
     <div class="header-content">
       <div class="inner">
-        <h4>San Andreas - Fire/EMS Operations</h4>
+        <h1 class="cursive"><a href="/ems-dashboard">San Andreas - Fire/EMS Operations</a></h1>
 
         <!-- imports the community specific alerts -->
         <% include community-alerts %>
@@ -74,20 +75,28 @@
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
         </div>
       </div>
-      <hr style="width: 88%;max-width: 100rem;">
+      </div>
+  </header>
+<section style='background-image: url("/static/images/hi-rise.jpg");'>
+<div class="container">
 
 <!--Table for Personas  -->
-      <div class="col-md-4 col-md-offset-1 name-table">
-      <table class="table table-hover" border="1" frame="box">
+      <div class="col-md-12 col-md-offset-0.75">
+        <div class="margin-bottom-1">
+          <span id="active-bolos margin-right-1" style="font-size: 18px;">Personnel:</span> <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Persona</button>
+        </div>
+      <table id="persona-table" class="table table-hover table-bordered">
     <thead>
       <tr>
-        Personas: (Click for Details)
+        <th>Persona Name</th>
+        <th>Department</th>
       </tr>
     </thead>
     <tbody>
       <% for(var i=0; i<personas.length; i++) {%>
    <tr data-toggle="modal" data-id=<%=i%> data-target="#viewEms" onclick="loadEmsData(<%=i%>)">
      <td><%= personas[i].ems.firstName%> <%= personas[i].ems.lastName%></td>
+     <td><%= personas[i].ems.department%></td>
    </tr>
   <% } %>
     </tbody>
@@ -95,42 +104,28 @@
 </div>
 
 <!--Table for Vehicles  -->
-<div class="col-md-5 col-md-offset-1 name-table">
-  <table class="table table-hover" border="1" frame="box">
+<div class="col-md-12 col-md-offset-0.75 margin-top-2">
+  <div class="margin-bottom-1">
+    <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Vehicle</button>
+  </div>
+  <table id="vehicle-table" class="table table-hover table-bordered">
     <thead>
-      <tr>
-        Vehicles: (Click for Details)
-      </tr>
-      <tr style="background-color: #2d2d2d;"><td>Plate</td><td>Model</td></tr>
-
+      <tr><th>Plate</th><th>Model</th><th>Color</th></tr>
     </thead>
       <tbody>
         <% for(var i=0; i<vehicles.length; i++) {%>
         <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewVeh" onclick="loadVehData(<%=i%>)">
           <td><%= vehicles[i].emsVehicle.plate%></td>
           <td> <%= vehicles[i].emsVehicle.model%></td>
+          <td> <%= vehicles[i].emsVehicle.color%></td>
         </tr>
         <% } %>
       </tbody>
   </table>
 </div>
-
-    </div>
-  </header>
-  <div id="google-ads-1">
-    <p class="text-align-center color-gray font-size-1">Advertisement</p>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-    <!-- Basic horizontal ads -->
-    <ins class="adsbygoogle"
-        style="display:block"
-        data-ad-client="ca-pub-3842696805773142"
-        data-ad-slot="4338952373"
-        data-ad-format="auto"
-        data-full-width-responsive="true"></ins>
-    <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
 </div>
+  </section>
+  <div class="google-ad"></div>
   <% include footer %>
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -777,7 +772,9 @@
 
 
   <!--scripts loaded here -->
-  <script src="/static/js/jquery.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+  <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
   <script src="/static/js/bootstrap.min.js"></script>
   <script src="/static/js/jquery.easing.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
@@ -1033,6 +1030,13 @@ $.delete = function(url, data, callback, type){
   }
 
   $(document).ready(function(){
+
+    $('#persona-table').DataTable({
+      "bLengthChange": false,
+    })
+    $('#vehicle-table').DataTable({
+      "bLengthChange": false,
+    })
 
     // displays the Update Username and Cancel buttons for updating the username
     var myUser = <%- JSON.stringify(user) %>;
