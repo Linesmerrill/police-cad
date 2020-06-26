@@ -893,11 +893,14 @@ $.delete = function(url, data, callback, type){
     } else {
       $('#lastNameRequired').hide()
     }
+    if (document.getElementById('civ-dob') != null) {
+    
     if (!document.getElementById('civ-dob').validity.valid) {
       $('#dateOfBirthRequired').show()
       return
     } else {
       $('#dateOfBirthRequired').hide()
+    }
     }
     var myUser = <%- JSON.stringify(user) %>;
     var activeCommunityID
