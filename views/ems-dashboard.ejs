@@ -788,6 +788,22 @@
 </html>
 
 <script type="text/javascript">
+$.delete = function(url, data, callback, type){
+ if ( $.isFunction(data) ){
+   type = type || callback,
+       callback = data,
+       data = {}
+ }
+
+ return $.ajax({
+   url: url,
+   type: 'DELETE',
+   success: callback,
+   data: data,
+   contentType: type
+ });
+}
+
   function loadEmsData(index) {
     var myVar = <%- JSON.stringify(personas) %>;
 
@@ -875,10 +891,8 @@
       activeCommunityID: activeCommunityID
       };
        $.get('/medical-database',parameters, function(data) {
-         console.log("data: ", data)
          var i = 0
          data.civilians.forEach(function(e){
-           console.log("resp for medical database: ", e)
            var collapsed
            if (i == 0) {
              collapsed = "in"
@@ -964,49 +978,58 @@
           data.civilians.forEach(function(e){
           data.reports.forEach(function(r){
             if (e._id == r.report.civilianID) {
-              console.log("found a report match for: ", r.report.civilianID)
               var newReportContent
             newReportContent = `
-            <tr id="`+r._id+`"><td>`+r.report.date+`</td><td style='text-transform: capitalize;'>`+r.report.hospitalized+`</td><td style='text-transform: capitalize;'>`+r.report.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteReport('`+r._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+            <tr id="`+r._id+`"><td>`+r.report.date+`</td><td style='text-transform: capitalize;'>`+r.report.hospitalized+`</td><td style='text-transform: capitalize;'>`+r.report.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteReport('`+r._id+`', '`+r.report.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
             `
-            console.log("ready to append: ", newReportContent)
             $("#reports-table-"+r.report.civilianID+" tbody").append(newReportContent)
             }
           });
 
           data.medications.forEach(function(m){
             if (e._id == m.medication.civilianID) {
-              console.log("found a medication match for: ", m.medication.civilianID)
               var newReportContent
             newReportContent = `
-            <tr id="`+m._id+`"><td>`+m.medication.startDate+`</td><td style='text-transform: capitalize;'>`+m.medication.name+`</td><td>`+m.medication.dosage+`</td><td style='text-transform: capitalize;'>`+m.medication.frequency+`</td><td class="text-align-center"><a class='clickable' onclick="deleteMedication('`+m._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+            <tr id="`+m._id+`"><td>`+m.medication.startDate+`</td><td style='text-transform: capitalize;'>`+m.medication.name+`</td><td>`+m.medication.dosage+`</td><td style='text-transform: capitalize;'>`+m.medication.frequency+`</td><td class="text-align-center"><a class='clickable' onclick="deleteMedication('`+m._id+`', '`+m.medication.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
             `
-            console.log("ready to append: ", newReportContent)
             $("#medications-table-"+m.medication.civilianID+" tbody").append(newReportContent)
             }
           });
 
           data.conditions.forEach(function(c){
             if (e._id == c.condition.civilianID) {
-              console.log("found a condition match for: ", c.condition.civilianID)
               var newReportContent
             newReportContent = `
-            <tr id="`+c._id+`"><td>`+c.condition.dateOccurred+`</td><td style='text-transform: capitalize;'>`+c.condition.name+`</td><td style='text-transform: capitalize;'>`+c.condition.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteCondition('`+c._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+            <tr id="`+c._id+`"><td>`+c.condition.dateOccurred+`</td><td style='text-transform: capitalize;'>`+c.condition.name+`</td><td style='text-transform: capitalize;'>`+c.condition.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteCondition('`+c._id+`', '`+c.condition.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
             `
-            console.log("ready to append: ", newReportContent)
             $("#conditions-table-"+c.condition.civilianID+" tbody").append(newReportContent)
             }
           });
         
         });
-        console.log("we are done writing")
-         
-
      });
   }
 
-  function createNewMedicalReport() {
-    //idk if we need this
+  function deleteReport(id, civilianID) {
+    var parameters = { reportID: id };
+    $.delete('/reports/'+id, parameters, function(data) {
+      $(`table#reports-table-`+civilianID+` tr#`+id).remove()
+    })
+  }
+
+  function deleteMedication(id, civilianID) {
+    var parameters = { medicationID: id };
+    $.delete('/medications/'+id, parameters, function(data) {
+      $(`table#medications-table-`+civilianID+` tr#`+id).remove()
+    })
+  }
+  
+
+  function deleteCondition(id, civilianID) {
+    var parameters = { conditionID: id };
+    $.delete('/conditions/'+id, parameters, function(data) {
+      $(`table#conditions-table-`+civilianID+` tr#`+id).remove()
+    })
   }
 
   $(document).ready(function(){

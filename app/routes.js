@@ -1281,7 +1281,21 @@ module.exports = function (app, passport, server) {
     }
   })
 
-  app.delete('/medications/:id', function (req, res) {
+  app.delete('/reports/:id', auth, function (req, res) {
+    // console.debug("req params: ", req.params)
+    if (!isValidObjectIdLength(req.params.id, "cannot lookup invalid length condition id, route: /reports/:id")) {
+      return
+    }
+    MedicalReport.findByIdAndDelete({
+        '_id': ObjectId(req.params.id),
+      },
+      function (err, status) {
+        if (err) return console.error(err);
+        res.send(status)
+      });
+  })
+
+  app.delete('/medications/:id', auth, function (req, res) {
     // console.debug("req params: ", req.params)
     if (!isValidObjectIdLength(req.params.id, "cannot lookup invalid length condition id, route: /medications/:id")) {
       return
@@ -1295,7 +1309,7 @@ module.exports = function (app, passport, server) {
       });
   })
 
-  app.delete('/conditions/:id', function (req, res) {
+  app.delete('/conditions/:id', auth, function (req, res) {
     // console.debug("req params: ", req.params)
     if (!isValidObjectIdLength(req.params.id, "cannot lookup invalid length condition id, route: /conditions/:id")) {
       return
