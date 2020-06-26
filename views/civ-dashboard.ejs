@@ -388,8 +388,13 @@
               <label class="col-md-4 control-label" for="weapon-type">Weapon Type</label>
               <div class="col-md-4">
                 <select id="weapon-type" name="weaponType" class="form-control">
-                  <option value="handgun">Handgun</option>
-                  <option value="long gun">Long Gun</option>
+                  <option value="pistol">Pistol</option>
+                  <option value="revolver">Revolver</option>
+                  <option value="shotgun">Shotgun</option>
+                  <option value="submachine gun">Submachine Gun</option>
+                  <option value="light machine gun">Light Machine Gun</option>
+                  <option value="assault rifle">Assault Rifle</option>
+                  <option value="sniper rifle">Sniper Rifle</option>
                 </select>
               </div>
             </div>
@@ -833,7 +838,7 @@
             <!-- Text input-->
             <div class="form-group">
               <label class="col-md-4 control-label" for="serial-number">Serial Number</label>
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <input id="serial-number-details" name="serialNumber" type="text" minlength="8" maxlength="8" placeholder="serial number" class="form-control input-md" required="" readonly="readonly">
               </div>
             </div>
@@ -841,10 +846,15 @@
             <!-- Select Basic -->
             <div class="form-group required">
               <label class="col-md-4 control-label" for="weapon-type">Weapon Type</label>
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <select id="weapon-type-details" name="weaponType" class="form-control">
-                  <option value="handgun">Handgun</option>
-                  <option value="long gun">Long Gun</option>
+                  <option value="pistol">Pistol</option>
+                  <option value="revolver">Revolver</option>
+                  <option value="shotgun">Shotgun</option>
+                  <option value="submachine gun">Submachine Gun</option>
+                  <option value="light machine gun">Light Machine Gun</option>
+                  <option value="assault rifle">Assault Rifle</option>
+                  <option value="sniper rifle">Sniper Rifle</option>
                 </select>
               </div>
             </div>
@@ -852,7 +862,7 @@
             <!-- Search input-->
             <div class="form-group">
               <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <select id="registeredOwner-details" name="registeredOwner" class="form-control">
                   <option value="N/A">N/A</option>
                   <% for(var i=0; i<personas.length; i++) {%>
@@ -865,7 +875,7 @@
             <!-- Select Basic -->
             <div class="form-group">
               <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <select id="is-stolen-details" name="isStolen" class="form-control">
                   <option value="false">No</option>
                   <option value="true">Yes</option>
