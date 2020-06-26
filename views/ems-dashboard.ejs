@@ -288,9 +288,17 @@
 
   <div id="searchMedicalRecords" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
-      
-      <div id="firearmNotFound" class="alert alert-warning" style="display:none">
-        <strong>Not Found!</strong> Person not found in police database.
+      <div id="personNotFound" class="alert alert-warning" style="display:none">
+        <strong>Not Found!</strong> Person not found in medical database.
+      </div>
+      <div id="firstNameRequired" class="alert alert-warning" style="display:none">
+        <strong>First Name is Required!</strong>
+      </div>
+      <div id="lastNameRequired" class="alert alert-warning" style="display:none">
+        <strong>Last Name is Required!</strong>
+      </div>
+      <div id="dateOfBirthRequired" class="alert alert-warning" style="display:none">
+        <strong>Date of Birth is Required!</strong>
       </div>
       <div class="modal-content">
         <div class="modal-body">
@@ -307,11 +315,11 @@
                 <div class="col-md-12">
                   <div class="col-md-4">
                     <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-first-name">First Name</label>
-                    <input id="civ-first-name" name="firstName" type="text" placeholder="First Name" class="form-control input-md col-md-offset-1" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
+                    <input id="civ-first-name" name="firstName" type="text" placeholder="First Name" class="form-control input-md col-md-offset-1" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required>
                   </div>
                   <div class="col-md-4">
                     <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-last-name">Last Name</label>
-                    <input id="civ-last-name" name="lastName" type="text" placeholder="Last Name" class="form-control input-md col-md-offset-1" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
+                    <input id="civ-last-name" name="lastName" type="text" placeholder="Last Name" class="form-control input-md col-md-offset-1" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required>
                   </div>
                   <% if (user.user.activeCommunity == '' || user.user.activeCommunity == null) { %>
                   <div class="col-md-4">
@@ -873,6 +881,24 @@ $.delete = function(url, data, callback, type){
   }
 
   function searchMedicalNames() {
+    if (!document.getElementById('civ-first-name').validity.valid) {
+      $('#firstNameRequired').show()
+      return
+    } else {
+      $('#firstNameRequired').hide()
+    }
+    if (!document.getElementById('civ-last-name').validity.valid) {
+      $('#lastNameRequired').show()
+      return
+    } else {
+      $('#lastNameRequired').hide()
+    }
+    if (!document.getElementById('civ-dob').validity.valid) {
+      $('#dateOfBirthRequired').show()
+      return
+    } else {
+      $('#dateOfBirthRequired').hide()
+    }
     var myUser = <%- JSON.stringify(user) %>;
     var activeCommunityID
     $("#accordion").empty()
@@ -887,6 +913,11 @@ $.delete = function(url, data, callback, type){
       };
        $.get('/medical-database',parameters, function(data) {
          var i = 0
+        if (data.civilians.length < 1) {
+          $('#personNotFound').show()
+          return
+        }
+        $('#personNotFound').hide()
          data.civilians.forEach(function(e){
            var collapsed
            if (i == 0) {
@@ -1026,6 +1057,24 @@ $.delete = function(url, data, callback, type){
       $(`table#conditions-table-`+civilianID+` tr#`+id).remove()
     })
   }
+
+  $("#civ-first-name").keydown(function(event) {
+    if (event.keyCode == 32) {
+        event.preventDefault();
+        $('#civ-first-name').popover('show')
+    } else {
+      $('#civ-first-name').popover('hide')
+    }
+  });
+
+  $("#civ-last-name").keydown(function(event) {
+      if (event.keyCode == 32) {
+          event.preventDefault();
+          $('#civ-last-name').popover('show')
+      } else {
+        $('#civ-last-name').popover('hide')
+      }
+  });
 
   $(document).ready(function(){
 
