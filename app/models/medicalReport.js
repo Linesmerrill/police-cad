@@ -18,8 +18,8 @@ var medicalReportSchema = mongoose.Schema({
 });
 
 medicalReportSchema.methods.createReport = function (request, response) {
-    // console.debug("create condition request body: ", request.body)
-    this.report.date = request.body.date;
+    // console.debug("create medical report request body: ", request.body)
+    this.report.date = request.body.reportDate;
     this.report.details = request.body.details.trim();
     this.report.civilianID = request.body.civilianID;
     this.report.reportingEmsID = request.body.reportingEmsID;
@@ -30,7 +30,7 @@ medicalReportSchema.methods.createReport = function (request, response) {
     this.report.lastName = request.body.lastName.trim().toLowerCase()
     this.report.dateOfBirth = request.body.dateOfBirth.trim()
     this.report.createdAt = new Date();
-    response.redirect('/civ-dashboard');
+    response.redirect('/ems-dashboard');
 };
 
 module.exports = mongoose.model('MedicalReport', medicalReportSchema);

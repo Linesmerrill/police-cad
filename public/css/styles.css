@@ -355,7 +355,7 @@ footer {
 }
 
 textarea {
-    resize: none;
+    resize: vertical;
 }
 
 .margin-top-0 {
@@ -872,6 +872,12 @@ a.link--inherit {
     margin-bottom: 0.5em
 }
 
+.disabled-color {
+    color: #eee !important;
+    background-color: #36333d !important;
+    cursor: not-allowed;
+}
+
 #civID {
     color: #eee;
     background-color: #36333d;
@@ -896,6 +902,11 @@ a.link--inherit {
     color: #eee;
     background-color: #36333d;
 }
+
+/* #new-report-civilianID {
+    color: #eee;
+    background-color: #36333d;
+} */
 
 #warrant-select {
     color: #eee;

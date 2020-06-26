@@ -1594,6 +1594,14 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.post('/create-medical-report', auth, function (req, res) {
+    var myReport = new MedicalReport()
+    myReport.createReport(req, res)
+    myReport.save(function (err) {
+      if (err) return console.error(err);
+    });
+  });
+
   app.post('/create-arrest-report', auth, function (req, res) {
     var myArrestReport = new ArrestReport()
     myArrestReport.updateArrestReport(req, res)

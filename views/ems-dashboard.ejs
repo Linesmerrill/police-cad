@@ -447,6 +447,108 @@
     </div>
   </div>
 
+  <div id="createReportModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/create-medical-report" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <h4>Create a New Report</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5>Patient Info:</h5>
+
+            
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="civilianID">Drivers License #</label>
+              <div class="col-md-6">
+                <input id="new-report-civilianID" name="civilianID" type="text" class="form-control input-md disabled-color" required readonly="readonly">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="firstName">First Name</label>
+              <div class="col-md-6">
+                <input id="new-report-firstName" name="firstName" type="text" class="form-control input-md disabled-color" required readonly="readonly">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="lastName">Last Name</label>
+              <div class="col-md-6">
+                <input id="new-report-lastName" name="lastName" type="text" class="form-control input-md disabled-color" required readonly="readonly">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="dateOfBirth">Date of Birth</label>
+              <div class="col-md-6">
+                <input id="new-report-dateOfBirth" name="dateOfBirth" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md disabled-color" required readonly="readonly">
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5>Incident Information:</h5>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="reportDate">Date</label>
+              <div class="col-md-6">
+              <input id="new-report-reportDate" name="reportDate" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="reportingEmsID">Fire/EMS ID</label>
+              <div class="col-md-6">
+              <input id="new-report-reportingEmsID" name="reportingEmsID" type="text" class="form-control input-md disabled-color" required readonly="readonly">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="hospitalized">Hospitalized</label>
+              <div class="col-md-6">
+                <select id="new-report-hospitalized" name="hospitalized" class="form-control" selected="selected">
+                  <option value="no">No</option>
+                  <option value="yes">Yes</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="details">Details</label>
+              <div class="col-md-10 col-md-offset-1">
+                <textarea id="new-report-details" name="details" type="text" maxlength="500" placeholder="incident details" class="form-control input-md" required></textarea>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="submit-new-civ"></label>
+              <div class="col-md-4 text-center">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submit-new-civ" class="btn btn-primary" onclick="createNewMedicalReport()">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="communitiesModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -742,6 +844,23 @@
     $('#updateUsernameBtns').hide();
   }
 
+  function setDateAndTime(dateElement, timeElement) {
+    $(dateElement)[0].valueAsDate = new Date();
+    $(timeElement)[0].value = new Date().toLocaleTimeString('en-GB', {
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  }
+
+  function CreateReport(firstName, lastName, civilianID, dateOfBirth) {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#new-report-civilianID').val(civilianID);
+    $('#new-report-firstName').val(firstName);
+    $('#new-report-lastName').val(lastName);
+    $('#new-report-dateOfBirth').val(dateOfBirth);
+    $('#new-report-reportingEmsID').val(myUser._id);
+  }
+
   function searchMedicalNames() {
     var myUser = <%- JSON.stringify(user) %>;
     var activeCommunityID
@@ -782,7 +901,7 @@
                           
                             <div class="panel-body">
                                 <div class="text-align-center">
-                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenCitation('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`');setDateAndTime('#date', '#time');">Create Report</button>
+                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`');setDateAndTime('#new-report-reportDate', '');">Create Report</button>
                                 </div>
                                 <hr/>
                                 Driver's ID #: `+e._id+`<br/>
@@ -804,9 +923,9 @@
                                 </ul>
                                 <div class="tab-content" id="pills-tabContent">
                                   <div class="tab-pane fade active in" id="pills-reports-`+e._id+`" role="tabpanel" aria-labelledby="pills-reports-tab-`+e._id+`">
-                                    <table id="reports-table-`+e._id+`" class="table table-hover" border="1" frame="box">
+                                    <table id="reports-table-`+e._id+`" class="table" border="1" frame="box">
                                       <thead>
-                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td></tr>
+                                        <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td><td>Delete</td></tr>
                                         </thead>
                                         <tbody>
                                           <!-- List of Reports -->
@@ -824,7 +943,7 @@
                                     </table>
                                   </div>
                                   <div class="tab-pane fade" id="pills-conditions-`+e._id+`" role="tabpanel" aria-labelledby="pills-conditions-tab-`+e._id+`">
-                                    <table id="conditions-table-`+e._id+`" class="table table-hover" border="1" frame="box">
+                                    <table id="conditions-table-`+e._id+`" class="table" border="1" frame="box">
                                       <thead>
                                         <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td><td>Delete</td></tr>
                                       </thead>
@@ -848,7 +967,7 @@
               console.log("found a report match for: ", r.report.civilianID)
               var newReportContent
             newReportContent = `
-            <tr id="`+r._id+`"><td>`+r.report.date+`</td><td style='text-transform: capitalize;'>`+r.report.hospitalized+`</td><td>`+r.report.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteReport('`+r._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+            <tr id="`+r._id+`"><td>`+r.report.date+`</td><td style='text-transform: capitalize;'>`+r.report.hospitalized+`</td><td style='text-transform: capitalize;'>`+r.report.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteReport('`+r._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
             `
             console.log("ready to append: ", newReportContent)
             $("#reports-table-"+r.report.civilianID+" tbody").append(newReportContent)
@@ -860,7 +979,7 @@
               console.log("found a medication match for: ", m.medication.civilianID)
               var newReportContent
             newReportContent = `
-            <tr id="`+m._id+`"><td>`+m.medication.startDate+`</td><td style='text-transform: capitalize;'>`+m.medication.name+`</td><td>`+m.medication.dosage+`</td><td>`+m.medication.frequency+`</td><td class="text-align-center"><a class='clickable' onclick="deleteMedication('`+m._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+            <tr id="`+m._id+`"><td>`+m.medication.startDate+`</td><td style='text-transform: capitalize;'>`+m.medication.name+`</td><td>`+m.medication.dosage+`</td><td style='text-transform: capitalize;'>`+m.medication.frequency+`</td><td class="text-align-center"><a class='clickable' onclick="deleteMedication('`+m._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
             `
             console.log("ready to append: ", newReportContent)
             $("#medications-table-"+m.medication.civilianID+" tbody").append(newReportContent)
@@ -872,7 +991,7 @@
               console.log("found a condition match for: ", c.condition.civilianID)
               var newReportContent
             newReportContent = `
-            <tr id="`+c._id+`"><td>`+c.condition.dateOccurred+`</td><td style='text-transform: capitalize;'>`+c.condition.name+`</td><td>`+c.condition.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteCondition('`+c._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+            <tr id="`+c._id+`"><td>`+c.condition.dateOccurred+`</td><td style='text-transform: capitalize;'>`+c.condition.name+`</td><td style='text-transform: capitalize;'>`+c.condition.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteCondition('`+c._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
             `
             console.log("ready to append: ", newReportContent)
             $("#conditions-table-"+c.condition.civilianID+" tbody").append(newReportContent)
@@ -884,6 +1003,10 @@
          
 
      });
+  }
+
+  function createNewMedicalReport() {
+    //idk if we need this
   }
 
   $(document).ready(function(){
