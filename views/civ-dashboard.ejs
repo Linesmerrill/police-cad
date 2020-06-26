@@ -100,7 +100,7 @@
         </thead>
         <tbody>
           <% for(var i=0; i<personas.length; i++) {%>
-            <tr data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
+            <tr data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
               <td><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td>
               <td><%= personas[i].civilian.birthday%></td>
             </tr>
@@ -710,7 +710,7 @@
             <div class="tab-pane fade active in" id="pills-reports" role="tabpanel" aria-labelledby="pills-reports-tab">
               <table id="reportsTable" class="table" border="1" frame="box">
                 <thead>
-                  <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td></tr>
+                  <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td><td>Delete</td></tr>
                 </thead>
                   <tbody>
                   </tbody>
@@ -1273,6 +1273,17 @@ $.delete = function(url, data, callback, type){
      });
   }
 
+  function loadReports(index) {
+    $("#reportsTable tbody").empty()
+    var parameters = { civID: index };
+       $.get('/medical-reports',parameters, function(data) {
+         data.forEach(function(e){
+          var newRowContent = `<tr id="`+e._id+`"><td>`+e.report.date+`</td><td style='text-transform: capitalize;'>`+e.report.hospitalized+`</td><td style='text-transform: capitalize;'>`+e.report.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteReport('`+e._id+`', '`+e.report.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>`
+          $("#reportsTable tbody").append(newRowContent)
+         });
+     });
+  }
+
   function loadMedications(index) {
     $('#medication-civilian-id').val(index)
     $("#medicationsTable tbody").empty()
@@ -1295,6 +1306,13 @@ $.delete = function(url, data, callback, type){
           $("#conditionsTable tbody").append(newRowContent)
          });
      });
+  }
+
+  function deleteReport(id, civilianID) {
+    var parameters = { reportID: id };
+    $.delete('/reports/'+id, parameters, function(data) {
+      $(`table#reportsTable tr#`+id).remove()
+    })
   }
 
   function deleteMedication(id) {

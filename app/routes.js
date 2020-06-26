@@ -1153,6 +1153,16 @@ module.exports = function (app, passport, server) {
       });
   })
 
+  app.get('/medical-reports', function (req, res) {
+    MedicalReport.find({
+        'report.civilianID': req.query.civID,
+      },
+      function (err, dbReports) {
+        if (err) return console.error(err);
+        res.send(dbReports)
+      });
+  })
+
   app.get('/medications', function (req, res) {
     Medication.find({
         'medication.civilianID': req.query.civID,
