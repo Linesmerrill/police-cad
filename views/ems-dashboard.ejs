@@ -745,7 +745,7 @@
   function searchMedicalNames() {
     var myUser = <%- JSON.stringify(user) %>;
     var activeCommunityID
-    $("#accordion div").empty()
+    $("#accordion").empty()
     if (myUser.user.activeCommunity != "" && myUser.user.activeCommunity != null) {
       activeCommunityID = myUser.user.activeCommunity
     }
@@ -760,7 +760,14 @@
          var i = 0
          data.civilians.forEach(function(e){
            console.log("resp for medical database: ", e)
-          var newRowContent = `
+           var collapsed
+           if (i == 0) {
+             collapsed = "in"
+           } else {
+            collapsed = ""
+           }
+          var newRowContent
+          newRowContent = `
           <!-- List of Civilians -->
               
                       <div class="panel panel-default background-transparent">
@@ -771,7 +778,7 @@
                             </h4>
                           </div>
                           
-                            <div id="collapse`+i+`" class="panel-collapse">
+                            <div id="collapse`+i+`" class="panel-collapse collapse `+collapsed+`">
                           
                             <div class="panel-body">
                                 <div class="text-align-center">
@@ -786,18 +793,18 @@
                                 <h4>Medical History</h4>
                                 <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
                                   <li class="nav-item active">
-                                    <a class="nav-link active" id="pills-citations-tab" data-toggle="pill" href="#pills-citations" role="tab" aria-controls="pills-citations" aria-selected="true">Reports</a>
+                                    <a class="nav-link active" id="pills-reports-tab-`+e._id+`" data-toggle="pill" href="#pills-reports-`+e._id+`" role="tab" aria-controls="pills-reports-`+e._id+`" aria-selected="true">Reports</a>
                                   </li>
                                   <li class="nav-item">
-                                    <a class="nav-link" id="pills-warnings-tab" data-toggle="pill" href="#pills-warnings" role="tab" aria-controls="pills-warnings" aria-selected="false">Medications</a>
+                                    <a class="nav-link" id="pills-medications-tab-`+e._id+`" data-toggle="pill" href="#pills-medications-`+e._id+`" role="tab" aria-controls="pills-medications-`+e._id+`" aria-selected="false">Medications</a>
                                   </li>
                                   <li class="nav-item">
-                                    <a class="nav-link" id="pills-arrests-tab" data-toggle="pill" href="#pills-arrests" role="tab" aria-controls="pills-arrests" aria-selected="false">Pre-Existing Conditions</a>
+                                    <a class="nav-link" id="pills-conditions-tab-`+e._id+`" data-toggle="pill" href="#pills-conditions-`+e._id+`" role="tab" aria-controls="pills-conditions-`+e._id+`" aria-selected="false">Pre-Existing Conditions</a>
                                   </li>
                                 </ul>
                                 <div class="tab-content" id="pills-tabContent">
-                                  <div class="tab-pane fade active in" id="pills-citations" role="tabpanel" aria-labelledby="pills-citations-tab">
-                                    <table id="reports-table" class="table table-hover" border="1" frame="box">
+                                  <div class="tab-pane fade active in" id="pills-reports-`+e._id+`" role="tabpanel" aria-labelledby="pills-reports-tab-`+e._id+`">
+                                    <table id="reports-table-`+e._id+`" class="table table-hover" border="1" frame="box">
                                       <thead>
                                         <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td></tr>
                                         </thead>
@@ -806,8 +813,8 @@
                                           </tbody>
                                       </table>
                                   </div>
-                                  <div class="tab-pane fade" id="pills-warnings" role="tabpanel" aria-labelledby="pills-warnings-tab">
-                                    <table id="medications-table" class="table" border="1" frame="box">
+                                  <div class="tab-pane fade" id="pills-medications-`+e._id+`" role="tabpanel" aria-labelledby="pills-medications-tab-`+e._id+`">
+                                    <table id="medications-table-`+e._id+`" class="table" border="1" frame="box">
                                       <thead>
                                         <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Dosage</td><td>Frequency</td><td>Delete</td></tr>
                                       </thead>
@@ -816,8 +823,8 @@
                                         </tbody>
                                     </table>
                                   </div>
-                                  <div class="tab-pane fade" id="pills-arrests" role="tabpanel" aria-labelledby="pills-arrests-tab">
-                                    <table id="conditions-table" class="table table-hover" border="1" frame="box">
+                                  <div class="tab-pane fade" id="pills-conditions-`+e._id+`" role="tabpanel" aria-labelledby="pills-conditions-tab-`+e._id+`">
+                                    <table id="conditions-table-`+e._id+`" class="table table-hover" border="1" frame="box">
                                       <thead>
                                         <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td><td>Delete</td></tr>
                                       </thead>
@@ -831,38 +838,50 @@
                           </div>
                         </div>
           `
-          $("#accordion div").append(newRowContent)
+          $("#accordion").append(newRowContent)
+          i++
+        });
           //loop through all reports, medications and conditions for this civ
-          
+          data.civilians.forEach(function(e){
           data.reports.forEach(function(r){
             if (e._id == r.report.civilianID) {
-            var newReportContent = `
-            <tr id="`+r._id+`"><td>"`+r.report.date+`"</td><td style='text-transform: capitalize;'>"`+r.report.hospitalized+`"</td><td>"`+r.report.details+`"</td><td class="text-align-center"><a class='clickable' onclick="deleteReport('`+r._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+              console.log("found a report match for: ", r.report.civilianID)
+              var newReportContent
+            newReportContent = `
+            <tr id="`+r._id+`"><td>`+r.report.date+`</td><td style='text-transform: capitalize;'>`+r.report.hospitalized+`</td><td>`+r.report.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteReport('`+r._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
             `
-            $("#reports-table tbody").append(newReportContent)
+            console.log("ready to append: ", newReportContent)
+            $("#reports-table-"+r.report.civilianID+" tbody").append(newReportContent)
             }
           });
 
           data.medications.forEach(function(m){
             if (e._id == m.medication.civilianID) {
-            var newReportContent = `
-            <tr id="`+m._id+`"><td>"`+m.medication.startDate+`"</td><td style='text-transform: capitalize;'>"`+m.medication.name+`"</td><td>"`+m.medication.dosage+`"</td><td>"`+m.medication.frequency+`"</td><td class="text-align-center"><a class='clickable' onclick="deleteMedication('`+m._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+              console.log("found a medication match for: ", m.medication.civilianID)
+              var newReportContent
+            newReportContent = `
+            <tr id="`+m._id+`"><td>`+m.medication.startDate+`</td><td style='text-transform: capitalize;'>`+m.medication.name+`</td><td>`+m.medication.dosage+`</td><td>`+m.medication.frequency+`</td><td class="text-align-center"><a class='clickable' onclick="deleteMedication('`+m._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
             `
-            $("#medications-table tbody").append(newReportContent)
+            console.log("ready to append: ", newReportContent)
+            $("#medications-table-"+m.medication.civilianID+" tbody").append(newReportContent)
             }
           });
 
           data.conditions.forEach(function(c){
             if (e._id == c.condition.civilianID) {
-            var newReportContent = `
-            <tr id="`+c._id+`"><td>"`+c.condition.dateOccurred+`"</td><td style='text-transform: capitalize;'>"`+c.condition.name+`"</td><td>"`+c.condition.details+`"</td><td class="text-align-center"><a class='clickable' onclick="deleteCondition('`+c._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+              console.log("found a condition match for: ", c.condition.civilianID)
+              var newReportContent
+            newReportContent = `
+            <tr id="`+c._id+`"><td>`+c.condition.dateOccurred+`</td><td style='text-transform: capitalize;'>`+c.condition.name+`</td><td>`+c.condition.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteCondition('`+c._id+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
             `
-            $("#conditions-table tbody").append(newReportContent)
+            console.log("ready to append: ", newReportContent)
+            $("#conditions-table-"+c.condition.civilianID+" tbody").append(newReportContent)
             }
           });
         
-        
-         });
+        });
+        console.log("we are done writing")
+         
 
      });
   }
