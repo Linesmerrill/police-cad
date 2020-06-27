@@ -415,14 +415,14 @@
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="first-name">Plate:</label>
                 <label class="col-md-5" id="plateView">plate here</label>
-                <input id="plateVeh" name="plateVeh" type="text" value="" style="display:none">
+                <input id="plateVeh" type="text" value="" style="display:none">
             </div>
 
             <!-- Text input-->
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="last-name">Model:</label>
                 <label class="col-md-8" id="modelView">model here</label>
-                <input id="modelVeh" name="modelVeh" type="text" value="" style="display:none">
+                <input id="modelVeh" type="text" value="" style="display:none">
             </div>
 
             <!-- Select Basic -->
@@ -435,11 +435,12 @@
             <div class="col-md-7">
               <label class="col-md-4 margin-bottom-1" for="ro">RO:</label>
               <label class="col-md-8" id="roView">ro here</label>
-              <input id="roVeh" type="text" name="roVeh" value="" style="display:none">
+              <input id="roVeh" type="text" value="" style="display:none">
             </div>
 
             <div class="col-md-12 text-align-center">
-              <button id="emailVeh" type="submit" name="emailVeh" class="btn btn-danger">Delete Vehicle</button>
+              <input id="vehicle-id" type="hidden" name="vehicleID" value="">
+              <button type="submit" class="btn btn-danger">Delete Vehicle</button>
             </div>
             </fieldset>
           </form>
@@ -831,15 +832,14 @@ $.delete = function(url, data, callback, type){
     var myVar = <%- JSON.stringify(vehicles) %>;
 
     var color = myVar[index].emsVehicle.color
-    var email = myVar[index].emsVehicle.email.toLowerCase()
     var plate = myVar[index].emsVehicle.plate.toUpperCase()
     var model = myVar[index].emsVehicle.model
     var registeredOwner = myVar[index].emsVehicle.registeredOwner
+    $('#vehicle-id').val(myVar[index]._id)
     $('#plateView').text(plate)
     $('#modelView').text(model)
     $('#colorView').text(color)
     $('#roView').text(registeredOwner)
-    $('#emailVeh').val(email.toLowerCase())
     $('#modelVeh').val(model)
     $('#roVeh').val(registeredOwner)
     $('#plateVeh').val(plate)

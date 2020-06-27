@@ -24,7 +24,6 @@ emsSchema.methods.create = function (request, response) {
     this.ems.assignmentArea = request.body.assignmentArea;
     this.ems.station = request.body.station;
     this.ems.callSign = request.body.callSign;
-    this.ems.email = request.body.submitNewEms.toLowerCase(); //deprecated 6/27/2020
     this.ems.activeCommunityID = request.body.activeCommunityID; // we set this when submitting the from so it should not be null
     this.ems.userID = request.body.userID; // we set this when submitting the from so it should not be null
     this.ems.createdAt = new Date();

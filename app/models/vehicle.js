@@ -29,7 +29,6 @@ vehicleSchema.methods.createVeh = function (request, response) {
     this.vehicle.validInsurance = request.body.validInsurance;
     this.vehicle.registeredOwner = request.body.registeredOwner.trim();
     this.vehicle.isStolen = request.body.isStolen;
-    this.vehicle.email = request.body.submitNewVeh.toLowerCase();
     this.vehicle.activeCommunityID = request.body.activeCommunityID; // we set this when submitting the from so it should not be null
     this.vehicle.userID = request.body.userID; // we set this when submitting the from so it should not be null
     this.vehicle.createdAt = new Date();

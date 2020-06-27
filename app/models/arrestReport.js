@@ -51,11 +51,6 @@ arrestReportSchema.methods.updateArrestReport = function (req, res) {
     this.arrestReport.reportingOfficerID = req.body.reportingOfficerID.toLowerCase();
   }
 
-  //deprecated 6/27/2020
-  if (exists(req.body.reportingOfficerEmail)) {
-    this.arrestReport.reportingOfficerEmail = req.body.reportingOfficerEmail.toLowerCase();
-  }
-
   this.arrestReport.accusedID = req.body.accusedID;
   if (exists(req.body.charges)) {
     this.arrestReport.charges = req.body.charges.trim();

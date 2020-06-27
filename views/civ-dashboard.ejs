@@ -251,7 +251,7 @@
               <div class="col-md-4">
                 <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
-                <button id="submit-new-civ" name="submitNewCiv" value="<%=user.user.email%>" class="btn btn-primary" onclick="createNewCiv()">Create</button>
+                <button id="submit-new-civ" class="btn btn-primary" onclick="createNewCiv()">Create</button>
               </div>
             </div>
             </fieldset>
@@ -360,7 +360,7 @@
               <div class="col-md-4">
                 <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-veh-activeCommunityID" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
-                <button id="create-vehicle" name="submitNewVeh" value=<%= user.user.email %> class="btn btn-primary">Create</button>
+                <button id="create-vehicle" class="btn btn-primary">Create</button>
               </div>
             </div>
             </fieldset>
@@ -647,7 +647,6 @@
             </div>
 
             <div class="col-md-12 text-align-center">
-              <input type="hidden" id="email" name="email">
               <input type="hidden" id="civilianID" name="civilianID">
               <button type="submit" value="update" name="action" class="btn btn-info" onclick="clearHelpText()">Update Civilian</button>
               <button type="submit" value="delete" name="action" class="btn btn-danger" onclick="clearHelpText()">Delete Civilian</button>
@@ -833,7 +832,6 @@
               </div>
 
             <div class="col-md-12 text-align-center">
-                <input type="hidden" id="emailVeh" name="emailVeh">
                 <input type="hidden" id="vehicleID" name="vehicleID">
                 <button type="submit" value="update" name="action" class="btn btn-info">Update Vehicle</button>
                 <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Vehicle</button>
@@ -1260,7 +1258,6 @@ $.delete = function(url, data, callback, type){
     // data to be sent to db for civ deletion
     $('#firstName').val(firstName)
     $('#lastName').val(lastName)
-    $('#email').val(myVar[index].civilian.email.toLowerCase())
     $('#delBirthday').val(birthday)
   }
 
@@ -1351,7 +1348,6 @@ $.delete = function(url, data, callback, type){
   function loadVehData(index) {
     var myVar = <%- JSON.stringify(vehicles) %>;
     $('#vehicleID').val(myVar[index]._id)
-    $('#emailVeh').val(myVar[index].vehicle.email.toLowerCase())
     $('#plateVeh').val(myVar[index].vehicle.plate.toUpperCase())
 
     // since only cars after 6/26/2020 will have this info, we need to check for empty values

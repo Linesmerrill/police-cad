@@ -199,7 +199,7 @@ module.exports = function (app, passport, server) {
     req.app.locals.specialContext = null;
     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
       Civilian.find({
-        'civilian.email': req.user.user.email.toLowerCase(),
+        'civilian.userID': req.user._id,
         '$or': [{ // some are stored as empty strings and others as null so we need to check for both
           'civilian.activeCommunityID': ''
         }, {
@@ -208,7 +208,7 @@ module.exports = function (app, passport, server) {
       }, function (err, dbPersonas) {
         if (err) return console.error(err);
         Vehicle.find({
-          'vehicle.email': req.user.user.email.toLowerCase(),
+          'vehicle.userID': req.user._id,
           '$or': [{ // some are stored as empty strings and others as null so we need to check for both
             'vehicle.activeCommunityID': ''
           }, {
@@ -247,12 +247,12 @@ module.exports = function (app, passport, server) {
       });
     } else {
       Civilian.find({
-        'civilian.email': req.user.user.email.toLowerCase(),
+        'civilian.userID': req.user._id,
         'civilian.activeCommunityID': req.user.user.activeCommunity
       }, function (err, dbPersonas) {
         if (err) return console.error(err);
         Vehicle.find({
-          'vehicle.email': req.user.user.email.toLowerCase(),
+          'vehicle.userID': req.user._id,
           'vehicle.activeCommunityID': req.user.user.activeCommunity
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
@@ -290,12 +290,13 @@ module.exports = function (app, passport, server) {
     req.app.locals.specialContext = null;
     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
       Ems.find({
-        'ems.email': req.user.user.email.toLowerCase(),
+        'ems.userID': req.user._id
       }, function (err, dbPersonas) {
         if (err) return console.error(err);
         EmsVehicle.find({
-          'emsVehicle.email': req.user.user.email.toLowerCase(),
+          'emsVehicle.userID': req.user._id,
         }, function (err, dbVehicles) {
+          console.log(dbVehicles)
           if (err) return console.error(err);
           Community.find({
             '$or': [{
@@ -317,12 +318,12 @@ module.exports = function (app, passport, server) {
       })
     } else {
       Ems.find({
-        'ems.email': req.user.user.email.toLowerCase(),
+        'ems.userID': req.user._id,
         'ems.activeCommunityID': req.user.user.activeCommunity
       }, function (err, dbPersonas) {
         if (err) return console.error(err);
         EmsVehicle.find({
-          'emsVehicle.email': req.user.user.email.toLowerCase(),
+          'emsVehicle.userID': req.user._id,
           'emsVehicle.activeCommunityID': req.user.user.activeCommunity
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
@@ -1549,17 +1550,11 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-civ', auth, function (req, res) {
-    User.findOne({
-      'user.email': req.body.submitNewCiv.toLowerCase()
-    }, function (err, user) {
-      if (err) return console.error(err);
       var myCiv = new Civilian()
       myCiv.updateCiv(req, res)
       myCiv.save(function (err) {
         if (err) return console.error(err);
       });
-
-    })
   });
 
   app.post('/create-ems', auth, function (req, res) {
@@ -2312,15 +2307,9 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/deleteEmsVeh', auth, function (req, res) {
-    var roName = req.body.roVeh
-    var modelName = req.body.modelVeh
-    var emailName = req.body.emailVeh.toLowerCase()
-    var plateName = req.body.plateVeh
-    EmsVehicle.deleteOne({
-      'emsVehicle.email': emailName.toLowerCase(),
-      'emsVehicle.model': modelName,
-      'emsVehicle.registeredOwner': roName,
-      'emsVehicle.plate': plateName
+    // console.debug(req.body)
+    EmsVehicle.findByIdAndDelete({
+      '_id': ObjectId(req.body.vehicleID)
     }, function (err) {
       if (err) return console.error(err);
       return res.redirect('/ems-dashboard');
