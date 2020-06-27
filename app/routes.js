@@ -1656,7 +1656,6 @@ module.exports = function (app, passport, server) {
         'warrant.updatedDate': req.body.updatedDate,
         'warrant.updatedTime': req.body.updatedTime,
         'warrant.clearingOfficer': req.body.clearingOfficer,
-        'warrant.clearingOfficerEmail': req.body.clearingOfficerEmail,
         'warrant.status': false
       }
     }, function (err) {
@@ -2176,8 +2175,8 @@ module.exports = function (app, passport, server) {
   app.post('/updateOrDeleteVeh', auth, function (req, res) {
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
-      if (!exists(req.body.vehicleID) || !exists(req.body.emailVeh)) {
-        console.warn("cannot update vehicle with empty vehicleID or emailVeh, route: /updateOrDeleteVeh")
+      if (!exists(req.body.vehicleID)) {
+        console.warn("cannot update vehicle with empty vehicleID, route: /updateOrDeleteVeh")
         return res.redirect('/civ-dashboard');
       }
       if (!exists(req.body.roVeh)) {
@@ -2192,9 +2191,8 @@ module.exports = function (app, passport, server) {
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect('/civ-dashboard')
       }
-      Vehicle.findOneAndUpdate({
-        '_id': ObjectId(req.body.vehicleID),
-        'vehicle.email': req.body.emailVeh.toLowerCase()
+      Vehicle.findByIdAndUpdate({
+        '_id': ObjectId(req.body.vehicleID)
       }, {
         $set: {
           "vehicle.plate": req.body.plateVeh.trim().toUpperCase(),
@@ -2225,9 +2223,8 @@ module.exports = function (app, passport, server) {
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect('/civ-dashboard')
       }
-      Vehicle.deleteOne({
-        '_id': ObjectId(req.body.vehicleID),
-        'vehicle.email': req.body.emailVeh.toLowerCase()
+      Vehicle.findByIdAndDelete({
+        '_id': ObjectId(req.body.vehicleID)
       }, function (err) {
         if (err) return console.error(err);
         return res.redirect('/civ-dashboard');

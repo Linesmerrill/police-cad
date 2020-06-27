@@ -210,7 +210,7 @@
               <div class="col-md-4">
                 <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
-                <button id="submit-new-ems" name="submitNewEms" value=<%= user.user.email %> class="btn btn-primary" onclick="createNewEms()">Create</button>
+                <button id="submit-new-ems" class="btn btn-primary" onclick="createNewEms()">Create</button>
               </div>
             </div>
             </fieldset>
@@ -276,7 +276,7 @@
               <div class="col-md-4">
                 <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
-                <button id="create-vehicle" name="submitNewVeh" value=<%= user.user.email %> class="btn btn-primary">Create</button>
+                <button id="create-vehicle" class="btn btn-primary">Create</button>
               </div>
             </div>
             </fieldset>
