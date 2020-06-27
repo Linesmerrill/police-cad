@@ -2187,6 +2187,7 @@ module.exports = function (app, passport, server) {
       }, {
         $set: {
           "vehicle.plate": req.body.plateVeh.trim().toUpperCase(),
+          "vehicle.vin": req.body.vinVeh.trim().toUpperCase(),
           "vehicle.model": req.body.modelVeh.trim().charAt(0).toUpperCase() + req.body.modelVeh.trim().slice(1),
           'vehicle.color': req.body.colorView.trim().charAt(0).toUpperCase() + req.body.colorView.trim().slice(1),
           'vehicle.validRegistration': req.body.validRegView,
