@@ -721,6 +721,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitTicket"></label>
                 <div class="col-md-4">
+                  <input type="hidden" name="officerID" value="<%=user._id%>">
                   <input type="hidden" name="route" value="police-dashboard">
                   <button id="submitTicket" name="officerEmail" class="btn btn-primary" onclick="hideTicketCivPopover()" value=<%= user.user.email%>>Submit</button>
                 </div>
@@ -980,8 +981,9 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitArrestReport"></label>
                 <div class="col-md-4">
+                  <input type="hidden" name="reportingOfficerID" value="<%=user._id%>">
                   <input type="hidden" name="route" value="police-dashboard">
-                  <button id="submitArrestReport" name="reportingOfficerEmail" class="btn btn-primary" onclick="hideArrestReportPopover()" value=<%= user.user.email%>>Submit</button>
+                  <button id="submitArrestReport" class="btn btn-primary" onclick="hideArrestReportPopover()">Submit</button>
                 </div>
               </div>
             </fieldset>

@@ -2103,9 +2103,8 @@ module.exports = function (app, passport, server) {
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect('/civ-dashboard')
       }
-      Civilian.findOneAndUpdate({
-        '_id': ObjectId(req.body.civilianID),
-        'civilian.email': req.body.email.toLowerCase()
+      Civilian.findByIdAndUpdate({
+        '_id': ObjectId(req.body.civilianID)
       }, {
         $set: {
           "civilian.firstName": req.body.firstName.trim().charAt(0).toUpperCase() + req.body.firstName.trim().slice(1),
@@ -2128,24 +2127,36 @@ module.exports = function (app, passport, server) {
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect('/civ-dashboard')
       }
-      Civilian.deleteOne({
-        '_id': ObjectId(req.body.civilianID),
-        'civilian.email': req.body.email.toLowerCase(),
+      Civilian.findByIdAndDelete({
+        '_id': ObjectId(req.body.civilianID)
       }, function (err) {
-        Ticket.deleteMany({ // used to delete all the legacy tickets that don't have separate first/last names
-          'ticket.civName': req.body.firstName + " " + req.body.lastName,
-        }, function (err) {
-          // the new future way to delete tickets, eventually we will have civEmail and
-          // civID to only delete the specific tickets for that civ
           Ticket.deleteMany({
-            'ticket.civFirstName': req.body.firstName,
-            'ticket.civLastName': req.body.lastName
+            'ticket.civID': req.body.civilianID
           }, function (err) {
             if (err) return console.error(err);
-            return res.redirect('/civ-dashboard');
+            ArrestReport.deleteMany({
+              'arrest.accusedID': req.body.civilianID
+            }, function(err) {
+              if (err) return console.error(err);
+              MedicalReport.deleteMany({
+                'report.civilianID': req.body.civilianID
+              }, function(err) {
+                if (err) return console.error(err);
+                Medication.deleteMany({
+                  'medication.civilianID': req.body.civilianID
+                }, function(err){
+                  if (err) return console.error(err);
+                  Condition.deleteMany({
+                    'condition.civilianID': req.body.civilianID
+                  }, function(err){
+                    if (err) return console.error(err);
+                    return res.redirect('/civ-dashboard');
+                  })
+                })
+              })
+            })
           })
         })
-      })
     }
   })
 

@@ -2,8 +2,7 @@ var mongoose = require('mongoose');
 
 var ticketSchema = mongoose.Schema({
   ticket: {
-    officerEmail: String,
-    civName: String,
+    officerID: String,
     caseNumber: String,
     violation: [{
       type: String
@@ -15,20 +14,25 @@ var ticketSchema = mongoose.Schema({
     amount: String,
     date: String,
     time: String,
-    civFirstName: String,
-    civLastName: String,
     civID: String,
     civEmail: String,
     isWarning: Boolean,
     createdAt: Date,
-    updatedAt: Date
+    updatedAt: Date,
+    civName: String, //deprecated 6/27/2020
+    civFirstName: String, //deprecated 6/27/2020
+    civLastName: String, //deprecated 6/27/2020
+    officerEmail: String //deprecated 6/27/2020
   }
 });
 
 ticketSchema.methods.updateTicket = function (request, response) {
   //debug log showing the request body for the ticket request
   // console.debug("ticket request body: ", request.body)
-  rawNameAndDOB = request.body.civFirstName
+  
+  rawNameAndDOB = request.body.civFirstName //deprecated 6/27/2020
+
+  //deprecated 6/27/2020
   if (exists(request.body.civFirstName) && exists(request.body.civLastName)) {
     if (request.body.civFirstName.trim().length > 1 && request.body.civLastName.length > 1) {
       this.ticket.civFirstName = request.body.civFirstName.trim().charAt(0).toUpperCase() + request.body.civFirstName.trim().slice(1);
@@ -44,7 +48,8 @@ ticketSchema.methods.updateTicket = function (request, response) {
     return
   }
 
-  this.ticket.officerEmail = request.body.officerEmail.toLowerCase();
+  this.ticket.officerID = request.body.officerID;
+  this.ticket.officerEmail = request.body.officerEmail.toLowerCase(); //deprecated 6/27/2020
   this.ticket.caseNumber = request.body.caseNumber;
   if (exists(request.body.plate)) {
     this.ticket.plate = request.body.plate.trim().toUpperCase(); //optional

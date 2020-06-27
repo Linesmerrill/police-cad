@@ -3,7 +3,7 @@ var bcrypt = require('bcrypt-nodejs');
 
 var civilianSchema = mongoose.Schema({
   civilian: {
-    email: String,
+    email: String, //deprecated 6/27/2020
     firstName: String,
     lastName: String,
     licenseStatus: String,
