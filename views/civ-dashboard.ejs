@@ -1059,8 +1059,13 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="accountEmail">Email:</label>
               <div class="col-md-6">
-              <input id="accountEmail" name="accountEmail" type="email" class="form-control input-md" readonly="readonly">
+              <input id="accountEmail" name="accountEmail" type="email" class="form-control input-md">
+              <div id="updateEmailBtns" class="margin-top-1" style="display: none">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" name="page" value="/civ-dashboard">
+                <button id="updateEmail" value="updateEmail" name="action" class="btn btn-info">Update Email</button> <button type="button" class="btn btn-primary" onclick="cancelEmailUpdate()">Cancel</button>
               </div>
+            </div>
             </div>
 
             <!-- Update Username input-->
@@ -1172,6 +1177,15 @@ $('#accountUsername').on('keyup', function(e) {
     $('#updateUsernameBtns').show();
   } else {
     $('#updateUsernameBtns').hide();
+  }
+})
+
+// displays the Update Email and Cancel buttons for updating the email
+$('#accountEmail').on('keyup', function(e) {
+  if(e.target.value != myUser.user.email && e.target.value != '') {
+    $('#updateEmailBtns').show();
+  } else {
+    $('#updateEmailBtns').hide();
   }
 })
 
@@ -1396,6 +1410,12 @@ $.delete = function(url, data, callback, type){
     var myUser = <%- JSON.stringify(user) %>;
     $('#accountUsername').val(myUser.user.username)
     $('#updateUsernameBtns').hide();
+  }
+
+  function cancelEmailUpdate() {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountEmail').val(myUser.user.email)
+    $('#updateEmailBtns').hide();
   }
 
   function generateSerialNumber(length, inputID) {

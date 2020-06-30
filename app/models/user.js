@@ -5,6 +5,7 @@ var userSchema = mongoose.Schema({
     user: {
         username: String,
         email: String,
+        isVerified: { type: Boolean, default: false },
         password: String,
         name: String,
         address: String,

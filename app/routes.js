@@ -1549,6 +1549,12 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  // app.post('/confirmation', userController.confirmationPost);
+  
+  app.post('/resend', function(req, res, next) {
+    
+  });
+
   app.post('/create-civ', auth, function (req, res) {
       var myCiv = new Civilian()
       myCiv.updateCiv(req, res)

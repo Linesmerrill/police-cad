@@ -931,11 +931,6 @@ a.link--inherit {
     background-color: #36333d;
 }
 
-#accountEmail {
-    color: #eee;
-    background-color: #36333d;
-}
-
 /* To fix the scrolling modal issues */
 .modal {
     overflow-y: auto;
