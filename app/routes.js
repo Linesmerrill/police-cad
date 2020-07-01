@@ -2186,6 +2186,9 @@ module.exports = function (app, passport, server) {
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect('/civ-dashboard')
       }
+      if (!exists(req.body.vinVeh)) {
+        req.body.vinVeh = ""
+      }
       Vehicle.findByIdAndUpdate({
         '_id': ObjectId(req.body.vehicleID)
       }, {
