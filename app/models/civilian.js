@@ -3,7 +3,7 @@ var bcrypt = require('bcrypt-nodejs');
 
 var civilianSchema = mongoose.Schema({
   civilian: {
-    email: String,
+    email: String, //deprecated 6/27/2020
     firstName: String,
     lastName: String,
     licenseStatus: String,
@@ -36,7 +36,6 @@ civilianSchema.methods.updateCiv = function (request, response) {
   this.civilian.ticketCount = request.body.ticketCount;
   this.civilian.birthday = request.body.birthday;
   this.civilian.warrants = request.body.warrants;
-  this.civilian.email = request.body.submitNewCiv.toLowerCase();
   if (exists(request.body.address)) {
     this.civilian.address = request.body.address.trim();
   }

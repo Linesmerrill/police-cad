@@ -501,6 +501,12 @@
                                     <strong>Danger!</strong> Vehicle reported as stolen.
                                 </div>
                               <% } %>
+                              <!-- <div class="text-align-center">
+                                <button data-toggle="modal" href="#stolenVehicleModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenReportStolen('<%= vehicles[i]._id%>');setDateAndTime('#date', '#time');">Report Stolen</button>
+                              </div>
+                              <hr/> -->
+
+                                Vin #: <%= vehicles[i].vehicle.vin%><br/>
                                 License Plate #: <%= vehicles[i].vehicle.plate%><br/>
                                 Registered Owner: <%= vehicles[i].vehicle.registeredOwner%><br/>
                                 Color: <%= vehicles[i].vehicle.color%><br/>
@@ -743,8 +749,9 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitTicket"></label>
                 <div class="col-md-4">
+                  <input type="hidden" name="officerID" value="<%=user._id%>">
                   <input type="hidden" name="route" value="dispatch-dashboard">
-                  <button id="submitTicket" name="officerEmail" class="btn btn-primary" onclick="hideTicketCivPopover()" value=<%= user.user.email%>>Submit</button>
+                  <button id="submitTicket" class="btn btn-primary" onclick="hideTicketCivPopover()">Submit</button>
                 </div>
               </div>
             </fieldset>
@@ -891,7 +898,7 @@
                 <label class="col-md-4 control-label" for="submitWarning"></label>
                 <div class="col-md-4">
                   <input type="hidden" name="route" value="dispatch-dashboard">
-                  <button id="submitWarning" name="officerEmail" class="btn btn-primary" onclick="hideWarningCivPopover()" value=<%= user.user.email%>>Submit</button>
+                  <button id="submitWarning" class="btn btn-primary" onclick="hideWarningCivPopover()">Submit</button>
                 </div>
               </div>
             </fieldset>
@@ -1002,8 +1009,9 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitArrestReport"></label>
                 <div class="col-md-4">
+                  <input type="hidden" name="reportingOfficerID" value="<%=user._id%>">
                   <input type="hidden" name="route" value="dispatch-dashboard">
-                  <button id="submitArrestReport" name="reportingOfficerEmail" class="btn btn-primary" onclick="hideArrestReportPopover()" value=<%= user.user.email%>>Submit</button>
+                  <button id="submitArrestReport" class="btn btn-primary" onclick="hideArrestReportPopover()">Submit</button>
                 </div>
               </div>
             </fieldset>
@@ -1080,7 +1088,7 @@
                 <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
                 <div class="col-md-4">
                   <input type="hidden" name="route" value="dispatch-dashboard">
-                  <button id="submitWarrantCreation" name="reportingOfficerEmail" class="btn btn-primary" onclick="hideWarrantCreatePopover()" value=<%= user.user.email%>>Submit</button>
+                  <button id="submitWarrantCreation" class="btn btn-primary" onclick="hideWarrantCreatePopover()">Submit</button>
                 </div>
               </div>
             </fieldset>
@@ -1112,7 +1120,7 @@
                 <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
                 <div class="col-md-4">
                   <input type="hidden" name="route" value="dispatch-dashboard">
-                  <button id="submitWarrantClearCreation" name="clearingOfficerEmail" class="btn btn-success" onclick="hideWarrantClearPopover()" value=<%= user.user.email%>>Yes</button>
+                  <button id="submitWarrantClearCreation" class="btn btn-success" onclick="hideWarrantClearPopover()">Yes</button>
                   <button class="btn btn-danger" data-dismiss="modal">No</button>
                 </div>
               </div>

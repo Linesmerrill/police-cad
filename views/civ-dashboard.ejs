@@ -76,7 +76,7 @@
         
         <div class="col-lg-10 col-lg-offset-1 text-center">
           <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-lg margin-top-2">Add New Civilian</button>
-          <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-lg margin-top-2">Add New Vehicle</button>
+          <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-lg margin-top-2" onclick="generateSerialNumber(17, 'vin')">Add New Vehicle</button>
           <button data-toggle="modal" href="#newFirearmModal"  class="btn btn-primary btn-lg margin-top-2" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button>
         </div>
       </div>
@@ -251,7 +251,7 @@
               <div class="col-md-4">
                 <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
-                <button id="submit-new-civ" name="submitNewCiv" value="<%=user.user.email%>" class="btn btn-primary" onclick="createNewCiv()">Create</button>
+                <button id="submit-new-civ" class="btn btn-primary" onclick="createNewCiv()">Create</button>
               </div>
             </div>
             </fieldset>
@@ -272,6 +272,17 @@
             <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Add a New Vehicle</h4>
             <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="vin">Vin #</label>
+              <div class="col-md-4">
+                <input id="vin" name="vin" type="text" minlength="17" maxlength="17" class="form-control input-md disabled-color" required readonly="readonly">
+              </div>
+              <div class="col-md-4">
+                <button type="button" class="btn btn-info btn-md" onclick="generateSerialNumber(17, 'vin')">Regenerate</button>
+              </div>
+            </div>
 
             <!-- Text input-->
             <div class="form-group required">
@@ -349,7 +360,7 @@
               <div class="col-md-4">
                 <input type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-veh-activeCommunityID" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
-                <button id="create-vehicle" name="submitNewVeh" value=<%= user.user.email %> class="btn btn-primary">Create</button>
+                <button id="create-vehicle" class="btn btn-primary">Create</button>
               </div>
             </div>
             </fieldset>
@@ -636,7 +647,6 @@
             </div>
 
             <div class="col-md-12 text-align-center">
-              <input type="hidden" id="email" name="email">
               <input type="hidden" id="civilianID" name="civilianID">
               <button type="submit" value="update" name="action" class="btn btn-info" onclick="clearHelpText()">Update Civilian</button>
               <button type="submit" value="delete" name="action" class="btn btn-danger" onclick="clearHelpText()">Delete Civilian</button>
@@ -747,21 +757,32 @@
             <h4>Details about your Vehicle</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
-            <div class="form-group">
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="vinVeh">Vin #</label>
+              <div class="col-md-4">
+                <input id="vinVeh" name="vinVeh" type="text" minlength="17" maxlength="17" class="form-control input-md disabled-color" required readonly="readonly">
+              </div>
+              <div id="no-existing-vin" class="col-md-4">
+                <button type="button" class="btn btn-info btn-md" onclick="generateSerialNumber(17, 'vinVeh')">Generate</button>
+              </div>
+            </div>
+
+            <div class="form-group required">
                 <label class="col-md-4 control-label" for="plate">Plate:</label>
                 <div class="col-md-4">
                   <input id="plateVeh" name="plateVeh" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
                 </div>
               </div>
 
-            <div class="form-group">
+            <div class="form-group required">
                 <label class="col-md-4 control-label" for="model">Model:</label>
                 <div class="col-md-4">
                   <input id="modelVeh" name="modelVeh" type="search" placeholder="Model" class="form-control input-md" required="">
                 </div>
               </div>
 
-            <div class="form-group">
+            <div class="form-group required">
                 <label class="col-md-4 control-label" for="colorView">Color:</label>
                 <div class="col-md-4">
                   <input id="colorView" name="colorView" type="text" placeholder="Color" class="form-control input-md" required="">
@@ -811,7 +832,6 @@
               </div>
 
             <div class="col-md-12 text-align-center">
-                <input type="hidden" id="emailVeh" name="emailVeh">
                 <input type="hidden" id="vehicleID" name="vehicleID">
                 <button type="submit" value="update" name="action" class="btn btn-info">Update Vehicle</button>
                 <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Vehicle</button>
@@ -1238,7 +1258,6 @@ $.delete = function(url, data, callback, type){
     // data to be sent to db for civ deletion
     $('#firstName').val(firstName)
     $('#lastName').val(lastName)
-    $('#email').val(myVar[index].civilian.email.toLowerCase())
     $('#delBirthday').val(birthday)
   }
 
@@ -1328,10 +1347,18 @@ $.delete = function(url, data, callback, type){
 
   function loadVehData(index) {
     var myVar = <%- JSON.stringify(vehicles) %>;
-
     $('#vehicleID').val(myVar[index]._id)
-    $('#emailVeh').val(myVar[index].vehicle.email.toLowerCase())
     $('#plateVeh').val(myVar[index].vehicle.plate.toUpperCase())
+
+    // since only cars after 6/26/2020 will have this info, we need to check for empty values
+    if (myVar[index].vehicle.vin == "" || myVar[index].vehicle.vin == undefined) {
+      $('#vinVeh').val("")
+      $('#no-existing-vin').show()
+    } else {
+      $('#vinVeh').val(myVar[index].vehicle.vin.toUpperCase())
+      $('#no-existing-vin').hide()
+    }
+    
     $('#modelVeh').val(myVar[index].vehicle.model)
     $('#colorView').val(myVar[index].vehicle.color)
     $('#validRegView').val(myVar[index].vehicle.validRegistration)

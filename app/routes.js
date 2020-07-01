@@ -199,7 +199,7 @@ module.exports = function (app, passport, server) {
     req.app.locals.specialContext = null;
     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
       Civilian.find({
-        'civilian.email': req.user.user.email.toLowerCase(),
+        'civilian.userID': req.user._id,
         '$or': [{ // some are stored as empty strings and others as null so we need to check for both
           'civilian.activeCommunityID': ''
         }, {
@@ -208,7 +208,7 @@ module.exports = function (app, passport, server) {
       }, function (err, dbPersonas) {
         if (err) return console.error(err);
         Vehicle.find({
-          'vehicle.email': req.user.user.email.toLowerCase(),
+          'vehicle.userID': req.user._id,
           '$or': [{ // some are stored as empty strings and others as null so we need to check for both
             'vehicle.activeCommunityID': ''
           }, {
@@ -247,12 +247,12 @@ module.exports = function (app, passport, server) {
       });
     } else {
       Civilian.find({
-        'civilian.email': req.user.user.email.toLowerCase(),
+        'civilian.userID': req.user._id,
         'civilian.activeCommunityID': req.user.user.activeCommunity
       }, function (err, dbPersonas) {
         if (err) return console.error(err);
         Vehicle.find({
-          'vehicle.email': req.user.user.email.toLowerCase(),
+          'vehicle.userID': req.user._id,
           'vehicle.activeCommunityID': req.user.user.activeCommunity
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
@@ -290,12 +290,13 @@ module.exports = function (app, passport, server) {
     req.app.locals.specialContext = null;
     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
       Ems.find({
-        'ems.email': req.user.user.email.toLowerCase(),
+        'ems.userID': req.user._id
       }, function (err, dbPersonas) {
         if (err) return console.error(err);
         EmsVehicle.find({
-          'emsVehicle.email': req.user.user.email.toLowerCase(),
+          'emsVehicle.userID': req.user._id,
         }, function (err, dbVehicles) {
+          console.log(dbVehicles)
           if (err) return console.error(err);
           Community.find({
             '$or': [{
@@ -317,12 +318,12 @@ module.exports = function (app, passport, server) {
       })
     } else {
       Ems.find({
-        'ems.email': req.user.user.email.toLowerCase(),
+        'ems.userID': req.user._id,
         'ems.activeCommunityID': req.user.user.activeCommunity
       }, function (err, dbPersonas) {
         if (err) return console.error(err);
         EmsVehicle.find({
-          'emsVehicle.email': req.user.user.email.toLowerCase(),
+          'emsVehicle.userID': req.user._id,
           'emsVehicle.activeCommunityID': req.user.user.activeCommunity
         }, function (err, dbVehicles) {
           if (err) return console.error(err);
@@ -1549,17 +1550,11 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-civ', auth, function (req, res) {
-    User.findOne({
-      'user.email': req.body.submitNewCiv.toLowerCase()
-    }, function (err, user) {
-      if (err) return console.error(err);
       var myCiv = new Civilian()
       myCiv.updateCiv(req, res)
       myCiv.save(function (err) {
         if (err) return console.error(err);
       });
-
-    })
   });
 
   app.post('/create-ems', auth, function (req, res) {
@@ -1656,7 +1651,6 @@ module.exports = function (app, passport, server) {
         'warrant.updatedDate': req.body.updatedDate,
         'warrant.updatedTime': req.body.updatedTime,
         'warrant.clearingOfficer': req.body.clearingOfficer,
-        'warrant.clearingOfficerEmail': req.body.clearingOfficerEmail,
         'warrant.status': false
       }
     }, function (err) {
@@ -2103,9 +2097,8 @@ module.exports = function (app, passport, server) {
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect('/civ-dashboard')
       }
-      Civilian.findOneAndUpdate({
-        '_id': ObjectId(req.body.civilianID),
-        'civilian.email': req.body.email.toLowerCase()
+      Civilian.findByIdAndUpdate({
+        '_id': ObjectId(req.body.civilianID)
       }, {
         $set: {
           "civilian.firstName": req.body.firstName.trim().charAt(0).toUpperCase() + req.body.firstName.trim().slice(1),
@@ -2128,24 +2121,36 @@ module.exports = function (app, passport, server) {
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect('/civ-dashboard')
       }
-      Civilian.deleteOne({
-        '_id': ObjectId(req.body.civilianID),
-        'civilian.email': req.body.email.toLowerCase(),
+      Civilian.findByIdAndDelete({
+        '_id': ObjectId(req.body.civilianID)
       }, function (err) {
-        Ticket.deleteMany({ // used to delete all the legacy tickets that don't have separate first/last names
-          'ticket.civName': req.body.firstName + " " + req.body.lastName,
-        }, function (err) {
-          // the new future way to delete tickets, eventually we will have civEmail and
-          // civID to only delete the specific tickets for that civ
           Ticket.deleteMany({
-            'ticket.civFirstName': req.body.firstName,
-            'ticket.civLastName': req.body.lastName
+            'ticket.civID': req.body.civilianID
           }, function (err) {
             if (err) return console.error(err);
-            return res.redirect('/civ-dashboard');
+            ArrestReport.deleteMany({
+              'arrest.accusedID': req.body.civilianID
+            }, function(err) {
+              if (err) return console.error(err);
+              MedicalReport.deleteMany({
+                'report.civilianID': req.body.civilianID
+              }, function(err) {
+                if (err) return console.error(err);
+                Medication.deleteMany({
+                  'medication.civilianID': req.body.civilianID
+                }, function(err){
+                  if (err) return console.error(err);
+                  Condition.deleteMany({
+                    'condition.civilianID': req.body.civilianID
+                  }, function(err){
+                    if (err) return console.error(err);
+                    return res.redirect('/civ-dashboard');
+                  })
+                })
+              })
+            })
           })
         })
-      })
     }
   })
 
@@ -2165,8 +2170,8 @@ module.exports = function (app, passport, server) {
   app.post('/updateOrDeleteVeh', auth, function (req, res) {
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
-      if (!exists(req.body.vehicleID) || !exists(req.body.emailVeh)) {
-        console.warn("cannot update vehicle with empty vehicleID or emailVeh, route: /updateOrDeleteVeh")
+      if (!exists(req.body.vehicleID)) {
+        console.warn("cannot update vehicle with empty vehicleID, route: /updateOrDeleteVeh")
         return res.redirect('/civ-dashboard');
       }
       if (!exists(req.body.roVeh)) {
@@ -2181,12 +2186,12 @@ module.exports = function (app, passport, server) {
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect('/civ-dashboard')
       }
-      Vehicle.findOneAndUpdate({
-        '_id': ObjectId(req.body.vehicleID),
-        'vehicle.email': req.body.emailVeh.toLowerCase()
+      Vehicle.findByIdAndUpdate({
+        '_id': ObjectId(req.body.vehicleID)
       }, {
         $set: {
           "vehicle.plate": req.body.plateVeh.trim().toUpperCase(),
+          "vehicle.vin": req.body.vinVeh.trim().toUpperCase(),
           "vehicle.model": req.body.modelVeh.trim().charAt(0).toUpperCase() + req.body.modelVeh.trim().slice(1),
           'vehicle.color': req.body.colorView.trim().charAt(0).toUpperCase() + req.body.colorView.trim().slice(1),
           'vehicle.validRegistration': req.body.validRegView,
@@ -2213,9 +2218,8 @@ module.exports = function (app, passport, server) {
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect('/civ-dashboard')
       }
-      Vehicle.deleteOne({
-        '_id': ObjectId(req.body.vehicleID),
-        'vehicle.email': req.body.emailVeh.toLowerCase()
+      Vehicle.findByIdAndDelete({
+        '_id': ObjectId(req.body.vehicleID)
       }, function (err) {
         if (err) return console.error(err);
         return res.redirect('/civ-dashboard');
@@ -2303,15 +2307,9 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/deleteEmsVeh', auth, function (req, res) {
-    var roName = req.body.roVeh
-    var modelName = req.body.modelVeh
-    var emailName = req.body.emailVeh.toLowerCase()
-    var plateName = req.body.plateVeh
-    EmsVehicle.deleteOne({
-      'emsVehicle.email': emailName.toLowerCase(),
-      'emsVehicle.model': modelName,
-      'emsVehicle.registeredOwner': roName,
-      'emsVehicle.plate': plateName
+    // console.debug(req.body)
+    EmsVehicle.findByIdAndDelete({
+      '_id': ObjectId(req.body.vehicleID)
     }, function (err) {
       if (err) return console.error(err);
       return res.redirect('/ems-dashboard');

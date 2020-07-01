@@ -35,9 +35,7 @@ warrantSchema.methods.createWarrant = function (req, res) {
   if (exists(req.body.reportingOfficer)) {
     this.warrant.reportingOfficer = req.body.reportingOfficer;
   }
-  if (exists(req.body.reportingOfficerEmail)) {
-    this.warrant.reportingOfficerEmail = req.body.reportingOfficerEmail;
-  }
+  
   if (exists(req.body.accusedFirstName)) {
     this.warrant.accusedFirstName = req.body.accusedFirstName;
   }

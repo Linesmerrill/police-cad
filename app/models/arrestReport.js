@@ -6,7 +6,8 @@ var arrestReportSchema = mongoose.Schema({
     date: String,
     time: String,
     reportingOfficer: String,
-    reportingOfficerEmail: String,
+    reportingOfficerEmail: String, //deprecated 6/27/2020
+    reportingOfficerID: String, //introduced 6/27/2020
     accusedFirstName: String,
     accusedLastName: String,
     accusedID: String,
@@ -46,9 +47,10 @@ arrestReportSchema.methods.updateArrestReport = function (req, res) {
   if (exists(req.body.reportingOfficer)) {
     this.arrestReport.reportingOfficer = req.body.reportingOfficer.toLowerCase();
   }
-  if (exists(req.body.reportingOfficerEmail)) {
-    this.arrestReport.reportingOfficerEmail = req.body.reportingOfficerEmail.toLowerCase();
+  if (exists(req.body.reportingOfficerID)) {
+    this.arrestReport.reportingOfficerID = req.body.reportingOfficerID.toLowerCase();
   }
+
   this.arrestReport.accusedID = req.body.accusedID;
   if (exists(req.body.charges)) {
     this.arrestReport.charges = req.body.charges.trim();
