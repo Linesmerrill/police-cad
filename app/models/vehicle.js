@@ -22,6 +22,9 @@ var vehicleSchema = mongoose.Schema({
 vehicleSchema.methods.createVeh = function (request, response) {
     // console.debug("request body: ", request.body)
     this.vehicle.plate = request.body.plate.trim().toUpperCase();
+    if (!exists(request.body.vin)) {
+        request.body.vin = ""
+    }
     this.vehicle.vin = request.body.vin.trim().toUpperCase();
     this.vehicle.model = request.body.model.trim().charAt(0).toUpperCase() + request.body.model.trim().slice(1);
     this.vehicle.color = request.body.color.trim().charAt(0).toUpperCase() + request.body.color.trim().slice(1);
