@@ -38,4 +38,12 @@ vehicleSchema.methods.createVeh = function (request, response) {
     response.redirect('/civ-dashboard');
 };
 
+function exists(v) {
+    if (v !== undefined) {
+      return true
+    } else {
+      return false
+    }
+  }
+
 module.exports = mongoose.model('Vehicle', vehicleSchema);
