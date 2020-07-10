@@ -73,6 +73,7 @@
           <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-lg margin-top-2">Add New Vehicle</button>
           <button data-toggle="modal" href="#searchMedicalRecords"  class="btn btn-primary btn-lg margin-top-2">Medical Database</button>
           <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
+          <button data-toggle="modal" href="#mapModal"  class="btn btn-primary btn-lg margin-top-2">Map</button>
         </div>
       </div>
       </div>
@@ -776,7 +777,7 @@
   </div>
 
   <% include 10-codes %> 
-
+  <% include map %>
 
   <!--scripts loaded here -->
   <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
@@ -787,6 +788,7 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
   <script src="/static/js/wow.js"></script>
   <script src="/static/js/scripts.js"></script>
+  <script src="/static/js/easyzoom.js"></script>
 </body>
 
 </html>
@@ -1087,6 +1089,9 @@ $.delete = function(url, data, callback, type){
     $('#vehicle-table').DataTable({
       "bLengthChange": false,
     })
+
+    var $easyzoom = $('.easyzoom').easyZoom();
+    var api = $easyzoom.data('easyZoom');
 
     // displays the Update Username and Cancel buttons for updating the username
     var myUser = <%- JSON.stringify(user) %>;

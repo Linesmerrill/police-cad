@@ -78,6 +78,7 @@
           <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-lg margin-top-2">Add New Civilian</button>
           <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-lg margin-top-2" onclick="generateSerialNumber(17, 'vin')">Add New Vehicle</button>
           <button data-toggle="modal" href="#newFirearmModal"  class="btn btn-primary btn-lg margin-top-2" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button>
+          <button data-toggle="modal" href="#mapModal"  class="btn btn-primary btn-lg margin-top-2">Map</button>
         </div>
       </div>
     </div>
@@ -450,6 +451,8 @@
       </div>
     </div>
   </div>
+
+  <% include map %>
 
   <div id="addMedicationModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -1148,6 +1151,7 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
   <script src="/static/js/wow.js"></script>
   <script src="/static/js/scripts.js"></script>
+  <script src="/static/js/easyzoom.js"></script>
 </body>
 
 </html>
@@ -1165,6 +1169,8 @@
     "bLengthChange": false,
   })
 
+var $easyzoom = $('.easyzoom').easyZoom();
+var api = $easyzoom.data('easyZoom');
 // displays the Update Username and Cancel buttons for updating the username
 var myUser = <%- JSON.stringify(user) %>;
 $('#accountUsername').on('keyup', function(e) {

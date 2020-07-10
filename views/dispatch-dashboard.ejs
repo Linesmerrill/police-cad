@@ -146,6 +146,7 @@
             <% } %>
           <button type="button" data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
           <button type="button" data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
+          <button data-toggle="modal" href="#mapModal"  class="btn btn-primary btn-lg margin-top-2">Map</button>
         </div>
       </div>
       <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
@@ -1641,6 +1642,7 @@
 
   <% include 10-codes %> 
   <% include notepad %>
+  <% include map %>
 </body>
 </div>
 </div>
@@ -1657,6 +1659,7 @@
 <script src="/static/js/wow.js"></script>
 <script src="/static/js/scripts.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
+<script src="/static/js/easyzoom.js"></script>
 </body>
 
 </html>
@@ -1780,6 +1783,9 @@ $(document).ready(function() {
     "bLengthChange": false,
     "pageLength": 5,
   });
+
+  var $easyzoom = $('.easyzoom').easyZoom();
+  var api = $easyzoom.data('easyZoom');
 
   if ( ($(window).height() + 100) < $(document).height() ) {
     $('#top-link-block').removeClass('hidden').affix({
