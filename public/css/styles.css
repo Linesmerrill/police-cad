@@ -1094,7 +1094,7 @@ a.link--inherit {
 
 @media (max-width: 594px) {
     #map-image {
-        background-image: url("/static/images/GTA-V-Custom-Postal-Code-Map.jpg");
+        background-image: url("/static/images/desktop-map.jpg");
         background-repeat: no-repeat;
         background-size: contain ;
         width: 325px;
