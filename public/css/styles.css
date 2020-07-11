@@ -1096,7 +1096,7 @@ a.link--inherit {
     #map-image {
         background-image: url("/static/images/mobile-map.jpg");
         background-repeat: no-repeat;
-        background-size: contain ;
+        background-size: contain;
         width: 325px;
         height: 325px;
     }
@@ -1106,7 +1106,7 @@ a.link--inherit {
     #map-image {
         background-image: url("/static/images/desktop-map.jpg");
         background-repeat: no-repeat;
-        background-size: contain ;
+        background-size: contain;
         width: 565px;
         height: 800px;
     }
@@ -1116,7 +1116,7 @@ a.link--inherit {
     #map-image {
         background-image: url("/static/images/GTA-V-Custom-Postal-Code-Map.jpg");
         background-repeat: no-repeat;
-        background-size: contain ;
+        background-size: contain;
         width: 850px;
         height: 800px;
     }
