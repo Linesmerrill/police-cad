@@ -1659,7 +1659,7 @@
 <script src="/static/js/wow.js"></script>
 <script src="/static/js/scripts.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
-<script src="/static/js/easyzoom.js"></script>
+<script src="/static/js/wheelzoom.js"></script>
 </body>
 
 </html>
@@ -1784,8 +1784,10 @@ $(document).ready(function() {
     "pageLength": 5,
   });
 
-  var $easyzoom = $('.easyzoom').easyZoom();
-  var api = $easyzoom.data('easyZoom');
+  demo = wheelzoom(document.querySelectorAll('img'),{
+       zoom: 0.1,
+       maxZoom: -1
+  });
 
   if ( ($(window).height() + 100) < $(document).height() ) {
     $('#top-link-block').removeClass('hidden').affix({

@@ -1091,3 +1091,33 @@ a.link--inherit {
 .height-100 {
     height: 100%;
 }
+
+@media (max-width: 594px) {
+    #map-image {
+        background-image: url("/static/images/GTA-V-Custom-Postal-Code-Map.jpg");
+        background-repeat: no-repeat;
+        background-size: contain ;
+        width: 325px;
+        height: 425px;
+    }
+}
+
+@media (min-width: 595px) and (max-width: 995px) {
+    #map-image {
+        background-image: url("/static/images/GTA-V-Custom-Postal-Code-Map.jpg");
+        background-repeat: no-repeat;
+        background-size: contain ;
+        width: 565px;
+        height: 800px;
+    }
+}
+
+@media (min-width: 996px) {
+    #map-image {
+        background-image: url("/static/images/GTA-V-Custom-Postal-Code-Map.jpg");
+        background-repeat: no-repeat;
+        background-size: contain ;
+        width: 850px;
+        height: 800px;
+    }
+}
