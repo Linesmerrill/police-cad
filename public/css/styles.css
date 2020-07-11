@@ -746,7 +746,7 @@ a.link--inherit {
     left: 0;
     background-image: linear-gradient(to bottom, black, black);
     opacity: .6;
-    
+
 }
 
 #second {
@@ -1018,18 +1018,26 @@ a.link--inherit {
 }
 
 #top-link-block.affix-top {
-    position: absolute; /* allows it to "slide" up into view */
-    bottom: -82px; /* negative of the offset - height of link element */
-    right: 10px; /* padding from the left side of the window */
+    position: absolute;
+    /* allows it to "slide" up into view */
+    bottom: -82px;
+    /* negative of the offset - height of link element */
+    right: 10px;
+    /* padding from the left side of the window */
 }
+
 #top-link-block.affix {
-    position: fixed; /* keeps it on the bottom once in view */
-    bottom: 245px; /* height of link element */
-    right: 10px; /* padding from the left side of the window */
+    position: fixed;
+    /* keeps it on the bottom once in view */
+    bottom: 245px;
+    /* height of link element */
+    right: 10px;
+    /* padding from the left side of the window */
     z-index: 3;
 }
 
-#scroll-top-block:hover, #scroll-top-block:focus {
+#scroll-top-block:hover,
+#scroll-top-block:focus {
     color: #23527c;
     text-decoration: underline;
 }
@@ -1052,11 +1060,13 @@ a.link--inherit {
 }
 
 #addMedicationModal {
-    z-index: 9001 /* ITS OVER 9000!! */
+    z-index: 9001
+        /* ITS OVER 9000!! */
 }
 
 #addConditionModal {
-    z-index: 9001 /* ITS OVER 9000!! */
+    z-index: 9001
+        /* ITS OVER 9000!! */
 }
 
 .clickable:hover {
@@ -1072,4 +1082,42 @@ a.link--inherit {
     position: absolute;
     bottom: 10px;
     right: 6px;
+}
+
+.width-100 {
+    width: 100%;
+}
+
+.height-100 {
+    height: 100%;
+}
+
+@media (max-width: 594px) {
+    #map-image {
+        background-image: url("/static/images/mobile-map.jpg");
+        background-repeat: no-repeat;
+        background-size: contain;
+        width: 325px;
+        height: 325px;
+    }
+}
+
+@media (min-width: 595px) and (max-width: 995px) {
+    #map-image {
+        background-image: url("/static/images/desktop-map.jpg");
+        background-repeat: no-repeat;
+        background-size: contain;
+        width: 565px;
+        height: 800px;
+    }
+}
+
+@media (min-width: 996px) {
+    #map-image {
+        background-image: url("/static/images/GTA-V-Custom-Postal-Code-Map.jpg");
+        background-repeat: no-repeat;
+        background-size: contain;
+        width: 850px;
+        height: 800px;
+    }
 }
