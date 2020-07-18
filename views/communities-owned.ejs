@@ -70,7 +70,7 @@
                         <a href="/dispatch-dashboard">Dispatch</a>
                     </li>
                     <li>
-                        <a href="/logout">Logout</a>
+                        <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"><ion-icon class="nav-user-icon" name="person-circle-outline"></ion-icon></a>
                     </li>
                 </ul>
             </div>
@@ -166,6 +166,7 @@
             <div class="google-ad"></div>
         </section>
     </div>
+    <% include account-management %>
     <% include footer %>
     <div id="alertModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-sm">
@@ -190,13 +191,23 @@
     <script src="/static/js/jquery.easing.min.js"></script>
     <script src="/static/js/wow.js"></script>
     <script src="/static/js/scripts.js"></script>
-
+    <script src="https://unpkg.com/ionicons@5.1.2/dist/ionicons.js"></script>
 </body>
 
 </html>
 <script type="text/javascript">
 $(document).ready(function () {
     $('#example').DataTable();
+
+    // displays the Update Username and Cancel buttons for updating the username
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountUsername').on('keyup', function(e) {
+    if(e.target.value != myUser.user.username && e.target.value != '') {
+        $('#updateUsernameBtns').show();
+    } else {
+        $('#updateUsernameBtns').hide();
+    }
+    })
 });
 
 function copyText(element, code) {
@@ -209,5 +220,17 @@ function copyText(element, code) {
 function populateCommunityID(communityID) {
     $('#communityID').val(communityID)
 }
+
+function fillAccountDetails() {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountEmail').val(myUser.user.email)
+    $('#accountUsername').val(myUser.user.username)
+  }
+  
+  function cancelUsername() {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountUsername').val(myUser.user.username)
+    $('#updateUsernameBtns').hide();
+  }
 </script>
 <!-- IE needs 512+ bytes: https://blogs.msdn.microsoft.com/ieinternals/2010/08/18/friendly-http-error-pages/ -->

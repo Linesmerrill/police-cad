@@ -145,7 +145,8 @@ module.exports = function (app, passport, server) {
         return res.render('communities', {
           members: dbMembers,
           communities: dbCommunities,
-          userID: req.session.passport.user
+          userID: req.session.passport.user,
+          user: req.user
         });
       })
     })
@@ -163,7 +164,8 @@ module.exports = function (app, passport, server) {
       }
       return res.render('communities-owned', {
         communities: dbCommunities,
-        userID: req.session.passport.user
+        userID: req.session.passport.user,
+        user: req.user
       });
     })
   })
@@ -1926,7 +1928,7 @@ module.exports = function (app, passport, server) {
       var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /manageAccount")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect(page)
+        return res.redirect('back')
       }
       User.findOneAndUpdate({
         '_id': ObjectId(req.body.userID),
@@ -1939,10 +1941,10 @@ module.exports = function (app, passport, server) {
         if (err) {
           console.error(err);
         }
-        return res.redirect(page);
+        return res.redirect('back')
       })
     } else {
-      return res.redirect(page);
+      return res.redirect('back')
     }
   })
 
@@ -1968,7 +1970,7 @@ module.exports = function (app, passport, server) {
             }, function (err) {
               if (err) {
                 console.error(err);
-                return res.redirect(page);
+                return res.redirect('back')
               }
             })
           })

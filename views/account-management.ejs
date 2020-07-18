@@ -1,0 +1,110 @@
+<div id="accountModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <!-- Modal Name -->
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4>Manage Account</h4>
+          <hr style="width: 88%;max-width: 100rem;">
+
+          <form class="form-horizontal" action="/manageAccount" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <h5>Profile</h5>
+                <div class="text-align-center">
+                    <ion-icon class="default-person-icon" name="person-circle-outline"></ion-icon>
+                </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountEmail">Email:</label>
+              <div class="col-md-6">
+              <input id="accountEmail" name="accountEmail" type="email" class="form-control input-md" readonly="readonly">
+              </div>
+            </div>
+
+            <!-- Update Username input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="accountUsername">Username:<br><small>Max 20 characters</small></label>
+              <div class="col-md-6">
+              <input id="accountUsername" name="accountUsername" type="text" class="form-control input-md" maxlength="20" autocomplete="off" required>
+              <div id="updateUsernameBtns" class="margin-top-1" style="display: none">
+                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" name="page" value="/civ-dashboard">
+                <button id="updateUsername" value="updateUsername" name="action" class="btn btn-info">Update Username</button> <button type="button" class="btn btn-primary" onclick="cancelUsername()">Cancel</button>
+              </div>
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5><ion-icon name="lock-closed-outline"></ion-icon> Password</h5>
+
+            <!-- Button -->
+            <div class="form-group text-align-center">
+              <div class="col-md-12">
+                <button id="updatePassword" type="button" class="btn btn-primary" onclick="document.location.href='forgot-password'">Update Password</button>
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5><ion-icon name="log-out-outline"></ion-icon> Sign out</h5>
+
+            <!-- Button -->
+            <div class="form-group text-align-center">
+              <div class="col-md-12">
+                <button id="sign-out" type="button" class="btn btn-primary" onclick="document.location.href='logout'">Sign out</button>
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+
+          <h5 class="color-red"> <ion-icon name="trash-outline"></ion-icon> Close Account</h5>
+
+          <h6><strong>Warning:</strong> Deleting your account is irreversible.</h6>
+          <!-- Button -->
+          <div class="form-group text-align-center">
+            <div class="col-md-12">
+              <button data-toggle="modal" type="button" href="#deleteAccountConfirmModal" class="btn btn-danger">Delete account</button>
+            </div>
+          </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteAccountConfirmModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/deleteAccount" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Delete Account</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <p>Warning: Once your account is deleted all created communities, civilians, vehicles, and citations 
+              from this account will be deleted. This is non-reversible.
+            </p>
+            <p>Are you sure you want to delete your account?</p>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="deleteAccount"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" name="page" value="/civ-dashboard">
+                <button id="deleteAccount" value="<%= user._id %>" name="userID"  class="btn btn-danger">Delete account</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>

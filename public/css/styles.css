@@ -1121,3 +1121,12 @@ a.link--inherit {
         height: 800px;
     }
 }
+
+.nav-user-icon {
+    font-size: 2.5em;
+    margin-top: -0.23em;
+}
+
+.default-person-icon {
+    font-size: 6em;
+}
