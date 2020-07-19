@@ -36,6 +36,10 @@ module.exports = function (app, passport, server) {
     res.render('about');
   });
 
+  app.get('/map', function (req, res) {
+    res.render('map');
+  });
+
   app.get('/health', function (req, res) {
     res.render('health');
   });
@@ -196,7 +200,7 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.get('/civ-dashboard', auth, function (req, res) {
+  app.get('/civ-dashboard', authCivilian, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
@@ -287,7 +291,7 @@ module.exports = function (app, passport, server) {
     }
   });
 
-  app.get('/ems-dashboard', auth, function (req, res) {
+  app.get('/ems-dashboard', authEms, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
@@ -350,7 +354,7 @@ module.exports = function (app, passport, server) {
     }
   });
 
-  app.get('/police-dashboard', auth, function (req, res) {
+  app.get('/police-dashboard', authPolice, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     Community.find({
@@ -381,7 +385,7 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.get('/dispatch-dashboard', auth, function (req, res) {
+  app.get('/dispatch-dashboard', authDispatch, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     Community.find({
@@ -2671,7 +2675,6 @@ function auth(req, res, next) {
 }
 
 function authCivilian(req, res, next) {
-
   if (req.isAuthenticated()) {
     return next();
   }
@@ -2681,7 +2684,6 @@ function authCivilian(req, res, next) {
 }
 
 function authPolice(req, res, next) {
-
   if (req.isAuthenticated()) {
     return next();
   }
@@ -2691,7 +2693,6 @@ function authPolice(req, res, next) {
 }
 
 function authEms(req, res, next) {
-
   if (req.isAuthenticated()) {
     return next();
   }

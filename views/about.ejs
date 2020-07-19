@@ -53,19 +53,7 @@
                     <i class="ion-ios-analytics-outline"></i> Lines Police Server</a>
             </div>
             <div class="navbar-collapse collapse" id="bs-navbar">
-
-                <ul class="nav navbar-nav navbar-right">
-                    <li>
-                        <a href="/rules">Rules</a>
-                    </li>
-                    <li>
-                        <a href="/about">About</a>
-                    </li>
-                    <li>
-                        <a href="/release-log">Release Log</a>
-                    </li>
-
-                </ul>
+                <% include index-navbar %>
             </div>
         </div>
     </nav>
@@ -128,9 +116,8 @@
                 <a href="/terms-and-conditions">Terms and Conditions</a>
             </h4>
         </div>
-        <section>
-            <div class="google-ad"></div>
-        </section>
+        <hr class="margin-top-3 margin-bottom-3" style="width: 88%;max-width: 100rem;">
+        <div class="google-ad"></div>
     </div>
     <% include footer %>
     <div id="alertModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
