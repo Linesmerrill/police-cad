@@ -75,14 +75,6 @@
         <div class="margin-bottom-2">
           <span id="active-bolos margin-right-1" style="font-size: 18px;">Civilians:</span> <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-md pull-right">Add New Civilian</button>
         </div>
-      <!-- <table id="personas-table" class="table table-hover table-bordered">
-        <thead>
-          <tr>
-            <th>Civilian Name</th>
-            <th>Date of Birth</th>
-          </tr>
-        </thead>
-        <tbody> -->
           <div>
             <label>Search:
               <input id="civilian-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
@@ -91,7 +83,7 @@
           <div class="row">
             <% for(var i=0; i<personas.length; i++) {%>
             <div class="col-xs-6 col-sm-4 col-md-3 text-align-center civ-thumbnails">
-              <div class="thumbnail civilian-box" data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
+              <div class="thumbnail thumbnail-box" data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
                 <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                 <div class="caption">
                   <h3 class="color-white"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></h3>
@@ -101,14 +93,6 @@
             </div>
             <% } %>
           </div>
-          
-            <tr >
-              <td></td>
-              <td></td>
-            </tr>
-            
-        <!-- </tbody>
-    </table> -->
     </div>
     <hr class="margin-top-1" style="width: 88%;max-width: 100rem;">
 <!--Table for Vehicles  -->
@@ -116,20 +100,24 @@
   <div class="margin-bottom-1">
     <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Vehicle</button>
   </div>
-  <table id="vehicle-table" class="table table-hover table-bordered">
-    <thead>
-      <tr><th>Plate</th><th>Model</th><th>Color</th></tr>
-    </thead>
-      <tbody>
-        <% for(var i=0; i<vehicles.length; i++) {%>
-        <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewVeh" onclick="loadVehData(<%=i%>)">
-          <td><%= vehicles[i].vehicle.plate%></td>
-          <td> <%= vehicles[i].vehicle.model%></td>
-          <td> <%= vehicles[i].vehicle.color%></td>
-        </tr>
-        <% } %>
-      </tbody>
-  </table>
+  <div>
+    <label>Search:
+      <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+    </label>
+  </div>
+  <div class="row">
+    <% for(var i=0; i<vehicles.length; i++) {%>
+    <div class="col-xs-6 col-sm-4 col-md-3 text-align-center veh-thumbnails">
+      <div class="thumbnail thumbnail-box" data-toggle="modal" data-id='<%=i%>' data-target="#viewVeh" onclick="loadVehData('<%=i%>')">
+        <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
+        <div class="caption">
+          <h3 class="color-white license-plate">#<%= vehicles[i].vehicle.plate%>)</h3>
+          <p class="color-white"><%= vehicles[i].vehicle.color%></td> <%= vehicles[i].vehicle.model%></p>
+        </div>
+      </div>
+    </div>
+    <% } %>
+  </div>
 </div>
 <hr class="margin-top-1" style="width: 88%;max-width: 100rem;">
 <!--Table for Firearms  -->
@@ -1061,12 +1049,6 @@
 <script type="text/javascript">
   $(document).ready(function(){
     
-  $('#personas-table').DataTable({
-    "bLengthChange": false,
-  })
-  $('#vehicle-table').DataTable({
-    "bLengthChange": false,
-  })
   $('#firearm-table').DataTable({
     "bLengthChange": false,
   })
@@ -1074,6 +1056,13 @@
   $('#civilian-search').on("keyup", function() {
     var value = $(this).val().toLowerCase();
     $(".civ-thumbnails").filter(function() {
+      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+    });
+  });
+
+  $('#vehicle-search').on("keyup", function() {
+    var value = $(this).val().toLowerCase();
+    $(".veh-thumbnails").filter(function() {
       $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
     });
   });

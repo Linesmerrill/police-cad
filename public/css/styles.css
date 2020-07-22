@@ -8,6 +8,23 @@ http://www.bootstrapzero.com
 @import url(https://fonts.googleapis.com/css?family=Questrial);
 @import url(https://fonts.googleapis.com/css?family=Dancing+Script:700);
 
+@font-face {
+    font-family: 'dealerplatecalifornia';
+    src: url('/static/fonts/dealerplate_california-webfont.woff2') format('woff2'),
+         url('/static/fonts/dealerplate_california-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'car-frame';
+    src: url('/static/fonts/cargoframedemo-webfont.woff2') format('woff2'),
+         url('/static/fonts/cargoframedemo-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
 html,
 body {
     width: 100%;
@@ -1139,13 +1156,17 @@ a.link--inherit {
     font-size: 6em;
 }
 
-.civilian-box {
+.thumbnail-box {
     cursor: pointer;
     background: transparent;
     background-color: transparent;
 }
 
-.civilian-box:hover {
+.thumbnail-box:hover {
     background-color: black;
     text-decoration: underline;
+}
+
+.license-plate {
+    font-family: car-frame;
 }
