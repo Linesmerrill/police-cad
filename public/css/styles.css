@@ -832,6 +832,10 @@ a.link--inherit {
     font-size: 6em;
 }
 
+.font-size-4-vmax {
+    font-size: 4vmax;
+}
+
 #arrest-report-case-no {
     background-color: #36333d;
 }
@@ -1143,4 +1147,5 @@ a.link--inherit {
 
 .civilian-box:hover {
     background-color: black;
+    text-decoration: underline;
 }

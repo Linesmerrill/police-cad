@@ -92,7 +92,7 @@
             <% for(var i=0; i<personas.length; i++) {%>
             <div class="col-xs-6 col-sm-4 col-md-3 text-align-center civ-thumbnails">
               <div class="thumbnail civilian-box" data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
-                <ion-icon class="font-size-6" name="person-outline"></ion-icon>
+                <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                 <div class="caption">
                   <h3 class="color-white"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></h3>
                   <p class="color-white"><%= personas[i].civilian.birthday%></p>
