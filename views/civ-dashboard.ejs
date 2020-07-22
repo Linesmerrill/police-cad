@@ -72,25 +72,43 @@
     <div class="container">
       <!--Table for Personas  -->
       <div class="col-md-12 col-md-offset-0.75">
-        <div class="margin-bottom-1">
-          <span id="active-bolos margin-right-1" style="font-size: 18px;">Civilians:</span> <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Civilian</button>
+        <div class="margin-bottom-2">
+          <span id="active-bolos margin-right-1" style="font-size: 18px;">Civilians:</span> <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-md pull-right">Add New Civilian</button>
         </div>
-      <table id="personas-table" class="table table-hover table-bordered">
+      <!-- <table id="personas-table" class="table table-hover table-bordered">
         <thead>
           <tr>
             <th>Civilian Name</th>
             <th>Date of Birth</th>
           </tr>
         </thead>
-        <tbody>
-          <% for(var i=0; i<personas.length; i++) {%>
-            <tr data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
-              <td><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></td>
-              <td><%= personas[i].civilian.birthday%></td>
-            </tr>
+        <tbody> -->
+          <div>
+            <label>Search:
+              <input id="civilian-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+            </label>
+          </div>
+          <div class="row">
+            <% for(var i=0; i<personas.length; i++) {%>
+            <div class="col-xs-6 col-sm-4 col-md-3 text-align-center civ-thumbnails">
+              <div class="thumbnail civilian-box" data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
+                <ion-icon class="font-size-6" name="person-outline"></ion-icon>
+                <div class="caption">
+                  <h3 class="color-white"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></h3>
+                  <p class="color-white"><%= personas[i].civilian.birthday%></p>
+                </div>
+              </div>
+            </div>
             <% } %>
-        </tbody>
-    </table>
+          </div>
+          
+            <tr >
+              <td></td>
+              <td></td>
+            </tr>
+            
+        <!-- </tbody>
+    </table> -->
     </div>
     <hr class="margin-top-1" style="width: 88%;max-width: 100rem;">
 <!--Table for Vehicles  -->
@@ -1052,6 +1070,13 @@
   $('#firearm-table').DataTable({
     "bLengthChange": false,
   })
+
+  $('#civilian-search').on("keyup", function() {
+    var value = $(this).val().toLowerCase();
+    $(".civ-thumbnails").filter(function() {
+      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+    });
+  });
 
 // displays the Update Username and Cancel buttons for updating the username
 var myUser = <%- JSON.stringify(user) %>;

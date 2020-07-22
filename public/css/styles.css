@@ -820,12 +820,16 @@ a.link--inherit {
     color: red;
 }
 
+.font-size-1 {
+    font-size: 1em;
+}
+
 .font-size-5 {
     font-size: 5em;
 }
 
-.font-size-1 {
-    font-size: 1em;
+.font-size-6 {
+    font-size: 6em;
 }
 
 #arrest-report-case-no {
@@ -1129,4 +1133,14 @@ a.link--inherit {
 
 .default-person-icon {
     font-size: 6em;
+}
+
+.civilian-box {
+    cursor: pointer;
+    background: transparent;
+    background-color: transparent;
+}
+
+.civilian-box:hover {
+    background-color: black;
 }
