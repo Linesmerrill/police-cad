@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="/static/css/animate.min.css" />
   <link rel="stylesheet" href="/static/css/ionicons.min.css" />
   <link rel="stylesheet" href="/static/css/styles.css" />
-  <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
+  <script src="https://code.iconify.design/1/1.0.7/iconify.min.js"></script>
 </head>
 <!-- Global Site Tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-107735203-1"></script>
@@ -125,20 +125,25 @@
   <div class="margin-bottom-1">
     <span id="active-bolos margin-right-1" style="font-size: 18px;">Firearms:</span> <button data-toggle="modal" href="#newFirearmModal"  class="btn btn-primary btn-md pull-right margin-bottom-1" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button>
   </div>
-  <table id="firearm-table" class="table table-hover table-bordered">
-    <thead>
-      <tr><th>Serial #</th><th>Type</th><th>Registered to</th></tr>
-    </thead>
-      <tbody>
-        <% for(var i=0; i<firearms.length; i++) {%>
-        <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewFirearm" onclick="loadFirearmData(<%=i%>)">
-          <td><%= firearms[i].firearm.serialNumber%></td>
-          <td style="text-transform: capitalize;"> <%= firearms[i].firearm.weaponType%></td>
-          <td> <%= firearms[i].firearm.registeredOwner%></td>
-        </tr>
-        <% } %>
-      </tbody>
-  </table>
+  <div>
+    <label>Search:
+      <input id="firearm-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+    </label>
+  </div>
+  <div class="row">
+    <% for(var i=0; i<firearms.length; i++) {%>
+    <div class="col-xs-6 col-sm-4 col-md-3 text-align-center firearm-thumbnails">
+      <div class="thumbnail thumbnail-box" data-toggle="modal" data-id='<%=i%>' data-target="#viewFirearm" onclick="loadFirearmData('<%=i%>')">
+        <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
+        <div class="caption">
+          <h3 class="color-white" style="font-family: dealerplatecalifornia;"><%= firearms[i].firearm.serialNumber%></h3>
+          <p class="color-white" style="text-transform: capitalize;"><%= firearms[i].firearm.weaponType%></p>
+          <p class="color-white" style="font-size: 12px;"><%= firearms[i].firearm.registeredOwner%></p>
+        </div>
+      </div>
+    </div>
+    <% } %>
+  </div>
 </div>
 
     </div>
@@ -1048,10 +1053,6 @@
 
 <script type="text/javascript">
   $(document).ready(function(){
-    
-  $('#firearm-table').DataTable({
-    "bLengthChange": false,
-  })
 
   $('#civilian-search').on("keyup", function() {
     var value = $(this).val().toLowerCase();
@@ -1063,6 +1064,13 @@
   $('#vehicle-search').on("keyup", function() {
     var value = $(this).val().toLowerCase();
     $(".veh-thumbnails").filter(function() {
+      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+    });
+  });
+
+  $('#firearm-search').on("keyup", function() {
+    var value = $(this).val().toLowerCase();
+    $(".firearm-thumbnails").filter(function() {
       $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
     });
   });
