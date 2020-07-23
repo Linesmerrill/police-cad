@@ -1113,6 +1113,7 @@
     } else if (document.cookie.split(';').some((item) => item.includes('persona_icon=app'))) {
       showApps()
     } else {
+      $('.dataTables_filter').hide();
       $('#personas-table-div').hide()
       $('#app-icon-personas').toggleClass('active-icon')
     }
@@ -1133,6 +1134,7 @@
     } else if (document.cookie.split(';').some((item) => item.includes('vehicle_icon=app'))) {
       showVehicleApps()
     } else {
+      $('.dataTables_filter').hide();
       $('#vehicles-table-div').hide()
       $('#app-icon-vehicles').toggleClass('active-icon')
     }
@@ -1153,8 +1155,9 @@
     } else if (document.cookie.split(';').some((item) => item.includes('firearm_icon=app'))) {
       showFirearmApps()
     } else {
+      $('.dataTables_filter').hide();
       $('#firearms-table-div').hide()
-  $('#app-icon-firearms').toggleClass('active-icon')
+      $('#app-icon-firearms').toggleClass('active-icon')
     }
   var firearmDataTable = $('#firearm-table').DataTable({
     "bLengthChange": false,
@@ -1420,6 +1423,7 @@ $.delete = function(url, data, callback, type){
   }
 
   function showApps() {
+    $('.dataTables_filter').hide();
     $('#personas-table-div').hide()
     $('#personas-thumbnail').show()
     $('#app-icon-personas').addClass('active-icon').removeClass('inactive-icon')
@@ -1437,6 +1441,7 @@ $.delete = function(url, data, callback, type){
   }
 
   function showVehicleApps() {
+    $('.dataTables_filter').hide();
     $('#vehicles-table-div').hide()
     $('#vehicles-thumbnail').show()
     $('#app-icon-vehicles').addClass('active-icon').removeClass('inactive-icon')
@@ -1454,6 +1459,7 @@ $.delete = function(url, data, callback, type){
   }
 
   function showFirearmsApps() {
+    $('.dataTables_filter').hide();
     $('#firearms-table-div').hide()
     $('#firearms-thumbnail').show()
     $('#app-icon-firearms').addClass('active-icon').removeClass('inactive-icon')
