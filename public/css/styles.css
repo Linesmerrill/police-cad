@@ -841,12 +841,20 @@ a.link--inherit {
     font-size: 1em;
 }
 
+.font-size-2 {
+    font-size: 2em;
+}
+
 .font-size-5 {
     font-size: 5em;
 }
 
 .font-size-6 {
     font-size: 6em;
+}
+
+.font-size-2-vmax {
+    font-size: 2vmax;
 }
 
 .font-size-4-vmax {
@@ -1163,10 +1171,24 @@ a.link--inherit {
 }
 
 .thumbnail-box:hover {
-    background-color: black;
-    text-decoration: underline;
+    background-color: #00aced;
 }
 
 .license-plate {
     font-family: car-frame;
+}
+
+.table-icon {
+    vertical-align: middle;
+    margin-left: 0.5em;
+    font-size: 2em;
+    cursor: pointer;
+}
+
+.active-icon {
+    color: #00aced;
+}
+
+.inactive-icon {
+    color: white;
 }

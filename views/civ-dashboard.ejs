@@ -79,20 +79,39 @@
             <label>Search:
               <input id="civilian-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
             </label>
+             <ion-icon id="app-icon-personas" name="apps-outline" class="color-white table-icon" onclick="showApps()"></ion-icon> <ion-icon id="list-icon-personas" name="list-outline" class="color-white table-icon" onclick="showList()"></ion-icon>
           </div>
-          <div class="row">
+          <div id="personas-thumbnail" class="row" style="margin-top: 0.5em;">
             <% for(var i=0; i<personas.length; i++) {%>
-            <div class="col-xs-6 col-sm-4 col-md-3 text-align-center civ-thumbnails">
+            <div class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails">
               <div class="thumbnail thumbnail-box" data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
                 <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                 <div class="caption">
-                  <h3 class="color-white"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></h3>
-                  <p class="color-white"><%= personas[i].civilian.birthday%></p>
+                  <h4 class="color-white"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></h4>
+                  <h5 class="color-white"><%= personas[i].civilian.birthday%></h5>
                 </div>
               </div>
             </div>
             <% } %>
           </div>
+          <div id="personas-table-div">
+          <table id="personas-table" class="table table-hover table-bordered">
+            <thead>
+              <tr>
+                <th>Civilian Name</th>
+                <th>Date of Birth</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% for(var j=0; j<personas.length; j++) {%>
+                <tr data-toggle="modal" data-id="<%=j%>" data-target="#viewCiv" onclick="loadCivData('<%=j%>');loadTicketsAndWarnings('<%=personas[j]._id%>');loadArrests('<%=personas[j]._id%>');loadReports('<%=personas[j]._id%>');loadMedications('<%=personas[j]._id%>');loadConditions('<%=personas[j]._id%>')">
+                  <td><%= personas[j].civilian.firstName%> <%= personas[j].civilian.lastName%></td>
+                  <td><%= personas[j].civilian.birthday%></td>
+                </tr>
+                <% } %>
+            </tbody>
+        </table>
+      </div>
     </div>
     <hr class="margin-top-1" style="width: 88%;max-width: 100rem;">
 <!--Table for Vehicles  -->
@@ -104,19 +123,36 @@
     <label>Search:
       <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
     </label>
+    <ion-icon id="app-icon-vehicles" name="apps-outline" class="color-white table-icon" onclick="showVehicleApps()"></ion-icon> <ion-icon id="list-icon-vehicles" name="list-outline" class="color-white table-icon" onclick="showVehicleList()"></ion-icon>
   </div>
-  <div class="row">
+  <div id="vehicles-thumbnail" class="row" style="margin-top: 0.5em;">
     <% for(var i=0; i<vehicles.length; i++) {%>
-    <div class="col-xs-6 col-sm-4 col-md-3 text-align-center veh-thumbnails">
+    <div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails">
       <div class="thumbnail thumbnail-box" data-toggle="modal" data-id='<%=i%>' data-target="#viewVeh" onclick="loadVehData('<%=i%>')">
         <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
         <div class="caption">
-          <h3 class="color-white license-plate">#<%= vehicles[i].vehicle.plate%>)</h3>
-          <p class="color-white"><%= vehicles[i].vehicle.color%></td> <%= vehicles[i].vehicle.model%></p>
+          <h4 class="color-white license-plate">#<%= vehicles[i].vehicle.plate%>)</h4>
+          <h5 class="color-white"><%= vehicles[i].vehicle.color%></td> <%= vehicles[i].vehicle.model%></h5>
         </div>
       </div>
     </div>
     <% } %>
+  </div>
+  <div id="vehicles-table-div">
+    <table id="vehicle-table" class="table table-hover table-bordered">
+      <thead>
+        <tr><th>Plate</th><th>Model</th><th>Color</th></tr>
+      </thead>
+        <tbody>
+          <% for(var i=0; i<vehicles.length; i++) {%>
+          <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewVeh" onclick="loadVehData(<%=i%>)">
+            <td><%= vehicles[i].vehicle.plate%></td>
+            <td> <%= vehicles[i].vehicle.model%></td>
+            <td> <%= vehicles[i].vehicle.color%></td>
+          </tr>
+          <% } %>
+        </tbody>
+    </table>
   </div>
 </div>
 <hr class="margin-top-1" style="width: 88%;max-width: 100rem;">
@@ -129,20 +165,37 @@
     <label>Search:
       <input id="firearm-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
     </label>
+    <ion-icon id="app-icon-firearms" name="apps-outline" class="color-white table-icon" onclick="showFirearmsApps()"></ion-icon> <ion-icon id="list-icon-firearms" name="list-outline" class="color-white table-icon" onclick="showFirearmsList()"></ion-icon>
   </div>
-  <div class="row">
+  <div id="firearms-thumbnail" class="row" style="margin-top: 0.5em;">
     <% for(var i=0; i<firearms.length; i++) {%>
-    <div class="col-xs-6 col-sm-4 col-md-3 text-align-center firearm-thumbnails">
+    <div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails">
       <div class="thumbnail thumbnail-box" data-toggle="modal" data-id='<%=i%>' data-target="#viewFirearm" onclick="loadFirearmData('<%=i%>')">
         <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
         <div class="caption">
-          <h3 class="color-white" style="font-family: dealerplatecalifornia;"><%= firearms[i].firearm.serialNumber%></h3>
-          <p class="color-white" style="text-transform: capitalize;"><%= firearms[i].firearm.weaponType%></p>
+          <h4 class="color-white" style="font-family: dealerplatecalifornia;"><%= firearms[i].firearm.serialNumber%></h4>
+          <h5 class="color-white" style="text-transform: capitalize;"><%= firearms[i].firearm.weaponType%></h5>
           <p class="color-white" style="font-size: 12px;"><%= firearms[i].firearm.registeredOwner%></p>
         </div>
       </div>
     </div>
     <% } %>
+  </div>
+  <div id="firearms-table-div">
+    <table id="firearm-table" class="table table-hover table-bordered">
+      <thead>
+        <tr><th>Serial #</th><th>Type</th><th>Registered to</th></tr>
+      </thead>
+        <tbody>
+          <% for(var i=0; i<firearms.length; i++) {%>
+          <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewFirearm" onclick="loadFirearmData(<%=i%>)">
+            <td><%= firearms[i].firearm.serialNumber%></td>
+            <td style="text-transform: capitalize;"> <%= firearms[i].firearm.weaponType%></td>
+            <td> <%= firearms[i].firearm.registeredOwner%></td>
+          </tr>
+          <% } %>
+        </tbody>
+    </table>
   </div>
 </div>
 
@@ -1054,21 +1107,42 @@
 <script type="text/javascript">
   $(document).ready(function(){
 
+    // personas table 
+    $('#personas-table-div').hide()
+    $('#app-icon-personas').toggleClass('active-icon')
+    var personasDataTable = $('#personas-table').DataTable({
+    "bLengthChange": false,
+    })
   $('#civilian-search').on("keyup", function() {
+    personasDataTable.search(this.value).draw();
     var value = $(this).val().toLowerCase();
     $(".civ-thumbnails").filter(function() {
       $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
     });
   });
 
+  // vehicles table
+  $('#vehicles-table-div').hide()
+    $('#app-icon-vehicles').toggleClass('active-icon')
+  var vehicleDataTable = $('#vehicle-table').DataTable({
+    "bLengthChange": false,
+  })
   $('#vehicle-search').on("keyup", function() {
+    vehicleDataTable.search(this.value).draw();
     var value = $(this).val().toLowerCase();
     $(".veh-thumbnails").filter(function() {
       $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
     });
   });
 
+  // firearms table
+  $('#firearms-table-div').hide()
+  $('#app-icon-firearms').toggleClass('active-icon')
+  var firearmDataTable = $('#firearm-table').DataTable({
+    "bLengthChange": false,
+  })
   $('#firearm-search').on("keyup", function() {
+    firearmDataTable.search(this.value).draw();
     var value = $(this).val().toLowerCase();
     $(".firearm-thumbnails").filter(function() {
       $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
@@ -1316,5 +1390,50 @@ $.delete = function(url, data, callback, type){
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
    }
    $('#'+inputID).val(result);
+  }
+
+  function showList() {
+    $('.dataTables_filter').hide();
+    $('#personas-table-div').show()
+    $('#personas-thumbnail').hide()
+    $('#app-icon-personas').addClass('inactive-icon').removeClass('active-icon')
+    $('#list-icon-personas').addClass('active-icon').removeClass('inactive-icon')
+  }
+
+  function showApps() {
+    $('#personas-table-div').hide()
+    $('#personas-thumbnail').show()
+    $('#app-icon-personas').addClass('active-icon').removeClass('inactive-icon')
+    $('#list-icon-personas').addClass('inactive-icon').removeClass('active-icon')
+  }
+
+  function showVehicleList() {
+    $('.dataTables_filter').hide();
+    $('#vehicles-table-div').show()
+    $('#vehicles-thumbnail').hide()
+    $('#app-icon-vehicles').addClass('inactive-icon').removeClass('active-icon')
+    $('#list-icon-vehicles').addClass('active-icon').removeClass('inactive-icon')
+  }
+
+  function showVehicleApps() {
+    $('#vehicles-table-div').hide()
+    $('#vehicles-thumbnail').show()
+    $('#app-icon-vehicles').addClass('active-icon').removeClass('inactive-icon')
+    $('#list-icon-vehicles').addClass('inactive-icon').removeClass('active-icon')
+  }
+
+  function showFirearmsList() {
+    $('.dataTables_filter').hide();
+    $('#firearms-table-div').show()
+    $('#firearms-thumbnail').hide()
+    $('#app-icon-firearms').addClass('inactive-icon').removeClass('active-icon')
+    $('#list-icon-firearms').addClass('active-icon').removeClass('inactive-icon')
+  }
+
+  function showFirearmsApps() {
+    $('#firearms-table-div').hide()
+    $('#firearms-thumbnail').show()
+    $('#app-icon-firearms').addClass('active-icon').removeClass('inactive-icon')
+    $('#list-icon-firearms').addClass('inactive-icon').removeClass('active-icon')
   }
 </script>
