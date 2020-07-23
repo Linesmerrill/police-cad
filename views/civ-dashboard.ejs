@@ -298,7 +298,7 @@
               <label class="col-md-4 control-label" for="submit-new-civ"></label>
               <div class="col-md-4">
                 <input type="hidden" name="userID" value="<%= user._id %>">
-                <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <input type="hidden" id="new-civ-activeCommunityID-new-civ" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                 <button id="submit-new-civ" class="btn btn-primary" onclick="createNewCiv()">Create</button>
               </div>
             </div>
@@ -382,7 +382,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
               <div class="col-md-4">
-                <select id="registeredOwner" name="registeredOwner" class="form-control">
+                <select id="registeredOwner-new-veh" name="registeredOwner" class="form-control">
                   <option value="N/A">N/A</option>
                   <% for(var i=0; i<personas.length; i++) {%>
                     <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
@@ -395,7 +395,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
               <div class="col-md-4">
-                <select id="is-stolen" name="isStolen" class="form-control">
+                <select id="is-stolen-new" name="isStolen" class="form-control">
                   <option value="1">No</option>
                   <option value="2">Yes</option>
                 </select>
@@ -407,7 +407,7 @@
               <label class="col-md-4 control-label" for="create-vehicle"></label>
               <div class="col-md-4">
                 <input type="hidden" name="userID" value="<%= user._id %>">
-                <input type="hidden" id="new-veh-activeCommunityID" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
+                <input type="hidden" id="new-veh-activeCommunityID-new-veh" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
                 <button id="create-vehicle" class="btn btn-primary">Create</button>
               </div>
             </div>
@@ -462,7 +462,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
               <div class="col-md-4">
-                <select id="registeredOwner" name="registeredOwner" class="form-control">
+                <select id="registeredOwner-new-firearm" name="registeredOwner" class="form-control">
                   <option value="N/A">N/A</option>
                   <% for(var i=0; i<personas.length; i++) {%>
                     <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
@@ -475,7 +475,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
               <div class="col-md-4">
-                <select id="is-stolen" name="isStolen" class="form-control">
+                <select id="is-stolen-update" name="isStolen" class="form-control">
                   <option value="false">No</option>
                   <option value="true">Yes</option>
                 </select>
@@ -487,7 +487,7 @@
               <label class="col-md-4 control-label" for="create-firearm"></label>
               <div class="col-md-4">
                 <input type="hidden" name="userID" value="<%= user._id %>">
-                <input type="hidden" id="new-veh-activeCommunityID" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
+                <input type="hidden" id="new-veh-activeCommunityID-new-firearm" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
                 <button id="create-firearm" class="btn btn-primary">Create</button>
               </div>
             </div>
@@ -552,8 +552,8 @@
                 <input type="hidden" id="medication-civ-last-name" name="lastName" value="">
                 <input type="hidden" id="medication-civ-date-of-birth" name="dateOfBirth" value="">
                 <input type="hidden" name="userID" value="<%= user._id %>">
-                <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
-                <button id="submit-new-civ" class="btn btn-primary" onclick="createNewCiv()">Create</button>
+                <input type="hidden" id="new-civ-activeCommunityID-add-medication" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submit-new-civ-add-med" class="btn btn-primary" onclick="createNewCiv()">Create</button>
               </div>
             </div>
             </fieldset>
@@ -608,8 +608,8 @@
                 <input type="hidden" id="condition-civ-last-name" name="lastName" value="">
                 <input type="hidden" id="condition-civ-date-of-birth" name="dateOfBirth" value="">
                 <input type="hidden" name="userID" value="<%= user._id %>">
-                <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
-                <button id="submit-new-civ" class="btn btn-primary">Create</button>
+                <input type="hidden" id="new-civ-activeCommunityID-add-condition" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submit-new-civ-add-cond" class="btn btn-primary">Create</button>
               </div>
             </div>
             </fieldset>
@@ -1099,7 +1099,8 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
   <script src="/static/js/wow.js"></script>
   <script src="/static/js/scripts.js"></script>
-  <script src="https://unpkg.com/ionicons@5.1.2/dist/ionicons.js"></script>
+  <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule="" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>
 </body>
 
 </html>
