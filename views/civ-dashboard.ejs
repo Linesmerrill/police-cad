@@ -1108,36 +1108,54 @@
   $(document).ready(function(){
 
     // personas table 
-    $('#personas-table-div').hide()
-    $('#app-icon-personas').toggleClass('active-icon')
+    if (document.cookie.split(';').some((item) => item.includes('persona_icon=list'))) {
+      showList()
+    } else if (document.cookie.split(';').some((item) => item.includes('persona_icon=app'))) {
+      showApps()
+    } else {
+      $('#personas-table-div').hide()
+      $('#app-icon-personas').toggleClass('active-icon')
+    }
     var personasDataTable = $('#personas-table').DataTable({
     "bLengthChange": false,
     })
-  $('#civilian-search').on("keyup", function() {
-    personasDataTable.search(this.value).draw();
-    var value = $(this).val().toLowerCase();
-    $(".civ-thumbnails").filter(function() {
-      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-    });
-  });
+    $('#civilian-search').on("keyup", function() {
+      personasDataTable.search(this.value).draw();
+      var value = $(this).val().toLowerCase();
+      $(".civ-thumbnails").filter(function() {
+        $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+      });
+    })
 
-  // vehicles table
-  $('#vehicles-table-div').hide()
-    $('#app-icon-vehicles').toggleClass('active-icon')
-  var vehicleDataTable = $('#vehicle-table').DataTable({
-    "bLengthChange": false,
-  })
-  $('#vehicle-search').on("keyup", function() {
-    vehicleDataTable.search(this.value).draw();
-    var value = $(this).val().toLowerCase();
-    $(".veh-thumbnails").filter(function() {
-      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-    });
-  });
+    // vehicles table
+    if (document.cookie.split(';').some((item) => item.includes('vehicle_icon=list'))) {
+      showVehicleList()
+    } else if (document.cookie.split(';').some((item) => item.includes('vehicle_icon=app'))) {
+      showVehicleApps()
+    } else {
+      $('#vehicles-table-div').hide()
+      $('#app-icon-vehicles').toggleClass('active-icon')
+    }
+    var vehicleDataTable = $('#vehicle-table').DataTable({
+      "bLengthChange": false,
+    })
+    $('#vehicle-search').on("keyup", function() {
+      vehicleDataTable.search(this.value).draw();
+      var value = $(this).val().toLowerCase();
+      $(".veh-thumbnails").filter(function() {
+        $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+      });
+    })
 
   // firearms table
-  $('#firearms-table-div').hide()
+  if (document.cookie.split(';').some((item) => item.includes('firearm_icon=list'))) {
+      showFirearmList()
+    } else if (document.cookie.split(';').some((item) => item.includes('firearm_icon=app'))) {
+      showFirearmApps()
+    } else {
+      $('#firearms-table-div').hide()
   $('#app-icon-firearms').toggleClass('active-icon')
+    }
   var firearmDataTable = $('#firearm-table').DataTable({
     "bLengthChange": false,
   })
@@ -1147,7 +1165,7 @@
     $(".firearm-thumbnails").filter(function() {
       $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
     });
-  });
+  })
 
 // displays the Update Username and Cancel buttons for updating the username
 var myUser = <%- JSON.stringify(user) %>;
@@ -1398,6 +1416,7 @@ $.delete = function(url, data, callback, type){
     $('#personas-thumbnail').hide()
     $('#app-icon-personas').addClass('inactive-icon').removeClass('active-icon')
     $('#list-icon-personas').addClass('active-icon').removeClass('inactive-icon')
+    document.cookie = "persona_icon=list"
   }
 
   function showApps() {
@@ -1405,6 +1424,7 @@ $.delete = function(url, data, callback, type){
     $('#personas-thumbnail').show()
     $('#app-icon-personas').addClass('active-icon').removeClass('inactive-icon')
     $('#list-icon-personas').addClass('inactive-icon').removeClass('active-icon')
+    document.cookie = "persona_icon=app"
   }
 
   function showVehicleList() {
@@ -1413,6 +1433,7 @@ $.delete = function(url, data, callback, type){
     $('#vehicles-thumbnail').hide()
     $('#app-icon-vehicles').addClass('inactive-icon').removeClass('active-icon')
     $('#list-icon-vehicles').addClass('active-icon').removeClass('inactive-icon')
+    document.cookie = "vehicle_icon=list"
   }
 
   function showVehicleApps() {
@@ -1420,6 +1441,7 @@ $.delete = function(url, data, callback, type){
     $('#vehicles-thumbnail').show()
     $('#app-icon-vehicles').addClass('active-icon').removeClass('inactive-icon')
     $('#list-icon-vehicles').addClass('inactive-icon').removeClass('active-icon')
+    document.cookie = "vehicle_icon=app"
   }
 
   function showFirearmsList() {
@@ -1428,6 +1450,7 @@ $.delete = function(url, data, callback, type){
     $('#firearms-thumbnail').hide()
     $('#app-icon-firearms').addClass('inactive-icon').removeClass('active-icon')
     $('#list-icon-firearms').addClass('active-icon').removeClass('inactive-icon')
+    document.cookie = "firearm_icon=list"
   }
 
   function showFirearmsApps() {
@@ -1435,5 +1458,6 @@ $.delete = function(url, data, callback, type){
     $('#firearms-thumbnail').show()
     $('#app-icon-firearms').addClass('active-icon').removeClass('inactive-icon')
     $('#list-icon-firearms').addClass('inactive-icon').removeClass('active-icon')
+    document.cookie = "firearm_icon=app"
   }
 </script>
