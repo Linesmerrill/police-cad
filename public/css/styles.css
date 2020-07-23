@@ -8,6 +8,23 @@ http://www.bootstrapzero.com
 @import url(https://fonts.googleapis.com/css?family=Questrial);
 @import url(https://fonts.googleapis.com/css?family=Dancing+Script:700);
 
+@font-face {
+    font-family: 'dealerplatecalifornia';
+    src: url('/static/fonts/dealerplate_california-webfont.woff2') format('woff2'),
+         url('/static/fonts/dealerplate_california-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'car-frame';
+    src: url('/static/fonts/cargoframedemo-webfont.woff2') format('woff2'),
+         url('/static/fonts/cargoframedemo-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
 html,
 body {
     width: 100%;
@@ -820,12 +837,28 @@ a.link--inherit {
     color: red;
 }
 
+.font-size-1 {
+    font-size: 1em;
+}
+
+.font-size-2 {
+    font-size: 2em;
+}
+
 .font-size-5 {
     font-size: 5em;
 }
 
-.font-size-1 {
-    font-size: 1em;
+.font-size-6 {
+    font-size: 6em;
+}
+
+.font-size-2-vmax {
+    font-size: 2vmax;
+}
+
+.font-size-4-vmax {
+    font-size: 4vmax;
 }
 
 #arrest-report-case-no {
@@ -1129,4 +1162,33 @@ a.link--inherit {
 
 .default-person-icon {
     font-size: 6em;
+}
+
+.thumbnail-box {
+    cursor: pointer;
+    background: transparent;
+    background-color: transparent;
+}
+
+.thumbnail-box:hover {
+    background-color: #00aced;
+}
+
+.license-plate {
+    font-family: car-frame;
+}
+
+.table-icon {
+    vertical-align: middle;
+    margin-left: 0.5em;
+    font-size: 2em;
+    cursor: pointer;
+}
+
+.active-icon {
+    color: #00aced;
+}
+
+.inactive-icon {
+    color: white;
 }
