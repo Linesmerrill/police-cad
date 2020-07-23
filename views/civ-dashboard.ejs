@@ -117,7 +117,7 @@
 <!--Table for Vehicles  -->
 <div class="col-md-12 col-md-offset-0.75 margin-top-2">
   <div class="margin-bottom-1">
-    <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Vehicle</button>
+    <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-md pull-right">Add New Vehicle</button>
   </div>
   <div>
     <label>Search:
@@ -159,7 +159,7 @@
 <!--Table for Firearms  -->
 <div class="col-md-12 col-md-offset-0.75 margin-top-2">
   <div class="margin-bottom-1">
-    <span id="active-bolos margin-right-1" style="font-size: 18px;">Firearms:</span> <button data-toggle="modal" href="#newFirearmModal"  class="btn btn-primary btn-md pull-right margin-bottom-1" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button>
+    <span id="active-bolos margin-right-1" style="font-size: 18px;">Firearms:</span> <button data-toggle="modal" href="#newFirearmModal"  class="btn btn-primary btn-md pull-right" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button>
   </div>
   <div>
     <label>Search:
@@ -1151,9 +1151,9 @@
 
   // firearms table
   if (document.cookie.split(';').some((item) => item.includes('firearm_icon=list'))) {
-      showFirearmList()
+      showFirearmsList()
     } else if (document.cookie.split(';').some((item) => item.includes('firearm_icon=app'))) {
-      showFirearmApps()
+      showFirearmsApps()
     } else {
       $('.dataTables_filter').hide();
       $('#firearms-table-div').hide()
