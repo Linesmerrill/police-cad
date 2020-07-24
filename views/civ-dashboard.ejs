@@ -631,6 +631,12 @@
             <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="clearHelpText()">X</button>
             <h4>Details about your Civilian</h4>
             <hr style="width: 88%;max-width: 100rem;">
+            <div id="license-notice" class="alert alert-info alert-dismissible" role="alert">
+              <strong><ion-icon style="font-size: 16px;" name="alert-circle-outline"></ion-icon></strong> Most fields in the Driver License can be modified, tap to modify
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="hideLicenseNotice()">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
             <div class="row">
               <div class="col-md-12">
             <div class="container col-sm-offset-2 col-md-offset-2" style="position: relative; margin-bottom: -106px;">
@@ -1319,6 +1325,13 @@
     });
   })
 
+  // check for license-notification 
+  if (document.cookie.split(';').some((item) => item.includes('license_notice=hidden'))) {
+      hideLicenseNotice()
+    } else {
+      $('#license-notice').show();
+    }
+
 // displays the Update Username and Cancel buttons for updating the username
 var myUser = <%- JSON.stringify(user) %>;
 $('#accountUsername').on('keyup', function(e) {
@@ -1614,5 +1627,10 @@ $.delete = function(url, data, callback, type){
     $('#app-icon-firearms').addClass('active-icon').removeClass('inactive-icon')
     $('#list-icon-firearms').addClass('inactive-icon').removeClass('active-icon')
     document.cookie = "firearm_icon=app"
+  }
+
+  function hideLicenseNotice() {
+    document.cookie = "license_notice=hidden"
+    $('#license-notice').hide();
   }
 </script>
