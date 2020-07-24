@@ -37,6 +37,7 @@
     "test": "mocha"
   },
   "engines": {
-    "npm": "6.4.x"
+    "npm": "6.4.x",
+    "node": "14.x"
   }
 }
