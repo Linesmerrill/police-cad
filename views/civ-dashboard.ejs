@@ -247,23 +247,27 @@
               </div>
             </div>
 
-            <!-- Select Basic -->
-            <div class="form-group required">
-              <label class="col-md-4 control-label" for="license-status">License Status</label>
-              <div class="col-md-4">
-                <select id="license-status" name="licenseStatus" class="form-control">
-                  <option value="1">Valid</option>
-                  <option value="2">Revoked</option>
-                  <option value="3">None</option>
-                </select>
-              </div>
-            </div>
-
             <!-- Text input-->
             <div class="form-group required">
               <label class="col-md-4 control-label" for="birthday">Date of Birth</label>
               <div class="col-md-4">
               <input id="birthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="address">Address</label>
+              <div class="col-md-4">
+                <input id="address" name="address" type="text" placeholder="Address (optional)" class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Checkbox -->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="license-status">Create Drivers License?</label>
+              <div class="col-md-1">
+                <input id="license-status" type="checkbox" name="licenseStatus" class="form-control" checked>
               </div>
             </div>
 
@@ -279,13 +283,7 @@
               </div>
             </div>
 
-            <!-- Text input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="address">Address</label>
-              <div class="col-md-4">
-                <input id="address" name="address" type="text" placeholder="Address (optional)" class="form-control input-md">
-              </div>
-            </div>
+            
 
             <!-- Text input-->
             <div class="form-group">
@@ -825,6 +823,14 @@
               </div>
             </div>
           </div>
+          </div>
+
+          <!-- Checkbox -->
+          <div id="create-license-div" class="form-group hide">
+            <label class="col-md-4 control-label" for="license-status">Create Drivers License?</label>
+            <div class="col-md-1">
+              <input id="license-status" type="checkbox" name="licenseStatus" class="form-control" checked>
+            </div>
           </div>
 
             <div class="form-group">
@@ -1414,6 +1420,7 @@ $.delete = function(url, data, callback, type){
         $('#licenseStatusView').text('Revoked').removeClass('color-white').addClass('color-red')
         break;
       default:
+        $('#create-license-div').removeClass('hide')
         $('#licenseStatusView').text('None').removeClass('color-white').addClass('color-red')
     }
     $('#birthdayView').text(birthday)

@@ -2111,7 +2111,7 @@ module.exports = function (app, passport, server) {
           "civilian.lastName": req.body.lastName.trim().charAt(0).toUpperCase() + req.body.lastName.trim().slice(1),
           'civilian.birthday': req.body.birthday,
           'civilian.warrants': req.body.warrants,
-          'civilian.licenseStatus': req.body.licenseStatus,
+          'civilian.licenseStatus': (req.body.licenseStatus ? '1': '3'),
           'civilian.address': address,
           'civilian.occupation': occupation,
           'civilian.firearmLicense': firearmLicense,
