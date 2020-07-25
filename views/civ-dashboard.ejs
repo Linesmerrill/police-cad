@@ -629,13 +629,60 @@
             <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="clearHelpText()">X</button>
             <h4>Details about your Civilian</h4>
             <hr style="width: 88%;max-width: 100rem;">
-            <div id="license-notice" class="alert alert-info alert-dismissible" role="alert">
-              <strong><ion-icon style="font-size: 16px;" name="alert-circle-outline"></ion-icon></strong> Most fields in the Driver License can be modified, tap to modify
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="hideLicenseNotice()">
-                <span aria-hidden="true">&times;</span>
-              </button>
+
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="civilianIDView">ID #:</label>
+              <div class="col-md-4">
+                <label id="civilianIDView" class="form-label uppercase"></label>
+              </div>
             </div>
-            <div class="row">
+
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="firstName">First Name:</label>
+              <div class="col-md-4">
+                <input id="firstName" name="firstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
+              </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="lastNameView">Last Name:</label>
+            <div class="col-md-4">
+              <input id="lastName" name="lastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="birthdayView">Date of Birth</label>
+            <div class="col-md-4">
+              <input id="delBirthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="addressView">Address:</label>
+            <div class="col-md-4">
+              <textarea id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md"></textarea>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="occupationView">Occupation:</label>
+            <div class="col-md-4">
+              <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md">
+            </div>
+          </div>
+
+          <div class="col-md-12 text-align-center margin-bottom-1">
+            <input type="hidden" id="civilianID" name="civilianID">
+            <button type="submit" value="update" name="action" class="btn btn-info" onclick="clearHelpText()">Update Civilian</button>
+            <button type="submit" value="delete" name="action" class="btn btn-danger" onclick="clearHelpText()">Delete Civilian</button>
+          </div>
+
+          <hr style="width: 88%;max-width: 100rem;">
+          <h5><ion-icon name="browsers-outline"></ion-icon> Drivers License</h5>
+
+            <!-- Drivers License -->
+            <div id="drivers-license" class="row">
               <div class="col-md-12">
             <div class="container col-sm-offset-2 col-md-offset-2" style="position: relative; margin-bottom: -106px;">
               <img src="/static/images/id-license.png" style="width: 301px; height: 186px;">
@@ -662,7 +709,7 @@
               <!-- drivers license # -->
               <div class="form-group">
                 <div class="col-md-4">
-                  <label id="civilianIDView" style="position: absolute;
+                  <label id="civilianIDViewLic" style="position: absolute;
                   bottom: 0px;
                   left: 25px;
                   font-weight: 100;
@@ -696,7 +743,7 @@
                   font-family: 'Signika', sans-serif;
                   font-weight: 500;
                   color: #00aced">LN </span>
-                  <input id="lastName" name="lastName" style="position: absolute;
+                  <span id="lastNameLic" style="position: absolute;
                   bottom: 152px;
                   left: 46px;
                   width: 174px;
@@ -708,7 +755,7 @@
                   font-family: 'Signika', sans-serif;
                   font-size: 14px;
                   font-weight: 500;
-                  text-transform: uppercase;" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
+                  text-transform: uppercase;"></span>
                 </div>
               </div>
 
@@ -722,7 +769,7 @@
                   font-family: 'Signika', sans-serif;
                   font-weight: 500;
                   color: #00aced">FN </span>
-                  <input id="firstName" name="firstName" style="position: absolute;
+                  <span id="firstNameLic" style="position: absolute;
                   bottom: 229px;
                   left: 46px;
                   width: 174px;
@@ -734,28 +781,25 @@
                   font-family: 'Signika', sans-serif;
                   font-size: 14px;
                   font-weight: 500;
-                  text-transform: uppercase;" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
+                  text-transform: uppercase;"></span>
                 </div>
               </div>
 
               <!-- address -->
               <div class="form-group">
                 <div class="col-md-4">
-                  <textarea id="addressView" name="address" style="position: absolute;
-                  bottom: 138px;
+                  <span id="addressViewLic" style="position: absolute;
+                  bottom: 136px;
                   width: 219px;
-                  left: 12px;
-                  height: 31px;
+                  left: 26px;
                   line-height: 14px;
-                  resize: none;
-                  overflow: hidden;
                   background: transparent;
                   color: white;
                   border: none;
                   font-family: 'Signika', sans-serif;
                   font-size: 14px;
                   font-weight: 500;
-                  text-transform: uppercase;" type="text" placeholder="Address" class="form-control input-md"></textarea>
+                  text-transform: uppercase;"></span>
                 </div>
               </div>
 
@@ -769,20 +813,15 @@
                   font-family: 'Signika', sans-serif;
                   font-weight: 500;
                   color: #00aced">DOB </span>
-                  <input id="delBirthday" name="birthday" style="position: absolute;
-                  bottom: 124px;
-                  left: 44px;
-                  height: 26px;
-                  padding-top: 0px;
-                  padding-bottom: 0px;
-                  margin-bottom: 6px;
+                  <span id="birthdayViewLic" style="position: absolute;
+                  bottom: 131px;
+                  left: 57px;
                   background: transparent;
                   color: white;
                   border: none;
                   font-family: 'Signika', sans-serif;
-                  font-size: 14px;
-                  font-weight: 500;
-                  width: 167px;" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+                  font-size: 15px;
+                  font-weight: 500;"></span>
                 </div>
               </div>
 
@@ -796,15 +835,15 @@
                   font-family: 'Signika', sans-serif;
                   font-weight: 500;
                   color: #00aced">STATUS </span>
-                  <span id="licenseStatusView" style="position: absolute;
-                  bottom: 123px;
-                  left: 63px;
+                  <span id="licenseStatusViewLic" style="position: absolute;
+                  bottom: 131px;
+                  left: 75px;
                   background: transparent;
                   border: none;
                   font-family: 'Signika', sans-serif;
                   font-size: 14px;
                   font-weight: 500;
-                  text-transform: uppercase;" name="licenseStatus" class="form-control color-white">
+                  text-transform: uppercase;" class="color-white">
                 </span>
                 </div>
               </div>
@@ -825,13 +864,24 @@
           </div>
           </div>
 
-          <!-- Checkbox -->
-          <div id="create-license-div" class="form-group hide">
-            <label class="col-md-4 control-label" for="license-status">Create Drivers License?</label>
-            <div class="col-md-1">
-              <input id="license-status" type="checkbox" name="licenseStatus" class="form-control" checked>
+          <!-- Create Drivers License Button -->
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="click-to-create-lic"></label>
+            <div class="col-md-4">
+              <button id="click-to-create-lic" type="submit" value="createLicense" name="action" class="btn btn-secondary color-black hide" onclick="clearHelpText()">Create Driver's License</button>
             </div>
           </div>
+
+          <!-- Delete Drivers License Button -->
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="click-to-delete-lic"></label>
+            <div class="col-md-4">
+              <button id="click-to-delete-lic" type="submit" value="deleteLicense" name="action" class="btn btn-danger hide" onclick="clearHelpText()">Delete Driver's License</button>
+            </div>
+          </div>
+
+          <hr style="width: 88%;max-width: 100rem;">
+          <h5><ion-icon name="browsers-outline"></ion-icon> Firearm License</h5>
 
             <div class="form-group">
               <label class="col-md-4 control-label" for="firearmLicenseView">Firearm License:</label>
@@ -844,18 +894,7 @@
               </div>
             </div>
 
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="occupationView">Occupation:</label>
-              <div class="col-md-4">
-                <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md">
-              </div>
-            </div>
-
-            <div class="col-md-12 text-align-center">
-              <input type="hidden" id="civilianID" name="civilianID">
-              <button type="submit" value="update" name="action" class="btn btn-info" onclick="clearHelpText()">Update Civilian</button>
-              <button type="submit" value="delete" name="action" class="btn btn-danger" onclick="clearHelpText()">Delete Civilian</button>
-            </div>
+            
             </fieldset>
           </form>
           <hr style="width: 88%;max-width: 100rem;">
@@ -1399,7 +1438,7 @@ $.delete = function(url, data, callback, type){
 
   function loadCivData(index) {
     var myVar = <%- JSON.stringify(personas) %>;
-    
+    loadDriversLicense(myVar, index);
     var firstName = myVar[index].civilian.firstName
     var lastName = myVar[index].civilian.lastName
     var birthday = myVar[index].civilian.birthday
@@ -1409,32 +1448,14 @@ $.delete = function(url, data, callback, type){
     var expYear = (createdDate.getFullYear())+10
     
     $('#civilianID').val(myVar[index]._id)
-    $('#civilianIDView').text('DL: '+ myVar[index]._id)
+    $('#civilianIDView').text(myVar[index]._id)
     $('#firstName').text(firstName)
     $('#lastNameView').text(lastName)
-    switch (myVar[index].civilian.licenseStatus) {
-      case '1':
-        $('#licenseStatusView').text('Valid').removeClass('color-red').addClass('color-white')
-        break;
-      case '2':
-        $('#licenseStatusView').text('Revoked').removeClass('color-white').addClass('color-red')
-        break;
-      default:
-        $('#create-license-div').removeClass('hide')
-        $('#licenseStatusView').text('None').removeClass('color-white').addClass('color-red')
-    }
     $('#birthdayView').text(birthday)
     $('#warrantsView').val(myVar[index].civilian.warrants)
     $('#firearmLicenseView').val(myVar[index].civilian.firearmLicense)
     $('#addressView').val(myVar[index].civilian.address)
     $('#occupationView').val(myVar[index].civilian.occupation)
-    $('#license-expiration').text(expMonth.toString().padStart(2, '0')+'/'+expDay.toString().padStart(2,'0')+'/'+expYear) //Janky AF
-    $('#license-issued').text(createdDate.toLocaleDateString('en-US', {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric"
-    }))
-
 
     // data to be set for condition form
     $('#condition-civ-first-name').val(firstName)
@@ -1450,6 +1471,45 @@ $.delete = function(url, data, callback, type){
     $('#firstName').val(firstName)
     $('#lastName').val(lastName)
     $('#delBirthday').val(birthday)
+  }
+
+  function loadDriversLicense(myVar, index) {
+    var firstName = myVar[index].civilian.firstName
+    var lastName = myVar[index].civilian.lastName
+    var birthday = myVar[index].civilian.birthday
+    var createdDate = new Date(myVar[index].civilian.createdAt)
+    var expDay = createdDate.getDate()
+    var expMonth = (createdDate.getMonth())+1
+    var expYear = (createdDate.getFullYear())+10
+    
+    $('#civilianID').val(myVar[index]._id)
+    $('#civilianIDViewLic').text('DL: '+ myVar[index]._id)
+    $('#firstNameLic').text(firstName)
+    $('#lastNameLic').text(lastName)
+    switch (myVar[index].civilian.licenseStatus) {
+      case '1':
+        $('#licenseStatusViewLic').text('Valid').removeClass('color-red').addClass('color-white')
+        $('#click-to-delete-lic').removeClass('hide')
+        break;
+      case '2':
+        $('#licenseStatusViewLic').text('Revoked').removeClass('color-white').addClass('color-red')
+        $('#click-to-delete-lic').removeClass('hide')
+        break;
+      default:
+        $('#drivers-license').hide();
+        $('#click-to-create-lic').removeClass('hide')
+        $('#licenseStatusViewLic').text('None').removeClass('color-white').addClass('color-red')
+    }
+    $('#birthdayViewLic').text(birthday)
+    $('#warrantsView').val(myVar[index].civilian.warrants)
+    $('#firearmLicenseView').val(myVar[index].civilian.firearmLicense)
+    $('#addressViewLic').text(myVar[index].civilian.address)
+    $('#license-expiration').text(expMonth.toString().padStart(2, '0')+'/'+expDay.toString().padStart(2,'0')+'/'+expYear) //Janky AF
+    $('#license-issued').text(createdDate.toLocaleDateString('en-US', {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    }))
   }
 
   function loadTicketsAndWarnings(index) {
