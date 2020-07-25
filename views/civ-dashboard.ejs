@@ -678,13 +678,13 @@
               <!-- expiration date -->
               <div class="form-group">
                 <div class="col-md-4">
-                  <label id="license-expiration" style="position: absolute;
+                  <label style="position: absolute;
                   bottom: 146px;
                   left: 25px;
                   color: white;
                   font-size: 14px;
                   font-family: 'Signika', sans-serif;
-                  font-weight: 500;" class="form-label"><span style="color: #00aced">EXP </span>07/23/2025</label>
+                  font-weight: 500;" class="form-label"><span style="color: #00aced">EXP </span><span id="license-expiration"></span></label>
                 </div>
               </div>
 
@@ -821,13 +821,13 @@
               <!-- issued date -->
               <div class="form-group">
                 <div class="col-md-4">
-                  <label id="license-expiration" style="position: absolute;
+                  <label style="position: absolute;
                   bottom: 241px;
                   left: 210px;
                   color: white;
                   font-size: 14px;
                   font-family: 'Signika', sans-serif;
-                  font-weight: 500;" class="form-label"><span style="color: #00aced">ISS </span>07/23/2025</label>
+                  font-weight: 500;" class="form-label"><span style="color: #00aced">ISS </span><span id="license-issued"></span></label>
                 </div>
               </div>
             </div>
@@ -1404,6 +1404,10 @@ $.delete = function(url, data, callback, type){
     var firstName = myVar[index].civilian.firstName
     var lastName = myVar[index].civilian.lastName
     var birthday = myVar[index].civilian.birthday
+    var createdDate = new Date(myVar[index].civilian.createdAt)
+    var expDay = createdDate.getDate()
+    var expMonth = (createdDate.getMonth())+1
+    var expYear = (createdDate.getFullYear())+5
     
     $('#civilianID').val(myVar[index]._id)
     $('#civilianIDView').text('DL: '+ myVar[index]._id)
@@ -1415,6 +1419,13 @@ $.delete = function(url, data, callback, type){
     $('#firearmLicenseView').val(myVar[index].civilian.firearmLicense)
     $('#addressView').val(myVar[index].civilian.address)
     $('#occupationView').val(myVar[index].civilian.occupation)
+    $('#license-expiration').text(expMonth.toString().padStart(2, '0')+'/'+expDay.toString().padStart(2,'0')+'/'+expYear) //Janky AF
+    $('#license-issued').text(createdDate.toLocaleDateString('en-US', {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    }))
+
 
     // data to be set for condition form
     $('#condition-civ-first-name').val(firstName)
