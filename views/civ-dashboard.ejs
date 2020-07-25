@@ -263,6 +263,14 @@
               </div>
             </div>
 
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="occupation">Job</label>
+              <div class="col-md-4">
+                <input id="occupation" name="occupation" type="text" placeholder="Occupation (optional)" class="form-control input-md">
+              </div>
+            </div>
+
             <!-- Checkbox -->
             <div class="form-group required">
               <label class="col-md-4 control-label" for="license-status">Create Drivers License?</label>
@@ -285,13 +293,7 @@
 
             
 
-            <!-- Text input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="occupation">Occupation</label>
-              <div class="col-md-4">
-                <input id="occupation" name="occupation" type="text" placeholder="Occupation (optional)" class="form-control input-md">
-              </div>
-            </div>
+            
 
             <!-- Button -->
             <div class="form-group">
@@ -661,14 +663,14 @@
           <div class="form-group">
             <label class="col-md-4 control-label" for="addressView">Address:</label>
             <div class="col-md-4">
-              <textarea id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md"></textarea>
+              <textarea id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md uppercase"></textarea>
             </div>
           </div>
 
           <div class="form-group">
             <label class="col-md-4 control-label" for="occupationView">Occupation:</label>
             <div class="col-md-4">
-              <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md">
+              <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md capitalize">
             </div>
           </div>
 
@@ -684,7 +686,7 @@
             <!-- Drivers License -->
             <div id="drivers-license" class="row">
               <div class="col-md-12">
-            <div class="container col-sm-offset-2 col-md-offset-2" style="position: relative; margin-bottom: -106px;">
+            <div class="container col-sm-offset-2 col-md-offset-2" style="position: relative; margin-bottom: -130px;">
               <img src="/static/images/id-license.png" style="width: 301px; height: 186px;">
 
               <label style="position: absolute;
