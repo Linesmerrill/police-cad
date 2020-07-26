@@ -694,20 +694,20 @@
               top: 4px;
               left: 38px;
               color: #00aced;
-              font-size: 17px;">SAN ANDREAS</label>
+              font-size: 17px;"></label>
               <label style="position: absolute;
               font-family: 'Signika', sans-serif;
               top: 8px;
               left: 206px;
               color: #00aced;
-              font-size: 12px;">DRIVER LICENSE</label>
-              <hr style="position: absolute;
+              font-size: 12px;"></label>
+              <!-- <hr style="position: absolute;
               top: 9px;
               left: 15px;
               color: black;
               opacity: 0.5;
               width: 301px;
-              max-width: unset;">
+              max-width: unset;"> -->
               <!-- drivers license # -->
               <div class="form-group">
                 <div class="col-md-4">
@@ -715,7 +715,7 @@
                   bottom: 0px;
                   left: 25px;
                   font-weight: 100;
-                  color: white;
+                  color: black;
                   font-size: 14px;
                   text-transform: uppercase;
                   font-family: 'Signika', sans-serif;" class="form-label"></label>
@@ -728,7 +728,7 @@
                   <label style="position: absolute;
                   bottom: 146px;
                   left: 25px;
-                  color: white;
+                  color: black;
                   font-size: 14px;
                   font-family: 'Signika', sans-serif;
                   font-weight: 500;" class="form-label"><span style="color: #00aced">EXP </span><span id="license-expiration"></span></label>
@@ -752,7 +752,7 @@
                   height: 18px;
                   padding: 0px;
                   background: transparent;
-                  color: white;
+                  color: black;
                   border: none;
                   font-family: 'Signika', sans-serif;
                   font-size: 14px;
@@ -778,7 +778,7 @@
                   height: 18px;
                   padding: 0px;
                   background: transparent;
-                  color: white;
+                  color: black;
                   border: none;
                   font-family: 'Signika', sans-serif;
                   font-size: 14px;
@@ -796,7 +796,7 @@
                   left: 26px;
                   line-height: 14px;
                   background: transparent;
-                  color: white;
+                  color: black;
                   border: none;
                   font-family: 'Signika', sans-serif;
                   font-size: 14px;
@@ -819,7 +819,7 @@
                   bottom: 131px;
                   left: 57px;
                   background: transparent;
-                  color: white;
+                  color: black;
                   border: none;
                   font-family: 'Signika', sans-serif;
                   font-size: 15px;
@@ -845,7 +845,7 @@
                   font-family: 'Signika', sans-serif;
                   font-size: 14px;
                   font-weight: 500;
-                  text-transform: uppercase;" class="color-white">
+                  text-transform: uppercase;" class="color-black">
                 </span>
                 </div>
               </div>
@@ -856,7 +856,7 @@
                   <label style="position: absolute;
                   bottom: 241px;
                   left: 210px;
-                  color: white;
+                  color: black;
                   font-size: 14px;
                   font-family: 'Signika', sans-serif;
                   font-weight: 500;" class="form-label"><span style="color: #00aced">ISS </span><span id="license-issued"></span></label>
@@ -1487,17 +1487,17 @@ $.delete = function(url, data, callback, type){
     $('#lastNameLic').text(lastName)
     switch (myVar[index].civilian.licenseStatus) {
       case '1':
-        $('#licenseStatusViewLic').text('Valid').removeClass('color-red').addClass('color-white')
+        $('#licenseStatusViewLic').text('Valid').removeClass('color-red').addClass('color-black')
         $('#click-to-delete-lic').removeClass('hide')
         break;
       case '2':
-        $('#licenseStatusViewLic').text('Revoked').removeClass('color-white').addClass('color-red')
+        $('#licenseStatusViewLic').text('Revoked').removeClass('color-black').addClass('color-red')
         $('#click-to-delete-lic').removeClass('hide')
         break;
       default:
         $('#drivers-license').hide();
         $('#click-to-create-lic').removeClass('hide')
-        $('#licenseStatusViewLic').text('None').removeClass('color-white').addClass('color-red')
+        $('#licenseStatusViewLic').text('None').removeClass('color-black').addClass('color-red')
     }
     var licenseDOB = birthday.split('-')
     if (licenseDOB.length == 3) {
