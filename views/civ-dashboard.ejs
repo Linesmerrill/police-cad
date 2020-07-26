@@ -1499,7 +1499,12 @@ $.delete = function(url, data, callback, type){
         $('#click-to-create-lic').removeClass('hide')
         $('#licenseStatusViewLic').text('None').removeClass('color-white').addClass('color-red')
     }
-    $('#birthdayViewLic').text(birthday)
+    var licenseDOB = birthday.split('-')
+    if (licenseDOB.length == 3) {
+      $('#birthdayViewLic').text(licenseDOB[1]+'/'+licenseDOB[2]+'/'+licenseDOB[0])
+    } else {
+      $('#birthdayViewLic').text(birthday)
+    }
     $('#warrantsView').val(myVar[index].civilian.warrants)
     $('#firearmLicenseView').val(myVar[index].civilian.firearmLicense)
     $('#addressViewLic').text(myVar[index].civilian.address)
