@@ -10,8 +10,8 @@
 This is a easy to setup and use police server CAD. Includes a signup/login for both Civilians and Police Officers. Also this is mobile friendly.
 
 ### Requirements : 
-1.  Node.js.
-1.  MongoDB.
+1.  [Node.js](https://nodejs.org/en/)
+1.  [MongoDB](https://docs.mongodb.com/manual/administration/install-community/)
 
 ### Getting Started with Code  : 
 1. [Set Up MongoDB](#setting-up-mongodb) and start mongodb
