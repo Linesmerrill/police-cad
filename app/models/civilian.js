@@ -29,10 +29,10 @@ var civilianSchema = mongoose.Schema({
 });
 
 civilianSchema.methods.updateCiv = function (request, response) {
-
+  // console.debug('req: ', request.body)
   this.civilian.firstName = request.body.civFirstName.trim().charAt(0).toUpperCase() + request.body.civFirstName.trim().slice(1);
   this.civilian.lastName = request.body.civLastName.trim().charAt(0).toUpperCase() + request.body.civLastName.trim().slice(1);
-  this.civilian.licenseStatus = request.body.licenseStatus;
+  this.civilian.licenseStatus = (request.body.licenseStatus ? '1' : '3');
   this.civilian.ticketCount = request.body.ticketCount;
   this.civilian.birthday = request.body.birthday;
   this.civilian.warrants = request.body.warrants;

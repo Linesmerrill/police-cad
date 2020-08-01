@@ -1556,11 +1556,11 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-civ', auth, function (req, res) {
-      var myCiv = new Civilian()
-      myCiv.updateCiv(req, res)
-      myCiv.save(function (err) {
-        if (err) return console.error(err);
-      });
+    var myCiv = new Civilian()
+    myCiv.updateCiv(req, res)
+    myCiv.save(function (err) {
+      if (err) return console.error(err);
+    });
   });
 
   app.post('/create-ems', auth, function (req, res) {
@@ -2084,6 +2084,7 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/updateOrDeleteCiv', auth, function (req, res) {
+    // console.debug(req.body)
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
       var address
@@ -2111,10 +2112,44 @@ module.exports = function (app, passport, server) {
           "civilian.lastName": req.body.lastName.trim().charAt(0).toUpperCase() + req.body.lastName.trim().slice(1),
           'civilian.birthday': req.body.birthday,
           'civilian.warrants': req.body.warrants,
-          'civilian.licenseStatus': req.body.licenseStatus,
+          'civilian.licenseStatus': (req.body.licenseStatus ? '1' : '3'),
           'civilian.address': address,
           'civilian.occupation': occupation,
           'civilian.firearmLicense': firearmLicense,
+          'civilian.updatedAt': new Date()
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        return res.redirect('/civ-dashboard');
+      })
+    } else if (req.body.action == "createLicense") {
+      var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/civ-dashboard')
+      }
+      Civilian.findByIdAndUpdate({
+        '_id': ObjectId(req.body.civilianID)
+      }, {
+        $set: {
+          'civilian.licenseStatus': '1',
+          'civilian.updatedAt': new Date()
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        return res.redirect('/civ-dashboard');
+      })
+    } else if (req.body.action == "deleteLicense") {
+      var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/civ-dashboard')
+      }
+      Civilian.findByIdAndUpdate({
+        '_id': ObjectId(req.body.civilianID)
+      }, {
+        $set: {
+          'civilian.licenseStatus': '3',
           'civilian.updatedAt': new Date()
         }
       }, function (err) {
@@ -2130,33 +2165,33 @@ module.exports = function (app, passport, server) {
       Civilian.findByIdAndDelete({
         '_id': ObjectId(req.body.civilianID)
       }, function (err) {
-          Ticket.deleteMany({
-            'ticket.civID': req.body.civilianID
+        Ticket.deleteMany({
+          'ticket.civID': req.body.civilianID
+        }, function (err) {
+          if (err) return console.error(err);
+          ArrestReport.deleteMany({
+            'arrest.accusedID': req.body.civilianID
           }, function (err) {
             if (err) return console.error(err);
-            ArrestReport.deleteMany({
-              'arrest.accusedID': req.body.civilianID
-            }, function(err) {
+            MedicalReport.deleteMany({
+              'report.civilianID': req.body.civilianID
+            }, function (err) {
               if (err) return console.error(err);
-              MedicalReport.deleteMany({
-                'report.civilianID': req.body.civilianID
-              }, function(err) {
+              Medication.deleteMany({
+                'medication.civilianID': req.body.civilianID
+              }, function (err) {
                 if (err) return console.error(err);
-                Medication.deleteMany({
-                  'medication.civilianID': req.body.civilianID
-                }, function(err){
+                Condition.deleteMany({
+                  'condition.civilianID': req.body.civilianID
+                }, function (err) {
                   if (err) return console.error(err);
-                  Condition.deleteMany({
-                    'condition.civilianID': req.body.civilianID
-                  }, function(err){
-                    if (err) return console.error(err);
-                    return res.redirect('/civ-dashboard');
-                  })
+                  return res.redirect('/civ-dashboard');
                 })
               })
             })
           })
         })
+      })
     }
   })
 

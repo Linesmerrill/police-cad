@@ -1192,3 +1192,11 @@ a.link--inherit {
 .inactive-icon {
     color: white;
 }
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+.capitalize {
+    text-transform: capitalize;
+}
