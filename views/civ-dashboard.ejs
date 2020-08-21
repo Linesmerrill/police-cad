@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="/static/css/animate.min.css" />
   <link rel="stylesheet" href="/static/css/ionicons.min.css" />
   <link rel="stylesheet" href="/static/css/styles.css" />
+
   <script src="https://code.iconify.design/1/1.0.7/iconify.min.js"></script>
 </head>
 <!-- Global Site Tag (gtag.js) - Google Analytics -->
@@ -1286,6 +1287,7 @@
   <% include account-management %>
 
   <!--scripts loaded here -->
+  <script src="/socket.io/socket.io.js"></script>
   <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
   <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
@@ -1302,7 +1304,7 @@
 
 <script type="text/javascript">
   $(document).ready(function(){
-
+    
     // personas table 
     if (document.cookie.split(';').some((item) => item.includes('persona_icon=list'))) {
       showList()
@@ -1382,6 +1384,8 @@ $('#accountUsername').on('keyup', function(e) {
     $('#updateUsernameBtns').hide();
   }
 })
+
+$('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
 
 // prevents spaces from user input
 $("#civ-first-name").keydown(function(event) {
@@ -1645,6 +1649,7 @@ $.delete = function(url, data, callback, type){
     var myUser = <%- JSON.stringify(user) %>;
     $('#accountEmail').val(myUser.user.email)
     $('#accountUsername').val(myUser.user.username)
+    
   }
 
   function cancelUsername() {
@@ -1720,5 +1725,16 @@ $.delete = function(url, data, callback, type){
   function hideLicenseNotice() {
     document.cookie = "license_notice=hidden"
     $('#license-notice').hide();
+  }
+
+  function togglePanicBtnSound() {
+    var socket = io();
+    socket.emit('update_panic_btn_sound', <%- JSON.stringify(user) %>)
+    socket.on('load_panic_btn_result', (res) => {
+      $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
+      $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function() {
+    $(this).hide();
+  });
+    })
   }
 </script>

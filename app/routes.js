@@ -2698,6 +2698,25 @@ module.exports = function (app, passport, server) {
         return socket.broadcast.emit('created_bolo', dbBolos)
       });
     })
+
+    socket.on('update_panic_btn_sound', (user) => {
+      // console.debug('update panic button sound status: ', user)
+      if (user._id != null && user._id != undefined) {
+        User.findById({
+          '_id': user._id
+        }, function (err, dbUser) {
+          if (err) return console.error(err);
+          User.findByIdAndUpdate({
+            '_id': user._id
+          }, {
+            'user.panicButtonSound': !dbUser.user.panicButtonSound
+          }, function (err, dbUserUpdtd){
+            if (err) return console.error(err);
+          return socket.emit('load_panic_btn_result', dbUserUpdtd)
+          })
+        });
+      }
+    });
   });
 
 }; //end of routes

@@ -1587,6 +1587,7 @@ $(document).ready(function() {
         $('#updateUsernameBtns').hide();
       }
     })
+    $('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
 
   let allVehicles = <%-JSON.stringify(vehicles)%>;
   let allCivilians = <%-JSON.stringify(civilians)%>;
@@ -2066,4 +2067,15 @@ function searchFirearm() {
     $('#plateDetails').removeAttr("style").hide()
     $('#stolenMessage').removeAttr("style").hide()
   })
+
+  function togglePanicBtnSound() {
+    var socket = io();
+    socket.emit('update_panic_btn_sound', <%- JSON.stringify(user) %>)
+    socket.on('load_panic_btn_result', (res) => {
+      $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
+      $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function() {
+    $(this).hide();
+  });
+    })
+  }
 </script>
