@@ -1938,7 +1938,7 @@ function searchFirearm() {
       userUsername: myUser.user.username,
       activeCommunity: myUser.user.activeCommunity
     }
-    if (myUser.user.panicButtonSound) {
+    if ($('#panic-button-check-sound').prop('checked')) {
       var audioElement = document.createElement('audio');
       audioElement.setAttribute('src', 'http://www.soundjay.com/button/sounds/beep-11.mp3');
       audioElement.play();
