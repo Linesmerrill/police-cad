@@ -302,7 +302,6 @@ module.exports = function (app, passport, server) {
         EmsVehicle.find({
           'emsVehicle.userID': req.user._id,
         }, function (err, dbVehicles) {
-          console.log(dbVehicles)
           if (err) return console.error(err);
           Community.find({
             '$or': [{
@@ -2582,7 +2581,9 @@ module.exports = function (app, passport, server) {
           if (err) return console.error(err)
           if (resp != null) {
             if (resp.community != null) {
-              return socket.broadcast.emit('load_panic_status_update', resp.community.activePanics, req)
+              // console.debug("resp", resp)
+              // console.debug("resp.community", resp.community)
+              return socket.broadcast.emit('load_panic_status_update', resp.community.activePanics, resp.community.activeSignal100, req)
             }
           }
         })
@@ -2683,6 +2684,64 @@ module.exports = function (app, passport, server) {
                   return socket.broadcast.emit('cleared_panic', req)
                 })
               }
+            }
+          }
+        })
+      }
+    })
+
+    socket.on('signal_100_button_update', (req) => {
+      // console.debug('signal 100 button update req: ', req)
+      if (req.activeCommunity != null && req.activeCommunity != undefined) {
+        var isValid = isValidObjectIdLength(req.activeCommunity, "cannot lookup invalid length activeCommunity, socket: signal_100_button_update")
+        if (!isValid) {
+          return
+        }
+        Community.findById({
+          '_id': ObjectId(req.activeCommunity)
+        }, function (err, resp) {
+          if (err) return console.error(err)
+          if (resp != null) {
+            if (resp.community != null) {
+              Community.findByIdAndUpdate({
+                '_id': ObjectId(req.activeCommunity)
+              }, {
+                $set: {
+                  'community.activeSignal100': true
+                }
+              }, function (err) {
+                if (err) return console.error(err)
+                return socket.broadcast.emit('signal_100_button_updated', req)
+              })
+            }
+          }
+        })
+      }
+    })
+
+    socket.on('clear_signal_100', (activeCommunity) => {
+      // console.debug('signal 100 clear button update req: ', activeCommunity)
+      if (activeCommunity != null && activeCommunity != undefined) {
+        var isValid = isValidObjectIdLength(activeCommunity, "cannot lookup invalid length activeCommunity, socket: clear_signal_100")
+        if (!isValid) {
+          return
+        }
+        Community.findById({
+          '_id': ObjectId(activeCommunity)
+        }, function (err, resp) {
+          if (err) return console.error(err)
+          if (resp != null) {
+            if (resp.community != null) {
+              Community.findByIdAndUpdate({
+                '_id': ObjectId(activeCommunity)
+              }, {
+                $set: {
+                  'community.activeSignal100': false
+                }
+              }, function (err) {
+                if (err) return console.error(err)
+                return socket.broadcast.emit('clear_signal_100_updated', activeCommunity)
+              })
             }
           }
         })
