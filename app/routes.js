@@ -1485,7 +1485,7 @@ module.exports = function (app, passport, server) {
             ' \'Lucida Sans Unicode\', \'Lucida Sans\', Tahoma, sans-serif;line-height:200%;padding-top:10px;padding-right:10px;padding-bottom:10px;padding-left:10px;">' +
             '<div style="font-family: \'Montserrat\', \'Trebuchet MS\', \'Lucida Grande\', \'Lucida Sans Unicode\', \'Lucida Sans\', Tahoma, sans-serif; ' +
             'font-size: 12px; line-height: 24px; color: #555555;"><p style="font-size: 14px; line-height: 84px; text-align: center; margin: 0;"><span ' +
-            'style="font-size: 42px;"><strong>Lines Police Server</strong></span></p></div></div><!--[if mso]></td></tr></table><![endif]--><table ' +
+            'style="font-size: 42px;"><strong>Lines Police CAD</strong></span></p></div></div><!--[if mso]></td></tr></table><![endif]--><table ' +
             'border="0" cellpadding="0" cellspacing="0" class="divider" role="presentation" style="table-layout: fixed; vertical-align: top; border-spacing:' +
             ' 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; min-width: 100%; -ms-text-size-adjust: 100%; -webkit-text-size-adjust:' +
             ' 100%;" valign="top" width="100%"><tbody><tr style="vertical-align: top;" valign="top"><td class="divider_inner" style="word-break: break-word; ' +
