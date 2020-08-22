@@ -1516,6 +1516,11 @@
     socket.on('panic_button_updated', (map, origReq) => {
       var myUser = <%- JSON.stringify(user) %>;
       if (myUser.user.activeCommunity == origReq.activeCommunity) {
+        if (myUser.user.panicButtonSound) {
+          var audioElement = document.createElement('audio');
+          audioElement.setAttribute('src', 'http://www.soundjay.com/button/sounds/beep-11.mp3');
+          audioElement.play();
+        }
         $('#panic-placeholder-socket').empty();
         $('#panic-placeholder').append(
           '<div id="panic-placeholder-socket"></div>'
@@ -1578,6 +1583,8 @@
 <script type="text/javascript">
 $(document).ready(function() {
 
+  
+    
   // displays the Update Username and Cancel buttons for updating the username
   var myUser = <%- JSON.stringify(user) %>;
     $('#accountUsername').on('keyup', function(e) {
@@ -1930,6 +1937,11 @@ function searchFirearm() {
       userID: myUser._id,
       userUsername: myUser.user.username,
       activeCommunity: myUser.user.activeCommunity
+    }
+    if (myUser.user.panicButtonSound) {
+      var audioElement = document.createElement('audio');
+      audioElement.setAttribute('src', 'http://www.soundjay.com/button/sounds/beep-11.mp3');
+      audioElement.play();
     }
     
     socket.emit('panic_button_update', myReq)

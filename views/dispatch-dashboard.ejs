@@ -1593,6 +1593,12 @@
     socket.on('panic_button_updated', (map, origReq) => {
       var myUser = <%- JSON.stringify(user) %>;
       if (myUser.user.activeCommunity == origReq.activeCommunity) {
+        if (myUser.user.panicButtonSound) {
+          console.log("play sound")
+          var audioElement = document.createElement('audio');
+          audioElement.setAttribute('src', 'http://www.soundjay.com/button/sounds/beep-11.mp3');
+          audioElement.play();
+        }
         $('#panic-placeholder-socket').empty();
         $('#panic-placeholder').append(
           '<div id="panic-placeholder-socket"></div>'
