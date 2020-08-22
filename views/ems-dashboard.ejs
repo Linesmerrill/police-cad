@@ -664,9 +664,9 @@
 
   <% include account-management %>
   <% include 10-codes %> 
-  <% include map %>
 
   <!--scripts loaded here -->
+  <script src="/socket.io/socket.io.js"></script>
   <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
   <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
@@ -968,6 +968,17 @@ $.delete = function(url, data, callback, type){
       }
   });
 
+  function togglePanicBtnSound() {
+    var socket = io();
+    socket.emit('update_panic_btn_sound', <%- JSON.stringify(user) %>)
+    socket.on('load_panic_btn_result', (res) => {
+      $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
+      $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function() {
+    $(this).hide();
+  });
+    })
+  }
+
   $(document).ready(function(){
 
     $('#persona-table').DataTable({
@@ -986,6 +997,7 @@ $.delete = function(url, data, callback, type){
         $('#updateUsernameBtns').hide();
       }
     })
+    $('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
 
 $("#first-name").keydown(function(event) {
     if (event.keyCode == 32) {

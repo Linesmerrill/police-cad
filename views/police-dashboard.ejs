@@ -1516,6 +1516,11 @@
     socket.on('panic_button_updated', (map, origReq) => {
       var myUser = <%- JSON.stringify(user) %>;
       if (myUser.user.activeCommunity == origReq.activeCommunity) {
+        if ($('#panic-button-check-sound').prop('checked')) {
+          var audioElement = document.createElement('audio');
+          audioElement.setAttribute('src', 'http://www.soundjay.com/button/sounds/beep-11.mp3');
+          audioElement.play();
+        }
         $('#panic-placeholder-socket').empty();
         $('#panic-placeholder').append(
           '<div id="panic-placeholder-socket"></div>'
@@ -1578,6 +1583,8 @@
 <script type="text/javascript">
 $(document).ready(function() {
 
+  
+    
   // displays the Update Username and Cancel buttons for updating the username
   var myUser = <%- JSON.stringify(user) %>;
     $('#accountUsername').on('keyup', function(e) {
@@ -1587,6 +1594,7 @@ $(document).ready(function() {
         $('#updateUsernameBtns').hide();
       }
     })
+    $('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
 
   let allVehicles = <%-JSON.stringify(vehicles)%>;
   let allCivilians = <%-JSON.stringify(civilians)%>;
@@ -1930,6 +1938,11 @@ function searchFirearm() {
       userUsername: myUser.user.username,
       activeCommunity: myUser.user.activeCommunity
     }
+    if ($('#panic-button-check-sound').prop('checked')) {
+      var audioElement = document.createElement('audio');
+      audioElement.setAttribute('src', 'http://www.soundjay.com/button/sounds/beep-11.mp3');
+      audioElement.play();
+    }
     
     socket.emit('panic_button_update', myReq)
     panicButtonEnabled = false
@@ -2066,4 +2079,15 @@ function searchFirearm() {
     $('#plateDetails').removeAttr("style").hide()
     $('#stolenMessage').removeAttr("style").hide()
   })
+
+  function togglePanicBtnSound() {
+    var socket = io();
+    socket.emit('update_panic_btn_sound', <%- JSON.stringify(user) %>)
+    socket.on('load_panic_btn_result', (res) => {
+      $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
+      $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function() {
+    $(this).hide();
+  });
+    })
+  }
 </script>
