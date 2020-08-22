@@ -1,6 +1,6 @@
-# Lines Police Server - CAD
+# Lines Police CAD
 
-![lines police server logo](lines-police-server.png)
+![lines police cad logo](lines-police-server.png)
 
 [![build](https://travis-ci.com/Linesmerrill/police-cad.svg?branch=master)](https://travis-ci.com/Linesmerrill/police-cad)
 [![Repository](https://img.shields.io/github/tag/linesmerrill/police-cad.svg?color=blue)](https://github.com/linesmerrill/police-cad)
