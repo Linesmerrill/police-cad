@@ -1519,6 +1519,7 @@
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement = document.createElement('audio');
           audioElement.setAttribute('src', 'http://www.soundjay.com/button/sounds/beep-11.mp3');
+          audioElement.css("touch-action", "manipulation");
           audioElement.play();
         }
         $('#panic-placeholder-socket').empty();
