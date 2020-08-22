@@ -1516,7 +1516,7 @@
     socket.on('panic_button_updated', (map, origReq) => {
       var myUser = <%- JSON.stringify(user) %>;
       if (myUser.user.activeCommunity == origReq.activeCommunity) {
-        if (myUser.user.panicButtonSound) {
+        if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement = document.createElement('audio');
           audioElement.setAttribute('src', 'http://www.soundjay.com/button/sounds/beep-11.mp3');
           audioElement.play();
