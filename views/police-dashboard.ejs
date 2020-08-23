@@ -36,6 +36,11 @@
 
 <body>
   <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
+    <div id="signal-100-banner" class="panel panel-danger hide">
+      <div class="panel-heading">
+        <h3 class="panel-title text-align-center">🚨🚨🚨   Signal 100 In Effect!   🚨🚨🚨</h3>
+      </div>
+    </div>
     <div class="container-fluid">
       <div class="navbar-header">
         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
@@ -1487,9 +1492,17 @@
       }
     })
 
-    socket.on('load_panic_status_update', (map, origReq) => {
+    socket.on('load_panic_status_update', (map, signal100Resp, origReq) => {
       var myUser = <%- JSON.stringify(user) %>;
       if (myUser.user.activeCommunity == origReq.activeCommunity) {
+        //load the signal 100 status to the page
+        if (signal100Resp) {
+          $('#signal-100-banner').removeClass('hide').addClass('show')
+        } else {
+          $('#signal-100-banner').removeClass('show').addClass('hide')
+        }
+        
+        //load the panic status items
         $('#panic-placeholder-socket').empty();
         $('#panic-placeholder').append(
           '<div id="panic-placeholder-socket"></div>'
@@ -1548,6 +1561,25 @@
       $('#'+res.userID+'-panic-row').remove().fadeOut(1, function() {
         $(this).remove();
       })
+    })
+
+    socket.on('signal_100_button_updated', (origReq) => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (myUser.user.activeCommunity == origReq.activeCommunity) {
+        if ($('#panic-button-check-sound').prop('checked')) {
+          var audioElement = document.createElement('audio');
+          audioElement.setAttribute('src', 'http://www.soundjay.com/button/sounds/beep-07.mp3');
+          audioElement.play();
+        }
+        $('#signal-100-banner').removeClass('hide').addClass('show')
+      }
+    })
+
+    socket.on('clear_signal_100_updated', activeCommunity => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (myUser.user.activeCommunity == activeCommunity) {
+        $('#signal-100-banner').removeClass('show').addClass('hide')
+      }
     })
 
     socket.on('updated_bolo', res => {

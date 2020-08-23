@@ -39,11 +39,16 @@
 <body>
   
   <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
-    <!-- <div class="panel panel-danger">
-      <div class="panel-heading">
-        <h3 class="panel-title text-align-center">🚨🚨🚨   Signal 100 In Effect!   🚨🚨🚨</h3>
+    <a data-toggle="modal" href="#signal100DetailModal">
+      <div id="signal-100-banner" class="panel panel-danger hide">
+        <div class="panel-heading text-align-center">
+          <span class="panel-title text-align-center">🚨🚨🚨   Signal 100 In Effect!   🚨🚨🚨</span>
+          <button type="button" class="close" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
       </div>
-    </div> -->
+    </a>
     <div class="container-fluid">
       <div class="navbar-header">
         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
@@ -107,6 +112,7 @@
         <button type="button" data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button type="button" data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
           <button type="button" data-toggle="modal" href="#firearmDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Firearm Database</button>
+          <button type="button" class="btn btn-primary btn-lg margin-top-2" onclick="signal100()">Signal 100</button>
         </div>
       </div>
     </div>
@@ -1526,6 +1532,22 @@
       </div>
     </div>
   </div>
+
+  <div id="signal100DetailModal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <span class="modal-title" style="font-size: 18px;">Clear Signal 100</span>
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+        </div>
+        <div class="modal-footer text-align-center">
+          <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="clearSignal100()">Clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
   <% include 10-codes %> 
   <% include notepad %>
 </body>
@@ -1564,9 +1586,17 @@
       }
     })
 
-    socket.on('load_panic_status_update', (map, origReq) => {
+    socket.on('load_panic_status_update', (map, signal100Resp, origReq) => {
       var myUser = <%- JSON.stringify(user) %>;
       if (myUser.user.activeCommunity == origReq.activeCommunity) {
+        //load the signal 100 status to the page
+        if (signal100Resp) {
+          $('#signal-100-banner').removeClass('hide').addClass('show')
+        } else {
+          $('#signal-100-banner').removeClass('show').addClass('hide')
+        }
+
+        //load the panic status items
         $('#panic-placeholder-socket').empty();
         $('#panic-placeholder').append(
           '<div id="panic-placeholder-socket"></div>'
@@ -1625,6 +1655,25 @@
       $('#'+res.userID+'-panic-row').remove().fadeOut(1, function() {
         $(this).remove();
       })
+    })
+
+    socket.on('signal_100_button_updated', (origReq) => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (myUser.user.activeCommunity == origReq.activeCommunity) {
+        if ($('#panic-button-check-sound').prop('checked')) {
+          var audioElement = document.createElement('audio');
+          audioElement.setAttribute('src', 'http://www.soundjay.com/button/sounds/beep-07.mp3');
+          audioElement.play();
+        }
+        $('#signal-100-banner').removeClass('hide').addClass('show')
+      }
+    })
+
+    socket.on('clear_signal_100_updated', activeCommunity => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (myUser.user.activeCommunity == activeCommunity) {
+        $('#signal-100-banner').removeClass('show').addClass('hide')
+      }
     })
 
     socket.on('updated_bolo', res => {
@@ -2065,6 +2114,13 @@ function searchFirearm() {
     $('#boloDetailModal').modal('hide')
   })
 
+  function clearSignal100() {
+    var socket = io();
+    myUser = <%- JSON.stringify(user) %>
+    socket.emit('clear_signal_100', myUser.user.activeCommunity)
+    $('#signal-100-banner').removeClass('show').addClass('hide')
+  }
+
   $('#createBolo').one('click', function() {
     // location.assign('/dispatch-dashboard')
     var socket = io();
@@ -2193,5 +2249,27 @@ function searchFirearm() {
     $(this).hide();
   });
     })
+  }
+
+  function signal100() {
+    //if it is already showing we don't want to show it again (there can only be 1 active
+    // signal 100 per community)
+    if (!$('#signal-100-banner').hasClass('show')) {
+    var myUser = <%- JSON.stringify(user) %>;
+    var socket = io();
+    myReq = {
+      userID: myUser._id,
+      userUsername: myUser.user.username,
+      activeCommunity: myUser.user.activeCommunity
+    }
+    if ($('#panic-button-check-sound').prop('checked')) {
+      var audioElement = document.createElement('audio');
+      audioElement.setAttribute('src', 'http://www.soundjay.com/button/sounds/beep-07.mp3');
+      audioElement.play();
+    }
+    
+    socket.emit('signal_100_button_update', myReq)
+  }
+    
   }
 </script>
