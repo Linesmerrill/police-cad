@@ -1625,7 +1625,7 @@
       if (myUser.user.activeCommunity == origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement = document.createElement('audio');
-          audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound.mp3');
+          audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound.wav');
           audioElement.play();
         }
         $('#panic-placeholder-socket').empty();
@@ -1662,7 +1662,7 @@
       if (myUser.user.activeCommunity == origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement = document.createElement('audio');
-          audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep.mp3');
+          audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep.wav');
           audioElement.play();
         }
         $('#signal-100-banner').removeClass('hide').addClass('show')
@@ -2264,7 +2264,7 @@ function searchFirearm() {
     }
     if ($('#panic-button-check-sound').prop('checked')) {
       var audioElement = document.createElement('audio');
-      audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep.mp3');
+      audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep.wav');
       audioElement.play();
     }
     
