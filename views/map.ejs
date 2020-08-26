@@ -78,48 +78,11 @@
         </div>
         <hr class="margin-top-3 margin-bottom-3" style="width: 88%;max-width: 100rem;">
         <div>
-            <h3>Sandy Shores/Harmony</h3>
-            <img src="/static/images/sandy-shores-harmony-map.png">
+            <button type="button" class="btn btn-primary btn-lg margin-top-2" onclick="zoomin()">In</button>
+            <button type="button" class="btn btn-primary btn-lg margin-top-2" onclick="zoomout()">Out</button>
         </div>
-        <div>
-            <h3>Grapeseed</h3>
-            <img src="/static/images/grapeseed-map.png">
-        </div>
-        <div>
-            <h3>Paleto Bay</h3>
-            <img src="/static/images/paleto-bay-map.png">
-        </div>
-        <div>
-            <h3>Mirror Park</h3>
-            <img src="/static/images/mirror-park-map.png">
-        </div>
-        <div>
-            <h3>Vinewood</h3>
-            <img src="/static/images/vinewood-map.png">
-        </div>
-        <div>
-            <h3>Vinewood Hills</h3>
-            <img src="/static/images/vinewood-hills-map.png">
-        </div>
-        <div>
-            <h3>Downtown</h3>
-            <img src="/static/images/downtown-map.png">
-        </div>
-        <div>
-            <h3>South Los Santos</h3>
-            <img src="/static/images/south-los-santos-map.png">
-        </div>
-        <div>
-            <h3>Rockford</h3>
-            <img src="/static/images/rockford-map.png">
-        </div>
-        <div>
-            <h3>Vespucci</h3>
-            <img src="/static/images/vespucci-map.png">
-        </div>
-        <div>
-            <h3>Full Map</h3>
-            <a href="/static/images/GTA-V-Custom-Postal-Code-Map.jpg" target="#">GTA V Map <span class="iconify" data-icon="ion:open-outline" data-inline="false"></span></a>
+        <div class="full-map dragscroll">
+            <img id="map" src="/static/images/GTA-V-Custom-Postal-Code-Map.jpg">
         </div>
         <hr class="margin-top-3 margin-bottom-3" style="width: 88%;max-width: 100rem;">
         <div class="google-ad"></div>
@@ -145,7 +108,27 @@
     <script src="/static/js/jquery.easing.min.js"></script>
     <script src="/static/js/wow.js"></script>
     <script src="/static/js/scripts.js"></script>
+    <!-- Map Manager Scripts -->
+    <script type="text/javascript" src="https://cdn.rawgit.com/asvd/dragscroll/master/dragscroll.js"></script>
+    <script>
+        function zoomin() {
+            let myImg = document.getElementById("map");
+            let currWidth = myImg.clientWidth;
+            if (currWidth === 2500) return false;
+            else {
+                myImg.style.width = (currWidth + 200) + "px";
+            }
+        }
 
+        function zoomout() {
+            let myImg = document.getElementById("map");
+            let currWidth = myImg.clientWidth;
+            if (currWidth === 100) return false;
+            else {
+                myImg.style.width = (currWidth - 200) + "px";
+            }
+        }
+    </script>
 </body>
 
 </html>
