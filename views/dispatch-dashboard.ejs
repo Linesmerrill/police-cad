@@ -39,6 +39,7 @@
 <body>
   
   <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
+    
     <a data-toggle="modal" href="#signal100DetailModal">
       <div id="signal-100-banner" class="panel panel-danger hide">
         <div class="panel-heading text-align-center">
@@ -64,8 +65,10 @@
   </nav>
   
   <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
+    
     <div class="header-content">
       <div class="inner">
+    <% include global-header %>
         
         <h1 class="cursive"><a href="/dispatch-dashboard">San Andreas - Dispatch Operations</a></h1>
 
@@ -114,7 +117,9 @@
           <button type="button" data-toggle="modal" href="#firearmDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Firearm Database</button>
           <button type="button" class="btn btn-primary btn-lg margin-top-2" onclick="signal100()">Signal 100</button>
         </div>
+
       </div>
+      
     </div>
     </header>
     <section style='background-image: url("/static/images/blue-clouds.jpg");'>
