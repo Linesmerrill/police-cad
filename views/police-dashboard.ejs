@@ -57,6 +57,8 @@
   <header id="second" style='background-image: url("/static/images/hway_bkground.jpg");'>
     <div class="header-content">
       <div class="inner">
+    <% include global-header %>
+
         <% for(var i=0; i<communities.length; i++) {%>
           <% if (communities[i]._id == user.user.activeCommunity) {%>
             <div id="panic-placeholder"></div>
