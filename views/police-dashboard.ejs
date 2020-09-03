@@ -661,63 +661,7 @@
                 <div class="col-md-4">
 
               <select id="ticket-select" name="fines" class="select-move" multiple required>
-                <optgroup label="Moving Violations: may result in suspended or revoked license">
-                  <option>Speeding 5-10 over the posted speed limit</option>
-                  <option>Speeding 10-39 over the posted speed limit</option>
-                  <option>Running a stop sign or red light</option>
-                  <option>Not yielding to pedestrian</option>
-                  <option>Illegal U-Turn</option>
-                  <option>Failure to yield</option>
-                  <option>Failure to maintain lane</option>
-                  <option>Driving without valid insurance</option>
-                  <option>Driving on suspended license</option>
-                  <option>Reckless or dangerous driving</option>
-                  <option>Operating motor vehicle while intoxicated</option>
-                  <option>Operating motor vehicle while under the influence</option>
-                  <option>Road rage</option>
-                  <option>Racing on public street</option>
-                  <option>Vehicular homicide</option>
-                  <option>Improper use of seat belt/child restraints</option>
-                </optgroup>
-                <optgroup label="Non-Moving Violations: fix-it ticket">
-                  <option>Parking in front of fire hydrant</option>
-                  <option>Parking in no-parking zone</option>
-                  <option>Parking in front of an expired meter</option>
-                  <option>Blocking sidewalk</option>
-                  <option>Double parking</option>
-                  <option>Excessive muffler noise</option>
-                  <option>No license plate</option>
-                  <option>Driving with expired registration tags</option>
-                  <option>Headlights or tail-lights not working</option>
-                  <option>Cracked windshield</option>
-                  <option>Illegal lights installed on vehicle</option>
-                  <option>Window tint darker than allowed</option>
-                  <option>Excessive use of horn</option>
-                </optgroup>
-                <optgroup label="Domestic:">
-                  <option>Domestic dispute</option>
-                  <option>Domestic violence</option>
-                  <option>Disturbing the peace</option>
-                  <option>Animal cruelty</option>
-                </optgroup>
-                <optgroup label="Possession:">
-                  <option>Possession of stolen property</option>
-                  <option>Possession of unlicensed firearms</option>
-                  <option>Possession of illegal firearms</option>
-                  <option>Possession of illegal substances</option>
-                  <option>Over the limit of controlled substances</option>
-                  <option>Possession of controlled substances</option>
-                </optgroup>
-                <optgroup label="Misdemeanors: fine, jail sentence or both">
-                  <option>Driving under the influence (DUI)</option>
-                  <option>Driving on suspended or revoked license</option>
-                  <option>Speeding 40mph or more in excess of speed limit</option>
-                  <option>Drag racing</option>
-                  <option>Reckless driving</option>
-                  <option>Leaving the scene of an accident</option>
-                  <option>Indecent exposure</option>
-                  <option>Identity theft</option>
-                </optgroup>
+                <% include citation-list %>
                 <optgroup label="Crime not listed">
                   <option id="ticket-option-other">Other</option>
                 </optgroup>
@@ -836,63 +780,7 @@
                 <div class="col-md-4">
 
               <select id="warning-select" name="fines" class="select-move" multiple required>
-                <optgroup label="Moving Violations: may result in suspended or revoked license">
-                  <option>Speeding 5-10 over the posted speed limit</option>
-                  <option>Speeding 10-39 over the posted speed limit</option>
-                  <option>Running a stop sign or red light</option>
-                  <option>Not yielding to pedestrian</option>
-                  <option>Illegal U-Turn</option>
-                  <option>Failure to yield</option>
-                  <option>Failure to maintain lane</option>
-                  <option>Driving without valid insurance</option>
-                  <option>Driving on suspended license</option>
-                  <option>Reckless or dangerous driving</option>
-                  <option>Operating motor vehicle while intoxicated</option>
-                  <option>Operating motor vehicle while under the influence</option>
-                  <option>Road rage</option>
-                  <option>Racing on public street</option>
-                  <option>Vehicular homicide</option>
-                  <option>Improper use of seat belt/child restraints</option>
-                </optgroup>
-                <optgroup label="Non-Moving Violations: fix-it ticket">
-                  <option>Parking in front of fire hydrant</option>
-                  <option>Parking in no-parking zone</option>
-                  <option>Parking in front of an expired meter</option>
-                  <option>Blocking sidewalk</option>
-                  <option>Double parking</option>
-                  <option>Excessive muffler noise</option>
-                  <option>No license plate</option>
-                  <option>Driving with expired registration tags</option>
-                  <option>Headlights or tail-lights not working</option>
-                  <option>Cracked windshield</option>
-                  <option>Illegal lights installed on vehicle</option>
-                  <option>Window tint darker than allowed</option>
-                  <option>Excessive use of horn</option>
-                </optgroup>
-                <optgroup label="Domestic:">
-                  <option>Domestic dispute</option>
-                  <option>Domestic violence</option>
-                  <option>Disturbing the peace</option>
-                  <option>Animal cruelty</option>
-                </optgroup>
-                <optgroup label="Possession:">
-                  <option>Possession of stolen property</option>
-                  <option>Possession of unlicensed firearms</option>
-                  <option>Possession of illegal firearms</option>
-                  <option>Possession of illegal substances</option>
-                  <option>Over the limit of controlled substances</option>
-                  <option>Possession of controlled substances</option>
-                </optgroup>
-                <optgroup label="Misdemeanors: fine, jail sentence or both">
-                  <option>Driving under the influence (DUI)</option>
-                  <option>Driving on suspended or revoked license</option>
-                  <option>Speeding 40mph or more in excess of speed limit</option>
-                  <option>Drag racing</option>
-                  <option>Reckless driving</option>
-                  <option>Leaving the scene of an accident</option>
-                  <option>Indecent exposure</option>
-                  <option>Identity theft</option>
-                </optgroup>
+                <% include citation-list %>
                 <optgroup label="Crime not listed">
                   <option id="warning-option-other">Other</option>
                 </optgroup>
