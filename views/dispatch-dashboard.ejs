@@ -39,6 +39,7 @@
 <body>
   
   <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
+    
     <a data-toggle="modal" href="#signal100DetailModal">
       <div id="signal-100-banner" class="panel panel-danger hide">
         <div class="panel-heading text-align-center">
@@ -64,9 +65,9 @@
   </nav>
   
   <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
+    
     <div class="header-content">
       <div class="inner">
-        
         <h1 class="cursive"><a href="/dispatch-dashboard">San Andreas - Dispatch Operations</a></h1>
 
         <% if (context == "createTicketSuccess") {%>
@@ -114,9 +115,21 @@
           <button type="button" data-toggle="modal" href="#firearmDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Firearm Database</button>
           <button type="button" class="btn btn-primary btn-lg margin-top-2" onclick="signal100()">Signal 100</button>
         </div>
+
       </div>
+      
     </div>
     </header>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<ins class="adsbygoogle"
+     style="display:block; text-align:center;"
+     data-ad-layout="in-article"
+     data-ad-format="fluid"
+     data-ad-client="ca-pub-3842696805773142"
+     data-ad-slot="8821936879"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
     <section style='background-image: url("/static/images/blue-clouds.jpg");'>
       <div class="container">
         <div class="col-lg-10 col-lg-offset-1 margin-top-1">
@@ -680,42 +693,7 @@
                 <div class="col-md-4">
 
               <select id="ticket-select" name="fines" class="select-move" multiple required>
-                <optgroup label="Moving Violations: may result in suspended or revoked license">
-                  <option>Speeding 5-10 over the posted speed limit</option>
-                  <option>Speeding 10-39 over the posted speed limit</option>
-                  <option>Running a stop sign or red light</option>
-                  <option>Not yielding to pedestrian</option>
-                  <option>Illegal U-Turn</option>
-                  <option>Failure to yield</option>
-                  <option>Driving on suspended license</option>
-                  <option>Reckless or dangerous driving</option>
-                  <option>Operating motor vehicle while intoxicated</option>
-                  <option>Road rage</option>
-                  <option>Racing on public street</option>
-                  <option>Vehicular homicide</option>
-                </optgroup>
-                <optgroup label="Non-Moving Violations: fix-it ticket">
-                  <option>Parking in front of fire hydrant</option>
-                  <option>Parking in no-parking zone</option>
-                  <option>Parking in front of an expired meter</option>
-                  <option>Blocking sidewalk</option>
-                  <option>Double parking</option>
-                  <option>Excessive muffler noise</option>
-                  <option>No license plate</option>
-                  <option>Driving with expired registration tags</option>
-                  <option>Headlights or tail-lights not working</option>
-                  <option>Cracked windshield</option>
-                  <option>Illegal lights installed on vehicle</option>
-                  <option>Window tint darker than allowed</option>
-                </optgroup>
-                <optgroup label="Misdemeanors: fine, jail sentence or both">
-                  <option>Driving under the influence (DUI)</option>
-                  <option>Driving on suspended or revoked license</option>
-                  <option>Speeding 40mph or more in excess of speed limit</option>
-                  <option>Drag racing</option>
-                  <option>Reckless driving</option>
-                  <option>Leaving the scene of an accident</option>
-                </optgroup>
+                <% include citation-list %>
                 <optgroup label="Crime not listed">
                   <option id="ticket-option-other">Other</option>
                 </optgroup>
@@ -834,42 +812,7 @@
                 <div class="col-md-4">
 
               <select id="warning-select" name="fines" class="select-move" multiple required>
-                <optgroup label="Moving Violations: may result in suspended or revoked license">
-                  <option>Speeding 5-10 over the posted speed limit</option>
-                  <option>Speeding 10-39 over the posted speed limit</option>
-                  <option>Running a stop sign or red light</option>
-                  <option>Not yielding to pedestrian</option>
-                  <option>Illegal U-Turn</option>
-                  <option>Failure to yield</option>
-                  <option>Driving on suspended license</option>
-                  <option>Reckless or dangerous driving</option>
-                  <option>Operating motor vehicle while intoxicated</option>
-                  <option>Road rage</option>
-                  <option>Racing on public street</option>
-                  <option>Vehicular homicide</option>
-                </optgroup>
-                <optgroup label="Non-Moving Violations: fix-it ticket">
-                  <option>Parking in front of fire hydrant</option>
-                  <option>Parking in no-parking zone</option>
-                  <option>Parking in front of an expired meter</option>
-                  <option>Blocking sidewalk</option>
-                  <option>Double parking</option>
-                  <option>Excessive muffler noise</option>
-                  <option>No license plate</option>
-                  <option>Driving with expired registration tags</option>
-                  <option>Headlights or tail-lights not working</option>
-                  <option>Cracked windshield</option>
-                  <option>Illegal lights installed on vehicle</option>
-                  <option>Window tint darker than allowed</option>
-                </optgroup>
-                <optgroup label="Misdemeanors: fine, jail sentence or both">
-                  <option>Driving under the influence (DUI)</option>
-                  <option>Driving on suspended or revoked license</option>
-                  <option>Speeding 40mph or more in excess of speed limit</option>
-                  <option>Drag racing</option>
-                  <option>Reckless driving</option>
-                  <option>Leaving the scene of an accident</option>
-                </optgroup>
+                <% include citation-list %>
                 <optgroup label="Crime not listed">
                   <option id="warning-option-other">Other</option>
                 </optgroup>
