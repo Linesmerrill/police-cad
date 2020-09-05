@@ -298,11 +298,7 @@
 
 
 
-                              <% if (civilians[i].civilian.licenseStatus == 3) {%>
-                                <div id="licenseRevokedMessage" class="alert alert-warning" style="display:block">
-                                    <strong>Warning!</strong> License is Revoked.
-                                  </div>
-                                <% } %>
+                                
                                 <div class="text-align-center">
                                   <button data-toggle="modal" href="#ticketModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenCitation('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#date', '#time');">Issue Citation</button>
                                   <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
@@ -317,7 +313,13 @@
             <!-- Drivers License -->
             <div id="drivers-license" class="row">
               <div class="col-md-12">
-            <div class="container col-sm-offset-2 col-md-offset-2" style="position: relative; margin-bottom: -130px;">
+                <div id="licenseRevokedMessage-<%=i%>" class="alert alert-warning hide">
+                  <strong>Warning!</strong> License is Revoked.
+                </div>
+                <div id="noLicenseMessage-<%=i%>" class="alert alert-danger hide">
+                  <strong>Alert!</strong> No License Found.
+                </div>
+            <div id="drivers-license-details-<%=i%>" class="container col-sm-offset-2 col-md-offset-2" style="position: relative; margin-bottom: -130px;">
               <img src="/static/images/id-license.png" style="width: 301px; height: 186px;">
 
               <label style="position: absolute;
@@ -479,7 +481,7 @@
                 <div class="col-md-4">
                   <label style="position: absolute;
                   bottom: 241px;
-                  left: 210px;
+                  left: 195px;
                   color: black;
                   font-size: 14px;
                   font-family: 'Signika', sans-serif;
@@ -499,28 +501,25 @@
           <div id="click-to-revoke-lic-<%=i%>" class="form-group col-md-12 text-align-center margin-top-1 hide">
               <button type="button" value="deleteLicense" name="action" class="btn btn-danger" onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','2')">Revoke Driver's License</button>
           </div>
+                                
+          <hr style="width: 88%;max-width: 100rem;">
+          <h5><ion-icon name="browsers-outline"></ion-icon> Firearm License</h5>
 
-
-                                <!-- old stuff that should be removed -->
-                                Driver's ID #: <%= civilians[i]._id%><br/>
-                                Date of Birth: <%= civilians[i].civilian.birthday%><br/>
-                                <% if (civilians[i].civilian.licenseStatus == 1) {%>
-                                  <p class="plate-body-text">Driver's License Status: Valid <i class="ion-checkmark-circled color-green"></i></p>
-                                  <% } else if (civilians[i].civilian.licenseStatus == 3) {%>
-                                    <p class="plate-body-text">Driver's License Status: Revoked <i class="ion-alert-circled color-yellow"></i></p>
-                                    <% } else {%>
-                                  <p class="plate-body-text">Driver's License Status: Invalid <i class="ion-alert-circled color-red"></i></p>
-                                <% } %>
-                                <% if (civilians[i].civilian.firearmLicense == 2) {%>
-                                  <p class="plate-body-text">Firearm License: Valid <i class="ion-checkmark-circled color-green"></i></p>
-                                  <% } else if (civilians[i].civilian.firearmLicense == 3) {%>
-                                    <p class="plate-body-text">Firearm License: Revoked <i class="ion-alert-circled color-red"></i></p>
-                                    <% } else {%>
-                                      <p class="plate-body-text">Firearm License: None <i class="ion-alert-circled color-yellow"></i></p>
-                                <% } %>
-                                Address: <%= civilians[i].civilian.address%><br/>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="firearmLicenseView"></label>
+              <div class="col-md-4">
+                <% if (civilians[i].civilian.firearmLicense == 2) {%>
+                  <p class="plate-body-text">Valid <i class="ion-checkmark-circled color-green"></i></p>
+                  <% } else if (civilians[i].civilian.firearmLicense == 3) {%>
+                    <p class="plate-body-text">Revoked <i class="ion-alert-circled color-red"></i></p>
+                    <% } else {%>
+                      <p class="plate-body-text">None <i class="ion-alert-circled color-yellow"></i></p>
+                <% } %>
+              </div>
+            </div>
+            <hr style="width: 88%;max-width: 100rem;">
+                                
                                 Occupation: <%= civilians[i].civilian.occupation%><br/>
-                                <!-- end of old stuff -->
 
                                 <hr style="width: 88%;max-width: 100rem;">
                                 <h4>Criminal History</h4>
@@ -1742,7 +1741,6 @@
       })
     }
     })
-  
 
   });
 </script>
@@ -2273,18 +2271,26 @@ function searchFirearm() {
       $('#lastNameLic-'+i).text(lastName)
       switch (civ[i].civilian.licenseStatus) {
         case '1':
-          $('#licenseStatusViewLic-'+i).text('Valid').removeClass('color-red').addClass('color-black')
+          $('#licenseStatusViewLic-'+i).text('Valid ').removeClass('color-red').addClass('color-black').append('<i class="ion-checkmark-circled color-green"></i>')
           $('#click-to-revoke-lic-'+i).removeClass('hide')
+          $('#licenseRevokedMessage-'+i).addClass('hide')
+          $('#noLicenseMessage-'+i).addClass('hide')
           break;
         case '2':
-          $('#licenseStatusViewLic-'+i).text('Revoked').removeClass('color-black').addClass('color-red')
+          $('#licenseStatusViewLic-'+i).text('Revoked ').removeClass('color-black').addClass('color-red').append('<i class="ion-alert-circled color-red"></i>')
           $('#click-to-revoke-lic-'+i).addClass('hide')
           $('#click-to-reinstate-lic-'+i).removeClass('hide')
+          $('#licenseRevokedMessage-'+i).removeClass('hide')
+          $('#noLicenseMessage-'+i).addClass('hide')
           break;
         default:
           $('#drivers-license-'+i).hide();
-          $('#click-to-reinstate-lic-'+i).removeClass('hide')
+          $('#click-to-reinstate-lic-'+i).addClass('hide')
           $('#licenseStatusViewLic-'+i).text('None').removeClass('color-black').addClass('color-red')
+          $('#licenseRevokedMessage-'+i).addClass('hide')
+          $('#click-to-revoke-lic-'+i).addClass('hide')
+          $('#drivers-license-details-'+i).addClass('hide')
+          $('#noLicenseMessage-'+i).removeClass('hide')
       }
       var licenseDOB = birthday.split('-')
       if (licenseDOB.length == 3) {
@@ -2312,19 +2318,27 @@ function searchFirearm() {
     socket.on('load_updated_drivers_license_status_result', (res) => {
       switch (status) {
         case '1':
-          $('#licenseStatusViewLic-'+i).text('Valid').removeClass('color-red').addClass('color-black')
+          $('#licenseStatusViewLic-'+i).text('Valid ').removeClass('color-red').addClass('color-black').append('<i class="ion-checkmark-circled color-green"></i>')
           $('#click-to-revoke-lic-'+i).removeClass('hide')
           $('#click-to-reinstate-lic-'+i).addClass('hide')
+          $('#licenseRevokedMessage-'+i).addClass('hide')
+          $('#noLicenseMessage-'+i).addClass('hide')
           break;
         case '2':
-          $('#licenseStatusViewLic-'+i).text('Revoked').removeClass('color-black').addClass('color-red')
-          $('#click-to-revoke-lic-'+i).addClass('hide')
+          $('#licenseStatusViewLic-'+i).text('Revoked ').removeClass('color-black').addClass('color-red').append('<i class="ion-alert-circled color-red"></i>')
+          $('#click-to-revoke-lic-'+i).addClass('hide').removeClass('show')
           $('#click-to-reinstate-lic-'+i).removeClass('hide')
+          $('#licenseRevokedMessage-'+i).removeClass('hide')
+          $('#noLicenseMessage-'+i).addClass('hide')
           break;
-        default: //TODO need to figure what to display here
+        default:
           $('#drivers-license-'+i).hide();
           $('#click-to-reinstate-lic-'+i).addClass('hide')
           $('#licenseStatusViewLic-'+i).text('None').removeClass('color-black').addClass('color-red')
+          $('#licenseRevokedMessage-'+i).addClass('hide')
+          $('#click-to-revoke-lic-'+i).addClass('hide')
+          $('#drivers-license-details-'+i).addClass('hide')
+          $('#noLicenseMessage-'+i).removeClass('hide')
       }
     })
   }
