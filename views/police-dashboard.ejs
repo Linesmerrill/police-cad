@@ -304,7 +304,7 @@
                                   <button data-toggle="modal" href="#warningModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
                                   <button data-toggle="modal" href="#arrestModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenArrest('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
                                   <button data-toggle="modal" href="#createWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenCreateWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Create Warrant</button>
-                                  <!-- <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button> -->
+                                  <button data-toggle="modal" href="#createCivNotesModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenCreateCivNotesModal('<%=civilians[i]._id%>');">Notes</button>
                                 </div>
                                 <hr/>
 
@@ -1195,6 +1195,43 @@
     </div>
   </div>
 
+  <div id="createCivNotesModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <!-- <form id="warrant-form" class="form-horizontal" action="/create-warrant" method="POST"> -->
+            <fieldset>
+
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Create Note for Civilian's Record</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="civ-notes">Note:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <div class="col-md-10 col-md-offset-1">
+                  <textarea id="civ-notes" name="notes" type="text" maxlength="500" placeholder="Notes about civilian" class="form-control input-md" required></textarea>
+                </div>
+              </div>
+
+              <input id="civ-note-date" type="hidden" name="date" value="">
+              <input id="civ-note-time" type="hidden" name="time" value="">
+              <input id="civ-note-id" type="hidden" name="time" value="">
+              <input id="civ-note-reporting-officer" type="hidden" name="reportingOfficer" value=<%= user.user.username%>>
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submitCivNoteCreation"></label>
+                <div class="col-md-4">
+                  <input type="hidden" name="route" value="police-dashboard">
+                  <button id="submitCivNoteCreation" class="btn btn-primary" onclick="CreateCivNotes()">Submit</button>
+                </div>
+              </div>
+            </fieldset>
+          <!-- </form> -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="confirmClearWarrantModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -2001,6 +2038,40 @@ function searchFirearm() {
     }))
     $('#warrant-civ-dob').val(dob)
     $('#searchWarrantDiv').hide()
+  }
+
+  function CreateCivNotes() {
+    //datetime
+    //reporting officer
+    //civID
+    //notes
+    var req = {
+      date: $('#civ-note-date').val(),
+      time: $('#civ-note-time').val(),
+      reportingOfficer: $('#civ-note-reporting-officer').val(),
+      civID: $('#civ-note-id').val(),
+      notes: $('#civ-notes').val(),
+    }
+    var socket = io();
+    socket.emit('create_civ_note', req)
+    socket.on('load_civ_note_result', (res) => {
+      //do something with the response
+      console.log("res: ", res)
+    })
+  }
+
+  function OpenCreateCivNotesModal(civID) {
+    //Super gross date calculation, thx javascript
+    $('#civ-note-id').val(civID)
+    let date = new Date()
+    let yyyy = date.getFullYear().toString();                                    
+    let mm = (date.getMonth()+1).toString(); // getMonth() is zero-based         
+    let dd  = date.getDate().toString(); 
+    $('#civ-note-date').val(yyyy + '-' + (mm[1]?mm:"0"+mm[0]) + '-' + (dd[1]?dd:"0"+dd[0]))
+    $('#civ-note-time').val(new Date().toLocaleTimeString('en-GB', {
+      hour: "2-digit",
+      minute: "2-digit"
+    }))
   }
 
   function clearWarrantWithValues(warrantID, warrantReason) {

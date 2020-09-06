@@ -2790,6 +2790,20 @@ module.exports = function (app, passport, server) {
         })
       }
     });
+
+    socket.on('create_civ_note', (req) => {
+      console.debug('create_civ_note: ', req)
+      if (req.civID != null && req.civID != undefined) {
+        Civilian.inser({
+          '_id': ObjectId(user._id)
+        }, {
+          'civilian.licenseStatus': user.status
+        }, function (err, dbUser) {
+          if (err) return console.error(err);
+          return socket.emit('load_updated_drivers_license_status_result', dbUser)
+        })
+      }
+    });
   });
 
 }; //end of routes
