@@ -6,7 +6,7 @@ var civilianSchema = mongoose.Schema({
     email: String, //deprecated 6/27/2020
     firstName: String,
     lastName: String,
-    licenseStatus: String,
+    licenseStatus: String, //1: valid, 2: revoked, 3: none
     ticketCount: String,
     birthday: String,
     warrants: [{

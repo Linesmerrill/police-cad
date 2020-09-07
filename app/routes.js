@@ -2762,18 +2762,32 @@ module.exports = function (app, passport, server) {
       // console.debug('update panic button sound status: ', user)
       if (user._id != null && user._id != undefined) {
         User.findById({
-          '_id': user._id
+          '_id': ObjectId(user._id)
         }, function (err, dbUser) {
           if (err) return console.error(err);
           User.findByIdAndUpdate({
-            '_id': user._id
+            '_id': ObjectId(user._id)
           }, {
             'user.panicButtonSound': !dbUser.user.panicButtonSound
-          }, function (err, dbUserUpdtd){
+          }, function (err, dbUserUpdtd) {
             if (err) return console.error(err);
-          return socket.emit('load_panic_btn_result', dbUserUpdtd)
+            return socket.emit('load_panic_btn_result', dbUserUpdtd)
           })
         });
+      }
+    });
+
+    socket.on('update_drivers_license_status', (user) => {
+      // console.debug('update revoke drivers license status: ', user._id)
+      if (user._id != null && user._id != undefined) {
+        Civilian.findByIdAndUpdate({
+          '_id': ObjectId(user._id)
+        }, {
+          'civilian.licenseStatus': user.status
+        }, function (err, dbUser) {
+          if (err) return console.error(err);
+          return socket.emit('load_updated_drivers_license_status_result', dbUser)
+        })
       }
     });
   });
