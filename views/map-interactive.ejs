@@ -74,78 +74,55 @@
     
     <div class="col-md-offset-2 col-md-8">
         <div class="inner">
-            <h2 class="text-center">Map</h2>
+            <h2 class="text-center">Interactive Map</h2>
         </div>
         <hr class="margin-top-3 margin-bottom-3" style="width: 88%;max-width: 100rem;">
-        <div>
-            <h3>Sandy Shores/Harmony</h3>
-            <img src="/static/images/sandy-shores-harmony-map.png">
+        <div class="btn btn-primary btn-lg margin-top-2 navbar-right">
+            <a href="/map">Popular Areas</a>
+        </div>
+        <div class="btn btn-primary btn-lg margin-top-2 navbar-right">
+            <a style="margin-right: 8px" href="/static/images/GTA-V-Custom-Postal-Code-Map.jpg" target="#">For Mobile <span class="iconify" data-icon="ion:open-outline" data-inline="false"></span></a>
         </div>
         <div>
-            <h3>Grapeseed</h3>
-            <img src="/static/images/grapeseed-map.png">
+            <button type="button" class="btn btn-primary btn-lg margin-top-2" onclick="zoomin()">In</button>
+            <button type="button" class="btn btn-primary btn-lg margin-top-2" onclick="zoomout()">Out</button>
         </div>
-        <div>
-            <h3>Paleto Bay</h3>
-            <img src="/static/images/paleto-bay-map.png">
-        </div>
-        <div>
-            <h3>Mirror Park</h3>
-            <img src="/static/images/mirror-park-map.png">
-        </div>
-        <div>
-            <h3>Vinewood</h3>
-            <img src="/static/images/vinewood-map.png">
-        </div>
-        <div>
-            <h3>Vinewood Hills</h3>
-            <img src="/static/images/vinewood-hills-map.png">
-        </div>
-        <div>
-            <h3>Downtown</h3>
-            <img src="/static/images/downtown-map.png">
-        </div>
-        <div>
-            <h3>South Los Santos</h3>
-            <img src="/static/images/south-los-santos-map.png">
-        </div>
-        <div>
-            <h3>Rockford</h3>
-            <img src="/static/images/rockford-map.png">
-        </div>
-        <div>
-            <h3>Vespucci</h3>
-            <img src="/static/images/vespucci-map.png">
-        </div>
-        <div>
-            <h3>Full Map</h3>
-            <a href="/static/images/GTA-V-Custom-Postal-Code-Map.jpg" target="#">GTA V Map <span class="iconify" data-icon="ion:open-outline" data-inline="false"></span></a>
+        <div class="full-map dragscroll">
+            <img id="map" src="/static/images/GTA-V-Custom-Postal-Code-Map.jpg">
         </div>
         <hr class="margin-top-3 margin-bottom-3" style="width: 88%;max-width: 100rem;">
         <div class="google-ad"></div>
     </div>
     <% include footer %>
-    <div id="alertModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <h2 class="text-center">Coming Soon!</h2>
-                    <p class="text-center">This is still being developed. Please check back later ;)</p>
-                    <br />
-                    <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK
-                        <i class="ion-android-close"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
     <!--scripts loaded here -->
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
     <script src="/static/js/jquery.easing.min.js"></script>
     <script src="/static/js/wow.js"></script>
     <script src="/static/js/scripts.js"></script>
+    <!-- Map Manager Scripts -->
+    <script type="text/javascript" src="https://cdn.rawgit.com/asvd/dragscroll/master/dragscroll.js"></script>
+    <script>
+        function zoomin() {
+            let myImg = document.getElementById("map");
+            let currWidth = myImg.clientWidth;
+            if (currWidth >= 7500){
+                return false;
+            } else {
+                myImg.style.width = (currWidth + 300) + "px";
+            }
+        }
 
+        function zoomout() {
+            let myImg = document.getElementById("map");
+            let currWidth = myImg.clientWidth;
+            if (currWidth <= 1249) {
+                return false;
+            } else {
+                myImg.style.width = (currWidth - 300) + "px";
+            }
+        }
+    </script>
 </body>
 
 </html>

@@ -78,6 +78,19 @@ p {
     margin-bottom: 20px;
 }
 
+.full-map {
+    margin-top: 30px;
+    width: 100%;
+    height: 85vh;
+    overflow: hidden;
+    cursor: grab;
+}
+
+.full-map img {
+    height: auto;
+    width: 100%;
+}
+
 .wide-space {
     letter-spacing: 1.6px;
 }

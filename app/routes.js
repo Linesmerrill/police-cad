@@ -36,9 +36,13 @@ module.exports = function (app, passport, server) {
     res.render('about');
   });
 
-  app.get('/map', function (req, res) {
-    res.render('map');
+  app.get('/map-interactive', function (req, res) {
+    res.render('map-interactive');
   });
+
+  app.get('/map', function (req, res) {
+    res.render('map-popular')
+  })
 
   app.get('/health', function (req, res) {
     res.render('health');
