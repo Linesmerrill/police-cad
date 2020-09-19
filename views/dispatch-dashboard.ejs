@@ -2423,6 +2423,7 @@ function searchFirearm() {
       $('#civilianIDViewLic-'+i).text('DL: '+ civ[i]._id)
       $('#firstNameLic-'+i).text(firstName)
       $('#lastNameLic-'+i).text(lastName)
+      $('#addressViewLic-'+i).text(civ[i].civilian.address)
       switch (civ[i].civilian.licenseStatus) {
         case '1':
           $('#licenseStatusViewLic-'+i).text('Valid ').removeClass('color-red').addClass('color-black').append('<i class="ion-checkmark-circled color-green"></i>')
