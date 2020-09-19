@@ -29,7 +29,7 @@ const app = express();
 gracefulFs.gracefulify(realFs)
 
 // Connect to MongoDB database.
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/knoldus' );
+mongoose.connect(process.env.DB_URI || 'mongodb://localhost/knoldus' );
 mongoose.set('useFindAndModify', false);
 
 // Setup passport.
@@ -40,7 +40,7 @@ app.use(cookieParser());
 
 var limiter = new RateLimit({
 	store: new MongoLimitStore({
-	  uri: process.env.MONGODB_URI || 'mongodb://localhost/knoldus',
+	  uri: process.env.DB_URI || 'mongodb://localhost/knoldus',
 	}),
 	max: process.env.RATE_LIMIT_NUMBER || 100, // limit each IP to n requests per windowMs (default 100)
 	windowMs: 15 * 60 * 1000 // 15 minutes
