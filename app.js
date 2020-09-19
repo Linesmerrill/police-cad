@@ -15,12 +15,9 @@ var gracefulFs = require('graceful-fs')
 var newBaseURL = process.env.NEW_BASE_URL || 'http://localhost:8080';
 var redirectStatus = parseInt(process.env.REDIRECT_STATUS || 302);
 var oldBaseURL = process.env.OLD_BASE_URL
-// Load enviroment variables file into process.
+// Load environment variables file into process.
 dotenv.config();
 
-/**
- * Express application.t
- */
 const app = express();
 
 // graceful-fs: in order to delay on EMFILE errors from any fs-using dependencies
