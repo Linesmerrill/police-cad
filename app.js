@@ -9,8 +9,6 @@ var passport = require('passport');
 var flash = require('connect-flash');
 var path = require('path');
 var http = require('http').createServer(express);
-var RateLimit = require("express-rate-limit");
-var MongoLimitStore = require('rate-limit-mongo');
 var realFs = require('fs')
 var gracefulFs = require('graceful-fs')
 
@@ -37,16 +35,6 @@ require('./config/passport')(passport);
 
 // Use cookie parser.
 app.use(cookieParser());
-
-// var limiter = new RateLimit({
-// 	store: new MongoLimitStore({
-// 	  uri: process.env.DB_URI || 'mongodb://localhost/knoldus',
-// 	}),
-// 	max: process.env.RATE_LIMIT_NUMBER || 100, // limit each IP to n requests per windowMs (default 100)
-// 	windowMs: 15 * 60 * 1000 // 15 minutes
-//   });
-// // apply to all requests
-// app.use(limiter);
 
 app.use(bodyParser.urlencoded({
 	extended: false,
