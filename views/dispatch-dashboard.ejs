@@ -189,6 +189,31 @@
             <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
           </div>
             <%} else {%>
+              <hr style="width: 88%;max-width: 100rem;">
+              <!-- Active Calls -->
+              <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Active Calls:</span> <button type="button" data-toggle="modal" href="#callModal" class="btn btn-primary btn-md pull-right margin-bottom-1" onclick="fillOfficerList()">Create Call</button>
+              <table id="callTable" class="table table-hover table-bordered">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Units Assigned</th>
+                    </tr>
+                </thead>
+                <tbody>
+                        <% if (calls != null && calls.length > 0) {%>
+                    <% for(var i=0; i<calls.length; i++) {%>
+                            <tr id="<%=calls[i]._id%>-row" class="gray-hover" data-toggle="modal" data-id="<%=i%>" data-target="#callDetailModal" onclick="populatecallDetails('<%=calls[i]._id%>')">
+                                <td id="<%=calls[i]._id%>-type" style="text-transform: capitalize;"><%=calls[i].call.callType%></td>
+                                <td id="<%=calls[i]._id%>-location"><%=calls[i].call.location%></td>
+                                <td id="<%=calls[i]._id%>-description"><%=calls[i].call.description%></td>
+                            </tr>
+                    <%}%>
+                    <%}%>
+                  </tbody>
+                </table>
+
+                <hr style="width: 88%;max-width: 100rem;">
+                <!-- officer list -->
           <h4 id="officer-list">Officer List:</h4>
           <table id="example" class="table table-hover table-bordered">
             <thead>
@@ -1408,6 +1433,64 @@
     </div>
   </div>
 
+  <div id="callModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="create-call-form" class="form-horizontal" action="/create-call" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Create Call</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="short-description">Short Description:</label>
+              <div class="col-md-4">
+              <input id="short-description" name="short-description" style="text-transform: capitalize;" type="text" placeholder="short description" class="form-control input-md" maxlength="50" required>
+              </div>
+            </div>
+
+            <!-- Multiple Checkboxes (inline) -->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="officers">Assign Officer(s)</label>
+              <div class="col-md-4">
+                <select id="officer-select" name="officers" class="select-manipulatable" multiple required>
+                </select>
+              </div>
+            </div>
+
+            <!-- Text Area input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="call-notes">Call Notes:</label>
+              <div class="col-md-8 col-md-offset-2">
+                <textarea id="call-notes" name="call-notes" type="text" rows="4" maxlength="500" placeholder="call notes" class="form-control input-md"></textarea>
+              </div>
+            </div>
+
+            
+            
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createCall"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" name="route" value="dispatch-dashboard">
+                <input type="hidden" name="reportingOfficerUsername" value="<%= user.user.username %>">
+                <input type="hidden" name="reportingOfficerID" value="<%= user._id %>">
+                <button id="createCall" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"  class="btn btn-primary" onclick="hideModal('boloModal')">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="nonCommunityBoloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1860,6 +1943,11 @@ $(document).ready(function() {
     "pageLength": 5,
   });
 
+  $('#callTable').DataTable({
+    "bLengthChange": false,
+    "pageLength": 5,
+  });
+
   if ( ($(window).height() + 100) < $(document).height() ) {
     $('#top-link-block').removeClass('hidden').affix({
         // how far to scroll down before link "slides" into view
@@ -1935,8 +2023,9 @@ $(document).ready(function() {
       $('#warrant-other-div').show();
     }
   })
-});
 
+  
+});
 
 document.addEventListener("DOMContentLoaded", function(){
   tail.select(".select-move", {
@@ -2336,6 +2425,34 @@ function searchFirearm() {
   //Clears bolo form on button press because we are using sockets
   function clearBoloForm() {
     document.getElementById("create-bolo-form").reset();
+  }
+
+  function fillOfficerList() {
+    officers = <%- JSON.stringify(commUsers) %>
+    var officerList = tail.select('#officer-select', {
+      search: true,
+      classNames: "default white",
+      descriptions: true,
+      sortGroups: "ASC",
+      sortItems: "ASC",
+      placeholder: "Officer List",
+      multiPinSelected: true,
+      hideSelected: false,
+      hideDisabled: true,
+      multiShowCount: false,
+      multiContainer: true
+    })
+    var items = {}
+    for (i = 0; i < officers.length; i++) {
+      items[i] = {
+        value: officers[i].user.username,
+            group: "#",
+            selected: false,
+            disabled: false,
+            description: officers[i].user.dispatchStatus
+      }
+    }
+    officerList.options.add(items)
   }
 
   function hideModal(modalID) {

@@ -9,6 +9,7 @@ var ArrestReport = require('../app/models/arrestReport');
 var Warrant = require('../app/models/warrants');
 var Community = require('../app/models/community');
 var Bolo = require('../app/models/bolos');
+var Call = require('../app/models/calls');
 var Medication = require('../app/models/medication');
 var Condition = require('../app/models/medicalCondition');
 var MedicalReport = require('../app/models/medicalReport');
@@ -25,7 +26,6 @@ module.exports = function (app, passport, server) {
     res.render('index', {
       message: req.flash('info')
     });
-
   });
 
   app.get('/release-log', function (req, res) {
@@ -415,6 +415,7 @@ module.exports = function (app, passport, server) {
             communities: dbCommunities,
             bolos: dbBolos,
             commUsers: null,
+            calls: null,
             context: context
           });
         } else {
@@ -433,6 +434,7 @@ module.exports = function (app, passport, server) {
               communities: dbCommunities,
               bolos: dbBolos,
               commUsers: dbCommUsers,
+              calls: null,
               context: context
             });
           });
@@ -504,6 +506,7 @@ module.exports = function (app, passport, server) {
                         communities: dbCommunities,
                         commUsers: null,
                         bolos: dbBolos,
+                        calls: null,
                         context: null
                       });
                     } else {
@@ -522,6 +525,7 @@ module.exports = function (app, passport, server) {
                           communities: dbCommunities,
                           commUsers: dbCommUsers,
                           bolos: dbBolos,
+                          calls: null,
                           context: null
                         });
                       });
@@ -579,6 +583,7 @@ module.exports = function (app, passport, server) {
                         communities: dbCommunities,
                         commUsers: null,
                         bolos: dbBolos,
+                        calls: null,
                         context: null
                       });
                     } else {
@@ -597,6 +602,7 @@ module.exports = function (app, passport, server) {
                           communities: dbCommunities,
                           commUsers: dbCommUsers,
                           bolos: dbBolos,
+                          calls: null,
                           context: null
                         });
                       });
@@ -772,6 +778,7 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   commUsers: null,
                   bolos: dbBolos,
+                  calls: null,
                   context: null
                 });
               } else {
@@ -790,6 +797,7 @@ module.exports = function (app, passport, server) {
                     communities: dbCommunities,
                     commUsers: dbCommUsers,
                     bolos: dbBolos,
+                    calls: null,
                     context: null
                   });
                 });
@@ -827,6 +835,7 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   commUsers: null,
                   bolos: dbBolos,
+                  calls: null,
                   context: null
                 });
               } else {
@@ -845,6 +854,7 @@ module.exports = function (app, passport, server) {
                     communities: dbCommunities,
                     commUsers: dbCommUsers,
                     bolos: dbBolos,
+                    calls: null,
                     context: null
                   });
                 });
@@ -978,6 +988,7 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   commUsers: null,
                   bolos: dbBolos,
+                  calls: null,
                   context: null
                 });
               } else {
@@ -996,6 +1007,7 @@ module.exports = function (app, passport, server) {
                     communities: dbCommunities,
                     commUsers: dbCommUsers,
                     bolos: dbBolos,
+                    calls: null,
                     context: null
                   });
                 });
@@ -1033,6 +1045,7 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   commUsers: null,
                   bolos: dbBolos,
+                  calls: null,
                   context: null
                 });
               } else {
@@ -1051,6 +1064,7 @@ module.exports = function (app, passport, server) {
                     communities: dbCommunities,
                     commUsers: dbCommUsers,
                     bolos: dbBolos,
+                    calls: null,
                     context: null
                   });
                 });
@@ -1691,6 +1705,15 @@ module.exports = function (app, passport, server) {
       req.app.locals.specialContext = "clearBoloSuccess"
       return res.redirect('/' + req.body.route);
     })
+  });
+
+  app.post('/create-call', auth, function (req, res) {
+    console.debug('create call req: ', req.body)
+    var myCall = new Call()
+    myCall.createCall(req, res)
+    myCall.save(function (err) {
+      if (err) return console.error(err);
+    });
   });
 
   app.post('/joinCommunity', auth, function (req, res) {
