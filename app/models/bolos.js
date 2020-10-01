@@ -38,43 +38,43 @@ boloSchema.methods.createBolo = function (req, res) {
   if (exists(req.body.reportingOfficerID)) {
     this.bolo.reportingOfficerID = req.body.reportingOfficerID;
   }
-  
+
   this.bolo.status = true;
   this.bolo.createdAt = new Date();
 
   req.app.locals.specialContext = "createBoloSuccess"
-  res.redirect('/'+req.body.route);
+  res.redirect('/' + req.body.route);
 };
 
 boloSchema.methods.socketCreateBolo = function (req, res) {
-   // debug log showing the request body for the bolo request
+  // debug log showing the request body for the bolo request
   //  console.debug("bolo req body: ", req)
 
-   if (exists(req.boloType)) {
-     this.bolo.boloType = req.boloType.toLowerCase();
-   }
-   if (exists(req.location)) {
-     this.bolo.location = req.location.trim();
-   }
-   if (exists(req.communityID)) {
-     this.bolo.communityID = req.communityID;
-   }
-   if (exists(req.description)) {
-     this.bolo.description = req.description.trim();
-   }
-   if (exists(req.reportingOfficerUsername)) {
-     this.bolo.reportingOfficerUsername = req.reportingOfficerUsername;
-   }
-   if (exists(req.reportingOfficerID)) {
-     this.bolo.reportingOfficerID = req.reportingOfficerID;
-   }
-   
-   this.bolo.status = true;
-   this.bolo.createdAt = new Date();
- 
-   // req.app.locals.specialContext = "createBoloSuccess"
-   // res.redirect('/'+req.body.route);
- };
+  if (exists(req.boloType)) {
+    this.bolo.boloType = req.boloType.toLowerCase();
+  }
+  if (exists(req.location)) {
+    this.bolo.location = req.location.trim();
+  }
+  if (exists(req.communityID)) {
+    this.bolo.communityID = req.communityID;
+  }
+  if (exists(req.description)) {
+    this.bolo.description = req.description.trim();
+  }
+  if (exists(req.reportingOfficerUsername)) {
+    this.bolo.reportingOfficerUsername = req.reportingOfficerUsername;
+  }
+  if (exists(req.reportingOfficerID)) {
+    this.bolo.reportingOfficerID = req.reportingOfficerID;
+  }
+
+  this.bolo.status = true;
+  this.bolo.createdAt = new Date();
+
+  // req.app.locals.specialContext = "createBoloSuccess"
+  // res.redirect('/'+req.body.route);
+};
 
 module.exports = mongoose.model('Bolo', boloSchema);
 
