@@ -39,12 +39,15 @@ callSchema.methods.createCall = function (req, res) {
   if (exists(req.body.createdByID)) {
     this.call.createdByID = req.body.createdByID;
   }
-  
+  if (exists(req.body.communityID)) {
+    this.call.communityID = req.body.communityID;
+  }
+
   this.call.status = true;
   this.call.createdAt = new Date();
 
   req.app.locals.specialContext = "createCallSuccess"
-  res.redirect('/'+req.body.route);
+  res.redirect('/' + req.body.route);
 };
 
 // boloSchema.methods.socketCreateBolo = function (req, res) {
@@ -69,10 +72,10 @@ callSchema.methods.createCall = function (req, res) {
 //    if (exists(req.reportingOfficerID)) {
 //      this.bolo.reportingOfficerID = req.reportingOfficerID;
 //    }
-   
+
 //    this.bolo.status = true;
 //    this.bolo.createdAt = new Date();
- 
+
 //    // req.app.locals.specialContext = "createBoloSuccess"
 //    // res.redirect('/'+req.body.route);
 //  };

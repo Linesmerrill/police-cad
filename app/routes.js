@@ -423,19 +423,24 @@ module.exports = function (app, passport, server) {
             'user.activeCommunity': req.user.user.activeCommunity
           }, function (err, dbCommUsers) {
             if (err) return console.error(err);
-            return res.render('dispatch-dashboard', {
-              user: req.user,
-              vehicles: null,
-              civilians: null,
-              firearms: null,
-              tickets: null,
-              arrestReports: null,
-              warrants: null,
-              communities: dbCommunities,
-              bolos: dbBolos,
-              commUsers: dbCommUsers,
-              calls: null,
-              context: context
+            Call.find({
+              'call.communityID': req.user.user.activeCommunity
+            }, function (err, dbCalls) {
+              if (err) return console.error(err);
+              return res.render('dispatch-dashboard', {
+                user: req.user,
+                vehicles: null,
+                civilians: null,
+                firearms: null,
+                tickets: null,
+                arrestReports: null,
+                warrants: null,
+                communities: dbCommunities,
+                bolos: dbBolos,
+                commUsers: dbCommUsers,
+                calls: dbCalls,
+                context: context
+              });
             });
           });
         }
