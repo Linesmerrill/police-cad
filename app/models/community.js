@@ -41,7 +41,7 @@ communitySchema.methods.createPoliceCommunity = function (req, res) {
   this.community.code = makeID(7);
   this.community.createdAt = new Date();
 
-  res.redirect('/'+req.body.route);
+  res.redirect('/' + req.body.route);
 };
 
 communitySchema.methods.createEmsCommunity = function (req, res) {
