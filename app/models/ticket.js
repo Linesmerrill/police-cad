@@ -87,11 +87,11 @@ ticketSchema.methods.updateTicket = function (request, response) {
 
   // for alert message to show up on dashboard after a redirect
   if (request.body.isWarning == "true") {
-    request.app.locals.specialContext = "createWarningSuccess"  
+    request.app.locals.specialContext = "createWarningSuccess"
   } else {
     request.app.locals.specialContext = "createTicketSuccess"
   }
-  response.redirect('/'+request.body.route);
+  response.redirect('/' + request.body.route);
 };
 
 module.exports = mongoose.model('Ticket', ticketSchema);
