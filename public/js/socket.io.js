@@ -1,4 +1,3 @@
-
 /*!
  * socket.io-node
  * Copyright(c) 2011 LearnBoost <dev@learnboost.com>
@@ -40,10 +39,10 @@ exports.clientVersion = client.version;
 
 exports.listen = function (server, options, fn) {
   if ('function' == typeof server) {
-    console.warn('Socket.IO\'s `listen()` method expects an `http.Server` instance\n'
-    + 'as its first parameter. Are you migrating from Express 2.x to 3.x?\n'
-    + 'If so, check out the "Socket.IO compatibility" section at:\n'
-    + 'https://github.com/visionmedia/express/wiki/Migrating-from-2.x-to-3.x');
+    console.warn('Socket.IO\'s `listen()` method expects an `http.Server` instance\n' +
+      'as its first parameter. Are you migrating from Express 2.x to 3.x?\n' +
+      'If so, check out the "Socket.IO compatibility" section at:\n' +
+      'https://github.com/visionmedia/express/wiki/Migrating-from-2.x-to-3.x');
   }
 
   if ('function' == typeof options) {
