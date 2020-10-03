@@ -1490,6 +1490,87 @@
     </div>
   </div>
 
+  <div id="callDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="update-call-form" class="form-horizontal" action="/updateOrDeleteCall" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Call Details</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createdBy">Created At:</label>
+              <div class="col-md-4">
+              <h5 id="createdAtCallDetail"></h5>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
+              <div class="col-md-4">
+              <h5 id="updatedAtCallDetail"></h5>
+              </div>
+            </div>
+
+           <!-- Text input-->
+           <div class="form-group required">
+            <label class="col-md-4 control-label" for="description">Description:</label>
+            <div class="col-md-4">
+            <input id="descriptionCallDetail" name="description" style="text-transform: capitalize;" type="text" placeholder="description" class="form-control input-md" maxlength="50" required>
+            </div>
+          </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="unitsAssigned">Units Assigned:</label>
+              <div class="col-md-4">
+              <input id="unitsAssignedCallDetail" name="unitsAssigned" style="text-transform: capitalize;" type="text" placeholder="units assigned" class="form-control input-md" maxlength="50" required>
+              </div>
+            </div>
+
+            <!-- Text Area input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="callNotes">Call Notes:</label>
+              <div class="col-md-8 col-md-offset-2">
+                <textarea id="callNotesDetail" name="callNotes" type="text" rows="4" maxlength="500" placeholder="call notes" class="form-control input-md" required></textarea>
+              </div>
+            </div>
+            
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="updateCall"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" name="route" value="dispatch-dashboard">
+                <input id="callIDDetail" type="hidden" name="callID" value="">
+                <button id="updateCall" type="submit" name="action" value="update" class="btn btn-info" onclick="hideModal('callDetailModal')">Update</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+          <form id="delete-bolo-form">
+            <fieldset>
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="deleteCall"></label>
+                <div class="col-md-4 text-align-center">
+                  <input type="hidden" name="route" value="dispatch-dashboard">
+                  <input id="boloIDDetail" type="hidden" name="boloID" value="">
+                  <button id="deleteCall" type="submit" name="action" value="delete" class="btn btn-danger" onclick="hideModal('boloDetailModal')">Delete</button>
+                  <button id="closeCall" type="submit" name="action" value="close" class="btn btn-success" onclick="hideModal('boloDetailModal')">Close</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="nonCommunityBoloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -2272,24 +2353,23 @@ function searchFirearm() {
 
   function populateCallDetails(id) {
     var socket = io();
-    socket.emit('load_dispatch_bolos', <%- JSON.stringify(user) %>)
-    socket.on('load_dispatch_bolos_result', (res) => {
+    socket.emit('load_dispatch_calls', <%- JSON.stringify(user) %>)
+    socket.on('load_dispatch_calls_result', (res) => {
       for (const i in res) {
         if (res[i]._id != id) {
           continue
         } else if (res[i]._id == id) {
-          $('#boloTypeDetail').val(res[i].bolo.boloType)
-          $('#locationDetail').val(res[i].bolo.location)
-          $('#descriptionDetail').val(res[i].bolo.description)
-          $('#boloIDDetail').val(res[i]._id)
-          $('#createdByDetail').text(res[i].bolo.reportingOfficerUsername)
-          var createdDate = new Date(res[i].bolo.createdAt)
-          $('#createdAtDetail').text(createdDate.toLocaleString())
-          if (res[i].bolo.updatedAt == null || res[i].bolo.updatedAt == '') {
-            $('#updatedAtDetail').text('')
+          $('#descriptionCallDetail').val(res[i].call.shortDescription)
+          $('#unitsAssignedCallDetail').val(res[i].call.assignedOfficers)
+          $('#callNotesDetail').val(res[i].call.callNotes)
+          $('#callIDDetail').val(res[i]._id)
+          var createdDate = new Date(res[i].call.createdAt)
+          $('#createdAtCallDetail').text(createdDate.toLocaleString())
+          if (res[i].call.updatedAt == null || res[i].call.updatedAt == '') {
+            $('#updatedAtCallDetail').text('')
           } else {
-            var updatedDate= new Date(res[i].bolo.updatedAt)
-            $('#updatedAtDetail').text(updatedDate.toLocaleString())
+            var updatedDate= new Date(res[i].call.updatedAt)
+            $('#updatedAtCallDetail').text(updatedDate.toLocaleString())
           }
         } else {
           //IDK we have issues

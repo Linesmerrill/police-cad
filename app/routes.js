@@ -2487,6 +2487,17 @@ module.exports = function (app, passport, server) {
       }
     });
 
+    socket.on('load_dispatch_calls', (user) => {
+      if (user.user.activeCommunity != null && user.user.activeCommunity != undefined) {
+        Call.find({
+          'call.communityID': user.user.activeCommunity
+        }, function (err, dbCalls) {
+          if (err) return console.error(err);
+          return socket.emit('load_dispatch_calls_result', dbCalls)
+        });
+      }
+    });
+
     socket.on('load_police_bolos', (user) => {
       if (user.user.activeCommunity != null && user.user.activeCommunity != undefined) {
         Bolo.find({
