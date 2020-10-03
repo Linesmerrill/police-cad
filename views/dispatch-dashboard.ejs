@@ -2366,7 +2366,7 @@ function searchFirearm() {
           var createdDate = new Date(res[i].call.createdAt)
           $('#createdAtCallDetail').text(createdDate.toLocaleString())
           if (res[i].call.updatedAt == null || res[i].call.updatedAt == '') {
-            $('#updatedAtCallDetail').text('')
+            $('#updatedAtCallDetail').text('N/A')
           } else {
             var updatedDate= new Date(res[i].call.updatedAt)
             $('#updatedAtCallDetail').text(updatedDate.toLocaleString())
