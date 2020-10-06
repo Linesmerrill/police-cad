@@ -2143,7 +2143,7 @@ module.exports = function (app, passport, server) {
         shortDescription = req.body.shortDescription.trim()
       }
       if (exists(req.body.assignedOfficers)) {
-        assignedOfficers = req.body.assignedOfficers.trim()
+        assignedOfficers = req.body.assignedOfficers
       }
       if (exists(req.body.callNotes)) {
         callNotes = req.body.callNotes.trim()
