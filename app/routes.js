@@ -2114,6 +2114,91 @@ module.exports = function (app, passport, server) {
     }
   })
 
+  app.post('/updateOrDeleteCall', auth, function (req, res) {
+    // console.debug("received a request:", req.body)
+    
+    req.app.locals.specialContext = null;
+    if (req.body.action === "delete") {
+      var callID
+      if (exists(req.body.callID)) {
+        callID = req.body.callID
+      }
+      var isValid = isValidObjectIdLength(callID, "cannot lookup invalid length callID, route: /updateOrDeleteCall")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/' + req.body.route)
+      }
+      Call.findByIdAndDelete({
+        '_id': ObjectId(callID)
+      }, function (err) {
+        if (err) return console.error(err);
+        return res.redirect('/' + req.body.route);
+      })
+    } else  if (req.body.action === "update") {
+      var shortDescription
+      var assignedOfficers
+      var callNotes
+      var callID
+      if (exists(req.body.shortDescription)) {
+        shortDescription = req.body.shortDescription.trim()
+      }
+      if (exists(req.body.assignedOfficers)) {
+        assignedOfficers = req.body.assignedOfficers.trim()
+      }
+      if (exists(req.body.callNotes)) {
+        callNotes = req.body.callNotes.trim()
+      }
+      
+      if (exists(req.body.callID)) {
+        callID = req.body.callID
+      } else {
+        console.warn("cannot update or delete non-existent callID: ", req.body.callID);
+        return res.redirect('/' + req.body.route);
+      }
+      var isValid = isValidObjectIdLength(callID, "cannot lookup invalid length callID, route: /updateOrDeleteCall")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/' + req.body.route);
+      }
+      Call.findOneAndUpdate({
+        '_id': ObjectId(callID)
+      }, {
+        $set: {
+          'call.shortDescription': shortDescription,
+          'call.assignedOfficers': assignedOfficers,
+          'call.callNotes': callNotes,
+          'call.updatedAt': new Date()
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        return res.redirect('/' + req.body.route);
+      })
+    } else {
+      var callID
+      if (exists(req.body.callID)) {
+        callID = req.body.callID
+      } else {
+        console.warn("cannot update or delete non-existent callID: ", req.body.callID);
+        return res.redirect('/' + req.body.route);
+      }
+      var isValid = isValidObjectIdLength(callID, "cannot lookup invalid length callID, route: /updateOrDeleteCall")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/' + req.body.route);
+      }
+      Call.findOneAndUpdate({
+        '_id': ObjectId(callID)
+      }, {
+        $set: {
+          'call.status': false,
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        return res.redirect('/' + req.body.route);
+      })
+    }
+  })
+
   app.post('/updateOrDeleteCiv', auth, function (req, res) {
     // console.debug(req.body)
     req.app.locals.specialContext = null;

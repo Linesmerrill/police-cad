@@ -204,10 +204,12 @@
                 <tbody>
                         <% if (calls != null && calls.length > 0) {%>
                     <% for(var i=0; i<calls.length; i++) {%>
+                      <% if (calls[i].call.status) {%>
                             <tr id="<%=calls[i]._id%>-row" class="gray-hover" data-toggle="modal" data-id="<%=i%>" data-target="#callDetailModal" onclick="populateCallDetails('<%=calls[i]._id%>')">
                                 <td id="<%=calls[i]._id%>-description" style="text-transform: capitalize;"><%=calls[i].call.shortDescription%></td>
                                 <td id="<%=calls[i]._id%>-units-assigned"><%=calls[i].call.assignedOfficers%></td>
                             </tr>
+                            <%}%>        
                     <%}%>
                     <%}%>
                   </tbody>
@@ -1522,7 +1524,7 @@
            <div class="form-group required">
             <label class="col-md-4 control-label" for="description">Description:</label>
             <div class="col-md-4">
-            <input id="descriptionCallDetail" name="description" style="text-transform: capitalize;" type="text" placeholder="description" class="form-control input-md" maxlength="50" required>
+            <input id="descriptionCallDetail" name="shortDescription" style="text-transform: capitalize;" type="text" placeholder="description" class="form-control input-md" maxlength="50" required>
             </div>
           </div>
 
@@ -1530,7 +1532,7 @@
             <div class="form-group required">
               <label class="col-md-4 control-label" for="unitsAssigned">Units Assigned:</label>
               <div class="col-md-4">
-              <input id="unitsAssignedCallDetail" name="unitsAssigned" style="text-transform: capitalize;" type="text" placeholder="units assigned" class="form-control input-md" maxlength="50" required>
+              <input id="unitsAssignedCallDetail" name="assignedOfficers" style="text-transform: capitalize;" type="text" placeholder="units assigned" class="form-control input-md" maxlength="50" required>
               </div>
             </div>
 
@@ -1551,15 +1553,9 @@
                 <button id="updateCall" type="submit" name="action" value="update" class="btn btn-info" onclick="hideModal('callDetailModal')">Update</button>
               </div>
             </div>
-            </fieldset>
-          </form>
-          <form id="delete-bolo-form">
-            <fieldset>
               <div class="form-group">
                 <label class="col-md-4 control-label" for="deleteCall"></label>
                 <div class="col-md-4 text-align-center">
-                  <input type="hidden" name="route" value="dispatch-dashboard">
-                  <input id="boloIDDetail" type="hidden" name="boloID" value="">
                   <button id="deleteCall" type="submit" name="action" value="delete" class="btn btn-danger" onclick="hideModal('boloDetailModal')">Delete</button>
                   <button id="closeCall" type="submit" name="action" value="close" class="btn btn-success" onclick="hideModal('boloDetailModal')">Close</button>
                 </div>
@@ -2363,6 +2359,7 @@ function searchFirearm() {
           $('#unitsAssignedCallDetail').val(res[i].call.assignedOfficers)
           $('#callNotesDetail').val(res[i].call.callNotes)
           $('#callIDDetail').val(res[i]._id)
+          $('#callIDDetailDeleteClose').val(res[i]._id)
           var createdDate = new Date(res[i].call.createdAt)
           $('#createdAtCallDetail').text(createdDate.toLocaleString())
           if (res[i].call.updatedAt == null || res[i].call.updatedAt == '') {
