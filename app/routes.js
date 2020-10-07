@@ -1713,7 +1713,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-call', auth, function (req, res) {
-    console.debug('create call req: ', req.body)
+    // console.debug('create call req: ', req.body)
     var myCall = new Call()
     myCall.createCall(req, res)
     myCall.save(function (err) {

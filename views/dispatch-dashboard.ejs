@@ -207,8 +207,21 @@
                       <% if (calls[i].call.status) {%>
                             <tr id="<%=calls[i]._id%>-row" class="gray-hover" data-toggle="modal" data-id="<%=i%>" data-target="#callDetailModal" onclick="populateCallDetails('<%=calls[i]._id%>');populateOfficerList('<%=calls[i].call.assignedOfficers%>')">
                                 <td id="<%=calls[i]._id%>-description" style="text-transform: capitalize;"><%=calls[i].call.shortDescription%></td>
-                                <td id="<%=calls[i]._id%>-units-assigned"><%=calls[i].call.assignedOfficers%></td>
-                            </tr>
+                                <td id="<%=calls[i]._id%>-units-assigned">
+                                  <% if (calls[i].call.assignedOfficers != null && calls[i].call.assignedOfficers.length > 0) {%>
+                                <% for(var j=0; j<calls[i].call.assignedOfficers.length; j++) {%>
+                                  <% for(var k=0; k<commUsers.length; k++) {%>
+                                    <% if (commUsers[k]._id == calls[i].call.assignedOfficers[j]) {%>
+                                      <span class="badge badge-secondary"><%=commUsers[k].user.username%></span>
+                                <%}%>   
+                                <%}%>   
+                                <%}%>
+                                <%} else {%>
+                                  <span class="badge badge-secondary">N/A</span>
+                                  <%}%>    
+                              </td>   
+                              </tr>
+                                 
                             <%}%>        
                     <%}%>
                     <%}%>
@@ -2556,7 +2569,7 @@ function searchFirearm() {
     })
     var items = {}
     for (i = 0; i < officers.length; i++) {
-      items[officers[i].user.username] = {
+      items[officers[i]._id] = {
         value: officers[i].user.username,
         group: "#",
         selected: false,
@@ -2586,7 +2599,7 @@ function searchFirearm() {
     officersSplit = dbOfficers.split(",")
     if (dbOfficers.length == 0) {
       for (i = 0; i < officers.length; i++) {
-        items[officers[i].user.username] = {
+        items[officers[i]._id] = {
         value: officers[i].user.username,
         group: "#",
         selected: false,
@@ -2597,8 +2610,8 @@ function searchFirearm() {
     } else {
     for (i = 0; i < officers.length; i++) {
       for (j = 0; j < dbOfficers.length; j++) {
-        if (officers[i].user.username == officersSplit[j]) {
-          items[officers[i].user.username] = {
+        if (officers[i]._id == officersSplit[j]) {
+          items[officers[i]._id] = {
           value: officers[i].user.username,
           group: "#",
           selected: true,
@@ -2607,7 +2620,7 @@ function searchFirearm() {
           }
           break //if we found a match we want to break out
         } else {
-          items[officers[i].user.username] = {
+          items[officers[i]._id] = {
         value: officers[i].user.username,
         group: "#",
         selected: false,
