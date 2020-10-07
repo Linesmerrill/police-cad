@@ -187,6 +187,21 @@
         <%}%>
       <%}%>
       <%}%>
+
+      <!-- active calls -->
+      <h4>Active Calls: </h4>
+        <h5>Click for details</h5>
+      <% if (calls != null && calls.length > 0) {%>
+        <% for(var i=0; i<calls.length; i++) {%>
+          <% if (calls[i].call.status == true) {%>
+              <a id="<%=calls[i]._id%>-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('<%=calls[i]._id%>')">
+      <div class="alert alert-success alert-dismissible show" role="alert">
+         Opened: <span id="<%=calls[i]._id%>-createdAt" style="text-transform:capitalize"><time datetime="MM/D/YYYY, hh:mm:ss"><%=calls[i].call.createdAt%></time></span> |  Description: <span id="<%=calls[i]._id%>-description"><%=calls[i].call.shortDescription%></span>%></span>
+      </div>
+    </a>
+        <%}%>
+      <%}%>
+      <%}%>
       <%}%>
       <% if (user.user.activeCommunity == '' || user.user.activeCommunity == null) {%>
       <div class="col-lg-10 col-lg-offset-1 margin-top-2 text-center">

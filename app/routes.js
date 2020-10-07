@@ -358,6 +358,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/police-dashboard', authPolice, function (req, res) {
+    console.debug("req: ", req.user)
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     Community.find({
@@ -372,6 +373,12 @@ module.exports = function (app, passport, server) {
         'bolo.communityID': req.user.user.activeCommunity
       }, function (err, dbBolos) {
         if (err) return console.error(err);
+        Call.find({
+          'call.communityID': req.user.user.activeCommunity,
+          'call.assignedOfficers': req._id
+        }, function (err, dbCalls) {
+          if (err) return console.error(err);
+          console.debug(dbCalls)
         return res.render('police-dashboard', {
           user: req.user,
           vehicles: null,
@@ -382,9 +389,11 @@ module.exports = function (app, passport, server) {
           warrants: null,
           communities: dbCommunities,
           bolos: dbBolos,
+          calls: dbCalls,
           context: context
         });
       });
+    });
     });
   });
 
