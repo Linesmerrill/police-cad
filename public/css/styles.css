@@ -1213,3 +1213,12 @@ a.link--inherit {
 .capitalize {
     text-transform: capitalize;
 }
+
+#callNotesDetail {
+    background-color: #36333d;
+}
+
+#callNotesDetail:focus {
+    background-color: #36333d;
+    color: white;
+}

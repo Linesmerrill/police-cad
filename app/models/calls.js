@@ -16,6 +16,7 @@ var callSchema = mongoose.Schema({
     clearingOfficerID: String,
     status: Boolean,
     createdAt: Date, //includes date and time
+    createdAtReadable: String, //to display nicely with esx
     updatedAt: Date, //includes date and time
   }
 });
@@ -45,7 +46,8 @@ callSchema.methods.createCall = function (req, res) {
 
   this.call.status = true;
   this.call.createdAt = new Date();
-
+  createdDate = new Date(this.call.createdAt);
+  this.call.createdAtReadable = createdDate.toLocaleString()
   req.app.locals.specialContext = "createCallSuccess"
   res.redirect('/' + req.body.route);
 };

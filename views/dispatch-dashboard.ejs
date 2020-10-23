@@ -1541,14 +1541,6 @@
             </div>
           </div>
 
-            <!-- Text input-->
-            <!-- <div class="form-group required">
-              <label class="col-md-4 control-label" for="unitsAssigned">Units Assigned:</label>
-              <div class="col-md-4">
-              <input id="unitsAssignedCallDetail" name="assignedOfficers" style="text-transform: capitalize;" type="text" placeholder="units assigned" class="form-control input-md" maxlength="50" required>
-              </div>
-            </div> -->
-
             <!-- Multiple Checkboxes (inline) -->
             <div class="form-group required">
               <label class="col-md-4 control-label" for="officer-select-details">Units Assigned:</label>
@@ -2377,7 +2369,6 @@ function searchFirearm() {
           continue
         } else if (res[i]._id == id) {
           $('#descriptionCallDetail').val(res[i].call.shortDescription)
-          $('#unitsAssignedCallDetail').val(res[i].call.assignedOfficers)
           $('#callNotesDetail').val(res[i].call.callNotes)
           $('#callIDDetail').val(res[i]._id)
           $('#callIDDetailDeleteClose').val(res[i]._id)
@@ -2594,9 +2585,10 @@ function searchFirearm() {
       hideDisabled: true,
       multiShowCount: false,
       multiContainer: true
-    })
+    }).reload();
     var items = {}
-    officersSplit = dbOfficers.split(",")
+    
+    // if there are none assigned
     if (dbOfficers.length == 0) {
       for (i = 0; i < officers.length; i++) {
         items[officers[i]._id] = {
@@ -2606,8 +2598,9 @@ function searchFirearm() {
         disabled: false,
         description: officers[i].user.dispatchStatus
       }
-      }  
+      }
     } else {
+    officersSplit = dbOfficers.split(",")
     for (i = 0; i < officers.length; i++) {
       for (j = 0; j < dbOfficers.length; j++) {
         if (officers[i]._id == officersSplit[j]) {

@@ -358,7 +358,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/police-dashboard', authPolice, function (req, res) {
-    console.debug("req: ", req.user)
+    // console.debug("req: ", req.user)
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     Community.find({
@@ -375,25 +375,23 @@ module.exports = function (app, passport, server) {
         if (err) return console.error(err);
         Call.find({
           'call.communityID': req.user.user.activeCommunity,
-          'call.assignedOfficers': req._id
         }, function (err, dbCalls) {
           if (err) return console.error(err);
-          console.debug(dbCalls)
-        return res.render('police-dashboard', {
-          user: req.user,
-          vehicles: null,
-          civilians: null,
-          firearms: null,
-          tickets: null,
-          arrestReports: null,
-          warrants: null,
-          communities: dbCommunities,
-          bolos: dbBolos,
-          calls: dbCalls,
-          context: context
+          return res.render('police-dashboard', {
+            user: req.user,
+            vehicles: null,
+            civilians: null,
+            firearms: null,
+            tickets: null,
+            arrestReports: null,
+            warrants: null,
+            communities: dbCommunities,
+            bolos: dbBolos,
+            calls: dbCalls,
+            context: context
+          });
         });
       });
-    });
     });
   });
 
@@ -2125,7 +2123,7 @@ module.exports = function (app, passport, server) {
 
   app.post('/updateOrDeleteCall', auth, function (req, res) {
     // console.debug("received a request:", req.body)
-    
+
     req.app.locals.specialContext = null;
     if (req.body.action === "delete") {
       var callID
@@ -2143,7 +2141,7 @@ module.exports = function (app, passport, server) {
         if (err) return console.error(err);
         return res.redirect('/' + req.body.route);
       })
-    } else  if (req.body.action === "update") {
+    } else if (req.body.action === "update") {
       var shortDescription
       var assignedOfficers
       var callNotes
@@ -2157,7 +2155,7 @@ module.exports = function (app, passport, server) {
       if (exists(req.body.callNotes)) {
         callNotes = req.body.callNotes.trim()
       }
-      
+
       if (exists(req.body.callID)) {
         callID = req.body.callID
       } else {
