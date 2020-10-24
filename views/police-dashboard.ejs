@@ -197,6 +197,7 @@
       <% if (calls != null && calls.length > 0) {%>
         <% for(var i=0; i<calls.length; i++) {%>
           <% if (calls[i].call.status == true) {%>
+            <% if (calls[i].call.assignedOfficers != null && calls[i].call.assignedOfficers != '') {%>
             <% if (calls[i].call.assignedOfficers.includes(user._id) == true) {%>
               <a id="<%=calls[i]._id%>-row" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails('<%=calls[i].call.createdAt%>', '<%=calls[i].call.updatedAt%>', '<%=calls[i].call.assignedOfficers%>','<%=calls[i].call.shortDescription%>','<%=calls[i].call.callNotes%>')">
       <div class="alert alert-success alert-dismissible show" role="alert">
@@ -204,6 +205,7 @@
       </div>
     </a>
         <%}%>
+      <%}%>
       <%}%>
       <%}%>
       <%}%>
