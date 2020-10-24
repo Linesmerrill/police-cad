@@ -2899,6 +2899,11 @@ module.exports = function (app, passport, server) {
       });
     })
 
+    socket.on('clear_call', (req) => {
+      // console.debug('clear call socket: ', req)
+      return socket.broadcast.emit('cleared_call', req)
+    })
+
     socket.on('update_panic_btn_sound', (user) => {
       // console.debug('update panic button sound status: ', user)
       if (user._id != null && user._id != undefined) {

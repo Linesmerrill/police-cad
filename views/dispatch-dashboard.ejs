@@ -2500,7 +2500,26 @@ function searchFirearm() {
       socket.emit('create_call', myCreateReq)
       return true;
     })
-    $('#callModal').modal('hide')
+  })
+
+  $('#closeCall').click(function(){
+    var socket = io();
+    myUser = <%- JSON.stringify(user) %>
+    var myReq = {
+      callID: $('#callIDDetail').val(),
+      communityID: myUser.user.activeCommunity,
+    }
+    socket.emit('clear_call', myReq)
+  })
+
+  $('#deleteCall').click(function(){
+    var socket = io();
+    myUser = <%- JSON.stringify(user) %>
+    var myReq = {
+      callID: $('#callIDDetail').val(),
+      communityID: myUser.user.activeCommunity,
+    }
+    socket.emit('clear_call', myReq)
   })
 
   function updateStatus(status) {

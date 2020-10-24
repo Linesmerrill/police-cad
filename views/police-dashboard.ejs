@@ -1829,6 +1829,15 @@
   }
     })
 
+    socket.on('cleared_call', res => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (res.communityID == myUser.user.activeCommunity) {
+        $('#'+res.callID+'-row').remove().fadeOut(5, function() {
+          $(this).remove();
+        })
+      }
+    })
+
   });
 </script>
 <script type="text/javascript">
@@ -2138,7 +2147,7 @@ function searchFirearm() {
           var createdDate = new Date(res[i].bolo.createdAt)
           $('#createdAtDetail').text(createdDate.toLocaleString())
           if (res[i].bolo.updatedAt == null || res[i].bolo.updatedAt == '') {
-            $('#updatedAtDetail').text('')
+            $('#updatedAtDetail').text('N/A')
           } else {
             var updatedDate= new Date(res[i].bolo.updatedAt)
             $('#updatedAtDetail').text(updatedDate.toLocaleString())
@@ -2154,7 +2163,7 @@ function searchFirearm() {
     // console.debug(createdAt, updatedAt, assignedOfficers, shortDescription, callNotes)
     var createdDate = new Date(createdAt)
     if (updatedAt == "" || updatedAt == 'undefined') {
-      $('#updatedAtCallDetail').empty().text("")
+      $('#updatedAtCallDetail').empty().text("N/A")
     } else {
       var updatedDate = new Date(updatedAt)
       $('#updatedAtCallDetail').empty().text(updatedDate.toLocaleString())
