@@ -197,8 +197,9 @@
               <table id="callTable" class="table table-hover table-bordered">
                 <thead>
                     <tr>
-                        <th>Description</th>
-                        <th>Units Assigned</th>
+                      <th>Created At</th>
+                      <th>Description</th>
+                      <th>Units Assigned</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -206,8 +207,9 @@
                     <% for(var i=0; i<calls.length; i++) {%>
                       <% if (calls[i].call.status) {%>
                             <tr id="<%=calls[i]._id%>-row" class="gray-hover" data-toggle="modal" data-id="<%=i%>" data-target="#callDetailModal" onclick="populateCallDetails('<%=calls[i]._id%>');populateOfficerList('<%=calls[i].call.assignedOfficers%>')">
-                                <td id="<%=calls[i]._id%>-description" style="text-transform: capitalize;"><%=calls[i].call.shortDescription%></td>
-                                <td id="<%=calls[i]._id%>-units-assigned">
+                              <td id="<%=calls[i]._id%>-createdAt"><%=calls[i].call.createdAtReadable%></td>
+                              <td id="<%=calls[i]._id%>-description" style="text-transform: capitalize;"><%=calls[i].call.shortDescription%></td>
+                              <td id="<%=calls[i]._id%>-units-assigned">
                                   <% if (calls[i].call.assignedOfficers != null && calls[i].call.assignedOfficers.length > 0) {%>
                                 <% for(var j=0; j<calls[i].call.assignedOfficers.length; j++) {%>
                                   <% for(var k=0; k<commUsers.length; k++) {%>
