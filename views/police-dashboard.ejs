@@ -200,7 +200,7 @@
             <% if (calls[i].call.assignedOfficers.includes(user._id) == true) {%>
               <a id="<%=calls[i]._id%>-row" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails('<%=calls[i].call.createdAt%>', '<%=calls[i].call.updatedAt%>', '<%=calls[i].call.assignedOfficers%>','<%=calls[i].call.shortDescription%>','<%=calls[i].call.callNotes%>')">
       <div class="alert alert-success alert-dismissible show" role="alert">
-         Opened: <span id="<%=calls[i]._id%>-createdAt" style="text-transform:capitalize"><time><%=calls[i].call.createdAtReadable%></time></span> |  Description: <span id="<%=calls[i]._id%>-description"><%=calls[i].call.shortDescription%></span>%></span>
+         Opened: <span id="<%=calls[i]._id%>-createdAt" style="text-transform:capitalize"><time><%=calls[i].call.createdAtReadable%></time> |  Description: <span id="<%=calls[i]._id%>-description"><%=calls[i].call.shortDescription%></span>%></span>
       </div>
     </a>
         <%}%>
@@ -1427,7 +1427,7 @@
            <div class="form-group">
             <label class="col-md-4 control-label" for="description">Description:</label>
             <div class="col-md-4">
-              <h5 id="descriptionCallDetail"></h5>
+              <h5 id="descriptionCallDetail" style="text-transform:capitalize"></h5>
             </div>
           </div>
 
@@ -1812,6 +1812,23 @@
     }
     })
 
+    socket.on('created_call', res => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (res.call.communityID == myUser.user.activeCommunity) {
+        if (res.call.assignedOfficers.includes(myUser._id) == true) {
+      $('#assigned-call-container').append(
+        '<a id="'+res._id+'-row" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails(\''+res.call.createdAt+'\',\''+ res.call.updatedAt+'\',\''+ res.call.assignedOfficers+'\',\''+ res.call.shortDescription+'\',\''+ res.call.callNotes+'\')">'+
+            '<div class="alert alert-success alert-dismissible show" role="alert">'+
+              'Opened: <span id="'+res._id+'-createdAt" style="text-transform:capitalize"><time>'+res.call.createdAtReadable+'</time> |  Description: <span id="'+res._id+'-description">'+res.call.shortDescription+'</span></span>'+
+            '</div>'+
+          '</a>'
+      ).fadeTo(1, function() {
+        $(this).add();
+      })
+    }
+  }
+    })
+
   });
 </script>
 <script type="text/javascript">
@@ -2134,9 +2151,9 @@ function searchFirearm() {
   }
 
   function populateCallDetails(createdAt, updatedAt, assignedOfficers, shortDescription, callNotes) {
-    console.log(createdAt, updatedAt, assignedOfficers, shortDescription, callNotes)
+    // console.debug(createdAt, updatedAt, assignedOfficers, shortDescription, callNotes)
     var createdDate = new Date(createdAt)
-    if (updatedAt == "") {
+    if (updatedAt == "" || updatedAt == 'undefined') {
       $('#updatedAtCallDetail').empty().text("")
     } else {
       var updatedDate = new Date(updatedAt)

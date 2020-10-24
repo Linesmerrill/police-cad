@@ -2484,6 +2484,25 @@ function searchFirearm() {
     $('#boloModal').modal('hide')
   })
 
+  $('#createCall').one('click', function() {
+    var socket = io();
+    myUser = <%- JSON.stringify(user) %>
+    $('#create-call-form').submit(function(e) {
+      //e.preventDefault(); //prevents page from reloading
+      var myCreateReq = {
+        shortDescription: $('#short-description').val(),
+        assignedOfficers: $('#officer-select').val(),
+        callNotes: $('#call-notes').val(),
+        createdByUsername: myUser.user.username,
+        createdByID: myUser._id,
+        communityID: myUser.user.activeCommunity,
+      }
+      socket.emit('create_call', myCreateReq)
+      return true;
+    })
+    $('#callModal').modal('hide')
+  })
+
   function updateStatus(status) {
     var socket = io();
     var onDuty = null

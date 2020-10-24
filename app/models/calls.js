@@ -52,35 +52,36 @@ callSchema.methods.createCall = function (req, res) {
   res.redirect('/' + req.body.route);
 };
 
-// boloSchema.methods.socketCreateBolo = function (req, res) {
-//    // debug log showing the request body for the bolo request
-//   //  console.debug("bolo req body: ", req)
+callSchema.methods.socketCreateCall = function (req, res) {
+  // debug log showing the request body for the call request
+  // console.debug("call req: ", req)
 
-//    if (exists(req.boloType)) {
-//      this.bolo.boloType = req.boloType.toLowerCase();
-//    }
-//    if (exists(req.location)) {
-//      this.bolo.location = req.location.trim();
-//    }
-//    if (exists(req.communityID)) {
-//      this.bolo.communityID = req.communityID;
-//    }
-//    if (exists(req.description)) {
-//      this.bolo.description = req.description.trim();
-//    }
-//    if (exists(req.reportingOfficerUsername)) {
-//      this.bolo.reportingOfficerUsername = req.reportingOfficerUsername;
-//    }
-//    if (exists(req.reportingOfficerID)) {
-//      this.bolo.reportingOfficerID = req.reportingOfficerID;
-//    }
+  if (exists(req.shortDescription)) {
+    this.call.shortDescription = req.shortDescription.trim();
+  }
+  if (exists(req.assignedOfficers)) {
+    this.call.assignedOfficers = req.assignedOfficers
+  }
+  if (exists(req.callNotes)) {
+    this.call.callNotes = req.callNotes.trim();
+  }
+  if (exists(req.createdByUsername)) {
+    this.call.createdByUsername = req.createdByUsername;
+  }
+  if (exists(req.createdByID)) {
+    this.call.createdByID = req.createdByID;
+  }
+  if (exists(req.communityID)) {
+    this.call.communityID = req.communityID;
+  }
 
-//    this.bolo.status = true;
-//    this.bolo.createdAt = new Date();
-
-//    // req.app.locals.specialContext = "createBoloSuccess"
-//    // res.redirect('/'+req.body.route);
-//  };
+  this.call.status = true;
+  this.call.createdAt = new Date();
+  createdDate = new Date(this.call.createdAt);
+  this.call.createdAtReadable = createdDate.toLocaleString()
+  // req.app.locals.specialContext = "createCallSuccess"
+  // res.redirect('/' + req.body.route);
+};
 
 module.exports = mongoose.model('Call', callSchema);
 

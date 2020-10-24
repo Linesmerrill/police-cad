@@ -1720,12 +1720,8 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-call', auth, function (req, res) {
-    // console.debug('create call req: ', req.body)
-    var myCall = new Call()
-    myCall.createCall(req, res)
-    myCall.save(function (err) {
-      if (err) return console.error(err);
-    });
+    req.app.locals.specialContext = "createCallSuccess"
+    return res.redirect('/' + req.body.route);
   });
 
   app.post('/joinCommunity', auth, function (req, res) {
@@ -2890,6 +2886,16 @@ module.exports = function (app, passport, server) {
       myBolo.save(function (err, dbBolos) {
         if (err) return console.error(err);
         return socket.broadcast.emit('created_bolo', dbBolos)
+      });
+    })
+
+    socket.on('create_call', (req) => {
+      // console.debug('create call socket: ', req)
+      var myCall = new Call()
+      myCall.socketCreateCall(req)
+      myCall.save(function (err, dbCalls) {
+        if (err) return console.error(err);
+        return socket.broadcast.emit('created_call', dbCalls)
       });
     })
 
