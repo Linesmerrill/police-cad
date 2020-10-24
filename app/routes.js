@@ -9,6 +9,7 @@ var ArrestReport = require('../app/models/arrestReport');
 var Warrant = require('../app/models/warrants');
 var Community = require('../app/models/community');
 var Bolo = require('../app/models/bolos');
+var Call = require('../app/models/calls');
 var Medication = require('../app/models/medication');
 var Condition = require('../app/models/medicalCondition');
 var MedicalReport = require('../app/models/medicalReport');
@@ -25,7 +26,6 @@ module.exports = function (app, passport, server) {
     res.render('index', {
       message: req.flash('info')
     });
-
   });
 
   app.get('/release-log', function (req, res) {
@@ -358,6 +358,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/police-dashboard', authPolice, function (req, res) {
+    // console.debug("req: ", req.user)
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     Community.find({
@@ -372,17 +373,23 @@ module.exports = function (app, passport, server) {
         'bolo.communityID': req.user.user.activeCommunity
       }, function (err, dbBolos) {
         if (err) return console.error(err);
-        return res.render('police-dashboard', {
-          user: req.user,
-          vehicles: null,
-          civilians: null,
-          firearms: null,
-          tickets: null,
-          arrestReports: null,
-          warrants: null,
-          communities: dbCommunities,
-          bolos: dbBolos,
-          context: context
+        Call.find({
+          'call.communityID': req.user.user.activeCommunity,
+        }, function (err, dbCalls) {
+          if (err) return console.error(err);
+          return res.render('police-dashboard', {
+            user: req.user,
+            vehicles: null,
+            civilians: null,
+            firearms: null,
+            tickets: null,
+            arrestReports: null,
+            warrants: null,
+            communities: dbCommunities,
+            bolos: dbBolos,
+            calls: dbCalls,
+            context: context
+          });
         });
       });
     });
@@ -415,6 +422,7 @@ module.exports = function (app, passport, server) {
             communities: dbCommunities,
             bolos: dbBolos,
             commUsers: null,
+            calls: null,
             context: context
           });
         } else {
@@ -422,18 +430,24 @@ module.exports = function (app, passport, server) {
             'user.activeCommunity': req.user.user.activeCommunity
           }, function (err, dbCommUsers) {
             if (err) return console.error(err);
-            return res.render('dispatch-dashboard', {
-              user: req.user,
-              vehicles: null,
-              civilians: null,
-              firearms: null,
-              tickets: null,
-              arrestReports: null,
-              warrants: null,
-              communities: dbCommunities,
-              bolos: dbBolos,
-              commUsers: dbCommUsers,
-              context: context
+            Call.find({
+              'call.communityID': req.user.user.activeCommunity
+            }, function (err, dbCalls) {
+              if (err) return console.error(err);
+              return res.render('dispatch-dashboard', {
+                user: req.user,
+                vehicles: null,
+                civilians: null,
+                firearms: null,
+                tickets: null,
+                arrestReports: null,
+                warrants: null,
+                communities: dbCommunities,
+                bolos: dbBolos,
+                commUsers: dbCommUsers,
+                calls: dbCalls,
+                context: context
+              });
             });
           });
         }
@@ -504,6 +518,7 @@ module.exports = function (app, passport, server) {
                         communities: dbCommunities,
                         commUsers: null,
                         bolos: dbBolos,
+                        calls: null,
                         context: null
                       });
                     } else {
@@ -522,6 +537,7 @@ module.exports = function (app, passport, server) {
                           communities: dbCommunities,
                           commUsers: dbCommUsers,
                           bolos: dbBolos,
+                          calls: null,
                           context: null
                         });
                       });
@@ -579,6 +595,7 @@ module.exports = function (app, passport, server) {
                         communities: dbCommunities,
                         commUsers: null,
                         bolos: dbBolos,
+                        calls: null,
                         context: null
                       });
                     } else {
@@ -597,6 +614,7 @@ module.exports = function (app, passport, server) {
                           communities: dbCommunities,
                           commUsers: dbCommUsers,
                           bolos: dbBolos,
+                          calls: null,
                           context: null
                         });
                       });
@@ -772,6 +790,7 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   commUsers: null,
                   bolos: dbBolos,
+                  calls: null,
                   context: null
                 });
               } else {
@@ -790,6 +809,7 @@ module.exports = function (app, passport, server) {
                     communities: dbCommunities,
                     commUsers: dbCommUsers,
                     bolos: dbBolos,
+                    calls: null,
                     context: null
                   });
                 });
@@ -827,6 +847,7 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   commUsers: null,
                   bolos: dbBolos,
+                  calls: null,
                   context: null
                 });
               } else {
@@ -845,6 +866,7 @@ module.exports = function (app, passport, server) {
                     communities: dbCommunities,
                     commUsers: dbCommUsers,
                     bolos: dbBolos,
+                    calls: null,
                     context: null
                   });
                 });
@@ -978,6 +1000,7 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   commUsers: null,
                   bolos: dbBolos,
+                  calls: null,
                   context: null
                 });
               } else {
@@ -996,6 +1019,7 @@ module.exports = function (app, passport, server) {
                     communities: dbCommunities,
                     commUsers: dbCommUsers,
                     bolos: dbBolos,
+                    calls: null,
                     context: null
                   });
                 });
@@ -1033,6 +1057,7 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   commUsers: null,
                   bolos: dbBolos,
+                  calls: null,
                   context: null
                 });
               } else {
@@ -1051,6 +1076,7 @@ module.exports = function (app, passport, server) {
                     communities: dbCommunities,
                     commUsers: dbCommUsers,
                     bolos: dbBolos,
+                    calls: null,
                     context: null
                   });
                 });
@@ -1693,6 +1719,11 @@ module.exports = function (app, passport, server) {
     })
   });
 
+  app.post('/create-call', auth, function (req, res) {
+    req.app.locals.specialContext = "createCallSuccess"
+    return res.redirect('/' + req.body.route);
+  });
+
   app.post('/joinCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var communityCode = req.body.communityCode.trim()
@@ -2086,6 +2117,91 @@ module.exports = function (app, passport, server) {
     }
   })
 
+  app.post('/updateOrDeleteCall', auth, function (req, res) {
+    // console.debug("received a request:", req.body)
+
+    req.app.locals.specialContext = null;
+    if (req.body.action === "delete") {
+      var callID
+      if (exists(req.body.callID)) {
+        callID = req.body.callID
+      }
+      var isValid = isValidObjectIdLength(callID, "cannot lookup invalid length callID, route: /updateOrDeleteCall")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/' + req.body.route)
+      }
+      Call.findByIdAndDelete({
+        '_id': ObjectId(callID)
+      }, function (err) {
+        if (err) return console.error(err);
+        return res.redirect('/' + req.body.route);
+      })
+    } else if (req.body.action === "update") {
+      var shortDescription
+      var assignedOfficers
+      var callNotes
+      var callID
+      if (exists(req.body.shortDescription)) {
+        shortDescription = req.body.shortDescription.trim()
+      }
+      if (exists(req.body.assignedOfficers)) {
+        assignedOfficers = req.body.assignedOfficers
+      }
+      if (exists(req.body.callNotes)) {
+        callNotes = req.body.callNotes.trim()
+      }
+
+      if (exists(req.body.callID)) {
+        callID = req.body.callID
+      } else {
+        console.warn("cannot update or delete non-existent callID: ", req.body.callID);
+        return res.redirect('/' + req.body.route);
+      }
+      var isValid = isValidObjectIdLength(callID, "cannot lookup invalid length callID, route: /updateOrDeleteCall")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/' + req.body.route);
+      }
+      Call.findOneAndUpdate({
+        '_id': ObjectId(callID)
+      }, {
+        $set: {
+          'call.shortDescription': shortDescription,
+          'call.assignedOfficers': assignedOfficers,
+          'call.callNotes': callNotes,
+          'call.updatedAt': new Date()
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        return res.redirect('/' + req.body.route);
+      })
+    } else {
+      var callID
+      if (exists(req.body.callID)) {
+        callID = req.body.callID
+      } else {
+        console.warn("cannot update or delete non-existent callID: ", req.body.callID);
+        return res.redirect('/' + req.body.route);
+      }
+      var isValid = isValidObjectIdLength(callID, "cannot lookup invalid length callID, route: /updateOrDeleteCall")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('/' + req.body.route);
+      }
+      Call.findOneAndUpdate({
+        '_id': ObjectId(callID)
+      }, {
+        $set: {
+          'call.status': false,
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        return res.redirect('/' + req.body.route);
+      })
+    }
+  })
+
   app.post('/updateOrDeleteCiv', auth, function (req, res) {
     // console.debug(req.body)
     req.app.locals.specialContext = null;
@@ -2459,6 +2575,17 @@ module.exports = function (app, passport, server) {
       }
     });
 
+    socket.on('load_dispatch_calls', (user) => {
+      if (user.user.activeCommunity != null && user.user.activeCommunity != undefined) {
+        Call.find({
+          'call.communityID': user.user.activeCommunity
+        }, function (err, dbCalls) {
+          if (err) return console.error(err);
+          return socket.emit('load_dispatch_calls_result', dbCalls)
+        });
+      }
+    });
+
     socket.on('load_police_bolos', (user) => {
       if (user.user.activeCommunity != null && user.user.activeCommunity != undefined) {
         Bolo.find({
@@ -2760,6 +2887,21 @@ module.exports = function (app, passport, server) {
         if (err) return console.error(err);
         return socket.broadcast.emit('created_bolo', dbBolos)
       });
+    })
+
+    socket.on('create_call', (req) => {
+      // console.debug('create call socket: ', req)
+      var myCall = new Call()
+      myCall.socketCreateCall(req)
+      myCall.save(function (err, dbCalls) {
+        if (err) return console.error(err);
+        return socket.broadcast.emit('created_call', dbCalls)
+      });
+    })
+
+    socket.on('clear_call', (req) => {
+      // console.debug('clear call socket: ', req)
+      return socket.broadcast.emit('cleared_call', req)
     })
 
     socket.on('update_panic_btn_sound', (user) => {

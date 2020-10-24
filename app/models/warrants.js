@@ -35,7 +35,7 @@ warrantSchema.methods.createWarrant = function (req, res) {
   if (exists(req.body.reportingOfficer)) {
     this.warrant.reportingOfficer = req.body.reportingOfficer;
   }
-  
+
   if (exists(req.body.accusedFirstName)) {
     this.warrant.accusedFirstName = req.body.accusedFirstName;
   }
@@ -56,7 +56,7 @@ warrantSchema.methods.createWarrant = function (req, res) {
   this.warrant.createdAt = new Date();
 
   req.app.locals.specialContext = "createWarrantSuccess"
-  res.redirect('/'+req.body.route);
+  res.redirect('/' + req.body.route);
 };
 
 module.exports = mongoose.model('Warrant', warrantSchema);

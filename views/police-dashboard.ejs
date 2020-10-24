@@ -187,6 +187,28 @@
         <%}%>
       <%}%>
       <%}%>
+  </div>
+</div>
+<div class="container">
+  <div id="assigned-call-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
+      <!-- active calls -->
+      <h4>Assigned Calls: </h4>
+        <h5>Click for details</h5>
+      <% if (calls != null && calls.length > 0) {%>
+        <% for(var i=0; i<calls.length; i++) {%>
+          <% if (calls[i].call.status == true) {%>
+            <% if (calls[i].call.assignedOfficers != null && calls[i].call.assignedOfficers != '') {%>
+            <% if (calls[i].call.assignedOfficers.includes(user._id) == true) {%>
+              <a id="<%=calls[i]._id%>-row" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails('<%=calls[i].call.createdAt%>', '<%=calls[i].call.updatedAt%>', '<%=calls[i].call.assignedOfficers%>','<%=calls[i].call.shortDescription%>','<%=calls[i].call.callNotes%>')">
+      <div class="alert alert-success alert-dismissible show" role="alert">
+         Opened: <span id="<%=calls[i]._id%>-createdAt" style="text-transform:capitalize"><time><%=calls[i].call.createdAtReadable%></time> |  Description: <span id="<%=calls[i]._id%>-description"><%=calls[i].call.shortDescription%></span>%></span>
+      </div>
+    </a>
+        <%}%>
+      <%}%>
+      <%}%>
+      <%}%>
+      <%}%>
       <%}%>
       <% if (user.user.activeCommunity == '' || user.user.activeCommunity == null) {%>
       <div class="col-lg-10 col-lg-offset-1 margin-top-2 text-center">
@@ -1375,6 +1397,56 @@
     </div>
   </div>
 
+  <div id="callDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="update-call-form" class="form-horizontal" action="/" method="get">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Call Details</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createdBy">Created At:</label>
+              <div class="col-md-4">
+              <h5 id="createdAtCallDetail"></h5>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
+              <div class="col-md-4">
+              <h5 id="updatedAtCallDetail"></h5>
+              </div>
+            </div>
+
+           <!-- Text input-->
+           <div class="form-group">
+            <label class="col-md-4 control-label" for="description">Description:</label>
+            <div class="col-md-4">
+              <h5 id="descriptionCallDetail" style="text-transform:capitalize"></h5>
+            </div>
+          </div>
+
+            <!-- Text Area input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="callNotes">Call Notes:</label>
+              <div class="col-md-8 col-md-offset-2">
+                <textarea id="callNotesDetail" name="callNotes" type="text" rows="4" maxlength="500" placeholder="call notes" class="form-control input-md" disabled></textarea>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="nonCommunityBoloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1742,6 +1814,32 @@
     }
     })
 
+    socket.on('created_call', res => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (res.call.communityID == myUser.user.activeCommunity) {
+        if (res.call.assignedOfficers.includes(myUser._id) == true) {
+      $('#assigned-call-container').append(
+        '<a id="'+res._id+'-row" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails(\''+res.call.createdAt+'\',\''+ res.call.updatedAt+'\',\''+ res.call.assignedOfficers+'\',\''+ res.call.shortDescription+'\',\''+ res.call.callNotes+'\')">'+
+            '<div class="alert alert-success alert-dismissible show" role="alert">'+
+              'Opened: <span id="'+res._id+'-createdAt" style="text-transform:capitalize"><time>'+res.call.createdAtReadable+'</time> |  Description: <span id="'+res._id+'-description">'+res.call.shortDescription+'</span></span>'+
+            '</div>'+
+          '</a>'
+      ).fadeTo(1, function() {
+        $(this).add();
+      })
+    }
+  }
+    })
+
+    socket.on('cleared_call', res => {
+      var myUser = <%- JSON.stringify(user) %>;
+      if (res.communityID == myUser.user.activeCommunity) {
+        $('#'+res.callID+'-row').remove().fadeOut(5, function() {
+          $(this).remove();
+        })
+      }
+    })
+
   });
 </script>
 <script type="text/javascript">
@@ -2051,7 +2149,7 @@ function searchFirearm() {
           var createdDate = new Date(res[i].bolo.createdAt)
           $('#createdAtDetail').text(createdDate.toLocaleString())
           if (res[i].bolo.updatedAt == null || res[i].bolo.updatedAt == '') {
-            $('#updatedAtDetail').text('')
+            $('#updatedAtDetail').text('N/A')
           } else {
             var updatedDate= new Date(res[i].bolo.updatedAt)
             $('#updatedAtDetail').text(updatedDate.toLocaleString())
@@ -2061,6 +2159,20 @@ function searchFirearm() {
         }
       }
     })
+  }
+
+  function populateCallDetails(createdAt, updatedAt, assignedOfficers, shortDescription, callNotes) {
+    // console.debug(createdAt, updatedAt, assignedOfficers, shortDescription, callNotes)
+    var createdDate = new Date(createdAt)
+    if (updatedAt == "" || updatedAt == 'undefined') {
+      $('#updatedAtCallDetail').empty().text("N/A")
+    } else {
+      var updatedDate = new Date(updatedAt)
+      $('#updatedAtCallDetail').empty().text(updatedDate.toLocaleString())
+    }
+    $('#createdAtCallDetail').empty().text(createdDate.toLocaleString())
+    $('#descriptionCallDetail').empty().text(shortDescription)
+    $('#callNotesDetail').empty().text(callNotes)
   }
 
   function populatePanicDetails(id) {
