@@ -114,7 +114,11 @@
         <button type="button" data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});" class="btn btn-primary btn-lg margin-top-2">Name Database</button>
           <button type="button" data-toggle="modal" href="#plateDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Plate Database</button>
           <button type="button" data-toggle="modal" href="#firearmDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Firearm Database</button>
-          <button type="button" class="btn btn-primary btn-lg margin-top-2" onclick="signal100()">Signal 100</button>
+          <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+            <button type="button" class="btn btn-primary btn-lg margin-top-2" onclick="signal100()">Signal 100</button>
+            <% } else {%>
+              <button type="button" data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Signal 100</button>
+              <% } %>
         </div>
 
       </div>
