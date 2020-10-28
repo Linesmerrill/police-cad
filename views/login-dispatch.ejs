@@ -19,6 +19,7 @@
     <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
     <!-- Global Site Tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-107735203-1"></script>
+<script src="https://www.google.com/recaptcha/api.js"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -82,7 +83,10 @@
                     </div>
                 </div>
 
-                 <button type="submit" value="SignUp" class="btn btn-primary btn-xl margin-top-2" >Sign In</button>
+                 <button type="submit" value="SignUp" class="btn btn-primary btn-xl margin-top-2 g-recaptcha"
+                 data-sitekey="6LflPdwZAAAAANsUIdfCJMxTv1r0ZobOS7PgcWN7" 
+                 data-callback='onSubmit' 
+                 data-action='submit'>Sign In</button>
                  <div class="signup-text">
                    <a href="/signup-dispatch"><u>Don't have an account?</u></a><br>
                    <a href="/forgot-password"><u>Forgot Password?</u></a>
@@ -147,3 +151,9 @@
     <script src="/static/js/scripts.js"></script>
   </body>
 </html>
+
+<script>
+  function onSubmit(token) {
+    document.getElementById("signInForm").submit();
+  }
+</script>
