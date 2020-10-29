@@ -74,13 +74,14 @@ callSchema.methods.socketCreateCall = function (req, res) {
   if (exists(req.communityID)) {
     this.call.communityID = req.communityID;
   }
+  if (exists(req.createdAt)) {
+    this.call.createdAt = req.createdAt;
+  }
+  if (exists(req.createdAtReadable)) {
+    this.call.createdAtReadable = req.createdAtReadable;
+  }
 
   this.call.status = true;
-  this.call.createdAt = new Date();
-  createdDate = new Date(this.call.createdAt);
-  this.call.createdAtReadable = createdDate.toLocaleString()
-  // req.app.locals.specialContext = "createCallSuccess"
-  // res.redirect('/' + req.body.route);
 };
 
 module.exports = mongoose.model('Call', callSchema);

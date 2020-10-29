@@ -210,6 +210,7 @@
                         <% if (calls != null && calls.length > 0) {%>
                     <% for(var i=0; i<calls.length; i++) {%>
                       <% if (calls[i].call.status) {%>
+                        
                             <tr id="<%=calls[i]._id%>-row" class="gray-hover" data-toggle="modal" data-id="<%=i%>" data-target="#callDetailModal" onclick="populateCallDetails('<%=calls[i]._id%>');populateOfficerList('<%=calls[i].call.assignedOfficers%>')">
                               <td id="<%=calls[i]._id%>-createdAt"><%=calls[i].call.createdAtReadable%></td>
                               <td id="<%=calls[i]._id%>-description" style="text-transform: capitalize;"><%=calls[i].call.shortDescription%></td>
@@ -2540,6 +2541,9 @@ function searchFirearm() {
     myUser = <%- JSON.stringify(user) %>
     $('#create-call-form').submit(function(e) {
       e.preventDefault(); //prevents page from reloading
+      myCreatedAt = new Date();
+      myCreatedDate = new Date(myCreatedAt);
+   
       var myCreateReq = {
         shortDescription: $('#short-description').val(),
         assignedOfficers: $('#officer-select').val(),
@@ -2547,6 +2551,8 @@ function searchFirearm() {
         createdByUsername: myUser.user.username,
         createdByID: myUser._id,
         communityID: myUser.user.activeCommunity,
+        createdAt: myCreatedAt,
+        createdAtReadable: myCreatedDate.toLocaleString()
       }
       socket.emit('create_call', myCreateReq)
       return true;
