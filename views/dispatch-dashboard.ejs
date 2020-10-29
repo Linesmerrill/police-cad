@@ -151,7 +151,7 @@
           
           <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
           <button type="button" data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
-          <button type="button" data-toggle="modal" href="#callModal" class="btn btn-primary btn-lg margin-top-2" onclick="fillOfficerList()">Create Call</button>
+          <button type="button" data-toggle="modal" href="#callModal" class="btn btn-primary btn-lg margin-top-2" onclick="fillOfficerList();clearCallForm()">Create Call</button>
           <% } else {%>
             <button type="button" data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
             <button type="button" data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create Call</button>
@@ -197,7 +197,7 @@
             <%} else {%>
               <hr style="width: 88%;max-width: 100rem;">
               <!-- Active Calls -->
-              <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Active Calls:</span> <button type="button" data-toggle="modal" href="#callModal" class="btn btn-primary btn-md pull-right margin-bottom-1" onclick="fillOfficerList()">Create Call</button>
+              <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Active Calls:</span> <button type="button" data-toggle="modal" href="#callModal" class="btn btn-primary btn-md pull-right margin-bottom-1" onclick="fillOfficerList();clearCallForm()">Create Call</button>
               <table id="callTable" class="table table-hover table-bordered">
                 <thead>
                     <tr>
@@ -1499,7 +1499,7 @@
                 <input type="hidden" name="route" value="dispatch-dashboard">
                 <input type="hidden" name="createdByUsername" value="<%= user.user.username %>">
                 <input type="hidden" name="createdByID" value="<%= user._id %>">
-                <button id="createCall" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"  class="btn btn-primary">Create</button>
+                <button id="createCall" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"  class="btn btn-primary" onclick="hideModal('callModal')">Create</button>
               </div>
             </div>
             </fieldset>
@@ -2037,7 +2037,6 @@
     })
 
     socket.on('created_call', res => {
-      // $('#create-call-form').empty();
       var myUser = <%- JSON.stringify(user) %>;
       var myCommUsers = <%- JSON.stringify(commUsers) %>;
       if (res.call.communityID == myUser.user.activeCommunity) {
@@ -2518,7 +2517,6 @@ function searchFirearm() {
   }
 
   $('#createBolo').one('click', function() {
-    // location.assign('/dispatch-dashboard')
     var socket = io();
     myUser = <%- JSON.stringify(user) %>
     $('#create-bolo-form').submit(function(e) {
@@ -2541,7 +2539,7 @@ function searchFirearm() {
     var socket = io();
     myUser = <%- JSON.stringify(user) %>
     $('#create-call-form').submit(function(e) {
-      // e.preventDefault(); //prevents page from reloading
+      e.preventDefault(); //prevents page from reloading
       var myCreateReq = {
         shortDescription: $('#short-description').val(),
         assignedOfficers: $('#officer-select').val(),
@@ -2633,6 +2631,11 @@ function searchFirearm() {
   //Clears bolo form on button press because we are using sockets
   function clearBoloForm() {
     document.getElementById("create-bolo-form").reset();
+  }
+
+  //Clears call form on button press because we are using sockets
+  function clearCallForm() {
+    document.getElementById("create-call-form").reset();
   }
 
   function fillOfficerList() {

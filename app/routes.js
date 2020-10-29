@@ -1783,6 +1783,11 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-call', auth, function (req, res) {
+    var myCall = new Call()
+    myCall.createCall(req)
+    myCall.save(function (err, dbCalls) {
+      if (err) return console.error(err);
+    });
     req.app.locals.specialContext = "createCallSuccess"
     return res.redirect('/' + req.body.route);
   });
