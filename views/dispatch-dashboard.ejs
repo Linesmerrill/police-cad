@@ -1467,8 +1467,6 @@
             <h4>Create Call</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
-            
-
             <!-- Text input-->
             <div class="form-group required">
               <label class="col-md-4 control-label" for="short-description">Short Description:</label>
@@ -1501,7 +1499,7 @@
                 <input type="hidden" name="route" value="dispatch-dashboard">
                 <input type="hidden" name="createdByUsername" value="<%= user.user.username %>">
                 <input type="hidden" name="createdByID" value="<%= user._id %>">
-                <button id="createCall" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"  class="btn btn-primary" onclick="hideModal('boloModal')">Create</button>
+                <button id="createCall" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"  class="btn btn-primary">Create</button>
               </div>
             </div>
             </fieldset>
@@ -2037,6 +2035,41 @@
                           })
                         }
     })
+
+    socket.on('created_call', res => {
+      // $('#create-call-form').empty();
+      var myUser = <%- JSON.stringify(user) %>;
+      var myCommUsers = <%- JSON.stringify(commUsers) %>;
+      if (res.call.communityID == myUser.user.activeCommunity) {
+      var containsEmptyRow = $('#callTable tr>td').hasClass('dataTables_empty');
+      if (containsEmptyRow) {
+        $('#callTable tbody>tr:first').fadeOut(1, function(){
+          $(this).remove();
+        })
+      }
+      var assignedUnits = ""
+      if (res.call.assignedOfficers != null && res.call.assignedOfficers.length > 0) {
+        for(var j=0; j<res.call.assignedOfficers.length; j++) {
+          for(var k=0; k<myCommUsers.length; k++) {
+            if (myCommUsers[k]._id == res.call.assignedOfficers[j]) {
+              assignedUnits += '<span class="badge badge-secondary">'+myCommUsers[k].user.username+'</span> '
+            }   
+          }   
+        }
+      } else {
+          assignedUnits = '<span class="badge badge-secondary">N/A</span>'
+      }       
+
+      $('#callTable tr:last').after(
+                          `<tr id="`+res._id+`-row" class="gray-hover" data-toggle="modal" data-target="#callDetailModal" onclick="populateCallDetails('`+res._id+`');populateOfficerList('`+res.call.assignedOfficers+`')">`+
+                              '<td id="'+res._id+'-createdAt" style="text-transform: capitalize;">'+res.call.createdAtReadable+'</td>'+
+                              '<td id="'+res._id+'-description">'+res.call.shortDescription+'</td>'+
+                              '<td id="'+res._id+'-units-assigned">'+assignedUnits+'</td>'+
+                          '</tr>').fadeTo(1, function() {
+                            $(this).add();
+                          })
+                        }
+    })
   });
 </script>
 <script type="text/javascript">
@@ -2508,7 +2541,7 @@ function searchFirearm() {
     var socket = io();
     myUser = <%- JSON.stringify(user) %>
     $('#create-call-form').submit(function(e) {
-      //e.preventDefault(); //prevents page from reloading
+      // e.preventDefault(); //prevents page from reloading
       var myCreateReq = {
         shortDescription: $('#short-description').val(),
         assignedOfficers: $('#officer-select').val(),
@@ -2520,6 +2553,7 @@ function searchFirearm() {
       socket.emit('create_call', myCreateReq)
       return true;
     })
+    $('#callModal').modal('hide');
   })
 
   $('#closeCall').click(function(){
