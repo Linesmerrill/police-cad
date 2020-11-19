@@ -11,7 +11,7 @@ http://www.bootstrapzero.com
 @font-face {
     font-family: 'dealerplatecalifornia';
     src: url('/static/fonts/dealerplate_california-webfont.woff2') format('woff2'),
-         url('/static/fonts/dealerplate_california-webfont.woff') format('woff');
+        url('/static/fonts/dealerplate_california-webfont.woff') format('woff');
     font-weight: normal;
     font-style: normal;
 }
@@ -19,7 +19,7 @@ http://www.bootstrapzero.com
 @font-face {
     font-family: 'car-frame';
     src: url('/static/fonts/cargoframedemo-webfont.woff2') format('woff2'),
-         url('/static/fonts/cargoframedemo-webfont.woff') format('woff');
+        url('/static/fonts/cargoframedemo-webfont.woff') format('woff');
     font-weight: normal;
     font-style: normal;
 
@@ -856,6 +856,14 @@ a.link--inherit {
 
 .font-size-2 {
     font-size: 2em;
+}
+
+.font-size-3 {
+    font-size: 3em;
+}
+
+.font-size-4 {
+    font-size: 4em;
 }
 
 .font-size-5 {
