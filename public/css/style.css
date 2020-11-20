@@ -68,9 +68,9 @@ hr {
   height: 0;
   overflow: visible; }
 
-h1, h2, h3, h4, h5, h6 {
+/* h1, h2, h3, h4, h5, h6 {
   margin-top: 0;
-  margin-bottom: 0.5rem; }
+  margin-bottom: 0.5rem; } */
 
 p {
   margin-top: 0;
@@ -318,8 +318,8 @@ h3, .h3 {
 /* h4, .h4 {
   font-size: 1.5rem; } */
 
-h5, .h5 {
-  font-size: 1.25rem; }
+/* h5, .h5 {
+  font-size: 1.25rem; } */
 
 h6, .h6 {
   font-size: 1rem; }
