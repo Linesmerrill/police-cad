@@ -62,11 +62,11 @@ body {
 [tabindex="-1"]:focus {
   outline: 0 !important; }
 
-hr {
+/* hr {
   -webkit-box-sizing: content-box;
   box-sizing: content-box;
   height: 0;
-  overflow: visible; }
+  overflow: visible; } */
 
 /* h1, h2, h3, h4, h5, h6 {
   margin-top: 0;
@@ -348,11 +348,11 @@ h6, .h6 {
   font-weight: 300;
   line-height: 1.2; }
 
-hr {
+/* hr {
   margin-top: 1rem;
   margin-bottom: 1rem;
   border: 0;
-  border-top: 1px solid rgba(0, 0, 0, 0.1); }
+  border-top: 1px solid rgba(0, 0, 0, 0.1); } */
 
 small,
 .small {

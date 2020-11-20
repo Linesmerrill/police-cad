@@ -51,12 +51,12 @@
           <i class="fa fa-bars" aria-hidden="true" style="z-index: 9; font-size: 1.5em;"></i>
         </button>
       </div>
-      <!-- <div class="img bg-wrap text-center py-4" style="background-image: url(/static/images/bg_1.jpg);">
+      <div class="img bg-wrap text-center py-4" style="background-image: url(/static/images/police-corner-bg.jpg);">
         <div class="user-logo">
-          <div class="img" style="background-image: url(/static/images/logo.jpg);"></div>
-          <h3>Catriona Henderson</h3>
+          <div class="img" style="background-image: url(/static/images/default_user_pic.png);"></div>
+          <h3><%=user.user.username%></h3>
         </div>
-      </div> -->
+      </div>
       <ul class="list-unstyled components mb-5">
         <li>
           <a href="/"><span class="fa fa-home mr-3"></span> Home</a>
@@ -190,7 +190,7 @@
             <%} else if (user.user.dispatchOnDuty) {%>
               <h4><span id="<%=user._id%>-duty" class="green-dot"></span> <span id="<%=user._id%>-duty-text"> On Duty</span></h4>
             <%}%>
-          <h4 id="username" class="text-align-center">Username: <%=user.user.username%></h4>
+          <!-- <h4 id="username" class="text-align-center">Username: <%=user.user.username%></h4> -->
           <h4 id="currentStatus" class="text-align-center">Your Current Status: <%=user.user.dispatchStatus%></h4>
           <h5 id="statusSetBy" class="text-align-center">Set By: <%=user.user.dispatchStatusSetBy%></h5>
           <div class="col-lg-10 col-lg-offset-1 text-center">
@@ -577,12 +577,12 @@
           </div>
 
           <!-- Reinstate Drivers License Button -->
-          <div id="click-to-reinstate-lic-<%=i%>" class="form-group col-md-12 text-align-center margin-top-1 hide" style="margin-top: -59px;">
+          <div id="click-to-reinstate-lic-<%=i%>" class="form-group col-md-12 text-align-center margin-top-1 hide">
             <button  type="button" value="reinstateLicense" name="action" class="btn btn-info" onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','1')">Reinstate Driver's License</button>
         </div>
 
           <!-- Delete Drivers License Button -->
-          <div id="click-to-revoke-lic-<%=i%>" class="form-group col-md-12 text-align-center margin-top-1 hide" style="margin-top: -59px;">
+          <div id="click-to-revoke-lic-<%=i%>" class="form-group col-md-12 text-align-center margin-top-1 hide">
               <button type="button" value="deleteLicense" name="action" class="btn btn-danger" onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','2')">Revoke Driver's License</button>
           </div>
                                 
