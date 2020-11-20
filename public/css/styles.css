@@ -1248,3 +1248,8 @@ a[data-toggle="collapse"] .rotate {
  .background-color-222 {
      background-color: #222;
  }
+
+ .topNav {
+    background-color: #222;
+    width: 100%;
+ }
