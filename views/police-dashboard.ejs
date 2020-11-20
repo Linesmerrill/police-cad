@@ -1770,7 +1770,12 @@
         $('#'+res.userID+"-duty").attr('style', 'background-color: #d9534f !important');
         $('#'+res.userID+"-duty-text").text(' Off Duty');
       }
-      $('#currentStatus').text('Your Current Status: '+ res.status)
+      $('#currentStatus').text('Your Current Status: '+ res.status).animate({
+        fontSize: "19px",
+        fontWeight: "900"
+        }, 600).animate({
+        fontSize: "18px"
+        }, 600)
       $('#statusSetBy').text('Set By: ' + res.setBy)
 
       }
