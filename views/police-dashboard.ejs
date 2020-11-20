@@ -38,7 +38,7 @@
   <!-- Global Site Tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=UA-107735203-1"></script>
   <script>
-    window.dataLayer = window.dataLayer || [];
+    window.dataLayer=window.dataLayer||[];
 
     function gtag() {
       dataLayer.push(arguments);
@@ -208,13 +208,13 @@
 
             <div class="container text-center width-100">
               <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-                <% if (!user.user.dispatchOnDuty) {%>
-                <h4><span id="<%=user._id%>-duty" class="red-dot"></span> <span id="<%=user._id%>-duty-text"> Off
-                    Duty</span></h4>
-                <%} else if (user.user.dispatchOnDuty) {%>
-                <h4><span id="<%=user._id%>-duty" class="green-dot"></span> <span id="<%=user._id%>-duty-text"> On
-                    Duty</span></h4>
-                <%}%>
+              <% if (!user.user.dispatchOnDuty) {%>
+              <h4><span id="<%=user._id%>-duty" class="red-dot"></span> <span id="<%=user._id%>-duty-text"> Off
+                  Duty</span></h4>
+              <%} else if (user.user.dispatchOnDuty) {%>
+              <h4><span id="<%=user._id%>-duty" class="green-dot"></span> <span id="<%=user._id%>-duty-text"> On
+                  Duty</span></h4>
+              <%}%>
               <h4 id="currentStatus" class="text-align-center">Your Current Status: <%=user.user.dispatchStatus%></h4>
               <h5 id="statusSetBy" class="text-align-center">Set By: <%=user.user.dispatchStatusSetBy%></h5>
               <div class="col-lg-10 col-lg-offset-1 text-center">
@@ -253,13 +253,13 @@
               </div>
               <% } %>
               <% if (user.user.activeCommunity == '' || user.user.activeCommunity == null) {%>
-                <div class="col-lg-10 col-lg-offset-1 margin-top-2 text-center">
-                  <h3><i class="fas fa-arrow-left"></i> Click on any of the search buttons to get started</h3>
-                  <hr style="width: 88%;max-width: 100rem;">
-                  <h4>Looks like you are not in a community, click here to get started!</h4>
-                  <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
-                </div>
-                <% } %>
+              <div class="col-lg-10 col-lg-offset-1 margin-top-2 text-center">
+                <h3><i class="fas fa-arrow-left"></i> Click on any of the search buttons to get started</h3>
+                <hr style="width: 88%;max-width: 100rem;">
+                <h4>Looks like you are not in a community, click here to get started!</h4>
+                <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
+              </div>
+              <% } %>
             </div>
           </div>
         </div>
@@ -268,7 +268,7 @@
       <ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article"
         data-ad-format="fluid" data-ad-client="ca-pub-3842696805773142" data-ad-slot="8821936879"></ins>
       <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
+        (adsbygoogle=window.adsbygoogle||[]).push({});
       </script>
       <section style='background-image: url("/static/images/blue-clouds.jpg"); padding:0'>
         <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
@@ -318,7 +318,7 @@
       <%}%>
             <%}%>
       <%}%>
-            
+
           </div>
         </div>
       </section>
@@ -1943,32 +1943,32 @@
 </html>
 <script>
   $(function () {
-    var socket = io();
+    var socket=io();
 
     socket.on('updated_status', res => {
-      var myUser = <%-JSON.stringify(user)%>;
-      if (res.userID == myUser._id) {
-        if (res.onDuty && res.updateDuty) {
-          $('#' + res.userID + "-duty").attr('style', 'background-color: #5cb85c !important');
-          $('#' + res.userID + "-duty-text").text(' On Duty');
-        } else if (!res.onDuty && res.updateDuty) {
-          $('#' + res.userID + "-duty").attr('style', 'background-color: #d9534f !important');
-          $('#' + res.userID + "-duty-text").text(' Off Duty');
+      var myUser= <%-JSON.stringify(user)%>;
+      if (res.userID==myUser._id) {
+        if (res.onDuty&&res.updateDuty) {
+          $('#'+res.userID+"-duty").attr('style', 'background-color: #5cb85c !important');
+          $('#'+res.userID+"-duty-text").text(' On Duty');
+        } else if (!res.onDuty&&res.updateDuty) {
+          $('#'+res.userID+"-duty").attr('style', 'background-color: #d9534f !important');
+          $('#'+res.userID+"-duty-text").text(' Off Duty');
         }
-        $('#currentStatus').text('Your Current Status: ' + res.status).animate({
+        $('#currentStatus').text('Your Current Status: '+res.status).animate({
           fontSize: "19px",
           fontWeight: "900"
         }, 600).animate({
           fontSize: "18px"
         }, 600)
-        $('#statusSetBy').text('Set By: ' + res.setBy)
+        $('#statusSetBy').text('Set By: '+res.setBy)
 
       }
     })
 
     socket.on('load_panic_status_update', (map, signal100Resp, origReq) => {
-      var myUser = <%-JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity == origReq.activeCommunity) {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity==origReq.activeCommunity) {
         //load the signal 100 status to the page
         if (signal100Resp) {
           $('#signal-100-banner').removeClass('hide').addClass('show')
@@ -1985,16 +1985,16 @@
         })
         for (var m in map) {
           $('#panic-placeholder-socket').append(
-            '<a id="' + map[m].userId +
-            '-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\'' + map[
-              m].userId + '\')">' +
-            '<div class="alert alert-danger alert-dismissible show" role="alert">' +
-            '<strong>Panic! </strong> Triggered by: <span id="' + map[m].userId + '-panic-username">' + map[m]
-            .username + '</span>' +
-            '<button type="button" type="button" class="close" aria-label="Close">' +
-            '<span aria-hidden="true">&times;</span>' +
-            '</button>' +
-            '</div>' +
+            '<a id="'+map[m].userId+
+            '-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\''+map[
+              m].userId+'\')">'+
+            '<div class="alert alert-danger alert-dismissible show" role="alert">'+
+            '<strong>Panic! </strong> Triggered by: <span id="'+map[m].userId+'-panic-username">'+map[m]
+              .username+'</span>'+
+            '<button type="button" type="button" class="close" aria-label="Close">'+
+            '<span aria-hidden="true">&times;</span>'+
+            '</button>'+
+            '</div>'+
             '</a>'
           ).fadeTo(1, function () {
             $(this).add();
@@ -2004,10 +2004,10 @@
     })
 
     socket.on('panic_button_updated', (map, origReq) => {
-      var myUser = <%-JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity == origReq.activeCommunity) {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity==origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
-          var audioElement = document.createElement('audio');
+          var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound.wav');
           audioElement.play();
         }
@@ -2019,16 +2019,16 @@
         })
         for (var m in map) {
           $('#panic-placeholder-socket').append(
-            '<a id="' + map[m].userId +
-            '-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\'' + map[
-              m].userId + '\')">' +
-            '<div class="alert alert-danger alert-dismissible show" role="alert">' +
-            '<strong>Panic! </strong> Triggered by: <span id="' + map[m].userId + '-panic-username">' + map[m]
-            .username + '</span>' +
-            '<button type="button" type="button" class="close" aria-label="Close">' +
-            '<span aria-hidden="true">&times;</span>' +
-            '</button>' +
-            '</div>' +
+            '<a id="'+map[m].userId+
+            '-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\''+map[
+              m].userId+'\')">'+
+            '<div class="alert alert-danger alert-dismissible show" role="alert">'+
+            '<strong>Panic! </strong> Triggered by: <span id="'+map[m].userId+'-panic-username">'+map[m]
+              .username+'</span>'+
+            '<button type="button" type="button" class="close" aria-label="Close">'+
+            '<span aria-hidden="true">&times;</span>'+
+            '</button>'+
+            '</div>'+
             '</a>'
           ).fadeTo(1, function () {
             $(this).add();
@@ -2038,16 +2038,16 @@
     })
 
     socket.on('cleared_panic', res => {
-      $('#' + res.userID + '-panic-row').remove().fadeOut(1, function () {
+      $('#'+res.userID+'-panic-row').remove().fadeOut(1, function () {
         $(this).remove();
       })
     })
 
     socket.on('signal_100_button_updated', (origReq) => {
-      var myUser = <%-JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity == origReq.activeCommunity) {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity==origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
-          var audioElement = document.createElement('audio');
+          var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep.wav');
           audioElement.play();
         }
@@ -2056,36 +2056,36 @@
     })
 
     socket.on('clear_signal_100_updated', activeCommunity => {
-      var myUser = <%-JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity == activeCommunity) {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity==activeCommunity) {
         $('#signal-100-banner').removeClass('show').addClass('hide')
       }
     })
 
     socket.on('updated_bolo', res => {
-      $('#' + res.boloID + "-type").text(res.boloType)
-      $('#' + res.boloID + "-location").text(res.location)
-      $('#' + res.boloID + "-description").text(res.description)
+      $('#'+res.boloID+"-type").text(res.boloType)
+      $('#'+res.boloID+"-location").text(res.location)
+      $('#'+res.boloID+"-description").text(res.description)
     })
 
     socket.on('deleted_bolo', res => {
-      $('#' + res.boloID + '-row').remove().fadeOut(1, function () {
+      $('#'+res.boloID+'-row').remove().fadeOut(1, function () {
         $(this).remove();
       })
     })
 
     socket.on('created_bolo', res => {
-      var myUser = <%-JSON.stringify(user)%>;
-      if (res.bolo.communityID == myUser.user.activeCommunity) {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (res.bolo.communityID==myUser.user.activeCommunity) {
         $('#active-bolo-container').append(
-          '<a id="' + res._id +
-          '-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails(\'' + res._id +
-          '\')">' +
-          '<div class="alert alert-warning alert-dismissible show" role="alert">' +
-          '<strong>BOLO! </strong> <span id="' + res._id + '-type" style="text-transform:capitalize">' + res
-          .bolo.boloType + '</span> Last Seen: <span id="' + res._id + '-location">' + res.bolo.location +
-          '</span> | Description: <span id="' + res._id + '-description">' + res.bolo.description +
-          '</div>' +
+          '<a id="'+res._id+
+          '-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails(\''+res._id+
+          '\')">'+
+          '<div class="alert alert-warning alert-dismissible show" role="alert">'+
+          '<strong>BOLO! </strong> <span id="'+res._id+'-type" style="text-transform:capitalize">'+res
+            .bolo.boloType+'</span> Last Seen: <span id="'+res._id+'-location">'+res.bolo.location+
+          '</span> | Description: <span id="'+res._id+'-description">'+res.bolo.description+
+          '</div>'+
           '</a>'
         ).fadeTo(1, function () {
           $(this).add();
@@ -2094,19 +2094,19 @@
     })
 
     socket.on('created_call', res => {
-      var myUser = <%-JSON.stringify(user)%>;
-      if (res.call.communityID == myUser.user.activeCommunity) {
-        if (res.call.assignedOfficers.includes(myUser._id) == true) {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (res.call.communityID==myUser.user.activeCommunity) {
+        if (res.call.assignedOfficers.includes(myUser._id)==true) {
           $('#assigned-call-container').append(
-            '<a id="' + res._id +
-            '-row" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails(\'' + res.call
-            .createdAt + '\',\'' + res.call.updatedAt + '\',\'' + res.call.assignedOfficers + '\',\'' + res
-            .call.shortDescription + '\',\'' + res.call.callNotes + '\')">' +
-            '<div class="alert alert-success alert-dismissible show" role="alert">' +
-            'Opened: <span id="' + res._id + '-createdAt" style="text-transform:capitalize"><time>' + res.call
-            .createdAtReadable + '</time> |  Description: <span id="' + res._id + '-description">' + res.call
-            .shortDescription + '</span></span>' +
-            '</div>' +
+            '<a id="'+res._id+
+            '-row" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails(\''+res.call
+              .createdAt+'\',\''+res.call.updatedAt+'\',\''+res.call.assignedOfficers+'\',\''+res
+                .call.shortDescription+'\',\''+res.call.callNotes+'\')">'+
+            '<div class="alert alert-success alert-dismissible show" role="alert">'+
+            'Opened: <span id="'+res._id+'-createdAt" style="text-transform:capitalize"><time>'+res.call
+              .createdAtReadable+'</time> |  Description: <span id="'+res._id+'-description">'+res.call
+              .shortDescription+'</span></span>'+
+            '</div>'+
             '</a>'
           ).fadeTo(1, function () {
             $(this).add();
@@ -2116,9 +2116,9 @@
     })
 
     socket.on('cleared_call', res => {
-      var myUser = <%-JSON.stringify(user)%>;
-      if (res.communityID == myUser.user.activeCommunity) {
-        $('#' + res.callID + '-row').remove().fadeOut(5, function () {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (res.communityID==myUser.user.activeCommunity) {
+        $('#'+res.callID+'-row').remove().fadeOut(5, function () {
           $(this).remove();
         })
       }
@@ -2132,9 +2132,9 @@
 
 
     // displays the Update Username and Cancel buttons for updating the username
-    var myUser = <%-JSON.stringify(user)%>;
+    var myUser= <%-JSON.stringify(user)%>;
     $('#accountUsername').on('keyup', function (e) {
-      if (e.target.value != myUser.user.username && e.target.value != '') {
+      if (e.target.value!=myUser.user.username&&e.target.value!='') {
         $('#updateUsernameBtns').show();
       } else {
         $('#updateUsernameBtns').hide();
@@ -2142,19 +2142,19 @@
     })
     $('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
 
-    let allVehicles = <%-JSON.stringify(vehicles)%>;
-    let allCivilians = <%-JSON.stringify(civilians)%>;
-    let allFirearms = <%-JSON.stringify(firearms)%>;
-    if (allVehicles != null) {
+    let allVehicles= <%-JSON.stringify(vehicles)%>;
+    let allCivilians= <%-JSON.stringify(civilians)%>;
+    let allFirearms= <%-JSON.stringify(firearms)%>;
+    if (allVehicles!=null) {
       $('#plateDetails').show()
       $('#plateDatabaseModal').modal('toggle');
       searchPlate()
-    } else if (allCivilians != null) {
+    } else if (allCivilians!=null) {
       $('#civDetails').show()
       $('#nameDatabaseModal').modal('toggle');
       searchNames()
       populateDriversLicense(allCivilians)
-    } else if (allFirearms != null) {
+    } else if (allFirearms!=null) {
       $('#firearmDetails').show()
       $('#firearmDatabaseModal').modal('toggle');
       searchFirearm()
@@ -2165,7 +2165,7 @@
     }
 
     $("#civ-first-name").keydown(function (event) {
-      if (event.keyCode == 32) {
+      if (event.keyCode==32) {
         event.preventDefault();
         $('#civ-first-name').popover('show')
       } else {
@@ -2174,7 +2174,7 @@
     });
 
     $("#civ-last-name").keydown(function (event) {
-      if (event.keyCode == 32) {
+      if (event.keyCode==32) {
         event.preventDefault();
         $('#civ-last-name').popover('show')
       } else {
@@ -2213,10 +2213,10 @@
     });
   });
 
-  window.onload = function () {
-    var socket = io();
-    var myUser = <%-JSON.stringify(user)%>;
-    var myReq = {
+  window.onload=function () {
+    var socket=io();
+    var myUser= <%-JSON.stringify(user)%>;
+    var myReq={
       userID: myUser._id,
       userUsername: myUser.user.username,
       activeCommunity: myUser.user.activeCommunity
@@ -2225,16 +2225,16 @@
   }
 
   function searchPlate() {
-    let x = document.getElementById('plateDetails');
-    if (x.style.display === 'none') {
-      x.style.display = 'block';
-    } else {}
+    let x=document.getElementById('plateDetails');
+    if (x.style.display==='none') {
+      x.style.display='block';
+    } else { }
 
-    let myVar = <%-JSON.stringify(vehicles)%>;
-    if (myVar === null) {
+    let myVar= <%-JSON.stringify(vehicles)%>;
+    if (myVar===null) {
       return
     }
-    if (myVar.length === 0) {
+    if (myVar.length===0) {
       $('#plateDetails').removeAttr("style").hide()
       $('#vehicleNotFound').show()
       return
@@ -2242,16 +2242,16 @@
   }
 
   function searchFirearm() {
-    let x = document.getElementById('firearmDetails');
-    if (x.style.display === 'none') {
-      x.style.display = 'block';
-    } else {}
+    let x=document.getElementById('firearmDetails');
+    if (x.style.display==='none') {
+      x.style.display='block';
+    } else { }
 
-    let myVar = <%-JSON.stringify(firearms)%>;
-    if (myVar === null) {
+    let myVar= <%-JSON.stringify(firearms)%>;
+    if (myVar===null) {
       return
     }
-    if (myVar.length === 0) {
+    if (myVar.length===0) {
       $('#firearmDetails').removeAttr("style").hide()
       $('#firearmNotFound').show()
       return
@@ -2259,20 +2259,20 @@
   }
 
   function searchNames() {
-    let x = document.getElementById('civDetails');
-    if (x.style.display === 'none') {
-      x.style.display = 'block';
-    } else {}
-    let myCiv = <%-JSON.stringify(civilians)%>;
-    let myTicket = <%-JSON.stringify(tickets)%>;
-    if (myCiv === null || myTicket === null) {
+    let x=document.getElementById('civDetails');
+    if (x.style.display==='none') {
+      x.style.display='block';
+    } else { }
+    let myCiv= <%-JSON.stringify(civilians)%>;
+    let myTicket= <%-JSON.stringify(tickets)%>;
+    if (myCiv===null||myTicket===null) {
       hideCivPopover();
       return
-    } else if (myCiv.length === 0) {
-      let civDetails = document.getElementById('civDetails')
-      civDetails.style.display = 'none'
-      let civNotFoundMsg = document.getElementById('civilianNotFound')
-      civNotFoundMsg.style.display = 'block'
+    } else if (myCiv.length===0) {
+      let civDetails=document.getElementById('civDetails')
+      civDetails.style.display='none'
+      let civNotFoundMsg=document.getElementById('civilianNotFound')
+      civNotFoundMsg.style.display='block'
       hideCivPopover();
       return
     }
@@ -2284,19 +2284,19 @@
   }
 
   function setDateAndTime(dateElement, timeElement) {
-    $(dateElement)[0].valueAsDate = new Date();
-    $(timeElement)[0].value = new Date().toLocaleTimeString('en-GB', {
+    $(dateElement)[0].valueAsDate=new Date();
+    $(timeElement)[0].value=new Date().toLocaleTimeString('en-GB', {
       hour: "2-digit",
       minute: "2-digit"
     })
   }
 
   function generateCaseNo(elementName) {
-    $(elementName).val(Math.round(Math.random() * 10000000000))
+    $(elementName).val(Math.round(Math.random()*10000000000))
   }
 
   function hideTicketCivPopover() {
-    if ($('#civID').val().length < 1) {
+    if ($('#civID').val().length<1) {
       $('#civID').popover('show')
       $('#ticket-form').attr('onsubmit', 'return false;');
     } else {
@@ -2306,7 +2306,7 @@
   }
 
   function hideWarningCivPopover() {
-    if ($('#civIDWarning').val().length < 1) {
+    if ($('#civIDWarning').val().length<1) {
       $('#civIDWarning').popover('show')
       $('#warning-form').attr('onsubmit', 'return false;');
     } else {
@@ -2316,7 +2316,7 @@
   }
 
   function hideArrestReportPopover() {
-    if ($('#civIDArrest').val().length < 1) {
+    if ($('#civIDArrest').val().length<1) {
       $('#civIDArrest').popover('show')
       $('#arrest-form').attr('onsubmit', 'return false;');
     } else {
@@ -2371,11 +2371,11 @@
     $('#warrant-civ-last-name').val(lastName)
     $('#civIDWarrant').val(id)
     //Super gross date calculation, thx javascript
-    let date = new Date()
-    let yyyy = date.getFullYear().toString();
-    let mm = (date.getMonth() + 1).toString(); // getMonth() is zero-based         
-    let dd = date.getDate().toString();
-    $('#warrant-date').val(yyyy + '-' + (mm[1] ? mm : "0" + mm[0]) + '-' + (dd[1] ? dd : "0" + dd[0]))
+    let date=new Date()
+    let yyyy=date.getFullYear().toString();
+    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based         
+    let dd=date.getDate().toString();
+    $('#warrant-date').val(yyyy+'-'+(mm[1]? mm:"0"+mm[0])+'-'+(dd[1]? dd:"0"+dd[0]))
     $('#warrant-time').val(new Date().toLocaleTimeString('en-GB', {
       hour: "2-digit",
       minute: "2-digit"
@@ -2388,11 +2388,11 @@
     $('#warrant-ID').val(warrantID)
     $('#warrant-reason').text(warrantReason)
     //Super gross date calculation, thx javascript
-    let date = new Date()
-    let yyyy = date.getFullYear().toString();
-    let mm = (date.getMonth() + 1).toString(); // getMonth() is zero-based         
-    let dd = date.getDate().toString();
-    $('#warrant-clear-date').val(yyyy + '-' + (mm[1] ? mm : "0" + mm[0]) + '-' + (dd[1] ? dd : "0" + dd[0]))
+    let date=new Date()
+    let yyyy=date.getFullYear().toString();
+    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based         
+    let dd=date.getDate().toString();
+    $('#warrant-clear-date').val(yyyy+'-'+(mm[1]? mm:"0"+mm[0])+'-'+(dd[1]? dd:"0"+dd[0]))
     $('#warrant-clear-time').val(new Date().toLocaleTimeString('en-GB', {
       hour: "2-digit",
       minute: "2-digit"
@@ -2405,36 +2405,36 @@
   }
 
   function fillAccountDetails() {
-    var myUser = <%-JSON.stringify(user)%>;
+    var myUser= <%-JSON.stringify(user)%>;
     $('#accountEmail').val(myUser.user.email)
     $('#accountUsername').val(myUser.user.username)
   }
 
   function cancelUsername() {
-    var myUser = <%-JSON.stringify(user)%>;
+    var myUser= <%-JSON.stringify(user)%>;
     $('#accountUsername').val(myUser.user.username)
     $('#updateUsernameBtns').hide();
   }
 
   function populateBoloDetails(id) {
-    var socket = io();
+    var socket=io();
     socket.emit('load_police_bolos', <%-JSON.stringify(user)%>)
     socket.on('load_police_bolos_result', (res) => {
       for (const i in res) {
-        if (res[i]._id != id) {
+        if (res[i]._id!=id) {
           continue
-        } else if (res[i]._id == id) {
+        } else if (res[i]._id==id) {
           $('#boloTypeDetail').val(res[i].bolo.boloType)
           $('#locationDetail').val(res[i].bolo.location)
           $('#descriptionDetail').val(res[i].bolo.description)
           $('#boloIDDetail').val(res[i]._id)
           $('#createdByDetail').text(res[i].bolo.reportingOfficerUsername)
-          var createdDate = new Date(res[i].bolo.createdAt)
+          var createdDate=new Date(res[i].bolo.createdAt)
           $('#createdAtDetail').text(createdDate.toLocaleString())
-          if (res[i].bolo.updatedAt == null || res[i].bolo.updatedAt == '') {
+          if (res[i].bolo.updatedAt==null||res[i].bolo.updatedAt=='') {
             $('#updatedAtDetail').text('N/A')
           } else {
-            var updatedDate = new Date(res[i].bolo.updatedAt)
+            var updatedDate=new Date(res[i].bolo.updatedAt)
             $('#updatedAtDetail').text(updatedDate.toLocaleString())
           }
         } else {
@@ -2446,11 +2446,11 @@
 
   function populateCallDetails(createdAt, updatedAt, assignedOfficers, shortDescription, callNotes) {
     // console.debug(createdAt, updatedAt, assignedOfficers, shortDescription, callNotes)
-    var createdDate = new Date(createdAt)
-    if (updatedAt == "" || updatedAt == 'undefined') {
+    var createdDate=new Date(createdAt)
+    if (updatedAt==""||updatedAt=='undefined') {
       $('#updatedAtCallDetail').empty().text("N/A")
     } else {
-      var updatedDate = new Date(updatedAt)
+      var updatedDate=new Date(updatedAt)
       $('#updatedAtCallDetail').empty().text(updatedDate.toLocaleString())
     }
     $('#createdAtCallDetail').empty().text(createdDate.toLocaleString())
@@ -2463,20 +2463,20 @@
   }
 
   function updateStatus(status) {
-    var myUser = <%-JSON.stringify(user)%>;
-    var socket = io();
-    var onDuty = null
-    var updateDuty = false
-    if (status == '10-41') {
-      onDuty = true
-      updateDuty = true
-      status = 'Online'
-    } else if (status == '10-42') {
-      onDuty = false
-      updateDuty = true
-      status = 'Offline'
+    var myUser= <%-JSON.stringify(user)%>;
+    var socket=io();
+    var onDuty=null
+    var updateDuty=false
+    if (status=='10-41') {
+      onDuty=true
+      updateDuty=true
+      status='Online'
+    } else if (status=='10-42') {
+      onDuty=false
+      updateDuty=true
+      status='Offline'
     }
-    myReq = {
+    myReq={
       userID: myUser._id,
       status: status,
       setBy: 'Self',
@@ -2487,36 +2487,36 @@
     socket.emit('update_status', myReq)
   }
 
-  var panicButtonEnabled = true
+  var panicButtonEnabled=true
 
   function panicButtonPressed() {
     if (panicButtonEnabled) {
-      var myUser = <%-JSON.stringify(user)%>;
-      var socket = io();
-      myReq = {
+      var myUser= <%-JSON.stringify(user)%>;
+      var socket=io();
+      myReq={
         userID: myUser._id,
         userUsername: myUser.user.username,
         activeCommunity: myUser.user.activeCommunity
       }
       if ($('#panic-button-check-sound').prop('checked')) {
-        var audioElement = document.createElement('audio');
+        var audioElement=document.createElement('audio');
         audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound.wav');
         audioElement.play();
       }
 
       socket.emit('panic_button_update', myReq)
-      panicButtonEnabled = false
+      panicButtonEnabled=false
     }
   }
 
   $('#updateBolo').one('click', function () {
-    var val = $(this).attr('value')
-    var socket = io();
+    var val=$(this).attr('value')
+    var socket=io();
     $('#update-bolo-form').submit(function (e) {
       e.preventDefault(); //prevents page from reloading
 
-      if (val == 'update') {
-        var myReq = {
+      if (val=='update') {
+        var myReq={
           action: 'update',
           boloID: $('#boloIDDetail').val(),
           boloType: $('#boloTypeDetail').val(),
@@ -2530,11 +2530,11 @@
   })
 
   $('#createBolo').one('click', function () {
-    var socket = io();
-    myUser = <%-JSON.stringify(user)%>
+    var socket=io();
+    myUser= <%-JSON.stringify(user)%>
       $('#create-bolo-form').submit(function (e) {
         e.preventDefault(); //prevents page from reloading
-        var myCreateReq = {
+        var myCreateReq={
           boloType: $('#type option:selected').text(),
           location: $('#location').val(),
           communityID: myUser.user.activeCommunity,
@@ -2549,13 +2549,13 @@
   })
 
   $('#deleteBolo').one('click', function () {
-    var val = $(this).attr('value')
-    var socket = io();
+    var val=$(this).attr('value')
+    var socket=io();
     $('#delete-bolo-form').submit(function (e) {
       e.preventDefault(); //prevents page from reloading
 
-      if (val == 'delete') {
-        var myReq = {
+      if (val=='delete') {
+        var myReq={
           action: 'delete',
           boloID: $('#boloIDDetail').val(),
           boloType: $('#boloTypeDetail').val(),
@@ -2571,18 +2571,18 @@
   })
 
   $('#clearPanic').one('click', function () {
-    myUser = <%-JSON.stringify(user)%>
-      var socket = io();
+    myUser= <%-JSON.stringify(user)%>
+      var socket=io();
     $('#clear-panic-form').submit(function (e) {
       e.preventDefault(); //prevents page from reloading
-      var myReq = {
+      var myReq={
         userID: $('#panic-id').val(),
         communityID: myUser.user.activeCommunity
       }
       socket.emit('clear_panic', myReq)
-      panicButtonEnabled = true
+      panicButtonEnabled=true
 
-      var myUpdateReq = {
+      var myUpdateReq={
         userID: $('#panic-id').val(),
         status: '10-8',
         setBy: 'System',
@@ -2596,7 +2596,7 @@
   })
 
   function hideModal(modalID) {
-    $('#' + modalID).modal('hide')
+    $('#'+modalID).modal('hide')
   }
 
   //Clears bolo form on button press because we are using sockets
@@ -2630,8 +2630,8 @@
 
   // removes all the names from caching on the website when the modal is closed
   $('#nameDatabaseModal').on('hidden.bs.modal', function (e) {
-    let civDetails = document.getElementById('civDetails')
-    civDetails.style.display = 'none'
+    let civDetails=document.getElementById('civDetails')
+    civDetails.style.display='none'
   })
 
   $('#plateDatabaseModal').on('hidden.bs.modal', function () {
@@ -2641,7 +2641,7 @@
   })
 
   function togglePanicBtnSound() {
-    var socket = io();
+    var socket=io();
     socket.emit('update_panic_btn_sound', <%-JSON.stringify(user)%>)
     socket.on('load_panic_btn_result', (res) => {
       $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
@@ -2652,54 +2652,54 @@
   }
 
   function populateDriversLicense(civ) {
-    for (i = 0; i < civ.length; i++) {
-      var firstName = civ[i].civilian.firstName
-      var lastName = civ[i].civilian.lastName
-      var birthday = civ[i].civilian.birthday
-      var createdDate = new Date(civ[i].civilian.createdAt)
-      var expDay = createdDate.getDate()
-      var expMonth = (createdDate.getMonth()) + 1
-      var expYear = (createdDate.getFullYear()) + 10
+    for (i=0; i<civ.length; i++) {
+      var firstName=civ[i].civilian.firstName
+      var lastName=civ[i].civilian.lastName
+      var birthday=civ[i].civilian.birthday
+      var createdDate=new Date(civ[i].civilian.createdAt)
+      var expDay=createdDate.getDate()
+      var expMonth=(createdDate.getMonth())+1
+      var expYear=(createdDate.getFullYear())+10
 
-      $('#civilianIDViewLic-' + i).text('DL: ' + civ[i]._id)
-      $('#firstNameLic-' + i).text(firstName)
-      $('#lastNameLic-' + i).text(lastName)
-      $('#addressViewLic-' + i).text(civ[i].civilian.address)
+      $('#civilianIDViewLic-'+i).text('DL: '+civ[i]._id)
+      $('#firstNameLic-'+i).text(firstName)
+      $('#lastNameLic-'+i).text(lastName)
+      $('#addressViewLic-'+i).text(civ[i].civilian.address)
       switch (civ[i].civilian.licenseStatus) {
         case '1':
-          $('#licenseStatusViewLic-' + i).text('Valid ').removeClass('color-red').addClass('color-black').append(
+          $('#licenseStatusViewLic-'+i).text('Valid ').removeClass('color-red').addClass('color-black').append(
             '<i class="ion-checkmark-circled color-green"></i>')
-          $('#click-to-revoke-lic-' + i).removeClass('hide')
-          $('#licenseRevokedMessage-' + i).addClass('hide')
-          $('#noLicenseMessage-' + i).addClass('hide')
+          $('#click-to-revoke-lic-'+i).removeClass('hide')
+          $('#licenseRevokedMessage-'+i).addClass('hide')
+          $('#noLicenseMessage-'+i).addClass('hide')
           break;
         case '2':
-          $('#licenseStatusViewLic-' + i).text('Revoked ').removeClass('color-black').addClass('color-red').append(
+          $('#licenseStatusViewLic-'+i).text('Revoked ').removeClass('color-black').addClass('color-red').append(
             '<i class="ion-alert-circled color-red"></i>')
-          $('#click-to-revoke-lic-' + i).addClass('hide')
-          $('#click-to-reinstate-lic-' + i).removeClass('hide')
-          $('#licenseRevokedMessage-' + i).removeClass('hide')
-          $('#noLicenseMessage-' + i).addClass('hide')
+          $('#click-to-revoke-lic-'+i).addClass('hide')
+          $('#click-to-reinstate-lic-'+i).removeClass('hide')
+          $('#licenseRevokedMessage-'+i).removeClass('hide')
+          $('#noLicenseMessage-'+i).addClass('hide')
           break;
         default:
-          $('#drivers-license-' + i).hide();
-          $('#click-to-reinstate-lic-' + i).addClass('hide')
-          $('#licenseStatusViewLic-' + i).text('None').removeClass('color-black').addClass('color-red')
-          $('#licenseRevokedMessage-' + i).addClass('hide')
-          $('#click-to-revoke-lic-' + i).addClass('hide')
-          $('#drivers-license-details-' + i).addClass('hide')
-          $('#noLicenseMessage-' + i).removeClass('hide')
+          $('#drivers-license-'+i).hide();
+          $('#click-to-reinstate-lic-'+i).addClass('hide')
+          $('#licenseStatusViewLic-'+i).text('None').removeClass('color-black').addClass('color-red')
+          $('#licenseRevokedMessage-'+i).addClass('hide')
+          $('#click-to-revoke-lic-'+i).addClass('hide')
+          $('#drivers-license-details-'+i).addClass('hide')
+          $('#noLicenseMessage-'+i).removeClass('hide')
       }
-      var licenseDOB = birthday.split('-')
-      if (licenseDOB.length == 3) {
-        $('#birthdayViewLic-' + i).text(licenseDOB[1] + '/' + licenseDOB[2] + '/' + licenseDOB[0])
+      var licenseDOB=birthday.split('-')
+      if (licenseDOB.length==3) {
+        $('#birthdayViewLic-'+i).text(licenseDOB[1]+'/'+licenseDOB[2]+'/'+licenseDOB[0])
       } else {
-        $('#birthdayViewLic-' + i).text(birthday)
+        $('#birthdayViewLic-'+i).text(birthday)
       }
 
-      $('#license-expiration-' + i).text(expMonth.toString().padStart(2, '0') + '/' + expDay.toString().padStart(2,
-        '0') + '/' + expYear) //Janky AF
-      $('#license-issued-' + i).text(createdDate.toLocaleDateString('en-US', {
+      $('#license-expiration-'+i).text(expMonth.toString().padStart(2, '0')+'/'+expDay.toString().padStart(2,
+        '0')+'/'+expYear) //Janky AF
+      $('#license-issued-'+i).text(createdDate.toLocaleDateString('en-US', {
         day: "2-digit",
         month: "2-digit",
         year: "numeric"
@@ -2708,38 +2708,38 @@
   }
 
   function updateDriversLicenseStatus(i, civID, status) {
-    var user = {
+    var user={
       _id: civID,
       status: status
     }
-    var socket = io();
+    var socket=io();
     socket.emit('update_drivers_license_status', user)
     socket.on('load_updated_drivers_license_status_result', (res) => {
       switch (status) {
         case '1':
-          $('#licenseStatusViewLic-' + i).text('Valid ').removeClass('color-red').addClass('color-black').append(
+          $('#licenseStatusViewLic-'+i).text('Valid ').removeClass('color-red').addClass('color-black').append(
             '<i class="ion-checkmark-circled color-green"></i>')
-          $('#click-to-revoke-lic-' + i).removeClass('hide')
-          $('#click-to-reinstate-lic-' + i).addClass('hide')
-          $('#licenseRevokedMessage-' + i).addClass('hide')
-          $('#noLicenseMessage-' + i).addClass('hide')
+          $('#click-to-revoke-lic-'+i).removeClass('hide')
+          $('#click-to-reinstate-lic-'+i).addClass('hide')
+          $('#licenseRevokedMessage-'+i).addClass('hide')
+          $('#noLicenseMessage-'+i).addClass('hide')
           break;
         case '2':
-          $('#licenseStatusViewLic-' + i).text('Revoked ').removeClass('color-black').addClass('color-red').append(
+          $('#licenseStatusViewLic-'+i).text('Revoked ').removeClass('color-black').addClass('color-red').append(
             '<i class="ion-alert-circled color-red"></i>')
-          $('#click-to-revoke-lic-' + i).addClass('hide').removeClass('show')
-          $('#click-to-reinstate-lic-' + i).removeClass('hide')
-          $('#licenseRevokedMessage-' + i).removeClass('hide')
-          $('#noLicenseMessage-' + i).addClass('hide')
+          $('#click-to-revoke-lic-'+i).addClass('hide').removeClass('show')
+          $('#click-to-reinstate-lic-'+i).removeClass('hide')
+          $('#licenseRevokedMessage-'+i).removeClass('hide')
+          $('#noLicenseMessage-'+i).addClass('hide')
           break;
         default:
-          $('#drivers-license-' + i).hide();
-          $('#click-to-reinstate-lic-' + i).addClass('hide')
-          $('#licenseStatusViewLic-' + i).text('None').removeClass('color-black').addClass('color-red')
-          $('#licenseRevokedMessage-' + i).addClass('hide')
-          $('#click-to-revoke-lic-' + i).addClass('hide')
-          $('#drivers-license-details-' + i).addClass('hide')
-          $('#noLicenseMessage-' + i).removeClass('hide')
+          $('#drivers-license-'+i).hide();
+          $('#click-to-reinstate-lic-'+i).addClass('hide')
+          $('#licenseStatusViewLic-'+i).text('None').removeClass('color-black').addClass('color-red')
+          $('#licenseRevokedMessage-'+i).addClass('hide')
+          $('#click-to-revoke-lic-'+i).addClass('hide')
+          $('#drivers-license-details-'+i).addClass('hide')
+          $('#noLicenseMessage-'+i).removeClass('hide')
       }
     })
   }
