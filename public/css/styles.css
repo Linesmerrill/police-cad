@@ -322,7 +322,7 @@ footer {
     }
 
     header {
-        min-height: 100%;
+        min-height: 50%;
     }
 
     header .header-content {
@@ -779,9 +779,9 @@ a.link--inherit {
 
 }
 
-#second {
+/* #second {
     min-height: 50%;
-}
+} */
 
 #third::before {
     content: '';
