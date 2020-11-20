@@ -58,18 +58,45 @@
         </div>
       </div> -->
       <ul class="list-unstyled components mb-5">
-        <li class="active">
+        <li>
           <a href="/"><span class="fa fa-home mr-3"></span> Home</a>
         </li>
+        <li class="background-color-222">
+          <a type="button" data-toggle="collapse" data-target="#toggleSearch" aria-expanded="true" aria-controls="toggleSearch" onclick="toggleCaret()"> Search <i class="fas fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
+        </li>
+        <div class="collapse in" id="toggleSearch">
         <li>
-            <a data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});"><span class="fa fa-id-card mr-3"></span> Name Database</a>
+          <a data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});"><span class="fa fa-id-card ml-3 mr-3"></span> Name Database</a>
         </li>
         <li>
-          <a data-toggle="modal" href="#plateDatabaseModal"><span class="fa fa-car mr-3"></span> Plate Database</a>
+          <a data-toggle="modal" href="#plateDatabaseModal"><span class="fa fa-car ml-3 mr-3"></span> Plate Database</a>
         </li>
         <li>
-          <a data-toggle="modal" href="#firearmDatabaseModal"><span class="fa fa-database mr-3"></span> Firearm Database</a>
+          <a data-toggle="modal" href="#firearmDatabaseModal"><span class="fa fa-database ml-3 mr-3"></span> Firearm Database</a>
         </li>
+      </div>
+      <li class="background-color-222">
+        <a type="button" data-toggle="collapse" data-target="#toggleUtilities" aria-expanded="false" aria-controls="toggleUtilities" onclick="toggleCaret()"> Utilities <i class="fas fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
+      </li>
+      <div class="collapse in" id="toggleUtilities">
+        <li>
+          <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+            <a data-toggle="modal" href="#boloModal" onclick="clearBoloForm()"><span class="fas fa-car-crash ml-3 mr-3"></span> Create BOLO</a>
+          <% } else {%>
+            <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span class="fas fa-car-crash ml-3 mr-3"></span> Create BOLO</a>
+          <% } %>
+        </li>
+        <li>
+          <a data-toggle="modal" href="#10codesModal"><span class="fas fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
+        </li>
+        <li>
+          <a data-toggle="modal" href="#notepadModal"><span class="fas fa-clipboard ml-3 mr-3"></span> Notepad</a>
+        </li>
+        <li>
+          <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i class="fas fa-external-link-alt"></i></a>
+          <!-- <a href="/map-interactive" class="btn btn-primary btn-lg margin-top-2">Map </a> -->
+        </li>
+        </div>
         <li>
           <a data-toggle="modal" href="#communitiesModal"><span class="fa fa-users mr-3"></span> Communities</a>
         </li>
@@ -80,7 +107,7 @@
           <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"><span class="fa fa-cog mr-3"></span> Settings</a>
         </li>
         <li>
-          <a href="/contact-us"><span class="fa fa-support mr-3"></span> Support</a>
+          <a href="/contact-us"><span class="fa fa-support mr-3"></span> Support <i class="fas fa-external-link-alt"></i></a>
         </li>
         <li>
           <a href="/logout"><span class="fa fa-sign-out mr-3"></span> Sign Out</a>
@@ -202,54 +229,7 @@
 <script>
      (adsbygoogle = window.adsbygoogle || []).push({});
 </script>
-  <section style='background-image: url("/static/images/blue-clouds.jpg");'>
-    <!-- <div class="container text-center">
-      <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-        <% if (!user.user.dispatchOnDuty) {%>
-          <h4><span id="<%=user._id%>-duty" class="red-dot"></span> <span id="<%=user._id%>-duty-text"> Off Duty</span></h4>
-        <%} else if (user.user.dispatchOnDuty) {%>
-          <h4><span id="<%=user._id%>-duty" class="green-dot"></span> <span id="<%=user._id%>-duty-text"> On Duty</span></h4>
-        <%}%>
-      <h4 id="username" class="text-align-center">Username: <%=user.user.username%></h4>
-      <h4 id="currentStatus" class="text-align-center">Your Current Status: <%=user.user.dispatchStatus%></h4>
-      <h5 id="statusSetBy" class="text-align-center">Set By: <%=user.user.dispatchStatusSetBy%></h5>
-      <div class="col-lg-10 col-lg-offset-1 text-center">
-        <button class="btn btn-primary btn-lg margin-top-2" title="In Service" onclick="updateStatus('10-8')">10-8</button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="Busy" onclick="updateStatus('10-6')">10-6</button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="Out of Service" onclick="updateStatus('10-7')">10-7</button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="Traffic Stop" onclick="updateStatus('10-11')">10-11</button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="Arrive on Scene" onclick="updateStatus('10-23')">10-23</button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="In Route" onclick="updateStatus('10-97')">10-97</button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="Subject in Custody" onclick="updateStatus('10-15')">10-15</button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="Foot Pursuit" onclick="updateStatus('10-70')">10-70</button>
-        <button class="btn btn-primary btn-lg margin-top-2" title="Vehicle Pursuit" onclick="updateStatus('10-80')">10-80</button>
-      </div>
-      <% } %>
-      
-      <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-      <div class="col-lg-10 col-lg-offset-1 text-center">
-        <button class="btn btn-warning btn-lg margin-top-2" title="Log out of CAD" onclick="updateStatus('10-42')">10-42</button>
-        <button class="btn btn-success btn-lg margin-top-2" title="Log in to CAD" onclick="updateStatus('10-41')">10-41</button>
-      </div>
-      <div class="col-lg-10 col-lg-offset-1 text-center">
-        <button id="panicButton" class="btn btn-danger btn-lg margin-top-2 page-scroll" title="Panic" onclick="updateStatus('Panic');panicButtonPressed()">Panic</button>
-      </div>
-      <% } %>
-    </div> -->
-    <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
-    <div class="container">
-      <div class="col-lg-10 col-lg-offset-1 text-center">
-        
-        <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-        <button data-toggle="modal" href="#boloModal" class="btn btn-primary btn-lg margin-top-2" onclick="clearBoloForm()">Create BOLO</button>
-        <% } else {%>
-          <button data-toggle="modal" href="#nonCommunityBoloModal" class="btn btn-primary btn-lg margin-top-2 mock-disabled">Create BOLO</button>
-          <% } %>
-        <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
-        <button data-toggle="modal" href="#notepadModal" class="btn btn-primary btn-lg margin-top-2">Notepad</button>
-        <a href="/map-interactive" class="btn btn-primary btn-lg margin-top-2">Map <i class="fas fa-external-link-alt"></i></a>
-      </div>
-    </div>
+  <section style='background-image: url("/static/images/blue-clouds.jpg"); padding:0'>
     <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
     <div class="container">
     <div id="active-bolo-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
@@ -2554,4 +2534,6 @@ function searchFirearm() {
       }
     })
   }
+
+  
 </script>

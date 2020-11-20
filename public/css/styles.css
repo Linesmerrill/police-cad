@@ -1230,3 +1230,25 @@ a.link--inherit {
     background-color: #36333d;
     color: white;
 }
+
+a[data-toggle="collapse"] .rotate {
+    -webkit-transition: all 0.2s ease-out;
+    -moz-transition: all 0.2s ease-out;
+    -ms-transition: all 0.2s ease-out;
+    -o-transition: all 0.2s ease-out;
+    transition: all 0.2s ease-out;
+    -moz-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    transform: rotate(90deg);
+ }
+ a[data-toggle="collapse"].collapsed .rotate {
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+ }
+
+ .background-color-222 {
+     background-color: #222;
+ }
