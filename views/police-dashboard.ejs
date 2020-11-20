@@ -183,7 +183,7 @@
         <!-- imports the community specific alerts -->
         <% include community-alerts %>
 
-        <div class="container text-center">
+        <div class="container text-center width-100">
           <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
             <% if (!user.user.dispatchOnDuty) {%>
               <h4><span id="<%=user._id%>-duty" class="red-dot"></span> <span id="<%=user._id%>-duty-text"> Off Duty</span></h4>
@@ -420,7 +420,7 @@
               font-size: 12px;"></label>
               <!-- drivers license # -->
               <div class="form-group">
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <label id="civilianIDViewLic-<%=i%>" style="position: absolute;
                   bottom: 0px;
                   left: 25px;
@@ -441,22 +441,22 @@
                   color: black;
                   font-size: 14px;
                   font-family: 'Signika', sans-serif;
-                  font-weight: 500;" class="form-label"><span style="color: #00aced">EXP </span><span id="license-expiration-<%=i%>"></span></label>
+                  font-weight: 500;" class="form-label"><span style="color: #102595">EXP </span><span id="license-expiration-<%=i%>"></span></label>
                 </div>
               </div>
 
               <!-- last name -->
               <div class="form-group">
-                <div class="col-md-4">
+                <div class="col-md-6">
                   <span style="position: absolute;
                   bottom: 150px;
                   left: 25px;
                   font-size: 14px;
                   font-family: 'Signika', sans-serif;
                   font-weight: 500;
-                  color: #00aced">LN </span>
+                  color: #102595">LN </span>
                   <span id="lastNameLic-<%=i%>" style="position: absolute;
-                  bottom: 152px;
+                  bottom: 157px;
                   left: 46px;
                   width: 174px;
                   height: 18px;
@@ -480,9 +480,9 @@
                   font-size: 14px;
                   font-family: 'Signika', sans-serif;
                   font-weight: 500;
-                  color: #00aced">FN </span>
+                  color: #102595">FN </span>
                   <span id="firstNameLic-<%=i%>" style="position: absolute;
-                  bottom: 229px;
+                  bottom: 234px;
                   left: 46px;
                   width: 174px;
                   height: 18px;
@@ -524,7 +524,7 @@
                   font-size: 14px;
                   font-family: 'Signika', sans-serif;
                   font-weight: 500;
-                  color: #00aced">DOB </span>
+                  color: #102595">DOB </span>
                   <span id="birthdayViewLic-<%=i%>" style="position: absolute;
                   bottom: 131px;
                   left: 57px;
@@ -546,7 +546,7 @@
                   font-size: 14px;
                   font-family: 'Signika', sans-serif;
                   font-weight: 500;
-                  color: #00aced">STATUS </span>
+                  color: #102595">STATUS </span>
                   <span id="licenseStatusViewLic-<%=i%>" style="position: absolute;
                   bottom: 131px;
                   left: 75px;
@@ -562,14 +562,14 @@
 
               <!-- issued date -->
               <div class="form-group">
-                <div class="col-md-4">
+                <div class="col-md-8">
                   <label style="position: absolute;
                   bottom: 241px;
                   left: 195px;
                   color: black;
                   font-size: 14px;
                   font-family: 'Signika', sans-serif;
-                  font-weight: 500;" class="form-label"><span style="color: #00aced">ISS </span><span id="license-issued-<%=i%>"></span></label>
+                  font-weight: 500;" class="form-label"><span style="color: #102595">ISS </span><span id="license-issued-<%=i%>"></span></label>
                 </div>
               </div>
             </div>
@@ -577,12 +577,12 @@
           </div>
 
           <!-- Reinstate Drivers License Button -->
-          <div id="click-to-reinstate-lic-<%=i%>" class="form-group col-md-12 text-align-center margin-top-1 hide">
+          <div id="click-to-reinstate-lic-<%=i%>" class="form-group col-md-12 text-align-center margin-top-1 hide" style="margin-top: -59px;">
             <button  type="button" value="reinstateLicense" name="action" class="btn btn-info" onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','1')">Reinstate Driver's License</button>
         </div>
 
           <!-- Delete Drivers License Button -->
-          <div id="click-to-revoke-lic-<%=i%>" class="form-group col-md-12 text-align-center margin-top-1 hide">
+          <div id="click-to-revoke-lic-<%=i%>" class="form-group col-md-12 text-align-center margin-top-1 hide" style="margin-top: -59px;">
               <button type="button" value="deleteLicense" name="action" class="btn btn-danger" onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','2')">Revoke Driver's License</button>
           </div>
                                 
@@ -608,8 +608,8 @@
                                 <hr style="width: 88%;max-width: 100rem;">
                                 <h4>Criminal History</h4>
                                 <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
-                                  <li class="nav-item active">
-                                    <a class="nav-link active" id="pills-citations-tab" data-toggle="pill" href="#pills-citations" role="tab" aria-controls="pills-citations" aria-selected="true">Citations</a>
+                                  <li class="nav-item">
+                                    <a class="nav-link" id="pills-citations-tab" data-toggle="pill" href="#pills-citations" role="tab" aria-controls="pills-citations" aria-selected="true">Citations</a>
                                   </li>
                                   <li class="nav-item">
                                     <a class="nav-link" id="pills-warnings-tab" data-toggle="pill" href="#pills-warnings" role="tab" aria-controls="pills-warnings" aria-selected="false">Warnings</a>
