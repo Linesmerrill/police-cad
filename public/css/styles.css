@@ -1253,3 +1253,25 @@ a[data-toggle="collapse"] .rotate {
     background-color: #222;
     width: 100%;
  }
+
+ .arrow {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    bottom: 30px;
+    display: block;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.white-dashboard {
+    background: white
+}
+
+.opacity-0 {
+    opacity: 0;
+}
+
+.opacity-1 {
+    opacity: 1;
+}
