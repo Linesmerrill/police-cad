@@ -1275,3 +1275,7 @@ a[data-toggle="collapse"] .rotate {
 .opacity-1 {
     opacity: 1;
 }
+
+#first {
+    min-height: 100%;
+}
