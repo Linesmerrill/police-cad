@@ -62,7 +62,7 @@
       </div>
       <ul class="list-unstyled components mb-5">
         <li>
-          <a href="/"><span class="fa fa-home mr-3"></span> Home</a>
+          <a href="/"><span class="fa fa-home mr-3"></span> <i class="ion-ios-analytics-outline"></i> Lines Police CAD</a>
         </li>
         <li class="background-color-222">
           <a type="button" data-toggle="collapse" data-target="#toggleSearch" aria-expanded="true"
@@ -92,10 +92,10 @@
           <li>
             <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
             <a data-toggle="modal" href="#boloModal" onclick="clearBoloForm()"><span
-                class="fas fa-car-crash ml-3 mr-3"></span> Create BOLO</a>
+                class="fas fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
             <% } else {%>
             <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span
-                class="fas fa-car-crash ml-3 mr-3"></span> Create BOLO</a>
+                class="fas fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
             <% } %>
           </li>
           <li>
