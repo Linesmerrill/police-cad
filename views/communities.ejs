@@ -112,7 +112,6 @@
                         <thead>
                             <tr>
                                 <th>Username</th>
-                                <th>Email</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -120,7 +119,6 @@
                             <% for(var i=0; i<members.length; i++) {%>
                                     <tr>
                                         <td><%=members[i].user.username%></td>
-                                        <td><%=members[i].user.email%></td>
                                         <td class="text-align-center">
                                             <input type="hidden" name="communityID" value="<%= communities._id %>">
                                             <button type="submit" value="<%= members[i]._id %>" name="memberID" class="btn btn-md btn-danger">Remove</button>
