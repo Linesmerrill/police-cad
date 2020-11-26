@@ -57,6 +57,7 @@
         <div class="user-logo">
           <div class="img" style="background-image: url(/static/images/default_user_pic.png);"></div>
           <h3><%=user.user.username%></h3>
+          <h5><%=user.user.callSign%></h5>
           <h5>Logged in as: Dispatch</h5>
         </div>
       </div>
@@ -239,6 +240,7 @@
                 <tr>
                   <th>On/Off Duty</th>
                   <th>Username</th>
+                  <th>Call Sign</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -252,7 +254,8 @@
                   <td><span title="1" id="<%=commUsers[i]._id%>-duty" class="green-dot"></span></td>
                   <%}%>
                                 
-                                <td style="text-transform: capitalize;"><%=commUsers[i].user.username%></td>
+                  <td style="text-transform: capitalize;"><%=commUsers[i].user.username%></td>
+                  <td style="text-transform: capitalize;"><%=commUsers[i].user.callSign%></td>
                   <% if (commUsers[i].user.dispatchStatus == '' || commUsers[i].user.dispatchStatus == null) {%>
                   <td id="<%=commUsers[i]._id%>-status">-</td>
                   <%} else {%>
@@ -349,7 +352,7 @@
                     <% for(var j=0; j<calls[i].call.assignedOfficers.length; j++) {%>
                     <% for(var k=0; k<commUsers.length; k++) {%>
                     <% if (commUsers[k]._id == calls[i].call.assignedOfficers[j]) {%>
-                    <span class="badge badge-secondary"><%=commUsers[k].user.username%></span>
+                    <span class="badge badge-secondary"><%=commUsers[k].user.username%> (<%=commUsers[k].user.callSign%>)</span>
                     <%}%>   
                                     <%}%>
                     <%}%>
@@ -1329,7 +1332,7 @@
                       <div class="col-md-4">
                         <input id="reporting-officer" name="reportingOfficer" type="text"
                           placeholder="Reporting Officer" class="form-control input-md"
-                          style="text-transform:capitalize;" value=<%= user.user.username%> required=""
+                          style="text-transform:capitalize;" value=<%= user.user.username%>(<%= user.user.callSign%>) required=""
                           readonly="readonly">
                       </div>
                     </div>
@@ -1494,7 +1497,7 @@
                     <input id="warrant-date" type="hidden" name="date" value="">
                     <input id="warrant-time" type="hidden" name="time" value="">
                     <input id="warrant-reportingOfficer" type="hidden" name="reportingOfficer"
-                      value=<%= user.user.username%>>
+                      value=<%= user.user.username%>(<%= user.user.callSign%>)>
                     <!-- Button -->
                     <div class="form-group">
                       <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
@@ -1527,7 +1530,7 @@
                     <input id="warrant-clear-date" type="hidden" name="updatedDate" value="">
                     <input id="warrant-clear-time" type="hidden" name="updatedTime" value="">
                     <input id="warrant-clearingOfficer" type="hidden" name="clearingOfficer"
-                      value=<%= user.user.username%>>
+                      value=<%= user.user.username%>(<%= user.user.callSign%>)>
                     <input id="warrant-ID" type="hidden" name="warrantID" value="">
                     <!-- Button -->
 
@@ -1594,7 +1597,7 @@
                       <label class="col-md-4 control-label" for="createBolo"></label>
                       <div class="col-md-4 text-align-center">
                         <input type="hidden" name="route" value="dispatch-dashboard">
-                        <input type="hidden" name="reportingOfficerUsername" value="<%= user.user.username %>">
+                        <input type="hidden" name="reportingOfficerUsername" value="<%= user.user.username %> (<%= user.user.callSign %>)">
                         <input type="hidden" name="reportingOfficerID" value="<%= user._id %>">
                         <button id="createBolo" type="submit" name="communityID"
                           value="<%= user.user.activeCommunity %>" class="btn btn-primary"
@@ -1750,7 +1753,7 @@
                       <label class="col-md-4 control-label" for="createCall"></label>
                       <div class="col-md-4 text-align-center">
                         <input type="hidden" name="route" value="dispatch-dashboard">
-                        <input type="hidden" name="createdByUsername" value="<%= user.user.username %>">
+                        <input type="hidden" name="createdByUsername" value="<%= user.user.username %> (<%= user.user.callSign %>)">
                         <input type="hidden" name="createdByID" value="<%= user._id %>">
                         <button id="createCall" type="submit" name="communityID"
                           value="<%= user.user.activeCommunity %>" class="btn btn-primary"
@@ -1883,7 +1886,7 @@
                     <input id="bolo-clear-date" type="hidden" name="updatedAt" value="">
                     <input id="bolo-clearingOfficerID" type="hidden" name="clearingOfficerID" value=<%= user._id%>>
                     <input id="bolo-clearingOfficerUsername" type="hidden" name="clearingOfficerUsername"
-                      value=<%= user.user.username%>>
+                      value="<%= user.user.username%> (<%= user.user.callSign %>)">
                     <input id="bolo-ID" type="hidden" name="boloID" value="">
 
                     <!-- Button -->
@@ -2110,43 +2113,42 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
 
-        <div id="panicDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-body">
-                <form id="clear-panic-form" class="form-horizontal" action="" method="post">
-                  <fieldset>
+  <% include account-management %>
 
-                    <!-- Form Name -->
-                    <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                      aria-hidden="true">X</button>
-                    <h4>Clear Panic</h4>
-                    <hr style="width: 88%;max-width: 100rem;">
+  <div id="manageUserDispatchStatusModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <!-- Modal Name -->
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4>Manage User Status</h4>
+          <hr style="width: 88%;max-width: 100rem;">
+          <div class="form-horizontal">
+          <fieldset>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="usernameDispatch">Username:</label>
+              <div class="col-md-6">
+                <h5 id="usernameDispatch" style="text-transform: capitalize;"></h5>
+              </div>
+            </div>
 
-                    <!-- Button -->
-                    <div class="form-group">
-                      <label class="col-md-4 control-label" for="deleteAccount"></label>
-                      <div class="col-md-4 text-align-center">
-                        <input id="panic-id" type="hidden" name="panic-id" value="">
-                        <button id="clearPanic" class="btn btn-danger"
-                          onclick="hideModal('panicDetailModal')">Clear</button>
-                      </div>
-                    </div>
-                  </fieldset>
-                </form>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="statusDispatch">Active Status:</label>
+              <div class="col-md-6">
+                <h5 id="statusDispatch"></h5>
               </div>
             </div>
           </div>
         </div>
 
-        <div id="signal100DetailModal" class="modal" tabindex="-1" role="dialog">
-          <div class="modal-dialog" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <span class="modal-title" style="font-size: 18px;">Clear Signal 100</span>
-                <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                  aria-hidden="true">X</button>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="setByDispatch">Set By:</label>
+              <div class="col-md-6">
+                <h5 id="setByDispatch" style="text-transform: capitalize;"></h5>
               </div>
               <div class="modal-footer text-align-center">
                 <button type="button" class="btn btn-danger" data-dismiss="modal"
@@ -2350,7 +2352,7 @@
           for (var j=0; j<res.call.assignedOfficers.length; j++) {
             for (var k=0; k<myCommUsers.length; k++) {
               if (myCommUsers[k]._id==res.call.assignedOfficers[j]) {
-                assignedUnits+='<span class="badge badge-secondary">'+myCommUsers[k].user.username+'</span> '
+                assignedUnits+='<span class="badge badge-secondary">'+myCommUsers[k].user.username+' ('+ myCommUsers[k].user.callSign + ')'+'</span> '
               }
             }
           }
@@ -2405,6 +2407,15 @@
         $('#updateUsernameBtns').hide();
       }
     })
+
+    $('#accountCallSign').on('keyup', function(e) {
+        if(e.target.value != myUser.user.callSign && e.target.value != '') {
+            $('#updateCallSignBtns').show();
+        } else {
+            $('#updateCallSignBtns').hide();
+        }
+    })
+
     $('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
 
     let allVehicles= <%-JSON.stringify(vehicles)%>;
@@ -2675,12 +2686,19 @@
     var myUser= <%- JSON.stringify(user)%>;
     $('#accountEmail').val(myUser.user.email)
     $('#accountUsername').val(myUser.user.username)
+    $('#accountCallSign').val(myUser.user.callSign)
   }
 
   function cancelUsername() {
     var myUser= <%- JSON.stringify(user)%>;
     $('#accountUsername').val(myUser.user.username)
     $('#updateUsernameBtns').hide();
+  }
+
+  function cancelCallSign() {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountCallSign').val(myUser.user.callSign)
+    $('#updateCallSignBtns').hide();
   }
 
   function populateBoloDetails(id) {
@@ -2959,8 +2977,12 @@
     })
     var items={}
     for (i=0; i<officers.length; i++) {
+      //To be deprecated once all users have set a call sign, going into effect 11/25/2020
+      if (!officers[i].user.callSign) {
+        officers[i].user.callSign = ""
+      }
       items[officers[i]._id]={
-        value: officers[i].user.username,
+        value: officers[i].user.username+' ('+officers[i].user.callSign+')',
         group: "#",
         selected: false,
         disabled: false,
@@ -2990,8 +3012,12 @@
     // if there are none assigned
     if (dbOfficers.length==0) {
       for (i=0; i<officers.length; i++) {
+        //To be deprecated once all users have set a call sign, going into effect 11/25/2020
+        if (!officers[i].user.callSign) {
+          officers[i].user.callSign = ""
+        }
         items[officers[i]._id]={
-          value: officers[i].user.username,
+          value: officers[i].user.username+' ('+officers[i].user.callSign+')',
           group: "#",
           selected: false,
           disabled: false,
@@ -3003,8 +3029,12 @@
       for (i=0; i<officers.length; i++) {
         for (j=0; j<dbOfficers.length; j++) {
           if (officers[i]._id==officersSplit[j]) {
+            //To be deprecated once all users have set a call sign, going into effect 11/25/2020
+            if (!officers[i].user.callSign) {
+              officers[i].user.callSign = ""
+            }
             items[officers[i]._id]={
-              value: officers[i].user.username,
+              value: officers[i].user.username+' ('+officers[i].user.callSign+')',
               group: "#",
               selected: true,
               disabled: false,
@@ -3012,8 +3042,12 @@
             }
             break //if we found a match we want to break out
           } else {
+            //To be deprecated once all users have set a call sign, going into effect 11/25/2020
+            if (!officers[i].user.callSign) {
+              officers[i].user.callSign = ""
+            }
             items[officers[i]._id]={
-              value: officers[i].user.username,
+              value: officers[i].user.username+' ('+officers[i].user.callSign+')',
               group: "#",
               selected: false,
               disabled: false,
