@@ -1780,21 +1780,21 @@
           <div class="form-horizontal">
           <fieldset>
             <div class="form-group">
-              <label class="col-md-4 control-label" for="accountUsername">Username:</label>
+              <label class="col-md-4 control-label" for="usernameDispatch">Username:</label>
               <div class="col-md-6">
                 <h5 id="usernameDispatch" style="text-transform: capitalize;"></h5>
               </div>
             </div>
 
             <div class="form-group">
-              <label class="col-md-4 control-label" for="accountUsername">Active Status:</label>
+              <label class="col-md-4 control-label" for="statusDispatch">Active Status:</label>
               <div class="col-md-6">
                 <h5 id="statusDispatch"></h5>
               </div>
             </div>
 
             <div class="form-group">
-              <label class="col-md-4 control-label" for="accountUsername">Set By:</label>
+              <label class="col-md-4 control-label" for="setByDispatch">Set By:</label>
               <div class="col-md-6">
                 <h5 id="setByDispatch" style="text-transform: capitalize;"></h5>
               </div>
@@ -2109,6 +2109,15 @@ $(document).ready(function() {
         $('#updateUsernameBtns').hide();
       }
     })
+
+    $('#accountCallSign').on('keyup', function(e) {
+        if(e.target.value != myUser.user.callSign && e.target.value != '') {
+            $('#updateCallSignBtns').show();
+        } else {
+            $('#updateCallSignBtns').hide();
+        }
+    })
+
     $('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
 
   let allVehicles = <%-JSON.stringify(vehicles)%>;
@@ -2379,12 +2388,19 @@ function searchFirearm() {
     var myUser = <%- JSON.stringify(user) %>;
     $('#accountEmail').val(myUser.user.email)
     $('#accountUsername').val(myUser.user.username)
+    $('#accountCallSign').val(myUser.user.callSign)
   }
 
   function cancelUsername() {
     var myUser = <%- JSON.stringify(user) %>;
     $('#accountUsername').val(myUser.user.username)
     $('#updateUsernameBtns').hide();
+  }
+
+  function cancelCallSign() {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountCallSign').val(myUser.user.callSign)
+    $('#updateCallSignBtns').hide();
   }
 
   function populateBoloDetails(id) {

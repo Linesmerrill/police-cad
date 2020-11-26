@@ -52,6 +52,18 @@
                   </div>
                   </div>
                 </div>
+
+                <!-- Update Call Sign input-->
+                <div class="form-group">
+                  <label class="col-md-4 control-label" for="accountCallSign">Call Sign:<br><small>Max 10 characters</small></label>
+                  <div class="col-md-6">
+                  <input id="accountCallSign" name="accountCallSign" type="text" class="form-control input-md" maxlength="10" autocomplete="off" required>
+                  <div id="updateCallSignBtns" class="margin-top-1" style="display: none">
+                    <input type="hidden" name="page" value="/civ-dashboard">
+                    <button id="updateCallSign" value="updateCallSign" name="action" class="btn btn-info">Update Call Sign</button> <button type="button" class="btn btn-primary" onclick="cancelCallSign()">Cancel</button>
+                  </div>
+                  </div>
+                </div>
     
                 <hr style="width: 88%;max-width: 100rem;">
     

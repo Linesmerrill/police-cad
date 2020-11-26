@@ -1400,6 +1400,14 @@ $('#accountUsername').on('keyup', function(e) {
   }
 })
 
+$('#accountCallSign').on('keyup', function(e) {
+  if(e.target.value != myUser.user.callSign && e.target.value != '') {
+    $('#updateCallSignBtns').show();
+  } else {
+    $('#updateCallSignBtns').hide();
+  }
+})
+
 $('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
 
 // prevents spaces from user input
@@ -1664,13 +1672,19 @@ $.delete = function(url, data, callback, type){
     var myUser = <%- JSON.stringify(user) %>;
     $('#accountEmail').val(myUser.user.email)
     $('#accountUsername').val(myUser.user.username)
-    
+    $('#accountCallSign').val(myUser.user.callSign)
   }
 
   function cancelUsername() {
     var myUser = <%- JSON.stringify(user) %>;
     $('#accountUsername').val(myUser.user.username)
     $('#updateUsernameBtns').hide();
+  }
+
+  function cancelCallSign() {
+    var myUser = <%- JSON.stringify(user) %>;
+    $('#accountCallSign').val(myUser.user.callSign)
+    $('#updateCallSignBtns').hide();
   }
 
   function generateSerialNumber(length, inputID) {
