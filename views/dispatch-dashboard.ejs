@@ -52,6 +52,7 @@
 <body>
 
   <div class="wrapper d-flex align-items-stretch">
+
     <nav id="sidebar" style="z-index: 9;">
       <div class="img bg-wrap text-center py-4" style="background-image: url(/static/images/dispatch-corner-bg2.jpg);">
         <div class="user-logo">
@@ -63,7 +64,8 @@
       </div>
       <ul class="list-unstyled components mb-5">
         <li>
-          <a href="/"><span class="fa fa-home mr-3"></span> <i class="ion-ios-analytics-outline"></i> Lines Police CAD</a>
+          <a href="/"><span class="fa fa-home mr-3"></span> <i class="ion-ios-analytics-outline"></i> Lines Police
+            CAD</a>
         </li>
         <li class="background-color-222">
           <a type="button" data-toggle="collapse" data-target="#toggleSearch" aria-expanded="true"
@@ -143,19 +145,8 @@
 
     <!-- Page Content  -->
     <div id="content" class="">
-      <a data-toggle="modal" href="#signal100DetailModal">
-        <div id="signal-100-banner" class="panel panel-danger hide">
-          <div class="panel-heading text-align-center">
-            <span class="panel-title text-align-center">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
-            <button type="button" class="close" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-        </div>
-      </a>
 
       <nav id="topNav" class="topNav" style="z-index: 8; margin-bottom: 0; position: fixed;">
-
         <div class="container-fluid" style="height: 70px;">
           <div class="custom-menu" style="position: absolute; top: 10px;">
             <button type="button" id="sidebarCollapse" class="btn btn-primary btn-lg"
@@ -169,6 +160,18 @@
           </div>
         </div>
       </nav>
+
+      <a data-toggle="modal" href="#signal100DetailModal" style="position: fixed;top: 64px;z-index: 8;width: 100%;">
+        <div id="signal-100-banner" class="panel panel-danger hide">
+          <div class="panel-heading">
+            <span class="panel-title">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
+            <button type="button" class="close" aria-label="Close"
+              style="position: absolute; margin-top: 5px; margin-left: 1em;">
+              <i class="fas fa-times"></i> Clear
+            </button>
+          </div>
+        </div>
+      </a>
 
       <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
 
@@ -352,7 +355,8 @@
                     <% for(var j=0; j<calls[i].call.assignedOfficers.length; j++) {%>
                     <% for(var k=0; k<commUsers.length; k++) {%>
                     <% if (commUsers[k]._id == calls[i].call.assignedOfficers[j]) {%>
-                    <span class="badge badge-secondary"><%=commUsers[k].user.username%> (<%=commUsers[k].user.callSign%>)</span>
+                    <span class="badge badge-secondary"><%=commUsers[k].user.username%>
+                      (<%=commUsers[k].user.callSign%>)</span>
                     <%}%>   
                                     <%}%>
                     <%}%>
@@ -379,7 +383,6 @@
 
 
 
-
         <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
           <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -387,13 +390,14 @@
                 <img src="" id="galleryImage" class="img-responsive" />
                 <p>
                   <br />
-                  <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i
-                      class="ion-android-close"></i></button>
+                  <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close
+                    <i class="ion-android-close"></i></button>
                 </p>
               </div>
             </div>
           </div>
         </div>
+
         <div id="nameDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
           <div class="modal-dialog">
             <div id="civilianNotFound" class="alert alert-warning" style="display:none">
@@ -421,14 +425,16 @@
                             data-content="* First name cannot contain spaces." required="">
                         </div>
                         <div class="col-md-4">
-                          <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-last-name">Last Name</label>
+                          <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-last-name">Last
+                            Name</label>
                           <input id="civ-last-name" name="lastName" type="text" placeholder="Last Name"
                             class="form-control input-md col-md-offset-1" data-trigger="last-name-popover"
                             data-content="* Last name cannot contain spaces." required="">
                         </div>
                         <% if (user.user.activeCommunity == '' || user.user.activeCommunity == null) { %>
                         <div class="col-md-4">
-                          <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-dob">Date of Birth</label>
+                          <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-dob">Date of
+                            Birth</label>
                           <input id="civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy"
                             class="form-control input-md col-md-offset-1" required="">
                         </div>
@@ -733,9 +739,11 @@
                                     <p class="plate-body-text">Valid <i class="ion-checkmark-circled color-green"></i>
                                     </p>
                                     <% } else if (civilians[i].civilian.firearmLicense == 3) {%>
-                                    <p class="plate-body-text">Revoked <i class="ion-alert-circled color-red"></i></p>
+                                    <p class="plate-body-text">Revoked <i class="ion-alert-circled color-red"></i>
+                                    </p>
                                     <% } else {%>
-                                    <p class="plate-body-text">None <i class="ion-alert-circled color-yellow"></i></p>
+                                    <p class="plate-body-text">None <i class="ion-alert-circled color-yellow"></i>
+                                    </p>
                                     <% } %>
                                   </div>
                                 </div>
@@ -1332,8 +1340,8 @@
                       <div class="col-md-4">
                         <input id="reporting-officer" name="reportingOfficer" type="text"
                           placeholder="Reporting Officer" class="form-control input-md"
-                          style="text-transform:capitalize;" value=<%= user.user.username%>(<%= user.user.callSign%>) required=""
-                          readonly="readonly">
+                          style="text-transform:capitalize;" value=<%= user.user.username%>(<%= user.user.callSign%>)
+                          required="" readonly="readonly">
                       </div>
                     </div>
 
@@ -1597,7 +1605,8 @@
                       <label class="col-md-4 control-label" for="createBolo"></label>
                       <div class="col-md-4 text-align-center">
                         <input type="hidden" name="route" value="dispatch-dashboard">
-                        <input type="hidden" name="reportingOfficerUsername" value="<%= user.user.username %> (<%= user.user.callSign %>)">
+                        <input type="hidden" name="reportingOfficerUsername"
+                          value="<%= user.user.username %> (<%= user.user.callSign %>)">
                         <input type="hidden" name="reportingOfficerID" value="<%= user._id %>">
                         <button id="createBolo" type="submit" name="communityID"
                           value="<%= user.user.activeCommunity %>" class="btn btn-primary"
@@ -1753,7 +1762,8 @@
                       <label class="col-md-4 control-label" for="createCall"></label>
                       <div class="col-md-4 text-align-center">
                         <input type="hidden" name="route" value="dispatch-dashboard">
-                        <input type="hidden" name="createdByUsername" value="<%= user.user.username %> (<%= user.user.callSign %>)">
+                        <input type="hidden" name="createdByUsername"
+                          value="<%= user.user.username %> (<%= user.user.callSign %>)">
                         <input type="hidden" name="createdByID" value="<%= user._id %>">
                         <button id="createCall" type="submit" name="communityID"
                           value="<%= user.user.activeCommunity %>" class="btn btn-primary"
@@ -1856,7 +1866,8 @@
               <div class="modal-body">
                 <div class="modal-body">
                   <h2 class="text-center">I'm sorry! ;(</h2>
-                  <p class="text-center">Looks like you are not in a community yet, so this feature is not enabled. </p>
+                  <p class="text-center">Looks like you are not in a community yet, so this feature is not enabled.
+                  </p>
                   <p>To join or
                     create a community for free, click on the communities button in the Left Menu.</p>
                   <p>Or just click here: <a data-toggle="modal" href="#communitiesModal">Communities</a>
@@ -2113,42 +2124,44 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <% include account-management %>
 
-  <div id="manageUserDispatchStatusModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <!-- Modal Name -->
-          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-          <h4>Manage User Status</h4>
-          <hr style="width: 88%;max-width: 100rem;">
-          <div class="form-horizontal">
-          <fieldset>
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="usernameDispatch">Username:</label>
-              <div class="col-md-6">
-                <h5 id="usernameDispatch" style="text-transform: capitalize;"></h5>
-              </div>
-            </div>
+        <div id="panicDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-body">
+                <form id="clear-panic-form" class="form-horizontal" action="" method="post">
+                  <fieldset>
 
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="statusDispatch">Active Status:</label>
-              <div class="col-md-6">
-                <h5 id="statusDispatch"></h5>
+                    <!-- Form Name -->
+                    <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                      aria-hidden="true">X</button>
+                    <h4>Clear Panic</h4>
+                    <hr style="width: 88%;max-width: 100rem;">
+
+                    <!-- Button -->
+                    <div class="form-group">
+                      <label class="col-md-4 control-label" for="deleteAccount"></label>
+                      <div class="col-md-4 text-align-center">
+                        <input id="panic-id" type="hidden" name="panic-id" value="">
+                        <button id="clearPanic" class="btn btn-danger"
+                          onclick="hideModal('panicDetailModal')">Clear</button>
+                      </div>
+                    </div>
+                  </fieldset>
+                </form>
               </div>
             </div>
           </div>
         </div>
 
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="setByDispatch">Set By:</label>
-              <div class="col-md-6">
-                <h5 id="setByDispatch" style="text-transform: capitalize;"></h5>
+        <div id="signal100DetailModal" class="modal" tabindex="-1" role="dialog">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <span class="modal-title" style="font-size: 18px;">Clear Signal 100</span>
+                <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                  aria-hidden="true">X</button>
               </div>
               <div class="modal-footer text-align-center">
                 <button type="button" class="btn btn-danger" data-dismiss="modal"
@@ -2174,14 +2187,9 @@
           </div>
         </div>
 
-
         <% include 10-codes %>
         <% include notepad %>
 </body>
-</div>
-</div>
-</div>
-</div>
 
 <!--scripts loaded here -->
 <script src="/socket.io/socket.io.js"></script>
@@ -2196,7 +2204,6 @@
 <script src="/static/js/scripts.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
 <script src="https://unpkg.com/ionicons@5.1.2/dist/ionicons.js"></script>
-</body>
 
 </html>
 <script>
@@ -2352,7 +2359,7 @@
           for (var j=0; j<res.call.assignedOfficers.length; j++) {
             for (var k=0; k<myCommUsers.length; k++) {
               if (myCommUsers[k]._id==res.call.assignedOfficers[j]) {
-                assignedUnits+='<span class="badge badge-secondary">'+myCommUsers[k].user.username+' ('+ myCommUsers[k].user.callSign + ')'+'</span> '
+                assignedUnits+='<span class="badge badge-secondary">'+myCommUsers[k].user.username+' ('+myCommUsers[k].user.callSign+')'+'</span> '
               }
             }
           }
@@ -2408,12 +2415,12 @@
       }
     })
 
-    $('#accountCallSign').on('keyup', function(e) {
-        if(e.target.value != myUser.user.callSign && e.target.value != '') {
-            $('#updateCallSignBtns').show();
-        } else {
-            $('#updateCallSignBtns').hide();
-        }
+    $('#accountCallSign').on('keyup', function (e) {
+      if (e.target.value!=myUser.user.callSign&&e.target.value!='') {
+        $('#updateCallSignBtns').show();
+      } else {
+        $('#updateCallSignBtns').hide();
+      }
     })
 
     $('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
@@ -2696,7 +2703,7 @@
   }
 
   function cancelCallSign() {
-    var myUser = <%- JSON.stringify(user) %>;
+    var myUser= <%- JSON.stringify(user)%>;
     $('#accountCallSign').val(myUser.user.callSign)
     $('#updateCallSignBtns').hide();
   }
@@ -2979,7 +2986,7 @@
     for (i=0; i<officers.length; i++) {
       //To be deprecated once all users have set a call sign, going into effect 11/25/2020
       if (!officers[i].user.callSign) {
-        officers[i].user.callSign = ""
+        officers[i].user.callSign=""
       }
       items[officers[i]._id]={
         value: officers[i].user.username+' ('+officers[i].user.callSign+')',
@@ -3014,7 +3021,7 @@
       for (i=0; i<officers.length; i++) {
         //To be deprecated once all users have set a call sign, going into effect 11/25/2020
         if (!officers[i].user.callSign) {
-          officers[i].user.callSign = ""
+          officers[i].user.callSign=""
         }
         items[officers[i]._id]={
           value: officers[i].user.username+' ('+officers[i].user.callSign+')',
@@ -3031,7 +3038,7 @@
           if (officers[i]._id==officersSplit[j]) {
             //To be deprecated once all users have set a call sign, going into effect 11/25/2020
             if (!officers[i].user.callSign) {
-              officers[i].user.callSign = ""
+              officers[i].user.callSign=""
             }
             items[officers[i]._id]={
               value: officers[i].user.username+' ('+officers[i].user.callSign+')',
@@ -3044,7 +3051,7 @@
           } else {
             //To be deprecated once all users have set a call sign, going into effect 11/25/2020
             if (!officers[i].user.callSign) {
-              officers[i].user.callSign = ""
+              officers[i].user.callSign=""
             }
             items[officers[i]._id]={
               value: officers[i].user.username+' ('+officers[i].user.callSign+')',
