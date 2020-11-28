@@ -77,7 +77,7 @@ module.exports = function (passport) {
 				} else {
 					var user = req.user;
 					user.user.username = req.body.username;
-					newUser.user.callSign = req.body.callSign;
+					user.user.callSign = req.body.callSign;
 					user.user.email = email.toLowerCase();
 					user.user.password = user.generateHash(password);
 					user.user.name = ''
