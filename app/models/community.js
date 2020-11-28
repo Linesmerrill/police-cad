@@ -13,7 +13,6 @@ var communitySchema = mongoose.Schema({
 });
 
 communitySchema.methods.createCommunity = function (req, res) {
-  // debug log showing the request body for the community request
   // console.debug("community req body: ", req.body)
 
   if (exists(req.body.communityName)) {
@@ -29,7 +28,6 @@ communitySchema.methods.createCommunity = function (req, res) {
 };
 
 communitySchema.methods.createPoliceCommunity = function (req, res) {
-  // debug log showing the request body for the community request
   // console.debug("community req body: ", req.body)
 
   if (exists(req.body.communityName)) {
@@ -45,7 +43,6 @@ communitySchema.methods.createPoliceCommunity = function (req, res) {
 };
 
 communitySchema.methods.createEmsCommunity = function (req, res) {
-  // debug log showing the request body for the community request
   // console.debug("community req body: ", req.body)
 
   if (exists(req.body.communityName)) {

@@ -17,20 +17,20 @@ var medicalReportSchema = mongoose.Schema({
     }
 });
 
-medicalReportSchema.methods.createReport = function (request, response) {
-    // console.debug("create medical report request body: ", request.body)
-    this.report.date = request.body.reportDate;
-    this.report.details = request.body.details.trim();
-    this.report.civilianID = request.body.civilianID;
-    this.report.reportingEmsID = request.body.reportingEmsID;
-    this.report.hospitalized = request.body.hospitalized;
-    this.report.activeCommunityID = request.body.activeCommunityID; // we set this when submitting the from so it should not be null
-    this.report.userID = request.body.userID; // we set this when submitting the from so it should not be null
-    this.report.firstName = request.body.firstName.trim().toLowerCase()
-    this.report.lastName = request.body.lastName.trim().toLowerCase()
-    this.report.dateOfBirth = request.body.dateOfBirth.trim()
+medicalReportSchema.methods.createReport = function (req, res) {
+    // console.debug("create medical report req body: ", req.body)
+    this.report.date = req.body.reportDate;
+    this.report.details = req.body.details.trim();
+    this.report.civilianID = req.body.civilianID;
+    this.report.reportingEmsID = req.body.reportingEmsID;
+    this.report.hospitalized = req.body.hospitalized;
+    this.report.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null
+    this.report.userID = req.body.userID; // we set this when submitting the from so it should not be null
+    this.report.firstName = req.body.firstName.trim().toLowerCase()
+    this.report.lastName = req.body.lastName.trim().toLowerCase()
+    this.report.dateOfBirth = req.body.dateOfBirth.trim()
     this.report.createdAt = new Date();
-    response.redirect('/ems-dashboard');
+    res.redirect('/ems-dashboard');
 };
 
 module.exports = mongoose.model('MedicalReport', medicalReportSchema);

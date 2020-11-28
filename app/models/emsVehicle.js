@@ -15,15 +15,15 @@ var emsVehicleSchema = mongoose.Schema({
     }
 });
 
-emsVehicleSchema.methods.createVeh = function (request, response) {
-    this.emsVehicle.plate = request.body.plate.trim().toUpperCase();
-    this.emsVehicle.model = request.body.model.trim();
-    this.emsVehicle.color = request.body.color.trim();
-    this.emsVehicle.registeredOwner = request.body.registeredOwner.trim();
-    this.emsVehicle.activeCommunityID = request.body.activeCommunityID; // we set this when submitting the from so it should not be null
-    this.emsVehicle.userID = request.body.userID; // we set this when submitting the from so it should not be null
+emsVehicleSchema.methods.createVeh = function (req, res) {
+    this.emsVehicle.plate = req.body.plate.trim().toUpperCase();
+    this.emsVehicle.model = req.body.model.trim();
+    this.emsVehicle.color = req.body.color.trim();
+    this.emsVehicle.registeredOwner = req.body.registeredOwner.trim();
+    this.emsVehicle.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null
+    this.emsVehicle.userID = req.body.userID; // we set this when submitting the from so it should not be null
     this.emsVehicle.createdAt = new Date();
-    response.redirect('/ems-dashboard');
+    res.redirect('/ems-dashboard');
 };
 
 module.exports = mongoose.model('EmsVehicle', emsVehicleSchema);

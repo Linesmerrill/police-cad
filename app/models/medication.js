@@ -17,20 +17,20 @@ var medicationSchema = mongoose.Schema({
     }
 });
 
-medicationSchema.methods.createMedication = function (request, response) {
-    // console.debug("create medication request body: ", request.body)
-    this.medication.startDate = request.body.startDate;
-    this.medication.name = request.body.name;
-    this.medication.dosage = request.body.dosage.trim();
-    this.medication.frequency = request.body.frequency;
-    this.medication.civilianID = request.body.civilianID;
-    this.medication.activeCommunityID = request.body.activeCommunityID; // we set this when submitting the from so it should not be null
-    this.medication.userID = request.body.userID; // we set this when submitting the from so it should not be null
-    this.medication.firstName = request.body.firstName.trim().toLowerCase()
-    this.medication.lastName = request.body.lastName.trim().toLowerCase()
-    this.medication.dateOfBirth = request.body.dateOfBirth.trim()
+medicationSchema.methods.createMedication = function (req, res) {
+    // console.debug("create medication req body: ", req.body)
+    this.medication.startDate = req.body.startDate;
+    this.medication.name = req.body.name;
+    this.medication.dosage = req.body.dosage.trim();
+    this.medication.frequency = req.body.frequency;
+    this.medication.civilianID = req.body.civilianID;
+    this.medication.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null
+    this.medication.userID = req.body.userID; // we set this when submitting the from so it should not be null
+    this.medication.firstName = req.body.firstName.trim().toLowerCase()
+    this.medication.lastName = req.body.lastName.trim().toLowerCase()
+    this.medication.dateOfBirth = req.body.dateOfBirth.trim()
     this.medication.createdAt = new Date();
-    response.redirect('/civ-dashboard');
+    res.redirect('/civ-dashboard');
 };
 
 module.exports = mongoose.model('Medication', medicationSchema);

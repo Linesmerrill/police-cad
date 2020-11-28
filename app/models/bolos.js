@@ -17,7 +17,6 @@ var boloSchema = mongoose.Schema({
 });
 
 boloSchema.methods.createBolo = function (req, res) {
-  // debug log showing the request body for the bolo request
   // console.debug("bolo req body: ", req.body)
 
   if (exists(req.body.boloType)) {
@@ -47,7 +46,6 @@ boloSchema.methods.createBolo = function (req, res) {
 };
 
 boloSchema.methods.socketCreateBolo = function (req, res) {
-  // debug log showing the request body for the bolo request
   //  console.debug("bolo req body: ", req)
 
   if (exists(req.boloType)) {
@@ -71,9 +69,6 @@ boloSchema.methods.socketCreateBolo = function (req, res) {
 
   this.bolo.status = true;
   this.bolo.createdAt = new Date();
-
-  // req.app.locals.specialContext = "createBoloSuccess"
-  // res.redirect('/'+req.body.route);
 };
 
 module.exports = mongoose.model('Bolo', boloSchema);

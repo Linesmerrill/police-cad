@@ -28,29 +28,29 @@ var civilianSchema = mongoose.Schema({
   }
 });
 
-civilianSchema.methods.updateCiv = function (request, response) {
-  // console.debug('req: ', request.body)
-  this.civilian.firstName = request.body.civFirstName.trim().charAt(0).toUpperCase() + request.body.civFirstName.trim().slice(1);
-  this.civilian.lastName = request.body.civLastName.trim().charAt(0).toUpperCase() + request.body.civLastName.trim().slice(1);
-  this.civilian.licenseStatus = (request.body.licenseStatus ? '1' : '3');
-  this.civilian.ticketCount = request.body.ticketCount;
-  this.civilian.birthday = request.body.birthday;
-  this.civilian.warrants = request.body.warrants;
-  if (exists(request.body.address)) {
-    this.civilian.address = request.body.address.trim();
+civilianSchema.methods.updateCiv = function (req, res) {
+  // console.debug('req: ', req.body)
+  this.civilian.firstName = req.body.civFirstName.trim().charAt(0).toUpperCase() + req.body.civFirstName.trim().slice(1);
+  this.civilian.lastName = req.body.civLastName.trim().charAt(0).toUpperCase() + req.body.civLastName.trim().slice(1);
+  this.civilian.licenseStatus = (req.body.licenseStatus ? '1' : '3');
+  this.civilian.ticketCount = req.body.ticketCount;
+  this.civilian.birthday = req.body.birthday;
+  this.civilian.warrants = req.body.warrants;
+  if (exists(req.body.address)) {
+    this.civilian.address = req.body.address.trim();
   }
-  if (exists(request.body.occupation)) {
-    this.civilian.occupation = request.body.occupation.trim();
+  if (exists(req.body.occupation)) {
+    this.civilian.occupation = req.body.occupation.trim();
   }
-  if (exists(request.body.firearmLicense)) {
-    this.civilian.firearmLicense = request.body.firearmLicense;
+  if (exists(req.body.firearmLicense)) {
+    this.civilian.firearmLicense = req.body.firearmLicense;
   }
-  if (exists(request.body.activeCommunityID)) {
-    this.civilian.activeCommunityID = request.body.activeCommunityID;
+  if (exists(req.body.activeCommunityID)) {
+    this.civilian.activeCommunityID = req.body.activeCommunityID;
   }
-  this.civilian.userID = request.body.userID; // we set this when submitting the from so it should not be null
+  this.civilian.userID = req.body.userID; // we set this when submitting the from so it should not be null
   this.civilian.createdAt = new Date();
-  response.redirect('/civ-dashboard');
+  res.redirect('/civ-dashboard');
 };
 
 function exists(v) {

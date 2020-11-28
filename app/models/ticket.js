@@ -26,72 +26,71 @@ var ticketSchema = mongoose.Schema({
   }
 });
 
-ticketSchema.methods.updateTicket = function (request, response) {
-  //debug log showing the request body for the ticket request
-  // console.debug("ticket request body: ", request.body)
+ticketSchema.methods.updateTicket = function (req, res) {
+  // console.debug("ticket req body: ", req.body)
 
-  rawNameAndDOB = request.body.civFirstName //deprecated 6/27/2020
+  rawNameAndDOB = req.body.civFirstName //deprecated 6/27/2020
 
   //deprecated 6/27/2020
-  if (exists(request.body.civFirstName) && exists(request.body.civLastName)) {
-    if (request.body.civFirstName.trim().length > 1 && request.body.civLastName.length > 1) {
-      this.ticket.civFirstName = request.body.civFirstName.trim().charAt(0).toUpperCase() + request.body.civFirstName.trim().slice(1);
-      this.ticket.civLastName = request.body.civLastName.trim().charAt(0).toUpperCase() + request.body.civLastName.trim().slice(1);
+  if (exists(req.body.civFirstName) && exists(req.body.civLastName)) {
+    if (req.body.civFirstName.trim().length > 1 && req.body.civLastName.length > 1) {
+      this.ticket.civFirstName = req.body.civFirstName.trim().charAt(0).toUpperCase() + req.body.civFirstName.trim().slice(1);
+      this.ticket.civLastName = req.body.civLastName.trim().charAt(0).toUpperCase() + req.body.civLastName.trim().slice(1);
     } else {
       console.error("cannot process empty values for civFirstName and civLastName");
-      response.redirect('/police-dashboard');
+      res.redirect('/police-dashboard');
       return
     }
   } else {
     console.error("cannot process null values for civFirstName and civLastName");
-    response.redirect('/police-dashboard');
+    res.redirect('/police-dashboard');
     return
   }
 
-  this.ticket.officerID = request.body.officerID;
-  this.ticket.caseNumber = request.body.caseNumber;
-  if (exists(request.body.plate)) {
-    this.ticket.plate = request.body.plate.trim().toUpperCase(); //optional
+  this.ticket.officerID = req.body.officerID;
+  this.ticket.caseNumber = req.body.caseNumber;
+  if (exists(req.body.plate)) {
+    this.ticket.plate = req.body.plate.trim().toUpperCase(); //optional
   }
-  if (exists(request.body.model)) {
-    this.ticket.model = request.body.model.trim().charAt(0).toUpperCase() + request.body.model.trim().slice(1); //optional
+  if (exists(req.body.model)) {
+    this.ticket.model = req.body.model.trim().charAt(0).toUpperCase() + req.body.model.trim().slice(1); //optional
   }
-  if (exists(request.body.color)) {
-    this.ticket.color = request.body.color.trim().charAt(0).toUpperCase() + request.body.color.trim().slice(1); //optional
+  if (exists(req.body.color)) {
+    this.ticket.color = req.body.color.trim().charAt(0).toUpperCase() + req.body.color.trim().slice(1); //optional
   }
-  if (exists(request.body.fines)) {
+  if (exists(req.body.fines)) {
     //We check to see if they selected 'Other' and if so we need to grab the input value
-    if (exists(request.body.other) && Array.isArray(request.body.fines)) {
-      otherIndex = request.body.fines.findIndex(element => element.includes("Other"));
-      request.body.fines[otherIndex] = "Other - " + request.body.other.trim()
-    } else if (request.body.other.trim() != "") {
-      request.body.fines = "Other - " + request.body.other.trim()
+    if (exists(req.body.other) && Array.isArray(req.body.fines)) {
+      otherIndex = req.body.fines.findIndex(element => element.includes("Other"));
+      req.body.fines[otherIndex] = "Other - " + req.body.other.trim()
+    } else if (req.body.other.trim() != "") {
+      req.body.fines = "Other - " + req.body.other.trim()
     }
-    this.ticket.violation = request.body.fines;
+    this.ticket.violation = req.body.fines;
   }
-  if (exists(request.body.amount)) {
-    this.ticket.amount = request.body.amount.trim();
+  if (exists(req.body.amount)) {
+    this.ticket.amount = req.body.amount.trim();
   }
-  if (exists(request.body.date)) {
-    this.ticket.date = request.body.date.trim();
+  if (exists(req.body.date)) {
+    this.ticket.date = req.body.date.trim();
 
   }
-  if (exists(request.body.time)) {
-    this.ticket.time = request.body.time.trim();
+  if (exists(req.body.time)) {
+    this.ticket.time = req.body.time.trim();
   }
-  this.ticket.isWarning = request.body.isWarning;
-  if (exists(request.body.civID)) {
-    this.ticket.civID = request.body.civID.trim();
+  this.ticket.isWarning = req.body.isWarning;
+  if (exists(req.body.civID)) {
+    this.ticket.civID = req.body.civID.trim();
   }
   this.ticket.createdAt = new Date();
 
   // for alert message to show up on dashboard after a redirect
-  if (request.body.isWarning == "true") {
-    request.app.locals.specialContext = "createWarningSuccess"
+  if (req.body.isWarning == "true") {
+    req.app.locals.specialContext = "createWarningSuccess"
   } else {
-    request.app.locals.specialContext = "createTicketSuccess"
+    req.app.locals.specialContext = "createTicketSuccess"
   }
-  response.redirect('/' + request.body.route);
+  res.redirect('/' + req.body.route);
 };
 
 module.exports = mongoose.model('Ticket', ticketSchema);

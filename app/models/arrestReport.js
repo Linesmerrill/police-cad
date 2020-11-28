@@ -23,7 +23,6 @@ var arrestReportSchema = mongoose.Schema({
 });
 
 arrestReportSchema.methods.updateArrestReport = function (req, res) {
-  // debug log showing the request body for the ticket request
   // console.debug("arrest report req body: ", req.body)
 
   if (exists(req.body.accusedFirstName) && exists(req.body.accusedLastName)) {
