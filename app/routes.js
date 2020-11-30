@@ -186,8 +186,12 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/reset/:token', function (req, res) {
+    if (req.params.token && req.params.token != 'encryptedToken') {
+      req.session.resetToken = req.params.token
+      return res.redirect('/reset/encryptedToken')
+    } else {
     User.findOne({
-      'user.resetPasswordToken': req.params.token,
+      'user.resetPasswordToken': req.session.resetToken,
       'user.resetPasswordExpires': {
         $gt: Date.now()
       }
@@ -202,6 +206,7 @@ module.exports = function (app, passport, server) {
         message: req.flash('resetSend')
       });
     });
+  }
   });
 
   app.get('/civ-dashboard', authCivilian, function (req, res) {
@@ -1598,7 +1603,13 @@ module.exports = function (app, passport, server) {
 
   app.post('/reset/:token', function (req, res) {
     //this is a super gross way to grab the token.. :yolo:
-    var token = req.headers.referer.split("/")[req.headers.referer.split("/").length - 1]
+    console.log("[POST] req.params.token: ", req.params.token)
+    console.log("[POST] req.session.resetToken: ", req.session.resetToken)
+    // var token = req.headers.referer.split("/")[req.headers.referer.split("/").length - 1]
+    var token = req.session.resetToken
+    // var sessData = req.session;
+    // sessData.resetToken = token;
+    
     async.waterfall([
       function (done) {
         User.findOne({
