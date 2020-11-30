@@ -11,7 +11,7 @@ http://www.bootstrapzero.com
 @font-face {
     font-family: 'dealerplatecalifornia';
     src: url('/static/fonts/dealerplate_california-webfont.woff2') format('woff2'),
-         url('/static/fonts/dealerplate_california-webfont.woff') format('woff');
+        url('/static/fonts/dealerplate_california-webfont.woff') format('woff');
     font-weight: normal;
     font-style: normal;
 }
@@ -19,7 +19,7 @@ http://www.bootstrapzero.com
 @font-face {
     font-family: 'car-frame';
     src: url('/static/fonts/cargoframedemo-webfont.woff2') format('woff2'),
-         url('/static/fonts/cargoframedemo-webfont.woff') format('woff');
+        url('/static/fonts/cargoframedemo-webfont.woff') format('woff');
     font-weight: normal;
     font-style: normal;
 
@@ -322,7 +322,7 @@ footer {
     }
 
     header {
-        min-height: 100%;
+        min-height: 50%;
     }
 
     header .header-content {
@@ -779,9 +779,9 @@ a.link--inherit {
 
 }
 
-#second {
+/* #second {
     min-height: 50%;
-}
+} */
 
 #third::before {
     content: '';
@@ -856,6 +856,14 @@ a.link--inherit {
 
 .font-size-2 {
     font-size: 2em;
+}
+
+.font-size-3 {
+    font-size: 3em;
+}
+
+.font-size-4 {
+    font-size: 4em;
 }
 
 .font-size-5 {
@@ -985,10 +993,6 @@ a.link--inherit {
 /* To fix the scrolling modal issues */
 .modal {
     overflow-y: auto;
-}
-
-.width-100 {
-    width: 100%
 }
 
 .diagonal-arrow {
@@ -1221,4 +1225,57 @@ a.link--inherit {
 #callNotesDetail:focus {
     background-color: #36333d;
     color: white;
+}
+
+a[data-toggle="collapse"] .rotate {
+    -webkit-transition: all 0.2s ease-out;
+    -moz-transition: all 0.2s ease-out;
+    -ms-transition: all 0.2s ease-out;
+    -o-transition: all 0.2s ease-out;
+    transition: all 0.2s ease-out;
+    -moz-transform: rotate(90deg);
+    -ms-transform: rotate(90deg);
+    -webkit-transform: rotate(90deg);
+    transform: rotate(90deg);
+ }
+ a[data-toggle="collapse"].collapsed .rotate {
+    -moz-transform: rotate(0deg);
+    -ms-transform: rotate(0deg);
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+ }
+
+ .background-color-222 {
+     background-color: #222;
+ }
+
+ .topNav {
+    background-color: #222;
+    width: 100%;
+ }
+
+ .arrow {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    bottom: 30px;
+    display: block;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.white-dashboard {
+    background: white
+}
+
+.opacity-0 {
+    opacity: 0;
+}
+
+.opacity-1 {
+    opacity: 1;
+}
+
+#first {
+    min-height: 100%;
 }

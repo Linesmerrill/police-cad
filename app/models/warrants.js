@@ -23,7 +23,6 @@ var warrantSchema = mongoose.Schema({
 });
 
 warrantSchema.methods.createWarrant = function (req, res) {
-  // debug log showing the request body for the warrant request
   // console.debug("warrant req body: ", req.body)
 
   if (exists(req.body.date)) {

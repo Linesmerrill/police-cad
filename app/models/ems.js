@@ -17,17 +17,17 @@ var emsSchema = mongoose.Schema({
     }
 });
 
-emsSchema.methods.create = function (request, response) {
-    this.ems.firstName = request.body.emsFirstName.trim();
-    this.ems.lastName = request.body.emsLastName.trim();
-    this.ems.department = request.body.department;
-    this.ems.assignmentArea = request.body.assignmentArea;
-    this.ems.station = request.body.station;
-    this.ems.callSign = request.body.callSign;
-    this.ems.activeCommunityID = request.body.activeCommunityID; // we set this when submitting the from so it should not be null
-    this.ems.userID = request.body.userID; // we set this when submitting the from so it should not be null
+emsSchema.methods.create = function (req, res) {
+    this.ems.firstName = req.body.emsFirstName.trim();
+    this.ems.lastName = req.body.emsLastName.trim();
+    this.ems.department = req.body.department;
+    this.ems.assignmentArea = req.body.assignmentArea;
+    this.ems.station = req.body.station;
+    this.ems.callSign = req.body.callSign;
+    this.ems.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null
+    this.ems.userID = req.body.userID; // we set this when submitting the from so it should not be null
     this.ems.createdAt = new Date();
-    response.redirect('/ems-dashboard');
+    res.redirect('/ems-dashboard');
 };
 
 module.exports = mongoose.model('Ems', emsSchema);

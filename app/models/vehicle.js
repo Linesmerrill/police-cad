@@ -19,23 +19,23 @@ var vehicleSchema = mongoose.Schema({
   }
 });
 
-vehicleSchema.methods.createVeh = function (request, response) {
-  // console.debug("request body: ", request.body)
-  this.vehicle.plate = request.body.plate.trim().toUpperCase();
-  if (!exists(request.body.vin)) {
-    request.body.vin = ""
+vehicleSchema.methods.createVeh = function (req, res) {
+  // console.debug("req body: ", req.body)
+  this.vehicle.plate = req.body.plate.trim().toUpperCase();
+  if (!exists(req.body.vin)) {
+    req.body.vin = ""
   }
-  this.vehicle.vin = request.body.vin.trim().toUpperCase();
-  this.vehicle.model = request.body.model.trim().charAt(0).toUpperCase() + request.body.model.trim().slice(1);
-  this.vehicle.color = request.body.color.trim().charAt(0).toUpperCase() + request.body.color.trim().slice(1);
-  this.vehicle.validRegistration = request.body.validRegistration;
-  this.vehicle.validInsurance = request.body.validInsurance;
-  this.vehicle.registeredOwner = request.body.registeredOwner.trim();
-  this.vehicle.isStolen = request.body.isStolen;
-  this.vehicle.activeCommunityID = request.body.activeCommunityID; // we set this when submitting the from so it should not be null
-  this.vehicle.userID = request.body.userID; // we set this when submitting the from so it should not be null
+  this.vehicle.vin = req.body.vin.trim().toUpperCase();
+  this.vehicle.model = req.body.model.trim().charAt(0).toUpperCase() + req.body.model.trim().slice(1);
+  this.vehicle.color = req.body.color.trim().charAt(0).toUpperCase() + req.body.color.trim().slice(1);
+  this.vehicle.validRegistration = req.body.validRegistration;
+  this.vehicle.validInsurance = req.body.validInsurance;
+  this.vehicle.registeredOwner = req.body.registeredOwner.trim();
+  this.vehicle.isStolen = req.body.isStolen;
+  this.vehicle.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null
+  this.vehicle.userID = req.body.userID; // we set this when submitting the from so it should not be null
   this.vehicle.createdAt = new Date();
-  response.redirect('/civ-dashboard');
+  res.redirect('/civ-dashboard');
 };
 
 function exists(v) {

@@ -16,19 +16,19 @@ var conditionSchema = mongoose.Schema({
     }
 });
 
-conditionSchema.methods.createCondition = function (request, response) {
-    // console.debug("create condition request body: ", request.body)
-    this.condition.dateOccurred = request.body.dateOccurred;
-    this.condition.name = request.body.name;
-    this.condition.details = request.body.details.trim();
-    this.condition.civilianID = request.body.civilianID;
-    this.condition.activeCommunityID = request.body.activeCommunityID; // we set this when submitting the from so it should not be null
-    this.condition.userID = request.body.userID; // we set this when submitting the from so it should not be null
-    this.condition.firstName = request.body.firstName.trim().toLowerCase()
-    this.condition.lastName = request.body.lastName.trim().toLowerCase()
-    this.condition.dateOfBirth = request.body.dateOfBirth.trim()
+conditionSchema.methods.createCondition = function (req, res) {
+    // console.debug("create condition req body: ", req.body)
+    this.condition.dateOccurred = req.body.dateOccurred;
+    this.condition.name = req.body.name;
+    this.condition.details = req.body.details.trim();
+    this.condition.civilianID = req.body.civilianID;
+    this.condition.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null
+    this.condition.userID = req.body.userID; // we set this when submitting the from so it should not be null
+    this.condition.firstName = req.body.firstName.trim().toLowerCase()
+    this.condition.lastName = req.body.lastName.trim().toLowerCase()
+    this.condition.dateOfBirth = req.body.dateOfBirth.trim()
     this.condition.createdAt = new Date();
-    response.redirect('/civ-dashboard');
+    res.redirect('/civ-dashboard');
 };
 
 module.exports = mongoose.model('Condition', conditionSchema);

@@ -22,7 +22,6 @@ var callSchema = mongoose.Schema({
 });
 
 callSchema.methods.createCall = function (req, res) {
-  // debug log showing the request body for the call request
   // console.debug("call req body: ", req.body)
 
   if (exists(req.body.shortDescription)) {
@@ -48,12 +47,12 @@ callSchema.methods.createCall = function (req, res) {
   this.call.createdAt = new Date();
   createdDate = new Date(this.call.createdAt);
   this.call.createdAtReadable = createdDate.toLocaleString()
+
   req.app.locals.specialContext = "createCallSuccess"
-  res.redirect('/' + req.body.route);
+  return res.redirect('/' + req.body.route);
 };
 
-callSchema.methods.socketCreateCall = function (req, res) {
-  // debug log showing the request body for the call request
+callSchema.methods.socketCreateCall = function (req) {
   // console.debug("call req: ", req)
 
   if (exists(req.shortDescription)) {
