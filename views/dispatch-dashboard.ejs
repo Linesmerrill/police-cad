@@ -358,11 +358,15 @@
                     <% for(var k=0; k<commUsers.length; k++) {%>
                     <% if (commUsers[k]._id == calls[i].call.assignedOfficers[j]) {%>
                     <span class="badge badge-secondary"><%=commUsers[k].user.username%>
-                      (<%=commUsers[k].user.callSign%>)</span>
-                    <%}%>   
-                                    <%}%>
+                      <% if (commUsers[k].user.callSign == undefined) {%>
+                      ()</span>
+                    <%} else {%>
+                    (<%=commUsers[k].user.callSign%>)</span>
                     <%}%>
-                                    <%} else {%>
+                    <%}%>
+                    <%}%>
+                    <%}%>
+                    <%} else {%>
                     <span class="badge badge-secondary">N/A</span>
                     <%}%>    
                                   </td>   
@@ -2360,6 +2364,9 @@
           for (var j=0; j<res.call.assignedOfficers.length; j++) {
             for (var k=0; k<myCommUsers.length; k++) {
               if (myCommUsers[k]._id==res.call.assignedOfficers[j]) {
+                if (myCommUsers[k].user.callSign==undefined) {
+                  myCommUsers[k].user.callSign=""
+                }
                 assignedUnits+='<span class="badge badge-secondary">'+myCommUsers[k].user.username+' ('+myCommUsers[k].user.callSign+')'+'</span> '
               }
             }
