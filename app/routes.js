@@ -1602,13 +1602,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/reset/:token', function (req, res) {
-    //this is a super gross way to grab the token.. :yolo:
-    console.log("[POST] req.params.token: ", req.params.token)
-    console.log("[POST] req.session.resetToken: ", req.session.resetToken)
-    // var token = req.headers.referer.split("/")[req.headers.referer.split("/").length - 1]
     var token = req.session.resetToken
-    // var sessData = req.session;
-    // sessData.resetToken = token;
     
     async.waterfall([
       function (done) {
