@@ -2225,6 +2225,8 @@
       } else {
         $('#'+res.userID+"-status").text(res.status)
       }
+
+      repopulateOfficerList(res.userID, res.status)
     })
 
     socket.on('load_panic_status_update', (map, signal100Resp, origReq) => {
@@ -2490,7 +2492,6 @@
         $('#warrant-other-div').show();
       }
     })
-
   });
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -2975,6 +2976,46 @@
     document.getElementById("create-call-form").reset();
   }
 
+  function repopulateOfficerList(id, status) {
+    officers= <%- JSON.stringify(commUsers)%>;
+    //override the values stored in memory, with the ones we just got back from the socket
+    for (i=0; i<officers.length;i++) {
+      if (officers[i]._id == id) {
+        officers[i].user.dispatchStatus = status
+      }
+    }
+
+    //List containing all officers when creating a new call
+    var officerListNewCall=tail.select('#officer-select', {
+      search: true,
+      classNames: "default white",
+      descriptions: true,
+      sortGroups: "ASC",
+      sortItems: "ASC",
+      placeholder: "Officer List",
+      multiPinSelected: true,
+      hideSelected: false,
+      hideDisabled: true,
+      multiShowCount: false,
+      multiContainer: true
+    })
+    var newCallItems={}
+    for (i=0; i<officers.length; i++) {
+      //To be deprecated once all users have set a call sign, going into effect 11/25/2020
+      if (!officers[i].user.callSign) {
+        officers[i].user.callSign=""
+      }
+      newCallItems[officers[i]._id]={
+        value: officers[i].user.username+' ('+officers[i].user.callSign+')',
+        group: "#",
+        selected: false,
+        disabled: false,
+        description: officers[i].user.dispatchStatus
+      }
+    }
+    officerListNewCall.options.add(newCallItems)
+  }
+
   function fillOfficerList() {
     officers= <%- JSON.stringify(commUsers)%>
     var officerList=tail.select('#officer-select', {
@@ -3007,6 +3048,8 @@
     officerList.options.add(items)
   }
 
+  // Param: dbOfficers, contains a list of IDs of the active officers assigned to the call
+  // Example: 5edeeaa078cf272b2ce9e40e,5ee00e3adde8ab0344ea49a2
   function populateOfficerList(dbOfficers) {
     officers= <%- JSON.stringify(commUsers)%>
     var officerList=tail.select('#officer-select-details', {
