@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>LPS - Penal Codes</title>
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">    
+    <link rel="shortcut icon" href="favicon.ico">  
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
+    <!-- FontAwesome JS -->
+    <script defer src="/static/fontawesome/js/all.js"></script>
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="/static/plugins/bootstrap/css/bootstrap.min.css">   
+    <!-- Plugins CSS -->    
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap.min.css" />
+    <link rel="stylesheet" href="/static/plugins/prism/prism.css">
+    <link rel="stylesheet" href="/static/plugins/lightbox/dist/ekko-lightbox.css">
+    <link rel="stylesheet" href="/static/css/ionicons.min.css" />
+    <link rel="stylesheet" href="/static/plugins/elegant_font/css/style.css">
+
+    <!-- Theme CSS -->
+    <link id="theme-style" rel="stylesheet" href="/static/css/docstyles.css">
+    <link id="theme-style" rel="stylesheet" href="/static/css/styles.css">
+    
+</head> 
+
+<body class="body-blue">
+    <nav id="topNav" class="navbar navbar-default navbar-fixed-top" style="background-color: #222;">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand page-scroll" href="/"><i class="ion-ios-analytics-outline"></i> Lines Police
+                    CAD</a>
+            </div>
+        </div>
+    </nav>
+    <div class="page-wrapper">
+        
+        <div class="doc-wrapper">
+            <div class="container">
+                <div id="doc-header" class="doc-header text-center">
+                    <h1 class="doc-title"><span aria-hidden="true" class="icon icon_lifesaver"></span> Penal Codes</h1>
+                    <div class="meta"><i class="far fa-clock"></i> Last updated: Dec 6th, 2020</div>
+                </div><!--//doc-header-->
+                <div class="doc-body row">
+                    <div class="doc-content col-md-9 col-12 order-1">
+                        <div class="content-inner">
+                            <section id="traffic-violations" class="doc-section">
+                                <h2 class="section-title">Traffic Violations</h2>
+                                <table id="traffic-violations-table" class="table table-bordered" style="width:100%;color:white">
+                                    <thead>
+                                      <tr>
+                                        <th class="no-sort">Violation</th>
+                                        <th class="no-sort">Jail Time</th>
+                                        <th class="no-sort">Fine</th>
+                                        <th class="no-sort">Explanation</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr>
+                                        <td>Reckless Driving</td>
+                                        <td>30 seconds</td>
+                                        <td>$1000</td>
+                                        <td>Careless and unlawful operation of a vehicle.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Driving without a license</td>
+                                        <td>20 seconds</td>
+                                        <td>$750</td>
+                                        <td>Operating a motor vehicle without proper paperwork.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Driving without headlights</td>
+                                        <td>N/A</td>
+                                        <td>$150</td>
+                                        <td>Operation of a vehicle without use of headlights in an appropriate situation.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Excessive vehicle noise</td>
+                                        <td>N/A</td>
+                                        <td>$200</td>
+                                        <td>Unnecessary or too much sound.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Failure to obey a traffic control device</td>
+                                        <td>N/A</td>
+                                        <td>$250</td>
+                                        <td>Violation of intersection lights, stop and give way signs.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Failure to maintain lanes</td>
+                                        <td>N/A</td>
+                                        <td>$500</td>
+                                        <td>Being in multiple lanes at once or swerving in between lanes.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Failure to yield to an emergency vehicle</td>
+                                        <td>N/A</td>
+                                        <td>$500</td>
+                                        <td>Failing to yield to an Emergency vehicle with red and or blue lights.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Illegal U-Turn</td>
+                                        <td>N/A</td>
+                                        <td>$200</td>
+                                        <td>U-Turn conducted in either a disallowed zone or an unsafe turn.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Illegal parking</td>
+                                        <td>N/A</td>
+                                        <td>$250</td>
+                                        <td>Parking illegally in a zone disallowing parking.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Impeding flow of traffic</td>
+                                        <td>N/A</td>
+                                        <td>$400</td>
+                                        <td>Interrupting the flow of traffic in anyway for an extended period of time.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Driving without insurance</td>
+                                        <td>N/A</td>
+                                        <td>$450</td>
+                                        <td>Self explanatory</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Speeding 10-19 over</td>
+                                        <td>N/A</td>
+                                        <td>$150</td>
+                                        <td>Failing to obey posted speed signs.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Speeding 20-29 over</td>
+                                        <td>N/A</td>
+                                        <td>$250</td>
+                                        <td>Failing to obey posted speed signs.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Unlawful vehicle modification</td>
+                                        <td>N/A</td>
+                                        <td>$500</td>
+                                        <td>Red and blue underglow, pure black window tint or police horn.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Unroadworthy vehicle</td>
+                                        <td>N/A</td>
+                                        <td>$350</td>
+                                        <td>Operation of a motorized vehicle that is not fit to be operated on a public roads.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Possession of burglary Tools</td>
+                                        <td>35 seconds</td>
+                                        <td>$800</td>
+                                        <td>A person who has in their possession tools necessary to commit burglary such as a crowbar with a screwdriver, shimmy, or other appropriate items.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Improper use of a motor vehicle</td>
+                                        <td>N/A</td>
+                                        <td>$400</td>
+                                        <td>Improper use of a motor vehicle like not wearing a helmet on a motorcycle.</td>
+                                      </tr>
+                                      </tbody>
+                                </table>
+                            </section><!--//doc-section-->
+                            
+                            <section id="petty-misdemeanors" class="doc-section">
+                                <h2 class="section-title">Petty Misdemeanors</h2>
+                                <table id="petty-misdemeanors-table" class="table table-bordered" style="width:100%;color:white">
+                                    <thead>
+                                      <tr>
+                                        <th class="no-sort">Violation</th>
+                                        <th class="no-sort">Jail Time</th>
+                                        <th class="no-sort">Fine</th>
+                                        <th class="no-sort">Explanation</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr>
+                                        <td>Disorderly conduct</td>
+                                        <td>15 seconds</td>
+                                        <td>$250</td>
+                                        <td>Unruly behaviour
+                                            constituting a minor
+                                            offense.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Disturbing the peace</td>
+                                        <td>20 seconds</td>
+                                        <td>$300</td>
+                                        <td>When a person’s
+                                            words or conduct
+                                            jeopardizes
+                                            another’s rights to
+                                            peace and
+                                            tranquility.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Loitering</td>
+                                        <td>N/A</td>
+                                        <td>$250</td>
+                                        <td>To delay or linger in
+                                            the vicinity of a
+                                            posted property with
+                                            no purpose or lawful
+                                            reason.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Public intoxication</td>
+                                        <td>25 seconds</td>
+                                        <td>$800</td>
+                                        <td>A person who is
+                                            found in any public
+                                            place under the
+                                            influence of alcohol.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>Jaywalking</td>
+                                        <td>N/A</td>
+                                        <td>$100</td>
+                                        <td>Crossing a public
+                                            road at an otherwise
+                                            unmarked crossing.</td>
+                                      </tr>
+                                      </tbody>
+                                </table>
+                            </section><!--//doc-section-->
+                            
+                            <section id="misdemeanor" class="doc-section">
+                                <h2 class="section-title">Misdemeanors</h2>
+                                <table id="misdemeanors-table" class="table table-bordered" style="width:100%;color:white">
+                                    <thead>
+                                      <tr>
+                                        <th class="no-sort">Violation</th>
+                                        <th class="no-sort">Jail Time</th>
+                                        <th class="no-sort">Fine</th>
+                                        <th class="no-sort">Explanation</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Assault</td>
+                                            <td>1 Minute</td>
+                                            <td>$3500</td>
+                                            <td>A person who intentionally put another in the reasonable belief of physical harm or offensive contact.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Aggravated Assault</td>
+                                            <td>1 minute 20 seconds</td>
+                                            <td>$6000</td>
+                                            <td>A person who continuously intentionally put another in the reasonable belief of severe physical harm or offensive contact.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Aiding and abetting</td>
+                                            <td>45 seconds</td>
+                                            <td>$2000</td>
+                                            <td>The act of aiding somebody or a group in the process of a crime.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Battery</td>
+                                            <td>1 minute</td>
+                                            <td>$2500</td>
+                                            <td>A person who uses a unlawful force or violence to cause physical harm.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Aggravated Battery</td>
+                                            <td>1 minute 15 seconds</td>
+                                            <td>$3500</td>
+                                            <td>A person who uses great or continued force or violence to cause physical harm.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Breaking and entering</td>
+                                            <td>45 seconds</td>
+                                            <td>$1800</td>
+                                            <td>The action of forcing your way into a property you do not have permission to be in.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Brandishing a firearm</td>
+                                            <td>30 seconds</td>
+                                            <td>$800</td>
+                                            <td>The act of holding or pointing a unconcealed weapon on or attached to your body.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Bribery</td>
+                                            <td>45 seconds</td>
+                                            <td>$2000</td>
+                                            <td>Attempting to give items of value and worth to receive a favorable outcome.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Contempt of court</td>
+                                            <td>30 seconds</td>
+                                            <td>$2500</td>
+                                            <td>A person who willfully disobeys, disrespects, or otherwise infringes the verbal or written authority of the court.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Destruction of property</td>
+                                            <td>30 seconds</td>
+                                            <td>$1500</td>
+                                            <td>The act of inflicting damage to property public or private.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Drug possession Class: A, B, C</td>
+                                            <td>A) 1 min 30 sec, B) 1 min, C) 50 sec</td>
+                                            <td>$2000</td>
+                                            <td>Possession of one or less pound.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>DUI/DWI</td>
+                                            <td>1 minute</td>
+                                            <td>$3000</td>
+                                            <td>Operating a motorized vehicle while under the influence of alcohol or drugs.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Failure to follow a lawful command</td>
+                                            <td>1 minute</td>
+                                            <td>$1000</td>
+                                            <td>Willingly disobeying a lawful command given by a government official.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Failure to identify to a LEO.</td>
+                                            <td>1 minute</td>
+                                            <td>$1200</td>
+                                            <td>A person who is detained or under arrest by a LEO and fails to provide their name or ID.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Failure to pay fines</td>
+                                            <td>2 minutes 30 seconds</td>
+                                            <td>N/A</td>
+                                            <td>A person who fails to pay a fine or court ordered fee.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Failure to have a valid permit.</td>
+                                            <td>1 minute</td>
+                                            <td>$1500</td>
+                                            <td>Not having a valid permit.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Filing a false complaint</td>
+                                            <td>1 minute 30 seconds</td>
+                                            <td>$1500</td>
+                                            <td>A person who knowingly files a false complaint, statement or document.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Indecent exposure</td>
+                                            <td>2 minutes</td>
+                                            <td>$1500</td>
+                                            <td>A person who intentionally exposes their naked body or genitalia.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Illegal street racing</td>
+                                            <td>1 minute 30 seconds</td>
+                                            <td>$4000</td>
+                                            <td>Unsanctioned and illegal form of auto racing that occurs on a public road.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Accessory to street racing</td>
+                                            <td>1 minute</td>
+                                            <td>$2000</td>
+                                            <td>Helping and or planning a street racing event.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Obstruction of justice</td>
+                                            <td>2 minutes 30 seconds</td>
+                                            <td>$1250</td>
+                                            <td>An action that shows a clear motivated attempt to stop/halt a law enforcement officer from doing their job.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Providing false information to a LEO.</td>
+                                            <td>2 minutes</td>
+                                            <td>$800</td>
+                                            <td>Providing a government official with false information.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Public endangerment</td>
+                                            <td>1 minute</td>
+                                            <td>$1600</td>
+                                            <td>The act of placing the public in any kind of way.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Stalking</td>
+                                            <td>2 minutes</td>
+                                            <td>$3000</td>
+                                            <td>A person that follows, threatens or harasses another individual.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Sexual assault</td>
+                                            <td>3 minutes</td>
+                                            <td>$3000</td>
+                                            <td>A person who commits verbal abuse for the purpose of sexual arousal.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Trespassing</td>
+                                            <td>2 minutes</td>
+                                            <td>$500</td>
+                                            <td>Entering private property that you do not have permission to reside in.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Theft</td>
+                                            <td>2 minutes 30 seconds</td>
+                                            <td>$1000</td>
+                                            <td>A person who takes or steals another’s property.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Unlawful discharge of a firearm</td>
+                                            <td>1 minute 30 seconds</td>
+                                            <td>$800</td>
+                                            <td>Discharge of a firearm without due cause or justifiable motive.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Vandalism</td>
+                                            <td>1 minute 30</td>
+                                            <td>$1500</td>
+                                            <td>A person that defaces, damages, or destroys property which belongs to another.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Withholding info from a LEO</td>
+                                            <td>2 minutes</td>
+                                            <td>N/A</td>
+                                            <td>A person who intentionally withholds information from a LEO.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Failure to stop for a police vehicle</td>
+                                            <td>2 minutes</td>
+                                            <td>$750</td>
+                                            <td>Self explanatory</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Wasting police time</td>
+                                            <td>3 minutes</td>
+                                            <td>N/A</td>
+                                            <td>A person who intentionally wastes a LEO’s time.</td>
+                                          </tr>
+                                      </tbody>
+                                </table>
+                            </section><!--//doc-section-->
+                            
+                            <section id="felonies" class="doc-section">
+                                <h2 class="section-title">Felonies</h2>
+                                <table id="felonies-table" class="table table-bordered" style="width:100%;color:white">
+                                    <thead>
+                                      <tr>
+                                        <th class="no-sort">Violation</th>
+                                        <th class="no-sort">Jail Time</th>
+                                        <th class="no-sort">Explanation</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Armed Robbery</td>
+                                            <td>3 minutes 30 seconds</td>
+                                            <td>A person who takes
+                                                property from the
+                                                possession of another with a
+                                                weapon.</td>
+                                              </tr>
+                                          <tr>
+                                            <td>Accessory to armed robbery</td>
+                                            <td>2 minutes</td>
+                                            <td>A person who helps commit
+                                                or plan to take property from
+                                                the possession of another
+                                                with a weapon.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Arson</td>
+                                            <td>2 minutes 30 seconds</td>
+                                            <td>A person who intentionally
+                                                malicious sets fire to any
+                                                structure, forest land, or
+                                                property.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Assault with a deadly
+                                                weapon</td>
+                                            <td>3 minutes 45 seconds</td>
+                                            <td>A person who attempts to
+                                                cause or threaten immediate
+                                                harm to another using a
+                                                weapon to communicate
+                                                that threat.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Accessory to assault with a
+                                                deadly weapon</td>
+                                            <td>3 minutes</td>
+                                            <td>A person who helps commit
+                                                or plan to attempt to cause
+                                                or threaten immediate harm
+                                                to another using a weapon
+                                                to cummunicate that threat.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Assault on a LEO</td>
+                                            <td>4 minutes</td>
+                                            <td>A person who intentionally
+                                                put another in the
+                                                reasonable belief or physical
+                                                harm or offensive contact to
+                                                a LEO.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Attempted murder</td>
+                                            <td>4 minutes</td>
+                                            <td>A person who deliberately
+                                                attempt to kill or cause life
+                                                threatening.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Accessory to Attempted
+                                                murder</td>
+                                            <td>3 minutes 30 seconds</td>
+                                            <td>A person who deliberately
+                                                helps or plans to attempt to
+                                                kill or cause life threatening
+                                                harm.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Attempted murder of a LEO</td>
+                                            <td>4 minutes 45 seconds</td>
+                                            <td>A person who deliberately
+                                                attempt to kill or cause life
+                                                threatening harm.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Accessory to attempted
+                                                murder of a LEO</td>
+                                            <td>4 minutes</td>
+                                            <td>A person who deliberately
+                                                helps or cause life
+                                                threatening harm of a LEO.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Corruption of a government
+                                                position</td>
+                                            <td>3 minute</td>
+                                            <td>A government employee
+                                                who acts outside the
+                                                interests of the public good
+                                                or public justice.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Dissuading a witness or a
+                                                victim</td>
+                                            <td>3 minute</td>
+                                            <td>A person who knowingly
+                                                and maliciously prevents or
+                                                encourages a witness or
+                                                victim from giving a
+                                                testimony.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Distribution of a illegal
+                                                firearms</td>
+                                            <td>4 minute</td>
+                                            <td>Selling or giving away illegal
+                                                firearms.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Extortion</td>
+                                            <td>3 minutes 30 seconds</td>
+                                            <td>A person who intimidates or
+                                                influences to provide or
+                                                hand over properties or
+                                                services.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Escape</td>
+                                            <td>4 minutes</td>
+                                            <td>A person who has been
+                                                detained and arrested,
+                                                booked, charged, or
+                                                convicted of any crime who
+                                                escapes from custody.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Accessory to escape</td>
+                                            <td>3 minutes</td>
+                                            <td>A person that helps or plans
+                                                someone who has been
+                                                detained and arrested,
+                                                booked, charged or
+                                                convicted of any crime who
+                                                escapes from custody.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Felony drug possession</td>
+                                            <td>Class:A 3 minutes
+                                                Class:B 2 minutes
+                                                Class:C 1 minute</td>
+                                            <td>Possession of a illegal
+                                                substance one pound or more.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Fleeing & Eluding</td>
+                                            <td>3 minutes 30 seconds</td>
+                                            <td>A person who runs away
+                                                from police in a vehicle or
+                                                on foot to elude arrest or
+                                                questioning.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Hit & Run</td>
+                                            <td>2 minutes 30 seconds</td>
+                                            <td>Leaving the scene of an
+                                                accident.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Grand Theft Auto</td>
+                                            <td>3 minutes</td>
+                                            <td>A person who has stolen a
+                                                motor vehicle.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Perjury</td>
+                                            <td>2 minutes</td>
+                                            <td>A person who knowingly
+                                                provides false information
+                                                while under oath in a court of law.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Prostitution</td>
+                                            <td>2 minutes</td>
+                                            <td>A person who exchanges
+                                                sexual acts for payment or
+                                                other goods.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Pandering/ Pimping</td>
+                                            <td>2 minutes 30 seconds</td>
+                                            <td>A person who solicits or
+                                                advertises and supervises
+                                                anyone involved in
+                                                prostitution.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Possession of a illegal
+                                                firearm Class A</td>
+                                            <td>2 minutes 30 seconds</td>
+                                            <td>A person who was in
+                                                possession of a illegal pistol
+                                                or handgun.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Possession of a illegal
+                                                firearm Class B</td>
+                                            <td>3 minutes</td>
+                                            <td>A person who was in
+                                                possession of a illegal
+                                                shotgun.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Possession of a illegal
+                                                firearm Class C</td>
+                                            <td>4 minutes</td>
+                                            <td>A person who was in
+                                                possession of a illegal fully
+                                                automatic firearm.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Improper use of a motor
+                                                vehicle</td>
+                                            <td>2 minutes</td>
+                                            <td>A person who excessively
+                                                speeds and is driving
+                                                recklessly.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Manslaughter</td>
+                                            <td>3 minutes</td>
+                                            <td>A person who
+                                                unintentionally kills another.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Police Impersonation</td>
+                                            <td>3 minutes</td>
+                                            <td>A person who pretends or
+                                                implies the role of a police
+                                                officer.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Kidnapping</td>
+                                            <td>3 minutes 30 seconds</td>
+                                            <td>A person who detains or
+                                                arrests another without their
+                                                consent and unlawfully.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Murder</td>
+                                            <td>5 minutes</td>
+                                            <td>A person who unlawfully
+                                                kills another.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Accessory to murder</td>
+                                            <td>4 minutes 30 seconds</td>
+                                            <td>A person who helps or plans
+                                                to unlawfully kills another.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Murder of a LEO</td>
+                                            <td>6 minutes</td>
+                                            <td>A person who unlawfully
+                                                kills a LEO.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Accessory to murder of a
+                                                LEO</td>
+                                            <td>5 minutes</td>
+                                            <td>A person who helps or plans
+                                                the unlawfully kills of a LEO.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Conspiracy to commit
+                                                murder</td>
+                                            <td>3 minutes 30 seconds</td>
+                                            <td>Planning to or discussing to
+                                                commit murder.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Solicitation of murder</td>
+                                            <td>4 minutes</td>
+                                            <td>Paying to have an individual(s) killed.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Sexual battery</td>
+                                            <td>3 minutes</td>
+                                            <td>A person who commits
+                                                unwanted touching or
+                                                sexual contact.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Resisting Arrest</td>
+                                            <td>4 minutes</td>
+                                            <td>A person who avoids
+                                                apprehension from an
+                                                officer by any means.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Rape</td>
+                                            <td>4 minutes 30 seconds</td>
+                                            <td>A person who forces
+                                                another to engage in sexual
+                                                activities.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Trespassing within a
+                                                restricted facility</td>
+                                            <td>3 minutes</td>
+                                            <td>A person who, without
+                                                proper authorization enters
+                                                any government owned or
+                                                managed facility that is
+                                                secured with the intent of
+                                                keeping people out.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Terrorism</td>
+                                            <td>10 minutes</td>
+                                            <td>A person who uses threats
+                                                or actions against the public
+                                                to cause fear at a grand
+                                                scale.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Vigilantism</td>
+                                            <td>4 minutes</td>
+                                            <td>A person who attempts to
+                                                effect justice according to
+                                                their own understanding of
+                                                right and wrong.</td>
+                                          </tr>
+                                          <tr>
+                                            <td>Possession of an illegal
+                                                weapon (Knife)</td>
+                                            <td>3 minutes</td>
+                                            <td>A person who is in
+                                                possession of a blade over
+                                                three inches.</td>
+                                          </tr>
+                                      </tbody>
+                                </table>
+                            </section><!--//doc-section-->
+                                          
+                            <section id="other" class="doc-section">
+                                <h2 class="section-title">Other</h2>
+                                <table id="other-table" class="table table-bordered" style="width:100%;color:white">
+                                    <thead>
+                                      <tr>
+                                        <th class="no-sort">Violation</th>
+                                        <th class="no-sort">Jail Time</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      <tr>
+                                        <td>Cop/Civ baiting</td>
+                                        <td>1st offense= 5min jail. 2nd offense= 10min
+                                            jail 3rd offense= 15min jail. If anybody
+                                            continues to Cop/Civ bait after 3 offenses
+                                            you will be contacted by a Admin.</td>
+                                      </tr>
+                                      <tr>
+                                        <td>MetaGaming</td>
+                                        <td>1st offense= 5min jail. 2nd offense= 10min
+                                            jail 3rd offense= 15min jail. If anybody
+                                            continues to Metagame after 3 offenses you
+                                            will be contacted by a Admin.</td>
+                                      </tr>
+                                      </tbody>
+                                </table>
+                            </section><!--//doc-section-->
+
+                        </div><!--//content-inner-->
+                    </div><!--//doc-content-->
+                    <div class="doc-sidebar col-md-3 col-12 order-0 d-none d-md-flex">
+                        <div id="doc-nav" class="doc-nav">
+                            <nav id="doc-menu" class="nav doc-menu flex-column sticky">
+                                <a class="nav-link scrollto" href="#traffic-violations">Traffic Violations</a>
+                                <a class="nav-link scrollto" href="#petty-misdemeanors">Petty Misdemeanors</a>
+                                <a class="nav-link scrollto" href="#misdemeanor">Misdemeanors</a>
+                                <a class="nav-link scrollto" href="#felonies">Felonies</a>
+                                <a class="nav-link scrollto" href="#other">Other</a>
+                            </nav><!--//doc-menu-->
+                        </div>
+                    </div><!--//doc-sidebar-->
+                </div><!--//doc-body-->              
+            </div><!--//container-->
+        </div><!--//doc-wrapper-->
+        
+    </div><!--//page-wrapper-->
+    <footer id="footer">
+        <div>
+    
+            <!-- horizontal ads -->
+            <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3842696805773142"
+                data-ad-slot="2113058291" data-ad-format="auto" data-full-width-responsive="true"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-xs-6 col-sm-3 column">
+                    <h4>Information</h4>
+                    <ul class="list-unstyled">
+                        <li><a href="/release-log">Release Log</a></li>
+                        <li><a href="https://linesmerrill.github.io/MerrillLines/" target="_blank">Developers</a></li>
+                    </ul>
+                </div>
+                <div class="col-xs-6 col-sm-3 column">
+                    <h4>About</h4>
+                    <ul class="list-unstyled">
+                        <li><a href="/about#contact-us">Contact Us</a></li>
+                        <li><a href="/privacy-policy">Privacy Policy</a></li>
+                        <li><a href="/terms-and-conditions">Terms &amp; Conditions</a></li>
+                    </ul>
+                </div>
+                <div class="col-xs-12 col-sm-3 column">
+                    <h4>Contribute</h4>
+                    <ul class="list-unstyled">
+                        <li><a href="https://www.patreon.com/linespoliceserver">Patreon</a></li>
+                        <li><a href="https://paypal.me/linespoliceserver">PayPal</a></li>
+                        <li><a href="https://github.com/linesmerrill/police-cad">Police-CAD on Github</a></li>
+                    </ul>
+                </div>
+                <div class="col-xs-12 col-sm-3 text-right">
+                    <h4>Follow</h4>
+                    <ul class="list-inline">
+                        <li><a rel="nofollow" target="_blank" href="https://www.twitter.com/LPSWebsite" title="Twitter"><i
+                                    class="icon-lg ion-social-twitter-outline"></i></a>&nbsp;</li>
+                        <li><a rel="nofollow" target="_blank" href="https://www.facebook.com/linespoliceserver/"
+                                title="Facebook"><i class="icon-lg ion-social-facebook-outline"></i></a>&nbsp;</li>
+                        <br />
+                        <!-- <li><a rel="nofollow" target="_blank" href="https://www.patreon.com/linespoliceserver"
+                                title="Patreon"><i class="fab fa-patreon font-size-4"></i></a></li> -->
+                    </ul>
+                </div>
+            </div>
+            <br />
+            <span class="pull-right text-muted small"><a href="/">Lines Police CAD</a> ©2020 TLPS LLC</span>
+        </div>
+    </footer>
+    
+    <!-- Main Javascript -->          
+    <script type="text/javascript" src="/static/plugins/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="/static/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/static/plugins/prism/prism.js"></script>    
+    <script type="text/javascript" src="/static/plugins/jquery-scrollTo/jquery.scrollTo.min.js"></script>  
+    <script type="text/javascript" src="/static/plugins/lightbox/dist/ekko-lightbox.min.js"></script>   
+    <script type="text/javascript" src="/static/plugins/stickyfill/dist/stickyfill.min.js"></script>   
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>                                                             
+    <script type="text/javascript" src="/static/js/main.js"></script>
+    
+</body>
+</html> 
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#traffic-violations-table').DataTable({
+            paging: false,
+            bInfo: false,
+            autoWidth: true,
+        });
+
+        $('#petty-misdemeanors-table').DataTable({
+            paging: false,
+            bInfo: false,
+            autoWidth: true,
+        });
+
+        $('#misdemeanors-table').DataTable({
+            paging: false,
+            bInfo: false,
+            autoWidth: true,
+        });
+
+        $('#felonies-table').DataTable({
+            paging: false,
+            bInfo: false,
+            autoWidth: true,
+        });
+
+        $('#other-table').DataTable({
+            paging: false,
+            bInfo: false,
+            autoWidth: true,
+        });
+
+    /* ===== Stickyfill ===== */
+    /* Ref: https://github.com/wilddeer/stickyfill */
+    // Add browser support to position: sticky
+    var elements = $('.sticky');
+    Stickyfill.add(elements);
+
+
+    /* Activate scrollspy menu */
+    $('body').scrollspy({target: '#doc-menu', offset: 100});
+    
+    /* Smooth scrolling */
+	$('a.scrollto').on('click', function(e){
+        //store hash
+        var target = this.hash;    
+        e.preventDefault();
+		$('body').scrollTo(target, 800, {offset: 0, 'axis':'y'});
+		
+	});
+     
+    /* Bootstrap lightbox */
+    /* Ref: http://ashleydw.github.io/lightbox/ */
+
+    $(document).delegate('*[data-toggle="lightbox"]', 'click', function(e) {
+        e.preventDefault();
+        $(this).ekkoLightbox();
+    });   
+})
+</script>
+
