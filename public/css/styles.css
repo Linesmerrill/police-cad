@@ -1279,3 +1279,7 @@ a[data-toggle="collapse"] .rotate {
 #first {
     min-height: 100%;
 }
+
+.no-sort::after { display: none!important; }
+
+.no-sort { pointer-events: none!important; cursor: default!important; }

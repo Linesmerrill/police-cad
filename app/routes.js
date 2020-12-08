@@ -64,6 +64,10 @@ module.exports = function (app, passport, server) {
     res.render('contact-us');
   });
 
+  app.get('/penal-code', function (req, res) {
+    res.render('penal-code');
+  });
+
   app.get('/ads.txt', (req, res) => {
     res.set('Content-Type', 'text');
     let message = 'google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0'
