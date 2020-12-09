@@ -1503,6 +1503,9 @@ module.exports = function (app, passport, server) {
         });
       },
       function (token, done) {
+        if (!exists(req.body.email)) {
+          return console.error("email cannot be empty")
+        }
         User.findOne({
           'user.email': req.body.email.toLowerCase()
         }, function (err, users) {
