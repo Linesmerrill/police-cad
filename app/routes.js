@@ -1511,7 +1511,7 @@ module.exports = function (app, passport, server) {
         }, function (err, users) {
           if (err) return console.error(err);
           if (!users) {
-            req.flash('emailSend', 'If this e-mail exists, then an email has been sent to ' + req.body.email.toLowerCase() + ' with a link to change the password.');
+            req.flash('emailSend', 'If this e-mail exists, then an email has been sent to \'' + req.body.email.toLowerCase() + '\' with a link to change the password.');
             return res.redirect('/forgot-password');
           }
           users.user.resetPasswordToken = token;
