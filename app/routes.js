@@ -1504,7 +1504,12 @@ module.exports = function (app, passport, server) {
       },
       function (token, done) {
         if (!exists(req.body.email)) {
-          return console.error("email cannot be empty")
+          req.flash('emailSend', 'Please enter a valid Email address and try again (error code: #1000)')
+          return res.redirect('/forgot-password');
+        }
+        if (req.body.email.trim().length < 1) {
+          req.flash('emailSend', 'Please enter a valid Email address and try again')
+          return res.redirect('/forgot-password');
         }
         User.findOne({
           'user.email': req.body.email.toLowerCase()
