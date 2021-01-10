@@ -1091,6 +1091,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitTicket"></label>
                 <div class="col-md-4">
+                  <input id="crimeList" type="hidden" name="crimeList" value="">
                   <input type="hidden" name="officerID" value="<%=user._id%>">
                   <input type="hidden" name="route" value="police-dashboard">
                   <button id="submitTicket" class="btn btn-primary" onclick="hideTicketCivPopover()">Submit</button>
@@ -2221,6 +2222,10 @@
       })
       $('#amount').val(parseInt(total))
     })
+
+    $("#submitTicket").on('click',function() {
+      $('#crimeList').val($("#ticket-select").find("option:selected").text())
+    });
   }); /* End of document.ready */
 
   document.addEventListener("DOMContentLoaded", function () {

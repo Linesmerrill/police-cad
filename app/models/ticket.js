@@ -58,15 +58,15 @@ ticketSchema.methods.updateTicket = function (req, res) {
   if (exists(req.body.color)) {
     this.ticket.color = req.body.color.trim().charAt(0).toUpperCase() + req.body.color.trim().slice(1); //optional
   }
-  if (exists(req.body.fines)) {
+  if (exists(req.body.crimeList)) {
     //We check to see if they selected 'Other' and if so we need to grab the input value
-    if (exists(req.body.other) && Array.isArray(req.body.fines)) {
-      otherIndex = req.body.fines.findIndex(element => element.includes("Other"));
-      req.body.fines[otherIndex] = "Other - " + req.body.other.trim()
+    if (exists(req.body.other) && Array.isArray(req.body.crimeList)) {
+      otherIndex = req.body.crimeList.findIndex(element => element.includes("Other"));
+      req.body.crimeList[otherIndex] = "Other - " + req.body.other.trim()
     } else if (req.body.other.trim() != "") {
-      req.body.fines = "Other - " + req.body.other.trim()
+      req.body.crimeList = "Other - " + req.body.other.trim()
     }
-    this.ticket.violation = req.body.fines;
+    this.ticket.violation = req.body.crimeList;
   }
   if (exists(req.body.amount)) {
     this.ticket.amount = req.body.amount.trim();
