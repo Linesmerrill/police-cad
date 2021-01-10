@@ -2134,9 +2134,6 @@
 </script>
 <script type="text/javascript">
   $(document).ready(function () {
-
-
-
     // displays the Update Username and Cancel buttons for updating the username
     var myUser= <%-JSON.stringify(user)%>;
     $('#accountUsername').on('keyup', function (e) {
@@ -2214,8 +2211,17 @@
         $('#warrant-other-div').show();
       }
     })
-  });
 
+    $('#ticket-select').change(function(e) {
+      var selected = $(e.target).val();
+      let total = 0
+      selected.forEach(val => {
+        let subVal = val.substring(2)
+        total += parseInt(subVal)
+      })
+      $('#amount').val(parseInt(total))
+    })
+  }); /* End of document.ready */
 
   document.addEventListener("DOMContentLoaded", function () {
     tail.select(".select-move", {
