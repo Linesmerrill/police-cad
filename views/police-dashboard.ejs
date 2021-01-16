@@ -1091,6 +1091,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitTicket"></label>
                 <div class="col-md-4">
+                  <input id="crimeList" type="hidden" name="crimeList" value="">
                   <input type="hidden" name="officerID" value="<%=user._id%>">
                   <input type="hidden" name="route" value="police-dashboard">
                   <button id="submitTicket" class="btn btn-primary" onclick="hideTicketCivPopover()">Submit</button>
@@ -2134,9 +2135,6 @@
 </script>
 <script type="text/javascript">
   $(document).ready(function () {
-
-
-
     // displays the Update Username and Cancel buttons for updating the username
     var myUser= <%-JSON.stringify(user)%>;
     $('#accountUsername').on('keyup', function (e) {
@@ -2214,8 +2212,21 @@
         $('#warrant-other-div').show();
       }
     })
-  });
 
+    $('#ticket-select').change(function(e) {
+      var selected = $(e.target).val();
+      let total = 0
+      selected.forEach(val => {
+        let subVal = val.substring(2)
+        total += parseInt(subVal)
+      })
+      $('#amount').val(parseInt(total))
+    })
+
+    $("#submitTicket").on('click',function() {
+      $('#crimeList').val($("#ticket-select").find("option:selected").text())
+    });
+  }); /* End of document.ready */
 
   document.addEventListener("DOMContentLoaded", function () {
     tail.select(".select-move", {

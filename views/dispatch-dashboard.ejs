@@ -76,8 +76,7 @@
         </li>
         <div class="collapse in" id="toggleSearch">
           <li>
-            <a data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});"><span
-                class="fa fa-id-card ml-3 mr-3"></span> Name Database</a>
+            <a data-toggle="modal" href="#nameDatabaseModal"><span class="fa fa-id-card ml-3 mr-3"></span> Name Database</a>
           </li>
           <li>
             <a data-toggle="modal" href="#plateDatabaseModal"><span class="fa fa-car ml-3 mr-3"></span> Plate
@@ -1170,6 +1169,7 @@
                     <div class="form-group">
                       <label class="col-md-4 control-label" for="submitTicket"></label>
                       <div class="col-md-4">
+                        <input id="crimeList" type="hidden" name="crimeList" value="">
                         <input type="hidden" name="officerID" value="<%=user._id%>">
                         <input type="hidden" name="route" value="dispatch-dashboard">
                         <button id="submitTicket" class="btn btn-primary"
@@ -2496,7 +2496,21 @@
         $('#warrant-other-div').show();
       }
     })
-  });
+
+    $('#ticket-select').change(function(e) {
+      var selected = $(e.target).val();
+      let total = 0
+      selected.forEach(val => {
+        let subVal = val.substring(2)
+        total += parseInt(subVal)
+      })
+      $('#amount').val(parseInt(total))
+    })
+
+    $("#submitTicket").on('click',function() {
+      $('#crimeList').val($("#ticket-select").find("option:selected").text())
+    });
+  }); /* End of document.ready */
 
   document.addEventListener("DOMContentLoaded", function () {
     tail.select(".select-move", {
