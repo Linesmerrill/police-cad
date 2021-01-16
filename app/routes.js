@@ -15,6 +15,7 @@ var Condition = require('../app/models/medicalCondition');
 var MedicalReport = require('../app/models/medicalReport');
 var ObjectId = require('mongodb').ObjectID;
 var nodemailer = require('nodemailer');
+var nodemailerSendgrid = require('nodemailer-sendgrid');
 var async = require('async');
 var crypto = require('crypto');
 var path = require('path');
@@ -1528,13 +1529,11 @@ module.exports = function (app, passport, server) {
         });
       },
       function (token, users, done) {
-        var smtpTransport = nodemailer.createTransport({
-          service: process.env.MAIL_SERVICE_NAME,
-          auth: {
-            user: process.env.MAIL_USER,
-            pass: process.env.MAIL_PASS,
-          }
-        });
+        var smtpTransport = nodemailer.createTransport(
+          nodemailerSendgrid({
+            apiKey: process.env.MAIL_API_KEY
+          })
+        );
         var mailOptions = {
           to: users.user.email.toLowerCase(),
           from: process.env.FROM_EMAIL,
@@ -1640,13 +1639,11 @@ module.exports = function (app, passport, server) {
         });
       },
       function (users, done) {
-        var smtpTransport = nodemailer.createTransport({
-          service: process.env.MAIL_SERVICE_NAME,
-          auth: {
-            user: process.env.MAIL_USER,
-            pass: process.env.MAIL_PASS,
-          }
-        });
+        var smtpTransport = nodemailer.createTransport(
+          nodemailerSendgrid({
+            apiKey: process.env.MAIL_API_KEY
+          })
+        );
         var mailOptions = {
           to: users.user.email.toLowerCase(),
           from: process.env.FROM_EMAIL,
