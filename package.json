@@ -22,6 +22,7 @@
     "mongoose": "^5.9.19",
     "mpromise": "^0.5.5",
     "nodemailer": "^6.4.10",
+    "nodemailer-sendgrid": "^1.0.3",
     "now": "^19.1.1",
     "passport": "^0.4.1",
     "passport-facebook": "^3.0.0",
