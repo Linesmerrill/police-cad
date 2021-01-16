@@ -24,7 +24,7 @@ communitySchema.methods.createCommunity = function (req, res) {
   this.community.code = makeID(7);
   this.community.createdAt = new Date();
 
-  res.redirect('/civ-dashboard');
+  res.redirect('back');
 };
 
 communitySchema.methods.createPoliceCommunity = function (req, res) {
