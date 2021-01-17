@@ -195,7 +195,7 @@ module.exports = function (app, passport, server) {
       req.session.resetToken = req.params.token
       return res.redirect('/reset/encryptedToken')
     } else {
-    User.findOne({
+    User.findOne({ 
       'user.resetPasswordToken': req.session.resetToken,
       'user.resetPasswordExpires': {
         $gt: Date.now()
@@ -204,7 +204,7 @@ module.exports = function (app, passport, server) {
       if (err) return console.error(err);
       if (!user) {
         req.flash('emailSend', 'Password reset token is invalid or has expired.');
-        return res.redirect('/forgot-password');
+        return res.redirect('back');
       }
       return res.render('reset', {
         user: req.user,
@@ -470,12 +470,12 @@ module.exports = function (app, passport, server) {
     if (req.query.route == 'dispatch-dashboard') {
       if (req.query.firstName == undefined || req.query.lastName == undefined) {
         res.status(400)
-        return res.redirect('/dispatch-dashboard')
+        return res.redirect('back');
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         if (req.query.dateOfBirth == undefined) {
           res.status(400)
-          return res.redirect('/dispatch-dashboard')
+          return res.redirect('back');
         }
         Civilian.find({
           'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
@@ -648,12 +648,12 @@ module.exports = function (app, passport, server) {
     } else {
       if (req.query.firstName == undefined || req.query.lastName == undefined) {
         res.status(400)
-        return res.redirect('/police-dashboard')
+        return res.redirect('back');
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         if (req.query.dateOfBirth == undefined) {
           res.status(400)
-          return res.redirect('/police-dashboard')
+          return res.redirect('back');
         }
         Civilian.find({
           'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
@@ -785,7 +785,7 @@ module.exports = function (app, passport, server) {
     if (req.query.route == 'dispatch-dashboard') {
       if (req.query.plateNumber == undefined) {
         res.status(400)
-        return res.redirect('/dispatch-dashboard')
+        return res.redirect('back');
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Vehicle.find({
@@ -919,7 +919,7 @@ module.exports = function (app, passport, server) {
     } else {
       if (req.query.plateNumber == undefined) {
         res.status(400)
-        return res.redirect('/police-dashboard')
+        return res.redirect('back');
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Vehicle.find({
@@ -973,7 +973,7 @@ module.exports = function (app, passport, server) {
           var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
           if (!isValid) {
             req.app.locals.specialContext = "invalidRequest";
-            return res.redirect('/police-dashboard')
+            return res.redirect('back');
           }
           Community.find({
             '$or': [{
@@ -1017,7 +1017,7 @@ module.exports = function (app, passport, server) {
     if (req.query.route == 'dispatch-dashboard') {
       if (req.query.serialNumber == undefined) {
         res.status(400)
-        return res.redirect('/dispatch-dashboard')
+        return res.redirect('back');
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Firearm.find({
@@ -1151,7 +1151,7 @@ module.exports = function (app, passport, server) {
     } else {
       if (req.query.serialNumber == undefined) {
         res.status(400)
-        return res.redirect('/police-dashboard')
+        return res.redirect('back');
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Firearm.find({
@@ -1205,7 +1205,7 @@ module.exports = function (app, passport, server) {
           var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
           if (!isValid) {
             req.app.locals.specialContext = "invalidRequest";
-            return res.redirect('/police-dashboard')
+            return res.redirect('back');
           }
           Community.find({
             '$or': [{
@@ -1506,11 +1506,11 @@ module.exports = function (app, passport, server) {
       function (token, done) {
         if (!exists(req.body.email)) {
           req.flash('emailSend', 'Please enter a valid Email address and try again (error code: #1000)')
-          return res.redirect('/forgot-password');
+          return res.redirect('back');
         }
         if (req.body.email.trim().length < 1) {
           req.flash('emailSend', 'Please enter a valid Email address and try again')
-          return res.redirect('/forgot-password');
+          return res.redirect('back');
         }
         User.findOne({
           'user.email': req.body.email.toLowerCase()
@@ -1518,7 +1518,7 @@ module.exports = function (app, passport, server) {
           if (err) return console.error(err);
           if (!users) {
             req.flash('emailSend', 'If this e-mail exists, then an email has been sent to \'' + req.body.email.toLowerCase() + '\' with a link to change the password.');
-            return res.redirect('/forgot-password');
+            return res.redirect('back');
           }
           users.user.resetPasswordToken = token;
           users.user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
@@ -1754,7 +1754,7 @@ module.exports = function (app, passport, server) {
     var isValid = isValidObjectIdLength(req.body.warrantID, "cannot lookup invalid length warrantID, route: /clear-warrant")
     if (!isValid) {
       req.app.locals.specialContext = "invalidRequest";
-      return res.redirect('/' + req.body.route)
+      return res.redirect('back');
     }
     Warrant.findByIdAndUpdate({
       '_id': ObjectId(req.body.warrantID)
@@ -1767,7 +1767,7 @@ module.exports = function (app, passport, server) {
       }
     }, function (err) {
       if (err) return console.error(err);
-      return res.redirect('/' + req.body.route);
+      return res.redirect('back');;
     })
   });
 
@@ -1785,14 +1785,14 @@ module.exports = function (app, passport, server) {
     var isValid = isValidObjectIdLength(req.body.boloID, "cannot lookup invalid length boloID, route: /clear-bolo")
     if (!isValid) {
       req.app.locals.specialContext = "invalidRequest";
-      return res.redirect('/' + req.body.route)
+      return res.redirect('back');
     }
     Bolo.findByIdAndDelete({
       '_id': ObjectId(req.body.boloID)
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "clearBoloSuccess"
-      return res.redirect('/' + req.body.route);
+      return res.redirect('back');;
     })
   });
 
@@ -1809,7 +1809,7 @@ module.exports = function (app, passport, server) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
-      return res.redirect('/civ-dashboard');
+      return res.redirect('back');
     }
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
@@ -1817,7 +1817,7 @@ module.exports = function (app, passport, server) {
       if (err) return console.error(err);
       if (community == null) {
         req.app.locals.specialContext = "noCommunityFound";
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       }
       var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /joinCommunity")
       if (!isValid) {
@@ -1833,7 +1833,7 @@ module.exports = function (app, passport, server) {
       }, function (err) {
         if (err) return console.error(err);
         req.app.locals.specialContext = "joinCommunitySuccess";
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       })
     })
   })
@@ -1854,7 +1854,7 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "leaveCommunitySuccess";
-      return res.redirect('/civ-dashboard');
+      return res.redirect('back');
     })
   })
 
@@ -1863,7 +1863,7 @@ module.exports = function (app, passport, server) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
-      return res.redirect('/' + req.body.route)
+      return res.redirect('back');
     }
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
@@ -1871,7 +1871,7 @@ module.exports = function (app, passport, server) {
       if (err) return console.error(err);
       if (community == null) {
         req.app.locals.specialContext = "noCommunityFound";
-        return res.redirect('/' + req.body.route);
+        return res.redirect('back');;
       }
       var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /joinPoliceCommunity")
       if (!isValid) {
@@ -1887,7 +1887,7 @@ module.exports = function (app, passport, server) {
       }, function (err) {
         if (err) return console.error(err);
         req.app.locals.specialContext = "joinCommunitySuccess";
-        return res.redirect('/' + req.body.route);
+        return res.redirect('back');;
       })
     })
   })
@@ -1908,7 +1908,7 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "leaveCommunitySuccess";
-      return res.redirect('/' + req.body.route);
+      return res.redirect('back');;
     })
   })
 
@@ -1917,7 +1917,7 @@ module.exports = function (app, passport, server) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
-      return res.redirect('/ems-dashboard');
+      return res.redirect('back');
     }
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
@@ -1925,7 +1925,7 @@ module.exports = function (app, passport, server) {
       if (err) return console.error(err);
       if (community == null) {
         req.app.locals.specialContext = "noCommunityFound";
-        return res.redirect('/ems-dashboard');
+        return res.redirect('back');
       }
       var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /leavePoliceActiveCommunity")
       if (!isValid) {
@@ -1941,7 +1941,7 @@ module.exports = function (app, passport, server) {
       }, function (err) {
         if (err) return console.error(err);
         req.app.locals.specialContext = "joinCommunitySuccess";
-        return res.redirect('/ems-dashboard');
+        return res.redirect('back');
       })
     })
   })
@@ -1962,7 +1962,7 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "leaveCommunitySuccess";
-      return res.redirect('/ems-dashboard');
+      return res.redirect('back');
     })
   })
 
@@ -2170,13 +2170,13 @@ module.exports = function (app, passport, server) {
       var isValid = isValidObjectIdLength(boloID, "cannot lookup invalid length boloID, route: /updateOrDeleteBolo")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/' + req.body.route)
+        return res.redirect('back');
       }
       Bolo.findByIdAndDelete({
         '_id': ObjectId(boloID)
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/' + req.body.route);
+        return res.redirect('back');;
       })
     } else {
       var boloType
@@ -2196,13 +2196,13 @@ module.exports = function (app, passport, server) {
         boloID = req.body.boloID
       } else {
         console.warn("cannot update or delete non-existent boloID: ", req.body.boloID);
-        return res.redirect('/' + req.body.route);
+        return res.redirect('back');;
 
       }
       var isValid = isValidObjectIdLength(boloID, "cannot lookup invalid length boloID, route: /updateOrDeleteBolo")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/' + req.body.route);
+        return res.redirect('back');;
       }
       Bolo.findOneAndUpdate({
         '_id': ObjectId(boloID)
@@ -2215,7 +2215,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/' + req.body.route);
+        return res.redirect('back');;
       })
     }
   })
@@ -2232,13 +2232,13 @@ module.exports = function (app, passport, server) {
       var isValid = isValidObjectIdLength(callID, "cannot lookup invalid length callID, route: /updateOrDeleteCall")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/' + req.body.route)
+        return res.redirect('back');
       }
       Call.findByIdAndDelete({
         '_id': ObjectId(callID)
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/' + req.body.route);
+        return res.redirect('back');;
       })
     } else if (req.body.action === "update") {
       var shortDescription
@@ -2259,12 +2259,12 @@ module.exports = function (app, passport, server) {
         callID = req.body.callID
       } else {
         console.warn("cannot update or delete non-existent callID: ", req.body.callID);
-        return res.redirect('/' + req.body.route);
+        return res.redirect('back');;
       }
       var isValid = isValidObjectIdLength(callID, "cannot lookup invalid length callID, route: /updateOrDeleteCall")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/' + req.body.route);
+        return res.redirect('back');;
       }
       Call.findOneAndUpdate({
         '_id': ObjectId(callID)
@@ -2277,7 +2277,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/' + req.body.route);
+        return res.redirect('back');;
       })
     } else {
       var callID
@@ -2285,12 +2285,12 @@ module.exports = function (app, passport, server) {
         callID = req.body.callID
       } else {
         console.warn("cannot update or delete non-existent callID: ", req.body.callID);
-        return res.redirect('/' + req.body.route);
+        return res.redirect('back');;
       }
       var isValid = isValidObjectIdLength(callID, "cannot lookup invalid length callID, route: /updateOrDeleteCall")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/' + req.body.route);
+        return res.redirect('back');;
       }
       Call.findOneAndUpdate({
         '_id': ObjectId(callID)
@@ -2300,7 +2300,7 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/' + req.body.route);
+        return res.redirect('back');;
       })
     }
   })
@@ -2324,7 +2324,7 @@ module.exports = function (app, passport, server) {
       var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/civ-dashboard')
+        return res.redirect('back');
       }
       Civilian.findByIdAndUpdate({
         '_id': ObjectId(req.body.civilianID)
@@ -2342,13 +2342,13 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       })
     } else if (req.body.action == "createLicense") {
       var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/civ-dashboard')
+        return res.redirect('back');
       }
       Civilian.findByIdAndUpdate({
         '_id': ObjectId(req.body.civilianID)
@@ -2359,13 +2359,13 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       })
     } else if (req.body.action == "deleteLicense") {
       var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/civ-dashboard')
+        return res.redirect('back');
       }
       Civilian.findByIdAndUpdate({
         '_id': ObjectId(req.body.civilianID)
@@ -2376,13 +2376,13 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       })
     } else {
       var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/civ-dashboard')
+        return res.redirect('back');
       }
       Civilian.findByIdAndDelete({
         '_id': ObjectId(req.body.civilianID)
@@ -2407,7 +2407,7 @@ module.exports = function (app, passport, server) {
                   'condition.civilianID': req.body.civilianID
                 }, function (err) {
                   if (err) return console.error(err);
-                  return res.redirect('/civ-dashboard');
+                  return res.redirect('back');
                 })
               })
             })
@@ -2426,7 +2426,7 @@ module.exports = function (app, passport, server) {
       'ems.lastName': lastName
     }, function (err) {
       if (err) return console.error(err);
-      res.redirect('/ems-dashboard');
+      res.redirect('back');
     })
   })
 
@@ -2435,19 +2435,19 @@ module.exports = function (app, passport, server) {
     if (req.body.action === "update") {
       if (!exists(req.body.vehicleID)) {
         console.warn("cannot update vehicle with empty vehicleID, route: /updateOrDeleteVeh")
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       }
       if (!exists(req.body.roVeh)) {
         req.body.roVeh = 'N/A'
       }
       if (req.body.vehicleID.length != 24) {
         console.warn("cannot delete vehicle with invalid vehicleID, route: /updateOrDeleteVeh", req.body.vehicleID)
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       }
       var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /updateOrDeleteVeh")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/civ-dashboard')
+        return res.redirect('back');
       }
       if (!exists(req.body.vinVeh)) {
         req.body.vinVeh = ""
@@ -2468,27 +2468,27 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       })
     } else {
       if (!exists(req.body.vehicleID)) {
         console.warn("cannot delete vehicle with empty vehicleID, route: /updateOrDeleteVeh")
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       }
       if (req.body.vehicleID.length != 24) {
         console.warn("cannot delete vehicle with invalid vehicleID, route: /updateOrDeleteVeh", req.body.vehicleID)
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       }
       var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /updateOrDeleteVeh")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/civ-dashboard')
+        return res.redirect('back');
       }
       Vehicle.findByIdAndDelete({
         '_id': ObjectId(req.body.vehicleID)
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       })
     }
   })
@@ -2499,7 +2499,7 @@ module.exports = function (app, passport, server) {
     if (req.body.action === "update") {
       if (!exists(req.body.firearmID)) {
         console.warn("cannot update firearm with empty firearmID, route: /updateOrDeleteFirearm")
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       }
       if (!exists(req.body.registeredOwner)) {
         req.body.registeredOwner = 'N/A'
@@ -2507,7 +2507,7 @@ module.exports = function (app, passport, server) {
       var isValid = isValidObjectIdLength(req.body.firearmID, "cannot lookup invalid length firearmID, route: /updateOrDeleteFirearm")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/civ-dashboard')
+        return res.redirect('back');
       }
       Firearm.findOneAndUpdate({
         '_id': ObjectId(req.body.firearmID),
@@ -2521,23 +2521,23 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       })
     } else {
       if (!exists(req.body.firearmID)) {
         console.warn("cannot delete firearm with empty firearmID, route: /updateOrDeleteFirearm")
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       }
       var isValid = isValidObjectIdLength(req.body.firearmID, "cannot lookup invalid length firearmID, route: /updateOrDeleteFirearm")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/civ-dashboard')
+        return res.redirect('back');
       }
       Firearm.deleteOne({
         '_id': ObjectId(req.body.firearmID),
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       })
     }
   })
@@ -2578,7 +2578,7 @@ module.exports = function (app, passport, server) {
       '_id': ObjectId(req.body.vehicleID)
     }, function (err) {
       if (err) return console.error(err);
-      return res.redirect('/ems-dashboard');
+      return res.redirect('back');
     })
   })
 
@@ -2647,7 +2647,7 @@ module.exports = function (app, passport, server) {
 
   app.post('/communities', auth, function (req, res) {
     req.session.communityID = req.body.communityID
-    return res.redirect('communities')
+    return res.redirect('back');
   })
 
   var io = require('socket.io').listen(server);
