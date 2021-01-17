@@ -195,23 +195,23 @@ module.exports = function (app, passport, server) {
       req.session.resetToken = req.params.token
       return res.redirect('/reset/encryptedToken')
     } else {
-    User.findOne({
-      'user.resetPasswordToken': req.session.resetToken,
-      'user.resetPasswordExpires': {
-        $gt: Date.now()
-      }
-    }, function (err, user) {
-      if (err) return console.error(err);
-      if (!user) {
-        req.flash('emailSend', 'Password reset token is invalid or has expired.');
-        return res.redirect('/forgot-password');
-      }
-      return res.render('reset', {
-        user: req.user,
-        message: req.flash('resetSend')
+      User.findOne({
+        'user.resetPasswordToken': req.session.resetToken,
+        'user.resetPasswordExpires': {
+          $gt: Date.now()
+        }
+      }, function (err, user) {
+        if (err) return console.error(err);
+        if (!user) {
+          req.flash('emailSend', 'Password reset token is invalid or has expired.');
+          return res.redirect('/forgot-password');
+        }
+        return res.render('reset', {
+          user: req.user,
+          message: req.flash('resetSend')
+        });
       });
-    });
-  }
+    }
   });
 
   app.get('/civ-dashboard', authCivilian, function (req, res) {
@@ -1614,7 +1614,7 @@ module.exports = function (app, passport, server) {
 
   app.post('/reset/:token', function (req, res) {
     var token = req.session.resetToken
-    
+
     async.waterfall([
       function (done) {
         User.findOne({
@@ -3009,34 +3009,38 @@ module.exports = function (app, passport, server) {
 
     socket.on('update_panic_btn_sound', (user) => {
       // console.debug('update panic button sound status: ', user)
-      if (user._id != null && user._id != undefined) {
-        User.findById({
-          '_id': ObjectId(user._id)
-        }, function (err, dbUser) {
-          if (err) return console.error(err);
-          User.findByIdAndUpdate({
+      if (user != null && user != undefined) {
+        if (user._id != null && user._id != undefined) {
+          User.findById({
             '_id': ObjectId(user._id)
-          }, {
-            'user.panicButtonSound': !dbUser.user.panicButtonSound
-          }, function (err, dbUserUpdtd) {
+          }, function (err, dbUser) {
             if (err) return console.error(err);
-            return socket.emit('load_panic_btn_result', dbUserUpdtd)
-          })
-        });
+            User.findByIdAndUpdate({
+              '_id': ObjectId(user._id)
+            }, {
+              'user.panicButtonSound': !dbUser.user.panicButtonSound
+            }, function (err, dbUserUpdtd) {
+              if (err) return console.error(err);
+              return socket.emit('load_panic_btn_result', dbUserUpdtd)
+            })
+          });
+        }
       }
     });
 
     socket.on('update_drivers_license_status', (user) => {
       // console.debug('update revoke drivers license status: ', user._id)
-      if (user._id != null && user._id != undefined) {
-        Civilian.findByIdAndUpdate({
-          '_id': ObjectId(user._id)
-        }, {
-          'civilian.licenseStatus': user.status
-        }, function (err, dbUser) {
-          if (err) return console.error(err);
-          return socket.emit('load_updated_drivers_license_status_result', dbUser)
-        })
+      if (user != null && user != undefined) {
+        if (user._id != null && user._id != undefined) {
+          Civilian.findByIdAndUpdate({
+            '_id': ObjectId(user._id)
+          }, {
+            'civilian.licenseStatus': user.status
+          }, function (err, dbUser) {
+            if (err) return console.error(err);
+            return socket.emit('load_updated_drivers_license_status_result', dbUser)
+          })
+        }
       }
     });
   });

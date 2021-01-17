@@ -21,16 +21,23 @@ var vehicleSchema = mongoose.Schema({
 
 vehicleSchema.methods.createVeh = function (req, res) {
   // console.debug("req body: ", req.body)
-  this.vehicle.plate = req.body.plate.trim().toUpperCase();
-  if (!exists(req.body.vin)) {
-    req.body.vin = ""
+  if (exists(req.body.plate)) {
+    this.vehicle.plate = req.body.plate.trim().toUpperCase();
   }
-  this.vehicle.vin = req.body.vin.trim().toUpperCase();
-  this.vehicle.model = req.body.model.trim().charAt(0).toUpperCase() + req.body.model.trim().slice(1);
-  this.vehicle.color = req.body.color.trim().charAt(0).toUpperCase() + req.body.color.trim().slice(1);
+  if (exists(req.body.vin)) {
+    this.vehicle.vin = req.body.vin.trim().toUpperCase();
+  }
+  if (exists(req.body.model)) {
+    this.vehicle.model = req.body.model.trim().charAt(0).toUpperCase() + req.body.model.trim().slice(1);
+  }
+  if (exists(req.body.color)) {
+    this.vehicle.color = req.body.color.trim().charAt(0).toUpperCase() + req.body.color.trim().slice(1);
+  }
   this.vehicle.validRegistration = req.body.validRegistration;
   this.vehicle.validInsurance = req.body.validInsurance;
-  this.vehicle.registeredOwner = req.body.registeredOwner.trim();
+  if (exists(req.body.registeredOwner)) {
+    this.vehicle.registeredOwner = req.body.registeredOwner.trim();
+  }
   this.vehicle.isStolen = req.body.isStolen;
   this.vehicle.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null
   this.vehicle.userID = req.body.userID; // we set this when submitting the from so it should not be null
@@ -39,7 +46,7 @@ vehicleSchema.methods.createVeh = function (req, res) {
 };
 
 function exists(v) {
-  if (v !== undefined) {
+  if (v !== undefined && v != null) {
     return true
   } else {
     return false
