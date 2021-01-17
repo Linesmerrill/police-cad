@@ -10,7 +10,8 @@ var flash = require('connect-flash');
 var path = require('path');
 var http = require('http').createServer(express);
 var realFs = require('fs')
-var gracefulFs = require('graceful-fs')
+var gracefulFs = require('graceful-fs');
+const rateLimit = require("express-rate-limit");
 
 var newBaseURL = process.env.NEW_BASE_URL || 'http://localhost:8080';
 var redirectStatus = parseInt(process.env.REDIRECT_STATUS || 302);
@@ -29,6 +30,18 @@ mongoose.set('useFindAndModify', false);
 
 // Setup passport.
 require('./config/passport')(passport);
+
+// Enable if you're behind a reverse proxy (Heroku, Bluemix, AWS ELB, Nginx, etc)
+// see https://expressjs.com/en/guide/behind-proxies.html
+app.set('trust proxy', 1);
+
+const limiter = rateLimit({
+	windowMs: 5 * 60 * 1000, // 5 minutes
+	max: 500 // limit each IP to 100 requests per windowMs
+  });
+   
+  //  apply to all requests
+  app.use(limiter);
 
 // Use cookie parser.
 app.use(cookieParser());
