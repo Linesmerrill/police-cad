@@ -91,6 +91,10 @@ module.exports = function (app, passport, server) {
     return res.redirect('/ems-dashboard')
   });
 
+  app.get('/login-community', authCommunity, function (req, res) {
+    return res.redirect('/community-dashboard')
+  });
+
   app.get('/login-dispatch', authDispatch, function (req, res) {
     return res.redirect('/dispatch-dashboard')
   });
@@ -109,6 +113,12 @@ module.exports = function (app, passport, server) {
 
   app.get('/signup-ems', function (req, res) {
     return res.render('signup-ems', {
+      message: req.flash('signuperror')
+    });
+  });
+
+  app.get('/signup-community', function (req, res) {
+    return res.render('signup-community', {
       message: req.flash('signuperror')
     });
   });
@@ -364,6 +374,47 @@ module.exports = function (app, passport, server) {
           });
         });
       })
+    }
+  });
+
+  app.get('/community-dashboard', authCommunity, function (req, res) {
+    var context = req.app.locals.specialContext;
+    req.app.locals.specialContext = null;
+    if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+
+      Community.find({
+        '$or': [{
+          'community.ownerID': req.user._id
+        }, {
+          '_id': req.user.user.activeCommunity
+        }]
+      }, function (err, dbCommunities) {
+        if (err) return console.error(err);
+        return res.render('community-dashboard', {
+          user: req.user,
+          personas: null,
+          vehicles: null,
+          communities: dbCommunities,
+          context: context
+        });
+      });
+    } else {
+      Community.find({
+        '$or': [{
+          'community.ownerID': req.user._id
+        }, {
+          '_id': req.user.user.activeCommunity
+        }]
+      }, function (err, dbCommunities) {
+        if (err) return console.error(err);
+        return res.render('community-dashboard', {
+          user: req.user,
+          personas: null,
+          vehicles: null,
+          communities: dbCommunities,
+          context: context
+        });
+      });
     }
   });
 
@@ -1465,6 +1516,12 @@ module.exports = function (app, passport, server) {
     failureFlash: true
   }));
 
+  app.post('/login-community', passport.authenticate('login', {
+    successRedirect: '/community-dashboard',
+    failureRedirect: '/login-community',
+    failureFlash: true
+  }));
+
   app.post('/login-dispatch', passport.authenticate('login', {
     successRedirect: '/dispatch-dashboard',
     failureRedirect: '/login-dispatch',
@@ -1486,6 +1543,12 @@ module.exports = function (app, passport, server) {
   app.post('/signup-ems', passport.authenticate('signup', {
     successRedirect: '/ems-dashboard',
     failureRedirect: '/signup-ems',
+    failureFlash: true
+  }));
+
+  app.post('/signup-community', passport.authenticate('signup', {
+    successRedirect: '/community-dashboard',
+    failureRedirect: '/signup-community',
     failureFlash: true
   }));
 
@@ -1809,7 +1872,7 @@ module.exports = function (app, passport, server) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
-      return res.redirect('/civ-dashboard');
+      return res.redirect('back');
     }
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
@@ -1817,12 +1880,12 @@ module.exports = function (app, passport, server) {
       if (err) return console.error(err);
       if (community == null) {
         req.app.locals.specialContext = "noCommunityFound";
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       }
       var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /joinCommunity")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect("/civ-dashboard")
+        return res.redirect('back');
       }
       User.findOneAndUpdate({
         '_id': ObjectId(req.body.userID),
@@ -1833,7 +1896,7 @@ module.exports = function (app, passport, server) {
       }, function (err) {
         if (err) return console.error(err);
         req.app.locals.specialContext = "joinCommunitySuccess";
-        return res.redirect('/civ-dashboard');
+        return res.redirect('back');
       })
     })
   })
@@ -1843,7 +1906,7 @@ module.exports = function (app, passport, server) {
     var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /leaveActiveCommunity")
     if (!isValid) {
       req.app.locals.specialContext = "invalidRequest";
-      return res.redirect("/civ-dashboard")
+      return res.redirect('back')
     }
     User.findOneAndUpdate({
       '_id': ObjectId(req.body.userID),
@@ -1854,7 +1917,7 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "leaveCommunitySuccess";
-      return res.redirect('/civ-dashboard');
+      return res.redirect('back');
     })
   })
 
@@ -3077,6 +3140,15 @@ function authEms(req, res, next) {
     return next();
   }
   res.render('login-ems', {
+    message: req.flash('error')
+  });
+}
+
+function authCommunity(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.render('login-community', {
     message: req.flash('error')
   });
 }
