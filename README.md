@@ -22,8 +22,8 @@ This is a easy to setup and use police server CAD. Includes a signup/login for b
 1. Go to http://localhost:8080.
 
 ### Setting up MongoDB
-1. Install mongodb via brew. `brew install mongodb`
-1. Start mongodb via brew. `brew services restart mongodb`
+1. Install mongodb via brew [Step by step instructions](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-os-x/)
+1. Start mongodb via brew [Step by step instructions](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-os-x/#run-mongodb-community-edition)
 
 ### Accessing the Database
 1. Locally this will use the knoldus db (or whatever you specify manually)
