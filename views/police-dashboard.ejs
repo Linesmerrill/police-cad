@@ -672,6 +672,52 @@
 
                           <hr style="width: 88%;max-width: 100rem;">
                           <h5>
+                            <ion-icon name="browsers-outline"></ion-icon> Registered Vehicles
+                          </h5>
+                          <button
+                            type="button"
+                            onclick="showRegisteredCars()"
+                            class="btn btn-primary btn-sm mr-3"
+                            id="registeredCarButton"
+                            > Show Registered Vehicles
+                          </button>
+
+                          <div class="form-group">
+                            <div id='registeredCars' style="display:none">
+                              <% if (registeredVehicles != null) {%>
+                                <% for (let c=0; c<registeredVehicles.length; c++) {%>
+                                  <!-- <script>console.log('<%=registeredVehicles[c].vehicle.plate%>')</script> -->
+                                  <div class="panel-body">
+                                    <% if (registeredVehicles[c].vehicle.isStolen == 2) {%>
+                                    <div id="stolenMessage" class="alert alert-danger" style="display:block">
+                                      <strong>Danger!</strong> Vehicle reported as stolen.
+                                    </div>
+                                    <% } %>
+                                    Vin #: <%= registeredVehicles[c].vehicle.vin%><br />
+                                    License Plate #: <%= registeredVehicles[c].vehicle.plate%><br />
+                                    Color: <%= registeredVehicles[c].vehicle.color%><br />
+                                    Model: <%= registeredVehicles[c].vehicle.model%><br />
+                                    <% if (registeredVehicles[c].vehicle.validInsurance == 1) {%>
+                                    <p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i>
+                                    </p>
+                                    <% } else {%>
+                                    <p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>
+                                    <% } %>
+                                    <% if (registeredVehicles[c].vehicle.validRegistration == 1) {%>
+                                    <p class="plate-body-text">Registration: Valid <i
+                                        class="ion-checkmark-circled color-green"></i></p>
+                                    <% } else {%>
+                                    <p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i>
+                                    </p>
+                                    <% } %>
+                                  </div>
+                                <% } %>
+                              <% } %>
+                            </div>
+                          </div>
+
+                          <hr style="width: 88%;max-width: 100rem;">
+                          <h5>
                             <ion-icon name="browsers-outline"></ion-icon> Firearm License
                           </h5>
 
@@ -863,9 +909,22 @@
                             <strong>Danger!</strong> Vehicle reported as stolen.
                           </div>
                           <% } %>
+                          <script>
+                            // Get First + Last name of Owner
+                            let data = '<%= vehicles[i].vehicle.registeredOwner %>';
+                            let communityID = '<%= vehicles[i].vehicle.activeCommunityID %>'
+                            let res = data.split(" ");
+                            let firstName = res[0],
+                                lastName = res[1];
+                            // Redirects to NameDB page
+                            function redirect() {
+                              let url = `name-search?firstName=${firstName}&lastName=${lastName}&activeCommunityID=${communityID}`;
+                              document.location.href = url;
+                            }
+                          </script>
                           Vin #: <%= vehicles[i].vehicle.vin%><br />
                           License Plate #: <%= vehicles[i].vehicle.plate%><br />
-                          Registered Owner: <%= vehicles[i].vehicle.registeredOwner%><br />
+                          Registered Owner: <button type="submit" class="btn btn-info" onclick="redirect()"><%= vehicles[i].vehicle.registeredOwner%></button><br />
                           Color: <%= vehicles[i].vehicle.color%><br />
                           Model: <%= vehicles[i].vehicle.model%><br />
                           <% if (vehicles[i].vehicle.validInsurance == 1) {%>
@@ -2248,6 +2307,17 @@
       activeCommunity: myUser.user.activeCommunity
     }
     socket.emit('load_panic_statuses', myReq)
+  }
+
+  function showRegisteredCars() {
+    let elem = document.getElementById('registeredCars');
+    if (elem.style.display === "none") {
+      elem.style.display = "block";
+      document.getElementById('registeredCarButton').innerHTML = 'Hide Registered Vehicles';
+    } else {
+      elem.style.display = "none";
+      document.getElementById('registeredCarButton').innerHTML = 'Show Registered Vehicles';
+    }
   }
 
   function searchPlate() {
