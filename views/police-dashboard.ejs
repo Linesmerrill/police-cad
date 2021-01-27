@@ -399,6 +399,22 @@
               <!-- List of Civilians -->
               <div id="civDetails" style="display:none">
                 <div class="panel-group" id="accordion">
+                  <script>
+                    // Global script
+                    // This function need to go here otherwise we get an undefined error
+                    function makeid(length) {
+                      let result = '';
+                      let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                      let charactersLength = characters.length;
+                      for ( var i = 0; i < length; i++ ) {
+                        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+                      }
+                      return result;
+                    }
+
+                    // This removed the "Identifier 'customID' has already been declared"
+                    let customID;
+                  </script>
                   <% if (civilians != null) {%>
                   <% for(var i=0; i<civilians.length; i++) {%>
                   <div class="panel panel-default background-transparent">
@@ -672,21 +688,20 @@
 
                           <hr style="width: 88%;max-width: 100rem;">
                           <h5>
-                            <ion-icon name="browsers-outline"></ion-icon> Registered Vehicles
+                            <ion-icon name="car-sport-outline"></ion-icon> Registered Vehicles
                           </h5>
                           <button
                             type="button"
-                            onclick="showRegisteredCars()"
-                            class="btn btn-primary btn-sm mr-3"
+                            class="btn btn-primary btn-md margin-bottom-05"
                             id="registeredCarButton"
                             > Show Registered Vehicles
                           </button>
 
                           <div class="form-group">
                             <div id='registeredCars' style="display:none">
-                              <% if (registeredVehicles != null) {%>
+                              <% if (registeredVehicles != null && registeredVehicles.length > 0) { %>
                                 <% for (let c=0; c<registeredVehicles.length; c++) {%>
-                                  <!-- <script>console.log('<%=registeredVehicles[c].vehicle.plate%>')</script> -->
+                                  <% if(registeredVehicles[c].vehicle.registeredOwner == `${civilians[i].civilian.firstName} ${civilians[i].civilian.lastName} | DOB: ${civilians[i].civilian.birthday}`) { %>
                                   <div class="panel-body">
                                     <% if (registeredVehicles[c].vehicle.isStolen == 2) {%>
                                     <div id="stolenMessage" class="alert alert-danger" style="display:block">
@@ -711,10 +726,23 @@
                                     </p>
                                     <% } %>
                                   </div>
+                                  <% } else { %>
+                                    <h5 style="text-align: center;">No Registered Vehicles</h5>  
+                                  <% } %>
                                 <% } %>
+                              <% } else { %>
+                                <h5 style="text-align: center;">No Registered Vehilces</h5>
                               <% } %>
                             </div>
                           </div>
+
+                          <script>
+                            // Sets Civilian Specific Registered Car Div
+                            customID = makeid(8);
+                            document.getElementById('registeredCars').setAttribute('id', `registeredCars-${customID}`)
+                            document.getElementById('registeredCarButton').setAttribute('onclick', `showRegisteredCars("${customID}")`)
+                            document.getElementById('registeredCarButton').setAttribute('id', `registeredCarButton-${customID}`)
+                          </script>
 
                           <hr style="width: 88%;max-width: 100rem;">
                           <h5>
@@ -880,7 +908,7 @@
                     class="form-control input-md" list="plates" style="text-transform: uppercase;" required>
                 </div>
                 <div class="col-md-4">
-                  <input type="hidden" id="active-community-id" name="activeCommunityID" ,
+                  <input type="hidden" id="this-active-community-id" name="activeCommunityID" ,
                     value="<%=user.user.activeCommunity%>">
                   <button type="submit" onclick="searchPlate()" class="btn btn-info">Search</button>
                 </div>
@@ -2309,14 +2337,14 @@
     socket.emit('load_panic_statuses', myReq)
   }
 
-  function showRegisteredCars() {
-    let elem = document.getElementById('registeredCars');
+  function showRegisteredCars(customID) {
+    let elem = document.getElementById(`registeredCars-${customID}`);
     if (elem.style.display === "none") {
       elem.style.display = "block";
-      document.getElementById('registeredCarButton').innerHTML = 'Hide Registered Vehicles';
+      document.getElementById(`registeredCarButton-${customID}`).innerHTML = 'Hide Registered Vehicles';
     } else {
       elem.style.display = "none";
-      document.getElementById('registeredCarButton').innerHTML = 'Show Registered Vehicles';
+      document.getElementById(`registeredCarButton-${customID}`).innerHTML = 'Show Registered Vehicles';
     }
   }
 
