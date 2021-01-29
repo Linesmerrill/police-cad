@@ -854,9 +854,7 @@ module.exports = function (app, passport, server) {
                       if (err) return console.error(err);
                       let target;
                       let allRegisteredVehicles = [];
-                      console.log("dbCivilians: ", dbCivilians)
                       for (let c=0; c<dbCivilians.length; c++) {
-                        
                         target = dbCivilians[c].civilian.firstName + ' ' + dbCivilians[c].civilian.lastName + " | DOB: " + dbCivilians[c].civilian.birthday;
                         await Vehicle.find({
                           'vehicle.registeredOwner': target
