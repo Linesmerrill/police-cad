@@ -461,6 +461,22 @@
                     <!-- List of Civilians -->
                     <div id="civDetails" style="display:none">
                       <div class="panel-group" id="accordion">
+                        <script>
+                          // Global script
+                          // This function need to go here otherwise we get an undefined error
+                          function makeid(length) {
+                            let result = '';
+                            let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                            let charactersLength = characters.length;
+                            for ( var i = 0; i < length; i++ ) {
+                              result += characters.charAt(Math.floor(Math.random() * charactersLength));
+                            }
+                            return result;
+                          }
+      
+                          // This removed the "Identifier 'customID' has already been declared"
+                          let customID;
+                        </script>
                         <% if (civilians != null) {%>
                         <% for(var i=0; i<civilians.length; i++) {%>
                         <div class="panel panel-default background-transparent">
@@ -993,23 +1009,9 @@
                                   <strong>Danger!</strong> Vehicle reported as stolen.
                                 </div>
                                 <% } %>
-                                <script>
-                                  // Get First + Last name of Owner
-                                  let data = '<%= vehicles[i].vehicle.registeredOwner %>';
-                                  let communityID = '<%= vehicles[i].vehicle.activeCommunityID %>'
-                                  let res = data.split(" ");
-                                  let firstName = res[0],
-                                      lastName = res[1];
-                                  // Redirects to NameDB page
-                                  function redirect() {
-                                    let url = `name-search?firstName=${firstName}&lastName=${lastName}&route=dispatch-dashboard&activeCommunityID=${communityID}`;
-                                    document.location.href = url;
-                                  }
-                                </script>
-
                                 Vin #: <%= vehicles[i].vehicle.vin%><br />
                                 License Plate #: <%= vehicles[i].vehicle.plate%><br />
-                                Registered Owner: <button type="submit" class="btn btn-info" onclick="redirect()"><%= vehicles[i].vehicle.registeredOwner%></button><br />
+                                Registered Owner: <a type="submit" class="btn btn-info" onclick="openNameDatabase('<%= vehicles[i].vehicle.registeredOwner%>','<%= vehicles[i].vehicle.activeCommunityID %>')"><%= vehicles[i].vehicle.registeredOwner%></a><br />
                                 Color: <%= vehicles[i].vehicle.color%><br />
                                 Model: <%= vehicles[i].vehicle.model%><br />
                                 <% if (vehicles[i].vehicle.validInsurance == 1) {%>
@@ -3375,5 +3377,38 @@
           $('#noLicenseMessage-'+i).removeClass('hide')
       }
     })
+  }
+
+  function openNameDatabase(registeredOwner, activeCommunityID) {
+    if (registeredOwner == null || registeredOwner == undefined) {
+      if (activeCommunityID.length == 0) {
+        return document.location.href = `name-search?firstName=&lastName=&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+      }
+      return document.location.href = `name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+    }
+    let nameAndDOB = registeredOwner.split(" | ")
+    if (nameAndDOB.length !== 2) {
+      if (activeCommunityID.length == 0) {
+        return document.location.href = `name-search?firstName=&lastName=&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+      }
+      return document.location.href = `name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+    }
+    let firstNameLastName = nameAndDOB[0].split(" ")
+    if (firstNameLastName.length !== 2) {
+      if (activeCommunityID.length == 0) {
+        return document.location.href = `name-search?firstName=&lastName=&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+      }
+      return document.location.href = `name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+    }
+    //check to see if we are in a community, if we are not, 
+    //then we need to use the DOB to do the name search
+    if (activeCommunityID.length == 0) {
+      let dob = nameAndDOB[1].split(" ")
+      if (dob.length !== 2) {
+        return document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`    
+      }
+      return document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=${dob[1]}&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`  
+    }
+    return document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
   }
 </script>

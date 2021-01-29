@@ -595,6 +595,7 @@ module.exports = function (app, passport, server) {
                           arrestReports: dbArrestReports,
                           warrants: dbWarrants,
                           communities: dbCommunities,
+                          commUsers: null,
                           bolos: dbBolos,
                           calls: dbCalls,
                           context: null

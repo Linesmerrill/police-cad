@@ -40,11 +40,12 @@ vehicleSchema.methods.createVeh = function (req, res) {
   if (exists(req.body.registeredOwner)) {
     let modOwner = req.body.registeredOwner.split("+")
     if (modOwner.length != 2) {
-      res.redirect('/civ-dashboard');
-      return
-    }
+      // means the user did not select a user to assign the vehicle to, which is fine
+      this.vehicle.registeredOwner = "N/A"
+    } else {
     this.vehicle.registeredOwnerID = modOwner[0]
     this.vehicle.registeredOwner = modOwner[1].trim();
+    }
   }
   
   this.vehicle.isStolen = req.body.isStolen;
