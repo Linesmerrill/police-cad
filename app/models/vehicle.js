@@ -21,7 +21,7 @@ var vehicleSchema = mongoose.Schema({
 });
 
 vehicleSchema.methods.createVeh = function (req, res) {
-  console.debug("req body: ", req.body)
+  // console.debug("req body: ", req.body)
   if (exists(req.body.plate)) {
     this.vehicle.plate = req.body.plate.trim().toUpperCase();
   }
