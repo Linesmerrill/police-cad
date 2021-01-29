@@ -700,8 +700,10 @@
                           <div class="form-group">
                             <div id='registeredCars' style="display:none">
                               <% if (registeredVehicles != null && registeredVehicles.length > 0) { %>
+                                <% let count = 0 %>
                                 <% for (let c=0; c<registeredVehicles.length; c++) {%>
                                   <% if(registeredVehicles[c].vehicle.registeredOwner == `${civilians[i].civilian.firstName} ${civilians[i].civilian.lastName} | DOB: ${civilians[i].civilian.birthday}`) { %>
+                                    <% count++ %>
                                   <div class="panel-body">
                                     <% if (registeredVehicles[c].vehicle.isStolen == 2) {%>
                                     <div id="stolenMessage" class="alert alert-danger" style="display:block">
@@ -726,12 +728,13 @@
                                     </p>
                                     <% } %>
                                   </div>
-                                  <% } else { %>
-                                    <h5 style="text-align: center;">No Registered Vehicles</h5>  
                                   <% } %>
                                 <% } %>
+                                <% if (count === 0) { %>
+                                  <h5 style="text-align: center;">No Registered Vehicles</h5> 
+                                  <% } %>
                               <% } else { %>
-                                <h5 style="text-align: center;">No Registered Vehilces</h5>
+                                <h5 style="text-align: center;">No Registered Vehicles</h5>
                               <% } %>
                             </div>
                           </div>
