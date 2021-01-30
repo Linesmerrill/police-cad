@@ -282,11 +282,12 @@
 
         </div>
       </header>
-      <ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article"
+      <div class= "adsbygoogle"></div>
+      <!-- <ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article"
         data-ad-format="fluid" data-ad-client="ca-pub-3842696805773142" data-ad-slot="8821936879"></ins>
       <script>
         (adsbygoogle=window.adsbygoogle||[]).push({});
-      </script>
+      </script> -->
       <section style='background-image: url("/static/images/blue-clouds.jpg"); padding: 0;'>
         <div class="container">
           <div class="col-lg-10 col-lg-offset-1 margin-top-1">
@@ -461,6 +462,22 @@
                     <!-- List of Civilians -->
                     <div id="civDetails" style="display:none">
                       <div class="panel-group" id="accordion">
+                        <script>
+                          // Global script
+                          // This function need to go here otherwise we get an undefined error
+                          function makeid(length) {
+                            let result = '';
+                            let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                            let charactersLength = characters.length;
+                            for ( var i = 0; i < length; i++ ) {
+                              result += characters.charAt(Math.floor(Math.random() * charactersLength));
+                            }
+                            return result;
+                          }
+      
+                          // This removed the "Identifier 'customID' has already been declared"
+                          let customID;
+                        </script>
                         <% if (civilians != null) {%>
                         <% for(var i=0; i<civilians.length; i++) {%>
                         <div class="panel panel-default background-transparent">
@@ -738,6 +755,67 @@
 
                                 <hr style="width: 88%;max-width: 100rem;">
                                 <h5>
+                                  <ion-icon name="car-sport-outline"></ion-icon> Registered Vehicles
+                                </h5>
+                                <button
+                                  type="button"
+                                  class="btn btn-primary btn-md margin-bottom-05"
+                                  id="registeredCarButton"
+                                  > Show Registered Vehicles
+                                </button>
+      
+                                <div class="form-group">
+                                  <div id='registeredCars' style="display:none">
+                                    <% if (registeredVehicles != null && registeredVehicles.length > 0) { %>
+                                      <% let count = 0 %>
+                                      <% for (let c=0; c<registeredVehicles.length; c++) {%>
+                                        <% if(registeredVehicles[c].vehicle.registeredOwner == `${civilians[i].civilian.firstName} ${civilians[i].civilian.lastName} | DOB: ${civilians[i].civilian.birthday}`) { %>
+                                          <% count++ %>
+                                          <div class="panel-body">
+                                          <% if (registeredVehicles[c].vehicle.isStolen == 2) {%>
+                                          <div id="stolenMessage" class="alert alert-danger" style="display:block">
+                                            <strong>Danger!</strong> Vehicle reported as stolen.
+                                          </div>
+                                          <% } %>
+                                          Vin #: <%= registeredVehicles[c].vehicle.vin%><br />
+                                          License Plate #: <%= registeredVehicles[c].vehicle.plate%><br />
+                                          Color: <%= registeredVehicles[c].vehicle.color%><br />
+                                          Model: <%= registeredVehicles[c].vehicle.model%><br />
+                                          <% if (registeredVehicles[c].vehicle.validInsurance == 1) {%>
+                                          <p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i>
+                                          </p>
+                                          <% } else {%>
+                                          <p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>
+                                          <% } %>
+                                          <% if (registeredVehicles[c].vehicle.validRegistration == 1) {%>
+                                          <p class="plate-body-text">Registration: Valid <i
+                                              class="ion-checkmark-circled color-green"></i></p>
+                                          <% } else {%>
+                                          <p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i>
+                                          </p>
+                                          <% } %>
+                                        </div>
+                                        <% } %>
+                                      <% } %>
+                                      <% if (count === 0) { %>
+                                        <h5 style="text-align: center;">No Registered Vehicles</h5> 
+                                        <% } %>
+                                    <% } else { %>
+                                      <h5 style="text-align: center;">No Registered Vehicles</h5>
+                                    <% } %>
+                                  </div>
+                                </div>
+      
+                                <script>
+                                  // Sets Civilian Specific Registered Car Div
+                                  customID = makeid(8);
+                                  document.getElementById('registeredCars').setAttribute('id', `registeredCars-${customID}`)
+                                  document.getElementById('registeredCarButton').setAttribute('onclick', `showRegisteredCars("${customID}")`)
+                                  document.getElementById('registeredCarButton').setAttribute('id', `registeredCarButton-${customID}`)
+                                </script>
+
+                                <hr style="width: 88%;max-width: 100rem;">
+                                <h5>
                                   <ion-icon name="browsers-outline"></ion-icon> Firearm License
                                 </h5>
 
@@ -903,7 +981,7 @@
                       </div>
                       <div class="col-md-4">
                         <input type="hidden" name="route" value="dispatch-dashboard">
-                        <input type="hidden" id="active-community-id" name="activeCommunityID" ,
+                        <input type="hidden" id="this-active-community-id" name="activeCommunityID" ,
                           value="<%=user.user.activeCommunity%>">
                         <button type="submit" onclick="searchPlate()" class="btn btn-info">Search</button>
                       </div>
@@ -932,14 +1010,9 @@
                                   <strong>Danger!</strong> Vehicle reported as stolen.
                                 </div>
                                 <% } %>
-                                <!-- <div class="text-align-center">
-                                <button data-toggle="modal" href="#stolenVehicleModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenReportStolen('<%= vehicles[i]._id%>');setDateAndTime('#date', '#time');">Report Stolen</button>
-                              </div>
-                              <hr/> -->
-
                                 Vin #: <%= vehicles[i].vehicle.vin%><br />
                                 License Plate #: <%= vehicles[i].vehicle.plate%><br />
-                                Registered Owner: <%= vehicles[i].vehicle.registeredOwner%><br />
+                                Registered Owner: <button type="submit" class="btn btn-info" onclick="openNameDatabase('<%= vehicles[i].vehicle.registeredOwner%>','<%= vehicles[i].vehicle.activeCommunityID %>')"><%= vehicles[i].vehicle.registeredOwner%></button><br />
                                 Color: <%= vehicles[i].vehicle.color%><br />
                                 Model: <%= vehicles[i].vehicle.model%><br />
                                 <% if (vehicles[i].vehicle.validInsurance == 1) {%>
@@ -2536,6 +2609,17 @@
     }
   }
 
+  function showRegisteredCars(customID) {
+    let elem = document.getElementById(`registeredCars-${customID}`);
+    if (elem.style.display === "none") {
+      elem.style.display = "block";
+      document.getElementById(`registeredCarButton-${customID}`).innerHTML = 'Hide Registered Vehicles';
+    } else {
+      elem.style.display = "none";
+      document.getElementById(`registeredCarButton-${customID}`).innerHTML = 'Show Registered Vehicles';
+    }
+  }
+
   function searchPlate() {
     let x=document.getElementById('plateDetails');
     if (x.style.display==='none') {
@@ -3294,5 +3378,38 @@
           $('#noLicenseMessage-'+i).removeClass('hide')
       }
     })
+  }
+
+  function openNameDatabase(registeredOwner, activeCommunityID) {
+    if (registeredOwner == null || registeredOwner == undefined) {
+      if (activeCommunityID.length == 0) {
+        return document.location.href = `name-search?firstName=&lastName=&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+      }
+      return document.location.href = `name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+    }
+    let nameAndDOB = registeredOwner.split(" | ")
+    if (nameAndDOB.length !== 2) {
+      if (activeCommunityID.length == 0) {
+        return document.location.href = `name-search?firstName=&lastName=&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+      }
+      return document.location.href = `name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+    }
+    let firstNameLastName = nameAndDOB[0].split(" ")
+    if (firstNameLastName.length !== 2) {
+      if (activeCommunityID.length == 0) {
+        return document.location.href = `name-search?firstName=&lastName=&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+      }
+      return document.location.href = `name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+    }
+    //check to see if we are in a community, if we are not, 
+    //then we need to use the DOB to do the name search
+    if (activeCommunityID.length == 0) {
+      let dob = nameAndDOB[1].split(" ")
+      if (dob.length !== 2) {
+        return document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`    
+      }
+      return document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=${dob[1]}&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`  
+    }
+    return document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
   }
 </script>

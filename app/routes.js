@@ -569,12 +569,27 @@ module.exports = function (app, passport, server) {
                     if (err) return console.error(err);
                     Call.find({
                       'call.communityID': req.user.user.activeCommunity,
-                    }, function (err, dbCalls) {
+                    }, async function (err, dbCalls) {
+                      if (err) return console.error(err);
+                      let target;
+                      let allRegisteredVehicles = [];
+                      for (let c=0; c<dbCivilians.length; c++) {
+                        target = `${dbCivilians[c].civilian.firstName} ${dbCivilians[c].civilian.lastName} | DOB: ${dbCivilians[c].civilian.birthday}`;
+                        await Vehicle.find({
+                          'vehicle.registeredOwner': target
+                        }, function (err, dbVehicles) {
+                          if (err) return console.error(err);
+                          for (let rc = 0; rc < dbVehicles.length; rc++) {
+                            allRegisteredVehicles.push(dbVehicles[rc]);
+                          }
+                        });
+                      }
                       if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
                         return res.render('dispatch-dashboard', {
                           user: req.user,
                           vehicles: null,
                           civilians: dbCivilians,
+                          registeredVehicles: allRegisteredVehicles,
                           firearms: null,
                           tickets: dbTickets,
                           arrestReports: dbArrestReports,
@@ -594,6 +609,7 @@ module.exports = function (app, passport, server) {
                             user: req.user,
                             vehicles: null,
                             civilians: dbCivilians,
+                            registeredVehicles: allRegisteredVehicles,
                             firearms: null,
                             tickets: dbTickets,
                             arrestReports: dbArrestReports,
@@ -650,19 +666,32 @@ module.exports = function (app, passport, server) {
                     if (err) return console.error(err);
                     Call.find({
                       'call.communityID': req.user.user.activeCommunity,
-                    }, function (err, dbCalls) {
+                    }, async function (err, dbCalls) {
                       if (err) return console.error(err);
+                      let target;
+                      let allRegisteredVehicles = [];
+                      for (let c=0; c<dbCivilians.length; c++) {
+                        target = `${dbCivilians[c].civilian.firstName} ${dbCivilians[c].civilian.lastName} | DOB: ${dbCivilians[c].civilian.birthday}`;
+                        await Vehicle.find({
+                          'vehicle.registeredOwner': target
+                        }, function (err, dbVehicles) {
+                          if (err) return console.error(err);
+                          for (let rc = 0; rc < dbVehicles.length; rc++) {
+                            allRegisteredVehicles.push(dbVehicles[rc]);
+                          }
+                        });
+                      }
                       if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
                         return res.render('dispatch-dashboard', {
                           user: req.user,
                           vehicles: null,
                           civilians: dbCivilians,
+                          registeredVehicles: allRegisteredVehicles,
                           firearms: null,
                           tickets: dbTickets,
                           arrestReports: dbArrestReports,
                           warrants: dbWarrants,
                           communities: dbCommunities,
-                          commUsers: null,
                           bolos: dbBolos,
                           calls: dbCalls,
                           context: null
@@ -676,6 +705,7 @@ module.exports = function (app, passport, server) {
                             user: req.user,
                             vehicles: null,
                             civilians: dbCivilians,
+                            registeredVehicles: allRegisteredVehicles,
                             firearms: null,
                             tickets: dbTickets,
                             arrestReports: dbArrestReports,
@@ -747,12 +777,26 @@ module.exports = function (app, passport, server) {
                     if (err) return console.error(err);
                     Call.find({
                       'call.communityID': req.user.user.activeCommunity,
-                    }, function (err, dbCalls) {
+                    }, async function (err, dbCalls) {
                       if (err) return console.error(err);
+                      let target;
+                      let allRegisteredVehicles = [];
+                      for (let c=0; c<dbCivilians.length; c++) {
+                        target = `${dbCivilians[c].civilian.firstName} ${dbCivilians[c].civilian.lastName} | DOB: ${dbCivilians[c].civilian.birthday}`;
+                        await Vehicle.find({
+                          'vehicle.registeredOwner': target
+                        }, function (err, dbVehicles) {
+                          if (err) return console.error(err);
+                          for (let rc = 0; rc < dbVehicles.length; rc++) {
+                            allRegisteredVehicles.push(dbVehicles[rc]);
+                          }
+                        });
+                      }
                       return res.render('police-dashboard', {
                         user: req.user,
                         vehicles: null,
                         civilians: dbCivilians,
+                        registeredVehicles: allRegisteredVehicles,
                         firearms: null,
                         tickets: dbTickets,
                         arrestReports: dbArrestReports,
@@ -806,12 +850,26 @@ module.exports = function (app, passport, server) {
                     if (err) return console.error(err);
                     Call.find({
                       'call.communityID': req.user.user.activeCommunity,
-                    }, function (err, dbCalls) {
+                    }, async function (err, dbCalls) {
                       if (err) return console.error(err);
+                      let target;
+                      let allRegisteredVehicles = [];
+                      for (let c=0; c<dbCivilians.length; c++) {
+                        target = dbCivilians[c].civilian.firstName + ' ' + dbCivilians[c].civilian.lastName + " | DOB: " + dbCivilians[c].civilian.birthday;
+                        await Vehicle.find({
+                          'vehicle.registeredOwner': target
+                        }, function (err, dbVehicles) {
+                          if (err) return console.error(err);
+                          for (let rc = 0; rc < dbVehicles.length; rc++) {
+                            allRegisteredVehicles.push(dbVehicles[rc]);
+                          }
+                        });
+                      }
                       return res.render('police-dashboard', {
                         user: req.user,
                         vehicles: null,
                         civilians: dbCivilians,
+                        registeredVehicles: allRegisteredVehicles,
                         firearms: null,
                         tickets: dbTickets,
                         arrestReports: dbArrestReports,
