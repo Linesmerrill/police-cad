@@ -1011,7 +1011,7 @@
                                 <% } %>
                                 Vin #: <%= vehicles[i].vehicle.vin%><br />
                                 License Plate #: <%= vehicles[i].vehicle.plate%><br />
-                                Registered Owner: <a role="button" href="javascript:;" onclick="openNameDatabase('<%= vehicles[i].vehicle.registeredOwner%>','<%= vehicles[i].vehicle.activeCommunityID %>')"><%= vehicles[i].vehicle.registeredOwner%></a><br />
+                                Registered Owner: <button type="submit" class="btn btn-info" onclick="openNameDatabase('<%= vehicles[i].vehicle.registeredOwner%>','<%= vehicles[i].vehicle.activeCommunityID %>')"><%= vehicles[i].vehicle.registeredOwner%></button><br />
                                 Color: <%= vehicles[i].vehicle.color%><br />
                                 Model: <%= vehicles[i].vehicle.model%><br />
                                 <% if (vehicles[i].vehicle.validInsurance == 1) {%>
