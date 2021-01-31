@@ -396,8 +396,6 @@
                       return result;
                     }
 
-                    // This removed the "Identifier 'customID' has already been declared"
-                    let customID;
                   </script>
                   <% if (civilians != null) {%>
                   <% for(var i=0; i<civilians.length; i++) {%>
@@ -677,59 +675,13 @@
                           <button
                             type="button"
                             class="btn btn-primary btn-md margin-bottom-05"
-                            id="registeredCarButton"
-                            > Show Registered Vehicles
+                            id="registeredCarButton-<%=i%>" onclick="getRegisteredCars('<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>', '<%=i%>', '<%=civilians[i]._id%>')"> Show Registered Vehicles
                           </button>
 
                           <div class="form-group">
-                            <div id='registeredCars' style="display:none">
-                              <% if (registeredVehicles != null && registeredVehicles.length > 0) { %>
-                                <% let count = 0 %>
-                                <% for (let c=0; c<registeredVehicles.length; c++) {%>
-                                  <% if(registeredVehicles[c].vehicle.registeredOwner == `${civilians[i].civilian.firstName} ${civilians[i].civilian.lastName} | DOB: ${civilians[i].civilian.birthday}`) { %>
-                                    <% count++ %>
-                                  <div class="panel-body">
-                                    <% if (registeredVehicles[c].vehicle.isStolen == 2) {%>
-                                    <div id="stolenMessage" class="alert alert-danger" style="display:block">
-                                      <strong>Danger!</strong> Vehicle reported as stolen.
-                                    </div>
-                                    <% } %>
-                                    Vin #: <%= registeredVehicles[c].vehicle.vin%><br />
-                                    License Plate #: <%= registeredVehicles[c].vehicle.plate%><br />
-                                    Color: <%= registeredVehicles[c].vehicle.color%><br />
-                                    Model: <%= registeredVehicles[c].vehicle.model%><br />
-                                    <% if (registeredVehicles[c].vehicle.validInsurance == 1) {%>
-                                    <p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i>
-                                    </p>
-                                    <% } else {%>
-                                    <p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>
-                                    <% } %>
-                                    <% if (registeredVehicles[c].vehicle.validRegistration == 1) {%>
-                                    <p class="plate-body-text">Registration: Valid <i
-                                        class="ion-checkmark-circled color-green"></i></p>
-                                    <% } else {%>
-                                    <p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i>
-                                    </p>
-                                    <% } %>
-                                  </div>
-                                  <% } %>
-                                <% } %>
-                                <% if (count === 0) { %>
-                                  <h5 style="text-align: center;">No Registered Vehicles</h5> 
-                                  <% } %>
-                              <% } else { %>
-                                <h5 style="text-align: center;">No Registered Vehicles</h5>
-                              <% } %>
+                            <div id="registered-cars-<%=i%>">
                             </div>
                           </div>
-
-                          <script>
-                            // Sets Civilian Specific Registered Car Div
-                            customID = makeid(8);
-                            document.getElementById('registeredCars').setAttribute('id', `registeredCars-${customID}`)
-                            document.getElementById('registeredCarButton').setAttribute('onclick', `showRegisteredCars("${customID}")`)
-                            document.getElementById('registeredCarButton').setAttribute('id', `registeredCarButton-${customID}`)
-                          </script>
 
                           <hr style="width: 88%;max-width: 100rem;">
                           <h5>
@@ -2192,7 +2144,7 @@
       }
     })
 
-  });
+  }); // end of sockets
 </script>
 <script type="text/javascript">
   $(document).ready(function () {
@@ -2311,15 +2263,85 @@
     socket.emit('load_panic_statuses', myReq)
   }
 
-  function showRegisteredCars(customID) {
-    let elem = document.getElementById(`registeredCars-${customID}`);
-    if (elem.style.display === "none") {
-      elem.style.display = "block";
-      document.getElementById(`registeredCarButton-${customID}`).innerHTML = 'Hide Registered Vehicles';
-    } else {
-      elem.style.display = "none";
-      document.getElementById(`registeredCarButton-${customID}`).innerHTML = 'Show Registered Vehicles';
+  function getRegisteredCars(registeredOwner, index, registeredOwnerID) {
+    //remove any existing panel body on button click
+    $(`#registered-cars-panel-body-${index}`).remove().fadeOut(1, function () {
+      $(this).remove();
+    })
+    if (document.getElementById(`registeredCarButton-${index}`).innerHTML == 'Hide Registered Vehicles') {
+      $(`#registered-cars-${index}`).hide()
+      document.getElementById(`registeredCarButton-${index}`).innerHTML = 'Show Registered Vehicles';
+      return
     }
+    $(`#registered-cars-${index}`).show()
+    
+    var myUser= <%-JSON.stringify(user)%>;
+    var socket=io();
+    
+    myReq={
+      regOwner: registeredOwner,
+      regOwnerID: registeredOwnerID, //new ID established 1/30/2021 so will only work on vehicles after this date
+      communityID: myUser.user.activeCommunity
+    }
+    socket.emit('get_reg_veh', myReq)
+    socket.on('load_reg_veh_result', res => {
+      if (res.length == 0) {
+        $('#registered-cars-'+index).append(
+          `<div id="registered-cars-panel-body-${index}" class="panel-body">`+
+            `<h5 style="text-align: center;">No Registered Vehicles</h5>`+
+            `</div>`
+        )
+        return
+      }
+      $('#registered-cars-'+index).append(
+          `<div id="registered-cars-panel-body-${index}" class="panel-body">`
+        )
+      for (i=0; i < res.length; i++) {
+        
+        if (i != 0) { //if we are not on the first loop, add a divider between each record
+          $('#registered-cars-panel-body-'+index).append(
+            `<hr>`
+          )
+        }
+        //check if vehicle is stolen and append result
+        if (res[i].vehicle.isStolen == 2) {
+          $('#registered-cars-panel-body-'+index).append(
+            `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
+            `<strong>Danger!</strong> Vehicle reported as stolen.`+
+          `</div>`
+          )
+        }
+        $('#registered-cars-panel-body-'+index).append(
+          `Vin #: ${res[i].vehicle.vin}<br/>`+
+          `License Plate #: ${res[i].vehicle.plate}<br/>`+
+          `Color: ${res[i].vehicle.color}<br/>`+
+          `Model: ${res[i].vehicle.model}<br/>`
+        )
+        //check for valid/invalid insurance and append result
+        if (res[i].vehicle.validInsurance == 1) {
+          $('#registered-cars-panel-body-'+index).append(
+            `<p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i></p>`
+          )
+        } else {
+          $('#registered-cars-panel-body-'+index).append(
+          `<p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>`
+          )
+        }
+        //check for valid/invalid registration and append result
+        if (res[i].vehicle.validRegistration == 1) {
+          $('#registered-cars-panel-body-'+index).append(
+            `<p class="plate-body-text">Registration: Valid <i class="ion-checkmark-circled color-green"></i></p>`
+          )
+        } else {
+          $('#registered-cars-panel-body-'+index).append(
+          `<p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>`
+          )
+        }
+      
+    }
+    })
+    //sets the button text after search has been completed
+    document.getElementById(`registeredCarButton-${index}`).innerHTML = 'Hide Registered Vehicles';
   }
 
   function searchPlate() {
