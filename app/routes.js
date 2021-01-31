@@ -2713,7 +2713,8 @@ module.exports = function (app, passport, server) {
     return res.redirect('communities')
   })
 
-  var io = require('socket.io').listen(server);
+  // var io = require('socket.io').listen(server);
+  const io = require('socket.io')(server, {wsEngine: 'ws'});
 
   io.sockets.on('connection', (socket) => {
 
