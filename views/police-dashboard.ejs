@@ -36,20 +36,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
   <script type="text/javascript" src="static/js/tail.select.min.js"></script>
-  <!-- Global Site Tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-107735203-1"></script>
-  <script>
-    window.dataLayer=window.dataLayer||[];
-
-    function gtag() {
-      dataLayer.push(arguments);
-    }
-    gtag('js', new Date());
-    gtag('config', 'UA-107735203-1');
-  </script>
-  <script data-ad-client="ca-pub-3842696805773142" async
-    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+  <% include ad-header %>
 </head>
 
 <body>
@@ -272,12 +259,9 @@
           </div>
         </div>
       </header>
-      <div class= "adsbygoogle"></div>
-      <!-- <ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article"
-        data-ad-format="fluid" data-ad-client="ca-pub-3842696805773142" data-ad-slot="8821936879"></ins>
-      <script>
-        (adsbygoogle=window.adsbygoogle||[]).push({});
-      </script> -->
+      <div class= "adsbygoogle">
+        <% include ad-body %>
+      </div>
       <section style='background-image: url("/static/images/blue-clouds.jpg"); padding:0'>
         <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
         <div class="container">
