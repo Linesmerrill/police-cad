@@ -2313,7 +2313,12 @@
 
   function showRegisteredCars(customID) {
     console.log("click on showRegisteredCars")
-    myCars= <%-JSON.stringify(registeredVehicles)%>;
+    if (registeredVehicles == undefined || registeredVehicles == null) {
+      console.log("yeah they are not defined yet")
+      return
+    } else {
+      myCars= <%-JSON.stringify(registeredVehicles)%>;
+    }
     console.log("my vehicles: ", myCars)
     let elem = document.getElementById(`registeredCars-${customID}`);
     if (elem.style.display === "none") {
