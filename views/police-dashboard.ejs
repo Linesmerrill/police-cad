@@ -672,11 +672,18 @@
                           <h5>
                             <ion-icon name="car-sport-outline"></ion-icon> Registered Vehicles
                           </h5>
-                          <button
+                          <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
+                            <button
                             type="button"
                             class="btn btn-primary btn-md margin-bottom-05"
                             id="registeredCarButton-<%=i%>" onclick="getRegisteredCars('<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>', '<%=i%>', '<%=civilians[i]._id%>')"> Show Registered Vehicles
                           </button>
+                            <% } else {%>
+                                <button
+                            type="button" data-toggle="modal" href="#nonCommunityBoloModal"
+                            class="btn btn-primary btn-md margin-bottom-05 mock-disabled" style="cursor: not-allowed;"> Show Registered Vehicles
+                          </button>
+                            <% } %>
 
                           <div class="form-group">
                             <div id="registered-cars-<%=i%>">
@@ -1706,7 +1713,7 @@
       <div class="modal-content">
         <div class="modal-body">
           <div class="modal-body">
-            <h2 class="text-center">I'm sorry! ;(</h2>
+            <h2 class="text-center">I'm sorry! 😥</h2>
             <p class="text-center">Looks like you are not in a community yet, so this feature is not enabled. </p>
             <p>To join or
               create a community for free, click on the communities button in the Left Menu.</p>
