@@ -46,8 +46,12 @@
       <div class="img bg-wrap text-center py-4" style="background-image: url(/static/images/police-corner-bg.jpg);">
         <div class="user-logo">
           <div class="img" style="background-image: url(/static/images/default_user_pic.png);"></div>
-          <h3><%=user.user.username%></h3>
-          <h5><%=user.user.callSign%></h5>
+          <h3>
+            <%=user.user.username%>
+          </h3>
+          <h5>
+            <%=user.user.callSign%>
+          </h5>
           <h5>Logged in as: Police Officer</h5>
         </div>
       </div>
@@ -82,20 +86,20 @@
         </li>
         <div class="collapse in" id="toggleUtilities">
           <li>
-            <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-            <a data-toggle="modal" href="#boloModal" onclick="clearBoloForm()"><span
-                class="fas fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
-            <% } else {%>
-            <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span
-                class="fas fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
-            <% } %>
+            <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+              <a data-toggle="modal" href="#boloModal" onclick="clearBoloForm()"><span
+                  class="fas fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
+              <% } else {%>
+                <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span
+                    class="fas fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
+                <% } %>
           </li>
           <li>
             <a data-toggle="modal" href="#10codesModal"><span class="fas fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
           </li>
           <li>
             <a href="/penal-code"><span class="fas fa-laptop ml-3 mr-3"></span>Penal Codes <i
-              class="fas fa-external-link-alt"></i></a>
+                class="fas fa-external-link-alt"></i></a>
           </li>
           <li>
             <a data-toggle="modal" href="#notepadModal"><span class="fas fa-clipboard ml-3 mr-3"></span> Notepad</a>
@@ -155,161 +159,183 @@
         <div class="header-content margin-top-2">
           <div class="inner">
             <% for(var i=0; i<communities.length; i++) {%>
-            <% if (communities[i]._id == user.user.activeCommunity) {%>
-            <div id="panic-placeholder"></div>
-            <div id="panic-placeholder-socket"></div>
-            <%}%>
-        <%}%>
+              <% if (communities[i]._id==user.user.activeCommunity) {%>
+                <div id="panic-placeholder"></div>
+                <div id="panic-placeholder-socket"></div>
+                <%}%>
+                  <%}%>
 
-            <% if (context == "createTicketSuccess") {%>
-            <div class="alert alert-success alert-dismissible show" role="alert">
-              <strong>Success!</strong> Citation created successfully
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <% } else if (context == "createWarningSuccess") {%>
-            <div class="alert alert-success alert-dismissible show" role="alert">
-              <strong>Success!</strong> Warning created successfully
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <% } else if (context == "createArrestSuccess") {%>
-            <div class="alert alert-success alert-dismissible show" role="alert">
-              <strong>Success!</strong> Arrest created successfully
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <% } else if (context == "createWarrantSuccess") {%>
-            <div class="alert alert-success alert-dismissible show" role="alert">
-              <strong>Success!</strong> Warrant created successfully
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <% } else if (context == "createBoloSuccess") {%>
-            <div class="alert alert-success alert-dismissible show" role="alert">
-              <strong>Success!</strong> Bolo created successfully
-              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <%}%>
+                    <% if (context=="createTicketSuccess" ) {%>
+                      <div class="alert alert-success alert-dismissible show" role="alert">
+                        <strong>Success!</strong> Citation created successfully
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <% } else if (context=="createWarningSuccess" ) {%>
+                        <div class="alert alert-success alert-dismissible show" role="alert">
+                          <strong>Success!</strong> Warning created successfully
+                          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                        </div>
+                        <% } else if (context=="createArrestSuccess" ) {%>
+                          <div class="alert alert-success alert-dismissible show" role="alert">
+                            <strong>Success!</strong> Arrest created successfully
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                              <span aria-hidden="true">&times;</span>
+                            </button>
+                          </div>
+                          <% } else if (context=="createWarrantSuccess" ) {%>
+                            <div class="alert alert-success alert-dismissible show" role="alert">
+                              <strong>Success!</strong> Warrant created successfully
+                              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                              </button>
+                            </div>
+                            <% } else if (context=="createBoloSuccess" ) {%>
+                              <div class="alert alert-success alert-dismissible show" role="alert">
+                                <strong>Success!</strong> Bolo created successfully
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                  <span aria-hidden="true">&times;</span>
+                                </button>
+                              </div>
+                              <%}%>
 
-        <!-- imports the community specific alerts -->
-        <% include community-alerts %>
+                                <!-- imports the community specific alerts -->
+                                <% include community-alerts %>
 
-            <div class="container text-center width-100">
-              <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-              <% if (!user.user.dispatchOnDuty) {%>
-              <h4><span id="<%=user._id%>-duty" class="red-dot"></span> <span id="<%=user._id%>-duty-text"> Off
-                  Duty</span></h4>
-              <%} else if (user.user.dispatchOnDuty) {%>
-              <h4><span id="<%=user._id%>-duty" class="green-dot"></span> <span id="<%=user._id%>-duty-text"> On
-                  Duty</span></h4>
-              <%}%>
-              <h4 id="currentStatus" class="text-align-center">Your Current Status: <%=user.user.dispatchStatus%></h4>
-              <h5 id="statusSetBy" class="text-align-center">Set By: <%=user.user.dispatchStatusSetBy%></h5>
-              <div class="col-lg-10 col-lg-offset-1 text-center">
-                <button class="btn btn-primary btn-lg margin-top-2" title="In Service"
-                  onclick="updateStatus('10-8')">10-8</button>
-                <button class="btn btn-primary btn-lg margin-top-2" title="Busy"
-                  onclick="updateStatus('10-6')">10-6</button>
-                <button class="btn btn-primary btn-lg margin-top-2" title="Out of Service"
-                  onclick="updateStatus('10-7')">10-7</button>
-                <button class="btn btn-primary btn-lg margin-top-2" title="Traffic Stop"
-                  onclick="updateStatus('10-11')">10-11</button>
-                <button class="btn btn-primary btn-lg margin-top-2" title="Arrive on Scene"
-                  onclick="updateStatus('10-23')">10-23</button>
-                <button class="btn btn-primary btn-lg margin-top-2" title="In Route"
-                  onclick="updateStatus('10-97')">10-97</button>
-                <button class="btn btn-primary btn-lg margin-top-2" title="Subject in Custody"
-                  onclick="updateStatus('10-15')">10-15</button>
-                <button class="btn btn-primary btn-lg margin-top-2" title="Foot Pursuit"
-                  onclick="updateStatus('10-70')">10-70</button>
-                <button class="btn btn-primary btn-lg margin-top-2" title="Vehicle Pursuit"
-                  onclick="updateStatus('10-80')">10-80</button>
-              </div>
-              <% } %>
+                                  <div class="container text-center width-100">
+                                    <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+                                      <% if (!user.user.dispatchOnDuty) {%>
+                                        <h4><span id="<%=user._id%>-duty" class="red-dot"></span> <span
+                                            id="<%=user._id%>-duty-text"> Off
+                                            Duty</span></h4>
+                                        <%} else if (user.user.dispatchOnDuty) {%>
+                                          <h4><span id="<%=user._id%>-duty" class="green-dot"></span> <span
+                                              id="<%=user._id%>-duty-text"> On
+                                              Duty</span></h4>
+                                          <%}%>
+                                            <h4 id="currentStatus" class="text-align-center">Your Current Status:
+                                              <%=user.user.dispatchStatus%>
+                                            </h4>
+                                            <h5 id="statusSetBy" class="text-align-center">Set By:
+                                              <%=user.user.dispatchStatusSetBy%>
+                                            </h5>
+                                            <div class="col-lg-10 col-lg-offset-1 text-center">
+                                              <button class="btn btn-primary btn-lg margin-top-2" title="In Service"
+                                                onclick="updateStatus('10-8')">10-8</button>
+                                              <button class="btn btn-primary btn-lg margin-top-2" title="Busy"
+                                                onclick="updateStatus('10-6')">10-6</button>
+                                              <button class="btn btn-primary btn-lg margin-top-2" title="Out of Service"
+                                                onclick="updateStatus('10-7')">10-7</button>
+                                              <button class="btn btn-primary btn-lg margin-top-2" title="Traffic Stop"
+                                                onclick="updateStatus('10-11')">10-11</button>
+                                              <button class="btn btn-primary btn-lg margin-top-2"
+                                                title="Arrive on Scene" onclick="updateStatus('10-23')">10-23</button>
+                                              <button class="btn btn-primary btn-lg margin-top-2" title="In Route"
+                                                onclick="updateStatus('10-97')">10-97</button>
+                                              <button class="btn btn-primary btn-lg margin-top-2"
+                                                title="Subject in Custody"
+                                                onclick="updateStatus('10-15')">10-15</button>
+                                              <button class="btn btn-primary btn-lg margin-top-2" title="Foot Pursuit"
+                                                onclick="updateStatus('10-70')">10-70</button>
+                                              <button class="btn btn-primary btn-lg margin-top-2"
+                                                title="Vehicle Pursuit" onclick="updateStatus('10-80')">10-80</button>
+                                            </div>
+                                            <% } %>
 
-              <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-              <div class="col-lg-10 col-lg-offset-1 text-center">
-                <button class="btn btn-warning btn-lg margin-top-2" title="Log out of CAD"
-                  onclick="updateStatus('10-42')"><i class="fas fa-sign-out-alt"></i> 10-42</button>
-                <button class="btn btn-success btn-lg margin-top-2" title="Log in to CAD"
-                  onclick="updateStatus('10-41')"><i class="fas fa-sign-in-alt"></i> 10-41</button>
-              </div>
-              <div class="col-lg-10 col-lg-offset-1 text-center">
-                <button id="panicButton" class="btn btn-danger btn-lg margin-top-2 page-scroll" title="Panic"
-                  onclick="updateStatus('Panic');panicButtonPressed()"><i class="fas fa-exclamation-circle"></i>
-                  Panic</button>
-              </div>
-              <% } %>
-              <% if (user.user.activeCommunity == '' || user.user.activeCommunity == null) {%>
-              <div class="col-lg-10 col-lg-offset-1 margin-top-2 text-center">
-                <h3><i class="fas fa-arrow-left"></i> Click on any of the search buttons to get started</h3>
-                <hr style="width: 88%;max-width: 100rem;">
-                <h4>Looks like you are not in a community, click here to get started!</h4>
-                <p><a data-toggle="modal" href="#communitiesModal">Create/Join A Community</a></p>
-              </div>
-              <% } %>
-            </div>
+                                              <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null)
+                                                {%>
+                                                <div class="col-lg-10 col-lg-offset-1 text-center">
+                                                  <button class="btn btn-warning btn-lg margin-top-2"
+                                                    title="Log out of CAD" onclick="updateStatus('10-42')"><i
+                                                      class="fas fa-sign-out-alt"></i> 10-42</button>
+                                                  <button class="btn btn-success btn-lg margin-top-2"
+                                                    title="Log in to CAD" onclick="updateStatus('10-41')"><i
+                                                      class="fas fa-sign-in-alt"></i> 10-41</button>
+                                                </div>
+                                                <div class="col-lg-10 col-lg-offset-1 text-center">
+                                                  <button id="panicButton"
+                                                    class="btn btn-danger btn-lg margin-top-2 page-scroll" title="Panic"
+                                                    onclick="updateStatus('Panic');panicButtonPressed()"><i
+                                                      class="fas fa-exclamation-circle"></i>
+                                                    Panic</button>
+                                                </div>
+                                                <% } %>
+                                                  <% if (user.user.activeCommunity=='' ||
+                                                    user.user.activeCommunity==null) {%>
+                                                    <div class="col-lg-10 col-lg-offset-1 margin-top-2 text-center">
+                                                      <h3><i class="fas fa-arrow-left"></i> Click on any of the search
+                                                        buttons to get started</h3>
+                                                      <hr style="width: 88%;max-width: 100rem;">
+                                                      <h4>Looks like you are not in a community, click here to get
+                                                        started!</h4>
+                                                      <p><a data-toggle="modal" href="#communitiesModal">Create/Join A
+                                                          Community</a></p>
+                                                    </div>
+                                                    <% } %>
+                                  </div>
           </div>
         </div>
       </header>
-      <div class= "adsbygoogle">
+      <div class="adsbygoogle">
         <% include ad-body %>
       </div>
       <section style='background-image: url("/static/images/blue-clouds.jpg"); padding:0'>
         <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
         <div class="container">
           <div id="active-bolo-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
-            <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-            <h4>Active BOLOs: </h4>
+            <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+              <h4>Active BOLOs: </h4>
+              <h5>Click for details</h5>
+              <% if (bolos !=null && bolos.length> 0) {%>
+                <% for(var i=0; i<bolos.length; i++) {%>
+                  <% if (bolos[i].bolo.status==true) {%>
+                    <a id="<%=bolos[i]._id%>-row" data-toggle="modal" href="#boloDetailModal"
+                      onclick="populateBoloDetails('<%=bolos[i]._id%>')">
+                      <div class="alert alert-warning alert-dismissible show" role="alert">
+                        <strong>BOLO! </strong> <span id="<%=bolos[i]._id%>-type" style="text-transform:capitalize">
+                          <%=bolos[i].bolo.boloType%>
+                        </span> Last Seen: <span id="<%=bolos[i]._id%>-location">
+                          <%=bolos[i].bolo.location%>
+                        </span> | Description: <span id="<%=bolos[i]._id%>-description">
+                          <%=bolos[i].bolo.description%>
+                        </span>
+                      </div>
+                    </a>
+                    <%}%>
+                      <%}%>
+                        <%}%>
+          </div>
+        </div>
+        <div class="container">
+          <div id="assigned-call-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
+            <!-- active calls -->
+            <h4>Assigned Calls: </h4>
             <h5>Click for details</h5>
-            <% if (bolos != null && bolos.length > 0) {%>
-            <% for(var i=0; i<bolos.length; i++) {%>
-            <% if (bolos[i].bolo.status == true) {%>
-            <a id="<%=bolos[i]._id%>-row" data-toggle="modal" href="#boloDetailModal"
-              onclick="populateBoloDetails('<%=bolos[i]._id%>')">
-              <div class="alert alert-warning alert-dismissible show" role="alert">
-                <strong>BOLO! </strong> <span id="<%=bolos[i]._id%>-type"
-                  style="text-transform:capitalize"><%=bolos[i].bolo.boloType%></span> Last Seen: <span
-                  id="<%=bolos[i]._id%>-location"><%=bolos[i].bolo.location%></span> | Description: <span
-                  id="<%=bolos[i]._id%>-description"><%=bolos[i].bolo.description%></span>
-              </div>
-            </a>
-            <%}%>
-      <%}%>
-            <%}%>
-  </div>
-</div>
-<div class="container">
-  <div id="assigned-call-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
-      <!-- active calls -->
-      <h4>Assigned Calls: </h4>
-        <h5>Click for details</h5>
-      <% if (calls != null && calls.length > 0) {%>
-            <% for(var i=0; i<calls.length; i++) {%>
-            <% if (calls[i].call.status == true) {%>
-            <% if (calls[i].call.assignedOfficers != null && calls[i].call.assignedOfficers != '') {%>
-            <% if (calls[i].call.assignedOfficers.includes(user._id) == true) {%>
-            <a id="<%=calls[i]._id%>-row" data-toggle="modal" href="#callDetailModal"
-              onclick="populateCallDetails('<%=calls[i].call.createdAt%>', '<%=calls[i].call.updatedAt%>', '<%=calls[i].call.assignedOfficers%>','<%=calls[i].call.shortDescription%>','<%=calls[i].call.callNotes%>')">
-              <div class="alert alert-success alert-dismissible show" role="alert">
-                Opened: <span id="<%=calls[i]._id%>-createdAt"
-                  style="text-transform:capitalize"><time><%=calls[i].call.createdAtReadable%></time> | Description:
-                  <span id="<%=calls[i]._id%>-description"><%=calls[i].call.shortDescription%></span>%></span>
-              </div>
-            </a>
-            <%}%>
-      <%}%>
-            <%}%>
-      <%}%>
-            <%}%>
-      <%}%>
+            <% if (calls !=null && calls.length> 0) {%>
+              <% for(var i=0; i<calls.length; i++) {%>
+                <% if (calls[i].call.status==true) {%>
+                  <% if (calls[i].call.assignedOfficers !=null && calls[i].call.assignedOfficers !='' ) {%>
+                    <% if (calls[i].call.assignedOfficers.includes(user._id)==true) {%>
+                      <a id="<%=calls[i]._id%>-row" data-toggle="modal" href="#callDetailModal"
+                        onclick="populateCallDetails('<%=calls[i].call.createdAt%>', '<%=calls[i].call.updatedAt%>', '<%=calls[i].call.assignedOfficers%>','<%=calls[i].call.shortDescription%>','<%=calls[i].call.callNotes%>')">
+                        <div class="alert alert-success alert-dismissible show" role="alert">
+                          Opened: <span id="<%=calls[i]._id%>-createdAt" style="text-transform:capitalize"><time>
+                              <%=calls[i].call.createdAtReadable%>
+                            </time> | Description:
+                            <span id="<%=calls[i]._id%>-description">
+                              <%=calls[i].call.shortDescription%>
+                            </span>%></span>
+                        </div>
+                      </a>
+                      <%}%>
+                        <%}%>
+                          <%}%>
+                            <%}%>
+                              <%}%>
+                                <%}%>
 
           </div>
         </div>
@@ -364,19 +390,19 @@
                       class="form-control input-md col-md-offset-1" data-trigger="last-name-popover"
                       data-content="* Last name cannot contain spaces." required="">
                   </div>
-                  <% if (user.user.activeCommunity == '' || user.user.activeCommunity == null) { %>
-                  <div class="col-md-4">
-                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-dob">Date of Birth</label>
-                    <input id="civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy"
-                      class="form-control input-md col-md-offset-1" required="">
-                  </div>
-                  <% } %>
-                  <div class="col-md-4">
-                    <br>
-                    <input type="hidden" id="activeCommunityID" name="activeCommunityID" ,
-                      value="<%=user.user.activeCommunity%>">
-                    <button type="submit" class="btn btn-info" onclick="searchNames()">Search</button>
-                  </div>
+                  <% if (user.user.activeCommunity=='' || user.user.activeCommunity==null) { %>
+                    <div class="col-md-4">
+                      <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-dob">Date of Birth</label>
+                      <input id="civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy"
+                        class="form-control input-md col-md-offset-1" required="">
+                    </div>
+                    <% } %>
+                      <div class="col-md-4">
+                        <br>
+                        <input type="hidden" id="activeCommunityID" name="activeCommunityID" ,
+                          value="<%=user.user.activeCommunity%>">
+                        <button type="submit" class="btn btn-info" onclick="searchNames()">Search</button>
+                      </div>
                 </div>
               </div>
 
@@ -387,439 +413,510 @@
                     // Global script
                     // This function need to go here otherwise we get an undefined error
                     function makeid(length) {
-                      let result = '';
-                      let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-                      let charactersLength = characters.length;
-                      for ( var i = 0; i < length; i++ ) {
-                        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+                      let result='';
+                      let characters='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                      let charactersLength=characters.length;
+                      for (var i=0; i<length; i++) {
+                        result+=characters.charAt(Math.floor(Math.random()*charactersLength));
                       }
                       return result;
                     }
 
                   </script>
-                  <% if (civilians != null) {%>
-                  <% for(var i=0; i<civilians.length; i++) {%>
-                  <div class="panel panel-default background-transparent">
-                    <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
-                      href="#collapse<%=i%>" <h4 class="panel-title">
-                      <a class="blue-hover">
-                        <%= civilians[i].civilian.firstName %> <%= civilians[i].civilian.lastName %> |
-                        <%= civilians[i]._id %></a>
-                      </h4>
-                    </div>
-                    <% if (i === 0) {%>
-                    <div id="collapse<%=i%>" class="panel-collapse collapse in">
-                      <% } else {%>
-                      <div id="collapse<%=i%>" class="panel-collapse collapse">
-                        <% } %>
-                        <div class="panel-body">
-
-                          <% if (warrants != null) {%>
-                          <% if (warrants.length == 0) {%>
-                          <div id="noWarrantMessage" class="alert alert-success alert-dismissible"
-                            style="display:block">
-                            <strong>NCIC Warrant Check!</strong> Clean, No Warrants Found.
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                              <span aria-hidden="true">&times;</span>
-                            </button>
-                          </div>
-                          <% } else {%>
-                          <span>(Click on warrant to clear)</span>
-                          <% for(var k=0; k<warrants.length; k++) {%>
-                          <% if ((warrants[k].warrant.accusedID == civilians[i]._id) && (warrants[k].warrant.status === true)) {%>
-                          <span id="confirmWarrantModal" data-toggle="modal" href="#confirmClearWarrantModal"
-                            onclick="clearWarrantWithValues('<%= warrants[k]._id %>', '<%= warrants[k].warrant.reasons[0] %>')">
-                            <div id="warrantMessage" class="alert alert-danger alert-dismissible" style="display:block">
-                              <strong>Active Warrant!</strong> <%= warrants[k].warrant.reasons[0] %>
-                            </div>
-                          </span>
-                          <% } %>
-                          <% } %>
-                          <% } %>
-                          <% } %>
-
-
-
-
-
-
-                          <div class="text-align-center">
-                            <button data-toggle="modal" href="#ticketModal"
-                              class="btn btn-primary btn-md margin-bottom-05"
-                              onclick="OpenCitation('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#date', '#time');">Issue
-                              Citation</button>
-                            <button data-toggle="modal" href="#warningModal"
-                              class="btn btn-primary btn-md margin-bottom-05"
-                              onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue
-                              Warning</button>
-                            <button data-toggle="modal" href="#arrestModal"
-                              class="btn btn-primary btn-md margin-bottom-05"
-                              onclick="OpenArrest('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
-                            <button data-toggle="modal" href="#createWarrantModal"
-                              class="btn btn-primary btn-md margin-bottom-05"
-                              onclick="OpenCreateWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Create
-                              Warrant</button>
-                            <!-- <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button> -->
-                          </div>
-                          <hr />
-
-                          <h5>
-                            <ion-icon name="browsers-outline"></ion-icon> Drivers License
-                          </h5>
-
-                          <!-- Drivers License -->
-                          <div id="drivers-license" class="row">
-                            <div class="col-md-12">
-                              <div id="licenseRevokedMessage-<%=i%>" class="alert alert-warning hide">
-                                <strong>Warning!</strong> License is Revoked.
-                              </div>
-                              <div id="noLicenseMessage-<%=i%>" class="alert alert-danger hide">
-                                <strong>Alert!</strong> No License Found.
-                              </div>
-                              <div id="drivers-license-details-<%=i%>" class="container col-sm-offset-2 col-md-offset-2"
-                                style="position: relative; margin-bottom: -130px;">
-                                <img src="/static/images/id-license.png" style="width: 301px; height: 186px;">
-
-                                <label style="position: absolute;
-              font-family: 'Abril Fatface', cursive;
-              top: 4px;
-              left: 38px;
-              color: #00aced;
-              font-size: 17px;"></label>
-                                <label style="position: absolute;
-              font-family: 'Signika', sans-serif;
-              top: 8px;
-              left: 206px;
-              color: #00aced;
-              font-size: 12px;"></label>
-                                <!-- drivers license # -->
-                                <div class="form-group">
-                                  <div class="col-md-6">
-                                    <label id="civilianIDViewLic-<%=i%>" style="position: absolute;
-                  bottom: 0px;
-                  left: 25px;
-                  font-weight: 100;
-                  color: black;
-                  font-size: 14px;
-                  text-transform: uppercase;
-                  font-family: 'Signika', sans-serif;" class="form-label"></label>
-                                  </div>
-                                </div>
-
-                                <!-- expiration date -->
-                                <div class="form-group">
-                                  <div class="col-md-4">
-                                    <label style="position: absolute;
-                  bottom: 146px;
-                  left: 25px;
-                  color: black;
-                  font-size: 14px;
-                  font-family: 'Signika', sans-serif;
-                  font-weight: 500;" class="form-label"><span style="color: #102595">EXP </span><span
-                                        id="license-expiration-<%=i%>"></span></label>
-                                  </div>
-                                </div>
-
-                                <!-- last name -->
-                                <div class="form-group">
-                                  <div class="col-md-6">
-                                    <span style="position: absolute;
-                  bottom: 150px;
-                  left: 25px;
-                  font-size: 14px;
-                  font-family: 'Signika', sans-serif;
-                  font-weight: 500;
-                  color: #102595">LN </span>
-                                    <span id="lastNameLic-<%=i%>" style="position: absolute;
-                  bottom: 157px;
-                  left: 46px;
-                  width: 174px;
-                  height: 18px;
-                  padding: 0px;
-                  background: transparent;
-                  color: black;
-                  border: none;
-                  font-family: 'Signika', sans-serif;
-                  font-size: 14px;
-                  font-weight: 500;
-                  text-transform: uppercase;"></span>
-                                  </div>
-                                </div>
-
-                                <!-- first name -->
-                                <div class="form-group">
-                                  <div>
-                                    <span style="position: absolute;
-                  bottom: 227px;
-                  left: 25px;
-                  font-size: 14px;
-                  font-family: 'Signika', sans-serif;
-                  font-weight: 500;
-                  color: #102595">FN </span>
-                                    <span id="firstNameLic-<%=i%>" style="position: absolute;
-                  bottom: 234px;
-                  left: 46px;
-                  width: 174px;
-                  height: 18px;
-                  padding: 0px;
-                  background: transparent;
-                  color: black;
-                  border: none;
-                  font-family: 'Signika', sans-serif;
-                  font-size: 14px;
-                  font-weight: 500;
-                  text-transform: uppercase;"></span>
-                                  </div>
-                                </div>
-
-                                <!-- address -->
-                                <div class="form-group">
-                                  <div class="col-md-4">
-                                    <span id="addressViewLic-<%=i%>" style="position: absolute;
-                  bottom: 136px;
-                  width: 219px;
-                  left: 26px;
-                  line-height: 14px;
-                  background: transparent;
-                  color: black;
-                  border: none;
-                  font-family: 'Signika', sans-serif;
-                  font-size: 14px;
-                  font-weight: 500;
-                  text-transform: uppercase;"></span>
-                                  </div>
-                                </div>
-
-                                <!-- dob -->
-                                <div class="form-group">
-                                  <div class="col-md-4">
-                                    <span style="position: absolute;
-                  bottom: 131px;
-                  left: 25px;
-                  font-size: 14px;
-                  font-family: 'Signika', sans-serif;
-                  font-weight: 500;
-                  color: #102595">DOB </span>
-                                    <span id="birthdayViewLic-<%=i%>" style="position: absolute;
-                  bottom: 131px;
-                  left: 57px;
-                  background: transparent;
-                  color: black;
-                  border: none;
-                  font-family: 'Signika', sans-serif;
-                  font-size: 15px;
-                  font-weight: 500;"></span>
-                                  </div>
-                                </div>
-
-                                <!-- license status -->
-                                <div class="form-group">
-                                  <div class="col-md-4">
-                                    <span style="position: absolute;
-                  bottom: 131px;
-                  left: 25px;
-                  font-size: 14px;
-                  font-family: 'Signika', sans-serif;
-                  font-weight: 500;
-                  color: #102595">STATUS </span>
-                                    <span id="licenseStatusViewLic-<%=i%>" style="position: absolute;
-                  bottom: 131px;
-                  left: 75px;
-                  background: transparent;
-                  border: none;
-                  font-family: 'Signika', sans-serif;
-                  font-size: 14px;
-                  font-weight: 500;
-                  text-transform: uppercase;" class="color-black">
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <!-- issued date -->
-                                <div class="form-group">
-                                  <div class="col-md-8">
-                                    <label style="position: absolute;
-                  bottom: 241px;
-                  left: 195px;
-                  color: black;
-                  font-size: 14px;
-                  font-family: 'Signika', sans-serif;
-                  font-weight: 500;" class="form-label"><span style="color: #102595">ISS </span><span
-                                        id="license-issued-<%=i%>"></span></label>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <!-- Reinstate Drivers License Button -->
-                          <div id="click-to-reinstate-lic-<%=i%>"
-                            class="form-group col-md-12 text-align-center margin-top-1 hide">
-                            <button type="button" value="reinstateLicense" name="action" class="btn btn-info"
-                              onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','1')">Reinstate
-                              Driver's License</button>
-                          </div>
-
-                          <!-- Delete Drivers License Button -->
-                          <div id="click-to-revoke-lic-<%=i%>"
-                            class="form-group col-md-12 text-align-center margin-top-1 hide">
-                            <button type="button" value="deleteLicense" name="action" class="btn btn-danger"
-                              onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','2')">Revoke
-                              Driver's License</button>
-                          </div>
-
-                          <hr style="width: 88%;max-width: 100rem;">
-                          <h5>
-                            <ion-icon name="car-sport-outline"></ion-icon> Registered Vehicles
-                          </h5>
-                          <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
-                            <button
-                            type="button"
-                            class="btn btn-info margin-bottom-05"
-                            id="registeredCarButton-<%=i%>" onclick="getRegisteredCars('<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>', '<%=i%>', '<%=civilians[i]._id%>')"> Show Registered Vehicles
-                          </button>
-                            <% } else {%>
-                                <button
-                            type="button" data-toggle="modal" href="#nonCommunityBoloModal"
-                            class="btn btn-info margin-bottom-05 mock-disabled" style="cursor: not-allowed;"> Show Registered Vehicles
-                          </button>
-                            <% } %>
-
-                          <div class="form-group">
-                            <div id="registered-cars-<%=i%>">
-                            </div>
-                          </div>
-
-                          <hr style="width: 88%;max-width: 100rem;">
-                          <h5>
-                            <ion-icon name="browsers-outline"></ion-icon> Firearm License
-                          </h5>
-
-                          <div class="form-group">
-                            <label class="col-md-4 control-label" for="firearmLicenseView"></label>
-                            <div class="col-md-4">
-                              <% if (civilians[i].civilian.firearmLicense == 2) {%>
-                              <p class="plate-body-text">Valid <i class="ion-checkmark-circled color-green"></i></p>
-                              <% } else if (civilians[i].civilian.firearmLicense == 3) {%>
-                              <p class="plate-body-text">Revoked <i class="ion-alert-circled color-red"></i></p>
-                              <% } else {%>
-                              <p class="plate-body-text">None <i class="ion-alert-circled color-yellow"></i></p>
-                              <% } %>
-                            </div>
-                          </div>
-                          <hr style="width: 88%;max-width: 100rem;">
-
-                          Occupation: <%= civilians[i].civilian.occupation%><br />
-
-                          <hr style="width: 88%;max-width: 100rem;">
-                          <h4>Criminal History</h4>
-                          <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
-                            <li class="nav-item">
-                              <a class="nav-link" id="pills-citations-tab" data-toggle="pill" href="#pills-citations"
-                                role="tab" aria-controls="pills-citations" aria-selected="true">Citations</a>
-                            </li>
-                            <li class="nav-item">
-                              <a class="nav-link" id="pills-warnings-tab" data-toggle="pill" href="#pills-warnings"
-                                role="tab" aria-controls="pills-warnings" aria-selected="false">Warnings</a>
-                            </li>
-                            <li class="nav-item">
-                              <a class="nav-link" id="pills-arrests-tab" data-toggle="pill" href="#pills-arrests"
-                                role="tab" aria-controls="pills-arrests" aria-selected="false">Arrests</a>
-                            </li>
-                          </ul>
-                          <div class="tab-content" id="pills-tabContent">
-                            <div class="tab-pane fade active in" id="pills-citations" role="tabpanel"
-                              aria-labelledby="pills-citations-tab">
-                              <table id="ticket-table" class="table table-hover" border="1" frame="box">
-                                <thead>
-                                  <tr style="background-color: #2d2d2d;">
-                                    <td>Date<br><i><small>YYYY-M-D</small></i></td>
-                                    <td>Violation</td>
-                                    <td>Amount</td>
-                                  </tr>
-                                </thead>
-                                <tbody id="ticket-body">
-                                  <% if (tickets != null) {%>
-                                  <% for(var j=0; j<tickets.length; j++) {%>
-                                  <tr>
-                                    <% if ((tickets[j].ticket.civID == civilians[i]._id) && (!tickets[j].ticket.isWarning)) {%>
-                                    <td><%= tickets[j].ticket.date %></td>
-                                    <td><%= tickets[j].ticket.violation %></td>
-                                    <td>$<%= tickets[j].ticket.amount %></td>
-                                    <% } %>
-                                    <% if ((i == 0) && (tickets[j].ticket.civID == null) && (!tickets[j].ticket.isWarning)) {%>
-                                    <td><%= tickets[j].ticket.date %></td>
-                                    <td><%= tickets[j].ticket.violation %></td>
-                                    <td>$<%= tickets[j].ticket.amount %></td>
-                                    <% } %>
-                                  </tr>
-                                  <% } %>
-                                  <% } %>
-                                </tbody>
-                              </table>
-                            </div>
-                            <div class="tab-pane fade" id="pills-warnings" role="tabpanel"
-                              aria-labelledby="pills-warnings-tab">
-                              <table id="warning-table" class="table table-hover" border="1" frame="box">
-                                <thead>
-                                  <tr style="background-color: #2d2d2d;">
-                                    <td>Date<br><i><small>YYYY-M-D</small></i></td>
-                                    <td>Warning</td>
-                                  </tr>
-                                </thead>
-                                <tbody id="warning-body">
-                                  <% if (tickets != null) {%>
-                                  <% for(var j=0; j<tickets.length; j++) {%>
-                                  <tr>
-                                    <% if ((tickets[j].ticket.civID == civilians[i]._id) && (tickets[j].ticket.isWarning)) {%>
-                                    <td><%= tickets[j].ticket.date %></td>
-                                    <td><%= tickets[j].ticket.violation %></td>
-                                    <% } %>
-                                    <% if ((i == 0) && (tickets[j].ticket.civID == null) && (tickets[j].ticket.isWarning)) {%>
-                                    <td><%= tickets[j].ticket.date %></td>
-                                    <td><%= tickets[j].ticket.violation %></td>
-                                    <% } %>
-                                  </tr>
-                                  <% } %>
-                                  <% } %>
-                                </tbody>
-                              </table>
-                            </div>
-                            <div class="tab-pane fade" id="pills-arrests" role="tabpanel"
-                              aria-labelledby="pills-arrests-tab">
-                              <table id="arrest-table" class="table table-hover" border="1" frame="box">
-                                <thead>
-                                  <tr style="background-color: #2d2d2d;">
-                                    <td>Date<br><i><small>YYYY-M-D</small></i></td>
-                                    <td>Charges</td>
-                                    <td>Summary</td>
-                                  </tr>
-                                </thead>
-                                <tbody id="arrest-body">
-                                  <% if (arrestReports != null) {%>
-                                  <% for(var j=0; j<arrestReports.length; j++) {%>
-                                  <tr>
-                                    <% if (arrestReports[j].arrestReport.accusedID == civilians[i]._id) {%>
-                                    <td><%= arrestReports[j].arrestReport.date %></td>
-                                    <td><%= arrestReports[j].arrestReport.charges %></td>
-                                    <td><%= arrestReports[j].arrestReport.summary %></td>
-                                    <% } %>
-                                  </tr>
-                                  <% } %>
-                                  <% } %>
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
+                  <% if (civilians !=null) {%>
+                    <% for(var i=0; i<civilians.length; i++) {%>
+                      <div class="panel panel-default background-transparent">
+                        <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
+                          href="#collapse<%=i%>" <h4 class="panel-title">
+                              <a class="blue-hover">
+                                <%= civilians[i].civilian.firstName %>
+                                  <%= civilians[i].civilian.lastName %> |
+                                    <%= civilians[i]._id %>
+                              </a>
+                            </h4>
                         </div>
+                        <% if (i===0) {%>
+                          <div id="collapse<%=i%>" class="panel-collapse collapse in">
+                            <% } else {%>
+                              <div id="collapse<%=i%>" class="panel-collapse collapse">
+                                <% } %>
+                                  <div class="panel-body">
+
+                                    <% if (warrants !=null) {%>
+                                      <% if (warrants.length==0) {%>
+                                        <div id="noWarrantMessage" class="alert alert-success alert-dismissible"
+                                          style="display:block">
+                                          <strong>NCIC Warrant Check!</strong> Clean, No Warrants Found.
+                                          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                          </button>
+                                        </div>
+                                        <% } else {%>
+                                          <span>(Click on warrant to clear)</span>
+                                          <% for(var k=0; k<warrants.length; k++) {%>
+                                            <% if ((warrants[k].warrant.accusedID==civilians[i]._id) &&
+                                              (warrants[k].warrant.status===true)) {%>
+                                              <span id="confirmWarrantModal" data-toggle="modal"
+                                                href="#confirmClearWarrantModal"
+                                                onclick="clearWarrantWithValues('<%= warrants[k]._id %>', '<%= warrants[k].warrant.reasons[0] %>')">
+                                                <div id="warrantMessage" class="alert alert-danger alert-dismissible"
+                                                  style="display:block">
+                                                  <strong>Active Warrant!</strong>
+                                                  <%= warrants[k].warrant.reasons[0] %>
+                                                </div>
+                                              </span>
+                                              <% } %>
+                                                <% } %>
+                                                  <% } %>
+                                                    <% } %>
+
+
+
+
+
+
+                                                      <div class="text-align-center">
+                                                        <button data-toggle="modal" href="#ticketModal"
+                                                          class="btn btn-primary btn-md margin-bottom-05"
+                                                          onclick="OpenCitation('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#date', '#time');">Issue
+                                                          Citation</button>
+                                                        <button data-toggle="modal" href="#warningModal"
+                                                          class="btn btn-primary btn-md margin-bottom-05"
+                                                          onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue
+                                                          Warning</button>
+                                                        <button data-toggle="modal" href="#arrestModal"
+                                                          class="btn btn-primary btn-md margin-bottom-05"
+                                                          onclick="OpenArrest('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
+                                                        <button data-toggle="modal" href="#createWarrantModal"
+                                                          class="btn btn-primary btn-md margin-bottom-05"
+                                                          onclick="OpenCreateWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Create
+                                                          Warrant</button>
+                                                        <!-- <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button> -->
+                                                      </div>
+                                                      <hr />
+
+                                                      <h5>
+                                                        <ion-icon name="browsers-outline"></ion-icon> Drivers License
+                                                      </h5>
+
+                                                      <!-- Drivers License -->
+                                                      <div id="drivers-license" class="row">
+                                                        <div class="col-md-12">
+                                                          <div id="licenseRevokedMessage-<%=i%>"
+                                                            class="alert alert-warning hide">
+                                                            <strong>Warning!</strong> License is Revoked.
+                                                          </div>
+                                                          <div id="noLicenseMessage-<%=i%>"
+                                                            class="alert alert-danger hide">
+                                                            <strong>Alert!</strong> No License Found.
+                                                          </div>
+                                                          <div id="drivers-license-details-<%=i%>"
+                                                            class="container col-sm-offset-2 col-md-offset-2"
+                                                            style="position: relative; margin-bottom: -130px;">
+                                                            <img src="/static/images/id-license.png"
+                                                              style="width: 301px; height: 186px;">
+
+                                                            <label style="position: absolute;
+                                                              font-family: 'Abril Fatface', cursive;
+                                                              top: 4px;
+                                                              left: 38px;
+                                                              color: #00aced;
+                                                              font-size: 17px;"></label>
+                                                            <label style="position: absolute;
+                                                              font-family: 'Signika', sans-serif;
+                                                              top: 8px;
+                                                              left: 206px;
+                                                              color: #00aced;
+                                                              font-size: 12px;"></label>
+                                                            <!-- drivers license # -->
+                                                            <div class="form-group">
+                                                              <div class="col-md-6">
+                                                                <label id="civilianIDViewLic-<%=i%>" style="position: absolute;
+                                                                  bottom: 0px;
+                                                                  left: 25px;
+                                                                  font-weight: 100;
+                                                                  color: black;
+                                                                  font-size: 14px;
+                                                                  text-transform: uppercase;
+                                                                  font-family: 'Signika', sans-serif;"
+                                                                  class="form-label"></label>
+                                                              </div>
+                                                            </div>
+
+                                                            <!-- expiration date -->
+                                                            <div class="form-group">
+                                                              <div class="col-md-4">
+                                                                <label style="position: absolute;
+                                                                  bottom: 146px;
+                                                                  left: 25px;
+                                                                  color: black;
+                                                                  font-size: 14px;
+                                                                  font-family: 'Signika', sans-serif;
+                                                                  font-weight: 500;" class="form-label"><span
+                                                                    style="color: #102595">EXP </span><span
+                                                                    id="license-expiration-<%=i%>"></span></label>
+                                                              </div>
+                                                            </div>
+
+                                                            <!-- last name -->
+                                                            <div class="form-group">
+                                                              <div class="col-md-6">
+                                                                <span style="position: absolute;
+                                                                  bottom: 150px;
+                                                                  left: 25px;
+                                                                  font-size: 14px;
+                                                                  font-family: 'Signika', sans-serif;
+                                                                  font-weight: 500;
+                                                                  color: #102595">LN </span>
+                                                                <span id="lastNameLic-<%=i%>" style="position: absolute;
+                                                                  bottom: 157px;
+                                                                  left: 46px;
+                                                                  width: 174px;
+                                                                  height: 18px;
+                                                                  padding: 0px;
+                                                                  background: transparent;
+                                                                  color: black;
+                                                                  border: none;
+                                                                  font-family: 'Signika', sans-serif;
+                                                                  font-size: 14px;
+                                                                  font-weight: 500;
+                                                                  text-transform: uppercase;"></span>
+                                                              </div>
+                                                            </div>
+
+                                                            <!-- first name -->
+                                                            <div class="form-group">
+                                                              <div>
+                                                                <span style="position: absolute;
+                                                                  bottom: 227px;
+                                                                  left: 25px;
+                                                                  font-size: 14px;
+                                                                  font-family: 'Signika', sans-serif;
+                                                                  font-weight: 500;
+                                                                  color: #102595">FN </span>
+                                                                <span id="firstNameLic-<%=i%>" style="position: absolute;
+                                                                  bottom: 234px;
+                                                                  left: 46px;
+                                                                  width: 174px;
+                                                                  height: 18px;
+                                                                  padding: 0px;
+                                                                  background: transparent;
+                                                                  color: black;
+                                                                  border: none;
+                                                                  font-family: 'Signika', sans-serif;
+                                                                  font-size: 14px;
+                                                                  font-weight: 500;
+                                                                  text-transform: uppercase;"></span>
+                                                              </div>
+                                                            </div>
+
+                                                            <!-- address -->
+                                                            <div class="form-group">
+                                                              <div class="col-md-4">
+                                                                <span id="addressViewLic-<%=i%>" style="position: absolute;
+                                                                  bottom: 136px;
+                                                                  width: 219px;
+                                                                  left: 26px;
+                                                                  line-height: 14px;
+                                                                  background: transparent;
+                                                                  color: black;
+                                                                  border: none;
+                                                                  font-family: 'Signika', sans-serif;
+                                                                  font-size: 14px;
+                                                                  font-weight: 500;
+                                                                  text-transform: uppercase;"></span>
+                                                              </div>
+                                                            </div>
+
+                                                            <!-- dob -->
+                                                            <div class="form-group">
+                                                              <div class="col-md-4">
+                                                                <span style="position: absolute;
+                                                                  bottom: 131px;
+                                                                  left: 25px;
+                                                                  font-size: 14px;
+                                                                  font-family: 'Signika', sans-serif;
+                                                                  font-weight: 500;
+                                                                  color: #102595">DOB </span>
+                                                                <span id="birthdayViewLic-<%=i%>" style="position: absolute;
+                                                                  bottom: 131px;
+                                                                  left: 57px;
+                                                                  background: transparent;
+                                                                  color: black;
+                                                                  border: none;
+                                                                  font-family: 'Signika', sans-serif;
+                                                                  font-size: 15px;
+                                                                  font-weight: 500;"></span>
+                                                              </div>
+                                                            </div>
+
+                                                            <!-- license status -->
+                                                            <div class="form-group">
+                                                              <div class="col-md-4">
+                                                                <span style="position: absolute;
+                                                                  bottom: 131px;
+                                                                  left: 25px;
+                                                                  font-size: 14px;
+                                                                  font-family: 'Signika', sans-serif;
+                                                                  font-weight: 500;
+                                                                  color: #102595">STATUS </span>
+                                                                <span id="licenseStatusViewLic-<%=i%>" style="position: absolute;
+                                                                  bottom: 131px;
+                                                                  left: 75px;
+                                                                  background: transparent;
+                                                                  border: none;
+                                                                  font-family: 'Signika', sans-serif;
+                                                                  font-size: 14px;
+                                                                  font-weight: 500;
+                                                                  text-transform: uppercase;" class="color-black">
+                                                                </span>
+                                                              </div>
+                                                            </div>
+
+                                                            <!-- issued date -->
+                                                            <div class="form-group">
+                                                              <div class="col-md-8">
+                                                                <label style="position: absolute;
+                                                                  bottom: 241px;
+                                                                  left: 195px;
+                                                                  color: black;
+                                                                  font-size: 14px;
+                                                                  font-family: 'Signika', sans-serif;
+                                                                  font-weight: 500;" class="form-label"><span
+                                                                    style="color: #102595">ISS </span><span
+                                                                    id="license-issued-<%=i%>"></span></label>
+                                                              </div>
+                                                            </div>
+                                                          </div>
+                                                        </div>
+                                                      </div>
+
+                                                      <!-- Reinstate Drivers License Button -->
+                                                      <div id="click-to-reinstate-lic-<%=i%>"
+                                                        class="form-group col-md-12 text-align-center margin-top-1 hide">
+                                                        <button type="button" value="reinstateLicense" name="action"
+                                                          class="btn btn-info"
+                                                          onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','1')">Reinstate
+                                                          Driver's License</button>
+                                                      </div>
+
+                                                      <!-- Delete Drivers License Button -->
+                                                      <div id="click-to-revoke-lic-<%=i%>"
+                                                        class="form-group col-md-12 text-align-center margin-top-1 hide">
+                                                        <button type="button" value="deleteLicense" name="action"
+                                                          class="btn btn-danger"
+                                                          onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','2')">Revoke
+                                                          Driver's License</button>
+                                                      </div>
+
+                                                      <hr style="width: 88%;max-width: 100rem;">
+                                                      <h5>
+                                                        <ion-icon name="car-sport-outline"></ion-icon> Registered
+                                                        Vehicles
+                                                      </h5>
+                                                      <% if (user.user.activeCommunity !='' && user.user.activeCommunity
+                                                        !=null) {%>
+                                                        <button type="button" class="btn btn-info margin-bottom-05"
+                                                          data-toggle="modal" href="#registeredVehicles"
+                                                          id="registeredCarButton-<%=i%>"
+                                                          onclick="getRegisteredCars('<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>', '<%=i%>', '<%=civilians[i]._id%>')">
+                                                          Show Registered Vehicles
+                                                        </button>
+                                                        <% } else {%>
+                                                          <button type="button" data-toggle="modal"
+                                                            href="#nonCommunityBoloModal"
+                                                            class="btn btn-info margin-bottom-05 mock-disabled"
+                                                            style="cursor: not-allowed;"> Show Registered Vehicles
+                                                          </button>
+                                                          <% } %>
+
+                                                            <hr style="width: 88%;max-width: 100rem;">
+                                                            <h5>
+                                                              <ion-icon name="browsers-outline"></ion-icon> Firearm
+                                                              License
+                                                            </h5>
+
+                                                            <div class="form-group">
+                                                              <label class="col-md-4 control-label"
+                                                                for="firearmLicenseView"></label>
+                                                              <div class="col-md-4">
+                                                                <% if (civilians[i].civilian.firearmLicense==2) {%>
+                                                                  <p class="plate-body-text">Valid <i
+                                                                      class="ion-checkmark-circled color-green"></i></p>
+                                                                  <% } else if (civilians[i].civilian.firearmLicense==3)
+                                                                    {%>
+                                                                    <p class="plate-body-text">Revoked <i
+                                                                        class="ion-alert-circled color-red"></i></p>
+                                                                    <% } else {%>
+                                                                      <p class="plate-body-text">None <i
+                                                                          class="ion-alert-circled color-yellow"></i>
+                                                                      </p>
+                                                                      <% } %>
+                                                              </div>
+                                                            </div>
+                                                            <hr style="width: 88%;max-width: 100rem;">
+
+                                                            Occupation: <%= civilians[i].civilian.occupation%><br />
+
+                                                              <hr style="width: 88%;max-width: 100rem;">
+                                                              <h4>Criminal History</h4>
+                                                              <ul class="nav nav-pills mb-3 margin-bottom-1"
+                                                                id="pills-tab" role="tablist">
+                                                                <li class="nav-item">
+                                                                  <a class="nav-link" id="pills-citations-tab"
+                                                                    data-toggle="pill" href="#pills-citations"
+                                                                    role="tab" aria-controls="pills-citations"
+                                                                    aria-selected="true">Citations</a>
+                                                                </li>
+                                                                <li class="nav-item">
+                                                                  <a class="nav-link" id="pills-warnings-tab"
+                                                                    data-toggle="pill" href="#pills-warnings" role="tab"
+                                                                    aria-controls="pills-warnings"
+                                                                    aria-selected="false">Warnings</a>
+                                                                </li>
+                                                                <li class="nav-item">
+                                                                  <a class="nav-link" id="pills-arrests-tab"
+                                                                    data-toggle="pill" href="#pills-arrests" role="tab"
+                                                                    aria-controls="pills-arrests"
+                                                                    aria-selected="false">Arrests</a>
+                                                                </li>
+                                                              </ul>
+                                                              <div class="tab-content" id="pills-tabContent">
+                                                                <div class="tab-pane fade active in"
+                                                                  id="pills-citations" role="tabpanel"
+                                                                  aria-labelledby="pills-citations-tab">
+                                                                  <table id="ticket-table" class="table table-hover"
+                                                                    border="1" frame="box">
+                                                                    <thead>
+                                                                      <tr style="background-color: #2d2d2d;">
+                                                                        <td>Date<br><i><small>YYYY-M-D</small></i></td>
+                                                                        <td>Violation</td>
+                                                                        <td>Amount</td>
+                                                                      </tr>
+                                                                    </thead>
+                                                                    <tbody id="ticket-body">
+                                                                      <% if (tickets !=null) {%>
+                                                                        <% for(var j=0; j<tickets.length; j++) {%>
+                                                                          <tr>
+                                                                            <% if
+                                                                              ((tickets[j].ticket.civID==civilians[i]._id)
+                                                                              && (!tickets[j].ticket.isWarning)) {%>
+                                                                              <td>
+                                                                                <%= tickets[j].ticket.date %>
+                                                                              </td>
+                                                                              <td>
+                                                                                <%= tickets[j].ticket.violation %>
+                                                                              </td>
+                                                                              <td>$<%= tickets[j].ticket.amount %>
+                                                                              </td>
+                                                                              <% } %>
+                                                                                <% if ((i==0) &&
+                                                                                  (tickets[j].ticket.civID==null) &&
+                                                                                  (!tickets[j].ticket.isWarning)) {%>
+                                                                                  <td>
+                                                                                    <%= tickets[j].ticket.date %>
+                                                                                  </td>
+                                                                                  <td>
+                                                                                    <%= tickets[j].ticket.violation %>
+                                                                                  </td>
+                                                                                  <td>$<%= tickets[j].ticket.amount %>
+                                                                                  </td>
+                                                                                  <% } %>
+                                                                          </tr>
+                                                                          <% } %>
+                                                                            <% } %>
+                                                                    </tbody>
+                                                                  </table>
+                                                                </div>
+                                                                <div class="tab-pane fade" id="pills-warnings"
+                                                                  role="tabpanel" aria-labelledby="pills-warnings-tab">
+                                                                  <table id="warning-table" class="table table-hover"
+                                                                    border="1" frame="box">
+                                                                    <thead>
+                                                                      <tr style="background-color: #2d2d2d;">
+                                                                        <td>Date<br><i><small>YYYY-M-D</small></i></td>
+                                                                        <td>Warning</td>
+                                                                      </tr>
+                                                                    </thead>
+                                                                    <tbody id="warning-body">
+                                                                      <% if (tickets !=null) {%>
+                                                                        <% for(var j=0; j<tickets.length; j++) {%>
+                                                                          <tr>
+                                                                            <% if
+                                                                              ((tickets[j].ticket.civID==civilians[i]._id)
+                                                                              && (tickets[j].ticket.isWarning)) {%>
+                                                                              <td>
+                                                                                <%= tickets[j].ticket.date %>
+                                                                              </td>
+                                                                              <td>
+                                                                                <%= tickets[j].ticket.violation %>
+                                                                              </td>
+                                                                              <% } %>
+                                                                                <% if ((i==0) &&
+                                                                                  (tickets[j].ticket.civID==null) &&
+                                                                                  (tickets[j].ticket.isWarning)) {%>
+                                                                                  <td>
+                                                                                    <%= tickets[j].ticket.date %>
+                                                                                  </td>
+                                                                                  <td>
+                                                                                    <%= tickets[j].ticket.violation %>
+                                                                                  </td>
+                                                                                  <% } %>
+                                                                          </tr>
+                                                                          <% } %>
+                                                                            <% } %>
+                                                                    </tbody>
+                                                                  </table>
+                                                                </div>
+                                                                <div class="tab-pane fade" id="pills-arrests"
+                                                                  role="tabpanel" aria-labelledby="pills-arrests-tab">
+                                                                  <table id="arrest-table" class="table table-hover"
+                                                                    border="1" frame="box">
+                                                                    <thead>
+                                                                      <tr style="background-color: #2d2d2d;">
+                                                                        <td>Date<br><i><small>YYYY-M-D</small></i></td>
+                                                                        <td>Charges</td>
+                                                                        <td>Summary</td>
+                                                                      </tr>
+                                                                    </thead>
+                                                                    <tbody id="arrest-body">
+                                                                      <% if (arrestReports !=null) {%>
+                                                                        <% for(var j=0; j<arrestReports.length; j++) {%>
+                                                                          <tr>
+                                                                            <% if
+                                                                              (arrestReports[j].arrestReport.accusedID==civilians[i]._id)
+                                                                              {%>
+                                                                              <td>
+                                                                                <%= arrestReports[j].arrestReport.date
+                                                                                  %>
+                                                                              </td>
+                                                                              <td>
+                                                                                <%=
+                                                                                  arrestReports[j].arrestReport.charges
+                                                                                  %>
+                                                                              </td>
+                                                                              <td>
+                                                                                <%=
+                                                                                  arrestReports[j].arrestReport.summary
+                                                                                  %>
+                                                                              </td>
+                                                                              <% } %>
+                                                                          </tr>
+                                                                          <% } %>
+                                                                            <% } %>
+                                                                    </tbody>
+                                                                  </table>
+                                                                </div>
+                                                              </div>
+                                  </div>
+                              </div>
+
+                          </div>
+
+                          <% } %>
+
+                            <% } %>
                       </div>
-
-                    </div>
-
-                    <% } %>
-
-                    <% } %>
-                  </div>
                 </div>
               </div>
             </fieldset>
@@ -863,50 +960,57 @@
               <!-- List of Plates -->
               <div id="plateDetails" style="display:none">
                 <div class="panel-group" id="accordion">
-                  <% if (vehicles != null) {%>
-                  <% for(var i=0; i<vehicles.length; i++) {%>
-                  <div class="panel panel-default background-transparent">
-                    <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
-                      href="#collapse<%=i%>" <h4 class="panel-title">
-                      <a class="blue-hover">
-                        <%= vehicles[i].vehicle.plate%> | <%= vehicles[i].vehicle.registeredOwner%></a>
-                      </h4>
-                    </div>
-                    <% if (i === 0) {%>
-                    <div id="collapse<%=i%>" class="panel-collapse collapse in">
-                      <% } else {%>
-                      <div id="collapse<%=i%>" class="panel-collapse collapse">
-                        <% } %>
-                        <div class="panel-body">
-                          <% if (vehicles[i].vehicle.isStolen == 2) {%>
-                          <div id="stolenMessage" class="alert alert-danger" style="display:block">
-                            <strong>Danger!</strong> Vehicle reported as stolen.
+                  <% if (vehicles !=null) {%>
+                    <% for(var i=0; i<vehicles.length; i++) {%>
+                      <div class="panel panel-default background-transparent">
+                        <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
+                          href="#collapse<%=i%>" <h4 class="panel-title">
+                              <a class="blue-hover">
+                                <%= vehicles[i].vehicle.plate%> | <%= vehicles[i].vehicle.registeredOwner%>
+                              </a>
+                            </h4>
+                        </div>
+                        <% if (i===0) {%>
+                          <div id="collapse<%=i%>" class="panel-collapse collapse in">
+                            <% } else {%>
+                              <div id="collapse<%=i%>" class="panel-collapse collapse">
+                                <% } %>
+                                  <div class="panel-body">
+                                    <% if (vehicles[i].vehicle.isStolen==2) {%>
+                                      <div id="stolenMessage" class="alert alert-danger" style="display:block">
+                                        <strong>Danger!</strong> Vehicle reported as stolen.
+                                      </div>
+                                      <% } %>
+                                        Vin #: <%= vehicles[i].vehicle.vin%><br />
+                                          License Plate #: <%= vehicles[i].vehicle.plate%><br />
+                                            Registered Owner: <button type="submit" class="btn btn-info"
+                                              onclick="openNameDatabase('<%= vehicles[i].vehicle.registeredOwner%>','<%= vehicles[i].vehicle.activeCommunityID %>')">
+                                              <%= vehicles[i].vehicle.registeredOwner%>
+                                            </button><br />
+                                            Color: <%= vehicles[i].vehicle.color%><br />
+                                              Model: <%= vehicles[i].vehicle.model%><br />
+                                                <% if (vehicles[i].vehicle.validInsurance==1) {%>
+                                                  <p class="plate-body-text">Insurance: Valid <i
+                                                      class="ion-checkmark-circled color-green"></i>
+                                                  </p>
+                                                  <% } else {%>
+                                                    <p class="plate-body-text">Insurance: Invalid <i
+                                                        class="ion-alert-circled color-red"></i></p>
+                                                    <% } %>
+                                                      <% if (vehicles[i].vehicle.validRegistration==1) {%>
+                                                        <p class="plate-body-text">Registration: Valid <i
+                                                            class="ion-checkmark-circled color-green"></i></p>
+                                                        <% } else {%>
+                                                          <p class="plate-body-text">Registration: Invalid <i
+                                                              class="ion-alert-circled color-red"></i>
+                                                          </p>
+                                                          <% } %>
+                                  </div>
+                              </div>
                           </div>
                           <% } %>
-                          Vin #: <%= vehicles[i].vehicle.vin%><br />
-                          License Plate #: <%= vehicles[i].vehicle.plate%><br />
-                          Registered Owner: <button type="submit" class="btn btn-info" onclick="openNameDatabase('<%= vehicles[i].vehicle.registeredOwner%>','<%= vehicles[i].vehicle.activeCommunityID %>')"><%= vehicles[i].vehicle.registeredOwner%></button><br />
-                          Color: <%= vehicles[i].vehicle.color%><br />
-                          Model: <%= vehicles[i].vehicle.model%><br />
-                          <% if (vehicles[i].vehicle.validInsurance == 1) {%>
-                          <p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i>
-                          </p>
-                          <% } else {%>
-                          <p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>
-                          <% } %>
-                          <% if (vehicles[i].vehicle.validRegistration == 1) {%>
-                          <p class="plate-body-text">Registration: Valid <i
-                              class="ion-checkmark-circled color-green"></i></p>
-                          <% } else {%>
-                          <p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i>
-                          </p>
-                          <% } %>
-                        </div>
+                            <% } %>
                       </div>
-                    </div>
-                    <% } %>
-                    <% } %>
-                  </div>
                 </div>
               </div>
             </fieldset>
@@ -950,36 +1054,38 @@
               <!-- List of Plates -->
               <div id="firearmDetails" style="display:none">
                 <div class="panel-group" id="accordion">
-                  <% if (firearms != null) {%>
-                  <% for(var i=0; i<firearms.length; i++) {%>
-                  <div class="panel panel-default background-transparent">
-                    <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
-                      href="#collapse<%=i%>" <h4 class="panel-title">
-                      <a class="blue-hover">
-                        <%= firearms[i].firearm.serialNumber%> | <%= firearms[i].firearm.registeredOwner%></a>
-                      </h4>
-                    </div>
-                    <% if (i === 0) {%>
-                    <div id="collapse<%=i%>" class="panel-collapse collapse in">
-                      <% } else {%>
-                      <div id="collapse<%=i%>" class="panel-collapse collapse">
-                        <% } %>
-                        <div class="panel-body">
-                          <% if (firearms[i].firearm.isStolen == 'true') {%>
-                          <div id="stolenMessage" class="alert alert-danger" style="display:block">
-                            <strong>Danger!</strong> Firearm reported as stolen.
+                  <% if (firearms !=null) {%>
+                    <% for(var i=0; i<firearms.length; i++) {%>
+                      <div class="panel panel-default background-transparent">
+                        <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
+                          href="#collapse<%=i%>" <h4 class="panel-title">
+                              <a class="blue-hover">
+                                <%= firearms[i].firearm.serialNumber%> | <%= firearms[i].firearm.registeredOwner%>
+                              </a>
+                            </h4>
+                        </div>
+                        <% if (i===0) {%>
+                          <div id="collapse<%=i%>" class="panel-collapse collapse in">
+                            <% } else {%>
+                              <div id="collapse<%=i%>" class="panel-collapse collapse">
+                                <% } %>
+                                  <div class="panel-body">
+                                    <% if (firearms[i].firearm.isStolen=='true' ) {%>
+                                      <div id="stolenMessage" class="alert alert-danger" style="display:block">
+                                        <strong>Danger!</strong> Firearm reported as stolen.
+                                      </div>
+                                      <% } %>
+                                        Serial #: <%= firearms[i].firearm.serialNumber%><br />
+                                          Registered Owner: <%= firearms[i].firearm.registeredOwner%><br />
+                                            <span style="text-transform: capitalize;">Type:
+                                              <%= firearms[i].firearm.weaponType%>
+                                            </span><br />
+                                  </div>
+                              </div>
                           </div>
                           <% } %>
-                          Serial #: <%= firearms[i].firearm.serialNumber%><br />
-                          Registered Owner: <%= firearms[i].firearm.registeredOwner%><br />
-                          <span style="text-transform: capitalize;">Type:
-                            <%= firearms[i].firearm.weaponType%></span><br />
-                        </div>
+                            <% } %>
                       </div>
-                    </div>
-                    <% } %>
-                    <% } %>
-                  </div>
                 </div>
               </div>
             </fieldset>
@@ -1083,9 +1189,9 @@
 
                   <select id="ticket-select" name="fines" class="select-move" multiple required>
                     <% include citation-list %>
-                    <optgroup label="Crime not listed">
-                      <option id="ticket-option-other">Other</option>
-                    </optgroup>
+                      <optgroup label="Crime not listed">
+                        <option id="ticket-option-other">Other</option>
+                      </optgroup>
                   </select>
                 </div>
               </div>
@@ -1216,9 +1322,9 @@
 
                   <select id="warning-select" name="fines" class="select-move" multiple required>
                     <% include citation-list %>
-                    <optgroup label="Crime not listed">
-                      <option id="warning-option-other">Other</option>
-                    </optgroup>
+                      <optgroup label="Crime not listed">
+                        <option id="warning-option-other">Other</option>
+                      </optgroup>
                   </select>
                 </div>
               </div>
@@ -1288,8 +1394,8 @@
                 <label class="col-md-4 control-label" for="reporting-officer">Reporting Officer:</label>
                 <div class="col-md-4">
                   <input id="reporting-officer" name="reportingOfficer" type="text" placeholder="Reporting Officer"
-                    class="form-control input-md" style="text-transform:capitalize;" value=<%= user.user.username%>
-                    required="" readonly="readonly">
+                    class="form-control input-md" style="text-transform:capitalize;" value=<%=user.user.username%>
+                  required="" readonly="readonly">
                 </div>
               </div>
 
@@ -1448,7 +1554,7 @@
 
               <input id="warrant-date" type="hidden" name="date" value="">
               <input id="warrant-time" type="hidden" name="time" value="">
-              <input id="warrant-reportingOfficer" type="hidden" name="reportingOfficer" value=<%= user.user.username%>>
+              <input id="warrant-reportingOfficer" type="hidden" name="reportingOfficer" value=<%=user.user.username%>>
               <!-- Button -->
               <div class="form-group">
                 <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
@@ -1480,7 +1586,7 @@
               <p id="warrant-reason"></p>
               <input id="warrant-clear-date" type="hidden" name="updatedDate" value="">
               <input id="warrant-clear-time" type="hidden" name="updatedTime" value="">
-              <input id="warrant-clearingOfficer" type="hidden" name="clearingOfficer" value=<%= user.user.username%>>
+              <input id="warrant-clearingOfficer" type="hidden" name="clearingOfficer" value=<%=user.user.username%>>
               <input id="warrant-ID" type="hidden" name="warrantID" value="">
               <!-- Button -->
 
@@ -1708,6 +1814,24 @@
     </div>
   </div>
 
+  <div id="registeredVehicles" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="modal-body">
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+            <h2 class="text-center">Registered Vehicles</h2>
+            <div class="form-group">
+              <div id="registered-cars">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="nonCommunityBoloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1742,9 +1866,9 @@
 
               <p id="bolo-reason"></p>
               <input id="bolo-clear-date" type="hidden" name="updatedAt" value="">
-              <input id="bolo-clearingOfficerID" type="hidden" name="clearingOfficerID" value=<%= user._id%>>
+              <input id="bolo-clearingOfficerID" type="hidden" name="clearingOfficerID" value=<%=user._id%>>
               <input id="bolo-clearingOfficerUsername" type="hidden" name="clearingOfficerUsername"
-                value=<%= user.user.username%>>
+                value=<%=user.user.username%>>
               <input id="bolo-ID" type="hidden" name="boloID" value="">
 
               <!-- Button -->
@@ -1904,52 +2028,53 @@
 
   <% include account-management %>
 
-  <div id="panicDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form id="clear-panic-form" class="form-horizontal" action="" method="post">
-            <fieldset>
+    <div id="panicDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <form id="clear-panic-form" class="form-horizontal" action="" method="post">
+              <fieldset>
 
-              <!-- Form Name -->
+                <!-- Form Name -->
+                <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                  aria-hidden="true">X</button>
+                <h4>Clear Panic</h4>
+                <hr style="width: 88%;max-width: 100rem;">
+
+                <!-- Button -->
+                <div class="form-group">
+                  <label class="col-md-4 control-label" for="deleteAccount"></label>
+                  <div class="col-md-4 text-align-center">
+                    <input id="panic-id" type="hidden" name="panic-id" value="">
+                    <button id="clearPanic" class="btn btn-danger"
+                      onclick="hideModal('panicDetailModal')">Clear</button>
+                  </div>
+                </div>
+              </fieldset>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="notificationModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body text-center">
+            <fieldset>
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
                 aria-hidden="true">X</button>
-              <h4>Clear Panic</h4>
-              <hr style="width: 88%;max-width: 100rem;">
-
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="deleteAccount"></label>
-                <div class="col-md-4 text-align-center">
-                  <input id="panic-id" type="hidden" name="panic-id" value="">
-                  <button id="clearPanic" class="btn btn-danger" onclick="hideModal('panicDetailModal')">Clear</button>
-                </div>
-              </div>
+              <h1>Hello! ❤️ </h1>
+              <h3>Thanks for checking out the new notifications. <br />Check back for updates</h3>
+              <h1 class="margin-top-2">🚀</h1>
             </fieldset>
-          </form>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div id="notificationModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body text-center">
-          <fieldset>
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-              aria-hidden="true">X</button>
-            <h1>Hello! ❤️ </h1>
-            <h3>Thanks for checking out the new notifications. <br />Check back for updates</h3>
-            <h1 class="margin-top-2">🚀</h1>
-          </fieldset>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <% include 10-codes %>
-  <% include notepad %>
+    <% include 10-codes %>
+      <% include notepad %>
 </body>
 </div>
 </div>
@@ -2233,17 +2358,17 @@
       }
     })
 
-    $('#ticket-select').change(function(e) {
-      var selected = $(e.target).val();
-      let total = 0
+    $('#ticket-select').change(function (e) {
+      var selected=$(e.target).val();
+      let total=0
       selected.forEach(val => {
-        let subVal = val.substring(2)
-        total += parseInt(subVal)
+        let subVal=val.substring(2)
+        total+=parseInt(subVal)
       })
       $('#amount').val(parseInt(total))
     })
 
-    $("#submitTicket").on('click',function() {
+    $("#submitTicket").on('click', function () {
       $('#crimeList').val($("#ticket-select").find("option:selected").text())
     });
   }); /* End of document.ready */
@@ -2272,19 +2397,12 @@
 
   function getRegisteredCars(registeredOwner, index, registeredOwnerID) {
     //remove any existing panel body on button click
-    $(`#registered-cars-panel-body-${index}`).remove().fadeOut(1, function () {
-      $(this).remove();
-    })
-    if (document.getElementById(`registeredCarButton-${index}`).innerHTML == 'Hide Registered Vehicles') {
-      $(`#registered-cars-${index}`).hide()
-      document.getElementById(`registeredCarButton-${index}`).innerHTML = 'Show Registered Vehicles';
-      return
-    }
-    $(`#registered-cars-${index}`).show()
-    
+    $('.reg-car').remove();
+    $(`#registered-cars`).show()
+
     var myUser= <%-JSON.stringify(user)%>;
     var socket=io();
-    
+
     myReq={
       regOwner: registeredOwner,
       regOwnerID: registeredOwnerID, //new ID established 1/30/2021 so will only work on vehicles after this date
@@ -2292,30 +2410,30 @@
     }
     socket.emit('get_reg_veh', myReq)
     socket.on('load_reg_veh_result', res => {
-      if (res.length == 0) {
-        $('#registered-cars-'+index).append(
-          `<div id="registered-cars-panel-body-${index}" class="panel-body">`+
-            `<h5 style="text-align: center;">No Registered Vehicles</h5>`+
-            `</div>`
+      if (res.length==0) {
+        $('#registered-cars').append(
+          `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`+
+          `<h5 style="text-align: center;">No Registered Vehicles</h5>`+
+          `</div>`
         )
         return
       }
-      $('#registered-cars-'+index).append(
-          `<div id="registered-cars-panel-body-${index}" class="panel-body">`
-        )
-      for (i=0; i < res.length; i++) {
-        
-        if (i != 0) { //if we are not on the first loop, add a divider between each record
+      $('#registered-cars').append(
+        `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`
+      )
+      for (i=0; i<res.length; i++) {
+
+        if (i!=0) { //if we are not on the first loop, add a divider between each record
           $('#registered-cars-panel-body-'+index).append(
             `<hr>`
           )
         }
         //check if vehicle is stolen and append result
-        if (res[i].vehicle.isStolen == 2) {
+        if (res[i].vehicle.isStolen==2) {
           $('#registered-cars-panel-body-'+index).append(
             `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
             `<strong>Danger!</strong> Vehicle reported as stolen.`+
-          `</div>`
+            `</div>`
           )
         }
         $('#registered-cars-panel-body-'+index).append(
@@ -2325,30 +2443,28 @@
           `Model: ${res[i].vehicle.model}<br/>`
         )
         //check for valid/invalid insurance and append result
-        if (res[i].vehicle.validInsurance == 1) {
+        if (res[i].vehicle.validInsurance==1) {
           $('#registered-cars-panel-body-'+index).append(
             `<p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i></p>`
           )
         } else {
           $('#registered-cars-panel-body-'+index).append(
-          `<p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>`
+            `<p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>`
           )
         }
         //check for valid/invalid registration and append result
-        if (res[i].vehicle.validRegistration == 1) {
+        if (res[i].vehicle.validRegistration==1) {
           $('#registered-cars-panel-body-'+index).append(
             `<p class="plate-body-text">Registration: Valid <i class="ion-checkmark-circled color-green"></i></p>`
           )
         } else {
           $('#registered-cars-panel-body-'+index).append(
-          `<p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>`
+            `<p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>`
           )
         }
-      
-    }
+
+      }
     })
-    //sets the button text after search has been completed
-    document.getElementById(`registeredCarButton-${index}`).innerHTML = 'Hide Registered Vehicles';
   }
 
   function searchPlate() {
@@ -2879,35 +2995,35 @@
   }
 
   function openNameDatabase(registeredOwner, activeCommunityID) {
-    if (registeredOwner == null || registeredOwner == undefined) {
-      if (activeCommunityID.length == 0) {
-        return document.location.href = `name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommunityID}`
+    if (registeredOwner==null||registeredOwner==undefined) {
+      if (activeCommunityID.length==0) {
+        return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommunityID}`
       }
-      return document.location.href = `name-search?firstName=&lastName=&activeCommunityID=${activeCommunityID}`
+      return document.location.href=`name-search?firstName=&lastName=&activeCommunityID=${activeCommunityID}`
     }
-    let nameAndDOB = registeredOwner.split(" | ")
-    if (nameAndDOB.length !== 2) {
-      if (activeCommunityID.length == 0) {
-        return document.location.href = `name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommunityID}`
+    let nameAndDOB=registeredOwner.split(" | ")
+    if (nameAndDOB.length!==2) {
+      if (activeCommunityID.length==0) {
+        return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommunityID}`
       }
-      return document.location.href = `name-search?firstName=&lastName=&activeCommunityID=${activeCommunityID}`
+      return document.location.href=`name-search?firstName=&lastName=&activeCommunityID=${activeCommunityID}`
     }
-    let firstNameLastName = nameAndDOB[0].split(" ")
-    if (firstNameLastName.length !== 2) {
-      if (activeCommunityID.length == 0) {
-        return document.location.href = `name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommunityID}`
+    let firstNameLastName=nameAndDOB[0].split(" ")
+    if (firstNameLastName.length!==2) {
+      if (activeCommunityID.length==0) {
+        return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommunityID}`
       }
-      return document.location.href = `name-search?firstName=&lastName=&activeCommunityID=${activeCommunityID}`
+      return document.location.href=`name-search?firstName=&lastName=&activeCommunityID=${activeCommunityID}`
     }
     //check to see if we are in a community, if we are not, 
     //then we need to use the DOB to do the name search
-    if (activeCommunityID.length == 0) {
-      let dob = nameAndDOB[1].split(" ")
-      if (dob.length !== 2) {
-        return document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=&activeCommunityID=${activeCommunityID}`    
+    if (activeCommunityID.length==0) {
+      let dob=nameAndDOB[1].split(" ")
+      if (dob.length!==2) {
+        return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=&activeCommunityID=${activeCommunityID}`
       }
-      return document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=${dob[1]}&activeCommunityID=${activeCommunityID}`  
+      return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=${dob[1]}&activeCommunityID=${activeCommunityID}`
     }
-    return document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&activeCommunityID=${activeCommunityID}`
+    return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&activeCommunityID=${activeCommunityID}`
   }
 </script>
