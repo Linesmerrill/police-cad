@@ -2643,10 +2643,10 @@
     }
     $(`#registered-cars-${index}`).show()
 
-    var myUser= <%-JSON.stringify(user)%>;
-    var socket=io();
+    let myUser= <%-JSON.stringify(user)%>;
+    let socket=io();
 
-    myReq={
+    let myReq={
       regOwner: registeredOwner,
       regOwnerID: registeredOwnerID, //new ID established 1/30/2021 so will only work on vehicles after this date
       communityID: myUser.user.activeCommunity
