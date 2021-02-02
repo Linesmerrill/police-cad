@@ -512,7 +512,7 @@
                                                           </div>
                                                           <div id="drivers-license-details-<%=i%>"
                                                             class="container col-sm-offset-2 col-md-offset-2"
-                                                            style="position: relative; margin-bottom: -130px;">
+                                                            style="position: relative;">
                                                             <img src="/static/images/id-license.png"
                                                               style="width: 301px; height: 186px;">
 
@@ -702,7 +702,7 @@
 
                                                       <!-- Delete Drivers License Button -->
                                                       <div id="click-to-revoke-lic-<%=i%>"
-                                                        class="form-group col-md-12 text-align-center margin-top-1 hide">
+                                                        class="form-group col-md-13 text-align-center hide" style="margin-top: -5em">
                                                         <button type="button" value="deleteLicense" name="action"
                                                           class="btn btn-danger"
                                                           onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','2')">Revoke
