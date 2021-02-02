@@ -675,13 +675,13 @@
                           <% if (user.user.activeCommunity != '' && user.user.activeCommunity != null) {%>
                             <button
                             type="button"
-                            class="btn btn-primary btn-md margin-bottom-05"
+                            class="btn btn-info margin-bottom-05"
                             id="registeredCarButton-<%=i%>" onclick="getRegisteredCars('<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>', '<%=i%>', '<%=civilians[i]._id%>')"> Show Registered Vehicles
                           </button>
                             <% } else {%>
                                 <button
                             type="button" data-toggle="modal" href="#nonCommunityBoloModal"
-                            class="btn btn-primary btn-md margin-bottom-05 mock-disabled" style="cursor: not-allowed;"> Show Registered Vehicles
+                            class="btn btn-info margin-bottom-05 mock-disabled" style="cursor: not-allowed;"> Show Registered Vehicles
                           </button>
                             <% } %>
 
