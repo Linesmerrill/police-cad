@@ -772,7 +772,8 @@
 
                                                           <!-- Delete Drivers License Button -->
                                                           <div id="click-to-revoke-lic-<%=i%>"
-                                                            class="form-group col-md-13 text-align-center hide" style="margin-top: -5em">
+                                                            class="form-group col-md-13 text-align-center hide"
+                                                            style="margin-top: -5em">
                                                             <button type="button" value="deleteLicense" name="action"
                                                               class="btn btn-danger"
                                                               onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','2')">Revoke
@@ -785,214 +786,203 @@
                                                             Vehicles
                                                           </h5>
                                                           <div class="text-center">
-                                                          <% if (user.user.activeCommunity !='' &&
-                                                            user.user.activeCommunity !=null) {%>
-                                                            <button type="button" class="btn btn-info margin-bottom-05"
-                                                              data-toggle="modal" href="#registeredVehicles"
-                                                              id="registeredCarButton-<%=i%>"
-                                                              onclick="getRegisteredCars('<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>', '<%=i%>', '<%=civilians[i]._id%>')">
-                                                              Search Registered Vehicles
-                                                            </button>
-                                                            <% } else {%>
-                                                              <button type="button" data-toggle="modal"
-                                                                href="#nonCommunityBoloModal"
-                                                                class="btn btn-info margin-bottom-05 mock-disabled"
-                                                                style="cursor: not-allowed;"> Search Registered Vehicles
+                                                            <% if (user.user.activeCommunity !='' &&
+                                                              user.user.activeCommunity !=null) {%>
+                                                              <button type="button"
+                                                                class="btn btn-info margin-bottom-05"
+                                                                data-toggle="modal" href="#registeredVehicles"
+                                                                id="registeredCarButton-<%=i%>"
+                                                                onclick="getRegisteredCars('<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>', '<%=i%>', '<%=civilians[i]._id%>')">
+                                                                Search Registered Vehicles
                                                               </button>
-                                                              <% } %>
+                                                              <% } else {%>
+                                                                <button type="button" data-toggle="modal"
+                                                                  href="#nonCommunityBoloModal"
+                                                                  class="btn btn-info margin-bottom-05 mock-disabled"
+                                                                  style="cursor: not-allowed;"> Search Registered
+                                                                  Vehicles
+                                                                </button>
+                                                                <% } %>
+                                                          </div>
+
+                                                          <hr style="width: 88%;max-width: 100rem;">
+                                                          <h5>
+                                                            <ion-icon name="browsers-outline"></ion-icon> Firearm
+                                                            License
+                                                          </h5>
+
+                                                          <div class="form-group">
+                                                            <label class="col-md-4 control-label"
+                                                              for="firearmLicenseView"></label>
+                                                            <div class="col-md-4">
+                                                              <% if (civilians[i].civilian.firearmLicense==2) {%>
+                                                                <p class="plate-body-text">Valid <i
+                                                                    class="ion-checkmark-circled color-green"></i>
+                                                                </p>
+                                                                <% } else if (civilians[i].civilian.firearmLicense==3)
+                                                                  {%>
+                                                                  <p class="plate-body-text">Revoked <i
+                                                                      class="ion-alert-circled color-red"></i>
+                                                                  </p>
+                                                                  <% } else {%>
+                                                                    <p class="plate-body-text">None <i
+                                                                        class="ion-alert-circled color-yellow"></i>
+                                                                    </p>
+                                                                    <% } %>
                                                             </div>
+                                                          </div>
+                                                          <hr style="width: 88%;max-width: 100rem;">
 
-                                                                <hr style="width: 88%;max-width: 100rem;">
-                                                                <h5>
-                                                                  <ion-icon name="browsers-outline"></ion-icon> Firearm
-                                                                  License
-                                                                </h5>
-
-                                                                <div class="form-group">
-                                                                  <label class="col-md-4 control-label"
-                                                                    for="firearmLicenseView"></label>
-                                                                  <div class="col-md-4">
-                                                                    <% if (civilians[i].civilian.firearmLicense==2) {%>
-                                                                      <p class="plate-body-text">Valid <i
-                                                                          class="ion-checkmark-circled color-green"></i>
-                                                                      </p>
-                                                                      <% } else if
-                                                                        (civilians[i].civilian.firearmLicense==3) {%>
-                                                                        <p class="plate-body-text">Revoked <i
-                                                                            class="ion-alert-circled color-red"></i>
-                                                                        </p>
-                                                                        <% } else {%>
-                                                                          <p class="plate-body-text">None <i
-                                                                              class="ion-alert-circled color-yellow"></i>
-                                                                          </p>
+                                                          Occupation: <%= civilians[i].civilian.occupation%><br />
+                                                            <hr style="width: 88%;max-width: 100rem;">
+                                                            <h4>Criminal History</h4>
+                                                            <ul class="nav nav-pills mb-3 margin-bottom-1"
+                                                              id="pills-tab" role="tablist">
+                                                              <li class="nav-item">
+                                                                <a class="nav-link" id="pills-citations-tab"
+                                                                  data-toggle="pill" href="#pills-citations" role="tab"
+                                                                  aria-controls="pills-citations"
+                                                                  aria-selected="true">Citations</a>
+                                                              </li>
+                                                              <li class="nav-item">
+                                                                <a class="nav-link" id="pills-warnings-tab"
+                                                                  data-toggle="pill" href="#pills-warnings" role="tab"
+                                                                  aria-controls="pills-warnings"
+                                                                  aria-selected="false">Warnings</a>
+                                                              </li>
+                                                              <li class="nav-item">
+                                                                <a class="nav-link" id="pills-arrests-tab"
+                                                                  data-toggle="pill" href="#pills-arrests" role="tab"
+                                                                  aria-controls="pills-arrests"
+                                                                  aria-selected="false">Arrests</a>
+                                                              </li>
+                                                            </ul>
+                                                            <div class="tab-content" id="pills-tabContent">
+                                                              <div class="tab-pane fade active in" id="pills-citations"
+                                                                role="tabpanel" aria-labelledby="pills-citations-tab">
+                                                                <table id="ticket-table" class="table table-hover"
+                                                                  border="1" frame="box">
+                                                                  <thead>
+                                                                    <tr style="background-color: #2d2d2d;">
+                                                                      <td>Date<br><i><small>YYYY-M-D</small></i>
+                                                                      </td>
+                                                                      <td>Violation</td>
+                                                                      <td>Amount</td>
+                                                                    </tr>
+                                                                  </thead>
+                                                                  <tbody id="ticket-body">
+                                                                    <% if (tickets !=null) {%>
+                                                                      <% for(var j=0; j<tickets.length; j++) {%>
+                                                                        <tr>
+                                                                          <% if
+                                                                            ((tickets[j].ticket.civID==civilians[i]._id)
+                                                                            && (!tickets[j].ticket.isWarning)) {%>
+                                                                            <td>
+                                                                              <%= tickets[j].ticket.date %>
+                                                                            </td>
+                                                                            <td>
+                                                                              <%= tickets[j].ticket.violation %>
+                                                                            </td>
+                                                                            <td>$<%= tickets[j].ticket.amount %>
+                                                                            </td>
+                                                                            <% } %>
+                                                                              <% if ((i==0) &&
+                                                                                (tickets[j].ticket.civID==null) &&
+                                                                                (!tickets[j].ticket.isWarning)) {%>
+                                                                                <td>
+                                                                                  <%= tickets[j].ticket.date %>
+                                                                                </td>
+                                                                                <td>
+                                                                                  <%= tickets[j].ticket.violation %>
+                                                                                </td>
+                                                                                <td>$<%= tickets[j].ticket.amount %>
+                                                                                </td>
+                                                                                <% } %>
+                                                                        </tr>
+                                                                        <% } %>
                                                                           <% } %>
-                                                                  </div>
-                                                                </div>
-                                                                <hr style="width: 88%;max-width: 100rem;">
-
-                                                                Occupation: <%= civilians[i].civilian.occupation%><br />
-                                                                  <hr style="width: 88%;max-width: 100rem;">
-                                                                  <h4>Criminal History</h4>
-                                                                  <ul class="nav nav-pills mb-3 margin-bottom-1"
-                                                                    id="pills-tab" role="tablist">
-                                                                    <li class="nav-item">
-                                                                      <a class="nav-link" id="pills-citations-tab"
-                                                                        data-toggle="pill" href="#pills-citations"
-                                                                        role="tab" aria-controls="pills-citations"
-                                                                        aria-selected="true">Citations</a>
-                                                                    </li>
-                                                                    <li class="nav-item">
-                                                                      <a class="nav-link" id="pills-warnings-tab"
-                                                                        data-toggle="pill" href="#pills-warnings"
-                                                                        role="tab" aria-controls="pills-warnings"
-                                                                        aria-selected="false">Warnings</a>
-                                                                    </li>
-                                                                    <li class="nav-item">
-                                                                      <a class="nav-link" id="pills-arrests-tab"
-                                                                        data-toggle="pill" href="#pills-arrests"
-                                                                        role="tab" aria-controls="pills-arrests"
-                                                                        aria-selected="false">Arrests</a>
-                                                                    </li>
-                                                                  </ul>
-                                                                  <div class="tab-content" id="pills-tabContent">
-                                                                    <div class="tab-pane fade active in"
-                                                                      id="pills-citations" role="tabpanel"
-                                                                      aria-labelledby="pills-citations-tab">
-                                                                      <table id="ticket-table" class="table table-hover"
-                                                                        border="1" frame="box">
-                                                                        <thead>
-                                                                          <tr style="background-color: #2d2d2d;">
-                                                                            <td>Date<br><i><small>YYYY-M-D</small></i>
+                                                                  </tbody>
+                                                                </table>
+                                                              </div>
+                                                              <div class="tab-pane fade" id="pills-warnings"
+                                                                role="tabpanel" aria-labelledby="pills-warnings-tab">
+                                                                <table id="warning-table" class="table table-hover"
+                                                                  border="1" frame="box">
+                                                                  <thead>
+                                                                    <tr style="background-color: #2d2d2d;">
+                                                                      <td>Date<br><i><small>YYYY-M-D</small></i>
+                                                                      </td>
+                                                                      <td>Warning</td>
+                                                                    </tr>
+                                                                  </thead>
+                                                                  <tbody id="warning-body">
+                                                                    <% if (tickets !=null) {%>
+                                                                      <% for(var j=0; j<tickets.length; j++) {%>
+                                                                        <tr>
+                                                                          <% if
+                                                                            ((tickets[j].ticket.civID==civilians[i]._id)
+                                                                            && (tickets[j].ticket.isWarning)) {%>
+                                                                            <td>
+                                                                              <%= tickets[j].ticket.date %>
                                                                             </td>
-                                                                            <td>Violation</td>
-                                                                            <td>Amount</td>
-                                                                          </tr>
-                                                                        </thead>
-                                                                        <tbody id="ticket-body">
-                                                                          <% if (tickets !=null) {%>
-                                                                            <% for(var j=0; j<tickets.length; j++) {%>
-                                                                              <tr>
-                                                                                <% if
-                                                                                  ((tickets[j].ticket.civID==civilians[i]._id)
-                                                                                  && (!tickets[j].ticket.isWarning)) {%>
-                                                                                  <td>
-                                                                                    <%= tickets[j].ticket.date %>
-                                                                                  </td>
-                                                                                  <td>
-                                                                                    <%= tickets[j].ticket.violation %>
-                                                                                  </td>
-                                                                                  <td>$<%= tickets[j].ticket.amount %>
-                                                                                  </td>
-                                                                                  <% } %>
-                                                                                    <% if ((i==0) &&
-                                                                                      (tickets[j].ticket.civID==null) &&
-                                                                                      (!tickets[j].ticket.isWarning))
-                                                                                      {%>
-                                                                                      <td>
-                                                                                        <%= tickets[j].ticket.date %>
-                                                                                      </td>
-                                                                                      <td>
-                                                                                        <%= tickets[j].ticket.violation
-                                                                                          %>
-                                                                                      </td>
-                                                                                      <td>$<%= tickets[j].ticket.amount
-                                                                                          %>
-                                                                                      </td>
-                                                                                      <% } %>
-                                                                              </tr>
-                                                                              <% } %>
-                                                                                <% } %>
-                                                                        </tbody>
-                                                                      </table>
-                                                                    </div>
-                                                                    <div class="tab-pane fade" id="pills-warnings"
-                                                                      role="tabpanel"
-                                                                      aria-labelledby="pills-warnings-tab">
-                                                                      <table id="warning-table"
-                                                                        class="table table-hover" border="1"
-                                                                        frame="box">
-                                                                        <thead>
-                                                                          <tr style="background-color: #2d2d2d;">
-                                                                            <td>Date<br><i><small>YYYY-M-D</small></i>
+                                                                            <td>
+                                                                              <%= tickets[j].ticket.violation %>
                                                                             </td>
-                                                                            <td>Warning</td>
-                                                                          </tr>
-                                                                        </thead>
-                                                                        <tbody id="warning-body">
-                                                                          <% if (tickets !=null) {%>
-                                                                            <% for(var j=0; j<tickets.length; j++) {%>
-                                                                              <tr>
-                                                                                <% if
-                                                                                  ((tickets[j].ticket.civID==civilians[i]._id)
-                                                                                  && (tickets[j].ticket.isWarning)) {%>
-                                                                                  <td>
-                                                                                    <%= tickets[j].ticket.date %>
-                                                                                  </td>
-                                                                                  <td>
-                                                                                    <%= tickets[j].ticket.violation %>
-                                                                                  </td>
-                                                                                  <% } %>
-                                                                                    <% if ((i==0) &&
-                                                                                      (tickets[j].ticket.civID==null) &&
-                                                                                      (tickets[j].ticket.isWarning)) {%>
-                                                                                      <td>
-                                                                                        <%= tickets[j].ticket.date %>
-                                                                                      </td>
-                                                                                      <td>
-                                                                                        <%= tickets[j].ticket.violation
-                                                                                          %>
-                                                                                      </td>
-                                                                                      <% } %>
-                                                                              </tr>
-                                                                              <% } %>
+                                                                            <% } %>
+                                                                              <% if ((i==0) &&
+                                                                                (tickets[j].ticket.civID==null) &&
+                                                                                (tickets[j].ticket.isWarning)) {%>
+                                                                                <td>
+                                                                                  <%= tickets[j].ticket.date %>
+                                                                                </td>
+                                                                                <td>
+                                                                                  <%= tickets[j].ticket.violation %>
+                                                                                </td>
                                                                                 <% } %>
-                                                                        </tbody>
-                                                                      </table>
-                                                                    </div>
-                                                                    <div class="tab-pane fade" id="pills-arrests"
-                                                                      role="tabpanel"
-                                                                      aria-labelledby="pills-arrests-tab">
-                                                                      <table id="arrest-table" class="table table-hover"
-                                                                        border="1" frame="box">
-                                                                        <thead>
-                                                                          <tr style="background-color: #2d2d2d;">
-                                                                            <td>Date<br><i><small>YYYY-M-D</small></i>
+                                                                        </tr>
+                                                                        <% } %>
+                                                                          <% } %>
+                                                                  </tbody>
+                                                                </table>
+                                                              </div>
+                                                              <div class="tab-pane fade" id="pills-arrests"
+                                                                role="tabpanel" aria-labelledby="pills-arrests-tab">
+                                                                <table id="arrest-table" class="table table-hover"
+                                                                  border="1" frame="box">
+                                                                  <thead>
+                                                                    <tr style="background-color: #2d2d2d;">
+                                                                      <td>Date<br><i><small>YYYY-M-D</small></i>
+                                                                      </td>
+                                                                      <td>Charges</td>
+                                                                      <td>Summary</td>
+                                                                    </tr>
+                                                                  </thead>
+                                                                  <tbody id="arrest-body">
+                                                                    <% if (arrestReports !=null) {%>
+                                                                      <% for(var j=0; j<arrestReports.length; j++) {%>
+                                                                        <tr>
+                                                                          <% if
+                                                                            (arrestReports[j].arrestReport.accusedID==civilians[i]._id)
+                                                                            {%>
+                                                                            <td>
+                                                                              <%= arrestReports[j].arrestReport.date %>
                                                                             </td>
-                                                                            <td>Charges</td>
-                                                                            <td>Summary</td>
-                                                                          </tr>
-                                                                        </thead>
-                                                                        <tbody id="arrest-body">
-                                                                          <% if (arrestReports !=null) {%>
-                                                                            <% for(var j=0; j<arrestReports.length; j++)
-                                                                              {%>
-                                                                              <tr>
-                                                                                <% if
-                                                                                  (arrestReports[j].arrestReport.accusedID==civilians[i]._id)
-                                                                                  {%>
-                                                                                  <td>
-                                                                                    <%=
-                                                                                      arrestReports[j].arrestReport.date
-                                                                                      %>
-                                                                                  </td>
-                                                                                  <td>
-                                                                                    <%=
-                                                                                      arrestReports[j].arrestReport.charges
-                                                                                      %>
-                                                                                  </td>
-                                                                                  <td>
-                                                                                    <%=
-                                                                                      arrestReports[j].arrestReport.summary
-                                                                                      %>
-                                                                                  </td>
-                                                                                  <% } %>
-                                                                              </tr>
-                                                                              <% } %>
-                                                                                <% } %>
-                                                                        </tbody>
-                                                                      </table>
-                                                                    </div>
-                                                                  </div>
+                                                                            <td>
+                                                                              <%= arrestReports[j].arrestReport.charges
+                                                                                %>
+                                                                            </td>
+                                                                            <td>
+                                                                              <%= arrestReports[j].arrestReport.summary
+                                                                                %>
+                                                                            </td>
+                                                                            <% } %>
+                                                                        </tr>
+                                                                        <% } %>
+                                                                          <% } %>
+                                                                  </tbody>
+                                                                </table>
+                                                              </div>
+                                                            </div>
                                   </div>
                               </div>
                           </div>
