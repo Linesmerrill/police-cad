@@ -272,7 +272,8 @@
                                               <%} else {%>
                                                 <% if (commUsers[i].user.dispatchStatus=='Panic' ) {%>
                                                   <td id="<%=commUsers[i]._id%>-status">🚨
-                                                    <%=commUsers[i].user.dispatchStatus%>🚨</td>
+                                                    <%=commUsers[i].user.dispatchStatus%>🚨
+                                                  </td>
                                                   <%} else {%>
                                                     <td id="<%=commUsers[i]._id%>-status">
                                                       <%=commUsers[i].user.dispatchStatus%>
@@ -537,11 +538,6 @@
                                                 <% } %>
                                                   <% } %>
                                                     <% } %>
-
-
-
-
-
                                                       <% if (civilians[i].civilian.licenseStatus==3) {%>
                                                         <div id="licenseRevokedMessage" class="alert alert-warning"
                                                           style="display:block">
@@ -584,33 +580,34 @@
                                                               </div>
                                                               <div id="drivers-license-details-<%=i%>"
                                                                 class="container col-sm-offset-2 col-md-offset-2"
-                                                                style="position: relative; margin-bottom: -130px;">
+                                                                style="position: relative;">
                                                                 <img src="/static/images/id-license.png"
                                                                   style="width: 301px; height: 186px;">
 
                                                                 <label style="position: absolute;
-                                  font-family: 'Abril Fatface', cursive;
-                                  top: 4px;
-                                  left: 38px;
-                                  color: #00aced;
-                                  font-size: 17px;"></label>
+                                                                  font-family: 'Abril Fatface', cursive;
+                                                                  top: 4px;
+                                                                  left: 38px;
+                                                                  color: #00aced;
+                                                                  font-size: 17px;"></label>
                                                                 <label style="position: absolute;
-                                  font-family: 'Signika', sans-serif;
-                                  top: 8px;
-                                  left: 206px;
-                                  color: #00aced;
-                                  font-size: 12px;"></label>
+                                                                  font-family: 'Signika', sans-serif;
+                                                                  top: 8px;
+                                                                  left: 206px;
+                                                                  color: #00aced;
+                                                                  font-size: 12px;"></label>
                                                                 <!-- drivers license # -->
                                                                 <div class="form-group">
                                                                   <div class="col-md-8">
                                                                     <label id="civilianIDViewLic-<%=i%>" style="position: absolute;
-                                      bottom: 0px;
-                                      left: 25px;
-                                      font-weight: 100;
-                                      color: black;
-                                      font-size: 14px;
-                                      text-transform: uppercase;
-                                      font-family: 'Signika', sans-serif;" class="form-label"></label>
+                                                                      bottom: 0px;
+                                                                      left: 25px;
+                                                                      font-weight: 100;
+                                                                      color: black;
+                                                                      font-size: 14px;
+                                                                      text-transform: uppercase;
+                                                                      font-family: 'Signika', sans-serif;"
+                                                                      class="form-label"></label>
                                                                   </div>
                                                                 </div>
 
@@ -618,12 +615,13 @@
                                                                 <div class="form-group">
                                                                   <div class="col-md-4">
                                                                     <label style="position: absolute;
-                                      bottom: 146px;
-                                      left: 25px;
-                                      color: black;
-                                      font-size: 14px;
-                                      font-family: 'Signika', sans-serif;
-                                      font-weight: 500;" class="form-label"><span style="color: #102595">EXP
+                                                                      bottom: 146px;
+                                                                      left: 25px;
+                                                                      color: black;
+                                                                      font-size: 14px;
+                                                                      font-family: 'Signika', sans-serif;
+                                                                      font-weight: 500;" class="form-label"><span
+                                                                        style="color: #102595">EXP
                                                                       </span><span
                                                                         id="license-expiration-<%=i%>"></span></label>
                                                                   </div>
@@ -633,25 +631,25 @@
                                                                 <div class="form-group">
                                                                   <div class="col-md-4">
                                                                     <span style="position: absolute;
-                                      bottom: 150px;
-                                      left: 25px;
-                                      font-size: 14px;
-                                      font-family: 'Signika', sans-serif;
-                                      font-weight: 500;
-                                      color: #102595">LN </span>
+                                                                      bottom: 150px;
+                                                                      left: 25px;
+                                                                      font-size: 14px;
+                                                                      font-family: 'Signika', sans-serif;
+                                                                      font-weight: 500;
+                                                                      color: #102595">LN </span>
                                                                     <span id="lastNameLic-<%=i%>" style="position: absolute;
-                                      bottom: 157px;
-                                      left: 46px;
-                                      width: 174px;
-                                      height: 18px;
-                                      padding: 0px;
-                                      background: transparent;
-                                      color: black;
-                                      border: none;
-                                      font-family: 'Signika', sans-serif;
-                                      font-size: 14px;
-                                      font-weight: 500;
-                                      text-transform: uppercase;"></span>
+                                                                      bottom: 157px;
+                                                                      left: 46px;
+                                                                      width: 174px;
+                                                                      height: 18px;
+                                                                      padding: 0px;
+                                                                      background: transparent;
+                                                                      color: black;
+                                                                      border: none;
+                                                                      font-family: 'Signika', sans-serif;
+                                                                      font-size: 14px;
+                                                                      font-weight: 500;
+                                                                      text-transform: uppercase;"></span>
                                                                   </div>
                                                                 </div>
 
@@ -659,25 +657,25 @@
                                                                 <div class="form-group">
                                                                   <div>
                                                                     <span style="position: absolute;
-                                      bottom: 227px;
-                                      left: 25px;
-                                      font-size: 14px;
-                                      font-family: 'Signika', sans-serif;
-                                      font-weight: 500;
-                                      color: #102595">FN </span>
+                                                                      bottom: 227px;
+                                                                      left: 25px;
+                                                                      font-size: 14px;
+                                                                      font-family: 'Signika', sans-serif;
+                                                                      font-weight: 500;
+                                                                      color: #102595">FN </span>
                                                                     <span id="firstNameLic-<%=i%>" style="position: absolute;
-                                      bottom: 234px;
-                                      left: 46px;
-                                      width: 174px;
-                                      height: 18px;
-                                      padding: 0px;
-                                      background: transparent;
-                                      color: black;
-                                      border: none;
-                                      font-family: 'Signika', sans-serif;
-                                      font-size: 14px;
-                                      font-weight: 500;
-                                      text-transform: uppercase;"></span>
+                                                                      bottom: 234px;
+                                                                      left: 46px;
+                                                                      width: 174px;
+                                                                      height: 18px;
+                                                                      padding: 0px;
+                                                                      background: transparent;
+                                                                      color: black;
+                                                                      border: none;
+                                                                      font-family: 'Signika', sans-serif;
+                                                                      font-size: 14px;
+                                                                      font-weight: 500;
+                                                                      text-transform: uppercase;"></span>
                                                                   </div>
                                                                 </div>
 
@@ -685,17 +683,17 @@
                                                                 <div class="form-group">
                                                                   <div class="col-md-4">
                                                                     <span id="addressViewLic-<%=i%>" style="position: absolute;
-                                      bottom: 136px;
-                                      width: 219px;
-                                      left: 26px;
-                                      line-height: 14px;
-                                      background: transparent;
-                                      color: black;
-                                      border: none;
-                                      font-family: 'Signika', sans-serif;
-                                      font-size: 14px;
-                                      font-weight: 500;
-                                      text-transform: uppercase;"></span>
+                                                                      bottom: 136px;
+                                                                      width: 219px;
+                                                                      left: 26px;
+                                                                      line-height: 14px;
+                                                                      background: transparent;
+                                                                      color: black;
+                                                                      border: none;
+                                                                      font-family: 'Signika', sans-serif;
+                                                                      font-size: 14px;
+                                                                      font-weight: 500;
+                                                                      text-transform: uppercase;"></span>
                                                                   </div>
                                                                 </div>
 
@@ -703,21 +701,21 @@
                                                                 <div class="form-group">
                                                                   <div class="col-md-4">
                                                                     <span style="position: absolute;
-                                      bottom: 131px;
-                                      left: 25px;
-                                      font-size: 14px;
-                                      font-family: 'Signika', sans-serif;
-                                      font-weight: 500;
-                                      color: #102595">DOB </span>
+                                                                      bottom: 131px;
+                                                                      left: 25px;
+                                                                      font-size: 14px;
+                                                                      font-family: 'Signika', sans-serif;
+                                                                      font-weight: 500;
+                                                                      color: #102595">DOB </span>
                                                                     <span id="birthdayViewLic-<%=i%>" style="position: absolute;
-                                      bottom: 131px;
-                                      left: 57px;
-                                      background: transparent;
-                                      color: black;
-                                      border: none;
-                                      font-family: 'Signika', sans-serif;
-                                      font-size: 15px;
-                                      font-weight: 500;"></span>
+                                                                      bottom: 131px;
+                                                                      left: 57px;
+                                                                      background: transparent;
+                                                                      color: black;
+                                                                      border: none;
+                                                                      font-family: 'Signika', sans-serif;
+                                                                      font-size: 15px;
+                                                                      font-weight: 500;"></span>
                                                                   </div>
                                                                 </div>
 
@@ -725,21 +723,21 @@
                                                                 <div class="form-group">
                                                                   <div class="col-md-4">
                                                                     <span style="position: absolute;
-                                      bottom: 131px;
-                                      left: 25px;
-                                      font-size: 14px;
-                                      font-family: 'Signika', sans-serif;
-                                      font-weight: 500;
-                                      color: #102595">STATUS </span>
+                                                                      bottom: 131px;
+                                                                      left: 25px;
+                                                                      font-size: 14px;
+                                                                      font-family: 'Signika', sans-serif;
+                                                                      font-weight: 500;
+                                                                      color: #102595">STATUS </span>
                                                                     <span id="licenseStatusViewLic-<%=i%>" style="position: absolute;
-                                      bottom: 131px;
-                                      left: 75px;
-                                      background: transparent;
-                                      border: none;
-                                      font-family: 'Signika', sans-serif;
-                                      font-size: 14px;
-                                      font-weight: 500;
-                                      text-transform: uppercase;" class="color-black">
+                                                                      bottom: 131px;
+                                                                      left: 75px;
+                                                                      background: transparent;
+                                                                      border: none;
+                                                                      font-family: 'Signika', sans-serif;
+                                                                      font-size: 14px;
+                                                                      font-weight: 500;
+                                                                      text-transform: uppercase;" class="color-black">
                                                                     </span>
                                                                   </div>
                                                                 </div>
@@ -748,12 +746,13 @@
                                                                 <div class="form-group">
                                                                   <div class="col-md-8">
                                                                     <label style="position: absolute;
-                                      bottom: 241px;
-                                      left: 195px;
-                                      color: black;
-                                      font-size: 14px;
-                                      font-family: 'Signika', sans-serif;
-                                      font-weight: 500;" class="form-label"><span style="color: #102595">ISS
+                                                                      bottom: 241px;
+                                                                      left: 195px;
+                                                                      color: black;
+                                                                      font-size: 14px;
+                                                                      font-family: 'Signika', sans-serif;
+                                                                      font-weight: 500;" class="form-label"><span
+                                                                        style="color: #102595">ISS
                                                                       </span><span
                                                                         id="license-issued-<%=i%>"></span></label>
                                                                   </div>
@@ -773,7 +772,8 @@
 
                                                           <!-- Delete Drivers License Button -->
                                                           <div id="click-to-revoke-lic-<%=i%>"
-                                                            class="form-group col-md-12 text-align-center margin-top-1 hide">
+                                                            class="form-group col-md-13 text-align-center hide"
+                                                            style="margin-top: -5em">
                                                             <button type="button" value="deleteLicense" name="action"
                                                               class="btn btn-danger"
                                                               onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','2')">Revoke
@@ -785,16 +785,24 @@
                                                             <ion-icon name="car-sport-outline"></ion-icon> Registered
                                                             Vehicles
                                                           </h5>
-                                                          <button type="button"
-                                                            class="btn btn-primary btn-md margin-bottom-05"
-                                                            id="registeredCarButton-<%=i%>"
-                                                            onclick="getRegisteredCars('<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>', '<%=i%>', '<%=civilians[i]._id%>')">
-                                                            Show Registered Vehicles
-                                                          </button>
-
-                                                          <div class="form-group">
-                                                            <div id="registered-cars-<%=i%>">
-                                                            </div>
+                                                          <div class="text-center">
+                                                            <% if (user.user.activeCommunity !='' &&
+                                                              user.user.activeCommunity !=null) {%>
+                                                              <button type="button"
+                                                                class="btn btn-info margin-bottom-05"
+                                                                data-toggle="modal" href="#registeredVehicles"
+                                                                id="registeredCarButton-<%=i%>"
+                                                                onclick="getRegisteredCars('<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>', '<%=i%>', '<%=civilians[i]._id%>')">
+                                                                Search Registered Vehicles
+                                                              </button>
+                                                              <% } else {%>
+                                                                <button type="button" data-toggle="modal"
+                                                                  href="#nonCommunityBoloModal"
+                                                                  class="btn btn-info margin-bottom-05 mock-disabled"
+                                                                  style="cursor: not-allowed;"> Search Registered
+                                                                  Vehicles
+                                                                </button>
+                                                                <% } %>
                                                           </div>
 
                                                           <hr style="width: 88%;max-width: 100rem;">
@@ -856,7 +864,8 @@
                                                                   border="1" frame="box">
                                                                   <thead>
                                                                     <tr style="background-color: #2d2d2d;">
-                                                                      <td>Date<br><i><small>YYYY-M-D</small></i></td>
+                                                                      <td>Date<br><i><small>YYYY-M-D</small></i>
+                                                                      </td>
                                                                       <td>Violation</td>
                                                                       <td>Amount</td>
                                                                     </tr>
@@ -901,7 +910,8 @@
                                                                   border="1" frame="box">
                                                                   <thead>
                                                                     <tr style="background-color: #2d2d2d;">
-                                                                      <td>Date<br><i><small>YYYY-M-D</small></i></td>
+                                                                      <td>Date<br><i><small>YYYY-M-D</small></i>
+                                                                      </td>
                                                                       <td>Warning</td>
                                                                     </tr>
                                                                   </thead>
@@ -941,7 +951,8 @@
                                                                   border="1" frame="box">
                                                                   <thead>
                                                                     <tr style="background-color: #2d2d2d;">
-                                                                      <td>Date<br><i><small>YYYY-M-D</small></i></td>
+                                                                      <td>Date<br><i><small>YYYY-M-D</small></i>
+                                                                      </td>
                                                                       <td>Charges</td>
                                                                       <td>Summary</td>
                                                                     </tr>
@@ -1968,12 +1979,30 @@
     </div>
   </div>
 
+  <div id="registeredVehicles" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="modal-body">
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+            <h2 class="text-center">Registered Vehicles</h2>
+            <div class="form-group">
+              <div id="registered-cars">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="nonCommunityBoloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
           <div class="modal-body">
-            <h2 class="text-center">I'm sorry! ;(</h2>
+            <h2 class="text-center">I'm sorry! 😥</h2>
             <p class="text-center">Looks like you are not in a community yet, so this feature is not enabled.
             </p>
             <p>To join or
@@ -2633,15 +2662,8 @@
 
   function getRegisteredCars(registeredOwner, index, registeredOwnerID) {
     //remove any existing panel body on button click
-    $(`#registered-cars-panel-body-${index}`).remove().fadeOut(1, function () {
-      $(this).remove();
-    })
-    if (document.getElementById(`registeredCarButton-${index}`).innerHTML=='Hide Registered Vehicles') {
-      $(`#registered-cars-${index}`).hide()
-      document.getElementById(`registeredCarButton-${index}`).innerHTML='Show Registered Vehicles';
-      return
-    }
-    $(`#registered-cars-${index}`).show()
+    $('.reg-car').remove();
+    $(`#registered-cars`).show()
 
     var myUser= <%-JSON.stringify(user)%>;
     var socket=io();
@@ -2654,15 +2676,15 @@
     socket.emit('get_reg_veh', myReq)
     socket.on('load_reg_veh_result', res => {
       if (res.length==0) {
-        $('#registered-cars-'+index).append(
-          `<div id="registered-cars-panel-body-${index}" class="panel-body">`+
+        $('#registered-cars').append(
+          `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`+
           `<h5 style="text-align: center;">No Registered Vehicles</h5>`+
           `</div>`
         )
         return
       }
-      $('#registered-cars-'+index).append(
-        `<div id="registered-cars-panel-body-${index}" class="panel-body">`
+      $('#registered-cars').append(
+        `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`
       )
       for (i=0; i<res.length; i++) {
 
@@ -2708,8 +2730,6 @@
 
       }
     })
-    //sets the button text after search has been completed
-    document.getElementById(`registeredCarButton-${index}`).innerHTML='Hide Registered Vehicles';
   }
 
 
