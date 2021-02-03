@@ -223,6 +223,8 @@
             <h4>Add a New Civilian</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
+            <h5><ion-icon name="person-add-outline"></ion-icon> Details</h5>
+
             <!-- Text input-->
             <div class="form-group required">
               <label class="col-md-4 control-label" for="civ-first-name">Civilian First Name</label>
@@ -263,6 +265,116 @@
               </div>
             </div>
 
+            <hr style="width: 88%;max-width: 100rem;">
+    
+            <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details (optional)</h5>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="gender">Gender</label>
+              <div class="col-md-4">
+                <select id="gender" name="gender" class="form-control">
+                  <option value="unspecified">Unspecified</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="non-binary">Non-Binary</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Radio -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="height">Height</label>
+              <div class="col-md-1">
+                <input id="imperial" value="imperial" type="radio" name="heightClassification"  class="form-control" checked onclick="toggleInput('height-imperial', 'height-metric')"> Imperial
+              </div>
+              <div class="col-md-1 col-md-offset-1">
+                <input id="metric" value="metric" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-metric', 'height-imperial')"> Metric
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group height-imperial">
+              <label class="col-md-4 control-label" for="height">Height</label>
+              <div class="col-md-2">
+                <input id="foot" name="heightFoot" type="number" min="0" max="15" placeholder="ft." class="form-control input-md">
+              </div>
+              <div class="col-md-2">
+                <input id="inches" name="heightInches" type="number" min="0" max="12" placeholder="in." class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group height-metric hide">
+              <label class="col-md-4 control-label" for="height">Height</label>
+              <div class="col-md-2">
+                <input id="centimeters" name="heightCentimeters" min="0" max="457" type="number" placeholder="cm." class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Radio -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="weight">Weight</label>
+              <div class="col-md-1">
+                <input id="imperial-weight" value="imperial" type="radio" name="weightClassification"  class="form-control" checked onclick="toggleInput('weight-imperial', 'weight-metric')"> Imperial
+              </div>
+              <div class="col-md-1 col-md-offset-1">
+                <input id="metric-weight" value="metric" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-metric', 'weight-imperial')"> Metric
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group weight-imperial">
+              <label class="col-md-4 control-label" for="weight">Weight</label>
+              <div class="col-md-2">
+                <input id="pounds" name="weightImperial" min="0" max="1000" type="number" placeholder="lbs." class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group weight-metric hide">
+              <label class="col-md-4 control-label" for="weight">Weight</label>
+              <div class="col-md-2">
+                <input id="kilos" name="weightMetric" min="0" max="453" type="number" placeholder="kgs." class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="eyeColor">Eye Color</label>
+              <div class="col-md-4">
+                <input id="eyeColor" name="eyeColor" type="text" placeholder="Eye Color (optional)" class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="hairColor">Hair Color</label>
+              <div class="col-md-4">
+                <input id="hairColor" name="hairColor" type="text" placeholder="Hair Color (optional)" class="form-control input-md">
+              </div>
+            </div>
+
+            <!-- Checkbox -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="organDonor">Organ Donor?</label>
+              <div class="col-md-1">
+                <input id="organDonor" type="checkbox" name="organDonor" class="form-control">
+              </div>
+            </div>
+
+            <!-- Checkbox -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="veteran">Veteran?</label>
+              <div class="col-md-1">
+                <input id="veteran" type="checkbox" name="veteran" class="form-control">
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+    
+            <h5><ion-icon name="id-card-outline"></ion-icon> License Details</h5>
+
             <!-- Checkbox -->
             <div class="form-group required">
               <label class="col-md-4 control-label" for="license-status">Create Drivers License?</label>
@@ -282,10 +394,6 @@
                 </select>
               </div>
             </div>
-
-            
-
-            
 
             <!-- Button -->
             <div class="form-group">
@@ -624,6 +732,8 @@
             <h4>Details about your Civilian</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
+            <h5><ion-icon name="person-outline"></ion-icon> Civilian</h5>
+
             <div class="form-group">
               <label class="col-md-4 control-label" for="civilianIDView">ID #:</label>
               <div class="col-md-4">
@@ -665,6 +775,118 @@
               <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md capitalize">
             </div>
           </div>
+
+          <div class="col-md-12 text-align-center margin-bottom-1">
+            <input type="hidden" id="civilianID" name="civilianID">
+            <button type="submit" value="update" name="action" class="btn btn-info" onclick="clearHelpText()">Update Civilian</button>
+            <button type="submit" value="delete" name="action" class="btn btn-danger" onclick="clearHelpText()">Delete Civilian</button>
+          </div>
+
+          <hr style="width: 88%;max-width: 100rem;">
+          <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details</h5>
+
+          <!-- Select Basic -->
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="genderView">Gender</label>
+            <div class="col-md-4">
+              <select id="gender-view" name="gender" class="form-control">
+                <option value="unspecified">Unspecified</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="non-binary">Non-Binary</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Radio -->
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="heightClassificationView">Height</label>
+            <div class="col-md-1">
+              <input id="height-imperial-view" value="imperial" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-imperial', 'height-metric')"> Imperial
+            </div>
+            <div class="col-md-1 col-md-offset-1">
+              <input id="height-metric-view" value="metric" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-metric', 'height-imperial')"> Metric
+            </div>
+          </div>
+
+          <!-- Text input-->
+          <div class="form-group height-imperial">
+            <label class="col-md-4 control-label" for="heightView">Height</label>
+            <div class="col-md-2">
+              <input id="foot-view" name="heightFoot" type="number" min="0" max="15" placeholder="ft." class="form-control input-md">
+            </div>
+            <div class="col-md-2">
+              <input id="inches-view" name="heightInches" type="number" min="0" max="12" placeholder="in." class="form-control input-md">
+            </div>
+          </div>
+
+          <!-- Text input-->
+          <div class="form-group height-metric hide">
+            <label class="col-md-4 control-label" for="heightView">Height</label>
+            <div class="col-md-2">
+              <input id="centimeters-view" name="heightCentimeters" min="0" max="457" type="number" placeholder="cm." class="form-control input-md">
+            </div>
+          </div>
+
+          <!-- Radio -->
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="weight">Weight</label>
+            <div class="col-md-1">
+              <input id="imperial-weight-view" value="imperial" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-imperial', 'weight-metric')"> Imperial
+            </div>
+            <div class="col-md-1 col-md-offset-1">
+              <input id="metric-weight-view" value="metric" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-metric', 'weight-imperial')"> Metric
+            </div>
+          </div>
+
+          <!-- Text input-->
+          <div class="form-group weight-imperial">
+            <label class="col-md-4 control-label" for="weight">Weight</label>
+            <div class="col-md-2">
+              <input id="pounds-view" name="weightImperial" min="0" max="1000" type="number" placeholder="lbs." class="form-control input-md">
+            </div>
+          </div>
+
+          <!-- Text input-->
+          <div class="form-group weight-metric hide">
+            <label class="col-md-4 control-label" for="weight">Weight</label>
+            <div class="col-md-2">
+              <input id="kilos-view" name="weightMetric" min="0" max="453" type="number" placeholder="kgs." class="form-control input-md">
+            </div>
+          </div>
+
+          <!-- Text input-->
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="eyeColor">Eye Color</label>
+            <div class="col-md-4">
+              <input id="eye-color-view" name="eyeColor" type="text" placeholder="Eye Color (optional)" class="form-control input-md">
+            </div>
+          </div>
+
+          <!-- Text input-->
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="hairColor">Hair Color</label>
+            <div class="col-md-4">
+              <input id="hair-color-view" name="hairColor" type="text" placeholder="Hair Color (optional)" class="form-control input-md">
+            </div>
+          </div>
+
+          <!-- Checkbox -->
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="organDonor">Organ Donor?</label>
+            <div class="col-md-1">
+              <input id="organ-donor-view" type="checkbox" name="organDonor" class="form-control">
+            </div>
+          </div>
+
+          <!-- Checkbox -->
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="veteran">Veteran?</label>
+            <div class="col-md-1">
+              <input id="veteran-view" type="checkbox" name="veteran" class="form-control">
+            </div>
+          </div>
+          
 
           <div class="col-md-12 text-align-center margin-bottom-1">
             <input type="hidden" id="civilianID" name="civilianID">
@@ -1473,6 +1695,38 @@ $.delete = function(url, data, callback, type){
     $('#addressView').val(myVar[index].civilian.address)
     $('#occupationView').val(myVar[index].civilian.occupation)
 
+    // advanced civilian details:
+    $('#gender-view').val(myVar[index].civilian.gender)
+    $('#height-imperial-view').prop("checked", myVar[index].civilian.heightClassification == 'imperial')
+    $('#height-metric-view').prop("checked", myVar[index].civilian.heightClassification == 'metric')
+    // because we accept 'imperial' and 'metric' as height classifications
+    // we need to figure out which we need to display for the height input boxes
+    if (myVar[index].civilian.heightClassification == 'imperial') {
+      //if we have imperial height, we need to convert inches into feet,inches
+      let foot = parseInt(parseInt(myVar[index].civilian.height) / 12)
+      let inches = parseFloat(myVar[index].civilian.height) % 12
+      $('#foot-view').val(foot)
+      $('#inches-view').val(inches)
+    } else {
+      $('#centimeters-view').val(myVar[index].civilian.height)
+    }
+    if (myVar[index].civilian.weightClassification == 'imperial') {
+      $('#imperial-weight-view').prop("checked", true)
+      $('#pounds-view').val(myVar[index].civilian.weight)
+      $('.weight-imperial').removeClass('hide').addClass('show');
+      $('.weight-metric').removeClass('show').addClass('hide');
+    } else {
+      $('#metric-weight-view').prop("checked", true)
+      $('#kilos-view').val(myVar[index].civilian.weight)
+      $('.weight-metric').removeClass('hide').addClass('show');
+      $('.weight-imperial').removeClass('show').addClass('hide');
+    }
+    
+    $('#eye-color-view').val(myVar[index].civilian.eyeColor)
+    $('#hair-color-view').val(myVar[index].civilian.hairColor)
+    $('#organ-donor-view').prop("checked", myVar[index].civilian.organDonor)
+    $('#veteran-view').prop("checked", myVar[index].civilian.veteran)
+
     // data to be set for condition form
     $('#condition-civ-first-name').val(firstName)
     $('#condition-civ-last-name').val(lastName)
@@ -1755,5 +2009,10 @@ $.delete = function(url, data, callback, type){
     $(this).hide();
   });
     })
+  }
+
+  function toggleInput(showClass, hideClass) {
+    $(`.${showClass}`).removeClass('hide').addClass('show')
+    $(`.${hideClass}`).removeClass('show').addClass('hide')
   }
 </script>
