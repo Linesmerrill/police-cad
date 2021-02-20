@@ -56,20 +56,21 @@ civilianSchema.methods.updateCiv = function (req, res) {
   if (exists(req.body.gender)) {
     this.civilian.gender = req.body.gender;
   }
-  // because the USA is dumb, we gotta do some quick-maths to convert ft and inches to a single number :fml:
-  if (exists(req.body.heightFoot) && !exists(req.body.heightInches)) {
-    //if only foot exists, then just convert to inches and store in DB
-    this.civilian.height = parseInt(req.body.heightFoot) * 12;
-  } else if (exists(req.body.heightFoot) && exists(req.body.heightInches)) {
-    //if foot and inches exist, we want to convert to inches to store in DB
-    this.civilian.height = parseInt(req.body.heightFoot) * 12 + parseInt(req.body.heightInches);
-  } else if (!exists(req.body.heightFoot) && exists(req.body.heightInches)) {
-    //if foot doesn't exist but inches exists, simple maths
-    this.civilian.height = parseInt(req.body.heightInches)
-  }
+  // height classification: imperial or metric, imperial will have 2 inputs and metric will have one
   if (exists(req.body.heightClassification)) {
     this.civilian.heightClassification = req.body.heightClassification;
+    // if user has selected 'imperial', then we should calculate USA maths for height
+    // else just grab whatever value was passed in for height
+    if (req.body.heightClassification === 'imperial') {
+      // because the USA is dumb, we gotta do some quick-maths to convert ft and inches to a single number :fml:
+      this.civilian.height = generateHeight(req.body.heightFoot, req.body.heightInches)
+    } else {
+      if (exists(req.body.heightCentimeters)) {
+        this.civilian.height = req.body.heightCentimeters;
+      }
+    }
   }
+
   if (exists(req.body.weightImperial)) {
     this.civilian.weight = req.body.weightImperial;
   } else if (exists(req.body.weightMetric)) {
@@ -98,7 +99,7 @@ civilianSchema.methods.updateCiv = function (req, res) {
       this.civilian.veteran = false;
     }
   }
-  this.civilian.userID = req.body.userID; // we set this when submitting the from so it should not be null
+  this.civilian.userID = req.body.userID; // we set this when submitting the form so it should not be null
   this.civilian.createdAt = new Date();
   res.redirect('/civ-dashboard');
 };
@@ -108,6 +109,21 @@ function exists(v) {
     return true
   } else {
     return false
+  }
+}
+
+function generateHeight(heightFoot, heightInches) {
+  if (exists(heightFoot) && !exists(heightInches)) {
+    //if only foot exists, then just convert to inches and store in DB
+    return parseInt(heightFoot) * 12;
+  }
+  if (exists(heightFoot) && exists(heightInches)) {
+    //if foot and inches exist, we want to convert to inches to store in DB
+    return parseInt(heightFoot) * 12 + parseInt(heightInches);
+  }
+  if (!exists(heightFoot) && exists(heightInches)) {
+    //if foot doesn't exist but inches exists, simple maths
+    return parseInt(heightInches)
   }
 }
 

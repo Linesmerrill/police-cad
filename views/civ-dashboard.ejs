@@ -286,10 +286,10 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="height">Height</label>
               <div class="col-md-1">
-                <input id="imperial" value="imperial" type="radio" name="heightClassification"  class="form-control" checked onclick="toggleInput('height-imperial', 'height-metric')"> Imperial
+                <input id="imperial" value="imperial" type="radio" name="heightClassification"  class="form-control" checked onclick="toggleInput('height-imperial', 'height-metric')"> Imperial <span class="color-gray">ft.in.</span>
               </div>
               <div class="col-md-1 col-md-offset-1">
-                <input id="metric" value="metric" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-metric', 'height-imperial')"> Metric
+                <input id="metric" value="metric" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-metric', 'height-imperial')"> Metric <span class="color-gray">cm.</span>
               </div>
             </div>
 
@@ -316,10 +316,10 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="weight">Weight</label>
               <div class="col-md-1">
-                <input id="imperial-weight" value="imperial" type="radio" name="weightClassification"  class="form-control" checked onclick="toggleInput('weight-imperial', 'weight-metric')"> Imperial
+                <input id="imperial-weight" value="imperial" type="radio" name="weightClassification"  class="form-control" checked onclick="toggleInput('weight-imperial', 'weight-metric')"> Imperial <span class="color-gray">lbs.</span>
               </div>
               <div class="col-md-1 col-md-offset-1">
-                <input id="metric-weight" value="metric" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-metric', 'weight-imperial')"> Metric
+                <input id="metric-weight" value="metric" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-metric', 'weight-imperial')"> Metric <span class="color-gray">kgs.</span>
               </div>
             </div>
 
@@ -783,7 +783,7 @@
           </div>
 
           <hr style="width: 88%;max-width: 100rem;">
-          <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details</h5>
+          <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details <span class="color-gray">(Optional)</span></h5>
 
           <!-- Select Basic -->
           <div class="form-group">
@@ -802,10 +802,10 @@
           <div class="form-group">
             <label class="col-md-4 control-label" for="heightClassificationView">Height</label>
             <div class="col-md-1">
-              <input id="height-imperial-view" value="imperial" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-imperial', 'height-metric')"> Imperial
+              <input id="height-imperial-view" value="imperial" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-imperial', 'height-metric')" checked> Imperial <span class="color-gray">ft.in.</span>
             </div>
             <div class="col-md-1 col-md-offset-1">
-              <input id="height-metric-view" value="metric" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-metric', 'height-imperial')"> Metric
+              <input id="height-metric-view" value="metric" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-metric', 'height-imperial')"> Metric <span class="color-gray">cm.</span>
             </div>
           </div>
 
@@ -832,10 +832,10 @@
           <div class="form-group">
             <label class="col-md-4 control-label" for="weight">Weight</label>
             <div class="col-md-1">
-              <input id="imperial-weight-view" value="imperial" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-imperial', 'weight-metric')"> Imperial
+              <input id="imperial-weight-view" value="imperial" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-imperial', 'weight-metric')"> Imperial <span class="color-gray">lbs.</span>
             </div>
             <div class="col-md-1 col-md-offset-1">
-              <input id="metric-weight-view" value="metric" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-metric', 'weight-imperial')"> Metric
+              <input id="metric-weight-view" value="metric" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-metric', 'weight-imperial')"> Metric <span class="color-gray">kgs.</span>
             </div>
           </div>
 
@@ -889,7 +889,6 @@
           
 
           <div class="col-md-12 text-align-center margin-bottom-1">
-            <input type="hidden" id="civilianID" name="civilianID">
             <button type="submit" value="update" name="action" class="btn btn-info" onclick="clearHelpText()">Update Civilian</button>
             <button type="submit" value="delete" name="action" class="btn btn-danger" onclick="clearHelpText()">Delete Civilian</button>
           </div>
@@ -1701,25 +1700,30 @@ $.delete = function(url, data, callback, type){
     $('#height-metric-view').prop("checked", myVar[index].civilian.heightClassification == 'metric')
     // because we accept 'imperial' and 'metric' as height classifications
     // we need to figure out which we need to display for the height input boxes
-    if (myVar[index].civilian.heightClassification == 'imperial') {
+    if (myVar[index].civilian.heightClassification === 'imperial') {
       //if we have imperial height, we need to convert inches into feet,inches
       let foot = parseInt(parseInt(myVar[index].civilian.height) / 12)
       let inches = parseFloat(myVar[index].civilian.height) % 12
       $('#foot-view').val(foot)
       $('#inches-view').val(inches)
-    } else {
+    } else if (myVar[index].civilian.heightClassification === 'metric') {
       $('#centimeters-view').val(myVar[index].civilian.height)
+    } else {
+      $('.height-imperial').hide(); //if none are selected, then just hide the input fields
     }
-    if (myVar[index].civilian.weightClassification == 'imperial') {
+    if (myVar[index].civilian.weightClassification === 'imperial') {
       $('#imperial-weight-view').prop("checked", true)
       $('#pounds-view').val(myVar[index].civilian.weight)
       $('.weight-imperial').removeClass('hide').addClass('show');
       $('.weight-metric').removeClass('show').addClass('hide');
-    } else {
+    } else if (myVar[index].civilian.weightClassification === 'metric') {
       $('#metric-weight-view').prop("checked", true)
       $('#kilos-view').val(myVar[index].civilian.weight)
       $('.weight-metric').removeClass('hide').addClass('show');
       $('.weight-imperial').removeClass('show').addClass('hide');
+    } else {
+      $('.weight-imperial').hide(); //if none are selected, then just hide the input fields
+      $('.weight-metric').hide();
     }
     
     $('#eye-color-view').val(myVar[index].civilian.eyeColor)
