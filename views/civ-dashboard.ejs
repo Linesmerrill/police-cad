@@ -900,181 +900,94 @@
             <div id="drivers-license" class="row">
               <div class="col-md-12">
             <div class="container col-sm-offset-2 col-md-offset-2" style="position: relative; margin-bottom: -130px;">
-              <img src="/static/images/id-license.png" style="width: 301px; height: 186px;">
+              <img src="/static/images/id-license.png" style="width: 301px; height: 186px; border-radius: 4%;">
 
-              <label style="position: absolute;
-              font-family: 'Abril Fatface', cursive;
-              top: 4px;
-              left: 38px;
-              color: #00aced;
-              font-size: 17px;"></label>
-              <label style="position: absolute;
-              font-family: 'Signika', sans-serif;
-              top: 8px;
-              left: 206px;
-              color: #00aced;
-              font-size: 12px;"></label>
-              <!-- <hr style="position: absolute;
-              top: 9px;
-              left: 15px;
-              color: black;
-              opacity: 0.5;
-              width: 301px;
-              max-width: unset;"> -->
               <!-- drivers license # -->
-              <div class="form-group">
-                <div class="col-md-4">
-                  <label id="civilianIDViewLic" style="position: absolute;
-                  bottom: 0px;
-                  left: 25px;
-                  font-weight: 100;
-                  color: black;
-                  font-size: 14px;
-                  text-transform: uppercase;
-                  font-family: 'Signika', sans-serif;" class="form-label"></label>
-                </div>
+              <div>
+                  <label id="civilianIDViewLic" class="drivers-license-number" class="form-label"></label>
               </div>
 
               <!-- expiration date -->
-              <div class="form-group">
-                <div class="col-md-4">
-                  <label style="position: absolute;
-                  bottom: 146px;
-                  left: 25px;
-                  color: black;
-                  font-size: 14px;
-                  font-family: 'Signika', sans-serif;
-                  font-weight: 500;" class="form-label"><span style="color: #00aced">EXP </span><span id="license-expiration"></span></label>
-                </div>
+              <div>
+                  <span class="expiration-title">EXP </span>
+                  <span id="license-expiration" class="expiration"></span>
               </div>
 
               <!-- last name -->
-              <div class="form-group">
-                <div class="col-md-4">
-                  <span style="position: absolute;
-                  bottom: 150px;
-                  left: 25px;
-                  font-size: 14px;
-                  font-family: 'Signika', sans-serif;
-                  font-weight: 500;
-                  color: #00aced">LN </span>
-                  <span id="lastNameLic" style="position: absolute;
-                  bottom: 152px;
-                  left: 46px;
-                  width: 174px;
-                  height: 18px;
-                  padding: 0px;
-                  background: transparent;
-                  color: black;
-                  border: none;
-                  font-family: 'Signika', sans-serif;
-                  font-size: 14px;
-                  font-weight: 500;
-                  text-transform: uppercase;"></span>
-                </div>
+              <div>
+                  <span class="last-name-title">LN </span>
+                  <span id="lastNameLic" class="last-name"></span>
               </div>
 
               <!-- first name -->
-              <div class="form-group"> 
-                <div>
-                  <span style="position: absolute;
-                  bottom: 227px;
-                  left: 25px;
-                  font-size: 14px;
-                  font-family: 'Signika', sans-serif;
-                  font-weight: 500;
-                  color: #00aced">FN </span>
-                  <span id="firstNameLic" style="position: absolute;
-                  bottom: 229px;
-                  left: 46px;
-                  width: 174px;
-                  height: 18px;
-                  padding: 0px;
-                  background: transparent;
-                  color: black;
-                  border: none;
-                  font-family: 'Signika', sans-serif;
-                  font-size: 14px;
-                  font-weight: 500;
-                  text-transform: uppercase;"></span>
-                </div>
+              <div> 
+                  <span class="first-name-title">FN </span>
+                  <span id="firstNameLic" class="first-name"></span>
               </div>
 
               <!-- address -->
-              <div class="form-group">
-                <div class="col-md-4">
-                  <span id="addressViewLic" style="position: absolute;
-                  bottom: 136px;
-                  width: 219px;
-                  left: 26px;
-                  line-height: 14px;
-                  background: transparent;
-                  color: black;
-                  border: none;
-                  font-family: 'Signika', sans-serif;
-                  font-size: 14px;
-                  font-weight: 500;
-                  text-transform: uppercase;"></span>
-                </div>
+              <div>
+                  <span id="addressViewLic" class="address"></span>
               </div>
 
               <!-- dob -->
-              <div class="form-group">
-                <div class="col-md-4">
-                  <span style="position: absolute;
-                  bottom: 131px;
-                  left: 25px;
-                  font-size: 14px;
-                  font-family: 'Signika', sans-serif;
-                  font-weight: 500;
-                  color: #00aced">DOB </span>
-                  <span id="birthdayViewLic" style="position: absolute;
-                  bottom: 131px;
-                  left: 57px;
-                  background: transparent;
-                  color: black;
-                  border: none;
-                  font-family: 'Signika', sans-serif;
-                  font-size: 15px;
-                  font-weight: 500;"></span>
-                </div>
+              <div>
+                  <span class="dob-title">DOB </span>
+                  <span id="birthdayViewLic" class="dob"></span>
               </div>
 
               <!-- license status -->
-              <div class="form-group">
-                <div class="col-md-4">
-                  <span style="position: absolute;
-                  bottom: 131px;
-                  left: 25px;
-                  font-size: 14px;
-                  font-family: 'Signika', sans-serif;
-                  font-weight: 500;
-                  color: #00aced">STATUS </span>
-                  <span id="licenseStatusViewLic" style="position: absolute;
-                  bottom: 131px;
-                  left: 75px;
-                  background: transparent;
-                  border: none;
-                  font-family: 'Signika', sans-serif;
-                  font-size: 14px;
-                  font-weight: 500;
-                  text-transform: uppercase;" class="color-black">
-                </span>
-                </div>
+              <div>
+                  <span class="status-title">STA </span>
+                  <span id="licenseStatusViewLic" class="status"></span>
               </div>
 
               <!-- issued date -->
-              <div class="form-group">
-                <div class="col-md-4">
-                  <label style="position: absolute;
-                  bottom: 241px;
-                  left: 210px;
-                  color: black;
-                  font-size: 14px;
-                  font-family: 'Signika', sans-serif;
-                  font-weight: 500;" class="form-label"><span style="color: #00aced">ISS </span><span id="license-issued"></span></label>
-                </div>
+              <div>
+                  <span class="issued-title">ISS </span>
+                  <span id="license-issued" class="issued"></span>
               </div>
+
+              <!-- sex -->
+              <div> 
+                  <span class="sex-title">SEX </span>
+                  <span id="sexLic" class="sex"></span>
+              </div>
+
+              <!-- height -->
+              <div> 
+                  <span class="height-title">HGT </span>
+                  <span id="heightLic" class="height"></span>
+              </div>
+
+              <!-- weight -->
+              <div> 
+                  <span class="weight-title">WGT </span>
+                  <span id="weightLic" class="weight"></span>
+              </div>
+
+              <!-- eye color -->
+              <div> 
+                  <span class="eye-title">EYES </span>
+                  <span id="eyeLic" class="eye"></span>
+              </div>
+
+              <!-- hair color -->
+              <div> 
+                  <span class="hair-title">HAIR </span>
+                  <span id="hairLic" class="hair"></span>
+              </div>
+
+              <!-- donor -->
+              <div class="donor-block hide"> 
+                  <span class="donor-title">DONOR ❤️</span>
+              </div>
+
+              <!-- veteran -->
+              <div class="veteran-block"> 
+                  <span class="veteran">VETERAN ⭐️</span>
+              </div>
+
             </div>
           </div>
           </div>
@@ -1748,6 +1661,7 @@ $.delete = function(url, data, callback, type){
   }
 
   function loadDriversLicense(myVar, index) {
+    // console.log('civilian: ', myVar[index].civilian)
     var firstName = myVar[index].civilian.firstName
     var lastName = myVar[index].civilian.lastName
     var birthday = myVar[index].civilian.birthday
@@ -1755,11 +1669,29 @@ $.delete = function(url, data, callback, type){
     var expDay = createdDate.getDate()
     var expMonth = (createdDate.getMonth())+1
     var expYear = (createdDate.getFullYear())+10
+    var gender = myVar[index].civilian.gender
+    var height = myVar[index].civilian.height
+    var weight = myVar[index].civilian.weight
+    var eyeColor = myVar[index].civilian.eyeColor
+    var hairColor = myVar[index].civilian.hairColor
+    var donor = myVar[index].civilian.organDonor
+    var veteran = myVar[index].civilian.veteran
     
     $('#civilianID').val(myVar[index]._id)
     $('#civilianIDViewLic').text('DL: '+ myVar[index]._id)
     $('#firstNameLic').text(firstName)
     $('#lastNameLic').text(lastName)
+    $('#sexLic').text(gender) //got to parse this a bit to get the correct value
+    $('#heightLic').text(height) //got to parse this a bit to get the correct value
+    $('#weightLic').text(weight) //got to parse this a bit to get the correct value
+    $('#eyeLic').text(eyeColor) //got to parse this a bit to get the correct value
+    $('#hairLic').text(hairColor) //got to parse this a bit to get the correct value
+    if (donor === true) {
+     $('.donor-block').removeClass('hide')
+    }
+    if (veteran === true) {
+     $('.veteran-block').removeClass('hide')
+    }
     switch (myVar[index].civilian.licenseStatus) {
       case '1':
         $('#licenseStatusViewLic').text('Valid').removeClass('color-red').addClass('color-black')
