@@ -1640,16 +1640,20 @@ $.delete = function(url, data, callback, type){
       $('#inches-view').val(inches)
     } else if (myVar[index].civilian.heightClassification === 'metric') {
       $('#centimeters-view').val(myVar[index].civilian.height)
+      $('.height-imperial').removeClass('show').addClass('hide');
+      $('.height-metric').removeClass('hide').addClass('show');
     } else {
       $('.height-imperial').removeClass('show').addClass('hide'); //if none are selected, then just hide the input fields
     }
     if (myVar[index].civilian.weightClassification === 'imperial') {
       $('#imperial-weight-view').prop("checked", true)
       $('#pounds-view').val(myVar[index].civilian.weight)
+      $('#kilos-view').val(''); //clear out kilos value stored in page
       $('.weight-imperial').removeClass('hide').addClass('show');
       $('.weight-metric').removeClass('show').addClass('hide');
     } else if (myVar[index].civilian.weightClassification === 'metric') {
       $('#metric-weight-view').prop("checked", true)
+      $('#pounds-view').val(''); //clear out lbs value stored in page
       $('#kilos-view').val(myVar[index].civilian.weight)
       $('.weight-metric').removeClass('hide').addClass('show');
       $('.weight-imperial').removeClass('show').addClass('hide');
@@ -1712,11 +1716,41 @@ $.delete = function(url, data, callback, type){
     // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional, 
     // we will do a check to see if its undefined or empty and if so just set it to an
     // empty string (or false for booleans), otherwise set it to the value from the db.
-    var gender = (myVar[index].civilian.gender == undefined || myVar[index].civilian.gender == '') ? '' : myVar[index].civilian.gender;
-    var height = (myVar[index].civilian.height == undefined || myVar[index].civilian.height == '') ? '' : myVar[index].civilian.height;
-    var weight = (myVar[index].civilian.weight == undefined || myVar[index].civilian.weight == '') ? '' : myVar[index].civilian.weight;
-    var eyeColor = (myVar[index].civilian.eyeColor == undefined || myVar[index].civilian.eyeColor == '') ? '' : myVar[index].civilian.eyeColor;
-    var hairColor = (myVar[index].civilian.hairColor == undefined || myVar[index].civilian.hairColor == '') ? '' : myVar[index].civilian.hairColor;
+    var gender = (myVar[index].civilian.gender == undefined || myVar[index].civilian.gender == '') ? '' : myVar[index].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
+    // height needs to be converted to ft in or cm depending on the heightClassification
+    if (myVar[index].civilian.height == undefined || myVar[index].civilian.height == '') {
+      height = ''
+    } else {
+      switch (myVar[index].civilian.heightClassification) {
+        case 'imperial':
+          var feet = Math.floor(myVar[index].civilian.height / 12); // just dividing by 12 to get the feet
+          var inches = ("0" + myVar[index].civilian.height % 12).slice(-2); // mod by 12 to get remainder, but also pad with a '0' if less than '10'
+          height = `${feet}'-${inches}"` // ex: 5'-07"
+          break;
+        case 'metric':
+          height = `${myVar[index].civilian.height} cm`
+          break;
+        default:
+          height = myVar[index].civilian.height
+      }
+    }
+    // weight just needs the appropriate label based on the weightClassification (lb or kg)
+    if (myVar[index].civilian.weight == undefined || myVar[index].civilian.weight == '') {
+      weight = ''
+    } else {
+      switch (myVar[index].civilian.weightClassification){
+        case 'imperial': 
+          weight = `${myVar[index].civilian.weight} lb`
+          break;
+        case 'metric':
+          weight = `${myVar[index].civilian.weight} kg`
+          break;
+        default:
+          weight = myVar[index].civilian.weight
+      }
+    }
+    var eyeColor = (myVar[index].civilian.eyeColor == undefined || myVar[index].civilian.eyeColor == '') ? '' : myVar[index].civilian.eyeColor.substring(0,3); //only grab first 3 characters of string
+    var hairColor = (myVar[index].civilian.hairColor == undefined || myVar[index].civilian.hairColor == '') ? '' : myVar[index].civilian.hairColor.substring(0,3); //only grab first 3 characters of string
     var donor = (myVar[index].civilian.organDonor == undefined || myVar[index].civilian.organDonor == '') ? false : myVar[index].civilian.organDonor;
     var veteran = (myVar[index].civilian.veteran == undefined || myVar[index].civilian.veteran == '') ? false : myVar[index].civilian.veteran;
     
