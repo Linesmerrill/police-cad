@@ -984,7 +984,7 @@
               </div>
 
               <!-- veteran -->
-              <div class="veteran-block"> 
+              <div class="veteran-block hide"> 
                   <span class="veteran">VETERAN ⭐️</span>
               </div>
 
@@ -993,17 +993,21 @@
           </div>
 
           <!-- Create Drivers License Button -->
-          <div class="form-group">
+          <div class="form-group create-license-btn hide">
             <label class="col-md-4 control-label" for="click-to-create-lic"></label>
             <div class="col-md-4">
-              <button id="click-to-create-lic" type="submit" value="createLicense" name="action" class="btn btn-secondary color-black hide" onclick="clearHelpText()">Create Driver's License</button>
+              <button id="click-to-create-lic" type="submit" value="createLicense" name="action" class="btn btn-secondary color-black" onclick="clearHelpText()">Create Driver's License</button>
             </div>
           </div>
 
           <!-- Delete Drivers License Button -->
-          <div class="form-group col-md-12 text-align-center">
-              <button id="click-to-delete-lic" type="submit" value="deleteLicense" name="action" class="btn btn-danger hide" onclick="clearHelpText()">Delete Driver's License</button>
+          <div class="form-group delete-license-btn hide">
+            <label class="col-md-4 control-label" for="click-to-delete-lic"></label>
+            <div class="col-md-4">
+              <button id="click-to-delete-lic" type="submit" value="deleteLicense" name="action" class="btn btn-danger" onclick="clearHelpText()">Delete Driver's License</button>
+            </div>
           </div>
+          
 
           <hr style="width: 88%;max-width: 100rem;">
           <h5><ion-icon name="browsers-outline"></ion-icon> Firearm License</h5>
@@ -1596,7 +1600,22 @@ $.delete = function(url, data, callback, type){
     var expDay = createdDate.getDate()
     var expMonth = (createdDate.getMonth())+1
     var expYear = (createdDate.getFullYear())+10
-    
+    // debug log:
+    // console.log("load civ data: ", myVar[index].civilian)
+
+    // pre-reqs to clear form between civilian clicks
+    $('#height-imperial-view').prop("checked", false)
+    $('#height-metric-view').prop("checked", false)
+    $('#foot-view').val('')
+    $('#inches-view').val('')
+    $('#centimeters-view').val('')
+    $('#imperial-weight-view').prop("checked", false)
+    $('#pounds-view').val('')
+    $('#metric-weight-view').prop("checked", false)
+    $('#eye-color-view').val('')
+    $('#hair-color-view').val('')
+
+    // civilian details:
     $('#civilianID').val(myVar[index]._id)
     $('#civilianIDView').text(myVar[index]._id)
     $('#firstName').text(firstName)
@@ -1622,7 +1641,7 @@ $.delete = function(url, data, callback, type){
     } else if (myVar[index].civilian.heightClassification === 'metric') {
       $('#centimeters-view').val(myVar[index].civilian.height)
     } else {
-      $('.height-imperial').hide(); //if none are selected, then just hide the input fields
+      $('.height-imperial').removeClass('show').addClass('hide'); //if none are selected, then just hide the input fields
     }
     if (myVar[index].civilian.weightClassification === 'imperial') {
       $('#imperial-weight-view').prop("checked", true)
@@ -1635,14 +1654,25 @@ $.delete = function(url, data, callback, type){
       $('.weight-metric').removeClass('hide').addClass('show');
       $('.weight-imperial').removeClass('show').addClass('hide');
     } else {
-      $('.weight-imperial').hide(); //if none are selected, then just hide the input fields
-      $('.weight-metric').hide();
+      $('.weight-imperial').removeClass('show').addClass('hide'); //if none are selected, then just hide the input fields
+      $('.weight-metric').removeClass('show').addClass('hide');
     }
     
     $('#eye-color-view').val(myVar[index].civilian.eyeColor)
     $('#hair-color-view').val(myVar[index].civilian.hairColor)
-    $('#organ-donor-view').prop("checked", myVar[index].civilian.organDonor)
-    $('#veteran-view').prop("checked", myVar[index].civilian.veteran)
+    
+    //to clear out the form from previous caching, we will just set it to false if it cannot be found in myVar
+    if (myVar[index].civilian.organDonor == undefined || myVar[index].civilian.organDonor == null) {
+      $('#organ-donor-view').prop("checked", false)
+    } else {
+      $('#organ-donor-view').prop("checked", myVar[index].civilian.organDonor)
+    }
+    //to clear out the form from previous caching, we will just set it to false if it cannot be found in myVar
+    if (myVar[index].civilian.veteran == undefined || myVar[index].civilian.veteran == null) {
+      $('#veteran-view').prop("checked", false)
+    } else {
+      $('#veteran-view').prop("checked", myVar[index].civilian.veteran)
+    }
 
     // data to be set for condition form
     $('#condition-civ-first-name').val(firstName)
@@ -1661,7 +1691,16 @@ $.delete = function(url, data, callback, type){
   }
 
   function loadDriversLicense(myVar, index) {
+    // debug log:
     // console.log('civilian: ', myVar[index].civilian)
+
+    //setup pre-reqs on license
+    $('.donor-block').removeClass('show').addClass('hide');
+    $('.veteran-block').removeClass('show').addClass('hide');
+    $('.delete-license-btn').removeClass('show').addClass('hide');
+    $('.create-license-btn').removeClass('show').addClass('hide');
+    $('#licenseStatusViewLic').text('Valid').removeClass('color-red').addClass('color-black')
+
     var firstName = myVar[index].civilian.firstName
     var lastName = myVar[index].civilian.lastName
     var birthday = myVar[index].civilian.birthday
@@ -1669,13 +1708,17 @@ $.delete = function(url, data, callback, type){
     var expDay = createdDate.getDate()
     var expMonth = (createdDate.getMonth())+1
     var expYear = (createdDate.getFullYear())+10
-    var gender = myVar[index].civilian.gender
-    var height = myVar[index].civilian.height
-    var weight = myVar[index].civilian.weight
-    var eyeColor = myVar[index].civilian.eyeColor
-    var hairColor = myVar[index].civilian.hairColor
-    var donor = myVar[index].civilian.organDonor
-    var veteran = myVar[index].civilian.veteran
+
+    // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional, 
+    // we will do a check to see if its undefined or empty and if so just set it to an
+    // empty string (or false for booleans), otherwise set it to the value from the db.
+    var gender = (myVar[index].civilian.gender == undefined || myVar[index].civilian.gender == '') ? '' : myVar[index].civilian.gender;
+    var height = (myVar[index].civilian.height == undefined || myVar[index].civilian.height == '') ? '' : myVar[index].civilian.height;
+    var weight = (myVar[index].civilian.weight == undefined || myVar[index].civilian.weight == '') ? '' : myVar[index].civilian.weight;
+    var eyeColor = (myVar[index].civilian.eyeColor == undefined || myVar[index].civilian.eyeColor == '') ? '' : myVar[index].civilian.eyeColor;
+    var hairColor = (myVar[index].civilian.hairColor == undefined || myVar[index].civilian.hairColor == '') ? '' : myVar[index].civilian.hairColor;
+    var donor = (myVar[index].civilian.organDonor == undefined || myVar[index].civilian.organDonor == '') ? false : myVar[index].civilian.organDonor;
+    var veteran = (myVar[index].civilian.veteran == undefined || myVar[index].civilian.veteran == '') ? false : myVar[index].civilian.veteran;
     
     $('#civilianID').val(myVar[index]._id)
     $('#civilianIDViewLic').text('DL: '+ myVar[index]._id)
@@ -1687,23 +1730,27 @@ $.delete = function(url, data, callback, type){
     $('#eyeLic').text(eyeColor) //got to parse this a bit to get the correct value
     $('#hairLic').text(hairColor) //got to parse this a bit to get the correct value
     if (donor === true) {
-     $('.donor-block').removeClass('hide')
+     $('.donor-block').removeClass('hide').addClass('show');
     }
     if (veteran === true) {
-     $('.veteran-block').removeClass('hide')
+     $('.veteran-block').removeClass('hide').addClass('show');
     }
     switch (myVar[index].civilian.licenseStatus) {
-      case '1':
+      case '1': //valid license
+        $('#drivers-license').removeClass('hide').addClass('show');
         $('#licenseStatusViewLic').text('Valid').removeClass('color-red').addClass('color-black')
-        $('#click-to-delete-lic').removeClass('hide')
-        break;
-      case '2':
+        $('.delete-license-btn').removeClass('hide').addClass('show');
+        $('.create-license-btn').removeClass('show').addClass('hide');
+        break; //javascript standard to put this here
+      case '2': //revoked license
+        $('#drivers-license').removeClass('hide').addClass('show');
         $('#licenseStatusViewLic').text('Revoked').removeClass('color-black').addClass('color-red')
-        $('#click-to-delete-lic').removeClass('hide')
-        break;
-      default:
-        $('#drivers-license').hide();
-        $('#click-to-create-lic').removeClass('hide')
+        $('.delete-license-btn').removeClass('hide').addClass('show');
+        $('.create-license-btn').removeClass('show').addClass('hide');
+        break; //javascript standard to put this here
+      default: // '3' or no license
+        $('#drivers-license').removeClass('show').addClass('hide');
+        $('.create-license-btn').removeClass('hide').addClass('show');
         $('#licenseStatusViewLic').text('None').removeClass('color-black').addClass('color-red')
     }
     var licenseDOB = birthday.split('-')
