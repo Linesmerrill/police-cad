@@ -1331,6 +1331,22 @@ a[data-toggle="collapse"].collapsed .rotate {
     text-transform: uppercase;
 }
 
+.last-name-search {
+    position: absolute;
+    bottom: 144px;
+    left: 46px;
+    width: 174px;
+    height: 18px;
+    padding: 0px;
+    background: transparent;
+    color: black;
+    border: none;
+    font-family: 'Signika', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
 .first-name-title {
     position: absolute;
     bottom: 125px;
