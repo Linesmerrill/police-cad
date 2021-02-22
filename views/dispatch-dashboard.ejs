@@ -582,180 +582,101 @@
                                                                 class="container col-sm-offset-2 col-md-offset-2"
                                                                 style="position: relative;">
                                                                 <img src="/static/images/id-license.png"
-                                                                  style="width: 301px; height: 186px;">
+                                                                  style="width: 301px; height: 186px; border-radius: 4%;">
 
-                                                                <label style="position: absolute;
-                                                                  font-family: 'Abril Fatface', cursive;
-                                                                  top: 4px;
-                                                                  left: 38px;
-                                                                  color: #00aced;
-                                                                  font-size: 17px;"></label>
-                                                                <label style="position: absolute;
-                                                                  font-family: 'Signika', sans-serif;
-                                                                  top: 8px;
-                                                                  left: 206px;
-                                                                  color: #00aced;
-                                                                  font-size: 12px;"></label>
                                                                 <!-- drivers license # -->
-                                                                <div class="form-group">
-                                                                  <div class="col-md-8">
-                                                                    <label id="civilianIDViewLic-<%=i%>" style="position: absolute;
-                                                                      bottom: 0px;
-                                                                      left: 25px;
-                                                                      font-weight: 100;
-                                                                      color: black;
-                                                                      font-size: 14px;
-                                                                      text-transform: uppercase;
-                                                                      font-family: 'Signika', sans-serif;"
-                                                                      class="form-label"></label>
-                                                                  </div>
+                                                                <div>
+                                                                  <label id="civilianIDViewLic-<%=i%>"
+                                                                    class="drivers-license-number"></label>
                                                                 </div>
 
                                                                 <!-- expiration date -->
-                                                                <div class="form-group">
-                                                                  <div class="col-md-4">
-                                                                    <label style="position: absolute;
-                                                                      bottom: 146px;
-                                                                      left: 25px;
-                                                                      color: black;
-                                                                      font-size: 14px;
-                                                                      font-family: 'Signika', sans-serif;
-                                                                      font-weight: 500;" class="form-label"><span
-                                                                        style="color: #102595">EXP
-                                                                      </span><span
-                                                                        id="license-expiration-<%=i%>"></span></label>
-                                                                  </div>
+                                                                <div>
+                                                                  <span class="expiration-title">EXP </span>
+                                                                  <span id="license-expiration-<%=i%>"
+                                                                    class="expiration"></span>
                                                                 </div>
 
                                                                 <!-- last name -->
-                                                                <div class="form-group">
-                                                                  <div class="col-md-4">
-                                                                    <span style="position: absolute;
-                                                                      bottom: 150px;
-                                                                      left: 25px;
-                                                                      font-size: 14px;
-                                                                      font-family: 'Signika', sans-serif;
-                                                                      font-weight: 500;
-                                                                      color: #102595">LN </span>
-                                                                    <span id="lastNameLic-<%=i%>" style="position: absolute;
-                                                                      bottom: 157px;
-                                                                      left: 46px;
-                                                                      width: 174px;
-                                                                      height: 18px;
-                                                                      padding: 0px;
-                                                                      background: transparent;
-                                                                      color: black;
-                                                                      border: none;
-                                                                      font-family: 'Signika', sans-serif;
-                                                                      font-size: 14px;
-                                                                      font-weight: 500;
-                                                                      text-transform: uppercase;"></span>
-                                                                  </div>
+                                                                <div>
+                                                                  <span class="last-name-title">LN </span>
+                                                                  <span id="lastNameLic-<%=i%>"
+                                                                    class="last-name-search"></span>
                                                                 </div>
 
                                                                 <!-- first name -->
-                                                                <div class="form-group">
-                                                                  <div>
-                                                                    <span style="position: absolute;
-                                                                      bottom: 227px;
-                                                                      left: 25px;
-                                                                      font-size: 14px;
-                                                                      font-family: 'Signika', sans-serif;
-                                                                      font-weight: 500;
-                                                                      color: #102595">FN </span>
-                                                                    <span id="firstNameLic-<%=i%>" style="position: absolute;
-                                                                      bottom: 234px;
-                                                                      left: 46px;
-                                                                      width: 174px;
-                                                                      height: 18px;
-                                                                      padding: 0px;
-                                                                      background: transparent;
-                                                                      color: black;
-                                                                      border: none;
-                                                                      font-family: 'Signika', sans-serif;
-                                                                      font-size: 14px;
-                                                                      font-weight: 500;
-                                                                      text-transform: uppercase;"></span>
-                                                                  </div>
+                                                                <div>
+                                                                  <span class="first-name-title">FN </span>
+                                                                  <span id="firstNameLic-<%=i%>"
+                                                                    class="first-name"></span>
                                                                 </div>
 
                                                                 <!-- address -->
-                                                                <div class="form-group">
-                                                                  <div class="col-md-4">
-                                                                    <span id="addressViewLic-<%=i%>" style="position: absolute;
-                                                                      bottom: 136px;
-                                                                      width: 219px;
-                                                                      left: 26px;
-                                                                      line-height: 14px;
-                                                                      background: transparent;
-                                                                      color: black;
-                                                                      border: none;
-                                                                      font-family: 'Signika', sans-serif;
-                                                                      font-size: 14px;
-                                                                      font-weight: 500;
-                                                                      text-transform: uppercase;"></span>
-                                                                  </div>
+                                                                <div>
+                                                                  <span id="addressViewLic-<%=i%>"
+                                                                    class="address"></span>
                                                                 </div>
 
                                                                 <!-- dob -->
-                                                                <div class="form-group">
-                                                                  <div class="col-md-4">
-                                                                    <span style="position: absolute;
-                                                                      bottom: 131px;
-                                                                      left: 25px;
-                                                                      font-size: 14px;
-                                                                      font-family: 'Signika', sans-serif;
-                                                                      font-weight: 500;
-                                                                      color: #102595">DOB </span>
-                                                                    <span id="birthdayViewLic-<%=i%>" style="position: absolute;
-                                                                      bottom: 131px;
-                                                                      left: 57px;
-                                                                      background: transparent;
-                                                                      color: black;
-                                                                      border: none;
-                                                                      font-family: 'Signika', sans-serif;
-                                                                      font-size: 15px;
-                                                                      font-weight: 500;"></span>
-                                                                  </div>
+                                                                <div>
+                                                                  <span class="dob-title">DOB </span>
+                                                                  <span id="birthdayViewLic-<%=i%>" class="dob"></span>
                                                                 </div>
 
                                                                 <!-- license status -->
-                                                                <div class="form-group">
-                                                                  <div class="col-md-4">
-                                                                    <span style="position: absolute;
-                                                                      bottom: 131px;
-                                                                      left: 25px;
-                                                                      font-size: 14px;
-                                                                      font-family: 'Signika', sans-serif;
-                                                                      font-weight: 500;
-                                                                      color: #102595">STATUS </span>
-                                                                    <span id="licenseStatusViewLic-<%=i%>" style="position: absolute;
-                                                                      bottom: 131px;
-                                                                      left: 75px;
-                                                                      background: transparent;
-                                                                      border: none;
-                                                                      font-family: 'Signika', sans-serif;
-                                                                      font-size: 14px;
-                                                                      font-weight: 500;
-                                                                      text-transform: uppercase;" class="color-black">
-                                                                    </span>
-                                                                  </div>
+                                                                <div>
+                                                                  <span class="status-title">STA </span>
+                                                                  <span id="licenseStatusViewLic-<%=i%>"
+                                                                    class="status"></span>
                                                                 </div>
 
                                                                 <!-- issued date -->
-                                                                <div class="form-group">
-                                                                  <div class="col-md-8">
-                                                                    <label style="position: absolute;
-                                                                      bottom: 241px;
-                                                                      left: 195px;
-                                                                      color: black;
-                                                                      font-size: 14px;
-                                                                      font-family: 'Signika', sans-serif;
-                                                                      font-weight: 500;" class="form-label"><span
-                                                                        style="color: #102595">ISS
-                                                                      </span><span
-                                                                        id="license-issued-<%=i%>"></span></label>
-                                                                  </div>
+                                                                <div>
+                                                                  <span class="issued-title">ISS </span>
+                                                                  <span id="license-issued-<%=i%>"
+                                                                    class="issued"></span>
+                                                                </div>
+
+                                                                <!-- sex -->
+                                                                <div>
+                                                                  <span class="sex-title">SEX </span>
+                                                                  <span id="sexLic-<%=i%>" class="sex"></span>
+                                                                </div>
+
+                                                                <!-- height -->
+                                                                <div>
+                                                                  <span class="height-title">HGT </span>
+                                                                  <span id="heightLic-<%=i%>" class="height"></span>
+                                                                </div>
+
+                                                                <!-- weight -->
+                                                                <div>
+                                                                  <span class="weight-title">WGT </span>
+                                                                  <span id="weightLic-<%=i%>" class="weight"></span>
+                                                                </div>
+
+                                                                <!-- eye color -->
+                                                                <div>
+                                                                  <span class="eye-title">EYES </span>
+                                                                  <span id="eyeLic-<%=i%>" class="eye"></span>
+                                                                </div>
+
+                                                                <!-- hair color -->
+                                                                <div>
+                                                                  <span class="hair-title">HAIR </span>
+                                                                  <span id="hairLic-<%=i%>" class="hair"></span>
+                                                                </div>
+
+                                                                <!-- donor -->
+                                                                <div class="donor-block-<%=i%> hide">
+                                                                  <span class="donor-title">DONOR
+                                                                    ❤️</span>
+                                                                </div>
+
+                                                                <!-- veteran -->
+                                                                <div class="veteran-block-<%=i%> hide">
+                                                                  <span class="veteran">VETERAN
+                                                                    ⭐️</span>
                                                                 </div>
                                                               </div>
                                                             </div>
@@ -3415,10 +3336,62 @@
       var expMonth=(createdDate.getMonth())+1
       var expYear=(createdDate.getFullYear())+10
 
+      // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional, 
+      // we will do a check to see if its undefined or empty and if so just set it to an
+      // empty string (or false for booleans), otherwise set it to the value from the db.
+      var gender=(civ[i].civilian.gender==undefined||civ[i].civilian.gender=='')? '':civ[i].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
+      // height needs to be converted to ft in or cm depending on the heightClassification
+      if (civ[i].civilian.height==undefined||civ[i].civilian.height=='') {
+        height=''
+      } else {
+        switch (civ[i].civilian.heightClassification) {
+          case 'imperial':
+            var feet=Math.floor(civ[i].civilian.height/12); // just dividing by 12 to get the feet
+            var inches=("0"+civ[i].civilian.height%12).slice(-2); // mod by 12 to get remainder, but also pad with a '0' if less than '10'
+            height=`${feet}'-${inches}"` // ex: 5'-07"
+            break;
+          case 'metric':
+            height=`${civ[i].civilian.height} cm`
+            break;
+          default:
+            height=civ[i].civilian.height
+        }
+      }
+      // weight just needs the appropriate label based on the weightClassification (lb or kg)
+      if (civ[i].civilian.weight==undefined||civ[i].civilian.weight=='') {
+        weight=''
+      } else {
+        switch (civ[i].civilian.weightClassification) {
+          case 'imperial':
+            weight=`${civ[i].civilian.weight} lb`
+            break;
+          case 'metric':
+            weight=`${civ[i].civilian.weight} kg`
+            break;
+          default:
+            weight=civ[i].civilian.weight
+        }
+      }
+      var eyeColor=(civ[i].civilian.eyeColor==undefined||civ[i].civilian.eyeColor=='')? '':civ[i].civilian.eyeColor.substring(0, 3); //only grab first 3 characters of string
+      var hairColor=(civ[i].civilian.hairColor==undefined||civ[i].civilian.hairColor=='')? '':civ[i].civilian.hairColor.substring(0, 3); //only grab first 3 characters of string
+      var donor=(civ[i].civilian.organDonor==undefined||civ[i].civilian.organDonor=='')? false:civ[i].civilian.organDonor;
+      var veteran=(civ[i].civilian.veteran==undefined||civ[i].civilian.veteran=='')? false:civ[i].civilian.veteran;
+
       $('#civilianIDViewLic-'+i).text('DL: '+civ[i]._id)
       $('#firstNameLic-'+i).text(firstName)
       $('#lastNameLic-'+i).text(lastName)
       $('#addressViewLic-'+i).text(civ[i].civilian.address)
+      $('#sexLic-'+i).text(gender);
+      $('#heightLic-'+i).text(height);
+      $('#weightLic-'+i).text(weight);
+      $('#eyeLic-'+i).text(eyeColor);
+      $('#hairLic-'+i).text(hairColor);
+      if (donor===true) {
+        $('.donor-block-'+i).removeClass('hide').addClass('show');
+      }
+      if (veteran===true) {
+        $('.veteran-block-'+i).removeClass('hide').addClass('show');
+      }
       switch (civ[i].civilian.licenseStatus) {
         case '1':
           $('#licenseStatusViewLic-'+i).text('Valid ').removeClass('color-red').addClass('color-black').append('<i class="ion-checkmark-circled color-green"></i>')

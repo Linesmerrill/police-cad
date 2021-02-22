@@ -2375,6 +2375,15 @@ module.exports = function (app, passport, server) {
       var address
       var occupation
       var firearmLicense
+      var gender
+      var heightClassification
+      var height
+      var weightClassification
+      var weight
+      var eyeColor
+      var hairColor
+      var organDonor
+      var veteran
       if (exists(req.body.address)) {
         address = req.body.address.trim()
       }
@@ -2383,6 +2392,47 @@ module.exports = function (app, passport, server) {
       }
       if (exists(req.body.firearmLicense)) {
         firearmLicense = req.body.firearmLicense
+      }
+      if (exists(req.body.gender)) {
+        gender = req.body.gender
+      }
+      // height classification: imperial or metric, imperial will have 2 inputs and metric will have one
+      if (exists(req.body.heightClassification)) {
+        heightClassification = req.body.heightClassification;
+        // if user has selected 'imperial', then we should calculate USA maths for height
+        // else just grab whatever value was passed in for height
+        if (req.body.heightClassification === 'imperial') {
+          // because the USA is dumb, we gotta do some quick-maths to convert ft and inches to a single number :fml:
+          height = generateHeight(req.body.heightFoot, req.body.heightInches)
+        } else {
+          if (exists(req.body.heightCentimeters)) {
+            height = req.body.heightCentimeters;
+          }
+        }
+      }
+      // weight classification: imperial or metric, both will have a single input
+      if (exists(req.body.weightImperial) && req.body.weightImperial !== '') {
+        weight = req.body.weightImperial;
+      } else if (exists(req.body.weightMetric) && req.body.weightMetric !== '') {
+        weight = req.body.weightMetric;
+      }
+      if (exists(req.body.eyeColor)) {
+        eyeColor = req.body.eyeColor
+      }
+      if (exists(req.body.hairColor)) {
+        hairColor = req.body.hairColor
+      }
+      if (exists(req.body.heightClassification)) {
+        heightClassification = req.body.heightClassification
+      }
+      if (exists(req.body.weightClassification)) {
+        weightClassification = req.body.weightClassification
+      }
+      if (exists(req.body.organDonor)) {
+        organDonor = (req.body.organDonor === 'on') ? true : false;
+      }
+      if (exists(req.body.veteran)) {
+        veteran = (req.body.veteran === 'on') ? true : false;
       }
       var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
       if (!isValid) {
@@ -2393,14 +2443,25 @@ module.exports = function (app, passport, server) {
         '_id': ObjectId(req.body.civilianID)
       }, {
         $set: {
+          //basic civ details
           "civilian.firstName": req.body.firstName.trim().charAt(0).toUpperCase() + req.body.firstName.trim().slice(1),
           "civilian.lastName": req.body.lastName.trim().charAt(0).toUpperCase() + req.body.lastName.trim().slice(1),
           'civilian.birthday': req.body.birthday,
-          'civilian.warrants': req.body.warrants,
-          'civilian.licenseStatus': (req.body.licenseStatus ? '1' : '3'),
           'civilian.address': address,
           'civilian.occupation': occupation,
-          'civilian.firearmLicense': firearmLicense,
+          //advanced civ details
+          'civilian.gender': gender,
+          'civilian.heightClassification': heightClassification,
+          'civilian.height': height,
+          'civilian.weightClassification': weightClassification,
+          'civilian.weight': weight,
+          'civilian.eyeColor': eyeColor,
+          'civilian.hairColor': hairColor,
+          'civilian.organDonor': organDonor,
+          'civilian.veteran': veteran,
+          //additional civ details
+          'civilian.warrants': req.body.warrants,
+          'civilian.licenseStatus': (req.body.licenseStatus ? '1' : '3'),
           'civilian.updatedAt': new Date()
         }
       }, function (err) {
@@ -3217,5 +3278,20 @@ function isValidObjectIdLength(value, errorMessage) {
   } else {
     console.warn("cannot check length of null value: ", value)
     return false
+  }
+}
+
+function generateHeight(heightFoot, heightInches) {
+  if (exists(heightFoot) && !exists(heightInches)) {
+    //if only foot exists, then just convert to inches and store in DB
+    return parseInt(heightFoot) * 12;
+  }
+  if (exists(heightFoot) && exists(heightInches)) {
+    //if foot and inches exist, we want to convert to inches to store in DB
+    return parseInt(heightFoot) * 12 + parseInt(heightInches);
+  }
+  if (!exists(heightFoot) && exists(heightInches)) {
+    //if foot doesn't exist but inches exists, simple maths
+    return parseInt(heightInches)
   }
 }

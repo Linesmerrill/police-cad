@@ -1237,24 +1237,25 @@ a[data-toggle="collapse"] .rotate {
     -ms-transform: rotate(90deg);
     -webkit-transform: rotate(90deg);
     transform: rotate(90deg);
- }
- a[data-toggle="collapse"].collapsed .rotate {
+}
+
+a[data-toggle="collapse"].collapsed .rotate {
     -moz-transform: rotate(0deg);
     -ms-transform: rotate(0deg);
     -webkit-transform: rotate(0deg);
     transform: rotate(0deg);
- }
+}
 
- .background-color-222 {
-     background-color: #222;
- }
+.background-color-222 {
+    background-color: #222;
+}
 
- .topNav {
+.topNav {
     background-color: #222;
     width: 100%;
- }
+}
 
- .arrow {
+.arrow {
     position: absolute;
     left: 0px;
     right: 0px;
@@ -1280,6 +1281,315 @@ a[data-toggle="collapse"] .rotate {
     min-height: 100%;
 }
 
-.no-sort::after { display: none!important; }
+.no-sort::after {
+    display: none !important;
+}
 
-.no-sort { pointer-events: none!important; cursor: default!important; }
+.no-sort {
+    pointer-events: none !important;
+    cursor: default !important;
+}
+
+#drivers-license {
+    margin-bottom: 10em;
+}
+
+.drivers-license-number {
+    position: absolute;
+    bottom: -4px;
+    left: 25px;
+    font-weight: 100;
+    color: black;
+    font-size: 14px;
+    text-transform: uppercase;
+    font-family: 'Signika', sans-serif;
+}
+
+.last-name-title {
+    position: absolute;
+    bottom: 139px;
+    left: 25px;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+    color: #801E46;
+}
+
+.last-name {
+    position: absolute;
+    bottom: 140px;
+    left: 46px;
+    width: 174px;
+    height: 18px;
+    padding: 0px;
+    background: transparent;
+    color: black;
+    border: none;
+    font-family: 'Signika', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.last-name-search {
+    position: absolute;
+    bottom: 144px;
+    left: 46px;
+    width: 174px;
+    height: 18px;
+    padding: 0px;
+    background: transparent;
+    color: black;
+    border: none;
+    font-family: 'Signika', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.first-name-title {
+    position: absolute;
+    bottom: 125px;
+    left: 25px;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+    color: #801E46
+}
+
+.first-name {
+    position: absolute;
+    bottom: 124px;
+    left: 46px;
+    width: 155px;
+    color: black;
+    font-family: 'Signika', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.address {
+    position: absolute;
+    bottom: 87px;
+    width: 170px;
+    height: 40px;
+    left: 26px;
+    line-height: 12px;
+    background: transparent;
+    color: black;
+    border: none;
+    font-family: 'Signika', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    text-transform: uppercase;
+}
+
+.dob-title {
+    position: absolute;
+    bottom: 139px;
+    left: 210px;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+    color: #801E46
+}
+
+.dob {
+    position: absolute;
+    bottom: 138px;
+    left: 237px;
+    color: black;
+    font-family: 'Signika', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.expiration-title {
+    position: absolute;
+    bottom: 74px;
+    left: 25px;
+    color: #801E46;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+}
+
+.expiration {
+    position: absolute;
+    bottom: 73px;
+    left: 50px;
+    color: black;
+    font-size: 14px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+}
+
+.issued-title {
+    position: absolute;
+    bottom: 74px;
+    left: 210px;
+    color: #801E46;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+}
+
+.issued {
+    position: absolute;
+    bottom: 73px;
+    left: 235px;
+    color: black;
+    font-size: 14px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+}
+
+.sex-title {
+    position: absolute;
+    bottom: 58px;
+    left: 25px;
+    color: #801E46;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+}
+
+.sex {
+    position: absolute;
+    bottom: 58px;
+    left: 52px;
+    color: black;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+}
+
+.height-title {
+    position: absolute;
+    bottom: 46px;
+    left: 25px;
+    color: #801E46;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+}
+
+.height {
+    position: absolute;
+    bottom: 46px;
+    left: 52px;
+    color: black;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+}
+
+.weight-title {
+    position: absolute;
+    bottom: 34px;
+    left: 25px;
+    color: #801E46;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+}
+
+.weight {
+    position: absolute;
+    bottom: 34px;
+    left: 52px;
+    color: black;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+}
+
+.eye-title {
+    position: absolute;
+    bottom: 58px;
+    left: 110px;
+    color: #801E46;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+}
+
+.eye {
+    position: absolute;
+    bottom: 58px;
+    left: 141px;
+    color: black;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+}
+
+.hair-title {
+    position: absolute;
+    bottom: 46px;
+    left: 110px;
+    color: #801E46;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+}
+
+.hair {
+    position: absolute;
+    bottom: 46px;
+    left: 140px;
+    color: black;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+}
+
+.status-title {
+    position: absolute;
+    bottom: 125px;
+    left: 210px;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+    color: #801E46;
+}
+
+.status {
+    position: absolute;
+    bottom: 125px;
+    left: 237px;
+    background: transparent;
+    border: none;
+    font-family: 'Signika', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: black;
+}
+
+.donor-title {
+    position: absolute;
+    bottom: 19px;
+    left: 25px;
+    color: #801E46;
+    font-size: 12px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 500;
+}
+
+.veteran {
+    position: absolute;
+    bottom: 54px;
+    left: 210px;
+    color: #102959;
+    font-size: 16px;
+    font-family: 'Signika', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+}
