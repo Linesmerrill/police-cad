@@ -113,8 +113,8 @@
           <a data-toggle="modal" href="/community-dashboard"><span class="fa fa-users mr-3"></span> Communities</a>
         </li>
         <li>
-          <a data-toggle="modal" href="#notificationModal"><span class="fa fa-bell mr-3 notif"><small
-                class="d-flex align-items-center justify-content-center">1</small></span> Notifications</a>
+          <a data-toggle="modal" href="#notificationModal" onclick="markAsRead()"><span id="notification-symbol" class="fa fa-bell mr-3 notif"><small
+                class="d-flex align-items-center justify-content-center" id="notification-count">1</small></span> Notifications</a>
         </li>
         <li>
           <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"><span
@@ -1964,24 +1964,9 @@
       </div>
     </div>
 
-    <div id="notificationModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-body text-center">
-            <fieldset>
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                aria-hidden="true">X</button>
-              <h1>Hello! ❤️ </h1>
-              <h3>Thanks for checking out the new notifications. <br />Check back for updates</h3>
-              <h1 class="margin-top-2">🚀</h1>
-            </fieldset>
-          </div>
-        </div>
-      </div>
-    </div>
-
+    <% include notification-modal %>
     <% include 10-codes %>
-      <% include notepad %>
+    <% include notepad %>
 </body>
 </div>
 </div>
@@ -2278,6 +2263,18 @@
     $("#submitTicket").on('click', function () {
       $('#crimeList').val($("#ticket-select").find("option:selected").text())
     });
+
+    //check for notification cookie
+    const cookieValue = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('notification-symbol='))
+      .split('=')[1];
+
+    if (cookieValue == 'v0.16.0') {
+      $('#notification-symbol').removeClass('notif')
+      $('#notification-count').text('')
+    }
+
   }); /* End of document.ready */
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -2984,5 +2981,11 @@
       return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=${dob[1]}&activeCommunityID=${activeCommunityID}`
     }
     return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&activeCommunityID=${activeCommunityID}`
+  }
+
+  function markAsRead() {
+    document.cookie ="notification-symbol=v0.16.0";
+    $('#notification-symbol').removeClass('notif');
+    $('#notification-count').text('');
   }
 </script>
