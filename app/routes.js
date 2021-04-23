@@ -37,6 +37,10 @@ module.exports = function (app, passport, server) {
     res.render('about');
   });
 
+  app.get('/not-authorized', function (req, res) {
+    res.render('not-authorized');
+  });
+
   app.get('/map-interactive', function (req, res) {
     res.render('map-interactive');
   });
@@ -1315,7 +1319,7 @@ module.exports = function (app, passport, server) {
       });
   })
 
-  app.get('/medical-reports', function (req, res) {
+  app.get('/medical-reports',auth, function (req, res) {
     MedicalReport.find({
         'report.civilianID': req.query.civID,
       },
@@ -1325,7 +1329,7 @@ module.exports = function (app, passport, server) {
       });
   })
 
-  app.get('/medications', function (req, res) {
+  app.get('/medications',auth, function (req, res) {
     Medication.find({
         'medication.civilianID': req.query.civID,
       },
@@ -1335,7 +1339,7 @@ module.exports = function (app, passport, server) {
       });
   })
 
-  app.get('/conditions', function (req, res) {
+  app.get('/conditions',auth, function (req, res) {
     Condition.find({
         'condition.civilianID': req.query.civID,
       },
@@ -1345,12 +1349,40 @@ module.exports = function (app, passport, server) {
       });
   })
 
-  app.get('/medical-database', function (req, res) {
+  app.get('/medical-database',auth, function (req, res) {
     // console.debug("medical database server: ", req.query)
+
+    //b/c people like to just search empty values, we do a little sanitation and checking here
+    var fName;
+    var medFName; //names are stored differently in the civilian and medical databases so we have to store 2 different values here
+    var lName;
+    var medLName; //names are stored differently in the civilian and medical databases so we have to store 2 different values here
+    if (exists(req.query.firstName)) {
+      fName = req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1);
+      medFName = req.query.firstName.trim().toLowerCase();
+    } else {
+      console.error('cannot lookup medical database without firstName');
+      res.status(400);
+      return res.redirect('back');
+    }
+    if (exists(req.query.lastName)) {
+      lName = req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1);
+      medLName = req.query.lastName.trim().toLowerCase();
+    } else {
+      console.error('cannot lookup medical database without lastName');
+      res.status(400);
+      return res.redirect('back');
+    }
+
     if (req.query.activeCommunityID == "" || req.query.activeCommunityID == null) {
+      if (!exists(req.query.dateOfBirth)) {
+        console.error('cannot lookup medical database without dateOfBirth');
+        res.status(400);
+        return res.redirect('back');
+      }
       Civilian.find({
-          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          'civilian.firstName': fName,
+          'civilian.lastName': lName,
           'civilian.birthday': req.query.dateOfBirth,
           '$or': [{ // some are stored as empty strings and others as null so we need to check for both
             'civilian.activeCommunityID': ''
@@ -1362,9 +1394,9 @@ module.exports = function (app, passport, server) {
           if (err) return console.error(err);
 
           Medication.find({
-              'medication.firstName': req.query.firstName.trim().toLowerCase(),
-              'medication.lastName': req.query.lastName.trim().toLowerCase(),
-              'medication.dateOfBirth': req.query.dateOfBirth.trim(),
+              'medication.firstName': medFName,
+              'medication.lastName': medLName,
+              'medication.dateOfBirth': req.query.dateOfBirth.trim(), // if we get here, it means it exists so prob safe to trim()
               '$or': [{ // some are stored as empty strings and others as null so we need to check for both
                 'civilian.activeCommunityID': ''
               }, {
@@ -1374,8 +1406,8 @@ module.exports = function (app, passport, server) {
             function (err, dbMedications) {
               if (err) return console.error(err);
               Condition.find({
-                  'condition.firstName': req.query.firstName.trim().toLowerCase(),
-                  'condition.lastName': req.query.lastName.trim().toLowerCase(),
+                  'condition.firstName': medFName,
+                  'condition.lastName': medLName,
                   'condition.dateOfBirth': req.query.dateOfBirth.trim(),
                   '$or': [{ // some are stored as empty strings and others as null so we need to check for both
                     'civilian.activeCommunityID': ''
@@ -1386,8 +1418,8 @@ module.exports = function (app, passport, server) {
                 function (err, dbConditions) {
                   if (err) return console.error(err);
                   MedicalReport.find({
-                      'report.firstName': req.query.firstName.trim().toLowerCase(),
-                      'report.lastName': req.query.lastName.trim().toLowerCase(),
+                      'report.firstName': medFName,
+                      'report.lastName': medLName,
                       'report.dateOfBirth': req.query.dateOfBirth.trim(),
                       '$or': [{ // some are stored as empty strings and others as null so we need to check for both
                         'civilian.activeCommunityID': ''
@@ -1410,29 +1442,29 @@ module.exports = function (app, passport, server) {
         })
     } else {
       Civilian.find({
-          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          'civilian.firstName': fName,
+          'civilian.lastName': lName,
           'civilian.activeCommunityID': req.query.activeCommunityID,
         },
         function (err, dbCivilians) {
           if (err) return console.error(err);
           Medication.find({
-              'medication.firstName': req.query.firstName.trim().toLowerCase(),
-              'medication.lastName': req.query.lastName.trim().toLowerCase(),
+              'medication.firstName': medFName,
+              'medication.lastName': medLName,
               'medication.activeCommunityID': req.query.activeCommunityID,
             },
             function (err, dbMedications) {
               if (err) return console.error(err);
               Condition.find({
-                  'condition.firstName': req.query.firstName.trim().toLowerCase(),
-                  'condition.lastName': req.query.lastName.trim().toLowerCase(),
+                  'condition.firstName': medFName,
+                  'condition.lastName': medLName,
                   'condition.activeCommunityID': req.query.activeCommunityID,
                 },
                 function (err, dbConditions) {
                   if (err) return console.error(err);
                   MedicalReport.find({
-                      'report.firstName': req.query.firstName.trim().toLowerCase(),
-                      'report.lastName': req.query.lastName.trim().toLowerCase(),
+                      'report.firstName': medFName,
+                      'report.lastName': medLName,
                       'report.activeCommunityID': req.query.activeCommunityID,
                     },
                     function (err, dbReports) {
@@ -3211,7 +3243,8 @@ function auth(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   }
-  return res.redirect('/login')
+  res.status(401);
+  return res.render('not-authorized');
 }
 
 function authCivilian(req, res, next) {
