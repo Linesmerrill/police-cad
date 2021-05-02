@@ -20,6 +20,8 @@ var async = require('async');
 var crypto = require('crypto');
 var path = require('path');
 var fs = require('fs');
+var got = require('got');
+var { pipeline } = require('stream');
 
 module.exports = function (app, passport, server) {
 
@@ -138,46 +140,59 @@ module.exports = function (app, passport, server) {
     return res.redirect('/');
   });
 
-  app.get('/communities', auth, function (req, res) {
-    req.app.locals.specialContext = null;
-    if (!exists(req.session.communityID)) {
-      console.warn("cannot render empty communityID, route: /communities")
-      res.status(400)
-      return res.redirect('back')
+
+  app.get('/communities', auth, async function(req, res) {
+    try {
+      const response = await got('http://localhost:8081/api/v1/community/'+req.session.communityID+'/'+req.session.passport.user, {headers: {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.qzzS5DRotYoImrC-Cb52n1k0fBCG3EffDeQBkXOgEDU'}});
+      console.log(response.body);
+      //=> '<!doctype html> ...'
+    } catch (error) {
+      console.log(error.response.body);
+      //=> 'Internal server error ...'
     }
-    var isValid = isValidObjectIdLength(req.session.communityID, "cannot lookup invalid length communityID, route: /communities")
-    if (!isValid) {
-      req.app.locals.specialContext = "invalidRequest";
-      return res.redirect('back')
-    }
-    Community.findOne({
-      '_id': ObjectId(req.session.communityID),
-      'community.ownerID': req.session.passport.user
-    }, function (err, dbCommunities) {
-      if (err) return console.error(err);
-      if (!exists(dbCommunities)) {
-        console.warn("cannot render empty communityID after searching community, route: /communities")
-        res.status(400)
-        return res.redirect('back')
-      }
-      User.find({
-        'user.activeCommunity': req.session.communityID
-      }, function (err, dbMembers) {
-        if (err) return console.error(err);
-        if (dbCommunities == null) {
-          console.warn("cannot render empty communityID after searching users, route: /communities")
-          res.status(400)
-          return res.redirect('back')
-        }
-        return res.render('communities', {
-          members: dbMembers,
-          communities: dbCommunities,
-          userID: req.session.passport.user,
-          user: req.user
-        });
-      })
-    })
-  })
+  });
+
+  //deprecated: use the above communities route
+  // app.get('/communities', auth, function (req, res) {
+  //   req.app.locals.specialContext = null;
+  //   if (!exists(req.session.communityID)) {
+  //     console.warn("cannot render empty communityID, route: /communities")
+  //     res.status(400)
+  //     return res.redirect('back')
+  //   }
+  //   var isValid = isValidObjectIdLength(req.session.communityID, "cannot lookup invalid length communityID, route: /communities")
+  //   if (!isValid) {
+  //     req.app.locals.specialContext = "invalidRequest";
+  //     return res.redirect('back')
+  //   }
+  //   Community.findOne({
+  //     '_id': ObjectId(req.session.communityID),
+  //     'community.ownerID': req.session.passport.user
+  //   }, function (err, dbCommunities) {
+  //     if (err) return console.error(err);
+  //     if (!exists(dbCommunities)) {
+  //       console.warn("cannot render empty communityID after searching community, route: /communities")
+  //       res.status(400)
+  //       return res.redirect('back')
+  //     }
+  //     User.find({
+  //       'user.activeCommunity': req.session.communityID
+  //     }, function (err, dbMembers) {
+  //       if (err) return console.error(err);
+  //       if (dbCommunities == null) {
+  //         console.warn("cannot render empty communityID after searching users, route: /communities")
+  //         res.status(400)
+  //         return res.redirect('back')
+  //       }
+  //       return res.render('communities', {
+  //         members: dbMembers,
+  //         communities: dbCommunities,
+  //         userID: req.session.passport.user,
+  //         user: req.user
+  //       });
+  //     })
+  //   })
+  // })
 
   app.get('/owned-communities', auth, function (req, res) {
     Community.find({
