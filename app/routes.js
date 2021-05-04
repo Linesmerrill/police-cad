@@ -143,56 +143,22 @@ module.exports = function (app, passport, server) {
 
   app.get('/communities', auth, async function(req, res) {
     try {
-      const response = await got('http://localhost:8081/api/v1/community/'+req.session.communityID+'/'+req.session.passport.user, {headers: {'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.qzzS5DRotYoImrC-Cb52n1k0fBCG3EffDeQBkXOgEDU'}});
-      console.log(response.body);
-      //=> '<!doctype html> ...'
+      const commResponse = await got('http://localhost:8081/api/v1/community/'+req.session.communityID+'/'+req.session.passport.user, {headers: {'Authorization': process.env.POLICE_CAD_API_TOKEN}});
+      let dbCommunities = JSON.parse(commResponse.body);
+      const userResponse = await got('http://localhost:8081/api/v1/users/'+req.session.communityID, {headers: {'Authorization': process.env.POLICE_CAD_API_TOKEN}});
+      let dbMembers = JSON.parse(userResponse.body);
+      return res.render('communities', {
+                members: dbMembers,
+                communities: dbCommunities,
+                userID: req.session.passport.user,
+                user: req.user
+              });
     } catch (error) {
-      console.log(error.response.body);
-      //=> 'Internal server error ...'
+      console.warn("error loading /communities. error: ", error.body)
+      res.status(500)
+      return res.redirect('back')
     }
   });
-
-  //deprecated: use the above communities route
-  // app.get('/communities', auth, function (req, res) {
-  //   req.app.locals.specialContext = null;
-  //   if (!exists(req.session.communityID)) {
-  //     console.warn("cannot render empty communityID, route: /communities")
-  //     res.status(400)
-  //     return res.redirect('back')
-  //   }
-  //   var isValid = isValidObjectIdLength(req.session.communityID, "cannot lookup invalid length communityID, route: /communities")
-  //   if (!isValid) {
-  //     req.app.locals.specialContext = "invalidRequest";
-  //     return res.redirect('back')
-  //   }
-  //   Community.findOne({
-  //     '_id': ObjectId(req.session.communityID),
-  //     'community.ownerID': req.session.passport.user
-  //   }, function (err, dbCommunities) {
-  //     if (err) return console.error(err);
-  //     if (!exists(dbCommunities)) {
-  //       console.warn("cannot render empty communityID after searching community, route: /communities")
-  //       res.status(400)
-  //       return res.redirect('back')
-  //     }
-  //     User.find({
-  //       'user.activeCommunity': req.session.communityID
-  //     }, function (err, dbMembers) {
-  //       if (err) return console.error(err);
-  //       if (dbCommunities == null) {
-  //         console.warn("cannot render empty communityID after searching users, route: /communities")
-  //         res.status(400)
-  //         return res.redirect('back')
-  //       }
-  //       return res.render('communities', {
-  //         members: dbMembers,
-  //         communities: dbCommunities,
-  //         userID: req.session.passport.user,
-  //         user: req.user
-  //       });
-  //     })
-  //   })
-  // })
 
   app.get('/owned-communities', auth, function (req, res) {
     Community.find({
