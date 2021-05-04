@@ -146,9 +146,9 @@ module.exports = function (app, passport, server) {
 
   app.get('/communities', auth, async function(req, res) {
     try {
-      const commResponse = await got('http://localhost:8081/api/v1/community/'+req.session.communityID+'/'+req.session.passport.user, {headers: {'Authorization': process.env.POLICE_CAD_API_TOKEN}});
+      const commResponse = await got(process.env.POLICE_CAD_API_URL+'/api/v1/community/'+req.session.communityID+'/'+req.session.passport.user, {headers: {'Authorization': process.env.POLICE_CAD_API_TOKEN}});
       let dbCommunities = JSON.parse(commResponse.body);
-      const userResponse = await got('http://localhost:8081/api/v1/users/'+req.session.communityID, {headers: {'Authorization': process.env.POLICE_CAD_API_TOKEN}});
+      const userResponse = await got(process.env.POLICE_CAD_API_URL+'/api/v1/users/'+req.session.communityID, {headers: {'Authorization': process.env.POLICE_CAD_API_TOKEN}});
       let dbMembers = JSON.parse(userResponse.body);
       return res.render('communities', {
                 members: dbMembers,
