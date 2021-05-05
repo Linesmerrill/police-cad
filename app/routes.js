@@ -145,40 +145,46 @@ module.exports = function (app, passport, server) {
 
 
   app.get('/communities', auth, async function(req, res) {
+    let dbCommunities = {}
+    let dbMembers = {}
+    let commUrl = ""
+    let userUrl = ""
     try {
-      const commResponse = await got(process.env.POLICE_CAD_API_URL+'/api/v1/community/'+req.session.communityID+'/'+req.session.passport.user, {headers: {'Authorization': process.env.POLICE_CAD_API_TOKEN}});
-      let dbCommunities = JSON.parse(commResponse.body);
-      const userResponse = await got(process.env.POLICE_CAD_API_URL+'/api/v1/users/'+req.session.communityID, {headers: {'Authorization': process.env.POLICE_CAD_API_TOKEN}});
-      let dbMembers = JSON.parse(userResponse.body);
-      return res.render('communities', {
-                members: dbMembers,
-                communities: dbCommunities,
-                userID: req.session.passport.user,
-                user: req.user
-              });
+      commUrl = `${process.env.POLICE_CAD_API_URL}/api/v1/community/${req.session.communityID}/${req.session.passport.user}`
+      let commResponse = await got(commUrl, {headers: {'Authorization': process.env.POLICE_CAD_API_TOKEN}});
+      dbCommunities = JSON.parse(commResponse.body);
     } catch (error) {
-      console.warn("error loading /communities. error: ", error.body)
-      res.status(500)
-      return res.redirect('back')
+      console.warn(`route /communities returned the following warning, url: '${commUrl}', warning: ${error.body}`)
     }
+    try {
+      userUrl = `${process.env.POLICE_CAD_API_URL}/api/v1/users/${req.session.communityID}`
+      let userResponse = await got(userUrl, {headers: {'Authorization': process.env.POLICE_CAD_API_TOKEN}});
+      dbMembers = JSON.parse(userResponse.body);
+    } catch (error) {
+      console.warn(`route /communities returned the following warning, url: '${userUrl}', warning: ${error.body}`)
+    }
+    return res.render('communities', {
+      members: dbMembers,
+      communities: dbCommunities,
+      userID: req.session.passport.user,
+      user: req.user
+    });
   });
 
-  app.get('/owned-communities', auth, function (req, res) {
-    Community.find({
-      'community.ownerID': req.session.passport.user
-    }, function (err, dbCommunities) {
-      if (err) return console.error(err);
-      if (!exists(dbCommunities)) {
-        console.warn("cannot render empty dbCommunity, route: /owned-communities")
-        res.status(400)
-        return res.redirect('back')
-      }
-      return res.render('communities-owned', {
-        communities: dbCommunities,
-        userID: req.session.passport.user,
-        user: req.user
-      });
-    })
+  app.get('/owned-communities', auth, async function (req, res) {
+    let dbCommunities = {}
+    let url = `${process.env.POLICE_CAD_API_URL}/api/v1/communities/${req.session.passport.user}`
+    try {
+      let commOwnerResponse = await got(url, {headers: {'Authorization': process.env.POLICE_CAD_API_TOKEN}});
+      dbCommunities = JSON.parse(commOwnerResponse.body);
+    } catch (error) {
+      console.warn(`route /owned-communities returned the following warning, url '${url}', warning: ${error.body}`)
+    }
+    return res.render('communities-owned', {
+      communities: dbCommunities,
+      userID: req.session.passport.user,
+      user: req.user
+    });
   })
 
   app.get('/forgot-password', function (req, res) {
