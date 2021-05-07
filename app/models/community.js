@@ -1,4 +1,5 @@
 var mongoose = require('mongoose');
+var got = require('got');
 
 var communitySchema = mongoose.Schema({
   community: {
@@ -57,7 +58,58 @@ communitySchema.methods.createEmsCommunity = function (req, res) {
   res.redirect('/ems-dashboard');
 };
 
-module.exports = mongoose.model('Community', communitySchema);
+async function getCommunity(req, res) {
+  let dbCommunities = {}
+  let dbMembers = {}
+  let commUrl = ""
+  let userUrl = ""
+  try {
+    commUrl = `${process.env.POLICE_CAD_API_URL}/api/v1/community/${req.session.communityID}/${req.session.passport.user}`
+    let commResponse = await got(commUrl, {
+      headers: {
+        'Authorization': process.env.POLICE_CAD_API_TOKEN
+      }
+    });
+    dbCommunities = JSON.parse(commResponse.body);
+  } catch (error) {
+      console.error(`route /communities returned the following error, url: '${commUrl}', error: ${error}`)
+      return res.redirect('back')
+  }
+  try {
+    userUrl = `${process.env.POLICE_CAD_API_URL}/api/v1/users/${req.session.communityID}`
+    let userResponse = await got(userUrl, {
+      headers: {
+        'Authorization': process.env.POLICE_CAD_API_TOKEN
+      }
+    });
+    dbMembers = JSON.parse(userResponse.body);
+  } catch (error) {
+      console.error(`route /communities returned the following error, url: '${commUrl}', error: ${error}`)
+      return res.redirect('back')
+  }
+  return res.render('communities', {
+    members: dbMembers,
+    communities: dbCommunities,
+    userID: req.session.passport.user,
+    user: req.user
+  });
+}
+
+async function getOwnedCommunities(req, res) {
+  let dbCommunities = {}
+    let url = `${process.env.POLICE_CAD_API_URL}/api/v1/communities/${req.session.passport.user}`
+    try {
+      let commOwnerResponse = await got(url, {headers: {'Authorization': process.env.POLICE_CAD_API_TOKEN}});
+      dbCommunities = JSON.parse(commOwnerResponse.body);
+    } catch (error) {
+      console.warn(`route /owned-communities returned the following warning, url '${url}', warning: ${error.body}`)
+    }
+    return res.render('communities-owned', {
+      communities: dbCommunities,
+      userID: req.session.passport.user,
+      user: req.user
+    });
+}
 
 function exists(v) {
   if (v !== undefined) {
@@ -76,3 +128,7 @@ function makeID(length) {
   }
   return result;
 }
+
+module.exports = mongoose.model('Community', communitySchema);
+module.exports.getCommunity = getCommunity;
+module.exports.getOwnedCommunities = getOwnedCommunities;
