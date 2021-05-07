@@ -132,11 +132,13 @@
         </div>
     </div>
     <!--scripts loaded here -->
+    <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
     <script src="/static/js/jquery.easing.min.js"></script>
     <script src="/static/js/wow.js"></script>
     <script src="/static/js/scripts.js"></script>
+    <script>if (window.module) module = window.module;</script>
 </body>
 
 </html>
