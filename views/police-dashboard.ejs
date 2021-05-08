@@ -682,7 +682,7 @@
                                                                 class="btn btn-info margin-bottom-05"
                                                                 data-toggle="modal" href="#registeredFirearms"
                                                                 id="registeredFirearmButton-<%=i%>"
-                                                                onclick="getRegisteredFirearms('<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>', '<%=i%>')">
+                                                                onclick="getRegisteredFirearms('<%=civilians[i]._id%>', '<%=i%>')">
                                                                 Search Registered Firearms
                                                               </button>
                                                               <% } else {%>
@@ -2344,7 +2344,7 @@
     socket.emit('load_panic_statuses', myReq)
   }
 
-  function getRegisteredFirearms(registeredOwner, index) {
+  function getRegisteredFirearms(registeredOwnerID, index) {
     //remove any existing panel body on button click
     $('.reg-arm').remove();
     $(`#registered-firearms`).show()
@@ -2353,7 +2353,7 @@
     var socket=io();
 
     myReq={
-      regOwner: registeredOwner,
+      regOwnerID: registeredOwnerID,
       communityID: myUser.user.activeCommunity
     }
     socket.emit('get_reg_arm', myReq)

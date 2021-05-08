@@ -3190,24 +3190,15 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on('get_reg_arm', (req) => {
-      if (req.regOwner != null && req.regOwner != undefined) {
+      if (req.regOwnerID != null && req.regOwnerID != undefined) {
         if (req.communityID == '' || req.communityID == null) {
-          Firearm.find({
-            'firearm.registeredOwner': req.regOwner,
-            '$or': [{ // some are stored as empty strings and others as null so we need to check for both
-              'firearm.activeCommunityID': ''
-            }, {
-              'firearm.activeCommunityID': null
-            }]
-          }, function (err, dbFirearms) {
-            if (err) return console.error(err);
-            return socket.emit('load_reg_arm_result', dbFirearms)
-          });
+          // if they are not in a community, we don't allow them to use this functionality
         } else {
           Firearm.find({
-            'firearm.registeredOwner': req.regOwner,
+            'firearm.registeredOwnerID': req.regOwnerID,
             'firearm.activeCommunityID': req.communityID
           }, function (err, dbFirearms) {
+            // console.debug("returned from db, dbFirearms: ", dbFirearms)
             if (err) return console.error(err);
             return socket.emit('load_reg_arm_result', dbFirearms)
           });
