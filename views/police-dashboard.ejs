@@ -2366,8 +2366,9 @@
         )
         return
       }
+      // Using the class .reg-arm does not apply the capitalization so instead I added it as a style
       $('#registered-firearms').append(
-        `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`
+        `<div id="registered-firearms-panel-body-${index}" class="panel-body" style="text-transform: capitalize;">`
       )
       for (i=0; i<res.length; i++) {
 
