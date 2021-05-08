@@ -21,7 +21,9 @@ var crypto = require('crypto');
 var path = require('path');
 var fs = require('fs');
 var handlebars = require('handlebars');
-var { promisify } = require('util');
+var {
+  promisify
+} = require('util');
 var readFile = promisify(fs.readFile);
 
 module.exports = function (app, passport, server) {
@@ -1322,7 +1324,7 @@ module.exports = function (app, passport, server) {
       });
   })
 
-  app.get('/medical-reports',auth, function (req, res) {
+  app.get('/medical-reports', auth, function (req, res) {
     MedicalReport.find({
         'report.civilianID': req.query.civID,
       },
@@ -1332,7 +1334,7 @@ module.exports = function (app, passport, server) {
       });
   })
 
-  app.get('/medications',auth, function (req, res) {
+  app.get('/medications', auth, function (req, res) {
     Medication.find({
         'medication.civilianID': req.query.civID,
       },
@@ -1342,7 +1344,7 @@ module.exports = function (app, passport, server) {
       });
   })
 
-  app.get('/conditions',auth, function (req, res) {
+  app.get('/conditions', auth, function (req, res) {
     Condition.find({
         'condition.civilianID': req.query.civID,
       },
@@ -1352,7 +1354,7 @@ module.exports = function (app, passport, server) {
       });
   })
 
-  app.get('/medical-database',auth, function (req, res) {
+  app.get('/medical-database', auth, function (req, res) {
     // console.debug("medical database server: ", req.query)
 
     //b/c people like to just search empty values, we do a little sanitation and checking here
@@ -1633,27 +1635,27 @@ module.exports = function (app, passport, server) {
           })
         );
         fs.
-        readFile('resetPassword.html', 'utf8', function(err, htmlData){
+        readFile('resetPassword.html', 'utf8', function (err, htmlData) {
           if (err) {
             console.error("failed to read file: ", err)
             return res.redirect('back')
           }
           let template = handlebars.compile(htmlData);
-        let data = {
-          resetLink: process.env.SITE_PROTOCOL + req.headers.host + '/reset/' + token,
-          sentTo: users.user.email.toLowerCase()
-        }
-        let htmlToSend = template(data)
-        var mailOptions = {
-          to: users.user.email.toLowerCase(),
-          from: process.env.FROM_EMAIL,
-          subject: 'Lines Police CAD Reset Password',
-          html: htmlToSend
-        }
-        smtpTransport.sendMail(mailOptions, function (err) {
-          req.flash('emailSend', 'If this e-mail exists, then an email has been sent to ' + users.user.email.toLowerCase() + ' with a link to change the password.');
-          done(err, 'done');
-        });
+          let data = {
+            resetLink: process.env.SITE_PROTOCOL + req.headers.host + '/reset/' + token,
+            sentTo: users.user.email.toLowerCase()
+          }
+          let htmlToSend = template(data)
+          var mailOptions = {
+            to: users.user.email.toLowerCase(),
+            from: process.env.FROM_EMAIL,
+            subject: 'Lines Police CAD Reset Password',
+            html: htmlToSend
+          }
+          smtpTransport.sendMail(mailOptions, function (err) {
+            req.flash('emailSend', 'If this e-mail exists, then an email has been sent to ' + users.user.email.toLowerCase() + ' with a link to change the password.');
+            done(err, 'done');
+          });
         });
       }
     ], function (err) {
@@ -1697,29 +1699,29 @@ module.exports = function (app, passport, server) {
           })
         );
         fs.
-        readFile('passwordHasBeenReset.html', 'utf8', function(err, htmlData){
+        readFile('passwordHasBeenReset.html', 'utf8', function (err, htmlData) {
           if (err) {
             console.error("failed to read file: ", err)
             return res.redirect('back')
           }
           let template = handlebars.compile(htmlData);
-        let data = {
-          sentTo: users.user.email.toLowerCase()
-        }
-        let htmlToSend = template(data)
-        var mailOptions = {
-          to: users.user.email.toLowerCase(),
-          from: process.env.FROM_EMAIL,
-          subject: 'Lines Police CAD Password Has Been Reset',
-          html: htmlToSend
-        }
-        
-        smtpTransport.sendMail(mailOptions, function (err) {
-          req.flash('info', 'Success! Your password has been changed.');
-          done(err);
+          let data = {
+            sentTo: users.user.email.toLowerCase()
+          }
+          let htmlToSend = template(data)
+          var mailOptions = {
+            to: users.user.email.toLowerCase(),
+            from: process.env.FROM_EMAIL,
+            subject: 'Lines Police CAD Password Has Been Reset',
+            html: htmlToSend
+          }
+
+          smtpTransport.sendMail(mailOptions, function (err) {
+            req.flash('info', 'Success! Your password has been changed.');
+            done(err);
+          });
         });
-      });
-    }
+      }
     ], function (err) {
       return res.redirect('/');
     });
@@ -2629,6 +2631,23 @@ module.exports = function (app, passport, server) {
       if (!exists(req.body.registeredOwner)) {
         req.body.registeredOwner = 'N/A'
       }
+      // hacky af, goal here is to separate the person_id from the person name and dob.
+      // example: 5eeaebb7e23cba396869becb+Rodger Pike | DOB: 2001-01-01
+      // caveat here being that if the name includes a "+" then it will incorrectly split
+      // and probably cause problems. TODO: fix this edge case.
+      if (req.body.registeredOwner.includes("+")) {
+        let idPlusRegisteredOwner = req.body.registeredOwner.split("+")
+        if (idPlusRegisteredOwner.length == 2) {
+          req.body.registeredOwner = idPlusRegisteredOwner[1];
+          req.body.registeredOwnerID = idPlusRegisteredOwner[0];
+        } else {
+          console.error(`invalid split on 'req.body.registeredOwner': ${req.body.registeredOwner}. Does not contain an array of length 2. Split value: ${idPlusRegisteredOwner}`)
+        }
+      } else if (req.body.registeredOwner == 'N/A') {
+        // do nothing, this is acceptable
+      } else {
+        console.error(`error on req.body.registeredOwner: ${req.body.registeredOwner}. Does not contain a '+'.`)
+      }
       var isValid = isValidObjectIdLength(req.body.firearmID, "cannot lookup invalid length firearmID, route: /updateOrDeleteFirearm")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
@@ -2641,6 +2660,7 @@ module.exports = function (app, passport, server) {
           "firearm.serialNumber": req.body.serialNumber,
           "firearm.weaponType": req.body.weaponType,
           'firearm.registeredOwner': req.body.registeredOwner,
+          'firearm.registeredOwnerID': req.body.registeredOwnerID,
           'firearm.isStolen': req.body.isStolen,
           'firearm.updatedAt': new Date()
         }
@@ -3173,12 +3193,12 @@ module.exports = function (app, passport, server) {
       if (req.regOwner != null && req.regOwner != undefined) {
         if (req.communityID == '' || req.communityID == null) {
           Firearm.find({
-              'firearm.registeredOwner': req.regOwner,
-              '$or': [{ // some are stored as empty strings and others as null so we need to check for both
-                'firearm.activeCommunityID': ''
-              }, {
-                'firearm.activeCommunityID': null
-              }]
+            'firearm.registeredOwner': req.regOwner,
+            '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+              'firearm.activeCommunityID': ''
+            }, {
+              'firearm.activeCommunityID': null
+            }]
           }, function (err, dbFirearms) {
             if (err) return console.error(err);
             return socket.emit('load_reg_arm_result', dbFirearms)
