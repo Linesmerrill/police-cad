@@ -3169,6 +3169,32 @@ module.exports = function (app, passport, server) {
       }
     });
 
+    socket.on('get_reg_arm', (req) => {
+      if (req.regOwner != null && req.regOwner != undefined) {
+        if (req.communityID == '' || req.communityID == null) {
+          Firearm.find({
+              'firearm.registeredOwner': req.regOwner,
+              '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+                'firearm.activeCommunityID': ''
+              }, {
+                'firearm.activeCommunityID': null
+              }]
+          }, function (err, dbFirearms) {
+            if (err) return console.error(err);
+            return socket.emit('load_reg_arm_result', dbFirearms)
+          });
+        } else {
+          Firearm.find({
+            'firearm.registeredOwner': req.regOwner,
+            'firearm.activeCommunityID': req.communityID
+          }, function (err, dbFirearms) {
+            if (err) return console.error(err);
+            return socket.emit('load_reg_arm_result', dbFirearms)
+          });
+        }
+      }
+    });
+
     socket.on('get_reg_veh', (req) => {
       // console.debug("inside get_reg_veh socket: ", req)
       if (req.regOwner != null && req.regOwner != undefined && req.regOwnerID != null && req.regOwnerID != undefined) {
