@@ -2645,22 +2645,21 @@
         )
         return
       }
-      // Using the class .reg-arm does not apply the capitalization so instead I added it as a style
+      
       $('#registered-firearms').append(
         `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`
       )
       for (i=0; i<res.length; i++) {
-
         if (i!=0) { //if we are not on the first loop, add a divider between each record
           $('#registered-firearms-panel-body-'+index).append(
             '<hr>'
           )
         }
         // Check if firearm is stolen and append result
-        if (res[i].firearm.isStolen==2) {
+        if (res[i].firearm.isStolen=="true") {
           $('#registered-firearms-panel-body-'+index).append(
             `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
-            `<strong>Danger!</strong> Firearm reported as stolen.`+
+            `<strong>Danger!</strong> #${res[i].firearm.serialNumber} reported as stolen.`+
             `</div>`
           )
         }
