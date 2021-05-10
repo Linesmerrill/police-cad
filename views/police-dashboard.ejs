@@ -671,6 +671,31 @@
                                                       </div>
                                                       <hr style="width: 88%;max-width: 100rem;">
 
+                                                      <h5>
+                                                            <ion-icon name="browsers-outline"></ion-icon> Registered
+                                                            Firearms
+                                                          </h5>
+                                                          <div class="text-center">
+                                                            <% if (user.user.activeCommunity !='' &&
+                                                              user.user.activeCommunity !=null) {%>
+                                                              <button type="button"
+                                                                class="btn btn-info margin-bottom-05"
+                                                                data-toggle="modal" href="#registeredFirearms"
+                                                                id="registeredFirearmButton-<%=i%>"
+                                                                onclick="getRegisteredFirearms('<%=civilians[i]._id%>', '<%=i%>')">
+                                                                Search Registered Firearms
+                                                              </button>
+                                                              <% } else {%>
+                                                                <button type="button" data-toggle="modal"
+                                                                  href="#nonCommunityBoloModal"
+                                                                  class="btn btn-info margin-bottom-05 mock-disabled"
+                                                                  style="cursor: not-allowed;"> Search Registered
+                                                                  Firearms
+                                                                </button>
+                                                                <% } %>
+                                                          </div>
+                                                        <hr style="width: 88%;max-width: 100rem;">
+
                                                       Occupation: <%= civilians[i].civilian.occupation%><br />
 
                                                         <hr style="width: 88%;max-width: 100rem;">
@@ -1721,6 +1746,24 @@
     </div>
   </div>
 
+  <div id="registeredFirearms" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="modal-body">
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+            <h2 class="text-center">Registered Firearms</h2>
+            <div class="form-group">
+              <div id="registered-firearms">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="registeredVehicles" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -2299,6 +2342,54 @@
       activeCommunity: myUser.user.activeCommunity
     }
     socket.emit('load_panic_statuses', myReq)
+  }
+
+  function getRegisteredFirearms(registeredOwnerID, index) {
+    //remove any existing panel body on button click
+    $('.reg-arm').remove();
+    $(`#registered-firearms`).show()
+
+    var myUser = <%-JSON.stringify(user)%>;
+    var socket=io();
+
+    myReq={
+      regOwnerID: registeredOwnerID,
+      communityID: myUser.user.activeCommunity
+    }
+    socket.emit('get_reg_arm', myReq)
+    socket.on('load_reg_arm_result', res => {
+      
+      if (res.length==0) {
+        $('#registered-firearms').append(
+          `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`+
+          `<h5 style="text-align: center;">No Registered Firearms</h5>`+
+          `</div>`
+        )
+        return
+      }
+      $('#registered-firearms').append(
+        `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`
+      )
+      for (i=0; i<res.length; i++) {
+        if (i!=0) { //if we are not on the first loop, add a divider between each record
+          $('#registered-firearms-panel-body-'+index).append(
+            '<hr>'
+          )
+        }
+        // Check if firearm is stolen and append result
+        if (res[i].firearm.isStolen=="true") {
+          $('#registered-firearms-panel-body-'+index).append(
+            `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
+            `<strong>Danger!</strong> #${res[i].firearm.serialNumber} reported as stolen.`+
+            `</div>`
+          )
+        }
+        $('#registered-firearms-panel-body-'+index).append(
+          `Serial #: ${res[i].firearm.serialNumber}<br/>`+
+          `Weapon Type: ${res[i].firearm.weaponType}<br/>`
+        )
+      }
+    });
   }
 
   function getRegisteredCars(registeredOwner, index, registeredOwnerID) {
