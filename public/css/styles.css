@@ -1593,3 +1593,7 @@ a[data-toggle="collapse"].collapsed .rotate {
     font-weight: 700;
     text-transform: uppercase;
 }
+
+.reg-arm {
+    text-transform: capitalize;
+}
