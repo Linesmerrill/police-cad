@@ -96,7 +96,7 @@
               <a data-toggle="modal" href="#call911Modal" onclick="clearCall911ModalForm()"><span
                   class="fas fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
               <% } else {%>
-                <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span
+                <a data-toggle="modal" href="#nonCommunityModal" class="mock-disabled"><span
                     class="fas fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
                 <% } %>
           </li>
@@ -1518,21 +1518,29 @@
     </div>
   </div>
 
-  <div id="notificationModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div id="nonCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-body text-center">
-            <fieldset>
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-            <h3>No Notifications :) </h3>
-            <h1 class="margin-top-2">🚀</h1>
-            </fieldset>
+        <div class="modal-body">
+          <div class="modal-body">
+            <h2 class="text-center">I'm sorry! 😥</h2>
+            <p class="text-center">Looks like you are not in a community yet, so this feature is not enabled.
+            </p>
+            <p>To join or
+              create a community for free, click on the communities button in the Left Menu.</p>
+            <p>Or just click here: <a data-toggle="modal" href="#communitiesModal">Communities</a>
+            </p>
+            <br />
+            <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK <i
+                class="ion-android-close"></i></button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <% include account-management %>
+  <% include notification-modal %>
 
   <!--scripts loaded here -->
   <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
@@ -1682,7 +1690,19 @@ $("#lastName").keydown(function(event) {
       $('#lastName').popover('hide')
     }
 });
-});
+
+//check for notification cookie
+const cookieValue = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('notification-symbol='))
+      .split('=')[1];
+
+    if (cookieValue == 'v0.17.0') {
+      $('#notification-symbol').removeClass('notif')
+      $('#notification-count').text('')
+    }
+
+}); /* End of document.ready */
 
 // add in a delete function as it is not supported as of jQuery {whatever-version-we-have}
 $.delete = function(url, data, callback, type){
@@ -2148,5 +2168,11 @@ $.delete = function(url, data, callback, type){
   function toggleInput(showClass, hideClass) {
     $(`.${showClass}`).removeClass('hide').addClass('show')
     $(`.${hideClass}`).removeClass('show').addClass('hide')
+  }
+
+  function markAsRead() {
+    document.cookie ="notification-symbol=v0.17.0";
+    $('#notification-symbol').removeClass('notif');
+    $('#notification-count').text('');
   }
 </script>
