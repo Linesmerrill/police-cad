@@ -91,7 +91,7 @@
               class="fas fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleUtilities">
-          <li>
+          <!-- <li>
             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
               <a data-toggle="modal" href="#call911Modal" onclick="clearCall911ModalForm()"><span
                   class="fas fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
@@ -99,7 +99,7 @@
                 <a data-toggle="modal" href="#nonCommunityModal" class="mock-disabled"><span
                     class="fas fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
                 <% } %>
-          </li>
+          </li> -->
           <li>
             <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
                 class="fas fa-external-link-alt"></i></a>
@@ -145,25 +145,8 @@
         </div>
       </nav>
       
-      <header id="second" style='background-image: url("/static/images/civ-bkground.jpg");'>
-    
-        <div class="header-content margin-top-2">
-    
-          <div class="inner">
-            <h1 class="cursive"><a href="/civ-dashboard">San Andreas - Civilian Operations</a></h1>
-            
-            <!-- imports the community specific alerts -->
-            <% include community-alerts %>
-            
-            <div class="col-lg-10 col-lg-offset-1 text-center">
-              <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-lg margin-top-2">Add New Civilian</button>
-              <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-lg margin-top-2" onclick="generateSerialNumber(17, 'vin')">Add New Vehicle</button>
-              <button data-toggle="modal" href="#newFirearmModal"  class="btn btn-primary btn-lg margin-top-2" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button>
-              <a href="/map-interactive" class="btn btn-primary btn-lg margin-top-2">Map <i class="fas fa-external-link-alt"></i></a>
-            </div>
-          </div>
-        </div>
-      </header>
+      <!-- imports the community specific alerts -->
+      <% include community-alerts %>
       <section style='background-image: url("/static/images/blue-clouds.jpg");'>
         <div class="container">
           <!--Table for Personas  -->
