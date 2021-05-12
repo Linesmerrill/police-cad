@@ -2592,7 +2592,7 @@
       .find(row => row.startsWith('notification-symbol='))
       .split('=')[1];
 
-    if (cookieValue == 'v0.16.0') {
+    if (cookieValue == 'v0.17.0') {
       $('#notification-symbol').removeClass('notif')
       $('#notification-count').text('')
     }
@@ -3590,7 +3590,7 @@
   }
 
   function markAsRead() {
-    document.cookie ="notification-symbol=v0.16.0";
+    document.cookie ="notification-symbol=v0.17.0";
     $('#notification-symbol').removeClass('notif');
     $('#notification-count').text('');
   }
