@@ -54,7 +54,7 @@
     <nav id="sidebar" style="z-index: 9;">
       <div class="img bg-wrap text-center py-4" style="background-image: url(/static/images/civ-corner-bg1.png);">
         <div class="user-logo">
-          <div class="img" style="background-image: url(/static/images/civ-unknown-user.png);"></div>
+          <div id="gravatar-img" class="img profile-image"></div>
           <h3>
             <%=user.user.username%>
           </h3>
@@ -1611,7 +1611,9 @@
     });
   })
 
-
+  //set gravatar image
+  var myAvatar = <%- JSON.stringify(avatar) %>;
+  $('#gravatar-img').css("background-image", `url(${myAvatar})`)
 
   // check for license-notification 
   if (document.cookie.split(';').some((item) => item.includes('license_notice=hidden'))) {

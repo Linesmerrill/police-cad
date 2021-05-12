@@ -21,6 +21,7 @@ var crypto = require('crypto');
 var path = require('path');
 var fs = require('fs');
 var handlebars = require('handlebars');
+var gravatar = require('gravatar');
 var {
   promisify
 } = require('util');
@@ -278,7 +279,8 @@ module.exports = function (app, passport, server) {
                 vehicles: dbVehicles,
                 firearms: dbFirearms,
                 communities: dbCommunities,
-                context: context
+                context: context,
+                avatar: gravatar.url(req.user.user.email ,  {s: '100', r: 'x', d: 'retro'}, true)
               });
             });
           });
@@ -315,7 +317,8 @@ module.exports = function (app, passport, server) {
                 vehicles: dbVehicles,
                 firearms: dbFirearms,
                 communities: dbCommunities,
-                context: context
+                context: context,
+                avatar: gravatar.url(req.user.user.email ,  {s: '100', r: 'x', d: 'retro'}, true)
               });
             });
           });
