@@ -110,7 +110,7 @@
         </li>
         <li>
           <a data-toggle="modal" href="#notificationModal" onclick="markAsRead()"><span id="notification-symbol" class="fa fa-bell mr-3 notif"><small
-                class="d-flex align-items-center justify-content-center" id="notification-count">1</small></span> Notifications</a>
+                class="d-flex align-items-center justify-content-center" id="notification-count"></small></span> Notifications</a>
         </li>
         <li>
           <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"><span
@@ -1674,15 +1674,38 @@ $("#lastName").keydown(function(event) {
     }
 });
 
-//check for notification cookie
-const cookieValue = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('notification-symbol='))
-      .split('=')[1];
+//CURRENT_VERSION
+    //the current version in production
+    let CURRENT_VERSION = "v2.18.0"
+    let MINOR_VERSION = CURRENT_VERSION.split(".")[1]
 
-    if (cookieValue == 'v0.17.0') {
+    //check for notification cookie
+    let cookieVersion = undefined
+    let cookieValueSplit = document.cookie.split('; ')
+    if (cookieValueSplit.length > 0) {
+      let cookieValueNotifSymbol = cookieValueSplit.find(row => row.startsWith('notification-symbol='))
+      if (cookieValueNotifSymbol != undefined) {
+        let cookieVersionSplit = cookieValueNotifSymbol.split('=');
+        if (cookieVersionSplit.length > 1) {
+          cookieVersion = cookieVersionSplit[1];
+        }
+      }
+    }
+
+    // if we cannot find the cookie, then we will set it to be 1
+    if (cookieVersion === undefined) {
+      $('#notification-count').text(1)
+    } else if (cookieVersion == CURRENT_VERSION) {
+      // else if cookie version is equal to current version, then we dont set anything :mark-all-as-read:
       $('#notification-symbol').removeClass('notif')
       $('#notification-count').text('')
+    } else {
+      // else if we can find the cookie, then we will subtract whatever the cookie value is from the current version
+      let specificVersionSplit = cookieVersion.split(".")
+      if (specificVersionSplit.length == 3) {
+        let versionDifference = parseInt(MINOR_VERSION) - parseInt(specificVersionSplit[1])
+        $('#notification-count').text(versionDifference)
+      }
     }
 
 }); /* End of document.ready */
@@ -2154,7 +2177,7 @@ $.delete = function(url, data, callback, type){
   }
 
   function markAsRead() {
-    document.cookie ="notification-symbol=v0.17.0";
+    document.cookie ="notification-symbol=v2.18.0";
     $('#notification-symbol').removeClass('notif');
     $('#notification-count').text('');
   }
