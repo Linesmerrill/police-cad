@@ -160,10 +160,10 @@
                 </label>
                  <ion-icon id="app-icon-personas" name="apps-outline" class="color-white table-icon" onclick="showApps()"></ion-icon> <ion-icon id="list-icon-personas" name="list-outline" class="color-white table-icon" onclick="showList()"></ion-icon>
               </div>
-              <div id="personas-thumbnail" class="row" style="margin-top: 0.5em;">
+              <div id="personas-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
                 <% for(var i=0; i<personas.length; i++) {%>
-                <div class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails">
-                  <div class="thumbnail thumbnail-box" data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
+                <div class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+                  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
                     <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                     <div class="caption">
                       <h4 class="color-white"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></h4>
@@ -204,10 +204,10 @@
         </label>
         <ion-icon id="app-icon-vehicles" name="apps-outline" class="color-white table-icon" onclick="showVehicleApps()"></ion-icon> <ion-icon id="list-icon-vehicles" name="list-outline" class="color-white table-icon" onclick="showVehicleList()"></ion-icon>
       </div>
-      <div id="vehicles-thumbnail" class="row" style="margin-top: 0.5em;">
+      <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
         <% for(var i=0; i<vehicles.length; i++) {%>
-        <div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails">
-          <div class="thumbnail thumbnail-box" data-toggle="modal" data-id='<%=i%>' data-target="#viewVeh" onclick="loadVehData('<%=i%>')">
+        <div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+          <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id='<%=i%>' data-target="#viewVeh" onclick="loadVehData('<%=i%>')">
             <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
             <div class="caption">
               <h4 class="color-white license-plate">#<%= vehicles[i].vehicle.plate%>)</h4>
@@ -246,10 +246,10 @@
         </label>
         <ion-icon id="app-icon-firearms" name="apps-outline" class="color-white table-icon" onclick="showFirearmsApps()"></ion-icon> <ion-icon id="list-icon-firearms" name="list-outline" class="color-white table-icon" onclick="showFirearmsList()"></ion-icon>
       </div>
-      <div id="firearms-thumbnail" class="row" style="margin-top: 0.5em;">
+      <div id="firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
         <% for(var i=0; i<firearms.length; i++) {%>
-        <div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails">
-          <div class="thumbnail thumbnail-box" data-toggle="modal" data-id='<%=i%>' data-target="#viewFirearm" onclick="loadFirearmData('<%=i%>')">
+        <div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
+          <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id='<%=i%>' data-target="#viewFirearm" onclick="loadFirearmData('<%=i%>')">
             <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
             <div class="caption">
               <h4 class="color-white" style="font-family: dealerplatecalifornia;"><%= firearms[i].firearm.serialNumber%></h4>
