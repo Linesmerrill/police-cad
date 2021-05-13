@@ -2310,12 +2310,24 @@
     });
 
     //check for notification cookie
-    const cookieValue = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('notification-symbol='))
-      .split('=')[1];
+    let cookieVersion = undefined
+    let cookieValueSplit = document.cookie.split('; ')
+    if (cookieValueSplit.length > 0) {
+      let cookieValueNotifSymbol = cookieValueSplit.find(row => row.startsWith('notification-symbol='))
+      if (cookieValueNotifSymbol != undefined) {
+        let cookieVersionSplit = cookieVersion.split('=');
+        if (cookieVersionSplit.length > 1) {
+          cookieVersion = cookieVersionSplit[1];
+        }
+      }
+    }
+    // if we cannot find the cookie, then we will 
+    if (cookieVersion === undefined) {
+      $('#notification-count').text(1)
+    } else {
 
-    if (cookieValue == 'v0.17.0') {
+    }
+    if (cookieVersion == 'v0.17.0') {
       $('#notification-symbol').removeClass('notif')
       $('#notification-count').text('')
     }
