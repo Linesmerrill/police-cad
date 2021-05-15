@@ -1,110 +1,142 @@
 <div id="accountModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <!-- Modal Name -->
-          <div id="successfully-updated-alert" class="alert alert-success alert-dismissible hide" role="alert">
-            Successfully updated!
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-          
-          
-          <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
-            <li class="nav-item active">
-              <a class="nav-link active" id="pills-account-tab" data-toggle="pill" href="#pills-account" role="tab" aria-controls="pills-account" aria-selected="true">Manage Account</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" id="pills-settings-tab" data-toggle="pill" href="#pills-settings" role="tab" aria-controls="pills-settings" aria-selected="false">Settings</a>
-            </li>
-          </ul>
-          <hr style="width: 88%;max-width: 100rem;">
-          <div class="tab-content" id="pills-tabContent">
-            <div class="tab-pane fade active in" id="pills-account" role="tabpanel" aria-labelledby="pills-account-tab">
-              <form class="form-horizontal" action="/manageAccount" method="post">
-                <fieldset>
-    
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <!-- Modal Name -->
+        <div id="successfully-updated-alert" class="alert alert-success alert-dismissible hide" role="alert">
+          Successfully updated!
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+          aria-hidden="true">X</button>
+
+
+        <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
+          <li class="nav-item active">
+            <a class="nav-link active" id="pills-account-tab" data-toggle="pill" href="#pills-account" role="tab"
+              aria-controls="pills-account" aria-selected="true">Manage Account</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="pills-settings-tab" data-toggle="pill" href="#pills-settings" role="tab"
+              aria-controls="pills-settings" aria-selected="false">Settings</a>
+          </li>
+        </ul>
+        <hr style="width: 88%;max-width: 100rem;">
+        <div class="tab-content" id="pills-tabContent">
+          <div class="tab-pane fade active in" id="pills-account" role="tabpanel" aria-labelledby="pills-account-tab">
+            <form class="form-horizontal" action="/manageAccount" method="post">
+              <fieldset>
+
                 <!-- Form Name -->
                 <h5>Profile</h5>
-                    <div class="text-align-center">
-                        <ion-icon class="default-person-icon" name="person-circle-outline"></ion-icon>
-                    </div>
-    
+                <div class="img bg-wrap text-center py-4" style="background: transparent;">
+                  <div class="user-logo">
+                    <div class="img profile-picture"
+                      style="background-image: url(/static/images/civ-unknown-user.png);"></div>
+                  </div>
+                </div>
+
+                <!-- Text input-->
+                <div class="form-group">
+                  <label class="col-md-4 control-label" for="profileImage">Profile Image:</label>
+                  <div class="col-md-6" style="margin-top: 7px;">
+                    <a href="https://en.gravatar.com/" target="_blank">Update <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
+                  </div>
+                </div>
+
                 <!-- Text input-->
                 <div class="form-group">
                   <label class="col-md-4 control-label" for="accountEmail">Email:</label>
                   <div class="col-md-6">
-                  <input id="accountEmail" name="accountEmail" type="email" class="form-control input-md" readonly="readonly">
+                    <input id="accountEmail" name="accountEmail" type="email" class="form-control input-md"
+                      readonly="readonly">
                   </div>
                 </div>
-    
+
                 <!-- Update Username input-->
                 <div class="form-group">
-                  <label class="col-md-4 control-label" for="accountUsername">Username:<br><small>Max 20 characters</small></label>
+                  <label class="col-md-4 control-label" for="accountUsername">Username:<br><small>Max 20
+                      characters</small></label>
                   <div class="col-md-6">
-                  <input id="accountUsername" name="accountUsername" type="text" class="form-control input-md" maxlength="20" autocomplete="off" required>
-                  <div id="updateUsernameBtns" class="margin-top-1" style="display: none">
-                    <input type="hidden" name="userID" value="<%= user._id %>">
-                    <input type="hidden" name="page" value="/civ-dashboard">
-                    <button id="updateUsername" value="updateUsername" name="action" class="btn btn-info">Update Username</button> <button type="button" class="btn btn-primary" onclick="cancelUsername()">Cancel</button>
-                  </div>
+                    <input id="accountUsername" name="accountUsername" type="text" class="form-control input-md"
+                      maxlength="20" autocomplete="off" required>
+                    <div id="updateUsernameBtns" class="margin-top-1" style="display: none">
+                      <input type="hidden" name="userID" value="<%= user._id %>">
+                      <input type="hidden" name="page" value="/civ-dashboard">
+                      <button id="updateUsername" value="updateUsername" name="action" class="btn btn-info">Update
+                        Username</button> <button type="button" class="btn btn-primary"
+                        onclick="cancelUsername()">Cancel</button>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Update Call Sign input-->
                 <div class="form-group">
-                  <label class="col-md-4 control-label" for="accountCallSign">Call Sign:<br><small>Max 10 characters</small></label>
+                  <label class="col-md-4 control-label" for="accountCallSign">Call Sign:<br><small>Max 10
+                      characters</small></label>
                   <div class="col-md-6">
-                  <input id="accountCallSign" name="accountCallSign" type="text" class="form-control input-md" maxlength="10" autocomplete="off" required>
-                  <div id="updateCallSignBtns" class="margin-top-1" style="display: none">
-                    <input type="hidden" name="page" value="/civ-dashboard">
-                    <button id="updateCallSign" value="updateCallSign" name="action" class="btn btn-info">Update Call Sign</button> <button type="button" class="btn btn-primary" onclick="cancelCallSign()">Cancel</button>
-                  </div>
+                    <input id="accountCallSign" name="accountCallSign" type="text" class="form-control input-md"
+                      maxlength="10" autocomplete="off" required>
+                    <div id="updateCallSignBtns" class="margin-top-1" style="display: none">
+                      <input type="hidden" name="page" value="/civ-dashboard">
+                      <button id="updateCallSign" value="updateCallSign" name="action" class="btn btn-info">Update Call
+                        Sign</button> <button type="button" class="btn btn-primary"
+                        onclick="cancelCallSign()">Cancel</button>
+                    </div>
                   </div>
                 </div>
-    
+
                 <hr style="width: 88%;max-width: 100rem;">
-    
-                <h5><ion-icon name="lock-closed-outline"></ion-icon> Password</h5>
-    
+
+                <h5>
+                  <ion-icon name="lock-closed-outline"></ion-icon> Password
+                </h5>
+
                 <!-- Button -->
                 <div class="form-group text-align-center">
                   <div class="col-md-12">
-                    <button id="updatePassword" type="button" class="btn btn-primary" onclick="document.location.href='forgot-password'">Update Password</button>
+                    <button id="updatePassword" type="button" class="btn btn-primary"
+                      onclick="document.location.href='forgot-password'">Update Password</button>
                   </div>
                 </div>
-    
+
                 <hr style="width: 88%;max-width: 100rem;">
-    
-                <h5><ion-icon name="log-out-outline"></ion-icon> Sign out</h5>
-    
+
+                <h5>
+                  <ion-icon name="log-out-outline"></ion-icon> Sign out
+                </h5>
+
                 <!-- Button -->
                 <div class="form-group text-align-center">
                   <div class="col-md-12">
-                    <button id="sign-out" type="button" class="btn btn-primary" onclick="document.location.href='logout'">Sign out</button>
+                    <button id="sign-out" type="button" class="btn btn-primary"
+                      onclick="document.location.href='logout'">Sign out</button>
                   </div>
                 </div>
-    
+
                 <hr style="width: 88%;max-width: 100rem;">
-    
-              <h5 class="color-red"> <ion-icon name="trash-outline"></ion-icon> Close Account</h5>
-    
-              <h6><strong>Warning:</strong> Deleting your account is irreversible.</h6>
-              <!-- Button -->
-              <div class="form-group text-align-center">
-                <div class="col-md-12">
-                  <button data-toggle="modal" type="button" href="#deleteAccountConfirmModal" class="btn btn-danger">Delete account</button>
+
+                <h5 class="color-red">
+                  <ion-icon name="trash-outline"></ion-icon> Close Account
+                </h5>
+
+                <h6><strong>Warning:</strong> Deleting your account is irreversible.</h6>
+                <!-- Button -->
+                <div class="form-group text-align-center">
+                  <div class="col-md-12">
+                    <button data-toggle="modal" type="button" href="#deleteAccountConfirmModal"
+                      class="btn btn-danger">Delete account</button>
+                  </div>
                 </div>
-              </div>
-                </fieldset>
-              </form>
-            </div>
-            <div class="tab-pane fade" id="pills-settings" role="tabpanel" aria-labelledby="pills-settings-tab">
-              <form class="form-horizontal" action="/updateSettings" method="post">
-                <fieldset>
-    
+              </fieldset>
+            </form>
+          </div>
+          <div class="tab-pane fade" id="pills-settings" role="tabpanel" aria-labelledby="pills-settings-tab">
+            <form class="form-horizontal" action="/updateSettings" method="post">
+              <fieldset>
+
                 <!-- Form Name -->
                 <h5>Panic Button</h5>
 
@@ -112,31 +144,33 @@
                 <div class="form-group">
                   <label class="col-md-4 control-label" for="enableSound">Enable Sound:</label>
                   <div class="col-md-1">
-                    <input id="panic-button-check-sound" type="checkbox" name="enableSound" class="form-control" onclick="togglePanicBtnSound()">
+                    <input id="panic-button-check-sound" type="checkbox" name="enableSound" class="form-control"
+                      onclick="togglePanicBtnSound()">
                   </div>
                 </div>
-                </fieldset>
-              </form>
-            </div>
+              </fieldset>
+            </form>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <div id="deleteAccountConfirmModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form class="form-horizontal" action="/deleteAccount" method="post">
-            <fieldset>
+<div id="deleteAccountConfirmModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <form class="form-horizontal" action="/deleteAccount" method="post">
+          <fieldset>
 
             <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
             <h4>Delete Account</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
-            <p>Warning: Once your account is deleted all created communities, civilians, vehicles, and citations 
+            <p>Warning: Once your account is deleted all created communities, civilians, vehicles, and citations
               from this account will be deleted. This is non-reversible.
             </p>
             <p>Are you sure you want to delete your account?</p>
@@ -146,12 +180,13 @@
               <label class="col-md-4 control-label" for="deleteAccount"></label>
               <div class="col-md-4 text-align-center">
                 <input type="hidden" name="page" value="/civ-dashboard">
-                <button id="deleteAccount" value="<%= user._id %>" name="userID"  class="btn btn-danger">Delete account</button>
+                <button id="deleteAccount" value="<%= user._id %>" name="userID" class="btn btn-danger">Delete
+                  account</button>
               </div>
             </div>
-            </fieldset>
-          </form>
-        </div>
+          </fieldset>
+        </form>
       </div>
     </div>
   </div>
+</div>
