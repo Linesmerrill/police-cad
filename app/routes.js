@@ -532,14 +532,16 @@ module.exports = function (app, passport, server) {
         res.status(400)
         return res.redirect('/dispatch-dashboard')
       }
+      let firstName = req.query.firstName.trim().toLowerCase();
+      let lastName = req.query.lastName.trim().toLowerCase();
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         if (req.query.dateOfBirth == undefined) {
           res.status(400)
           return res.redirect('/dispatch-dashboard')
         }
+        
         Civilian.find({
-          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          '$text': {'$search': `"${firstName}" "${lastName}"`},
           'civilian.birthday': req.query.dateOfBirth,
           '$or': [{ // some are stored as empty strings and others as null so we need to check for both
             'civilian.activeCommunityID': ''
@@ -625,8 +627,7 @@ module.exports = function (app, passport, server) {
         });
       } else {
         Civilian.find({
-          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          '$text': {'$search': `"${firstName}" "${lastName}"`},
           'civilian.activeCommunityID': req.query.activeCommunityID
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
@@ -710,14 +711,15 @@ module.exports = function (app, passport, server) {
         res.status(400)
         return res.redirect('/police-dashboard')
       }
+      let firstName = req.query.firstName.trim().toLowerCase();
+      let lastName = req.query.lastName.trim().toLowerCase();
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         if (req.query.dateOfBirth == undefined) {
           res.status(400)
           return res.redirect('/police-dashboard')
         }
         Civilian.find({
-          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          '$text': {'$search': `"${firstName}" "${lastName}"`},
           'civilian.birthday': req.query.dateOfBirth,
           '$or': [{ // some are stored as empty strings and others as null so we need to check for both
             'civilian.activeCommunityID': ''
@@ -780,8 +782,7 @@ module.exports = function (app, passport, server) {
         });
       } else {
         Civilian.find({
-          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          '$text': {'$search': `"${firstName}" "${lastName}"`},
           'civilian.activeCommunityID': req.query.activeCommunityID
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
