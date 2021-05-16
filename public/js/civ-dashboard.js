@@ -617,5 +617,7 @@ $('#create-civ-form').submit(function (e) {
       $(this).add();
     })
   })
+  //reset the form after form submit
+  $('#create-civ-form').trigger("reset"); 
   return true;
 })
