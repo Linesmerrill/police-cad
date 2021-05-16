@@ -1556,45 +1556,6 @@
 
 </html>
 
-<script>
-  $(function () {
-    var socket=io();
-
-    //socket that receives a response after creating a new civilian
-    socket.on('created_new_civ', (res) => {
-      //populate civilian cards on the dashboard
-      $('#personas-thumbnail').append(
-        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-                  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
-                    <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
-                    <div class="caption">
-                      <h4 class="color-white">${res.civilian.firstName} ${res.civilian.lastName}</h4>
-                      <h5 class="color-white">${res.civilian.birthday}</h5>
-                    </div>
-                  </div>
-                </div>`
-      )
-
-      //populate the civilian person table
-      var containsEmptyRow=$('#personas-table tr>td').hasClass('dataTables_empty');
-        if (containsEmptyRow) {
-          $('#personas-table tbody>tr:first').fadeOut(1, function () {
-            $(this).remove();
-          })
-        }
-        $('#personas-table tr:last').after(
-          `<tr data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
-              <td>${res.civilian.firstName} ${res.civilian.lastName}</td>
-              <td>${res.civilian.birthday}</td>
-            </tr>`).fadeTo(1, function () {
-            $(this).add();
-          })
-    })
-
-
-  }) /* end of sockets */
-</script>
-
 <script type="text/javascript">
   $(document).ready(function(){
     
@@ -2511,6 +2472,37 @@ $.delete = function(url, data, callback, type){
       }
         socket.emit('create_new_civ', myReq)
       }
+
+      //socket that receives a response after creating a new civilian
+    socket.on('created_new_civ', (res) => {
+      //populate civilian cards on the dashboard
+      $('#personas-thumbnail').append(
+        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+                  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
+                    <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+                    <div class="caption">
+                      <h4 class="color-white">${res.civilian.firstName} ${res.civilian.lastName}</h4>
+                      <h5 class="color-white">${res.civilian.birthday}</h5>
+                    </div>
+                  </div>
+                </div>`
+      )
+
+      //populate the civilian person table
+      var containsEmptyRow=$('#personas-table tr>td').hasClass('dataTables_empty');
+        if (containsEmptyRow) {
+          $('#personas-table tbody>tr:first').fadeOut(1, function () {
+            $(this).remove();
+          })
+        }
+        $('#personas-table tr:last').after(
+          `<tr data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
+              <td>${res.civilian.firstName} ${res.civilian.lastName}</td>
+              <td>${res.civilian.birthday}</td>
+            </tr>`).fadeTo(1, function () {
+            $(this).add();
+          })
+    })
       return true;
     })
     

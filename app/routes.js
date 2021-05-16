@@ -3149,7 +3149,7 @@ module.exports = function (app, passport, server) {
 
     socket.on('clear_call', (req) => {
       // console.debug('clear call socket: ', req)
-      return socket.broadcast.emit('cleared_call', req)
+      return socket.broadcast.emit('cleared_call', req) //send to all listeners except the sender (ref https://stackoverflow.com/a/38026094/9392066)
     })
 
     socket.on('update_panic_btn_sound', (user) => {
@@ -3247,7 +3247,7 @@ module.exports = function (app, passport, server) {
       myNewCiv.socketCreateCiv(req)
       myNewCiv.save(function (err, dbCivilians) {
         if (err) return console.error(err);
-        return socket.broadcast.emit('created_new_civ', dbCivilians)
+        return socket.emit('created_new_civ', dbCivilians)
       });
     })
 
@@ -3258,7 +3258,7 @@ module.exports = function (app, passport, server) {
           '_id': ObjectId(req.civID)
         }, function (err, dbCiv) {
           if (err) return console.error(err);
-          return socket.emit('load_civ_by_id_result', dbCiv)
+          return socket.emit('load_civ_by_id_result', dbCiv) //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
         })
       }
     });
