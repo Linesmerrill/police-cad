@@ -3241,6 +3241,28 @@ module.exports = function (app, passport, server) {
       }
     });
 
+    socket.on('create_new_civ', (req) => {
+      // console.debug('create new civ socket: ', req)
+      var myNewCiv = new Civilian()
+      myNewCiv.socketCreateCiv(req)
+      myNewCiv.save(function (err, dbCivilians) {
+        if (err) return console.error(err);
+        return socket.broadcast.emit('created_new_civ', dbCivilians)
+      });
+    })
+
+    socket.on('lookup_civ_by_id', (req) => {
+      // console.debug('lookup civ socket: ', req)
+      if (exists(req.civID)) {
+        Civilian.findById({
+          '_id': ObjectId(req.civID)
+        }, function (err, dbCiv) {
+          if (err) return console.error(err);
+          return socket.emit('load_civ_by_id_result', dbCiv)
+        })
+      }
+    });
+
   }); //end of sockets
 
 }; //end of routes
