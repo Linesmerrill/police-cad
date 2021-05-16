@@ -553,8 +553,7 @@
                                                               Citation</button>
                                                             <button data-toggle="modal" href="#warningModal"
                                                               class="btn btn-primary btn-md margin-bottom-05"
-                                                              onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue
-                                                              Warning</button>
+                                                              onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
                                                             <button data-toggle="modal" href="#arrestModal"
                                                               class="btn btn-primary btn-md margin-bottom-05"
                                                               onclick="OpenArrest('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
@@ -1364,6 +1363,7 @@
                 <label class="col-md-4 control-label" for="submitWarning"></label>
                 <div class="col-md-4">
                   <input type="hidden" name="route" value="dispatch-dashboard">
+                  <input id="warningCrimeList" type="hidden" name="crimeList" value="">
                   <button id="submitWarning" class="btn btn-primary" onclick="hideWarningCivPopover()">Submit</button>
                 </div>
               </div>
@@ -2562,12 +2562,6 @@
       }
     })
 
-    $('#ticket-select').change(function () {
-      if ($('#ticket-option-other').is(':selected')) {
-        $('#ticket-other-div').show();
-      }
-    })
-
     $('#warrant-select').change(function () {
       if ($('#warrant-other-option').is(':selected')) {
         $('#warrant-other-div').show();
@@ -2575,6 +2569,10 @@
     })
 
     $('#ticket-select').change(function (e) {
+      if ($('#ticket-option-other').is(':selected')) {
+        $('#ticket-other-div').show();
+      }
+
       var selected=$(e.target).val();
       let total=0
       selected.forEach(val => {
@@ -2586,6 +2584,10 @@
 
     $("#submitTicket").on('click', function () {
       $('#crimeList').val($("#ticket-select").find("option:selected").text())
+    });
+
+    $("#submitWarning").on('click', function () {
+      $('#warningCrimeList').val($("#warning-select").find("option:selected").text())
     });
 
     //CURRENT_VERSION

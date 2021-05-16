@@ -1278,6 +1278,7 @@
                 <label class="col-md-4 control-label" for="submitWarning"></label>
                 <div class="col-md-4">
                   <input type="hidden" name="route" value="police-dashboard">
+                  <input id="warningCrimeList" type="hidden" name="crimeList" value="">
                   <button id="submitWarning" class="btn btn-primary" onclick="hideWarningCivPopover()">Submit</button>
                 </div>
               </div>
@@ -2309,6 +2310,10 @@
 
     $("#submitTicket").on('click', function () {
       $('#crimeList').val($("#ticket-select").find("option:selected").text())
+    });
+
+    $("#submitWarning").on('click', function () {
+      $('#warningCrimeList').val($("#warning-select").find("option:selected").text())
     });
 
     //CURRENT_VERSION
