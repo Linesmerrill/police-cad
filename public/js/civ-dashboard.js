@@ -554,6 +554,7 @@ function loadDriversLicenseSocket(res) {
   from reloading the page on civ creation */
 $('#create-civ-form').submit(function (e) {
   e.preventDefault(); //prevents page from reloading
+  
   var socket = io();
   var myReq = {
     body: {
@@ -619,5 +620,6 @@ $('#create-civ-form').submit(function (e) {
   })
   //reset the form after form submit
   $('#create-civ-form').trigger("reset"); 
+  hideModal('newCivModal')
   return true;
 })
