@@ -21,6 +21,7 @@ var crypto = require('crypto');
 var path = require('path');
 var fs = require('fs');
 var handlebars = require('handlebars');
+var sanitize = require('mongo-sanitize');
 var {
   promisify
 } = require('util');
@@ -532,14 +533,13 @@ module.exports = function (app, passport, server) {
         res.status(400)
         return res.redirect('/dispatch-dashboard')
       }
-      let firstName = req.query.firstName.trim().toLowerCase();
-      let lastName = req.query.lastName.trim().toLowerCase();
+      let firstName = sanitize(req.query.firstName.trim().toLowerCase());
+      let lastName = sanitize(req.query.lastName.trim().toLowerCase());
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         if (req.query.dateOfBirth == undefined) {
           res.status(400)
           return res.redirect('/dispatch-dashboard')
         }
-        
         Civilian.find({
           '$text': {'$search': `"${firstName}" "${lastName}"`},
           'civilian.birthday': req.query.dateOfBirth,
@@ -711,8 +711,8 @@ module.exports = function (app, passport, server) {
         res.status(400)
         return res.redirect('/police-dashboard')
       }
-      let firstName = req.query.firstName.trim().toLowerCase();
-      let lastName = req.query.lastName.trim().toLowerCase();
+      let firstName = sanitize(req.query.firstName.trim().toLowerCase());
+      let lastName = sanitize(req.query.lastName.trim().toLowerCase());
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         if (req.query.dateOfBirth == undefined) {
           res.status(400)
