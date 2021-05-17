@@ -21,6 +21,7 @@ var crypto = require('crypto');
 var path = require('path');
 var fs = require('fs');
 var handlebars = require('handlebars');
+var sanitize = require('mongo-sanitize');
 var {
   promisify
 } = require('util');
@@ -532,14 +533,15 @@ module.exports = function (app, passport, server) {
         res.status(400)
         return res.redirect('/dispatch-dashboard')
       }
+      let firstName = sanitize(req.query.firstName.trim().toLowerCase());
+      let lastName = sanitize(req.query.lastName.trim().toLowerCase());
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         if (req.query.dateOfBirth == undefined) {
           res.status(400)
           return res.redirect('/dispatch-dashboard')
         }
         Civilian.find({
-          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          '$text': {'$search': `"${firstName}" "${lastName}"`},
           'civilian.birthday': req.query.dateOfBirth,
           '$or': [{ // some are stored as empty strings and others as null so we need to check for both
             'civilian.activeCommunityID': ''
@@ -625,8 +627,7 @@ module.exports = function (app, passport, server) {
         });
       } else {
         Civilian.find({
-          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          '$text': {'$search': `"${firstName}" "${lastName}"`},
           'civilian.activeCommunityID': req.query.activeCommunityID
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
@@ -710,14 +711,15 @@ module.exports = function (app, passport, server) {
         res.status(400)
         return res.redirect('/police-dashboard')
       }
+      let firstName = sanitize(req.query.firstName.trim().toLowerCase());
+      let lastName = sanitize(req.query.lastName.trim().toLowerCase());
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         if (req.query.dateOfBirth == undefined) {
           res.status(400)
           return res.redirect('/police-dashboard')
         }
         Civilian.find({
-          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          '$text': {'$search': `"${firstName}" "${lastName}"`},
           'civilian.birthday': req.query.dateOfBirth,
           '$or': [{ // some are stored as empty strings and others as null so we need to check for both
             'civilian.activeCommunityID': ''
@@ -780,8 +782,7 @@ module.exports = function (app, passport, server) {
         });
       } else {
         Civilian.find({
-          'civilian.firstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-          'civilian.lastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+          '$text': {'$search': `"${firstName}" "${lastName}"`},
           'civilian.activeCommunityID': req.query.activeCommunityID
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
@@ -3149,7 +3150,7 @@ module.exports = function (app, passport, server) {
 
     socket.on('clear_call', (req) => {
       // console.debug('clear call socket: ', req)
-      return socket.broadcast.emit('cleared_call', req)
+      return socket.broadcast.emit('cleared_call', req) //send to all listeners except the sender (ref https://stackoverflow.com/a/38026094/9392066)
     })
 
     socket.on('update_panic_btn_sound', (user) => {
@@ -3238,6 +3239,28 @@ module.exports = function (app, passport, server) {
             return socket.emit('load_reg_veh_result', dbVehicles)
           });
         }
+      }
+    });
+
+    socket.on('create_new_civ', (req) => {
+      // console.debug('create new civ socket: ', req)
+      var myNewCiv = new Civilian()
+      myNewCiv.socketCreateCiv(req)
+      myNewCiv.save(function (err, dbCivilians) {
+        if (err) return console.error(err);
+        return socket.emit('created_new_civ', dbCivilians)
+      });
+    })
+
+    socket.on('lookup_civ_by_id', (req) => {
+      // console.debug('lookup civ socket: ', req)
+      if (exists(req.civID)) {
+        Civilian.findById({
+          '_id': ObjectId(req.civID)
+        }, function (err, dbCiv) {
+          if (err) return console.error(err);
+          return socket.emit('load_civ_by_id_result', dbCiv) //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
+        })
       }
     });
 

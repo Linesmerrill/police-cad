@@ -20,6 +20,7 @@
     "handlebars": "^4.7.7",
     "minimist": "^1.2.5",
     "mocha": "^7.2.0",
+    "mongo-sanitize": "^1.1.0",
     "mongoose": "^5.9.19",
     "mpromise": "^0.5.5",
     "mquery": "^3.2.3",

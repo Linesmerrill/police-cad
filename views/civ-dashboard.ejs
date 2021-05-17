@@ -60,9 +60,6 @@
           <h3>
             <%=user.user.username%>
           </h3>
-          <!-- <h5>
-            <%=user.user.callSign%>
-          </h5> -->
           <h5>Logged in as: Civilian</h5>
         </div>
       </div>
@@ -168,7 +165,7 @@
                   <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
                     <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                     <div class="caption">
-                      <h4 class="color-white"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></h4>
+                      <h4 class="color-white capitalize"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></h4>
                       <h5 class="color-white"><%= personas[i].civilian.birthday%></h5>
                     </div>
                   </div>
@@ -305,7 +302,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/create-civ" method="post">
+          <form id="create-civ-form" class="form-horizontal" action="#" method="post">
             <fieldset>
 
             <!-- Form Name -->
@@ -487,11 +484,12 @@
 
             <!-- Button -->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="submit-new-civ"></label>
-              <div class="col-md-4">
-                <input type="hidden" name="userID" value="<%= user._id %>">
+              <label class="col-md-4 control-label" for="submitNewCiv"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" name="route" value="civ-dashboard">
+                <input id="newCivUserID" type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-civ-activeCommunityID-new-civ" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
-                <button id="submit-new-civ" class="btn btn-primary" onclick="createNewCiv()">Create</button>
+                <button id="submitNewCiv" type="submit" name="submitNewCivForm" value="submit" class="btn btn-info">Create</button>
               </div>
             </div>
             </fieldset>
@@ -1539,6 +1537,7 @@
   <script src="/static/js/popper.js"></script>
   <script src="/static/js/main.js"></script>
   <script src="/static/js/scripts.js"></script>
+  <script src="/static/js/civ-dashboard.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
   <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule="" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>
@@ -1718,475 +1717,175 @@ $("#lastName").keydown(function(event) {
 
 }); /* End of document.ready */
 
-// add in a delete function as it is not supported as of jQuery {whatever-version-we-have}
-$.delete = function(url, data, callback, type){
- if ( $.isFunction(data) ){
-   type = type || callback,
-       callback = data,
-       data = {}
- }
-
- return $.ajax({
-   url: url,
-   type: 'DELETE',
-   success: callback,
-   data: data,
-   contentType: type
- });
-}
-
-  function loadCivData(index) {
-    var myVar = <%- JSON.stringify(personas) %>;
-    loadDriversLicense(myVar, index);
-    var firstName = myVar[index].civilian.firstName
-    var lastName = myVar[index].civilian.lastName
-    var birthday = myVar[index].civilian.birthday
-    var createdDate = new Date(myVar[index].civilian.createdAt)
-    var expDay = createdDate.getDate()
-    var expMonth = (createdDate.getMonth())+1
-    var expYear = (createdDate.getFullYear())+10
-    // debug log:
-    // console.log("load civ data: ", myVar[index].civilian)
-
-    // pre-reqs to clear form between civilian clicks
-    $('#height-imperial-view').prop("checked", false)
-    $('#height-metric-view').prop("checked", false)
-    $('#foot-view').val('')
-    $('#inches-view').val('')
-    $('#centimeters-view').val('')
-    $('#imperial-weight-view').prop("checked", false)
-    $('#pounds-view').val('')
-    $('#metric-weight-view').prop("checked", false)
-    $('#eye-color-view').val('')
-    $('#hair-color-view').val('')
-
-    // civilian details:
-    $('#civilianID').val(myVar[index]._id)
-    $('#civilianIDView').text(myVar[index]._id)
-    $('#firstName').text(firstName)
-    $('#lastNameView').text(lastName)
-    $('#birthdayView').text(birthday)
-    $('#warrantsView').val(myVar[index].civilian.warrants)
-    $('#firearmLicenseView').val(myVar[index].civilian.firearmLicense)
-    $('#addressView').val(myVar[index].civilian.address)
-    $('#occupationView').val(myVar[index].civilian.occupation)
-
-    // advanced civilian details:
-    $('#gender-view').val(myVar[index].civilian.gender)
-    $('#height-imperial-view').prop("checked", myVar[index].civilian.heightClassification == 'imperial')
-    $('#height-metric-view').prop("checked", myVar[index].civilian.heightClassification == 'metric')
-    // because we accept 'imperial' and 'metric' as height classifications
-    // we need to figure out which we need to display for the height input boxes
-    if (myVar[index].civilian.heightClassification === 'imperial') {
-      //if we have imperial height, we need to convert inches into feet,inches
-      let foot = parseInt(parseInt(myVar[index].civilian.height) / 12)
-      let inches = parseFloat(myVar[index].civilian.height) % 12
-      $('#foot-view').val(foot)
-      $('#inches-view').val(inches)
-    } else if (myVar[index].civilian.heightClassification === 'metric') {
-      $('#centimeters-view').val(myVar[index].civilian.height)
-      $('.height-imperial').removeClass('show').addClass('hide');
-      $('.height-metric').removeClass('hide').addClass('show');
-    } else {
-      $('.height-imperial').removeClass('show').addClass('hide'); //if none are selected, then just hide the input fields
-    }
-    if (myVar[index].civilian.weightClassification === 'imperial') {
-      $('#imperial-weight-view').prop("checked", true)
-      $('#pounds-view').val(myVar[index].civilian.weight)
-      $('#kilos-view').val(''); //clear out kilos value stored in page
-      $('.weight-imperial').removeClass('hide').addClass('show');
-      $('.weight-metric').removeClass('show').addClass('hide');
-    } else if (myVar[index].civilian.weightClassification === 'metric') {
-      $('#metric-weight-view').prop("checked", true)
-      $('#pounds-view').val(''); //clear out lbs value stored in page
-      $('#kilos-view').val(myVar[index].civilian.weight)
-      $('.weight-metric').removeClass('hide').addClass('show');
-      $('.weight-imperial').removeClass('show').addClass('hide');
-    } else {
-      $('.weight-imperial').removeClass('show').addClass('hide'); //if none are selected, then just hide the input fields
-      $('.weight-metric').removeClass('show').addClass('hide');
-    }
-    
-    $('#eye-color-view').val(myVar[index].civilian.eyeColor)
-    $('#hair-color-view').val(myVar[index].civilian.hairColor)
-    
-    //to clear out the form from previous caching, we will just set it to false if it cannot be found in myVar
-    if (myVar[index].civilian.organDonor == undefined || myVar[index].civilian.organDonor == null) {
-      $('#organ-donor-view').prop("checked", false)
-    } else {
-      $('#organ-donor-view').prop("checked", myVar[index].civilian.organDonor)
-    }
-    //to clear out the form from previous caching, we will just set it to false if it cannot be found in myVar
-    if (myVar[index].civilian.veteran == undefined || myVar[index].civilian.veteran == null) {
-      $('#veteran-view').prop("checked", false)
-    } else {
-      $('#veteran-view').prop("checked", myVar[index].civilian.veteran)
-    }
-
-    // data to be set for condition form
-    $('#condition-civ-first-name').val(firstName)
-    $('#condition-civ-last-name').val(lastName)
-    $('#condition-civ-date-of-birth').val(birthday)
-
-    // data to be set for medication form
-    $('#medication-civ-first-name').val(firstName)
-    $('#medication-civ-last-name').val(lastName)
-    $('#medication-civ-date-of-birth').val(birthday)
-
-    // data to be sent to db for civ deletion
-    $('#firstName').val(firstName)
-    $('#lastName').val(lastName)
-    $('#delBirthday').val(birthday)
-  }
-
-  function loadDriversLicense(myVar, index) {
-    // debug log:
-    // console.log('civilian: ', myVar[index].civilian)
-
-    //setup pre-reqs on license
-    $('.donor-block').removeClass('show').addClass('hide');
-    $('.veteran-block').removeClass('show').addClass('hide');
-    $('.delete-license-btn').removeClass('show').addClass('hide');
-    $('.create-license-btn').removeClass('show').addClass('hide');
-    $('#licenseStatusViewLic').text('Valid').removeClass('color-red').addClass('color-black')
-
-    var firstName = myVar[index].civilian.firstName
-    var lastName = myVar[index].civilian.lastName
-    var birthday = myVar[index].civilian.birthday
-    var createdDate = new Date(myVar[index].civilian.createdAt)
-    var expDay = createdDate.getDate()
-    var expMonth = (createdDate.getMonth())+1
-    var expYear = (createdDate.getFullYear())+10
-
-    // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional, 
-    // we will do a check to see if its undefined or empty and if so just set it to an
-    // empty string (or false for booleans), otherwise set it to the value from the db.
-    var gender = (myVar[index].civilian.gender == undefined || myVar[index].civilian.gender == '') ? '' : myVar[index].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
-    // height needs to be converted to ft in or cm depending on the heightClassification
-    if (myVar[index].civilian.height == undefined || myVar[index].civilian.height == '') {
-      height = ''
-    } else {
-      switch (myVar[index].civilian.heightClassification) {
-        case 'imperial':
-          var feet = Math.floor(myVar[index].civilian.height / 12); // just dividing by 12 to get the feet
-          var inches = ("0" + myVar[index].civilian.height % 12).slice(-2); // mod by 12 to get remainder, but also pad with a '0' if less than '10'
-          height = `${feet}'-${inches}"` // ex: 5'-07"
-          break;
-        case 'metric':
-          height = `${myVar[index].civilian.height} cm`
-          break;
-        default:
-          height = myVar[index].civilian.height
-      }
-    }
-    // weight just needs the appropriate label based on the weightClassification (lb or kg)
-    if (myVar[index].civilian.weight == undefined || myVar[index].civilian.weight == '') {
-      weight = ''
-    } else {
-      switch (myVar[index].civilian.weightClassification){
-        case 'imperial': 
-          weight = `${myVar[index].civilian.weight} lb`
-          break;
-        case 'metric':
-          weight = `${myVar[index].civilian.weight} kg`
-          break;
-        default:
-          weight = myVar[index].civilian.weight
-      }
-    }
-    var eyeColor = (myVar[index].civilian.eyeColor == undefined || myVar[index].civilian.eyeColor == '') ? '' : myVar[index].civilian.eyeColor.substring(0,3); //only grab first 3 characters of string
-    var hairColor = (myVar[index].civilian.hairColor == undefined || myVar[index].civilian.hairColor == '') ? '' : myVar[index].civilian.hairColor.substring(0,3); //only grab first 3 characters of string
-    var donor = (myVar[index].civilian.organDonor == undefined || myVar[index].civilian.organDonor == '') ? false : myVar[index].civilian.organDonor;
-    var veteran = (myVar[index].civilian.veteran == undefined || myVar[index].civilian.veteran == '') ? false : myVar[index].civilian.veteran;
-    
-    $('#civilianID').val(myVar[index]._id)
-    $('#civilianIDViewLic').text('DL: '+ myVar[index]._id)
-    $('#firstNameLic').text(firstName)
-    $('#lastNameLic').text(lastName)
-    $('#sexLic').text(gender);
-    $('#heightLic').text(height);
-    $('#weightLic').text(weight);
-    $('#eyeLic').text(eyeColor);
-    $('#hairLic').text(hairColor);
-    if (donor === true) {
-     $('.donor-block').removeClass('hide').addClass('show');
-    }
-    if (veteran === true) {
-     $('.veteran-block').removeClass('hide').addClass('show');
-    }
-    switch (myVar[index].civilian.licenseStatus) {
-      case '1': //valid license
-        $('#drivers-license').removeClass('hide').addClass('show');
-        $('#licenseStatusViewLic').text('Valid').removeClass('color-red').addClass('color-black')
-        $('.delete-license-btn').removeClass('hide').addClass('show');
-        $('.create-license-btn').removeClass('show').addClass('hide');
-        break; //javascript standard to put this here
-      case '2': //revoked license
-        $('#drivers-license').removeClass('hide').addClass('show');
-        $('#licenseStatusViewLic').text('Revoked').removeClass('color-black').addClass('color-red')
-        $('.delete-license-btn').removeClass('hide').addClass('show');
-        $('.create-license-btn').removeClass('show').addClass('hide');
-        break; //javascript standard to put this here
-      default: // '3' or no license
-        $('#drivers-license').removeClass('show').addClass('hide');
-        $('.create-license-btn').removeClass('hide').addClass('show');
-        $('#licenseStatusViewLic').text('None').removeClass('color-black').addClass('color-red')
-    }
-    var licenseDOB = birthday.split('-')
-    if (licenseDOB.length == 3) {
-      $('#birthdayViewLic').text(licenseDOB[1]+'/'+licenseDOB[2]+'/'+licenseDOB[0])
-    } else {
-      $('#birthdayViewLic').text(birthday)
-    }
-    $('#warrantsView').val(myVar[index].civilian.warrants)
-    $('#firearmLicenseView').val(myVar[index].civilian.firearmLicense)
-    $('#addressViewLic').text(myVar[index].civilian.address)
-    $('#license-expiration').text(expMonth.toString().padStart(2, '0')+'/'+expDay.toString().padStart(2,'0')+'/'+expYear) //Janky AF
-    $('#license-issued').text(createdDate.toLocaleDateString('en-US', {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric"
-    }))
-  }
-
-  function loadTicketsAndWarnings(index) {
-    $("#warningTable tbody").empty()
-    $("#citationTable tbody").empty()
-    var parameters = { civID: index };
-       $.get('/tickets',parameters, function(data) {
-         data.forEach(function(e){
-           if (e.ticket.isWarning) {
-            var newRowContent = "<tr><td>"+e.ticket.date+"</td><td>"+e.ticket.violation+"</td></tr>"
-            $("#warningTable tbody").append(newRowContent)
-           } else {
-          var newRowContent = "<tr><td>"+e.ticket.date+"</td><td>"+e.ticket.violation+"</td><td>"+"$"+e.ticket.amount+"</td></tr>"
-          $("#citationTable tbody").append(newRowContent)
-           }
-         });
-     });
-  }
-
-  function loadArrests(index) {
-    $("#arrestTable tbody").empty()
-    var parameters = { civID: index };
-       $.get('/arrests',parameters, function(data) {
-         data.forEach(function(e){
-          var newRowContent = "<tr><td>"+e.arrestReport.date+"</td><td>"+e.arrestReport.charges+"</td><td>"+e.arrestReport.summary+"</td></tr>"
-          $("#arrestTable tbody").append(newRowContent)
-         });
-     });
-  }
-
-  function loadReports(index) {
-    $("#reportsTable tbody").empty()
-    var parameters = { civID: index };
-       $.get('/medical-reports',parameters, function(data) {
-         data.forEach(function(e){
-          var newRowContent = `<tr id="`+e._id+`"><td>`+e.report.date+`</td><td style='text-transform: capitalize;'>`+e.report.hospitalized+`</td><td style='text-transform: capitalize;'>`+e.report.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteReport('`+e._id+`', '`+e.report.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>`
-          $("#reportsTable tbody").append(newRowContent)
-         });
-     });
-  }
-
-  function loadMedications(index) {
-    $('#medication-civilian-id').val(index)
-    $("#medicationsTable tbody").empty()
-    var parameters = { civID: index };
-       $.get('/medications',parameters, function(data) {
-         data.forEach(function(e){
-          var newRowContent = "<tr id=\""+e._id+"\"><td>"+e.medication.startDate+"</td><td style='text-transform: capitalize;'>"+e.medication.name+"</td><td>"+e.medication.dosage+"</td><td>"+e.medication.frequency+"</td><td class=\"text-align-center\"><a class='clickable' onclick=\"deleteMedication('"+e._id+"')\"><i class=\"glyphicon glyphicon-remove-circle color-alert-red\"></i></a></td></tr>"
-          $("#medicationsTable tbody").append(newRowContent)
-         });
-     });
-  }
-
-  function loadConditions(index) {
-    $('#condition-civilian-id').val(index)
-    $("#conditionsTable tbody").empty()
-    var parameters = { civID: index };
-       $.get('/conditions',parameters, function(data) {
-         data.forEach(function(e){
-          var newRowContent = "<tr id=\""+e._id+"\"><td>"+e.condition.dateOccurred+"</td><td style='text-transform: capitalize;'>"+e.condition.name+"</td><td>"+e.condition.details+"</td><td class=\"text-align-center\"><a class='clickable' onclick=\"deleteCondition('"+e._id+"')\"><i class=\"glyphicon glyphicon-remove-circle color-alert-red\"></i></a></td></tr>"
-          $("#conditionsTable tbody").append(newRowContent)
-         });
-     });
-  }
-
-  function deleteReport(id, civilianID) {
-    var parameters = { reportID: id };
-    $.delete('/reports/'+id, parameters, function(data) {
-      $(`table#reportsTable tr#`+id).remove()
-    })
-  }
-
-  function deleteMedication(id) {
-    var parameters = { medicationID: id };
-    $.delete('/medications/'+id, parameters, function(data) {
-      $('table#medicationsTable tr#'+id).remove()
-    })
-  }
-
-  function deleteCondition(id) {
-    var parameters = { conditionID: id };
-    $.delete('/conditions/'+id, parameters, function(data) {
-      $('table#conditionsTable tr#'+id).remove()
-    })
-  }
-
-  function loadVehData(index) {
-    var myVar = <%- JSON.stringify(vehicles) %>;
-    $('#vehicleID').val(myVar[index]._id)
-    $('#plateVeh').val(myVar[index].vehicle.plate.toUpperCase())
-
-    // since only cars after 6/26/2020 will have this info, we need to check for empty values
-    if (myVar[index].vehicle.vin == "" || myVar[index].vehicle.vin == undefined) {
-      $('#vinVeh').val("")
-      $('#no-existing-vin').show()
-    } else {
-      $('#vinVeh').val(myVar[index].vehicle.vin.toUpperCase())
-      $('#no-existing-vin').hide()
-    }
-    
-    $('#modelVeh').val(myVar[index].vehicle.model)
-    $('#colorView').val(myVar[index].vehicle.color)
-    $('#validRegView').val(myVar[index].vehicle.validRegistration)
-    $('#validInsView').val(myVar[index].vehicle.validInsurance)
-    $('#roVeh').val(myVar[index].vehicle.registeredOwner)
-    $('#stolenView').val(myVar[index].vehicle.isStolen)
-  }
-
-  function loadFirearmData(index) {
-    var myVar = <%- JSON.stringify(firearms) %>;
-    $('#firearmID').val(myVar[index]._id)
-    $('#serial-number-details').val(myVar[index].firearm.serialNumber)
-    $('#weapon-type-details').val(myVar[index].firearm.weaponType)
-    //Because from the backend we already split the person_id from the person name and dob, we now 
-    //need to rejoin those values back together for #registeredOwner-details
-    if (myVar[index].firearm.registeredOwner == 'N/A') {
-      $('#registeredOwner-details').val(`${myVar[index].firearm.registeredOwner}`)
-    } else {
-      $('#registeredOwner-details').val(`${myVar[index].firearm.registeredOwnerID}+${myVar[index].firearm.registeredOwner}`)
-    }
-    $('#is-stolen-details').val(myVar[index].firearm.isStolen)
-  }
-
-  function createNewCiv() {
-    $('#civ-first-name').popover('hide')
-    $('#civ-last-name').popover('hide')
-  }
-
-  function clearHelpText() {
-    $('#firstName').popover('hide')
-    $('#lastName').popover('hide')
-  }
-
-  function fillAccountDetails() {
-    var myUser = <%- JSON.stringify(user) %>;
-    $('#accountEmail').val(myUser.user.email)
-    $('#accountUsername').val(myUser.user.username)
-    $('#accountCallSign').val(myUser.user.callSign)
-  }
-
-  function cancelUsername() {
-    var myUser = <%- JSON.stringify(user) %>;
-    $('#accountUsername').val(myUser.user.username)
-    $('#updateUsernameBtns').hide();
-  }
-
-  function cancelCallSign() {
-    var myUser = <%- JSON.stringify(user) %>;
-    $('#accountCallSign').val(myUser.user.callSign)
-    $('#updateCallSignBtns').hide();
-  }
-
-  function generateSerialNumber(length, inputID) {
-    var result           = '';
-   var characters       = 'ABCDEFGHJKMNPQRSTUVWXYZ0123456789';
-   var charactersLength = characters.length;
-   for ( var i = 0; i < length; i++ ) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+function loadCivData(index) {
+     var myVar = <%- JSON.stringify(personas) %>;
+     loadDriversLicense(myVar, index);
+     var firstName = myVar[index].civilian.firstName
+     var lastName = myVar[index].civilian.lastName
+     var birthday = myVar[index].civilian.birthday
+     var createdDate = new Date(myVar[index].civilian.createdAt)
+     var expDay = createdDate.getDate()
+     var expMonth = (createdDate.getMonth())+1
+     var expYear = (createdDate.getFullYear())+10
+     // debug log:
+     // console.log("load civ data: ", myVar[index].civilian)
+ 
+     // pre-reqs to clear form between civilian clicks
+     $('#height-imperial-view').prop("checked", false)
+     $('#height-metric-view').prop("checked", false)
+     $('#foot-view').val('')
+     $('#inches-view').val('')
+     $('#centimeters-view').val('')
+     $('#imperial-weight-view').prop("checked", false)
+     $('#pounds-view').val('')
+     $('#metric-weight-view').prop("checked", false)
+     $('#eye-color-view').val('')
+     $('#hair-color-view').val('')
+ 
+     // civilian details:
+     $('#civilianID').val(myVar[index]._id)
+     $('#civilianIDView').text(myVar[index]._id)
+     $('#firstName').text(firstName)
+     $('#lastNameView').text(lastName)
+     $('#birthdayView').text(birthday)
+     $('#warrantsView').val(myVar[index].civilian.warrants)
+     $('#firearmLicenseView').val(myVar[index].civilian.firearmLicense)
+     $('#addressView').val(myVar[index].civilian.address)
+     $('#occupationView').val(myVar[index].civilian.occupation)
+ 
+     // advanced civilian details:
+     $('#gender-view').val(myVar[index].civilian.gender)
+     $('#height-imperial-view').prop("checked", myVar[index].civilian.heightClassification == 'imperial')
+     $('#height-metric-view').prop("checked", myVar[index].civilian.heightClassification == 'metric')
+     // because we accept 'imperial' and 'metric' as height classifications
+     // we need to figure out which we need to display for the height input boxes
+     if (myVar[index].civilian.heightClassification === 'imperial') {
+       //if we have imperial height, we need to convert inches into feet,inches
+       let foot = parseInt(parseInt(myVar[index].civilian.height) / 12)
+       let inches = parseFloat(myVar[index].civilian.height) % 12
+       $('#foot-view').val(foot)
+       $('#inches-view').val(inches)
+     } else if (myVar[index].civilian.heightClassification === 'metric') {
+       $('#centimeters-view').val(myVar[index].civilian.height)
+       $('.height-imperial').removeClass('show').addClass('hide');
+       $('.height-metric').removeClass('hide').addClass('show');
+     } else {
+       $('.height-imperial').removeClass('show').addClass('hide'); //if none are selected, then just hide the input fields
+     }
+     if (myVar[index].civilian.weightClassification === 'imperial') {
+       $('#imperial-weight-view').prop("checked", true)
+       $('#pounds-view').val(myVar[index].civilian.weight)
+       $('#kilos-view').val(''); //clear out kilos value stored in page
+       $('.weight-imperial').removeClass('hide').addClass('show');
+       $('.weight-metric').removeClass('show').addClass('hide');
+     } else if (myVar[index].civilian.weightClassification === 'metric') {
+       $('#metric-weight-view').prop("checked", true)
+       $('#pounds-view').val(''); //clear out lbs value stored in page
+       $('#kilos-view').val(myVar[index].civilian.weight)
+       $('.weight-metric').removeClass('hide').addClass('show');
+       $('.weight-imperial').removeClass('show').addClass('hide');
+     } else {
+       $('.weight-imperial').removeClass('show').addClass('hide'); //if none are selected, then just hide the input fields
+       $('.weight-metric').removeClass('show').addClass('hide');
+     }
+     
+     $('#eye-color-view').val(myVar[index].civilian.eyeColor)
+     $('#hair-color-view').val(myVar[index].civilian.hairColor)
+     
+     //to clear out the form from previous caching, we will just set it to false if it cannot be found in myVar
+     if (myVar[index].civilian.organDonor == undefined || myVar[index].civilian.organDonor == null) {
+       $('#organ-donor-view').prop("checked", false)
+     } else {
+       $('#organ-donor-view').prop("checked", myVar[index].civilian.organDonor)
+     }
+     //to clear out the form from previous caching, we will just set it to false if it cannot be found in myVar
+     if (myVar[index].civilian.veteran == undefined || myVar[index].civilian.veteran == null) {
+       $('#veteran-view').prop("checked", false)
+     } else {
+       $('#veteran-view').prop("checked", myVar[index].civilian.veteran)
+     }
+ 
+     // data to be set for condition form
+     $('#condition-civ-first-name').val(firstName)
+     $('#condition-civ-last-name').val(lastName)
+     $('#condition-civ-date-of-birth').val(birthday)
+ 
+     // data to be set for medication form
+     $('#medication-civ-first-name').val(firstName)
+     $('#medication-civ-last-name').val(lastName)
+     $('#medication-civ-date-of-birth').val(birthday)
+ 
+     // data to be sent to db for civ deletion
+     $('#firstName').val(firstName)
+     $('#lastName').val(lastName)
+     $('#delBirthday').val(birthday)
    }
-   $('#'+inputID).val(result);
-  }
 
-  function showList() {
-    $('.dataTables_filter').hide();
-    $('#personas-table-div').show()
-    $('#personas-thumbnail').hide()
-    $('#app-icon-personas').addClass('inactive-icon').removeClass('active-icon')
-    $('#list-icon-personas').addClass('active-icon').removeClass('inactive-icon')
-    document.cookie = "persona_icon=list"
-  }
+function loadVehData(index) {
+     var myVar = <%- JSON.stringify(vehicles) %>;
+     $('#vehicleID').val(myVar[index]._id)
+     $('#plateVeh').val(myVar[index].vehicle.plate.toUpperCase())
+ 
+     // since only cars after 6/26/2020 will have this info, we need to check for empty values
+     if (myVar[index].vehicle.vin == "" || myVar[index].vehicle.vin == undefined) {
+       $('#vinVeh').val("")
+       $('#no-existing-vin').show()
+     } else {
+       $('#vinVeh').val(myVar[index].vehicle.vin.toUpperCase())
+       $('#no-existing-vin').hide()
+     }
+     
+     $('#modelVeh').val(myVar[index].vehicle.model)
+     $('#colorView').val(myVar[index].vehicle.color)
+     $('#validRegView').val(myVar[index].vehicle.validRegistration)
+     $('#validInsView').val(myVar[index].vehicle.validInsurance)
+     $('#roVeh').val(myVar[index].vehicle.registeredOwner)
+     $('#stolenView').val(myVar[index].vehicle.isStolen)
+   }
+ 
+   function loadFirearmData(index) {
+     var myVar = <%- JSON.stringify(firearms) %>;
+     $('#firearmID').val(myVar[index]._id)
+     $('#serial-number-details').val(myVar[index].firearm.serialNumber)
+     $('#weapon-type-details').val(myVar[index].firearm.weaponType)
+     //Because from the backend we already split the person_id from the person name and dob, we now 
+     //need to rejoin those values back together for #registeredOwner-details
+     if (myVar[index].firearm.registeredOwner == 'N/A') {
+       $('#registeredOwner-details').val(`${myVar[index].firearm.registeredOwner}`)
+     } else {
+       $('#registeredOwner-details').val(`${myVar[index].firearm.registeredOwnerID}+${myVar[index].firearm.registeredOwner}`)
+     }
+     $('#is-stolen-details').val(myVar[index].firearm.isStolen)
+   }
 
-  function showApps() {
-    $('.dataTables_filter').hide();
-    $('#personas-table-div').hide()
-    $('#personas-thumbnail').show()
-    $('#app-icon-personas').addClass('active-icon').removeClass('inactive-icon')
-    $('#list-icon-personas').addClass('inactive-icon').removeClass('active-icon')
-    document.cookie = "persona_icon=app"
-  }
+   function fillAccountDetails() {
+     var myUser = <%- JSON.stringify(user) %>;
+     $('#accountEmail').val(myUser.user.email)
+     $('#accountUsername').val(myUser.user.username)
+     $('#accountCallSign').val(myUser.user.callSign)
+   }
+ 
+   function cancelUsername() {
+     var myUser = <%- JSON.stringify(user) %>;
+     $('#accountUsername').val(myUser.user.username)
+     $('#updateUsernameBtns').hide();
+   }
+ 
+   function cancelCallSign() {
+     var myUser = <%- JSON.stringify(user) %>;
+     $('#accountCallSign').val(myUser.user.callSign)
+     $('#updateCallSignBtns').hide();
+   }
 
-  function showVehicleList() {
-    $('.dataTables_filter').hide();
-    $('#vehicles-table-div').show()
-    $('#vehicles-thumbnail').hide()
-    $('#app-icon-vehicles').addClass('inactive-icon').removeClass('active-icon')
-    $('#list-icon-vehicles').addClass('active-icon').removeClass('inactive-icon')
-    document.cookie = "vehicle_icon=list"
-  }
-
-  function showVehicleApps() {
-    $('.dataTables_filter').hide();
-    $('#vehicles-table-div').hide()
-    $('#vehicles-thumbnail').show()
-    $('#app-icon-vehicles').addClass('active-icon').removeClass('inactive-icon')
-    $('#list-icon-vehicles').addClass('inactive-icon').removeClass('active-icon')
-    document.cookie = "vehicle_icon=app"
-  }
-
-  function showFirearmsList() {
-    $('.dataTables_filter').hide();
-    $('#firearms-table-div').show()
-    $('#firearms-thumbnail').hide()
-    $('#app-icon-firearms').addClass('inactive-icon').removeClass('active-icon')
-    $('#list-icon-firearms').addClass('active-icon').removeClass('inactive-icon')
-    document.cookie = "firearm_icon=list"
-  }
-
-  function showFirearmsApps() {
-    $('.dataTables_filter').hide();
-    $('#firearms-table-div').hide()
-    $('#firearms-thumbnail').show()
-    $('#app-icon-firearms').addClass('active-icon').removeClass('inactive-icon')
-    $('#list-icon-firearms').addClass('inactive-icon').removeClass('active-icon')
-    document.cookie = "firearm_icon=app"
-  }
-
-  function hideLicenseNotice() {
-    document.cookie = "license_notice=hidden"
-    $('#license-notice').hide();
-  }
-
-  function togglePanicBtnSound() {
-    var socket = io();
-    socket.emit('update_panic_btn_sound', <%- JSON.stringify(user) %>)
-    socket.on('load_panic_btn_result', (res) => {
-      $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
-      $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function() {
-    $(this).hide();
-  });
-    })
-  }
-
-  function toggleInput(showClass, hideClass) {
-    $(`.${showClass}`).removeClass('hide').addClass('show')
-    $(`.${hideClass}`).removeClass('show').addClass('hide')
-  }
-
-  function markAsRead() {
-    document.cookie ="notification-symbol=v2.19.0";
-    $('#notification-symbol').removeClass('notif');
-    $('#notification-count').text('');
-  }
+   function togglePanicBtnSound() {
+     var socket = io();
+     socket.emit('update_panic_btn_sound', <%- JSON.stringify(user) %>)
+     socket.on('load_panic_btn_result', (res) => {
+       $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
+       $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function() {
+     $(this).hide();
+   });
+     })
+   }
+  
 </script>

@@ -430,7 +430,7 @@
                       <div class="panel panel-default background-transparent">
                         <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
                           href="#collapse<%=i%>" <h4 class="panel-title">
-                              <a class="blue-hover">
+                              <a class="blue-hover capitalize">
                                 <%= civilians[i].civilian.firstName %>
                                   <%= civilians[i].civilian.lastName %> |
                                     <%= civilians[i]._id %>
@@ -899,7 +899,7 @@
                       <div class="panel panel-default background-transparent">
                         <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
                           href="#collapse<%=i%>" <h4 class="panel-title">
-                              <a class="blue-hover">
+                              <a class="blue-hover capitalize">
                                 <%= vehicles[i].vehicle.plate%> | <%= vehicles[i].vehicle.registeredOwner%>
                               </a>
                             </h4>
@@ -993,7 +993,7 @@
                       <div class="panel panel-default background-transparent">
                         <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
                           href="#collapse<%=i%>" <h4 class="panel-title">
-                              <a class="blue-hover">
+                              <a class="blue-hover capitalize">
                                 <%= firearms[i].firearm.serialNumber%> | <%= firearms[i].firearm.registeredOwner%>
                               </a>
                             </h4>
@@ -1278,6 +1278,7 @@
                 <label class="col-md-4 control-label" for="submitWarning"></label>
                 <div class="col-md-4">
                   <input type="hidden" name="route" value="police-dashboard">
+                  <input id="warningCrimeList" type="hidden" name="crimeList" value="">
                   <button id="submitWarning" class="btn btn-primary" onclick="hideWarningCivPopover()">Submit</button>
                 </div>
               </div>
@@ -2309,6 +2310,10 @@
 
     $("#submitTicket").on('click', function () {
       $('#crimeList').val($("#ticket-select").find("option:selected").text())
+    });
+
+    $("#submitWarning").on('click', function () {
+      $('#warningCrimeList').val($("#warning-select").find("option:selected").text())
     });
 
     //CURRENT_VERSION
