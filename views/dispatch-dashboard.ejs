@@ -239,11 +239,11 @@
                             <%} else {%>
                               <hr style="width: 88%;max-width: 100rem;">
                               <!-- officer list -->
-                              <h4 id="officer-list">Officer List:</h4>
-                              <table id="example" class="table table-hover table-bordered">
+                              <h4 id="officer-list">Officer List: <a data-toggle="modal" href="#officerHelpModal"><i class="far fa-question-circle"></i></a></h4>
+                              <table id="officerListTable" class="table table-hover table-bordered">
                                 <thead>
                                   <tr>
-                                    <th>On/Off Duty</th>
+                                    <!-- <th>On/Off Duty</th> -->
                                     <th>Username</th>
                                     <th>Call Sign</th>
                                     <th>Status</th>
@@ -251,16 +251,37 @@
                                 </thead>
                                 <tbody>
                                   <% for(var i=0; i<commUsers.length; i++) {%>
-                                    <tr class="gray-hover" data-toggle="modal" data-id="<%=i%>"
-                                      data-target="#manageUserDispatchStatusModal"
-                                      onclick="setDispatchModalValues('<%=commUsers[i]._id%>')">
                                       <% if (!commUsers[i].user.dispatchOnDuty) {%>
-                                        <td><span title="100" id="<%=commUsers[i]._id%>-duty" class="red-dot"></span>
-                                        </td>
-                                        <%} else if (commUsers[i].user.dispatchOnDuty) {%>
-                                          <td><span title="1" id="<%=commUsers[i]._id%>-duty" class="green-dot"></span>
+                                        <tr id="<%=commUsers[i]._id%>-duty" class="gray-hover hide" data-toggle="modal" data-id="<%=i%>"
+                                          data-target="#manageUserDispatchStatusModal"
+                                          onclick="setDispatchModalValues('<%=commUsers[i]._id%>')">
+
+                                          <td style="text-transform: capitalize;">
+                                            <%=commUsers[i].user.username%>
                                           </td>
-                                          <%}%>
+                                          <td style="text-transform: capitalize;">
+                                            <%=commUsers[i].user.callSign%>
+                                          </td>
+                                          <% if (commUsers[i].user.dispatchStatus=='' ||
+                                            commUsers[i].user.dispatchStatus==null) {%>
+                                            <td id="<%=commUsers[i]._id%>-status">-</td>
+                                            <%} else {%>
+                                              <% if (commUsers[i].user.dispatchStatus=='Panic' ) {%>
+                                                <td id="<%=commUsers[i]._id%>-status">🚨
+                                                  <%=commUsers[i].user.dispatchStatus%>🚨
+                                                </td>
+                                                <%} else {%>
+                                                  <td id="<%=commUsers[i]._id%>-status">
+                                                    <%=commUsers[i].user.dispatchStatus%>
+                                                  </td>
+                                                  <%}%>
+                                                    <%}%>
+                                                    
+                                          </tr>
+                                        <%} else if (commUsers[i].user.dispatchOnDuty) {%>
+                                          <tr id="<%=commUsers[i]._id%>-duty" class="gray-hover" data-toggle="modal" data-id="<%=i%>"
+                                            data-target="#manageUserDispatchStatusModal"
+                                            onclick="setDispatchModalValues('<%=commUsers[i]._id%>')">
 
                                             <td style="text-transform: capitalize;">
                                               <%=commUsers[i].user.username%>
@@ -281,6 +302,7 @@
                                                       <%=commUsers[i].user.dispatchStatus%>
                                                     </td>
                                                     <%}%>
+                                                      <%}%>
                                                       <%}%>
                                     </tr>
                                     <%}%>
@@ -2270,6 +2292,23 @@
       </div>
     </div>
 
+    <div id="officerHelpModal" class="modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="modal-title" style="font-size: 18px;">Officer List Help</span>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+          </div>
+          <div class="modal-footer text-align-center">
+            <p>If you see no records in the table, that means no officers have marked themselves 10-41 or "on-duty".</p><p> Remind 
+              your officers to make sure and mark themselves 10-41 when they go "on-duty" and 10-42 when they go "off-duty".
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <% include notification-modal %>
     <% include 10-codes %>
       <% include notepad %>
@@ -2295,10 +2334,15 @@
   $(function () {
     var socket=io();
     socket.on('updated_status', res => {
+      console.log("res: ", res)
       if (res.onDuty&&res.updateDuty) {
-        $('#'+res.userID+"-duty").attr('style', 'background-color: #5cb85c !important')
+        //socket coming in that a user is going on-duty
+        $('#'+res.userID+"-duty").removeClass('hide')
+        $('#'+res.userID+"-duty").attr('style', 'cursor: pointer')
       } else if (!res.onDuty&&res.updateDuty) {
+        //socket coming in that a user is going off-duty
         $('#'+res.userID+"-duty").attr('style', 'background-color: #d9534f !important')
+        $('#'+res.userID+"-duty").addClass('hide')
       }
       if (res.status=="Panic") {
         $('#'+res.userID+"-status").text("🚨 "+res.status+" 🚨")
@@ -2471,7 +2515,7 @@
 </script>
 <script type="text/javascript">
   $(document).ready(function () {
-    $('#example').DataTable({
+    $('#officerListTable').DataTable({
       "bLengthChange": false,
       "pageLength": 5,
       columnDefs: [
