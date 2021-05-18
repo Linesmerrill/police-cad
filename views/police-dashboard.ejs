@@ -706,25 +706,25 @@
                                                           role="tablist">
                                                           <li class="nav-item">
                                                             <a class="nav-link" id="pills-citations-tab"
-                                                              data-toggle="pill" href="#pills-citations" role="tab"
+                                                              data-toggle="pill" href="#pills-citations-<%=i%>" role="tab"
                                                               aria-controls="pills-citations"
                                                               aria-selected="true">Citations</a>
                                                           </li>
                                                           <li class="nav-item">
                                                             <a class="nav-link" id="pills-warnings-tab"
-                                                              data-toggle="pill" href="#pills-warnings" role="tab"
+                                                              data-toggle="pill" href="#pills-warnings-<%=i%>" role="tab"
                                                               aria-controls="pills-warnings"
                                                               aria-selected="false">Warnings</a>
                                                           </li>
                                                           <li class="nav-item">
                                                             <a class="nav-link" id="pills-arrests-tab"
-                                                              data-toggle="pill" href="#pills-arrests" role="tab"
+                                                              data-toggle="pill" href="#pills-arrests-<%=i%>" role="tab"
                                                               aria-controls="pills-arrests"
                                                               aria-selected="false">Arrests</a>
                                                           </li>
                                                         </ul>
                                                         <div class="tab-content" id="pills-tabContent">
-                                                          <div class="tab-pane fade active in" id="pills-citations"
+                                                          <div class="tab-pane fade active in" id="pills-citations-<%=i%>"
                                                             role="tabpanel" aria-labelledby="pills-citations-tab">
                                                             <table id="ticket-table" class="table table-hover"
                                                               border="1" frame="box">
@@ -768,7 +768,7 @@
                                                               </tbody>
                                                             </table>
                                                           </div>
-                                                          <div class="tab-pane fade" id="pills-warnings" role="tabpanel"
+                                                          <div class="tab-pane fade" id="pills-warnings-<%=i%>" role="tabpanel"
                                                             aria-labelledby="pills-warnings-tab">
                                                             <table id="warning-table" class="table table-hover"
                                                               border="1" frame="box">
@@ -807,7 +807,7 @@
                                                               </tbody>
                                                             </table>
                                                           </div>
-                                                          <div class="tab-pane fade" id="pills-arrests" role="tabpanel"
+                                                          <div class="tab-pane fade" id="pills-arrests-<%=i%>" role="tabpanel"
                                                             aria-labelledby="pills-arrests-tab">
                                                             <table id="arrest-table" class="table table-hover"
                                                               border="1" frame="box">
