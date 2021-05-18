@@ -702,31 +702,31 @@
 
                                                         <hr style="width: 88%;max-width: 100rem;">
                                                         <h4>Criminal History</h4>
-                                                        <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab"
+                                                        <ul class="nav nav-pills mb-3 margin-bottom-1"
                                                           role="tablist">
                                                           <li class="nav-item">
-                                                            <a class="nav-link" id="pills-citations-tab"
+                                                            <a class="nav-link" id="pills-citations-tab-<%=i%>"
                                                               data-toggle="pill" href="#pills-citations-<%=i%>" role="tab"
-                                                              aria-controls="pills-citations"
+                                                              aria-controls="pills-citations-<%=i%>"
                                                               aria-selected="true">Citations</a>
                                                           </li>
                                                           <li class="nav-item">
-                                                            <a class="nav-link" id="pills-warnings-tab"
+                                                            <a class="nav-link" id="pills-warnings-tab-<%=i%>"
                                                               data-toggle="pill" href="#pills-warnings-<%=i%>" role="tab"
-                                                              aria-controls="pills-warnings"
+                                                              aria-controls="pills-warnings-<%=i%>"
                                                               aria-selected="false">Warnings</a>
                                                           </li>
                                                           <li class="nav-item">
-                                                            <a class="nav-link" id="pills-arrests-tab"
+                                                            <a class="nav-link" id="pills-arrests-tab-<%=i%>"
                                                               data-toggle="pill" href="#pills-arrests-<%=i%>" role="tab"
-                                                              aria-controls="pills-arrests"
+                                                              aria-controls="pills-arrests-<%=i%>"
                                                               aria-selected="false">Arrests</a>
                                                           </li>
                                                         </ul>
-                                                        <div class="tab-content" id="pills-tabContent">
-                                                          <div class="tab-pane fade active in" id="pills-citations-<%=i%>"
-                                                            role="tabpanel" aria-labelledby="pills-citations-tab">
-                                                            <table id="ticket-table" class="table table-hover"
+                                                        <div class="tab-content" id="pills-tabContent-<%=i%>">
+                                                          <div class="tab-pane fade" id="pills-citations-<%=i%>"
+                                                            role="tabpanel" aria-labelledby="pills-citations-tab-<%=i%>">
+                                                            <table id="ticket-table-<%=i%>" class="table table-hover"
                                                               border="1" frame="box">
                                                               <thead>
                                                                 <tr style="background-color: #2d2d2d;">
@@ -735,7 +735,7 @@
                                                                   <td>Amount</td>
                                                                 </tr>
                                                               </thead>
-                                                              <tbody id="ticket-body">
+                                                              <tbody id="ticket-body-<%=i%>">
                                                                 <% if (tickets !=null) {%>
                                                                   <% for(var j=0; j<tickets.length; j++) {%>
                                                                     <tr>
@@ -769,8 +769,8 @@
                                                             </table>
                                                           </div>
                                                           <div class="tab-pane fade" id="pills-warnings-<%=i%>" role="tabpanel"
-                                                            aria-labelledby="pills-warnings-tab">
-                                                            <table id="warning-table" class="table table-hover"
+                                                            aria-labelledby="pills-warnings-tab-<%=i%>">
+                                                            <table id="warning-table-<%=i%>" class="table table-hover"
                                                               border="1" frame="box">
                                                               <thead>
                                                                 <tr style="background-color: #2d2d2d;">
@@ -778,7 +778,7 @@
                                                                   <td>Warning</td>
                                                                 </tr>
                                                               </thead>
-                                                              <tbody id="warning-body">
+                                                              <tbody id="warning-body-<%=i%>">
                                                                 <% if (tickets !=null) {%>
                                                                   <% for(var j=0; j<tickets.length; j++) {%>
                                                                     <tr>
@@ -808,8 +808,8 @@
                                                             </table>
                                                           </div>
                                                           <div class="tab-pane fade" id="pills-arrests-<%=i%>" role="tabpanel"
-                                                            aria-labelledby="pills-arrests-tab">
-                                                            <table id="arrest-table" class="table table-hover"
+                                                            aria-labelledby="pills-arrests-tab-<%=i%>">
+                                                            <table id="arrest-table-<%=i%>" class="table table-hover"
                                                               border="1" frame="box">
                                                               <thead>
                                                                 <tr style="background-color: #2d2d2d;">
@@ -818,7 +818,7 @@
                                                                   <td>Summary</td>
                                                                 </tr>
                                                               </thead>
-                                                              <tbody id="arrest-body">
+                                                              <tbody id="arrest-body-<%=i%>">
                                                                 <% if (arrestReports !=null) {%>
                                                                   <% for(var j=0; j<arrestReports.length; j++) {%>
                                                                     <tr>
