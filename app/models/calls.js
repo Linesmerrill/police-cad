@@ -83,6 +83,39 @@ callSchema.methods.socketCreateCall = function (req) {
   this.call.status = true;
 };
 
+callSchema.methods.socketCreate911Call = function (req) {
+  // console.debug("911 call req: ", req)
+
+  if (exists(req.body.name) && exists(req.body.location)) {
+    this.call.shortDescription = `911 Caller: ${req.body.name.trim()}`
+  }
+  
+  if (exists(req.body.peopleDescription) && exists(req.body.peopleDescription) && exists(req.body.name) && exists(req.body.location)) {
+    this.call.callNotes = `
+    911 Caller: ${req.body.name.trim()}
+    Location: ${req.body.location.trim()}
+    Call Description: ${req.body.callDescription.trim()}
+    Suspect Description: ${req.body.peopleDescription.trim()}`
+  }
+  if (exists(req.body.username)) {
+    this.call.createdByUsername = req.body.username;
+  }
+  if (exists(req.body.userID)) {
+    this.call.createdByID = req.body.userID;
+  }
+  if (exists(req.body.activeCommunityID)) {
+    this.call.communityID = req.body.activeCommunityID;
+  }
+  if (exists(req.body.createdAt)) {
+    this.call.createdAt = req.body.createdAt;
+  }
+  if (exists(req.body.createdAtReadable)) {
+    this.call.createdAtReadable = req.body.createdAtReadable;
+  }
+
+  this.call.status = true;
+};
+
 module.exports = mongoose.model('Call', callSchema);
 
 function exists(v) {

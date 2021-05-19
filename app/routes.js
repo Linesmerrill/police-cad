@@ -3148,6 +3148,17 @@ module.exports = function (app, passport, server) {
       });
     })
 
+    socket.on('create_911_call', (req) => {
+      // console.debug('create new 911 call socket: ', req)
+      var myNew911Call = new Call()
+      myNew911Call.socketCreate911Call(req)
+      myNew911Call.save(function (err, dbCalls) {
+        if (err) return console.error(err);
+        socket.broadcast.emit('created_call', dbCalls)
+        return socket.emit('created_911_call', dbCalls)
+      });
+    })
+
     socket.on('clear_call', (req) => {
       // console.debug('clear call socket: ', req)
       return socket.broadcast.emit('cleared_call', req) //send to all listeners except the sender (ref https://stackoverflow.com/a/38026094/9392066)
