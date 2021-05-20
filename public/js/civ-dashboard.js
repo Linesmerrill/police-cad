@@ -333,6 +333,19 @@ function loadCivSocketData(civID) {
   })
 }
 
+function loadVehSocketData(vehID) {
+
+  var socket = io();
+  var myReq = {
+    vehID: vehID
+  }
+  socket.emit('lookup_veh_by_id', myReq)
+  socket.on('load_veh_by_id_result', (res) => {
+    //load civ data into UI
+    populateVehSocketDetails(res)
+  })
+}
+
 function populateCivSocketDetails(res) {
   loadDriversLicenseSocket(res);
   var firstName = res.civilian.firstName
@@ -550,6 +563,27 @@ function loadDriversLicenseSocket(res) {
   }))
 }
 
+function populateVehSocketDetails(res) {
+  $('#vehicleID').val(res._id)
+  $('#plateVeh').val(res.vehicle.plate.toUpperCase())
+
+  // since only cars after 6/26/2020 will have this info, we need to check for empty values
+  if (res.vehicle.vin == "" || res.vehicle.vin == undefined) {
+    $('#vinVeh').val("")
+    $('#no-existing-vin').show()
+  } else {
+    $('#vinVeh').val(res.vehicle.vin.toUpperCase())
+    $('#no-existing-vin').hide()
+  }
+  
+  $('#modelVeh').val(res.vehicle.model)
+  $('#colorView').val(res.vehicle.color)
+  $('#validRegView').val(res.vehicle.validRegistration)
+  $('#validInsView').val(res.vehicle.validInsurance)
+  $('#roVeh').val(res.vehicle.registeredOwner)
+  $('#stolenView').val(res.vehicle.isStolen)
+}
+
 /* function to send socket when new civ is created. This is to move away 
   from reloading the page on civ creation */
 $('#create-civ-form').submit(function (e) {
@@ -656,3 +690,63 @@ $('#create-civ-form').submit(function (e) {
     hideModal('call911Modal')
     return true;
   })
+
+  /* function to send socket when new civ is created. This is to move away 
+  from reloading the page on civ creation */
+$('#create-vehicle-form').submit(function (e) {
+  e.preventDefault(); //prevents page from reloading
+  
+  var socket = io();
+  var myReq = {
+    body: {
+      plate: $('#plate').val(),
+      vin: $('#vin').val(),
+      model: $('#model').val(),
+      color: $('#color').val(),
+      validRegistration: $('#valid-registration').val(),
+      validInsurance: $('#valid-insurance').val(),
+      registeredOwner: $('#registeredOwner-new-veh').val(),
+      isStolen: $('#is-stolen-new').val(),
+      activeCommunityID: $('#new-veh-activeCommunityID-new-veh').val(),
+      userID: $('#create-vehicle-user-id').val(),
+    }
+  }
+  socket.emit('create_new_veh', myReq)
+
+  //socket that receives a response after creating a new vehicle
+  socket.on('created_new_veh', (res) => {
+    //populate vehicle cards on the dashboard
+    //note: at the end of the vehicle plate we add a ')' to correctly display the plate on the page
+    $('#vehicles-thumbnail').append(
+      `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+        <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res._id}')">
+          <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
+          <div class="caption">
+            <h4 class="color-white license-plate">#${res.vehicle.plate})</h4>
+            <h5 class="color-white">${res.vehicle.color} ${res.vehicle.model}</h5>
+          </div>
+        </div>
+      </div>`
+    )
+
+    //populate the vehicle table
+    var containsEmptyRow = $('#vehicle-table tr>td').hasClass('dataTables_empty');
+    if (containsEmptyRow) {
+      $('#vehicle-table tbody>tr:first').fadeOut(1, function () {
+        $(this).remove();
+      })
+    }
+    $('#vehicle-table tr:last').after(
+      `<tr class="gray-hover" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res._id}')">
+      <td>${res.vehicle.plate}</td>
+      <td>${res.vehicle.model}</td>
+      <td>${res.vehicle.color}</td>
+    </tr>`).fadeTo(1, function () {
+      $(this).add();
+    })
+  })
+  //reset the form after form submit
+  $('#create-vehicle-form').trigger("reset"); 
+  hideModal('newVehicleModal')
+  return true;
+})

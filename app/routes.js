@@ -3275,6 +3275,28 @@ module.exports = function (app, passport, server) {
       }
     });
 
+    socket.on('lookup_veh_by_id', (req) => {
+      // console.debug('lookup veh socket: ', req)
+      if (exists(req.vehID)) {
+        Vehicle.findById({
+          '_id': ObjectId(req.vehID)
+        }, function (err, dbVeh) {
+          if (err) return console.error(err);
+          return socket.emit('load_veh_by_id_result', dbVeh) //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
+        })
+      }
+    });
+
+    socket.on('create_new_veh', (req) => {
+      // console.debug('create new veh socket: ', req)
+      var myNewVeh = new Vehicle()
+      myNewVeh.socketCreateVeh(req)
+      myNewVeh.save(function (err, dbVehicles) {
+        if (err) return console.error(err);
+        return socket.emit('created_new_veh', dbVehicles)
+      });
+    })
+
   }); //end of sockets
 
 }; //end of routes
