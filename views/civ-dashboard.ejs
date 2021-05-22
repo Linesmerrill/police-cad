@@ -90,15 +90,15 @@
               class="fas fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleUtilities">
-          <!-- <li>
+          <li>
             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
-              <a data-toggle="modal" href="#call911Modal" onclick="clearCall911ModalForm()"><span
+              <a data-toggle="modal" href="#call911Modal"><span
                   class="fas fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
               <% } else {%>
                 <a data-toggle="modal" href="#nonCommunityModal" class="mock-disabled"><span
                     class="fas fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
                 <% } %>
-          </li> -->
+          </li>
           <li>
             <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
                 class="fas fa-external-link-alt"></i></a>
@@ -142,10 +142,16 @@
             </h1>
           </div>
         </div>
+        <!-- imports the community specific alerts -->
+        <% include community-alerts %>
+        <div id="911CallCreatedAlert" class="alert alert-success alert-dismissible hide" role="alert">
+          <strong>Success!</strong> 911 Call has been placed
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
       </nav>
       
-      <!-- imports the community specific alerts -->
-      <% include community-alerts %>
       <section style='background-image: url("/static/images/blue-clouds.jpg");'>
         <div class="container">
           <!--Table for Personas  -->
@@ -1522,6 +1528,68 @@
     </div>
   </div>
 
+  <div id="call911Modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="call911Form" class="form-horizontal" action="/#" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Place a Call to 911</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="911CallName">Your Name:</label>
+              <div class="col-md-4">
+              <input id="911CallName" name="name" style="text-transform: capitalize;" type="text" placeholder="name: John Smith" class="form-control input-md" maxlength="100" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="911CallLocation">Location:</label>
+              <div class="col-md-4">
+              <input id="911CallLocation" name="location" style="text-transform: capitalize;" type="text" placeholder="location: Landmark, St Address" class="form-control input-md" maxlength="100" required>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="911CallPeopleDescription">Description of people involved:</label>
+              <div class="col-md-10 col-md-offset-1">
+                <textarea id="911CallPeopleDescription" name="peopleDescription" type="text" maxlength="500"
+                  placeholder="description: Names or physical description of people involved" class="form-control input-md" required></textarea>
+              </div>
+            </div>
+
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="911CallDescription">Description of what is/was happening:</label>
+              <div class="col-md-10 col-md-offset-1">
+                <textarea id="911CallDescription" name="callDescription" type="text" maxlength="500"
+                  placeholder="description: Summary of what is/was happening" class="form-control input-md" required></textarea>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="create911Call"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" id="911CallCommunityID" name="communityID" value="<%= user.user.activeCommunity %>">
+                <input type="hidden" id="911CallUsername" name="communityID" value="<%= user.user.username %>">
+                <button id="create911Call" value="<%= user._id %>" name="userID"  class="btn btn-primary">Submit</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <% include account-management %>
   <% include notification-modal %>
 
@@ -1677,7 +1745,7 @@ $("#lastName").keydown(function(event) {
 
 //CURRENT_VERSION
     //the current version in production
-    let CURRENT_VERSION = "v2.20.0"
+    let CURRENT_VERSION = "v2.21.0"
     let MINOR_VERSION = CURRENT_VERSION.split(".")[1]
 
     //check for notification cookie
