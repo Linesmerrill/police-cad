@@ -2720,6 +2720,11 @@ module.exports = function (app, passport, server) {
 
   app.post('/deleteEmsVeh', auth, function (req, res) {
     // console.debug(req.body)
+    var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /deleteEmsVeh")
+    if (!isValid) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect('back')
+    }
     EmsVehicle.findByIdAndDelete({
       '_id': ObjectId(req.body.vehicleID)
     }, function (err) {
