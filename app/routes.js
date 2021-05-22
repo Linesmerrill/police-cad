@@ -2840,6 +2840,18 @@ module.exports = function (app, passport, server) {
       }
     });
 
+    socket.on('get_call_by_id', (callID) => {
+      if (!isValidObjectIdLength(callID)) {
+        return console.error(`invalid call ID length for socket: get_call_by_id, callID: ${callID}`)
+      }
+      Call.findById({
+        '_id': ObjectId(callID)
+      }, function (err, dbCalls) {
+        if (err) return console.error(err)
+        return socket.emit('load_call_by_id_result', dbCalls);
+      })
+    })
+
     socket.on('load_police_bolos', (user) => {
       if (user.user.activeCommunity != null && user.user.activeCommunity != undefined) {
         Bolo.find({
