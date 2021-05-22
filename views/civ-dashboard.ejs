@@ -509,7 +509,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/create-vehicle" method="post">
+          <form id="create-vehicle-form" class="form-horizontal" action="#" method="post">
             <fieldset>
 
             <!-- Form Name -->
@@ -602,8 +602,8 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="create-vehicle"></label>
               <div class="col-md-4">
-                <input type="hidden" name="userID" value="<%= user._id %>">
-                <input type="hidden" id="new-veh-activeCommunityID-new-veh" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
+                <input id="create-vehicle-user-id" type="hidden" name="userID" value="<%= user._id %>">
+                <input id="new-veh-activeCommunityID-new-veh" type="hidden" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
                 <button id="create-vehicle" class="btn btn-primary">Create</button>
               </div>
             </div>
@@ -661,7 +661,7 @@
                 <select id="registeredOwner-new-firearm" name="registeredOwner" class="form-control">
                   <option value="N/A">N/A</option>
                   <% for(var i=0; i<personas.length; i++) {%>
-                    <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%=i+1%>) <%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                    <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
                    <% } %>
                 </select>
               </div>
@@ -1353,7 +1353,7 @@
                 <select id="registeredOwner-details" name="registeredOwner" class="form-control">
                   <option value="N/A">N/A</option>
                   <% for(var i=0; i<personas.length; i++) {%>
-                    <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%=i+1%>) <%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                    <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
                    <% } %>
                 </select>
               </div>
