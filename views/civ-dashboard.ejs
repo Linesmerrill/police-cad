@@ -578,10 +578,10 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
               <div class="col-md-4">
-                <select id="registeredOwner-new-veh" name="registeredOwner" class="form-control">
+                <select id="registeredOwner-new-veh" name="registeredOwner" class="form-control capitalize">
                   <option value="N/A">N/A</option>
                   <% for(var i=0; i<personas.length; i++) {%>
-                    <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%=i+1%>) <%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                    <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
                    <% } %>
                 </select>
               </div>
@@ -1279,10 +1279,10 @@
             <div class="form-group">
                 <label class="col-md-4 control-label" for="roVeh">Registered Owner:</label>
                 <div class="col-md-4">
-                  <select id="roVeh" name="roVeh" class="form-control" selected="selected">
+                  <select id="roVeh" name="roVeh" class="form-control capitalize" selected="selected">
                     <option value="N/A">N/A</option>
                     <% for(var i=0; i<personas.length; i++) {%>
-                      <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%=i+1%>) <%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                      <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
                      <% } %>
                   </select>
                 </div>
