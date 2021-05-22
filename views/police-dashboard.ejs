@@ -321,8 +321,8 @@
                 <% if (calls[i].call.status==true) {%>
                   <% if (calls[i].call.assignedOfficers !=null && calls[i].call.assignedOfficers !='' ) {%>
                     <% if (calls[i].call.assignedOfficers.includes(user._id)==true) {%>
-                      <a id="<%=calls[i]._id%>-row" data-toggle="modal" href="#callDetailModal"
-                        onclick="populateCallDetails('<%=calls[i].call.createdAt%>', '<%=calls[i].call.updatedAt%>', '<%=calls[i].call.assignedOfficers%>','<%=calls[i].call.shortDescription%>','<%=calls[i].call.callNotes%>')">
+                      <a id="<%=calls[i]._id%>" data-toggle="modal" href="#callDetailModal"
+                        onclick="populateCallDetails('<%=calls[i]._id%>')">
                         <div class="alert alert-success alert-dismissible show" role="alert">
                           Opened: <span id="<%=calls[i]._id%>-createdAt" style="text-transform:capitalize"><time>
                               <%=calls[i].call.createdAtReadable%>
@@ -2190,16 +2190,12 @@
       if (res.call.communityID==myUser.user.activeCommunity) {
         if (res.call.assignedOfficers.includes(myUser._id)==true) {
           $('#assigned-call-container').append(
-            '<a id="'+res._id+
-            '-row" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails(\''+res.call
-              .createdAt+'\',\''+res.call.updatedAt+'\',\''+res.call.assignedOfficers+'\',\''+res
-                .call.shortDescription+'\',\''+res.call.callNotes+'\')">'+
-            '<div class="alert alert-success alert-dismissible show" role="alert">'+
-            'Opened: <span id="'+res._id+'-createdAt" style="text-transform:capitalize"><time>'+res.call
-              .createdAtReadable+'</time> |  Description: <span id="'+res._id+'-description">'+res.call
-              .shortDescription+'</span></span>'+
-            '</div>'+
-            '</a>'
+            `<a id="${res._id}" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails('${res._id}')">
+              <div class="alert alert-success alert-dismissible show" role="alert">
+                Opened: <span id="${res._id}-createdAt" style="text-transform:capitalize">
+                  <time>${res.call.createdAtReadable}</time> |  Description: <span id="${res._id}-description">${res.call.shortDescription}</span></span>
+            </div>
+            </a>`
           ).fadeTo(1, function () {
             $(this).add();
           })
@@ -2727,18 +2723,23 @@
     })
   }
 
-  function populateCallDetails(createdAt, updatedAt, assignedOfficers, shortDescription, callNotes) {
-    // console.debug(createdAt, updatedAt, assignedOfficers, shortDescription, callNotes)
-    var createdDate=new Date(createdAt)
-    if (updatedAt==""||updatedAt=='undefined') {
-      $('#updatedAtCallDetail').empty().text("N/A")
-    } else {
-      var updatedDate=new Date(updatedAt)
-      $('#updatedAtCallDetail').empty().text(updatedDate.toLocaleString())
-    }
-    $('#createdAtCallDetail').empty().text(createdDate.toLocaleString())
-    $('#descriptionCallDetail').empty().text(shortDescription)
-    $('#callNotesDetail').empty().text(callNotes)
+  function populateCallDetails(callID) {
+    var socket=io();
+    socket.emit('get_call_by_id', callID)
+    socket.on('load_call_by_id_result', (res) => {
+      //debug log
+      //console.log(res)
+      var createdDate=new Date(res.call.createdAt)
+      if (res.call.updatedAt===""||res.call.updatedAt===undefined||res.call.updatedAt==='undefined') {
+        $('#updatedAtCallDetail').empty().text("N/A")
+      } else {
+        var updatedDate=new Date(res.call.updatedAt)
+        $('#updatedAtCallDetail').empty().text(updatedDate.toLocaleString())
+      }
+      $('#createdAtCallDetail').empty().text(createdDate.toLocaleString())
+      $('#descriptionCallDetail').empty().text(res.call.shortDescription)
+      $('#callNotesDetail').empty().text(res.call.callNotes)
+    })
   }
 
   function populatePanicDetails(id) {

@@ -2720,6 +2720,11 @@ module.exports = function (app, passport, server) {
 
   app.post('/deleteEmsVeh', auth, function (req, res) {
     // console.debug(req.body)
+    var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /deleteEmsVeh")
+    if (!isValid) {
+      req.app.locals.specialContext = "invalidRequest";
+      return res.redirect('back')
+    }
     EmsVehicle.findByIdAndDelete({
       '_id': ObjectId(req.body.vehicleID)
     }, function (err) {
@@ -2834,6 +2839,18 @@ module.exports = function (app, passport, server) {
         });
       }
     });
+
+    socket.on('get_call_by_id', (callID) => {
+      if (!isValidObjectIdLength(callID)) {
+        return console.error(`invalid call ID length for socket: get_call_by_id, callID: ${callID}`)
+      }
+      Call.findById({
+        '_id': ObjectId(callID)
+      }, function (err, dbCalls) {
+        if (err) return console.error(err)
+        return socket.emit('load_call_by_id_result', dbCalls);
+      })
+    })
 
     socket.on('load_police_bolos', (user) => {
       if (user.user.activeCommunity != null && user.user.activeCommunity != undefined) {
