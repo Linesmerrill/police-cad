@@ -15,7 +15,7 @@ var firearmSchema = mongoose.Schema({
     }
 });
 
-firearmSchema.methods.createFirearm = function (req, res) {
+firearmSchema.methods.socketCreateFirearm = function (req, res) {
     // console.debug("req body: ", req.body)
     this.firearm.serialNumber = req.body.serialNumber;
     this.firearm.weaponType = req.body.weaponType;
@@ -41,7 +41,6 @@ firearmSchema.methods.createFirearm = function (req, res) {
     this.firearm.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null
     this.firearm.userID = req.body.userID; // we set this when submitting the from so it should not be null
     this.firearm.createdAt = new Date();
-    res.redirect('/civ-dashboard');
 };
 
 module.exports = mongoose.model('Firearm', firearmSchema);

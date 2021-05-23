@@ -541,7 +541,9 @@ module.exports = function (app, passport, server) {
           return res.redirect('/dispatch-dashboard')
         }
         Civilian.find({
-          '$text': {'$search': `"${firstName}" "${lastName}"`},
+          '$text': {
+            '$search': `"${firstName}" "${lastName}"`
+          },
           'civilian.birthday': req.query.dateOfBirth,
           '$or': [{ // some are stored as empty strings and others as null so we need to check for both
             'civilian.activeCommunityID': ''
@@ -627,7 +629,9 @@ module.exports = function (app, passport, server) {
         });
       } else {
         Civilian.find({
-          '$text': {'$search': `"${firstName}" "${lastName}"`},
+          '$text': {
+            '$search': `"${firstName}" "${lastName}"`
+          },
           'civilian.activeCommunityID': req.query.activeCommunityID
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
@@ -719,7 +723,9 @@ module.exports = function (app, passport, server) {
           return res.redirect('/police-dashboard')
         }
         Civilian.find({
-          '$text': {'$search': `"${firstName}" "${lastName}"`},
+          '$text': {
+            '$search': `"${firstName}" "${lastName}"`
+          },
           'civilian.birthday': req.query.dateOfBirth,
           '$or': [{ // some are stored as empty strings and others as null so we need to check for both
             'civilian.activeCommunityID': ''
@@ -782,7 +788,9 @@ module.exports = function (app, passport, server) {
         });
       } else {
         Civilian.find({
-          '$text': {'$search': `"${firstName}" "${lastName}"`},
+          '$text': {
+            '$search': `"${firstName}" "${lastName}"`
+          },
           'civilian.activeCommunityID': req.query.activeCommunityID
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
@@ -1728,34 +1736,10 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.post('/create-civ', auth, function (req, res) {
-    var myCiv = new Civilian()
-    myCiv.updateCiv(req, res)
-    myCiv.save(function (err) {
-      if (err) return console.error(err);
-    });
-  });
-
   app.post('/create-ems', auth, function (req, res) {
     var myEms = new Ems()
     myEms.create(req, res)
     myEms.save(function (err) {
-      if (err) return console.error(err);
-    });
-  });
-
-  app.post('/create-vehicle', auth, function (req, res) {
-    var myVeh = new Vehicle()
-    myVeh.createVeh(req, res)
-    myVeh.save(function (err) {
-      if (err) return console.error(err);
-    });
-  });
-
-  app.post('/create-firearm', auth, function (req, res) {
-    var myFirearm = new Firearm()
-    myFirearm.createFirearm(req, res)
-    myFirearm.save(function (err) {
       if (err) return console.error(err);
     });
   });
@@ -3304,6 +3288,18 @@ module.exports = function (app, passport, server) {
       }
     });
 
+    socket.on('lookup_firearm_by_id', (req) => {
+      // console.debug('lookup firearm socket: ', req)
+      if (exists(req.firearmID)) {
+        Firearm.findById({
+          '_id': ObjectId(req.firearmID)
+        }, function (err, dbFirearm) {
+          if (err) return console.error(err);
+          return socket.emit('load_firearm_by_id_result', dbFirearm) //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
+        })
+      }
+    });
+
     socket.on('create_new_veh', (req) => {
       // console.debug('create new veh socket: ', req)
       var myNewVeh = new Vehicle()
@@ -3311,6 +3307,16 @@ module.exports = function (app, passport, server) {
       myNewVeh.save(function (err, dbVehicles) {
         if (err) return console.error(err);
         return socket.emit('created_new_veh', dbVehicles)
+      });
+    })
+
+    socket.on('create_new_firearm', (req) => {
+      // console.debug('create new firearm socket: ', req)
+      var myNewFirearm = new Firearm()
+      myNewFirearm.socketCreateFirearm(req)
+      myNewFirearm.save(function (err, dbFirearms) {
+        if (err) return console.error(err);
+        return socket.emit('created_new_firearm', dbFirearms)
       });
     })
 

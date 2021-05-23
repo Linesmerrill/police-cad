@@ -256,9 +256,9 @@
         <div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
           <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id='<%=i%>' data-target="#viewFirearm" onclick="loadFirearmData('<%=i%>')">
             <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
-            <div class="caption">
+            <div class="caption text-capitalize">
               <h4 class="color-white" style="font-family: dealerplatecalifornia;"><%= firearms[i].firearm.serialNumber%></h4>
-              <h5 class="color-white" style="text-transform: capitalize;"><%= firearms[i].firearm.weaponType%></h5>
+              <h5 class="color-white"><%= firearms[i].firearm.weaponType%></h5>
               <p class="color-white" style="font-size: 12px;"><%= firearms[i].firearm.registeredOwner%></p>
             </div>
           </div>
@@ -609,7 +609,6 @@
             </div>
             </fieldset>
             </form>
-
         </div>
       </div>
     </div>
@@ -619,7 +618,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/create-firearm" method="post">
+          <form id="create-firearm-form" class="form-horizontal" action="#" method="post">
             <fieldset>
 
             <!-- Form Name -->
@@ -682,14 +681,13 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="create-firearm"></label>
               <div class="col-md-4">
-                <input type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-firearm-userID" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-veh-activeCommunityID-new-firearm" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
                 <button id="create-firearm" class="btn btn-primary">Create</button>
               </div>
             </div>
             </fieldset>
             </form>
-
         </div>
       </div>
     </div>
@@ -1350,7 +1348,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
               <div class="col-md-6">
-                <select id="registeredOwner-details" name="registeredOwner" class="form-control">
+                <select id="registeredOwner-details" name="registeredOwner" class="form-control text-capitalize">
                   <option value="N/A">N/A</option>
                   <% for(var i=0; i<personas.length; i++) {%>
                     <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
