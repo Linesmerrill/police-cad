@@ -341,9 +341,35 @@ function loadVehSocketData(vehID) {
   }
   socket.emit('lookup_veh_by_id', myReq)
   socket.on('load_veh_by_id_result', (res) => {
-    //load civ data into UI
+    //load vehicle data into UI
     populateVehSocketDetails(res)
   })
+}
+
+function loadFirearmSocketData(firearmID) {
+  var socket = io();
+  var myReq = {
+    firearmID: firearmID
+  }
+  socket.emit('lookup_firearm_by_id', myReq)
+  socket.on('load_firearm_by_id_result', (res) => {
+    //load firearm data into UI
+    populateFirearmSocketDetails(res)
+  })
+}
+
+function populateFirearmSocketDetails(res) {
+  $('#firearmID').val(res._id)
+  $('#serial-number-details').val(res.firearm.serialNumber)
+  $('#weapon-type-details').val(res.firearm.weaponType)
+  //Because from the backend we already split the person_id from the person name and dob, we now 
+  //need to rejoin those values back together for #registeredOwner-details
+  if (res.firearm.registeredOwner == 'N/A') {
+    $('#registeredOwner-details').val(`${res.firearm.registeredOwner}`)
+  } else {
+    $('#registeredOwner-details').val(`${res.firearm.registeredOwnerID}+${res.firearm.registeredOwner}`)
+  }
+  $('#is-stolen-details').val(res.firearm.isStolen)
 }
 
 function populateCivSocketDetails(res) {
@@ -700,8 +726,8 @@ $('#call911Form').submit(function (e) {
   return true;
 })
 
-/* function to send socket when new civ is created. This is to move away 
-from reloading the page on civ creation */
+/* function to send socket when new vehicle is created. This is to move away 
+from reloading the page on vehicle creation */
 $('#create-vehicle-form').submit(function (e) {
   e.preventDefault(); //prevents page from reloading
 
@@ -757,5 +783,61 @@ $('#create-vehicle-form').submit(function (e) {
   //reset the form after form submit
   $('#create-vehicle-form').trigger("reset");
   hideModal('newVehicleModal')
+  return true;
+})
+
+/* function to send socket when new firearm is created. 
+This is to move away from reloading the page on firearm creation */
+$('#create-firearm-form').submit(function (e) {
+  e.preventDefault(); //prevents page from reloading
+
+  var socket = io();
+  var myReq = {
+    body: {
+      serialNumber: $('#serial-number').val(),
+      weaponType: $('#weapon-type').val(),
+      registeredOwner: $('#registeredOwner-new-firearm').val(),
+      isStolen: $('#is-stolen-update').val(),
+      activeCommunityID: $('#new-veh-activeCommunityID-new-firearm').val(),
+      userID: $('#new-firearm-userID').val(),
+    }
+  }
+  socket.emit('create_new_firearm', myReq)
+
+  //socket that receives a response after creating a new firearm
+  socket.on('created_new_firearm', (res) => {
+    //populate firearm cards on the dashboard
+    $('#firearms-thumbnail').append(
+      `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
+      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res._id}')">
+        <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
+        <div class="caption text-capitalize">
+          <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res.firearm.serialNumber}</h4>
+          <h5 class="color-white">${res.firearm.weaponType}</h5>
+          <p class="color-white" style="font-size: 12px;">${res.firearm.registeredOwner}</p>
+        </div>
+      </div>
+    </div>`
+    )
+
+    //populate the firearm table
+    var containsEmptyRow = $('#firearm-table tr>td').hasClass('dataTables_empty');
+    if (containsEmptyRow) {
+      $('#firearm-table tbody>tr:first').fadeOut(1, function () {
+        $(this).remove();
+      })
+    }
+    $('#firearm-table tr:last').after(
+      `<tr class="gray-hover" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res._id}')">
+      <td>${res.firearm.serialNumber}</td>
+      <td style="text-transform: capitalize;"> ${res.firearm.weaponType}</td>
+      <td> ${res.firearm.registeredOwner}</td>
+    </tr>`).fadeTo(1, function () {
+      $(this).add();
+    })
+  })
+  //reset the form after form submit
+  $('#create-firearm-form').trigger("reset");
+  hideModal('newFirearmModal')
   return true;
 })
