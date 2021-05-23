@@ -841,3 +841,87 @@ $('#create-firearm-form').submit(function (e) {
   hideModal('newFirearmModal')
   return true;
 })
+
+/* function to send socket when a civilian is updated/deleted. 
+This is to move away from reloading the page on civilian updates/deletions */
+$('#update-delete-civ-form').submit(function (e) {
+  e.preventDefault(); //prevents page from reloading
+  let submitter_btn = $(e.originalEvent.submitter);
+  var socket = io();
+  var myReq = {
+    body: {
+      civID: $('#civilianIDView').text(),
+      civFirstName: $('#firstName').val(),
+      civLastName: $('#lastName').val(),
+      licenseStatus: $('#license-status').val(),
+      ticketCount: $('#ticket-count').val(), //dont really have
+      birthday: $('#delBirthday').val(),
+      warrants: $('#warrants').val(), //dont really have
+      address: $('#addressView').val(),
+      occupation: $('#occupationView').val(),
+      firearmLicense: $('#firearmLicenseView').val(),
+      gender: $('#gender-view').val(),
+      imperial: $('#height-imperial-view').is(':checked'), //heightClassification
+      metric: $('#height-metric-view').is(':checked'), //heightClassification
+      heightFoot: $('#foot-view').val(),
+      heightInches: $('#inches-view').val(),
+      heightCentimeters: $('#centimeters-view').val(),
+      weightImperial: $('#imperial-weight-view').is(':checked'), //weightClassification
+      weightMetric: $('#metric-weight-view').is(':checked'), //weightClassification
+      kilos: $('#kilos-view').val(),
+      pounds: $('#pounds-view').val(),
+      eyeColor: $('#eye-color-view').val(),
+      hairColor: $('#hair-color-view').val(),
+      organDonor: $('#organ-donor-view').is(':checked'),
+      veteran: $('#veteran-view').is(':checked'),
+      activeCommunityID: $('#new-civ-activeCommunityID-new-civ').val(),
+      userID: $('#userID').val(),
+    }
+  }
+  console.log("outgoing req: ", myReq)
+  if (submitter_btn.attr("value")==='delete') { 
+    socket.emit('delete_civilian', myReq)
+  } else if (submitter_btn.attr("value") ==='update') {
+    socket.emit('update_civilian', myReq)
+  } else {
+    return console.error(`[LPS Error] no matching action found, got: ${submitter_btn.attr("value")}, wanted: ['update', 'delete']`)
+  }
+
+  //socket that receives a response after updating a civilian
+  socket.on('updated_civilian', (res) => {
+    console.log("updated civ res: ", res)
+    //populate firearm cards on the dashboard
+    // $('#firearms-thumbnail').append(
+    //   `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
+    //   <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res._id}')">
+    //     <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
+    //     <div class="caption text-capitalize">
+    //       <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res.firearm.serialNumber}</h4>
+    //       <h5 class="color-white">${res.firearm.weaponType}</h5>
+    //       <p class="color-white" style="font-size: 12px;">${res.firearm.registeredOwner}</p>
+    //     </div>
+    //   </div>
+    // </div>`
+    // )
+
+    //populate the firearm table
+  //   var containsEmptyRow = $('#firearm-table tr>td').hasClass('dataTables_empty');
+  //   if (containsEmptyRow) {
+  //     $('#firearm-table tbody>tr:first').fadeOut(1, function () {
+  //       $(this).remove();
+  //     })
+  //   }
+  //   $('#firearm-table tr:last').after(
+  //     `<tr class="gray-hover" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res._id}')">
+  //     <td>${res.firearm.serialNumber}</td>
+  //     <td style="text-transform: capitalize;"> ${res.firearm.weaponType}</td>
+  //     <td> ${res.firearm.registeredOwner}</td>
+  //   </tr>`).fadeTo(1, function () {
+  //     $(this).add();
+  //   })
+  })
+  //reset the form after form submit
+  $('#update-delete-civ-form').trigger("reset");
+  hideModal('viewCiv')
+  return true;
+})

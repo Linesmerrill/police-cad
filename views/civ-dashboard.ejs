@@ -817,7 +817,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" action="/updateOrDeleteCiv" method="POST">
+          <form id="update-delete-civ-form" class="form-horizontal" action="#" method="POST">
           <fieldset>
 
             <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="clearHelpText()">X</button>
@@ -869,7 +869,7 @@
           </div>
 
           <div class="col-md-12 text-align-center margin-bottom-1">
-            <input type="hidden" id="civilianID" name="civilianID">
+            <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
             <button type="submit" value="update" name="action" class="btn btn-info" onclick="clearHelpText()">Update Civilian</button>
             <button type="submit" value="delete" name="action" class="btn btn-danger" onclick="clearHelpText()">Delete Civilian</button>
           </div>

@@ -33,8 +33,9 @@ var civilianSchema = mongoose.Schema({
   }
 });
 
-civilianSchema.methods.updateCiv = function (req, res) {
-  // console.debug('req: ', req.body)
+civilianSchema.methods.updateCiv = function (req) {
+  console.debug('req: ', req.body)
+  this._id = req.body.civID
   this.civilian.firstName = req.body.civFirstName.trim().charAt(0).toUpperCase() + req.body.civFirstName.trim().slice(1);
   this.civilian.lastName = req.body.civLastName.trim().charAt(0).toUpperCase() + req.body.civLastName.trim().slice(1);
   this.civilian.licenseStatus = (req.body.licenseStatus ? '1' : '3');
@@ -101,11 +102,17 @@ civilianSchema.methods.updateCiv = function (req, res) {
   }
   this.civilian.userID = req.body.userID; // we set this when submitting the form so it should not be null
   this.civilian.createdAt = new Date();
-  res.redirect('/civ-dashboard');
+  // res.redirect('/civ-dashboard');
 };
 
 civilianSchema.methods.socketCreateCiv = function (req, res) {
   // console.debug('req in db method: ', req.body)
+
+  // we use this for updates, so if the civID is provided then we will treat this
+  // as an upsert
+  if (req.body.civID) {
+    this._id = req.body.civID
+  }
   this.civilian.firstName = req.body.civFirstName.trim().toLowerCase(); //need to fix on lookup for all lowercase
   this.civilian.lastName = req.body.civLastName.trim().toLowerCase(); //need to fix on lookup for all lowercase
   this.civilian.licenseStatus = (req.body.licenseStatus ? '1' : '3');
@@ -170,14 +177,14 @@ civilianSchema.methods.socketCreateCiv = function (req, res) {
     this.civilian.hairColor = req.body.hairColor;
   }
   if (exists(req.body.organDonor)) {
-    if (req.body.organDonor == 'on') {
+    if (req.body.organDonor == 'on' || req.body.organDonor === true) {
       this.civilian.organDonor = true;
     } else {
       this.civilian.organDonor = false;
     }
   }
   if (exists(req.body.veteran)) {
-    if (req.body.veteran == 'on') {
+    if (req.body.veteran == 'on' || req.body.veteran === true) {
       this.civilian.veteran = true;
     } else {
       this.civilian.veteran = false;
