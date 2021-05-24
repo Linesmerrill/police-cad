@@ -146,8 +146,8 @@ civilianSchema.methods.socketCreateCiv = function (req, res) {
     // else just grab whatever value was passed in for height
     if (req.body.heightClassification === 'imperial') {
       if (exists(req.body.heightFoot) || exists(req.body.heightInches)) {
-      // because the USA is dumb, we gotta do some quick-maths to convert ft and inches to a single number :fml:
-      this.civilian.height = generateHeight(req.body.heightFoot, req.body.heightInches)
+        // because the USA is dumb, we gotta do some quick-maths to convert ft and inches to a single number :fml:
+        this.civilian.height = generateHeight(req.body.heightFoot, req.body.heightInches)
       }
     } else {
       if (exists(req.body.heightCentimeters)) {
@@ -164,7 +164,7 @@ civilianSchema.methods.socketCreateCiv = function (req, res) {
 
   if (exists(req.body.pounds)) {
     req.body.weightClassification = 'imperial'
-  } else if (exists(req.body.kilos)) { 
+  } else if (exists(req.body.kilos)) {
     req.body.weightClassification = 'metric'
   }
   if (exists(req.body.weightClassification)) {

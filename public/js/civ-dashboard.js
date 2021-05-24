@@ -652,7 +652,7 @@ $('#create-civ-form').submit(function (e) {
   socket.on('created_new_civ', (res) => {
     //populate civilian cards on the dashboard
     $('#personas-thumbnail').append(
-      `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+      `<div id="personas-thumbnail-${res._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
                 <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
                   <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                   <div class="caption capitalize">
@@ -878,9 +878,9 @@ $('#update-delete-civ-form').submit(function (e) {
       userID: $('#userID').val(),
     }
   }
-  if (submitter_btn.attr("value")==='delete') { 
+  if (submitter_btn.attr("value") === 'delete') {
     socket.emit('delete_civilian', myReq)
-  } else if (submitter_btn.attr("value") ==='update') {
+  } else if (submitter_btn.attr("value") === 'update') {
     socket.emit('update_civilian', myReq)
   } else {
     return console.error(`[LPS Error] no matching action found, got: ${submitter_btn.attr("value")}, wanted: ['update', 'delete']`)
@@ -895,6 +895,11 @@ $('#update-delete-civ-form').submit(function (e) {
     $(`#personas-table-name-${res._id}`).text(`${res.civilian.firstName} ${res.civilian.lastName}`)
     $(`#personas-table-dob-${res._id}`).text(res.civilian.birthday)
   })
+  //socket that receives a response after deleting a civilian
+  socket.on('deleted_civilian', (res) => {
+    $(`#personas-thumbnail-${res.body.civID}`).remove();
+  })
+
   //reset the form after form submit
   $('#update-delete-civ-form').trigger("reset");
   hideModal('viewCiv')

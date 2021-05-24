@@ -3265,17 +3265,56 @@ module.exports = function (app, passport, server) {
     })
 
     socket.on('update_civilian', (req) => {
-      console.debug('update civilian socket: ', req)
+      // console.debug('update civilian socket: ', req)
       if (!isValidObjectIdLength(req.body.civID)) {
         return console.error(`[LPS Error] cannot update civilian with invalid objectID, got: ${req.body.civID}`)
       } else {
-
-        Civilian.findById({'_id': ObjectId(req.body.civID)}, (err, doc) => {
+        Civilian.findById({
+          '_id': ObjectId(req.body.civID)
+        }, (err, doc) => {
           var civ = doc
           civ.socketCreateCiv(req)
           civ.save(function (err, dbCivilian) {
             if (err) return console.error(err);
             return socket.emit('updated_civilian', dbCivilian)
+          })
+        })
+      }
+    })
+
+    socket.on('delete_civilian', (req) => {
+      // console.debug('delete civilian socket: ', req)
+      if (!isValidObjectIdLength(req.body.civID)) {
+        return console.error(`[LPS Error] cannot delete civilian with invalid objectID, got: ${req.body.civID}`)
+      } else {
+        Civilian.findByIdAndDelete({
+          '_id': ObjectId(req.body.civID)
+        }, function (err) {
+          Ticket.deleteMany({
+            'ticket.civID': req.body.civID
+          }, function (err) {
+            if (err) return console.error(err);
+            ArrestReport.deleteMany({
+              'arrest.accusedID': req.body.civID
+            }, function (err) {
+              if (err) return console.error(err);
+              MedicalReport.deleteMany({
+                'report.civilianID': req.body.civID
+              }, function (err) {
+                if (err) return console.error(err);
+                Medication.deleteMany({
+                  'medication.civilianID': req.body.civID
+                }, function (err) {
+                  if (err) return console.error(err);
+                  Condition.deleteMany({
+                    'condition.civilianID': req.body.civID
+                  }, function (err) {
+                    if (err) return console.error(err);
+                    return socket.emit('deleted_civilian', req)
+                  })
+                })
+              })
+            })
           })
         })
       }
