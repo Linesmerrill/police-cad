@@ -629,19 +629,19 @@ $('#create-civ-form').submit(function (e) {
       occupation: $('#occupation').val(),
       firearmLicense: $('#firearmLicense').val(),
       gender: $('#gender').val(),
-      imperial: $('#imperial').val(), //heightClassification
-      metric: $('#metric').val(), //heightClassification
+      imperial: $('#imperial').is(':checked'), //heightClassification
+      metric: $('#metric').is(':checked'), //heightClassification
       heightFoot: $('#foot').val(),
       heightInches: $('#inches').val(),
       heightCentimeters: $('#centimeters').val(),
-      weightImperial: $('#imperial-weight').val(), //weightClassification
-      weightMetric: $('#metric-weight').val(), //weightClassification
+      weightImperial: $('#imperial-weight').is(':checked'), //weightClassification
+      weightMetric: $('#metric-weight').is(':checked'), //weightClassification
       kilos: $('#kilos').val(),
       pounds: $('#pounds').val(),
       eyeColor: $('#eyeColor').val(),
       hairColor: $('#hairColor').val(),
-      organDonor: $('#organDonor').val(),
-      veteran: $('#veteran').val(),
+      organDonor: $('#organDonor').is(':checked'),
+      veteran: $('#veteran').is(':checked'),
       activeCommunityID: $('#new-civ-activeCommunityID-new-civ').val(),
       userID: $('#newCivUserID').val(),
     }
@@ -878,7 +878,6 @@ $('#update-delete-civ-form').submit(function (e) {
       userID: $('#userID').val(),
     }
   }
-  console.log("outgoing req: ", myReq)
   if (submitter_btn.attr("value")==='delete') { 
     socket.emit('delete_civilian', myReq)
   } else if (submitter_btn.attr("value") ==='update') {
@@ -889,36 +888,12 @@ $('#update-delete-civ-form').submit(function (e) {
 
   //socket that receives a response after updating a civilian
   socket.on('updated_civilian', (res) => {
-    console.log("updated civ res: ", res)
-    //populate firearm cards on the dashboard
-    // $('#firearms-thumbnail').append(
-    //   `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
-    //   <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res._id}')">
-    //     <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
-    //     <div class="caption text-capitalize">
-    //       <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res.firearm.serialNumber}</h4>
-    //       <h5 class="color-white">${res.firearm.weaponType}</h5>
-    //       <p class="color-white" style="font-size: 12px;">${res.firearm.registeredOwner}</p>
-    //     </div>
-    //   </div>
-    // </div>`
-    // )
-
-    //populate the firearm table
-  //   var containsEmptyRow = $('#firearm-table tr>td').hasClass('dataTables_empty');
-  //   if (containsEmptyRow) {
-  //     $('#firearm-table tbody>tr:first').fadeOut(1, function () {
-  //       $(this).remove();
-  //     })
-  //   }
-  //   $('#firearm-table tr:last').after(
-  //     `<tr class="gray-hover" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res._id}')">
-  //     <td>${res.firearm.serialNumber}</td>
-  //     <td style="text-transform: capitalize;"> ${res.firearm.weaponType}</td>
-  //     <td> ${res.firearm.registeredOwner}</td>
-  //   </tr>`).fadeTo(1, function () {
-  //     $(this).add();
-  //   })
+    //populate the civ card that has been updated
+    $(`#personas-thumbnail-name-${res._id}`).text(`${res.civilian.firstName} ${res.civilian.lastName}`)
+    $(`#personas-thumbnail-dob-${res._id}`).text(res.civilian.birthday)
+    //populate the civ table
+    $(`#personas-table-name-${res._id}`).text(`${res.civilian.firstName} ${res.civilian.lastName}`)
+    $(`#personas-table-dob-${res._id}`).text(res.civilian.birthday)
   })
   //reset the form after form submit
   $('#update-delete-civ-form').trigger("reset");

@@ -168,11 +168,11 @@
               <div id="personas-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
                 <% for(var i=0; i<personas.length; i++) {%>
                 <div class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-                  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivData('<%=i%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
+                  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivSocketData('<%= personas[i]._id%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
                     <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                     <div class="caption">
-                      <h4 class="color-white capitalize"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></h4>
-                      <h5 class="color-white"><%= personas[i].civilian.birthday%></h5>
+                      <h4 id="personas-thumbnail-name-<%=personas[i]._id%>" class="color-white capitalize"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></h4>
+                      <h5 id="personas-thumbnail-dob-<%=personas[i]._id%>" class="color-white"><%= personas[i].civilian.birthday%></h5>
                     </div>
                   </div>
                 </div>
@@ -188,9 +188,9 @@
                 </thead>
                 <tbody>
                   <% for(var j=0; j<personas.length; j++) {%>
-                    <tr data-toggle="modal" data-id="<%=j%>" data-target="#viewCiv" onclick="loadCivData('<%=j%>');loadTicketsAndWarnings('<%=personas[j]._id%>');loadArrests('<%=personas[j]._id%>');loadReports('<%=personas[j]._id%>');loadMedications('<%=personas[j]._id%>');loadConditions('<%=personas[j]._id%>')">
-                      <td><%= personas[j].civilian.firstName%> <%= personas[j].civilian.lastName%></td>
-                      <td><%= personas[j].civilian.birthday%></td>
+                    <tr data-toggle="modal" data-id="<%=j%>" data-target="#viewCiv" onclick="loadCivSocketData('<%= personas[j]._id%>');loadTicketsAndWarnings('<%=personas[j]._id%>');loadArrests('<%=personas[j]._id%>');loadReports('<%=personas[j]._id%>');loadMedications('<%=personas[j]._id%>');loadConditions('<%=personas[j]._id%>')">
+                      <td id="personas-table-name-<%=personas[j]._id%>"><%= personas[j].civilian.firstName%> <%= personas[j].civilian.lastName%></td>
+                      <td id="personas-table-dob-<%=personas[j]._id%>"><%= personas[j].civilian.birthday%></td>
                     </tr>
                     <% } %>
                 </tbody>
@@ -1782,110 +1782,6 @@ $("#lastName").keydown(function(event) {
 
 
 }); /* End of document.ready */
-
-function loadCivData(index) {
-     var myVar = <%- JSON.stringify(personas) %>;
-     loadDriversLicense(myVar, index);
-     var firstName = myVar[index].civilian.firstName
-     var lastName = myVar[index].civilian.lastName
-     var birthday = myVar[index].civilian.birthday
-     var createdDate = new Date(myVar[index].civilian.createdAt)
-     var expDay = createdDate.getDate()
-     var expMonth = (createdDate.getMonth())+1
-     var expYear = (createdDate.getFullYear())+10
-     // debug log:
-     // console.log("load civ data: ", myVar[index].civilian)
- 
-     // pre-reqs to clear form between civilian clicks
-     $('#height-imperial-view').prop("checked", false)
-     $('#height-metric-view').prop("checked", false)
-     $('#foot-view').val('')
-     $('#inches-view').val('')
-     $('#centimeters-view').val('')
-     $('#imperial-weight-view').prop("checked", false)
-     $('#pounds-view').val('')
-     $('#metric-weight-view').prop("checked", false)
-     $('#eye-color-view').val('')
-     $('#hair-color-view').val('')
- 
-     // civilian details:
-     $('#civilianID').val(myVar[index]._id)
-     $('#civilianIDView').text(myVar[index]._id)
-     $('#firstName').text(firstName)
-     $('#lastNameView').text(lastName)
-     $('#birthdayView').text(birthday)
-     $('#warrantsView').val(myVar[index].civilian.warrants)
-     $('#firearmLicenseView').val(myVar[index].civilian.firearmLicense)
-     $('#addressView').val(myVar[index].civilian.address)
-     $('#occupationView').val(myVar[index].civilian.occupation)
- 
-     // advanced civilian details:
-     $('#gender-view').val(myVar[index].civilian.gender)
-     $('#height-imperial-view').prop("checked", myVar[index].civilian.heightClassification == 'imperial')
-     $('#height-metric-view').prop("checked", myVar[index].civilian.heightClassification == 'metric')
-     // because we accept 'imperial' and 'metric' as height classifications
-     // we need to figure out which we need to display for the height input boxes
-     if (myVar[index].civilian.heightClassification === 'imperial') {
-       //if we have imperial height, we need to convert inches into feet,inches
-       let foot = parseInt(parseInt(myVar[index].civilian.height) / 12)
-       let inches = parseFloat(myVar[index].civilian.height) % 12
-       $('#foot-view').val(foot)
-       $('#inches-view').val(inches)
-     } else if (myVar[index].civilian.heightClassification === 'metric') {
-       $('#centimeters-view').val(myVar[index].civilian.height)
-       $('.height-imperial').removeClass('show').addClass('hide');
-       $('.height-metric').removeClass('hide').addClass('show');
-     } else {
-       $('.height-imperial').removeClass('show').addClass('hide'); //if none are selected, then just hide the input fields
-     }
-     if (myVar[index].civilian.weightClassification === 'imperial') {
-       $('#imperial-weight-view').prop("checked", true)
-       $('#pounds-view').val(myVar[index].civilian.weight)
-       $('#kilos-view').val(''); //clear out kilos value stored in page
-       $('.weight-imperial').removeClass('hide').addClass('show');
-       $('.weight-metric').removeClass('show').addClass('hide');
-     } else if (myVar[index].civilian.weightClassification === 'metric') {
-       $('#metric-weight-view').prop("checked", true)
-       $('#pounds-view').val(''); //clear out lbs value stored in page
-       $('#kilos-view').val(myVar[index].civilian.weight)
-       $('.weight-metric').removeClass('hide').addClass('show');
-       $('.weight-imperial').removeClass('show').addClass('hide');
-     } else {
-       $('.weight-imperial').removeClass('show').addClass('hide'); //if none are selected, then just hide the input fields
-       $('.weight-metric').removeClass('show').addClass('hide');
-     }
-     
-     $('#eye-color-view').val(myVar[index].civilian.eyeColor)
-     $('#hair-color-view').val(myVar[index].civilian.hairColor)
-     
-     //to clear out the form from previous caching, we will just set it to false if it cannot be found in myVar
-     if (myVar[index].civilian.organDonor == undefined || myVar[index].civilian.organDonor == null) {
-       $('#organ-donor-view').prop("checked", false)
-     } else {
-       $('#organ-donor-view').prop("checked", myVar[index].civilian.organDonor)
-     }
-     //to clear out the form from previous caching, we will just set it to false if it cannot be found in myVar
-     if (myVar[index].civilian.veteran == undefined || myVar[index].civilian.veteran == null) {
-       $('#veteran-view').prop("checked", false)
-     } else {
-       $('#veteran-view').prop("checked", myVar[index].civilian.veteran)
-     }
- 
-     // data to be set for condition form
-     $('#condition-civ-first-name').val(firstName)
-     $('#condition-civ-last-name').val(lastName)
-     $('#condition-civ-date-of-birth').val(birthday)
- 
-     // data to be set for medication form
-     $('#medication-civ-first-name').val(firstName)
-     $('#medication-civ-last-name').val(lastName)
-     $('#medication-civ-date-of-birth').val(birthday)
- 
-     // data to be sent to db for civ deletion
-     $('#firstName').val(firstName)
-     $('#lastName').val(lastName)
-     $('#delBirthday').val(birthday)
-   }
 
 function loadVehData(index) {
      var myVar = <%- JSON.stringify(vehicles) %>;
