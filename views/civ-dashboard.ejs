@@ -179,24 +179,6 @@
                 </div>
                 <% } %>
               </div>
-              <div id="personas-table-div">
-              <table id="personas-table" class="table table-hover table-bordered">
-                <thead>
-                  <tr>
-                    <th>Civilian Name</th>
-                    <th>Date of Birth</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% for(var j=0; j<personas.length; j++) {%>
-                    <tr data-toggle="modal" data-id="<%=j%>" data-target="#viewCiv" onclick="loadCivSocketData('<%= personas[j]._id%>');loadTicketsAndWarnings('<%=personas[j]._id%>');loadArrests('<%=personas[j]._id%>');loadReports('<%=personas[j]._id%>');loadMedications('<%=personas[j]._id%>');loadConditions('<%=personas[j]._id%>')">
-                      <td id="personas-table-name-<%=personas[j]._id%>"><%= personas[j].civilian.firstName%> <%= personas[j].civilian.lastName%></td>
-                      <td id="personas-table-dob-<%=personas[j]._id%>"><%= personas[j].civilian.birthday%></td>
-                    </tr>
-                    <% } %>
-                </tbody>
-            </table>
-          </div>
         </div>
         <hr class="margin-top-1" style="width: 88%;max-width: 100rem;">
     <!--Table for Vehicles  -->
@@ -208,7 +190,7 @@
         <label>Search:
           <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
         </label>
-        <ion-icon id="app-icon-vehicles" name="apps-outline" class="color-white table-icon" onclick="showVehicleApps()"></ion-icon> <ion-icon id="list-icon-vehicles" name="list-outline" class="color-white table-icon" onclick="showVehicleList()"></ion-icon>
+        <ion-icon id="app-icon-vehicles" name="apps-outline" class="color-white table-icon" onclick="showVehicleApps()"></ion-icon> 
       </div>
       <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
         <% for(var i=0; i<vehicles.length; i++) {%>
@@ -223,22 +205,6 @@
         </div>
         <% } %>
       </div>
-      <div id="vehicles-table-div">
-        <table id="vehicle-table" class="table table-hover table-bordered">
-          <thead>
-            <tr><th>Plate</th><th>Model</th><th>Color</th></tr>
-          </thead>
-            <tbody>
-              <% for(var i=0; i<vehicles.length; i++) {%>
-              <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewVeh" onclick="loadVehData(<%=i%>)">
-                <td><%= vehicles[i].vehicle.plate%></td>
-                <td> <%= vehicles[i].vehicle.model%></td>
-                <td> <%= vehicles[i].vehicle.color%></td>
-              </tr>
-              <% } %>
-            </tbody>
-        </table>
-      </div>
     </div>
     <hr class="margin-top-1" style="width: 88%;max-width: 100rem;">
     <!--Table for Firearms  -->
@@ -250,7 +216,7 @@
         <label>Search:
           <input id="firearm-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
         </label>
-        <ion-icon id="app-icon-firearms" name="apps-outline" class="color-white table-icon" onclick="showFirearmsApps()"></ion-icon> <ion-icon id="list-icon-firearms" name="list-outline" class="color-white table-icon" onclick="showFirearmsList()"></ion-icon>
+        <ion-icon id="app-icon-firearms" name="apps-outline" class="color-white table-icon" onclick="showFirearmsApps()"></ion-icon> 
       </div>
       <div id="firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
         <% for(var i=0; i<firearms.length; i++) {%>
@@ -265,22 +231,6 @@
           </div>
         </div>
         <% } %>
-      </div>
-      <div id="firearms-table-div">
-        <table id="firearm-table" class="table table-hover table-bordered">
-          <thead>
-            <tr><th>Serial #</th><th>Type</th><th>Registered to</th></tr>
-          </thead>
-            <tbody>
-              <% for(var i=0; i<firearms.length; i++) {%>
-              <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewFirearm" onclick="loadFirearmData(<%=i%>)">
-                <td><%= firearms[i].firearm.serialNumber%></td>
-                <td style="text-transform: capitalize;"> <%= firearms[i].firearm.weaponType%></td>
-                <td> <%= firearms[i].firearm.registeredOwner%></td>
-              </tr>
-              <% } %>
-            </tbody>
-        </table>
       </div>
     </div>
     
@@ -468,14 +418,6 @@
             <hr style="width: 88%;max-width: 100rem;">
     
             <h5><ion-icon name="id-card-outline"></ion-icon> License Details</h5>
-
-            <!-- Checkbox -->
-            <div class="form-group required">
-              <label class="col-md-4 control-label" for="license-status">Create Drivers License?</label>
-              <div class="col-md-1">
-                <input id="license-status" type="checkbox" name="licenseStatus" class="form-control" checked>
-              </div>
-            </div>
 
             <!-- Select Basic -->
             <div class="form-group required">
@@ -1616,16 +1558,16 @@
 <script type="text/javascript">
   $(document).ready(function(){
     
-    // personas table 
+    // personas cards using data-tables to filter and sort
     if (document.cookie.split(';').some((item) => item.includes('persona_icon=list'))) {
       showList()
     } else if (document.cookie.split(';').some((item) => item.includes('persona_icon=app'))) {
       showApps()
     } else {
       $('.dataTables_filter').hide();
-      $('#personas-table-div').hide()
       $('#app-icon-personas').toggleClass('active-icon')
     }
+    //used to filter the personas cards
     var personasDataTable = $('#personas-table').DataTable({
     "bLengthChange": false,
     })

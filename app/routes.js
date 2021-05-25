@@ -3257,7 +3257,7 @@ module.exports = function (app, passport, server) {
     socket.on('create_new_civ', (req) => {
       // console.debug('create new civ socket: ', req)
       var myNewCiv = new Civilian()
-      myNewCiv.socketCreateCiv(req)
+      myNewCiv.socketCreateUpdateCiv(req)
       myNewCiv.save(function (err, dbCivilians) {
         if (err) return console.error(err);
         return socket.emit('created_new_civ', dbCivilians)
@@ -3273,7 +3273,7 @@ module.exports = function (app, passport, server) {
           '_id': ObjectId(req.body.civID)
         }, (err, doc) => {
           var civ = doc
-          civ.socketCreateCiv(req)
+          civ.socketCreateUpdateCiv(req)
           civ.save(function (err, dbCivilian) {
             if (err) return console.error(err);
             return socket.emit('updated_civilian', dbCivilian)

@@ -1,5 +1,8 @@
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt-nodejs');
+const {
+  registerDecorator
+} = require('handlebars');
 
 var civilianSchema = mongoose.Schema({
   civilian: {
@@ -33,79 +36,7 @@ var civilianSchema = mongoose.Schema({
   }
 });
 
-civilianSchema.methods.updateCiv = function (req) {
-  console.debug('req: ', req.body)
-  this._id = req.body.civID
-  this.civilian.firstName = req.body.civFirstName.trim().charAt(0).toUpperCase() + req.body.civFirstName.trim().slice(1);
-  this.civilian.lastName = req.body.civLastName.trim().charAt(0).toUpperCase() + req.body.civLastName.trim().slice(1);
-  this.civilian.licenseStatus = (req.body.licenseStatus ? '1' : '3');
-  this.civilian.ticketCount = req.body.ticketCount;
-  this.civilian.birthday = req.body.birthday;
-  this.civilian.warrants = req.body.warrants;
-  if (exists(req.body.address)) {
-    this.civilian.address = req.body.address.trim();
-  }
-  if (exists(req.body.occupation)) {
-    this.civilian.occupation = req.body.occupation.trim();
-  }
-  if (exists(req.body.firearmLicense)) {
-    this.civilian.firearmLicense = req.body.firearmLicense;
-  }
-  if (exists(req.body.activeCommunityID)) {
-    this.civilian.activeCommunityID = req.body.activeCommunityID;
-  }
-  if (exists(req.body.gender)) {
-    this.civilian.gender = req.body.gender;
-  }
-  // height classification: imperial or metric, imperial will have 2 inputs and metric will have one
-  if (exists(req.body.heightClassification)) {
-    this.civilian.heightClassification = req.body.heightClassification;
-    // if user has selected 'imperial', then we should calculate USA maths for height
-    // else just grab whatever value was passed in for height
-    if (req.body.heightClassification === 'imperial') {
-      // because the USA is dumb, we gotta do some quick-maths to convert ft and inches to a single number :fml:
-      this.civilian.height = generateHeight(req.body.heightFoot, req.body.heightInches)
-    } else {
-      if (exists(req.body.heightCentimeters)) {
-        this.civilian.height = req.body.heightCentimeters;
-      }
-    }
-  }
-
-  if (exists(req.body.weightImperial)) {
-    this.civilian.weight = req.body.weightImperial;
-  } else if (exists(req.body.weightMetric)) {
-    this.civilian.weight = req.body.weightMetric;
-  }
-  if (exists(req.body.weightClassification)) {
-    this.civilian.weightClassification = req.body.weightClassification;
-  }
-  if (exists(req.body.eyeColor)) {
-    this.civilian.eyeColor = req.body.eyeColor;
-  }
-  if (exists(req.body.hairColor)) {
-    this.civilian.hairColor = req.body.hairColor;
-  }
-  if (exists(req.body.organDonor)) {
-    if (req.body.organDonor == 'on') {
-      this.civilian.organDonor = true;
-    } else {
-      this.civilian.organDonor = false;
-    }
-  }
-  if (exists(req.body.veteran)) {
-    if (req.body.veteran == 'on') {
-      this.civilian.veteran = true;
-    } else {
-      this.civilian.veteran = false;
-    }
-  }
-  this.civilian.userID = req.body.userID; // we set this when submitting the form so it should not be null
-  this.civilian.createdAt = new Date();
-  // res.redirect('/civ-dashboard');
-};
-
-civilianSchema.methods.socketCreateCiv = function (req, res) {
+civilianSchema.methods.socketCreateUpdateCiv = function (req) {
   // console.debug('req in db method: ', req.body)
 
   // we use this for updates, so if the civID is provided then we will treat this
@@ -113,9 +44,9 @@ civilianSchema.methods.socketCreateCiv = function (req, res) {
   if (req.body.civID) {
     this._id = req.body.civID
   }
-  this.civilian.firstName = req.body.civFirstName.trim().toLowerCase(); //need to fix on lookup for all lowercase
-  this.civilian.lastName = req.body.civLastName.trim().toLowerCase(); //need to fix on lookup for all lowercase
-  this.civilian.licenseStatus = (req.body.licenseStatus ? '1' : '3');
+  this.civilian.firstName = req.body.civFirstName.trim().toLowerCase();
+  this.civilian.lastName = req.body.civLastName.trim().toLowerCase();
+  this.civilian.licenseStatus = req.body.licenseStatus; //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
   this.civilian.ticketCount = req.body.ticketCount;
   this.civilian.birthday = req.body.birthday;
   this.civilian.warrants = req.body.warrants;
@@ -134,41 +65,36 @@ civilianSchema.methods.socketCreateCiv = function (req, res) {
   if (exists(req.body.gender)) {
     this.civilian.gender = req.body.gender;
   }
-  if (exists(req.body.imperial)) {
-    req.body.heightClassification = 'imperial'
-  } else if (exists(req.body.metric)) {
-    req.body.heightClassification = 'metric'
-  }
-  // height classification: imperial or metric, imperial will have 2 inputs and metric will have one
-  if (exists(req.body.heightClassification)) {
-    this.civilian.heightClassification = req.body.heightClassification;
+  if (exists(req.body.imperial) && exists(req.body.metric)) {
+    // we have redundant boolean values for imperial and metric, 
+    //these will always be inverse values of one another.
+    //
     // if user has selected 'imperial', then we should calculate USA maths for height
     // else just grab whatever value was passed in for height
-    if (req.body.heightClassification === 'imperial') {
+    if (req.body.imperial) {
+      this.civilian.heightClassification = 'imperial'
+      // height classification: imperial or metric, imperial will have 2 inputs and metric will have one
       if (exists(req.body.heightFoot) || exists(req.body.heightInches)) {
         // because the USA is dumb, we gotta do some quick-maths to convert ft and inches to a single number :fml:
         this.civilian.height = generateHeight(req.body.heightFoot, req.body.heightInches)
       }
     } else {
+      this.civilian.heightClassification = 'metric'
       if (exists(req.body.heightCentimeters)) {
         this.civilian.height = req.body.heightCentimeters;
       }
     }
   }
-
-  if (exists(req.body.weightImperial)) {
-    this.civilian.weight = req.body.pounds;
-  } else if (exists(req.body.weightMetric)) {
-    this.civilian.weight = req.body.kilos;
-  }
-
-  if (exists(req.body.pounds)) {
-    req.body.weightClassification = 'imperial'
-  } else if (exists(req.body.kilos)) {
-    req.body.weightClassification = 'metric'
-  }
-  if (exists(req.body.weightClassification)) {
-    this.civilian.weightClassification = req.body.weightClassification;
+  if (exists(req.body.weightImperial) && exists(req.body.weightMetric)) {
+    // we have redundant boolean values for imperial and metric, 
+    //these will always be inverse values of one another.
+    if (req.body.weightImperial && exists(req.body.pounds)) {
+      this.civilian.weight = req.body.pounds;
+      this.civilian.weightClassification = 'imperial'
+    } else if (req.body.weightMetric && exists(req.body.kilos)) {
+      this.civilian.weight = req.body.kilos;
+      this.civilian.weightClassification = 'metric'
+    }
   }
   if (exists(req.body.eyeColor)) {
     this.civilian.eyeColor = req.body.eyeColor;
@@ -177,18 +103,10 @@ civilianSchema.methods.socketCreateCiv = function (req, res) {
     this.civilian.hairColor = req.body.hairColor;
   }
   if (exists(req.body.organDonor)) {
-    if (req.body.organDonor == 'on' || req.body.organDonor === true) {
-      this.civilian.organDonor = true;
-    } else {
-      this.civilian.organDonor = false;
-    }
+    this.civilian.organDonor = req.body.organDonor;
   }
   if (exists(req.body.veteran)) {
-    if (req.body.veteran == 'on' || req.body.veteran === true) {
-      this.civilian.veteran = true;
-    } else {
-      this.civilian.veteran = false;
-    }
+    this.civilian.veteran = req.body.veteran;
   }
   this.civilian.userID = req.body.userID; // we set this when submitting the form so it should not be null
   this.civilian.createdAt = new Date();

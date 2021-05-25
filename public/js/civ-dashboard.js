@@ -614,14 +614,12 @@ function populateVehSocketDetails(res) {
   from reloading the page on civ creation */
 $('#create-civ-form').submit(function (e) {
   e.preventDefault(); //prevents page from reloading
-
   var socket = io();
   var myReq = {
     body: {
-      action: 'create',
       civFirstName: $('#civ-first-name').val(),
       civLastName: $('#civ-last-name').val(),
-      licenseStatus: $('#license-status').val(),
+      licenseStatus: '1', //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
       ticketCount: $('#ticket-count').val(),
       birthday: $('#birthday').val(),
       warrants: $('#warrants').val(),
@@ -853,10 +851,8 @@ $('#update-delete-civ-form').submit(function (e) {
       civID: $('#civilianIDView').text(),
       civFirstName: $('#firstName').val(),
       civLastName: $('#lastName').val(),
-      licenseStatus: $('#license-status').val(),
-      ticketCount: $('#ticket-count').val(), //dont really have
+      licenseStatus: '1', //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
       birthday: $('#delBirthday').val(),
-      warrants: $('#warrants').val(), //dont really have
       address: $('#addressView').val(),
       occupation: $('#occupationView').val(),
       firearmLicense: $('#firearmLicenseView').val(),
@@ -881,6 +877,12 @@ $('#update-delete-civ-form').submit(function (e) {
   if (submitter_btn.attr("value") === 'delete') {
     socket.emit('delete_civilian', myReq)
   } else if (submitter_btn.attr("value") === 'update') {
+    socket.emit('update_civilian', myReq)
+  } else if (submitter_btn.attr("value") === 'deleteLicense') {
+    myReq.body.licenseStatus = '3'
+    socket.emit('update_civilian', myReq)
+  } else if (submitter_btn.attr("value") === 'createLicense') {
+    myReq.body.licenseStatus = '1'
     socket.emit('update_civilian', myReq)
   } else {
     return console.error(`[LPS Error] no matching action found, got: ${submitter_btn.attr("value")}, wanted: ['update', 'delete']`)
