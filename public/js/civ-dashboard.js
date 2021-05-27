@@ -614,14 +614,12 @@ function populateVehSocketDetails(res) {
   from reloading the page on civ creation */
 $('#create-civ-form').submit(function (e) {
   e.preventDefault(); //prevents page from reloading
-
   var socket = io();
   var myReq = {
     body: {
-      action: 'create',
       civFirstName: $('#civ-first-name').val(),
       civLastName: $('#civ-last-name').val(),
-      licenseStatus: $('#license-status').val(),
+      licenseStatus: '1', //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
       ticketCount: $('#ticket-count').val(),
       birthday: $('#birthday').val(),
       warrants: $('#warrants').val(),
@@ -629,19 +627,19 @@ $('#create-civ-form').submit(function (e) {
       occupation: $('#occupation').val(),
       firearmLicense: $('#firearmLicense').val(),
       gender: $('#gender').val(),
-      imperial: $('#imperial').val(), //heightClassification
-      metric: $('#metric').val(), //heightClassification
+      imperial: $('#imperial').is(':checked'), //heightClassification
+      metric: $('#metric').is(':checked'), //heightClassification
       heightFoot: $('#foot').val(),
       heightInches: $('#inches').val(),
       heightCentimeters: $('#centimeters').val(),
-      weightImperial: $('#imperial-weight').val(), //weightClassification
-      weightMetric: $('#metric-weight').val(), //weightClassification
+      weightImperial: $('#imperial-weight').is(':checked'), //weightClassification
+      weightMetric: $('#metric-weight').is(':checked'), //weightClassification
       kilos: $('#kilos').val(),
       pounds: $('#pounds').val(),
       eyeColor: $('#eyeColor').val(),
       hairColor: $('#hairColor').val(),
-      organDonor: $('#organDonor').val(),
-      veteran: $('#veteran').val(),
+      organDonor: $('#organDonor').is(':checked'),
+      veteran: $('#veteran').is(':checked'),
       activeCommunityID: $('#new-civ-activeCommunityID-new-civ').val(),
       userID: $('#newCivUserID').val(),
     }
@@ -652,7 +650,7 @@ $('#create-civ-form').submit(function (e) {
   socket.on('created_new_civ', (res) => {
     //populate civilian cards on the dashboard
     $('#personas-thumbnail').append(
-      `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+      `<div id="personas-thumbnail-${res._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
                 <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
                   <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                   <div class="caption capitalize">
@@ -839,5 +837,73 @@ $('#create-firearm-form').submit(function (e) {
   //reset the form after form submit
   $('#create-firearm-form').trigger("reset");
   hideModal('newFirearmModal')
+  return true;
+})
+
+/* function to send socket when a civilian is updated/deleted. 
+This is to move away from reloading the page on civilian updates/deletions */
+$('#update-delete-civ-form').submit(function (e) {
+  e.preventDefault(); //prevents page from reloading
+  let submitter_btn = $(e.originalEvent.submitter);
+  var socket = io();
+  var myReq = {
+    body: {
+      civID: $('#civilianIDView').text(),
+      civFirstName: $('#firstName').val(),
+      civLastName: $('#lastName').val(),
+      licenseStatus: '1', //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
+      birthday: $('#delBirthday').val(),
+      address: $('#addressView').val(),
+      occupation: $('#occupationView').val(),
+      firearmLicense: $('#firearmLicenseView').val(),
+      gender: $('#gender-view').val(),
+      imperial: $('#height-imperial-view').is(':checked'), //heightClassification
+      metric: $('#height-metric-view').is(':checked'), //heightClassification
+      heightFoot: $('#foot-view').val(),
+      heightInches: $('#inches-view').val(),
+      heightCentimeters: $('#centimeters-view').val(),
+      weightImperial: $('#imperial-weight-view').is(':checked'), //weightClassification
+      weightMetric: $('#metric-weight-view').is(':checked'), //weightClassification
+      kilos: $('#kilos-view').val(),
+      pounds: $('#pounds-view').val(),
+      eyeColor: $('#eye-color-view').val(),
+      hairColor: $('#hair-color-view').val(),
+      organDonor: $('#organ-donor-view').is(':checked'),
+      veteran: $('#veteran-view').is(':checked'),
+      activeCommunityID: $('#new-civ-activeCommunityID-new-civ').val(),
+      userID: $('#userID').val(),
+    }
+  }
+  if (submitter_btn.attr("value") === 'delete') {
+    socket.emit('delete_civilian', myReq)
+  } else if (submitter_btn.attr("value") === 'update') {
+    socket.emit('update_civilian', myReq)
+  } else if (submitter_btn.attr("value") === 'deleteLicense') {
+    myReq.body.licenseStatus = '3'
+    socket.emit('update_civilian', myReq)
+  } else if (submitter_btn.attr("value") === 'createLicense') {
+    myReq.body.licenseStatus = '1'
+    socket.emit('update_civilian', myReq)
+  } else {
+    return console.error(`[LPS Error] no matching action found, got: ${submitter_btn.attr("value")}, wanted: ['update', 'delete']`)
+  }
+
+  //socket that receives a response after updating a civilian
+  socket.on('updated_civilian', (res) => {
+    //populate the civ card that has been updated
+    $(`#personas-thumbnail-name-${res._id}`).text(`${res.civilian.firstName} ${res.civilian.lastName}`)
+    $(`#personas-thumbnail-dob-${res._id}`).text(res.civilian.birthday)
+    //populate the civ table
+    $(`#personas-table-name-${res._id}`).text(`${res.civilian.firstName} ${res.civilian.lastName}`)
+    $(`#personas-table-dob-${res._id}`).text(res.civilian.birthday)
+  })
+  //socket that receives a response after deleting a civilian
+  socket.on('deleted_civilian', (res) => {
+    $(`#personas-thumbnail-${res.body.civID}`).remove();
+  })
+
+  //reset the form after form submit
+  $('#update-delete-civ-form').trigger("reset");
+  hideModal('viewCiv')
   return true;
 })
