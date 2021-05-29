@@ -3272,6 +3272,7 @@ module.exports = function (app, passport, server) {
         Civilian.findById({
           '_id': ObjectId(req.body.civID)
         }, (err, doc) => {
+          if (err) return console.error(err);
           var civ = doc
           civ.socketCreateUpdateCiv(req)
           civ.save(function (err, dbCivilian) {
