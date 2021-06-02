@@ -846,7 +846,7 @@ $('#create-firearm-form').submit(function (e) {
 This is to move away from reloading the page on civilian updates/deletions */
 $('#update-delete-civ-form').submit(function (e) {
   // e.preventDefault(); //prevents page from reloading
-  let submitter_btn = $('#userBtnValue').val();
+  var submitter_btn = $('#userBtnValue').val();
   var socket = io();
   var myReq = {
     body: {
