@@ -840,11 +840,15 @@ $('#create-firearm-form').submit(function (e) {
   return true;
 })
 
+function updateUserBtnValue(value) {
+  $('#userBtnValue').val(value)
+}
+
 /* function to send socket when a civilian is updated/deleted. 
 This is to move away from reloading the page on civilian updates/deletions */
 $('#update-delete-civ-form').submit(function (e) {
   e.preventDefault(); //prevents page from reloading
-  let submitter_btn = $(e.originalEvent.submitter);
+  let submitter_btn = $('#userBtnValue').val();
   var socket = io();
   var myReq = {
     body: {
@@ -874,18 +878,18 @@ $('#update-delete-civ-form').submit(function (e) {
       userID: $('#userID').val(),
     }
   }
-  if (submitter_btn.attr("value") === 'delete') {
+  if (submitter_btn === 'delete') {
     socket.emit('delete_civilian', myReq)
-  } else if (submitter_btn.attr("value") === 'update') {
+  } else if (submitter_btn === 'update') {
     socket.emit('update_civilian', myReq)
-  } else if (submitter_btn.attr("value") === 'deleteLicense') {
+  } else if (submitter_btn === 'deleteLicense') {
     myReq.body.licenseStatus = '3'
     socket.emit('update_civilian', myReq)
-  } else if (submitter_btn.attr("value") === 'createLicense') {
+  } else if (submitter_btn === 'createLicense') {
     myReq.body.licenseStatus = '1'
     socket.emit('update_civilian', myReq)
   } else {
-    return console.error(`[LPS Error] no matching action found, got: ${submitter_btn.attr("value")}, wanted: ['update', 'delete']`)
+    return console.error(`[LPS Error] no matching action found, got: ${submitter_btn}, wanted: ['update', 'delete']`)
   }
 
   //socket that receives a response after updating a civilian
