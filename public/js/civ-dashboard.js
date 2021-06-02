@@ -840,9 +840,7 @@ $('#create-firearm-form').submit(function (e) {
   return true;
 })
 
-function updateUserBtnValue(value) {
-  $('#userBtnValue').val(value)
-}
+
 
 /* function to send socket when a civilian is updated/deleted. 
 This is to move away from reloading the page on civilian updates/deletions */
