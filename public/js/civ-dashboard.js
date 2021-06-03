@@ -841,19 +841,14 @@ $('#create-firearm-form').submit(function (e) {
 })
 
 function updateUserBtnValue(value) {
-  // console.log('updating user btn value: ', value)
   $('#userBtnValue').val(value)
 }
 
 /* function to send socket when a civilian is updated/deleted. 
 This is to move away from reloading the page on civilian updates/deletions */
 $("#update-delete-civ-form button").click(function(e){
-// $('#update-delete-civ-form').submit(function (e) {
   e.preventDefault(); //prevents page from reloading
-  // var val=$(this).attr('value')
-  // console.log("val of button: ", val)
   var submitter_btn = $('#userBtnValue').val();
-  // console.log("submitter_btn: ", submitter_btn)
   var socket = io();
   var myReq = {
     body: {
