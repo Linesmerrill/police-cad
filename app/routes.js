@@ -3254,6 +3254,16 @@ module.exports = function (app, passport, server) {
       }
     });
 
+    socket.on('get_active_warrants', (req) => {
+      // console.debug('get active warrants socket: ', req)
+      Warrant.find({
+        'warrant.accusedID': req.accusedID
+      }, function (err, dbWarrants) {
+        if (err) return console.error(err)
+        return socket.emit('load_active_warrants_result', dbWarrants)
+      })
+    })
+
     socket.on('create_new_civ', (req) => {
       // console.debug('create new civ socket: ', req)
       var myNewCiv = new Civilian()
