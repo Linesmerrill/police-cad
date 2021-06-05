@@ -3283,6 +3283,7 @@ module.exports = function (app, passport, server) {
           '_id': ObjectId(req.body.civID)
         }, (err, doc) => {
           if (err) return console.error(err);
+          if (!exists(doc)) return console.err(`[LPS Error] cannot update civ when civ cannot be found, civID: ${req.body.civID}`);
           var civ = doc
           civ.socketCreateUpdateCiv(req)
           civ.save(function (err, dbCivilian) {

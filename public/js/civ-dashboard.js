@@ -654,8 +654,8 @@ $('#create-civ-form').submit(function (e) {
                 <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
                   <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                   <div class="caption capitalize">
-                    <h4 class="color-white">${res.civilian.firstName} ${res.civilian.lastName}</h4>
-                    <h5 class="color-white">${res.civilian.birthday}</h5>
+                    <h4 id="personas-thumbnail-name-${res._id}" class="color-white capitalize">${res.civilian.firstName} ${res.civilian.lastName}</h4>
+                    <h5 id="personas-thumbnail-dob-${res._id}" class="color-white">${res.civilian.birthday}</h5>
                   </div>
                 </div>
               </div>`
