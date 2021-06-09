@@ -3231,6 +3231,7 @@
   })
 
   function updateStatus(status) {
+    var myUser= <%- JSON.stringify(user)%>;
     var socket=io();
     var onDuty=null
     var updateDuty=false
@@ -3245,6 +3246,7 @@
     }
     myReq={
       userID: $('#userIDDispatch').val(),
+      activeCommunityID: myUser.user.activeCommunity,
       status: status,
       setBy: 'Dispatch',
       onDuty: onDuty,
@@ -3256,7 +3258,7 @@
   }
 
   $('#clearPanic').one('click', function () {
-    myUser= <%- JSON.stringify(user)%>
+    myUser= <%- JSON.stringify(user)%>;
     var socket=io();
     $('#clear-panic-form').submit(function (e) {
       e.preventDefault(); //prevents page from reloading
@@ -3269,6 +3271,7 @@
 
       var myUpdateReq={
         userID: $('#panic-id').val(),
+        activeCommunityID: myUser.user.activeCommunity,
         status: '10-8',
         setBy: 'System',
         onDuty: null,
