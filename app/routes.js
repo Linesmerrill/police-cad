@@ -2913,6 +2913,9 @@ module.exports = function (app, passport, server) {
       } else if (!exists(req.status) || req.status == '') {
         return console.error('cannot update an empty status')
       }
+      //first check if the officer is going on/off duty
+      //if they are, then we want to update the dispatchOnDuty
+      //else we don't
       if (req.updateDuty) {
         var isValid = isValidObjectIdLength(req.userID, "cannot lookup invalid length userID, socket: update_status")
         if (!isValid) {
@@ -2928,7 +2931,17 @@ module.exports = function (app, passport, server) {
           }
         }, function (err) {
           if (err) return console.error(err)
-          return socket.broadcast.emit('updated_status', req)
+          //if update would be successful, then we will search for all active officers in the community
+        //primarily this is to wipe the DataTable and reload using the updated data from the server
+        User.find({
+          'user.activeCommunity': req.activeCommunityID,
+          'user.dispatchOnDuty': true
+        },function (err, res) {
+          if (err) return console.error(err);
+          socket.emit('updated_status', req) //emits socket back to the officer
+          socket.broadcast.emit('updated_dispatch_status', res) //emits socket back to the dispatcher
+          return
+        })
         })
       } else {
         var isValid = isValidObjectIdLength(req.userID, "cannot lookup invalid length userID, socket: update_status")
@@ -2944,7 +2957,17 @@ module.exports = function (app, passport, server) {
           }
         }, function (err) {
           if (err) return console.error(err)
-          return socket.broadcast.emit('updated_status', req)
+          //if update would be successful, then we will search for all active officers in the community
+        //primarily this is to wipe the DataTable and reload using the updated data from the server
+        User.find({
+          'user.activeCommunity': req.activeCommunityID,
+          'user.dispatchOnDuty': true
+        },function (err, res) {
+          if (err) return console.error(err);
+          socket.emit('updated_status', req) //emits socket back to the officer
+          socket.broadcast.emit('updated_dispatch_status', res) //emits socket back to the dispatcher
+          return
+        })
         })
       }
     })
