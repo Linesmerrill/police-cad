@@ -249,64 +249,6 @@
                                     <th>Status</th>
                                   </tr>
                                 </thead>
-                                <tbody>
-                                  <% for(var i=0; i<commUsers.length; i++) {%>
-                                      <% if (!commUsers[i].user.dispatchOnDuty) {%>
-                                        <tr id="<%=commUsers[i]._id%>-duty" class="gray-hover hide" data-toggle="modal" data-id="<%=i%>"
-                                          data-target="#manageUserDispatchStatusModal"
-                                          onclick="setDispatchModalValues('<%=commUsers[i]._id%>')">
-
-                                          <td style="text-transform: capitalize;">
-                                            <%=commUsers[i].user.username%>
-                                          </td>
-                                          <td style="text-transform: capitalize;">
-                                            <%=commUsers[i].user.callSign%>
-                                          </td>
-                                          <% if (commUsers[i].user.dispatchStatus=='' ||
-                                            commUsers[i].user.dispatchStatus==null) {%>
-                                            <td id="<%=commUsers[i]._id%>-status">-</td>
-                                            <%} else {%>
-                                              <% if (commUsers[i].user.dispatchStatus=='Panic' ) {%>
-                                                <td id="<%=commUsers[i]._id%>-status">🚨
-                                                  <%=commUsers[i].user.dispatchStatus%>🚨
-                                                </td>
-                                                <%} else {%>
-                                                  <td id="<%=commUsers[i]._id%>-status">
-                                                    <%=commUsers[i].user.dispatchStatus%>
-                                                  </td>
-                                                  <%}%>
-                                                    <%}%>
-                                                    
-                                          </tr>
-                                        <%} else if (commUsers[i].user.dispatchOnDuty) {%>
-                                          <tr id="<%=commUsers[i]._id%>-duty" class="gray-hover" data-toggle="modal" data-id="<%=i%>"
-                                            data-target="#manageUserDispatchStatusModal"
-                                            onclick="setDispatchModalValues('<%=commUsers[i]._id%>')">
-
-                                            <td style="text-transform: capitalize;">
-                                              <%=commUsers[i].user.username%>
-                                            </td>
-                                            <td style="text-transform: capitalize;">
-                                              <%=commUsers[i].user.callSign%>
-                                            </td>
-                                            <% if (commUsers[i].user.dispatchStatus=='' ||
-                                              commUsers[i].user.dispatchStatus==null) {%>
-                                              <td id="<%=commUsers[i]._id%>-status">-</td>
-                                              <%} else {%>
-                                                <% if (commUsers[i].user.dispatchStatus=='Panic' ) {%>
-                                                  <td id="<%=commUsers[i]._id%>-status">🚨
-                                                    <%=commUsers[i].user.dispatchStatus%>🚨
-                                                  </td>
-                                                  <%} else {%>
-                                                    <td id="<%=commUsers[i]._id%>-status">
-                                                      <%=commUsers[i].user.dispatchStatus%>
-                                                    </td>
-                                                    <%}%>
-                                                      <%}%>
-                                                      <%}%>
-                                    </tr>
-                                    <%}%>
-                                </tbody>
                               </table>
                               <%}%>
           </div>
@@ -2333,24 +2275,45 @@
 <script>
   $(function () {
     var socket=io();
-    socket.on('updated_status', res => {
-      console.log("res: ", res)
-      if (res.onDuty&&res.updateDuty) {
-        //socket coming in that a user is going on-duty
-        $('#'+res.userID+"-duty").removeClass('hide')
-        $('#'+res.userID+"-duty").attr('style', 'cursor: pointer')
-      } else if (!res.onDuty&&res.updateDuty) {
-        //socket coming in that a user is going off-duty
-        $('#'+res.userID+"-duty").attr('style', 'background-color: #d9534f !important')
-        $('#'+res.userID+"-duty").addClass('hide')
-      }
-      if (res.status=="Panic") {
-        $('#'+res.userID+"-status").text("🚨 "+res.status+" 🚨")
-      } else {
-        $('#'+res.userID+"-status").text(res.status)
-      }
+    socket.on('updated_status', (req, res) => {
 
-      repopulateOfficerList(res.userID, res.status)
+      //check to make sure we are sending update to proper community
+      var myUser= <%- JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity === req.activeCommunityID) {
+        //because mongo does not return null values, we need to loop through each
+        //record and if any of the values are null, we need to populate them
+        //to properly fill the table
+        var datatable = $('#officerListTable').DataTable();
+        datatable.clear();
+        res.forEach(val => {
+          officerTable = ""
+          if (val["user"]["username"] == undefined) {
+            val["user"]["username"] = ""
+          }
+          if (val["user"]["callSign"] == undefined) {
+            val["user"]["callSign"] = ""
+          }
+          if (val["user"]["dispatchStatus"] == undefined ||val["user"]["dispatchStatus"] == '') {
+            val["user"]["dispatchStatus"] = "-" //set a default
+          } else if (val["user"]["dispatchStatus"] == 'Panic') {
+            val["user"]["dispatchStatus"] = "🚨 Panic 🚨" //set a custom panic message
+          }
+          
+          officerTable += `<tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageUserDispatchStatusModal"onclick="setDispatchModalValues('${val._id}')">
+            <td style="text-transform: capitalize;">
+              ${val.user.username}
+            </td>
+            <td style="text-transform: capitalize;">
+              ${val.user.callSign}
+            </td>
+            <td id="${val._id}-status">
+              ${val.user.dispatchStatus}
+            </td>
+          </tr>`
+        datatable.row.add($(officerTable))
+        })
+        datatable.draw();
+      }
     })
 
     socket.on('load_panic_status_update', (map, signal100Resp, origReq) => {
@@ -2520,8 +2483,48 @@
       "pageLength": 5,
       columnDefs: [
         { type: 'title-numeric', targets: 0 }
-      ]
+      ],
     });
+
+    //load the officer list table, we do this because we want to filter out any 
+    //officers that are not currently on duty. DataTables is easier to leverage
+    //than relying on the html above
+    var myCommUsers= <%- JSON.stringify(commUsers)%>;
+    console.log("myCommUsers: ", myCommUsers)
+    let datatable = $('#officerListTable').DataTable();
+        datatable.clear();
+        myCommUsers.forEach(val => {
+          officerTable = ""
+          if (!val.user.dispatchOnDuty) {
+            return;
+          }
+          if (val.user.username == undefined) {
+            val.user.username = ""
+          }
+          if (val.user.callSign == undefined) {
+            val.user.callSign = ""
+          }
+          if (val.user.dispatchStatus == undefined ||val.user.dispatchStatus == '') {
+            val.user.dispatchStatus = "-" //set a default
+          } else if (val.user.dispatchStatus == 'Panic') {
+            val.user.dispatchStatus = "🚨 Panic 🚨" //set a custom panic message
+          }
+          
+          officerTable += `<tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageUserDispatchStatusModal"onclick="setDispatchModalValues('${val._id}')">
+            <td style="text-transform: capitalize;">
+              ${val.user.username}
+            </td>
+            <td style="text-transform: capitalize;">
+              ${val.user.callSign}
+            </td>
+            <td id="${val._id}-status">
+              ${val.user.dispatchStatus}
+            </td>
+          </tr>`
+        datatable.row.add($(officerTable))
+        })
+        datatable.draw();
+
     $('#boloTable').DataTable({
       "bLengthChange": false,
       "pageLength": 5,
@@ -3214,6 +3217,7 @@
   })
 
   function updateStatus(status) {
+    var myUser= <%- JSON.stringify(user)%>;
     var socket=io();
     var onDuty=null
     var updateDuty=false
@@ -3228,6 +3232,7 @@
     }
     myReq={
       userID: $('#userIDDispatch').val(),
+      activeCommunityID: myUser.user.activeCommunity,
       status: status,
       setBy: 'Dispatch',
       onDuty: onDuty,
@@ -3239,7 +3244,7 @@
   }
 
   $('#clearPanic').one('click', function () {
-    myUser= <%- JSON.stringify(user)%>
+    myUser= <%- JSON.stringify(user)%>;
     var socket=io();
     $('#clear-panic-form').submit(function (e) {
       e.preventDefault(); //prevents page from reloading
@@ -3252,6 +3257,7 @@
 
       var myUpdateReq={
         userID: $('#panic-id').val(),
+        activeCommunityID: myUser.user.activeCommunity,
         status: '10-8',
         setBy: 'System',
         onDuty: null,
