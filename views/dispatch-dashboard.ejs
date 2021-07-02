@@ -249,64 +249,6 @@
                                     <th>Status</th>
                                   </tr>
                                 </thead>
-                                <tbody>
-                                  <% for(var i=0; i<commUsers.length; i++) {%>
-                                      <% if (!commUsers[i].user.dispatchOnDuty) {%>
-                                        <tr id="<%=commUsers[i]._id%>-duty" class="gray-hover hide" data-toggle="modal" data-id="<%=i%>"
-                                          data-target="#manageUserDispatchStatusModal"
-                                          onclick="setDispatchModalValues('<%=commUsers[i]._id%>')">
-
-                                          <td style="text-transform: capitalize;">
-                                            <%=commUsers[i].user.username%>
-                                          </td>
-                                          <td style="text-transform: capitalize;">
-                                            <%=commUsers[i].user.callSign%>
-                                          </td>
-                                          <% if (commUsers[i].user.dispatchStatus=='' ||
-                                            commUsers[i].user.dispatchStatus==null) {%>
-                                            <td id="<%=commUsers[i]._id%>-status">-</td>
-                                            <%} else {%>
-                                              <% if (commUsers[i].user.dispatchStatus=='Panic' ) {%>
-                                                <td id="<%=commUsers[i]._id%>-status">🚨
-                                                  <%=commUsers[i].user.dispatchStatus%>🚨
-                                                </td>
-                                                <%} else {%>
-                                                  <td id="<%=commUsers[i]._id%>-status">
-                                                    <%=commUsers[i].user.dispatchStatus%>
-                                                  </td>
-                                                  <%}%>
-                                                    <%}%>
-                                                    
-                                          </tr>
-                                        <%} else if (commUsers[i].user.dispatchOnDuty) {%>
-                                          <tr id="<%=commUsers[i]._id%>-duty" class="gray-hover" data-toggle="modal" data-id="<%=i%>"
-                                            data-target="#manageUserDispatchStatusModal"
-                                            onclick="setDispatchModalValues('<%=commUsers[i]._id%>')">
-
-                                            <td style="text-transform: capitalize;">
-                                              <%=commUsers[i].user.username%>
-                                            </td>
-                                            <td style="text-transform: capitalize;">
-                                              <%=commUsers[i].user.callSign%>
-                                            </td>
-                                            <% if (commUsers[i].user.dispatchStatus=='' ||
-                                              commUsers[i].user.dispatchStatus==null) {%>
-                                              <td id="<%=commUsers[i]._id%>-status">-</td>
-                                              <%} else {%>
-                                                <% if (commUsers[i].user.dispatchStatus=='Panic' ) {%>
-                                                  <td id="<%=commUsers[i]._id%>-status">🚨
-                                                    <%=commUsers[i].user.dispatchStatus%>🚨
-                                                  </td>
-                                                  <%} else {%>
-                                                    <td id="<%=commUsers[i]._id%>-status">
-                                                      <%=commUsers[i].user.dispatchStatus%>
-                                                    </td>
-                                                    <%}%>
-                                                      <%}%>
-                                                      <%}%>
-                                    </tr>
-                                    <%}%>
-                                </tbody>
                               </table>
                               <%}%>
           </div>
@@ -2522,6 +2464,46 @@
         { type: 'title-numeric', targets: 0 }
       ]
     });
+
+//load the officer list table, we do this because we want to filter out any 
+    //officers that are not currently on duty. DataTables is easier to leverage
+    //than relying on the html above
+    var myCommUsers= <%- JSON.stringify(commUsers)%>;
+    console.log("myCommUsers: ", myCommUsers)
+    let datatable = $('#officerListTable').DataTable();
+        datatable.clear();
+        myCommUsers.forEach(val => {
+          officerTable = ""
+          if (!val.user.dispatchOnDuty) {
+            return;
+          }
+          if (val.user.username == undefined) {
+            val.user.username = ""
+          }
+          if (val.user.callSign == undefined) {
+            val.user.callSign = ""
+          }
+          if (val.user.dispatchStatus == undefined ||val.user.dispatchStatus == '') {
+            val.user.dispatchStatus = "-" //set a default
+          } else if (val.user.dispatchStatus == 'Panic') {
+            val.user.dispatchStatus = "🚨 Panic 🚨" //set a custom panic message
+          }
+          
+          officerTable += `<tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageUserDispatchStatusModal"onclick="setDispatchModalValues('${val._id}')">
+            <td style="text-transform: capitalize;">
+              ${val.user.username}
+            </td>
+            <td style="text-transform: capitalize;">
+              ${val.user.callSign}
+            </td>
+            <td id="${val._id}-status">
+              ${val.user.dispatchStatus}
+            </td>
+          </tr>`
+        datatable.row.add($(officerTable))
+        })
+        datatable.draw();
+
     $('#boloTable').DataTable({
       "bLengthChange": false,
       "pageLength": 5,
