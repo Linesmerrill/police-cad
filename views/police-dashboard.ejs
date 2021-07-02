@@ -2049,6 +2049,28 @@
 <script>
   $(function () {
     var socket=io();
+
+    socket.on('updated_status', res => {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (res.userID==myUser._id) {
+        if (res.onDuty&&res.updateDuty) {
+          $('#'+res.userID+"-duty").attr('style', 'background-color: #5cb85c !important');
+          $('#'+res.userID+"-duty-text").text(' On Duty');
+        } else if (!res.onDuty&&res.updateDuty) {
+          $('#'+res.userID+"-duty").attr('style', 'background-color: #d9534f !important');
+          $('#'+res.userID+"-duty-text").text(' Off Duty');
+        }
+        $('#currentStatus').text('Your Current Status: '+res.status).animate({
+          fontSize: "19px",
+          fontWeight: "900"
+        }, 600).animate({
+          fontSize: "18px"
+        }, 600)
+        $('#statusSetBy').text('Set By: '+res.setBy)
+
+      }
+    })
+
     socket.on('load_panic_status_update', (map, signal100Resp, origReq) => {
       var myUser= <%-JSON.stringify(user)%>;
       if (myUser.user.activeCommunity==origReq.activeCommunity) {
@@ -2807,7 +2829,6 @@
     }
     myReq={
       userID: myUser._id,
-      activeCommunityID: myUser.user.activeCommunity,
       status: status,
       setBy: 'Self',
       onDuty: onDuty,
@@ -2815,34 +2836,6 @@
     }
 
     socket.emit('update_status', myReq)
-
-    socket.on('updated_status', (req, res) => {
-      // console.log("req: ", res, "res: ", res)
-      var myUser= <%-JSON.stringify(user)%>;
-      for (i=0; i<res.length;i++) {
-        if (res[i]._id == myUser._id) {
-          if (res[i].user.dispatchOnDuty&&res[i].user.dispatchOnDuty) {
-          $('#'+res[i]._id+"-duty").attr('style', 'background-color: #5cb85c !important');
-          $('#'+res[i]._id+"-duty-text").text(' On Duty');
-        } else if (!res[i].user.dispatchOnDuty&&res[i].user.dispatchOnDuty) {
-          $('#'+res[i]._id+"-duty").attr('style', 'background-color: #d9534f !important');
-          $('#'+res[i]._id+"-duty-text").text(' Off Duty');
-        }
-        //we only want to show the animation when there is an actual update, so this will
-        //check the current value, and if it is not the same, then it will show the animation
-        if (!$('#currentStatus').text().includes(res[i].user.dispatchStatus)) {
-        $('#currentStatus').text('Your Current Status: '+res[i].user.dispatchStatus).animate({
-          fontSize: "19px",
-          fontWeight: "900"
-        }, 600).animate({
-          fontSize: "18px"
-        }, 600)
-      }
-      $('#statusSetBy').text('Set By: '+res[i].user.dispatchStatusSetBy)
-        }
-      }
-        
-    })
   }
 
   var panicButtonEnabled=true
@@ -2942,7 +2935,6 @@
 
       var myUpdateReq={
         userID: $('#panic-id').val(),
-        activeCommunityID: myUser.user.activeCommunity,
         status: '10-8',
         setBy: 'System',
         onDuty: null,

@@ -2913,9 +2913,6 @@ module.exports = function (app, passport, server) {
       } else if (!exists(req.status) || req.status == '') {
         return console.error('cannot update an empty status')
       }
-      //first check if the officer is going on/off duty
-      //if they are, then we want to update the dispatchOnDuty
-      //else we don't
       if (req.updateDuty) {
         var isValid = isValidObjectIdLength(req.userID, "cannot lookup invalid length userID, socket: update_status")
         if (!isValid) {
@@ -2931,16 +2928,7 @@ module.exports = function (app, passport, server) {
           }
         }, function (err) {
           if (err) return console.error(err)
-          //if update would be successful, then we will search for all active officers in the community
-        //primarily this is to wipe the DataTable and reload using the updated data from the server
-        User.find({
-          'user.activeCommunity': req.activeCommunityID,
-          'user.dispatchOnDuty': true
-        },function (err, res) {
-          if (err) return console.error(err);
-          io.emit('updated_status', req, res) //send to all listeners including the sender
-          return
-        })
+          return socket.broadcast.emit('updated_status', req)
         })
       } else {
         var isValid = isValidObjectIdLength(req.userID, "cannot lookup invalid length userID, socket: update_status")
@@ -2956,16 +2944,7 @@ module.exports = function (app, passport, server) {
           }
         }, function (err) {
           if (err) return console.error(err)
-          //if update would be successful, then we will search for all active officers in the community
-        //primarily this is to wipe the DataTable and reload using the updated data from the server
-        User.find({
-          'user.activeCommunity': req.activeCommunityID,
-          'user.dispatchOnDuty': true
-        },function (err, res) {
-          if (err) return console.error(err);
-          io.emit('updated_status', req, res) //send to all listeners including the sender
-          return
-        })
+          return socket.broadcast.emit('updated_status', req)
         })
       }
     })
