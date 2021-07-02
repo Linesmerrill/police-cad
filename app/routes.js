@@ -2938,8 +2938,7 @@ module.exports = function (app, passport, server) {
           'user.dispatchOnDuty': true
         },function (err, res) {
           if (err) return console.error(err);
-          socket.emit('updated_status', req) //emits socket back to the officer
-          socket.broadcast.emit('updated_dispatch_status', res) //emits socket back to the dispatcher
+          io.emit('updated_status', req, res) //send to all listeners including the sender
           return
         })
         })
@@ -2964,8 +2963,7 @@ module.exports = function (app, passport, server) {
           'user.dispatchOnDuty': true
         },function (err, res) {
           if (err) return console.error(err);
-          socket.emit('updated_status', req) //emits socket back to the officer
-          socket.broadcast.emit('updated_dispatch_status', res) //emits socket back to the dispatcher
+          io.emit('updated_status', req, res) //send to all listeners including the sender
           return
         })
         })

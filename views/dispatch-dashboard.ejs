@@ -2333,41 +2333,45 @@
 <script>
   $(function () {
     var socket=io();
-    socket.on('updated_dispatch_status', res => {
-      // console.log("res: ", res)
-      //because mongo does not return null values, we need to loop through each
-      //record and if any of the values are null, we need to populate them
-      //to properly fill the table
-      var datatable = $('#officerListTable').DataTable();
-      datatable.clear();
-      res.forEach(val => {
-        officerTable = ""
-        if (val["user"]["username"] == undefined) {
-          val["user"]["username"] = ""
-        }
-        if (val["user"]["callSign"] == undefined) {
-          val["user"]["callSign"] = ""
-        }
-        if (val["user"]["dispatchStatus"] == undefined ||val["user"]["dispatchStatus"] == '') {
-          val["user"]["dispatchStatus"] = "-" //set a default
-        } else if (val["user"]["dispatchStatus"] == 'Panic') {
-          val["user"]["dispatchStatus"] = "🚨 Panic 🚨" //set a custom panic message
-        }
-        
-        officerTable += `<tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageUserDispatchStatusModal"onclick="setDispatchModalValues('${val._id}')">
-          <td style="text-transform: capitalize;">
-            ${val.user.username}
-          </td>
-          <td style="text-transform: capitalize;">
-            ${val.user.callSign}
-          </td>
-          <td id="${val._id}-status">
-            ${val.user.dispatchStatus}
-          </td>
-        </tr>`
-      datatable.row.add($(officerTable))
-      })
-      datatable.draw();
+    socket.on('updated_status', (req, res) => {
+
+      //check to make sure we are sending update to proper community
+      var myUser= <%- JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity === req.activeCommunityID) {
+        //because mongo does not return null values, we need to loop through each
+        //record and if any of the values are null, we need to populate them
+        //to properly fill the table
+        var datatable = $('#officerListTable').DataTable();
+        datatable.clear();
+        res.forEach(val => {
+          officerTable = ""
+          if (val["user"]["username"] == undefined) {
+            val["user"]["username"] = ""
+          }
+          if (val["user"]["callSign"] == undefined) {
+            val["user"]["callSign"] = ""
+          }
+          if (val["user"]["dispatchStatus"] == undefined ||val["user"]["dispatchStatus"] == '') {
+            val["user"]["dispatchStatus"] = "-" //set a default
+          } else if (val["user"]["dispatchStatus"] == 'Panic') {
+            val["user"]["dispatchStatus"] = "🚨 Panic 🚨" //set a custom panic message
+          }
+          
+          officerTable += `<tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageUserDispatchStatusModal"onclick="setDispatchModalValues('${val._id}')">
+            <td style="text-transform: capitalize;">
+              ${val.user.username}
+            </td>
+            <td style="text-transform: capitalize;">
+              ${val.user.callSign}
+            </td>
+            <td id="${val._id}-status">
+              ${val.user.dispatchStatus}
+            </td>
+          </tr>`
+        datatable.row.add($(officerTable))
+        })
+        datatable.draw();
+      }
     })
 
     socket.on('load_panic_status_update', (map, signal100Resp, origReq) => {
