@@ -23,6 +23,9 @@
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link rel="stylesheet" href="/static/css/pagenotfound.css" />
     <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
+    <!-- To hide google translate header bar on each page -->
+    <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
+    <style type='text/css'> body {position: static !important; top:0px !important;}</style>
     <% include ad-header %>
 </head>
 
@@ -47,7 +50,17 @@
     <h1 class="page-not-found-header">401</h1>
     <h2>You are not authorized to access that page</h2>
     <p>Try going to <a href="/">Lines Police CAD's home page</a> and logging in.</p>
+
+    <!-- scripts loaded here -->
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
+
+<!--  added for google translate --> 
+<script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+    }
+    </script>
 
 </html>
 <!-- IE needs 512+ bytes: https://blogs.msdn.microsoft.com/ieinternals/2010/08/18/friendly-http-error-pages/ -->
