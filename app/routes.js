@@ -3173,6 +3173,9 @@ module.exports = function (app, passport, server) {
             '_id': ObjectId(user._id)
           }, function (err, dbUser) {
             if (err) return console.error(err);
+            if (!exists(dbUser)) {
+              return console.error("cannot update_panic_btn_sound with null dbUser: ", dbUser)
+            }
             User.findByIdAndUpdate({
               '_id': ObjectId(user._id)
             }, {
