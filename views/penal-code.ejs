@@ -24,6 +24,9 @@
     <!-- Theme CSS -->
     <link id="theme-style" rel="stylesheet" href="/static/css/docstyles.css">
     <link id="theme-style" rel="stylesheet" href="/static/css/styles.css">
+    <!-- To hide google translate header bar on each page -->
+    <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
+    <style type='text/css'> body {position: static !important; top:0px !important;}</style>
     
 </head> 
 
@@ -903,7 +906,8 @@
     <script type="text/javascript" src="/static/plugins/stickyfill/dist/stickyfill.min.js"></script>   
     <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>     
-    <script>if (window.module) module = window.module;</script>                                                        
+    <script>if (window.module) module = window.module;</script>                    
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>                                    
     
 </body>
 </html> 
@@ -967,5 +971,12 @@
         $(this).ekkoLightbox();
     });   
 })
+</script>
+
+<!--  added for google translate --> 
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+}
 </script>
 
