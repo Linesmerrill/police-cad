@@ -3167,14 +3167,17 @@ module.exports = function (app, passport, server) {
 
     socket.on('update_panic_btn_sound', (user) => {
       // console.debug('update panic button sound status: ', user)
-      if (user != null && user != undefined) {
-        if (user._id != null && user._id != undefined) {
+      if (exists(user)) {
+        if (exists(user._id)) {
           User.findById({
             '_id': ObjectId(user._id)
           }, function (err, dbUser) {
             if (err) return console.error(err);
-            if (!exists(dbUser)) {
+            if (!exists(dbUser) || dbUser == null) {
               return console.error("cannot update_panic_btn_sound with null dbUser: ", dbUser)
+            }
+            if (!exists(dbUser.user) || dbUser.user == null) {
+              return console.error("cannot update_panic_btn_sound with null dbUser.user: ", dbUser)
             }
             User.findByIdAndUpdate({
               '_id': ObjectId(user._id)
@@ -3185,7 +3188,11 @@ module.exports = function (app, passport, server) {
               return socket.emit('load_panic_btn_result', dbUserUpdtd)
             })
           });
+        } else {
+          return console.error("cannot update_panic_btn_sound with null user._id: ", user)
         }
+      } else {
+        return console.error("cannot update_panic_btn_sound with null user: ", user)
       }
     });
 
