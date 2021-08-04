@@ -2785,11 +2785,16 @@ module.exports = function (app, passport, server) {
     return res.redirect('communities')
   })
 
-  var io = require('socket.io').listen(server);
+  var io = require('socket.io')(server);
 
   io.sockets.on('connection', (socket) => {
 
     socket.on("disconnect", function () {});
+
+    socket.on("botping", (data) => {
+      console.log(data);
+      socket.emit('botpong',{message:'pong'});
+    });
 
     socket.on('load_statuses', (user) => {
       if (user.user.activeCommunity != null && user.user.activeCommunity != undefined) {
@@ -2907,7 +2912,6 @@ module.exports = function (app, passport, server) {
     })
 
     socket.on('update_status', (req) => {
-      // console.debug('update req: ', req)
       if (!exists(req.userID) || req.userID == '') {
         return console.error('cannot update an empty userID')
       } else if (!exists(req.status) || req.status == '') {
@@ -2948,6 +2952,37 @@ module.exports = function (app, passport, server) {
         })
       }
     })
+
+    socket.on('bot_update_status', (req) => {
+      if (req.updateDuty) {
+        User.findByIdAndUpdate({
+          '_id': ObjectId(req.userID)
+        }, {
+          $set: {
+            'user.dispatchStatus': req.status,
+            'user.dispatchStatusSetBy': req.setBy,
+            'user.dispatchOnDuty': req.onDuty
+          }
+        }, function (err) {
+          if (err) return console.error(err)
+          socket.broadcast.emit('updated_status', req);
+          return socket.emit('bot_updated_status', req);npm 
+        })
+      } else {
+        User.findByIdAndUpdate({
+          '_id': ObjectId(req.userID)
+        }, {
+          $set: {
+            'user.dispatchStatus': req.status,
+            'user.dispatchStatusSetBy': req.setBy,
+          }
+        }, function (err) {
+          if (err) return console.error(err);
+          socket.broadcast.emit('updated_status', req);
+          return socket.emit('bot_updated_status', req);
+        })
+      }
+    });
 
     socket.on('load_panic_statuses', (req) => {
       // console.debug('load panic status req: ', req)
