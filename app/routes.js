@@ -1395,14 +1395,43 @@ module.exports = function (app, passport, server) {
         return res.redirect('back');
       }
       Civilian.find({
-          'civilian.firstName': fName,
-          'civilian.lastName': lName,
+        '$or': [{
+          'civilian.firstName': fName, //capitalized first-name
+          'civilian.lastName': lName, //capitalized last-name
           'civilian.birthday': req.query.dateOfBirth,
           '$or': [{ // some are stored as empty strings and others as null so we need to check for both
             'civilian.activeCommunityID': ''
           }, {
             'civilian.activeCommunityID': null
           }]
+        }, {
+          'civilian.firstName': fName, //capitalized first-name
+          'civilian.lastName': medLName, //lowercase last-name
+          'civilian.birthday': req.query.dateOfBirth,
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'civilian.activeCommunityID': ''
+          }, {
+            'civilian.activeCommunityID': null
+          }]
+        }, {
+          'civilian.firstName': medFName, //lowercase first-name
+          'civilian.lastName': lName, //capitalized last-name
+          'civilian.birthday': req.query.dateOfBirth,
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'civilian.activeCommunityID': ''
+          }, {
+            'civilian.activeCommunityID': null
+          }]
+        }, {
+          'civilian.firstName': medFName, //lowercase first-name
+          'civilian.lastName': medLName, //lowercase last-name
+          'civilian.birthday': req.query.dateOfBirth,
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'civilian.activeCommunityID': ''
+          }, {
+            'civilian.activeCommunityID': null
+          }]
+        }]
         },
         function (err, dbCivilians) {
           if (err) return console.error(err);
@@ -1455,10 +1484,27 @@ module.exports = function (app, passport, server) {
             });
         })
     } else {
+      // We have legacy data with first/last names
+      // that do not have a consistent format. Some show up as "First Last" and all permutations of this
+      // to "first last". If there is a cleaner way to do this plz fix. 
       Civilian.find({
-          'civilian.firstName': fName,
-          'civilian.lastName': lName,
-          'civilian.activeCommunityID': req.query.activeCommunityID,
+        '$or': [{
+          'civilian.firstName': fName, //capitalized first-name
+          'civilian.lastName': lName, //capitalized last-name
+          'civilian.activeCommunityID': req.query.activeCommunityID
+        }, {
+          'civilian.firstName': fName, //capitalized first-name
+          'civilian.lastName': medLName, //lowercase last-name
+          'civilian.activeCommunityID': req.query.activeCommunityID
+        }, {
+          'civilian.firstName': medFName, //lowercase first-name
+          'civilian.lastName': lName, //capitalized last-name
+          'civilian.activeCommunityID': req.query.activeCommunityID
+        }, {
+          'civilian.firstName': medFName, //lowercase first-name
+          'civilian.lastName': medLName, //lowercase last-name
+          'civilian.activeCommunityID': req.query.activeCommunityID
+        }]
         },
         function (err, dbCivilians) {
           if (err) return console.error(err);
