@@ -58,7 +58,7 @@
         </li>
         <div class="collapse in" id="toggleSearch">
           <li>
-            <a data-toggle="modal" href="#newCivModal"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Civilian</a>
+            <a data-toggle="modal" href="#newCivChoiceModal"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Civilian</a>
           </li>
           <li>
             <a data-toggle="modal" href="#newVehicleModal" onclick="generateSerialNumber(17, 'vin')"><span class="fa fa-car ml-3 mr-3"></span> Add New Vehicle</a>
@@ -140,7 +140,7 @@
           <!--Table for Personas  -->
           <div class="col-md-12 col-md-offset-0.75 margin-top-5">
             <div class="margin-bottom-2">
-              <span id="active-bolos margin-right-1" style="font-size: 18px;">Civilians:</span> <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-md pull-right">Add New Civilian</button>
+              <span id="active-bolos margin-right-1" style="font-size: 18px;">Civilians:</span> <button data-toggle="modal" href="#newCivChoiceModal"  class="btn btn-primary btn-md pull-right">Add New Civilian</button>
             </div>
               <div>
                 <label>Search:
@@ -233,6 +233,26 @@
             <br/>
             <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i class="ion-android-close"></i></button>
           </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newCivChoiceModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+        <div class="modal-body">
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4>New Civilian Choice</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            <div class="text-align-center margin-bottom-1">
+              <button class="btn btn-primary btn-lg">Auto</button>
+              <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true">Manual</button>
+            </div>
+            <div>
+              <span>·</span> Auto: We will generate a new civilian for you <br/>
+              <span>·</span> Manual: You specify the details for your new civilian
+            </div>
         </div>
       </div>
     </div>
