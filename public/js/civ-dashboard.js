@@ -691,6 +691,127 @@ $('#create-civ-form').submit(function (e) {
   return true;
 })
 
+$('#create-auto-civ-form').submit(function (e) {
+  e.preventDefault(); //prevents page from reloading
+  var socket = io();
+  inputGender = $('#genderAuto').val();
+  inputFirearmLicense = $('#firearmLicenseAuto').val();
+  reqBody = autoCivCreator(inputGender, inputFirearmLicense)
+  var myReq = {
+    body: reqBody
+  }
+  // console.log(`[DEBUG]: myReq: ${myReq}`, myReq)
+  socket.emit('create_new_civ', myReq)
+
+  //socket that receives a response after creating a new civilian
+  socket.on('created_new_civ', (res) => {
+    //populate civilian cards on the dashboard
+    $('#personas-thumbnail').append(
+      `<div id="personas-thumbnail-${res._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+                <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
+                  <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+                  <div class="caption capitalize">
+                    <h4 id="personas-thumbnail-name-${res._id}" class="color-white capitalize">${res.civilian.firstName} ${res.civilian.lastName}</h4>
+                    <h5 id="personas-thumbnail-dob-${res._id}" class="color-white">${res.civilian.birthday}</h5>
+                  </div>
+                </div>
+              </div>`
+    )
+
+    //populate the civilian person table
+    var containsEmptyRow = $('#personas-table tr>td').hasClass('dataTables_empty');
+    if (containsEmptyRow) {
+      $('#personas-table tbody>tr:first').fadeOut(1, function () {
+        $(this).remove();
+      })
+    }
+    $('#personas-table tr:last').after(
+      `<tr data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
+            <td>${res.civilian.firstName} ${res.civilian.lastName}</td>
+            <td>${res.civilian.birthday}</td>
+          </tr>`).fadeTo(1, function () {
+      $(this).add();
+    })
+
+    //append to list for updating a vehicle
+    $('#roVeh').append(`<option value="${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`)
+    //append to list for creating a vehicle
+    $('#registeredOwner-new-veh').append(`<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`)
+    //append to list for updating a firearm
+    $('#registeredOwner-details').append(`<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`)
+    //append to list for creating a firearm
+    $('#registeredOwner-new-firearm').append(`<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`)
+  })
+  //reset the form after form submit
+  $('#create-auto-civ-form').trigger("reset");
+  hideModal('newAutoCivModal')
+  return true;
+})
+
+function autoCivCreator(gender, firearmLicenseMarker) {
+  //faker: https://fakerjsdocs.netlify.app/api
+  if (gender != undefined && gender != null) {
+    switch (gender.toLowerCase) {
+      case "male":
+        civFirstName = faker.name.firstName(0)
+        civLastName = faker.name.lastName(0)
+      case "female":
+        civFirstName = faker.name.firstName(1)
+        civLastName = faker.name.lastName(1)
+      default:
+        civFirstName = faker.name.firstName()
+        civLastName = faker.name.lastName()
+    }
+  }
+  // imperial vs metric
+  if (faker.datatype.boolean()) {
+    heightClassification = "imperial"
+    weightClassification = "imperial"
+    height = faker.datatype.number({
+      min: 36,
+      max: 180
+    }) //inches
+    weight = faker.datatype.number({
+      min: 75,
+      max: 1000
+    }) //lbs
+  } else {
+    heightClassification = "metric"
+    weightClassification = "metric"
+    height = faker.datatype.number({
+      min: 92,
+      max: 205
+    }) //cm
+    weight = faker.datatype.number({
+      min: 45,
+      max: 400
+    }) //kgs
+  }
+  const now = moment();
+  body = {
+    civFirstName: civFirstName,
+    civLastName: civLastName,
+    licenseStatus: '1', //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
+    birthday: moment(faker.date.past(50, now.subtract(18, "years"))).format('YYYY-MM-DD'),
+    warrants: null,
+    address: faker.datatype.boolean() ? `${faker.address.streetAddress(true)}, LS ${faker.address.zipCode("#####")}` : "",
+    occupation: faker.datatype.boolean() ? faker.name.jobType() : "",
+    firearmLicense: firearmLicenseMarker,
+    activeCommunityID: $('#new-civ-activeCommunityID-new-civ').val(),
+    gender: gender,
+    heightClassification: heightClassification,
+    height: height,
+    weight: weight,
+    weightClassification: weightClassification,
+    eyeColor: faker.datatype.boolean() ? faker.commerce.color() : "",
+    hairColor: faker.datatype.boolean() ? faker.commerce.color() : "",
+    organDonor: faker.datatype.boolean(),
+    veteran: faker.datatype.boolean(),
+    userID: $('#newCivUserID').val(),
+  }
+  return body
+}
+
 /* call911Form */
 $('#call911Form').submit(function (e) {
   e.preventDefault(); //prevents page from reloading
@@ -846,7 +967,7 @@ function updateUserBtnValue(value) {
 
 /* function to send socket when a civilian is updated/deleted. 
 This is to move away from reloading the page on civilian updates/deletions */
-$("#update-delete-civ-form button").click(function(e){
+$("#update-delete-civ-form button").click(function (e) {
   e.preventDefault(); //prevents page from reloading
   var submitter_btn = $('#userBtnValue').val();
   var socket = io();
