@@ -751,13 +751,15 @@ $('#create-auto-civ-form').submit(function (e) {
 function autoCivCreator(gender, firearmLicenseMarker) {
   //faker: https://fakerjsdocs.netlify.app/api
   if (gender != undefined && gender != null) {
-    switch (gender.toLowerCase) {
+    switch (gender.toLowerCase()) {
       case "male":
         civFirstName = faker.name.firstName(0)
         civLastName = faker.name.lastName(0)
+        break;
       case "female":
         civFirstName = faker.name.firstName(1)
         civLastName = faker.name.lastName(1)
+        break;
       default:
         civFirstName = faker.name.firstName()
         civLastName = faker.name.lastName()
