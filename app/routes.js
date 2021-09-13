@@ -2838,8 +2838,6 @@ module.exports = function (app, passport, server) {
 
   io.sockets.on('connection', (socket) => {
 
-    socket.on("disconnect", function () {});
-
     socket.on("botping", (data) => {
       console.log(data);
       socket.emit('botpong',{message:'pong'});
