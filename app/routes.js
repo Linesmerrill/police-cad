@@ -3169,6 +3169,138 @@ module.exports = function (app, passport, server) {
       }
     });
 
+    socket.on('bot_firearm_search', (req) => {
+      if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
+        Firearm.find({
+          'firearm.serialNumber': req.query.serialNumber.trim().toUpperCase(),
+          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+            'firearm.activeCommunityID': ''
+          }, {
+            'firearm.activeCommunityID': null
+          }]
+        }, function (err, dbFirearms) {
+          if (err) return console.error(err);
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            if (err) return console.error(err);
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              if (err) return console.error(err);
+              Call.find({
+                'call.communityID': req.user.user.activeCommunity,
+              }, function (err, dbCalls) {
+                if (err) return console.error(err);
+                if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+                  return socket.emit('bot_firearm_search_results', {
+                    user: req.user,
+                    vehicles: null,
+                    civilians: null,
+                    firearms: dbFirearms,
+                    tickets: null,
+                    arrestReports: null,
+                    warrants: null,
+                    communities: dbCommunities,
+                    commUsers: null,
+                    bolos: dbBolos,
+                    calls: dbCalls,
+                    context: null
+                  });
+                } else {
+                  User.find({
+                    'user.activeCommunity': req.user.user.activeCommunity
+                  }, function (err, dbCommUsers) {
+                    if (err) return console.error(err);
+                    return socket.emit('bot_firearm_search_results', {
+                      user: req.user,
+                      vehicles: null,
+                      firearms: dbFirearms,
+                      civilians: null,
+                      tickets: null,
+                      arrestReports: null,
+                      warrants: null,
+                      communities: dbCommunities,
+                      commUsers: dbCommUsers,
+                      bolos: dbBolos,
+                      calls: dbCalls,
+                      context: null
+                    });
+                  });
+                }
+              });
+            });
+          });
+        })
+      } else {
+        Firearm.find({
+          'firearm.serialNumber': req.query.serialNumber.trim().toUpperCase(),
+          'firearm.activeCommunityID': req.query.activeCommunityID
+        }, function (err, dbFirearms) {
+          if (err) return console.error(err);
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
+            if (err) return console.error(err);
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
+              if (err) return console.error(err);
+              Call.find({
+                'call.communityID': req.user.user.activeCommunity,
+              }, function (err, dbCalls) {
+                if (err) return console.error(err);
+                if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+                  return socket.emit('bot_firearm_search_results', {
+                    user: req.user,
+                    vehicles: null,
+                    firearms: dbFirearms,
+                    civilians: null,
+                    tickets: null,
+                    arrestReports: null,
+                    warrants: null,
+                    communities: dbCommunities,
+                    commUsers: null,
+                    bolos: dbBolos,
+                    calls: dbCalls,
+                    context: null
+                  });
+                } else {
+                  User.find({
+                    'user.activeCommunity': req.user.user.activeCommunity
+                  }, function (err, dbCommUsers) {
+                    if (err) return console.error(err);
+                    return socket.emit('bot_firearm_search_results', {
+                      user: req.user,
+                      vehicles: null,
+                      firearms: dbFirearms,
+                      civilians: null,
+                      tickets: null,
+                      arrestReports: null,
+                      warrants: null,
+                      communities: dbCommunities,
+                      commUsers: dbCommUsers,
+                      bolos: dbBolos,
+                      calls: dbCalls,
+                      context: null
+                    });
+                  });
+                }
+              });
+            });
+          });
+        })
+      }
+    });
+
     socket.on('load_statuses', (user) => {
       if (user.user.activeCommunity != null && user.user.activeCommunity != undefined) {
         User.find({
