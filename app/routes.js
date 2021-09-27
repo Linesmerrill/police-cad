@@ -22,6 +22,7 @@ var path = require('path');
 var fs = require('fs');
 var handlebars = require('handlebars');
 var sanitize = require('mongo-sanitize');
+let randomstring = require('randomstring');
 var {
   promisify
 } = require('util');
@@ -2202,7 +2203,27 @@ module.exports = function (app, passport, server) {
         }
         return res.redirect('back')
       })
-    } else {
+    } else if (req.body.action === 'updateDiscordToken') {
+      var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /manageAccount")
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect('back')
+      }
+      let newToken = randomstring.generate(12);
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.discordLoginToken': newToken
+        }
+      }, function (err) {
+        if (err) {
+          console.error(err);
+        }
+        return res.redirect('back')
+      })
+    }
+     else {
       return res.redirect('back')
     }
   })

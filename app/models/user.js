@@ -11,6 +11,7 @@ var userSchema = mongoose.Schema({
         firstName: String,
         lastName: String,
         address: String,
+        discordLoginToken: String,
         resetPasswordToken: String,
         resetPasswordExpires: Date,
         activeCommunity: String,
