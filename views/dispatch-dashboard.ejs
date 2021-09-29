@@ -161,6 +161,18 @@
         </div>
       </a>
 
+      <a data-toggle="modal" href="#holdTrafficDetailModal" style="position: fixed;top: 64px;z-index: 8;width: 100%;">
+        <div id="hold-traffic-banner" class="panel panel-warning hide">
+          <div class="panel-heading">
+            <span class="panel-title">⚠️⚠️⚠️ Dispatch has the mic, hold all radio traffic! ⚠️⚠️⚠️</span>
+            <button type="button" class="close" aria-label="Close"
+              style="position: absolute; margin-top: 5px; margin-left: 1em;">
+              <i class="fas fa-times"></i> Clear
+            </button>
+          </div>
+        </div>
+      </a>
+
       <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
 
         <div class="header-content margin-top-2">
@@ -210,6 +222,9 @@
                               <button type="button" class="btn btn-danger btn-lg margin-top-2 margin-bottom-1"
                                 onclick="signal100()"><i class="fas fa-exclamation-circle" aria-hidden="true"></i>
                                 Signal 100</button>
+                                <button type="button" class="btn btn-warning btn-lg margin-top-2 margin-bottom-1"
+                                onclick="holdTraffic()"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                10-3</button>
                               <% } else {%>
                                 <button type="button" data-toggle="modal" href="#nonCommunityBoloModal"
                                   class="btn btn-danger btn-lg margin-top-2 mock-disabled margin-bottom-1"><i
@@ -2222,6 +2237,21 @@
       </div>
     </div>
 
+    <div id="holdTrafficDetailModal" class="modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="modal-title" style="font-size: 18px;">Clear 10-3</span>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+          </div>
+          <div class="modal-footer text-align-center">
+            <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="clearHoldTraffic()">Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="officerHelpModal" class="modal" tabindex="-1" role="dialog">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -2264,7 +2294,7 @@
   $(function () {
     var socket=io();
     socket.on('updated_status', res => {
-      console.log("res: ", res)
+      // console.log("res: ", res)
       if (res.onDuty&&res.updateDuty) {
         //socket coming in that a user is going on-duty
         $('#'+res.userID+"-duty").removeClass('hide')
@@ -2283,7 +2313,7 @@
       repopulateOfficerList(res.userID, res.status)
     })
 
-    socket.on('load_panic_status_update', (map, signal100Resp, origReq) => {
+    socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq) => {
       var myUser= <%- JSON.stringify(user)%>;
       if (myUser.user.activeCommunity==origReq.activeCommunity) {
         //load the signal 100 status to the page
@@ -2291,6 +2321,11 @@
           $('#signal-100-banner').removeClass('hide').addClass('show')
         } else {
           $('#signal-100-banner').removeClass('show').addClass('hide')
+        }
+        if (holdTrafficResp) {
+          $('#hold-traffic-banner').removeClass('hide').addClass('show')
+        } else {
+          $('#hold-traffic-banner').removeClass('show').addClass('hide')
         }
 
         //load the panic status items
@@ -2366,10 +2401,29 @@
       }
     })
 
+    socket.on('hold_traffic_button_updated', (origReq) => {
+      var myUser= <%- JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity==origReq.activeCommunity) {
+        if ($('#panic-button-check-sound').prop('checked')) {
+          var audioElement=document.createElement('audio');
+          audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep.wav');
+          audioElement.play();
+        }
+        $('#hold-traffic-banner').removeClass('hide').addClass('show')
+      }
+    })
+
     socket.on('clear_signal_100_updated', activeCommunity => {
       var myUser= <%- JSON.stringify(user)%>;
       if (myUser.user.activeCommunity==activeCommunity) {
         $('#signal-100-banner').removeClass('show').addClass('hide')
+      }
+    })
+
+    socket.on('clear_hold_traffic_updated', activeCommunity => {
+      var myUser= <%- JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity==activeCommunity) {
+        $('#hold-traffic-banner').removeClass('show').addClass('hide')
       }
     })
 
@@ -2457,7 +2511,7 @@
     //officers that are not currently on duty. DataTables is easier to leverage
     //than relying on the html above
     var myCommUsers= <%- JSON.stringify(commUsers)%>;
-    console.log("myCommUsers: ", myCommUsers)
+    // console.log("myCommUsers: ", myCommUsers)
     let datatable = $('#officerListTable').DataTable();
         datatable.clear();
         myCommUsers.forEach(val => {
@@ -3120,6 +3174,13 @@
     $('#signal-100-banner').removeClass('show').addClass('hide')
   }
 
+  function clearHoldTraffic() {
+    var socket=io();
+    myUser= <%- JSON.stringify(user)%>
+      socket.emit('clear_hold_traffic', myUser.user.activeCommunity)
+    $('#hold-traffic-banner').removeClass('show').addClass('hide')
+  }
+
   $('#createBolo').one('click', function () {
     var socket=io();
     myUser= <%- JSON.stringify(user)%>
@@ -3458,6 +3519,27 @@
       }
 
       socket.emit('signal_100_button_update', myReq)
+    }
+  }
+
+  function holdTraffic() {
+    //if it is already showing we don't want to show it again (there can only be 1 active
+    // hold traffic per community)
+    if (!$('#hold-traffic-banner').hasClass('show')) {
+      var myUser= <%- JSON.stringify(user)%>;
+      var socket=io();
+      myReq={
+        userID: myUser._id,
+        userUsername: myUser.user.username,
+        activeCommunity: myUser.user.activeCommunity
+      }
+      if ($('#panic-button-check-sound').prop('checked')) {
+        var audioElement=document.createElement('audio');
+        audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep.wav');
+        audioElement.play();
+      }
+
+      socket.emit('hold_traffic_button_update', myReq)
     }
   }
 

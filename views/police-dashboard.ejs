@@ -144,6 +144,14 @@
         </div>
       </a>
 
+      <a style="position: fixed;top: 64px;z-index: 8;width: 100%; cursor: default;">
+        <div id="hold-traffic-banner" class="panel panel-warning hide">
+          <div class="panel-heading">
+            <span class="panel-title">⚠️⚠️⚠️ Dispatch has the mic, hold all radio traffic! ⚠️⚠️⚠️</span>
+          </div>
+        </div>
+      </a>
+
       <header id="second" style='background-image: url("/static/images/hway_bkground.jpg");'>
         <div class="header-content margin-top-2">
           <div class="inner">
@@ -2058,7 +2066,7 @@
       }
     })
 
-    socket.on('load_panic_status_update', (map, signal100Resp, origReq) => {
+    socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq) => {
       var myUser= <%-JSON.stringify(user)%>;
       if (myUser.user.activeCommunity==origReq.activeCommunity) {
         //load the signal 100 status to the page
@@ -2066,6 +2074,11 @@
           $('#signal-100-banner').removeClass('hide').addClass('show')
         } else {
           $('#signal-100-banner').removeClass('show').addClass('hide')
+        }
+        if (holdTrafficResp) {
+          $('#hold-traffic-banner').removeClass('hide').addClass('show')
+        } else {
+          $('#hold-traffic-banner').removeClass('show').addClass('hide')
         }
 
         //load the panic status items
