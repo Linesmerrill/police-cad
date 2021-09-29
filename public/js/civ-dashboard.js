@@ -766,25 +766,36 @@ function autoCivCreator(gender, firearmLicenseMarker) {
     }
   }
   // imperial vs metric
+  var heightCentimeters = ""
+  var heightFoot = ""
+  var weightMetric = false
+  var imperial = false
+  var weightImperial = false
+  var metric = false
   if (faker.datatype.boolean()) {
-    heightClassification = "imperial"
-    weightClassification = "imperial"
-    height = faker.datatype.number({
-      min: 36,
-      max: 180
+    imperial = true;
+    weightImperial = true;
+    heightInches = faker.datatype.number({
+      min: 0,
+      max: 12
     }) //inches
-    weight = faker.datatype.number({
+    heightFoot = faker.datatype.number({
+      min: 4,
+      max: 7
+    }) //inches
+    pounds = faker.datatype.number({
       min: 75,
-      max: 1000
+      max: 10000
     }) //lbs
-  } else {
-    heightClassification = "metric"
-    weightClassification = "metric"
-    height = faker.datatype.number({
+  } else { //metric
+    imperial = false;
+    metric = true;
+    weightMetric = true;
+    heightCentimeters = faker.datatype.number({
       min: 92,
       max: 205
     }) //cm
-    weight = faker.datatype.number({
+    kilos = faker.datatype.number({
       min: 45,
       max: 400
     }) //kgs
@@ -801,10 +812,15 @@ function autoCivCreator(gender, firearmLicenseMarker) {
     firearmLicense: firearmLicenseMarker,
     activeCommunityID: $('#new-civ-activeCommunityID-new-civ').val(),
     gender: gender,
-    heightClassification: heightClassification,
-    height: height,
-    weight: weight,
-    weightClassification: weightClassification,
+    heightFoot: heightFoot,
+    heightInches: heightInches,
+    heightCentimeters: heightCentimeters,
+    weightImperial: weightImperial,
+    imperial: imperial,
+    metric: metric,
+    pounds: pounds,
+    kilos: kilos,
+    weightMetric: weightMetric,
     eyeColor: faker.datatype.boolean() ? faker.commerce.color() : "",
     hairColor: faker.datatype.boolean() ? faker.commerce.color() : "",
     organDonor: faker.datatype.boolean(),
