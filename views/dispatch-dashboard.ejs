@@ -147,31 +147,29 @@
             </h1>
           </div>
         </div>
+        <a data-toggle="modal" href="#signal100DetailModal" style="z-index: 8;width: 100%;">
+          <div id="signal-100-banner" class="panel panel-danger hide">
+            <div class="panel-heading">
+              <span class="panel-title">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
+              <button type="button" class="close" aria-label="Close"
+                style="position: absolute; margin-top: 5px; margin-left: 1em;">
+                <i class="fas fa-times"></i> Clear
+              </button>
+            </div>
+          </div>
+        </a>
+        <a data-toggle="modal" href="#holdTrafficDetailModal" style="z-index: 8;width: 100%;">
+          <div id="hold-traffic-banner" class="panel panel-warning hide">
+            <div class="panel-heading">
+              <span class="panel-title">⚠️⚠️⚠️ 10-3 Active: hold all radio traffic! ⚠️⚠️⚠️</span>
+              <button type="button" class="close" aria-label="Close"
+                style="position: absolute; margin-top: 5px; margin-left: 1em;">
+                <i class="fas fa-times"></i> Clear
+              </button>
+            </div>
+          </div>
+        </a>
       </nav>
-
-      <a data-toggle="modal" href="#signal100DetailModal" style="position: fixed;top: 64px;z-index: 8;width: 100%;">
-        <div id="signal-100-banner" class="panel panel-danger hide">
-          <div class="panel-heading">
-            <span class="panel-title">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
-            <button type="button" class="close" aria-label="Close"
-              style="position: absolute; margin-top: 5px; margin-left: 1em;">
-              <i class="fas fa-times"></i> Clear
-            </button>
-          </div>
-        </div>
-      </a>
-
-      <a data-toggle="modal" href="#holdTrafficDetailModal" style="position: fixed;top: 64px;z-index: 8;width: 100%;">
-        <div id="hold-traffic-banner" class="panel panel-warning hide">
-          <div class="panel-heading">
-            <span class="panel-title">⚠️⚠️⚠️ 10-3 Active: hold all radio traffic! ⚠️⚠️⚠️</span>
-            <button type="button" class="close" aria-label="Close"
-              style="position: absolute; margin-top: 5px; margin-left: 1em;">
-              <i class="fas fa-times"></i> Clear
-            </button>
-          </div>
-        </div>
-      </a>
 
       <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
 
@@ -2406,7 +2404,7 @@
       if (myUser.user.activeCommunity==origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
-          audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep.wav');
+          audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound.wav');
           audioElement.play();
         }
         $('#hold-traffic-banner').removeClass('hide').addClass('show')
@@ -3535,7 +3533,7 @@
       }
       if ($('#panic-button-check-sound').prop('checked')) {
         var audioElement=document.createElement('audio');
-        audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep.wav');
+        audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound.wav');
         audioElement.play();
       }
 

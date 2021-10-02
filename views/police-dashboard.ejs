@@ -134,27 +134,25 @@
             <h1 class="cursive"><a href="/police-dashboard"><i class="fas fa-star"></i> Police Operations</a></h1>
           </div>
         </div>
+        <a style="z-index: 8;width: 100%; cursor: default;">
+          <div id="signal-100-banner" class="panel panel-danger hide">
+            <div class="panel-heading">
+              <span class="panel-title">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
+            </div>
+          </div>
+        </a>
+        <a style="z-index: 8;width: 100%; cursor: default;">
+          <div id="hold-traffic-banner" class="panel panel-warning hide">
+            <div class="panel-heading">
+              <span class="panel-title">⚠️⚠️⚠️ 10-3 Active: hold all radio traffic! ⚠️⚠️⚠️</span>
+            </div>
+          </div>
+        </a>
       </nav>
-
-      <a style="position: fixed;top: 64px;z-index: 8;width: 100%; cursor: default;">
-        <div id="signal-100-banner" class="panel panel-danger hide">
-          <div class="panel-heading">
-            <span class="panel-title">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
-          </div>
-        </div>
-      </a>
-
-      <a style="position: fixed;top: 64px;z-index: 8;width: 100%; cursor: default;">
-        <div id="hold-traffic-banner" class="panel panel-warning hide">
-          <div class="panel-heading">
-            <span class="panel-title">⚠️⚠️⚠️ 10-3 Active: hold all radio traffic! ⚠️⚠️⚠️</span>
-          </div>
-        </div>
-      </a>
 
       <header id="second" style='background-image: url("/static/images/hway_bkground.jpg");'>
         <div class="header-content margin-top-2">
-          <div class="inner">
+          <div class="inner" style="margin-top: 9em;">
             <% for(var i=0; i<communities.length; i++) {%>
               <% if (communities[i]._id==user.user.activeCommunity) {%>
                 <div id="panic-placeholder"></div>
@@ -202,7 +200,7 @@
                                 <!-- imports the community specific alerts -->
                                 <% include community-alerts %>
 
-                                  <div class="container text-center width-100">
+                                  <div class="container text-center width-100 margin-top-2">
                                     <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
                                       <% if (!user.user.dispatchOnDuty) {%>
                                         <h4><span id="<%=user._id%>-duty" class="red-dot"></span> <span
@@ -2160,10 +2158,29 @@
       }
     })
 
+    socket.on('hold_traffic_button_updated', (origReq) => {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity==origReq.activeCommunity) {
+        if ($('#panic-button-check-sound').prop('checked')) {
+          var audioElement=document.createElement('audio');
+          audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound.wav');
+          audioElement.play();
+        }
+        $('#hold-traffic-banner').removeClass('hide').addClass('show')
+      }
+    })
+
     socket.on('clear_signal_100_updated', activeCommunity => {
       var myUser= <%-JSON.stringify(user)%>;
       if (myUser.user.activeCommunity==activeCommunity) {
         $('#signal-100-banner').removeClass('show').addClass('hide')
+      }
+    })
+
+    socket.on('clear_hold_traffic_updated', activeCommunity => {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity==activeCommunity) {
+        $('#hold-traffic-banner').removeClass('show').addClass('hide')
       }
     })
 
