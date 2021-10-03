@@ -718,11 +718,6 @@ module.exports = function (app, passport, server) {
       }
       let firstName = sanitize(req.query.firstName.trim().toLowerCase());
       let lastName = sanitize(req.query.lastName.trim().toLowerCase());
-      console.log(req)
-      console.log('-----------------------------------------------')
-      console.log(firstName)
-      console.log(lastName)
-      console.log('-----------------------------------------------')
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         if (req.query.dateOfBirth == undefined) {
           res.status(400)
@@ -832,19 +827,6 @@ module.exports = function (app, passport, server) {
                       'call.communityID': req.user.user.activeCommunity,
                     }, function (err, dbCalls) {
                       if (err) return console.error(err);
-                      console.log({
-                        user: req.user,
-                        vehicles: null,
-                        civilians: dbCivilians,
-                        firearms: null,
-                        tickets: dbTickets,
-                        arrestReports: dbArrestReports,
-                        warrants: dbWarrants,
-                        communities: dbCommunities,
-                        bolos: dbBolos,
-                        calls: dbCalls,
-                        context: null
-                      })
                       return res.render('police-dashboard', {
                         user: req.user,
                         vehicles: null,
@@ -2877,8 +2859,8 @@ module.exports = function (app, passport, server) {
 
   io.sockets.on('connection', (socket) => {
 
+    // For testing bot connection
     socket.on("botping", (data) => {
-      console.log(data);
       socket.emit('botpong',{message:'pong'});
     });
 
