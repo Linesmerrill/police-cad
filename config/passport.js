@@ -2,6 +2,7 @@
 // For more details go to https://github.com/jaredhanson/passport-local
 var LocalStrategy = require('passport-local').Strategy;
 var User = require('../app/models/user');
+let randomstring = require('randomstring');
 
 module.exports = function (passport) {
 
@@ -64,6 +65,7 @@ module.exports = function (passport) {
 							newUser.user.password = newUser.generateHash(password);
 							newUser.user.name = '';
 							newUser.user.address = '';
+							newUser.user.discordLoginToken = randomstring.generate(12);
 							newUser.user.resetPasswordToken = '';
 							newUser.user.resetPasswordExpires = '';
 							newUser.user.createdAt = new Date();
@@ -82,6 +84,7 @@ module.exports = function (passport) {
 					user.user.password = user.generateHash(password);
 					user.user.name = ''
 					user.user.address = ''
+					user.user.discordLoginToken = randomstring.generate(12);
 					user.resetPasswordToken = ''
 					user.resetPasswordExpires = ''
 					user.save(function (err) {
