@@ -2868,6 +2868,52 @@ module.exports = function (app, passport, server) {
       socket.emit('botpong',{message:'pong'});
     });
 
+    socket.on('bot_join_community', (data) => {
+      var communityCode = data.communityCode.trim()
+      if (communityCode.length != 7) {
+        return socket.emit('bot_joined_community',{error:'Improper Community Code'});
+      }
+      Community.findOne({
+        'community.code': data.communityCode.toUpperCase()
+      }, function (err, community) {
+        if (err) return console.error(err);
+        if (community == null) {
+          return socket.emit('bot_joined_community',{error:'Community not found'});
+        }
+        var isValid = isValidObjectIdLength(data.userID, "cannot lookup invalid length userID")
+        if (!isValid) {
+          return socket.emit('bot_joined_community',{error:'Improper UserID'});
+        }
+        User.findOneAndUpdate({
+          '_id': ObjectId(data.userID),
+        }, {
+          $set: {
+            'user.activeCommunity': community._id
+          }
+        }, function (err) {
+          if (err) return console.error(err);
+          return socket.emit('bot_joined_community',{message:'success', commName:community.community.name});
+        })
+      })
+    });
+
+    socket.on('bot_leave_community', (data) => {
+      var isValid = isValidObjectIdLength(data.userID, "cannot lookup invalid length userID")
+      if (!isValid) {
+        return socket.emit('bot_left_community',{error:'Improper UserID'});
+      }
+      User.findOneAndUpdate({
+        '_id': ObjectId(data.userID),
+      }, {
+        $set: {
+          'user.activeCommunity': null
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        return socket.emit('bot_left_community',{message:'Successfully left community'});
+      })
+    });
+
     socket.on('bot_name_search', (data) => {
       let firstName = sanitize(data.query.firstName.trim().toLowerCase());
       let lastName = sanitize(data.query.lastName.trim().toLowerCase());
@@ -2917,7 +2963,7 @@ module.exports = function (app, passport, server) {
                     }, function (err, dbCalls) {
                       if (err) return console.error(err);
                       if (data.user.user.activeCommunity == '' || data.user.user.activeCommunity == null) {
-                        return socket.emtit('bot_name_search_results', {
+                        return socket.emit('bot_name_search_results', {
                           user: data.user,
                           vehicles: null,
                           civilians: dbCivilians,
