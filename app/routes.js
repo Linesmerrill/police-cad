@@ -2861,13 +2861,13 @@ module.exports = function (app, passport, server) {
 
   var io = require('socket.io')(server);
 
-  io.sockets.on('connection', (socket) => {
+    io.sockets.on('connection', (socket) => {
 
     // For testing bot connection
     socket.on("botping", (data) => {
       socket.emit('botpong',{message:'pong'});
     });
-
+    
     socket.on('bot_join_community', (data) => {
       var communityCode = data.communityCode.trim()
       if (communityCode.length != 7) {
@@ -3629,7 +3629,7 @@ module.exports = function (app, passport, server) {
     })
 
     socket.on('clear_panic', (req) => {
-      // console.debug("clear req", req)
+      //console.log("clear req", req)
       if (req.communityID != null && req.communityID != undefined) {
         var isValid = isValidObjectIdLength(req.communityID, "cannot lookup invalid length communityID, socket: clear_panic")
         if (!isValid) {
@@ -3848,7 +3848,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on('update_drivers_license_status', (user) => {
-      // console.debug('update revoke drivers license status: ', user._id)
+      // console.debug('update revoke drivers license status: ', user)
       if (user != null && user != undefined) {
         if (user._id != null && user._id != undefined) {
           Civilian.findByIdAndUpdate({
@@ -3856,7 +3856,15 @@ module.exports = function (app, passport, server) {
           }, {
             'civilian.licenseStatus': user.status
           }, function (err, dbUser) {
-            if (err) return console.error(err);
+            if (err) {
+              console.error(err);
+              if (user.bot_request != null && user.bot_request != undefined && user.bot_request == true) {
+                return socket.emit('bot_updated_drivers_license_status',{success:false});
+              }  
+            }
+            if (user.bot_request != null && user.bot_request != undefined && user.bot_request == true) {
+              return socket.emit('bot_updated_drivers_license_status',{success:true});
+            }
             return socket.emit('load_updated_drivers_license_status_result', dbUser)
           })
         }
