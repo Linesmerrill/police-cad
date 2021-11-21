@@ -8,9 +8,16 @@
     content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="Codeply">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <script src="https://kit.fontawesome.com/e048807041.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap.min.css" />
   <link rel="stylesheet" href="/static/css/animate.min.css" />
   <link rel="stylesheet" href="/static/css/ionicons.min.css" />
+  <link rel="stylesheet" href="/static/css/tail.select-dark.min.css" />
+  <link rel="stylesheet" href="/static/css/awesomplete.css" />
+  <link rel="stylesheet" href="static/css/style.css">
   <link rel="stylesheet" href="/static/css/styles.css" />
   <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
   <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
@@ -20,100 +27,183 @@
   <% include ad-header %>
 </head>
 <body>
-  <nav id="topNav" class="navbar navbar-default navbar-fixed-top">
-    <div class="container-fluid">
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand page-scroll" href="/"><img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD</a>
-      </div>
-      <% include navbar %>
-    </div>
-  </nav>
 
-  <header id="second" style='background-image: url("/static/images/ems-bkground.jpg");'>
-    <div class="header-content">
-      <div class="inner">
-        <h1 class="cursive"><a href="/ems-dashboard">San Andreas - Fire/EMS Operations</a></h1>
-
-        <!-- imports the community specific alerts -->
-        <% include community-alerts %>
-
-        <div class="col-lg-10 col-lg-offset-1 text-center">
-          <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg margin-top-2">Add New
-            Persona</button>
-          <button data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-lg margin-top-2">Add New
-            Vehicle</button>
-          <button data-toggle="modal" href="#searchMedicalRecords" class="btn btn-primary btn-lg margin-top-2">Medical
-            Database</button>
-          <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
-          <a href="/map-interactive" class="btn btn-primary btn-lg margin-top-2">Map</a>
+  <div class="wrapper d-flex align-items-stretch">
+    <nav id="sidebar" style="z-index: 9;">
+      <div class="img bg-wrap text-center py-4" style="background-image: linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.4)),url(/static/images/fire-ems-corner-bg.jpg);">
+        <div class="user-logo">
+          <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()">
+            <div class="img profile-picture"></div>
+          </a>
+          <h3>
+            <%=user.user.username%>
+          </h3>
+          <h5>
+            <%=user.user.callSign%>
+          </h5>
+          <h5>Logged in as: Fire/EMS</h5>
         </div>
       </div>
-    </div>
-  </header>
-  <section style='background-image: url("/static/images/blue-clouds.jpg");'>
-    <div class="container">
-
-      <!--Table for Personas  -->
-      <div class="col-md-12 col-md-offset-0.75">
-        <div class="margin-bottom-1">
-          <span id="active-bolos margin-right-1" style="font-size: 18px;">Personnel:</span> <button data-toggle="modal"
-            href="#newCivModal" class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Persona</button>
+      <ul class="list-unstyled components mb-5">
+        <li>
+          <a href="/"><span class="fa fa-home mr-3"></span> <img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD</a>
+        </li>
+        <li class="background-color-222">
+          <a type="button" data-toggle="collapse" data-target="#toggleSearch" aria-expanded="true"
+            aria-controls="toggleSearch" onclick="toggleCaret()"> Search <i class="fas fa-caret-right pull-right rotate"
+              style="margin-top: 0.3em;"></i></a>
+        </li>
+        <div class="collapse in" id="toggleSearch">
+          <li>
+            <a data-toggle="modal" href="#searchMedicalRecords"><span class="fa fa-id-card ml-3 mr-3"></span> Medical
+              Database</a>
+          </li>
         </div>
-        <table id="persona-table" class="table table-hover table-bordered">
-          <thead>
-            <tr>
-              <th>Persona Name</th>
-              <th>Department</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% for(var i=0; i<personas.length; i++) {%>
-            <tr data-toggle="modal" data-id=<%=i%> data-target="#viewEms" onclick="loadEmsData(<%=i%>)">
-              <td><%= personas[i].ems.firstName%> <%= personas[i].ems.lastName%></td>
-              <td><%= personas[i].ems.department%></td>
-            </tr>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
-
-      <!--Table for Vehicles  -->
-      <div class="col-md-12 col-md-offset-0.75 margin-top-2">
-        <div class="margin-bottom-1">
-          <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button
-            data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-md pull-right margin-bottom-1">Add
-            New Vehicle</button>
+        <li class="background-color-222">
+          <a type="button" data-toggle="collapse" data-target="#toggleUtilities" aria-expanded="false"
+            aria-controls="toggleUtilities" onclick="toggleCaret()"> Utilities <i
+              class="fas fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
+        </li>
+        <div class="collapse in" id="toggleUtilities">
+          <li>
+            <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+              <a data-toggle="modal" href="#boloModal" onclick="clearBoloForm()"><span
+                  class="fas fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
+              <% } else {%>
+                <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span
+                    class="fas fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
+                <% } %>
+          </li>
+          <li>
+            <a data-toggle="modal" href="#10codesModal"><span class="fas fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
+          </li>
+          <li>
+          <li>
+            <a data-toggle="modal" href="#notepadModal"><span class="fas fa-clipboard ml-3 mr-3"></span> Notepad</a>
+          </li>
+          <li>
+            <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
+                class="fas fa-external-link-alt"></i></a>
+          </li>
         </div>
-        <table id="vehicle-table" class="table table-hover table-bordered">
-          <thead>
-            <tr>
-              <th>Plate</th>
-              <th>Model</th>
-              <th>Color</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% for(var i=0; i<vehicles.length; i++) {%>
-            <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewVeh"
-              onclick="loadVehData(<%=i%>)">
-              <td><%= vehicles[i].emsVehicle.plate%></td>
-              <td> <%= vehicles[i].emsVehicle.model%></td>
-              <td> <%= vehicles[i].emsVehicle.color%></td>
-            </tr>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-  <div class="google-ad"></div>
-  <% include footer %>
+        <li>
+          <a data-toggle="modal" href="/community-dashboard"><span class="fa fa-users mr-3"></span> Communities</a>
+        </li>
+        <li>
+          <a data-toggle="modal" href="#notificationModal" onclick="markAsRead()"><span id="notification-symbol" class="fa fa-bell mr-3 notif"><small
+                class="d-flex align-items-center justify-content-center" id="notification-count"></small></span> Notifications</a>
+        </li>
+        <li>
+          <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"><span
+              class="fa fa-cog mr-3"></span> Settings</a>
+        </li>
+        <li>
+          <a href="/contact-us"><span class="fa fa-support mr-3"></span> Support <i
+              class="fas fa-external-link-alt"></i></a>
+        </li>
+        <li>
+          <a href="/logout"><span class="fa fa-sign-out mr-3"></span> Sign Out</a>
+        </li>
+      </ul>
+
+    </nav>
+
+    <div id="content" class="">
+      <nav id="topNav" class="topNav" style="z-index: 8; margin-bottom: 0; position: fixed;">
+        <div class="container-fluid" style="height: 70px;">
+          <div class="custom-menu" style="position: absolute; top: 10px;">
+            <button type="button" id="sidebarCollapse" class="btn btn-primary btn-lg"
+              style="z-index: 9;color: white;background: transparent;border-radius: unset;padding-right: 2em; border: transparent;">
+              <i class="fa fa-bars" aria-hidden="true" style="z-index: 9; font-size: 1.5em;"></i>
+            </button>
+          </div>
+          <div class="navbar-header" style="position: absolute; left: 85px;">
+            <h1 class="cursive"><a href="/police-dashboard"><i class="fas fa-star"></i> Fire/EMS Operations</a></h1>
+          </div>
+        </div>
+      </nav>
+
+      <header id="second" style='background-image: url("/static/images/ems-bkground.jpg");'>
+        <div class="header-content">
+          <div class="inner">
+            <h1 class="cursive"><a href="/ems-dashboard">San Andreas - Fire/EMS Operations</a></h1>
+
+            <!-- imports the community specific alerts -->
+            <% include community-alerts %>
+
+            <div class="col-lg-10 col-lg-offset-1 text-center">
+              <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg margin-top-2">Add New
+                Persona</button>
+              <button data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-lg margin-top-2">Add New
+                Vehicle</button>
+              <button data-toggle="modal" href="#searchMedicalRecords" class="btn btn-primary btn-lg margin-top-2">Medical
+                Database</button>
+              <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
+              <a href="/map-interactive" class="btn btn-primary btn-lg margin-top-2">Map</a>
+            </div>
+          </div>
+        </div>
+      </header>
+      <section style='background-image: url("/static/images/blue-clouds.jpg");'>
+        <div class="container">
+
+          <!--Table for Personas  -->
+          <div class="col-md-12 col-md-offset-0.75">
+            <div class="margin-bottom-1">
+              <span id="active-bolos margin-right-1" style="font-size: 18px;">Personnel:</span> <button data-toggle="modal"
+                href="#newCivModal" class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Persona</button>
+            </div>
+            <table id="persona-table" class="table table-hover table-bordered">
+              <thead>
+                <tr>
+                  <th>Persona Name</th>
+                  <th>Department</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% for(var i=0; i<personas.length; i++) {%>
+                <tr data-toggle="modal" data-id=<%=i%> data-target="#viewEms" onclick="loadEmsData(<%=i%>)">
+                  <td><%= personas[i].ems.firstName%> <%= personas[i].ems.lastName%></td>
+                  <td><%= personas[i].ems.department%></td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+
+          <!--Table for Vehicles  -->
+          <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+            <div class="margin-bottom-1">
+              <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button
+                data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-md pull-right margin-bottom-1">Add
+                New Vehicle</button>
+            </div>
+            <table id="vehicle-table" class="table table-hover table-bordered">
+              <thead>
+                <tr>
+                  <th>Plate</th>
+                  <th>Model</th>
+                  <th>Engine #</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% for(var i=0; i<vehicles.length; i++) {%>
+                <tr class="gray-hover" data-toggle="modal" data-id=<%=i%> data-target="#viewVeh"
+                  onclick="loadVehData(<%=i%>)">
+                  <td><%= vehicles[i].emsVehicle.plate%></td>
+                  <td> <%= vehicles[i].emsVehicle.model%></td>
+                  <td> <%= vehicles[i].emsVehicle.engineNumber%></td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <div class="google-ad"></div>
+      <% include footer %>
+</div>
+  </div>
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -240,12 +330,29 @@
                 </div>
               </div>
 
-              <!-- Search input-->
+              <!-- Select input-->
               <div class="form-group required">
                 <label class="col-md-4 control-label" for="model">Model</label>
                 <div class="col-md-4">
-                  <input id="model" name="model" type="search" placeholder="model" class="form-control input-md"
-                    required="">
+                  <select class="form-control" name="model" id="model" required="">
+                    <option value="FireTruck">FireTruck</option>
+                    <option value="Fire Dept. Vehicle">Fire Dept. Vehicle</option>
+                    <option value="Fire Dept. Chief Vehicle">Fire Dept. Chief Vehicle</option>
+                    <option value="Ambulance">Ambulance</option>
+                    <option value="Medical Dept. Vehicle">Medical Dept. Vehicle</option>
+                    <option value="Medical Dept. Cheif Vehicle">Medical Dept. Cheif Vehicle</option>
+                    <option value="LifeGaurd Patrol Vehicle">LifeGaurd Patrol Vehicle</option>
+                    <option value="LifeGaurd Boat">LifeGaurd Boat</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Text input -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="engineNumber">Engine #</label>
+                <div class="col-md-4">
+                  <input id="engineNumber" name="engineNumber" type="text" maxlength="10" placeholder="engine # (optional)"
+                    class="form-control input-md">
                 </div>
               </div>
 
@@ -437,6 +544,13 @@
                 <input id="modelVeh" type="text" value="" style="display:none">
               </div>
 
+              <!-- Text input-->
+              <div class="col-md-7">
+                <label class="col-md-4 margin-bottom-1" for="engineNumber">Engine #:</label>
+                <label class="col-md-8" id="engineNumView">engine nymber here</label>
+                <input id="engineNumVeh" type="text" value="" style="display:none">
+              </div>
+
               <!-- Select Basic -->
               <div class="col-md-7">
                 <label class="col-md-4 margin-bottom-1" for="color">Color:</label>
@@ -541,6 +655,16 @@
                 <div class="col-md-6">
                   <select id="new-report-hospitalized" name="hospitalized" class="form-control" selected="selected">
                     <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="deceased">Deceased</label>
+                <div class="col-md-6">
+                  <select id="deceased" name="deceased" class="form-control" selected="no">
+                    <option value="no" selected>No</option>
                     <option value="yes">Yes</option>
                   </select>
                 </div>
@@ -726,6 +850,7 @@
 
   <% include account-management %>
   <% include 10-codes %>
+  <% include notepad %>
 
   <!--scripts loaded here -->
   <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
@@ -738,6 +863,7 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
   <script src="/static/js/wow.js"></script>
   <script src="/static/js/scripts.js"></script>
+  <script src="/static/js/main.js"></script>
   <script>if (window.module) module = window.module;</script>
 </body>
 
@@ -786,13 +912,16 @@
     var color=myVar[index].emsVehicle.color
     var plate=myVar[index].emsVehicle.plate.toUpperCase()
     var model=myVar[index].emsVehicle.model
+    var engineNumber=myVar[index].emsVehicle.engineNumber
     var registeredOwner=myVar[index].emsVehicle.registeredOwner
     $('#vehicle-id').val(myVar[index]._id)
     $('#plateView').text(plate)
     $('#modelView').text(model)
+    $('#engineNumView').text(engineNumber)
     $('#colorView').text(color)
     $('#roView').text(registeredOwner)
     $('#modelVeh').val(model)
+    $('#engineNumVeh').val(engineNumber)
     $('#roVeh').val(registeredOwner)
     $('#plateVeh').val(plate)
 
@@ -837,6 +966,11 @@
     $('#new-report-lastName').val(lastName);
     $('#new-report-dateOfBirth').val(dateOfBirth);
     $('#new-report-reportingEmsID').val(myUser._id);
+  }
+
+  function pronounceDead(status) {
+    if (status) document.getElementById("deceased").value = "yes";
+    if (!status) document.getElementById("deceased").value = "no";
   }
 
   function searchMedicalNames() {
@@ -890,7 +1024,7 @@
         var newRowContent
         newRowContent=`
           <!-- List of Civilians -->
-              
+
                       <div class="panel panel-default background-transparent">
                           <div class="panel-heading" data-toggle="collapse" data-id="`+i+`" data-parent="#accordion" href="#collapse`+i+`"
                             <h4 class="panel-title">
@@ -898,18 +1032,20 @@
                                   `+e.civilian.firstName+` `+e.civilian.lastName+` | `+e._id+`</a>
                             </h4>
                           </div>
-                          
+
                             <div id="collapse`+i+`" class="panel-collapse collapse `+collapsed+`">
-                          
+
                             <div class="panel-body">
                                 <div class="text-align-center">
-                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`');setDateAndTime('#new-report-reportDate', '');">Create Report</button>
+                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="pronounceDead(false);CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`');setDateAndTime('#new-report-reportDate', '');">Create Report</button>
+                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="pronounceDead(true);CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`');setDateAndTime('#new-report-reportDate', '')">Pronounce Dead</button>
                                 </div>
                                 <hr/>
                                 Driver's ID #: `+e._id+`<br/>
                                 Date of Birth: `+e.civilian.birthday+`<br/>
                                 Address: `+e.civilian.address+`<br/>
                                 Occupation: `+e.civilian.occupation+`<br/>
+                                Deceased: `+e.civilian.deceased+`<br/>
                                 <hr style="width: 88%;max-width: 100rem;">
                                 <h4>Medical History</h4>
                                 <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">

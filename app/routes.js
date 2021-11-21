@@ -1397,7 +1397,7 @@ module.exports = function (app, passport, server) {
       }
       // We have legacy data with first/last names
       // that do not have a consistent format. Some show up as "First Last" and all permutations of this
-      // to "first last". If there is a cleaner way to do this plz fix. 
+      // to "first last". If there is a cleaner way to do this plz fix.
       Civilian.find({
           '$or': [{
             'civilian.firstName': fName, //capitalized first-name
@@ -1490,7 +1490,7 @@ module.exports = function (app, passport, server) {
     } else {
       // We have legacy data with first/last names
       // that do not have a consistent format. Some show up as "First Last" and all permutations of this
-      // to "first last". If there is a cleaner way to do this plz fix. 
+      // to "first last". If there is a cleaner way to do this plz fix.
       Civilian.find({
           '$or': [{
             'civilian.firstName': fName, //capitalized first-name
@@ -1829,6 +1829,15 @@ module.exports = function (app, passport, server) {
   app.post('/create-medical-report', auth, function (req, res) {
     var myReport = new MedicalReport()
     myReport.createReport(req, res)
+    if (req.body.deceased=="yes") {
+      Civilian.findByIdAndUpdate({
+        '_id': req.body.civilianID
+      }, {
+        'civilian.deceased': req.body.deceased
+      }, function (err, civilian) {
+        if (err) return console.error(err);
+      });
+    }
     myReport.save(function (err) {
       if (err) return console.error(err);
     });
@@ -2863,7 +2872,7 @@ module.exports = function (app, passport, server) {
     socket.on("botping", (data) => {
       socket.emit('botpong',{message:'pong'});
     });
-    
+
     socket.on('bot_join_community', (data) => {
       var communityCode = data.communityCode.trim()
       if (communityCode.length != 7) {
@@ -3520,7 +3529,7 @@ module.exports = function (app, passport, server) {
         }, function (err) {
           if (err) return console.error(err)
           socket.broadcast.emit('updated_status', req);
-          return socket.emit('bot_updated_status', req);npm 
+          return socket.emit('bot_updated_status', req);npm
         })
       } else {
         User.findByIdAndUpdate({
@@ -3798,7 +3807,7 @@ module.exports = function (app, passport, server) {
               console.error(err);
               if (user.bot_request != null && user.bot_request != undefined && user.bot_request == true) {
                 return socket.emit('bot_updated_drivers_license_status',{success:false});
-              }  
+              }
             }
             if (user.bot_request != null && user.bot_request != undefined && user.bot_request == true) {
               return socket.emit('bot_updated_drivers_license_status',{success:true});

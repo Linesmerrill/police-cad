@@ -34,7 +34,7 @@ function loadDriversLicense(myVar, index) {
   var expMonth = (createdDate.getMonth()) + 1
   var expYear = (createdDate.getFullYear()) + 10
 
-  // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional, 
+  // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional,
   // we will do a check to see if its undefined or empty and if so just set it to an
   // empty string (or false for booleans), otherwise set it to the value from the db.
   var gender = (myVar[index].civilian.gender == undefined || myVar[index].civilian.gender == '') ? '' : myVar[index].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
@@ -362,7 +362,7 @@ function populateFirearmSocketDetails(res) {
   $('#firearmID').val(res._id)
   $('#serial-number-details').val(res.firearm.serialNumber)
   $('#weapon-type-details').val(res.firearm.weaponType)
-  //Because from the backend we already split the person_id from the person name and dob, we now 
+  //Because from the backend we already split the person_id from the person name and dob, we now
   //need to rejoin those values back together for #registeredOwner-details
   if (res.firearm.registeredOwner == 'N/A') {
     $('#registeredOwner-details').val(`${res.firearm.registeredOwner}`)
@@ -395,6 +395,8 @@ function populateCivSocketDetails(res) {
   $('#metric-weight-view').prop("checked", false)
   $('#eye-color-view').val('')
   $('#hair-color-view').val('')
+  $('#deceasedView').text(res.civilian.deceased);
+
 
   // civilian details:
   $('#civilianID').val(res._id)
@@ -477,7 +479,7 @@ function populateCivSocketDetails(res) {
 
 /* loadDriversLicenseSocket will execute whenever a socket civilian is clicked on.
 After a page reload, this data will be stored in memory so this method
-will not be called at that point in time. Ideally to save on memory inside the app 
+will not be called at that point in time. Ideally to save on memory inside the app
 we should probably swap to use sockets all the time. */
 function loadDriversLicenseSocket(res) {
   // debug log:
@@ -498,7 +500,7 @@ function loadDriversLicenseSocket(res) {
   var expMonth = (createdDate.getMonth()) + 1
   var expYear = (createdDate.getFullYear()) + 10
 
-  // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional, 
+  // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional,
   // we will do a check to see if its undefined or empty and if so just set it to an
   // empty string (or false for booleans), otherwise set it to the value from the db.
   var gender = (res.civilian.gender == undefined || res.civilian.gender == '') ? '' : res.civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
@@ -610,7 +612,7 @@ function populateVehSocketDetails(res) {
   $('#stolenView').val(res.vehicle.isStolen)
 }
 
-/* function to send socket when new civ is created. This is to move away 
+/* function to send socket when new civ is created. This is to move away
   from reloading the page on civ creation */
 $('#create-civ-form').submit(function (e) {
   e.preventDefault(); //prevents page from reloading
@@ -724,7 +726,7 @@ $('#call911Form').submit(function (e) {
   return true;
 })
 
-/* function to send socket when new vehicle is created. This is to move away 
+/* function to send socket when new vehicle is created. This is to move away
 from reloading the page on vehicle creation */
 $('#create-vehicle-form').submit(function (e) {
   e.preventDefault(); //prevents page from reloading
@@ -784,7 +786,7 @@ $('#create-vehicle-form').submit(function (e) {
   return true;
 })
 
-/* function to send socket when new firearm is created. 
+/* function to send socket when new firearm is created.
 This is to move away from reloading the page on firearm creation */
 $('#create-firearm-form').submit(function (e) {
   e.preventDefault(); //prevents page from reloading
@@ -844,7 +846,7 @@ function updateUserBtnValue(value) {
   $('#userBtnValue').val(value)
 }
 
-/* function to send socket when a civilian is updated/deleted. 
+/* function to send socket when a civilian is updated/deleted.
 This is to move away from reloading the page on civilian updates/deletions */
 $("#update-delete-civ-form button").click(function(e){
   e.preventDefault(); //prevents page from reloading

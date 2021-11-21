@@ -5,7 +5,8 @@ var emsVehicleSchema = mongoose.Schema({
     emsVehicle: {
         email: String, //deprecated 6/27/2020
         plate: String,
-        model: String,
+        model: String, // Ambulance or Firetruck etc.
+        engineNumber: String, // Call sign for vehicle ex. Engine '31'
         color: String,
         registeredOwner: String,
         activeCommunityID: String,
@@ -18,6 +19,7 @@ var emsVehicleSchema = mongoose.Schema({
 emsVehicleSchema.methods.createVeh = function (req, res) {
     this.emsVehicle.plate = req.body.plate.trim().toUpperCase();
     this.emsVehicle.model = req.body.model.trim();
+    this.emsVehicle.engineNumber = req.body.engineNumber.trim();
     this.emsVehicle.color = req.body.color.trim();
     this.emsVehicle.registeredOwner = req.body.registeredOwner.trim();
     this.emsVehicle.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null

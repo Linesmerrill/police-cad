@@ -515,6 +515,14 @@
                                                               Warrant</button>
                                                             <!-- <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button> -->
                                                           </div>
+                                                          <% if (civilians[i].civilian.deceased=="yes") { %>
+                                                            <span>
+                                                              <div class="alert alert-danger alert-dismissible"
+                                                                style="display:block">
+                                                                <strong>Deceased!</strong>
+                                                              </div>
+                                                            </span>
+                                                          <% } %>
                                                           <h5>
                                                             <ion-icon name="browsers-outline"></ion-icon> Drivers
                                                             License
@@ -2231,7 +2239,7 @@
               aria-hidden="true">X</button>
           </div>
           <div class="modal-footer text-align-center">
-            <p>If you see no records in the table, that means no officers have marked themselves 10-41 or "on-duty".</p><p> Remind 
+            <p>If you see no records in the table, that means no officers have marked themselves 10-41 or "on-duty".</p><p> Remind
               your officers to make sure and mark themselves 10-41 when they go "on-duty" and 10-42 when they go "off-duty".
             </p>
           </div>
@@ -2241,7 +2249,7 @@
 
     <% include notification-modal %>
     <% include 10-codes %>
-      <% include notepad %>
+    <% include notepad %>
 </body>
 
 <!--scripts loaded here -->
@@ -2453,7 +2461,7 @@
       ]
     });
 
-//load the officer list table, we do this because we want to filter out any 
+//load the officer list table, we do this because we want to filter out any
     //officers that are not currently on duty. DataTables is easier to leverage
     //than relying on the html above
     var myCommUsers= <%- JSON.stringify(commUsers)%>;
@@ -2476,7 +2484,7 @@
           } else if (val.user.dispatchStatus == 'Panic') {
             val.user.dispatchStatus = "🚨 Panic 🚨" //set a custom panic message
           }
-          
+
           officerTable += `<tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageUserDispatchStatusModal"onclick="setDispatchModalValues('${val._id}')">
             <td style="text-transform: capitalize;">
               ${val.user.username}
@@ -2690,7 +2698,7 @@
         )
         return
       }
-      
+
       $('#registered-firearms').append(
         `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`
       )
@@ -2938,7 +2946,7 @@
     //Super gross date calculation, thx javascript
     let date=new Date()
     let yyyy=date.getFullYear().toString();
-    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based         
+    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based
     let dd=date.getDate().toString();
     $('#warrant-date').val(yyyy+'-'+(mm[1]? mm:"0"+mm[0])+'-'+(dd[1]? dd:"0"+dd[0]))
     $('#warrant-time').val(new Date().toLocaleTimeString('en-GB', {
@@ -2955,7 +2963,7 @@
     //Super gross date calculation, thx javascript
     let date=new Date()
     let yyyy=date.getFullYear().toString();
-    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based         
+    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based
     let dd=date.getDate().toString();
     $('#warrant-clear-date').val(yyyy+'-'+(mm[1]? mm:"0"+mm[0])+'-'+(dd[1]? dd:"0"+dd[0]))
     $('#warrant-clear-time').val(new Date().toLocaleTimeString('en-GB', {
@@ -3471,7 +3479,7 @@
       var expMonth=(createdDate.getMonth())+1
       var expYear=(createdDate.getFullYear())+10
 
-      // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional, 
+      // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional,
       // we will do a check to see if its undefined or empty and if so just set it to an
       // empty string (or false for booleans), otherwise set it to the value from the db.
       var gender=(civ[i].civilian.gender==undefined||civ[i].civilian.gender=='')? '':civ[i].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
@@ -3622,7 +3630,7 @@
       }
       return document.location.href=`name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
     }
-    //check to see if we are in a community, if we are not, 
+    //check to see if we are in a community, if we are not,
     //then we need to use the DOB to do the name search
     if (activeCommunityID.length==0) {
       let dob=nameAndDOB[1].split(" ")
