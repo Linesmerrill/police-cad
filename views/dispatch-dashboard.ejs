@@ -3475,7 +3475,7 @@
       for (i=0; i<classifierDb.length; i++) {
         for (j=0; j<classifiers.length; j++) {
           if (classifierDb[i] == classifierSplit[j]) {
-            items[i]={
+            items[classifierDb[i]]={
               value: classifierDb[i],
               group: "#",
               selected: true,
@@ -3484,7 +3484,7 @@
             }
             break
           } else {
-            items[i]={
+            items[classifierDb[i]]={
               value: classifierDb[i],
               group: "#",
               selected: false,

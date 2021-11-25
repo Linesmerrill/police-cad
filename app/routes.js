@@ -375,13 +375,18 @@ module.exports = function (app, passport, server) {
             }]
           }, function (err, dbCommunities) {
             if (err) return console.error(err);
-            return res.render('ems-dashboard', {
-              user: req.user,
-              personas: dbPersonas,
-              vehicles: dbVehicles,
-              communities: dbCommunities,
-              context: context
-            });
+            Call.find({
+              'call.communityID': req.user.user.activeCommunity,
+            }, function (err, dbCalls) {
+              return res.render('ems-dashboard', {
+                user: req.user,
+                personas: dbPersonas,
+                vehicles: dbVehicles,
+                communities: dbCommunities,
+                calls: dbCalls,
+                context: context
+              });
+            })
           });
         });
       })
@@ -2377,15 +2382,23 @@ module.exports = function (app, passport, server) {
         return res.redirect('/' + req.body.route);
       })
     } else if (req.body.action === "update") {
+      let classifier
       var shortDescription
       var assignedOfficers
+      let assignerFireEms
       var callNotes
       var callID
+      if (exists(req.body.classifier)) {
+        classifier = req.body.classifier
+      }
       if (exists(req.body.shortDescription)) {
         shortDescription = req.body.shortDescription.trim()
       }
       if (exists(req.body.assignedOfficers)) {
         assignedOfficers = req.body.assignedOfficers
+      }
+      if (exists(req.body.assignedFireEms)) {
+        assignedFireEms = req.body.assignedFireEms
       }
       if (exists(req.body.callNotes)) {
         callNotes = req.body.callNotes.trim()
@@ -2406,8 +2419,10 @@ module.exports = function (app, passport, server) {
         '_id': ObjectId(callID)
       }, {
         $set: {
+          'call.classifier': classifier,
           'call.shortDescription': shortDescription,
           'call.assignedOfficers': assignedOfficers,
+          'call.assignedFireEms': assignedFireEms,
           'call.callNotes': callNotes,
           'call.updatedAt': new Date()
         }

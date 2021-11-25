@@ -196,6 +196,38 @@
             </table>
           </div>
         </div>
+        <div class="container">
+          <div id="assigned-call-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
+            <!-- active calls -->
+            <h4>Assigned Calls: </h4>
+            <h5>Click for details</h5>
+            <% if (calls !=null && calls.length> 0) { %>
+              <% for(var i=0; i<calls.length; i++) { %>
+                <% if (calls[i].call.status==true) { %>
+                  <% if (calls[i].call.assignedFireEms !=null && calls[i].call.assignedFireEms !='' ) { %>
+                    <% for (let j=0; j < vehicles.length; j++) { %>
+                      <% if (calls[i].call.assignedFireEms.includes(vehicles[j]._id)) { %>
+                        <a id="<%=calls[i]._id%>" data-toggle="modal" href="#callDetailModal"
+                          onclick="populateCallDetails('<%=calls[i]._id%>')">
+                          <div class="alert alert-success alert-dismissible show" role="alert">
+                            Opened: <span id="<%=calls[i]._id%>-createdAt" style="text-transform:capitalize"><time>
+                                <%=calls[i].call.createdAtReadable%>
+                              </time> | Description:
+                              <span id="<%=calls[i]._id%>-description">
+                                <%=calls[i].call.shortDescription%>
+                              </span>%></span>
+                          </div>
+                        </a>
+                        <% break %>
+                      <% } %>
+                    <% } %>
+                  <% } %>
+                <% } %>
+              <% } %>
+            <% } %>
+
+          </div>
+        </div>
       </section>
       <div class="google-ad"></div>
       <% include footer %>
@@ -211,6 +243,74 @@
             <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i
                 class="ion-android-close"></i></button>
           </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="callDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="update-call-form" class="form-horizontal" action="/" method="get">
+            <fieldset>
+
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
+              <h4>Call Details</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Created At:</label>
+                <div class="col-md-4">
+                  <h5 id="createdAtCallDetail"></h5>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
+                <div class="col-md-4">
+                  <h5 id="updatedAtCallDetail"></h5>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Classifier:</label>
+                <div class="col-md-4">
+                  <h5 id="classifier"></h5>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Engines:</label>
+                <div class="col-md-4">
+                  <h5 id="engines"></h5>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="description">Description:</label>
+                <div class="col-md-4">
+                  <h5 id="descriptionCallDetail" style="text-transform:capitalize"></h5>
+                </div>
+              </div>
+
+              <!-- Text Area input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="callNotes">Call Notes:</label>
+                <div class="col-md-8 col-md-offset-2">
+                  <textarea id="callNotesDetail" name="callNotes" type="text" rows="4" maxlength="500"
+                    placeholder="call notes" class="form-control input-md" disabled></textarea>
+                </div>
+              </div>
+            </fieldset>
+          </form>
         </div>
       </div>
     </div>
@@ -867,6 +967,39 @@
 </html>
 
 <script type="text/javascript">
+  $(function () {
+    var socket=io()
+    socket.on('created_call', res => {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (res.call.communityID==myUser.user.activeCommunity) {
+        let dbVehicles = <%-JSON.stringify(vehicles)%>
+        for (let i=0; i < dbVehicles.length; i++) {
+          if (res.call.assignedFireEms.includes(dbVehciles[i]._id)==true) {
+            $('#assigned-call-container').append(
+              `<a id="${res._id}" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails('${res._id}')">
+                <div class="alert alert-success alert-dismissible show" role="alert">
+                  Opened: <span id="${res._id}-createdAt" style="text-transform:capitalize">
+                    <time>${res.call.createdAtReadable}</time> |  Description: <span id="${res._id}-description">${res.call.shortDescription}</span></span>
+              </div>
+              </a>`
+            ).fadeTo(1, function () {
+              $(this).add();
+            })
+          }
+        }
+      }
+    })
+
+    socket.on('cleared_call', res => {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (res.communityID==myUser.user.activeCommunity) {
+        $('#'+res.callID+'-row').remove().fadeOut(5, function () {
+          $(this).remove();
+        })
+      }
+    })
+  })
+
   $.delete=function (url, data, callback, type) {
     if ($.isFunction(data)) {
       type=type||callback,
@@ -881,6 +1014,40 @@
       data: data,
       contentType: type
     });
+  }
+
+  function populateCallDetails(callID) {
+    var socket=io();
+    socket.emit('get_call_by_id', callID)
+    socket.on('load_call_by_id_result', (res) => {
+      //debug log
+      //console.log(res)
+      var createdDate=new Date(res.call.createdAt)
+      if (res.call.updatedAt===""||res.call.updatedAt===undefined||res.call.updatedAt==='undefined') {
+        $('#updatedAtCallDetail').empty().text("N/A")
+      } else {
+        var updatedDate=new Date(res.call.updatedAt)
+        $('#updatedAtCallDetail').empty().text(updatedDate.toLocaleString())
+      }
+      $('#createdAtCallDetail').empty().text(createdDate.toLocaleString())
+      $('#descriptionCallDetail').empty().text(res.call.shortDescription)
+      $('#callNotesDetail').empty().text(res.call.callNotes)
+      let selectedClassifiers = ""
+      for (let i=0; i<res.call.classifier.length; i++) {
+        selectedClassifiers += res.call.classifier[i] + ", "
+      }
+      $('#classifier').empty().text(selectedClassifiers)
+      let vehicles = <%-JSON.stringify(vehicles)%>
+      let assignedFireEms = ""
+      for (let i=0; i<res.call.assignedFireEms.length; i++) {
+        for (let j=0; j<vehicles.length; j++) {
+          if (vehicles[j]._id==res.call.assignedFireEms[i]) {
+            assignedFireEms = assignedFireEms + `Engine - ${vehicles[i].emsVehicle.engineNumber} (${vehicles[i].emsVehicle.model}), `
+          }
+        }
+      }
+      $('#engines').empty().text(assignedFireEms)
+    })
   }
 
   function loadEmsData(index) {
