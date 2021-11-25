@@ -55,8 +55,14 @@
         </li>
         <div class="collapse in" id="toggleSearch">
           <li>
-            <a data-toggle="modal" href="#searchMedicalRecords"><span class="fa fa-id-card ml-3 mr-3"></span> Medical
+            <a data-toggle="modal" href="#searchMedicalRecords"><span class="fa fa-database ml-3 mr-3"></span> Medical
               Database</a>
+          </li>
+          <li>
+            <a data-toggle="modal" href="#newCivModal"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Persona</a>
+          </li>
+          <li>
+            <a data-toggle="modal" href="#newVehicleModal"><span class="fa fa-car ml-3 mr-3"></span> Add New Vehicle</a>
           </li>
         </div>
         <li class="background-color-222">
@@ -65,15 +71,6 @@
               class="fas fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleUtilities">
-          <li>
-            <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
-              <a data-toggle="modal" href="#boloModal" onclick="clearBoloForm()"><span
-                  class="fas fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
-              <% } else {%>
-                <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span
-                    class="fas fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
-                <% } %>
-          </li>
           <li>
             <a data-toggle="modal" href="#10codesModal"><span class="fas fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
           </li>
@@ -348,10 +345,10 @@
               </div>
 
               <!-- Text input -->
-              <div class="form-group">
+              <div class="form-group required">
                 <label class="col-md-4 control-label" for="engineNumber">Engine #</label>
                 <div class="col-md-4">
-                  <input id="engineNumber" name="engineNumber" type="text" maxlength="10" placeholder="engine # (optional)"
+                  <input id="engineNumber" name="engineNumber" type="text" maxlength="10" placeholder="engine #"
                     class="form-control input-md">
                 </div>
               </div>

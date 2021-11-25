@@ -506,19 +506,25 @@ module.exports = function (app, passport, server) {
               'call.communityID': req.user.user.activeCommunity
             }, function (err, dbCalls) {
               if (err) return console.error(err);
-              return res.render('dispatch-dashboard', {
-                user: req.user,
-                vehicles: null,
-                civilians: null,
-                firearms: null,
-                tickets: null,
-                arrestReports: null,
-                warrants: null,
-                communities: dbCommunities,
-                bolos: dbBolos,
-                commUsers: dbCommUsers,
-                calls: dbCalls,
-                context: context
+              EmsVehicle.find({
+                'emsVehicle.activeCommunityID': req.user.user.activeCommunity
+              }, function (err, dbEmsEngines) {
+                if (err) return console.error(err);
+                return res.render('dispatch-dashboard', {
+                  user: req.user,
+                  vehicles: null,
+                  civilians: null,
+                  firearms: null,
+                  tickets: null,
+                  arrestReports: null,
+                  warrants: null,
+                  dbEmsEngines: dbEmsEngines,
+                  communities: dbCommunities,
+                  bolos: dbBolos,
+                  commUsers: dbCommUsers,
+                  calls: dbCalls,
+                  context: context
+                });
               });
             });
           });
@@ -3738,7 +3744,6 @@ module.exports = function (app, passport, server) {
     })
 
     socket.on('create_call', (req) => {
-      // console.debug('create call socket: ', req)
       var myCall = new Call()
       myCall.socketCreateCall(req)
       myCall.save(function (err, dbCalls) {
