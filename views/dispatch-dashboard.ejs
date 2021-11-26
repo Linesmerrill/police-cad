@@ -239,6 +239,20 @@
                                 </thead>
                               </table>
                               <%}%>
+                            <% if (dbEmsEngines!=null) { %>
+                              <hr style="width: 88%;max-width: 100rem;">
+                              <!-- Fire/Ems list -->
+                              <h4 id="fireEms-list">Fire/EMS List:</h4>
+                              <table id="fireEmsListTable" class="table table-hover table-bordered">
+                                <thead>
+                                  <tr>
+                                    <th>Engine #</th>
+                                    <th>Model</th>
+                                    <th>Registered Owner</th>
+                                  </tr>
+                                </thead>
+                              </table>
+                            <% } %>
           </div>
 
         </div>
@@ -2508,7 +2522,15 @@
       ]
     });
 
-//load the officer list table, we do this because we want to filter out any
+    $('#fireEmsListTable').DataTable({
+      "bLengthChange": false,
+      "pageLength": 5,
+      columnDefs: [
+        { type: 'title-numeric', targets: 0 }
+      ]
+    });
+
+    //load the officer list table, we do this because we want to filter out any
     //officers that are not currently on duty. DataTables is easier to leverage
     //than relying on the html above
     var myCommUsers= <%- JSON.stringify(commUsers)%>;
@@ -2545,6 +2567,36 @@
         datatable.row.add($(officerTable))
         })
         datatable.draw();
+
+    let emsVehicles = <%-JSON.stringify(dbEmsEngines)%>;
+    let emsdatatable = $('#fireEmsListTable').DataTable();
+      emsdatatable.clear();
+      emsVehicles.forEach(val => {
+        emsTable = ""
+        if (val.emsVehicle.engineNumber == undefined) {
+          val.emsVehicle.engineNumber = ""
+        }
+        if (val.emsVehicle.model == undefined) {
+          val.emsVehicle.model = ""
+        }
+        if (val.emsVehicle.registeredOwner == undefined) {
+          val.emsVehicle.registeredOwner = "N/A"
+        }
+
+        emsTable += `<tr id="${val._id}-en" class="gray-hover">
+          <td style="text-transform: capitalize;">
+            Engine - ${val.emsVehicle.engineNumber}
+          </td>
+          <td style="text-transform: capitalize;">
+            ${val.emsVehicle.model}
+          </td>
+          <td id="${val._id}-ro">
+            ${val.emsVehicle.registeredOwner}
+          </td>
+        </tr>`
+      emsdatatable.row.add($(emsTable))
+      });
+      emsdatatable.draw();
 
     $('#boloTable').DataTable({
       "bLengthChange": false,
