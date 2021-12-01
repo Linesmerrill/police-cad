@@ -2802,20 +2802,26 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/deleteEmsVeh', auth, function (req, res) {
-    // console.debug(req.body)
-    var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /deleteEmsVeh")
-    if (!isValid) {
-      req.app.locals.specialContext = "invalidRequest";
-      return res.redirect('back')
-    }
-    EmsVehicle.findByIdAndDelete({
-      '_id': ObjectId(req.body.vehicleID)
-    }, function (err) {
-      if (err) return console.error(err);
-      return res.redirect('/ems-dashboard');
-    })
-  })
+  // Deprecated 2021/11/30
+  // app.post('/updateOrDeleteEmsVeh', auth, function (req, res) {
+  //   // console.debug(req.body)
+  //   if (req.body.action=="delete") {
+  //     var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /deleteEmsVeh")
+  //     if (!isValid) {
+  //       req.app.locals.specialContext = "invalidRequest";
+  //       return res.redirect('back')
+  //     }
+  //     EmsVehicle.findByIdAndDelete({
+  //       '_id': ObjectId(req.body.vehicleID)
+  //     }, function (err) {
+  //       if (err) return console.error(err);
+  //       return res.redirect('/ems-dashboard');
+  //     })
+  //   } else if (req.body.action=="update") {
+  //     // Let the socket update data and return
+  //     return res.redirect('/ems-dashboard');
+  //   }
+  // })
 
   app.post('/community', auth, function (req, res) {
     // console.debug("community req: ", req.body)
@@ -3391,6 +3397,17 @@ module.exports = function (app, passport, server) {
       }
     })
 
+    socket.on('load_ems_statuses', (vehicle) => {
+      if (vehicle.emsVehicle.activeCommunityID != null && vehicle.emsVehicle.activeCommunityID != undefined) {
+        EmsVehicle.find({
+          'emsVehicle.activeCommunityID': vehicle.emsVehicle.activeCommunityID
+        }, function (err, dbCommEms) {
+          if (err) return console.error(err);
+          return socket.emit('load_ems_status_result', dbCommEms);
+        });
+      }
+    });
+
     socket.on('load_dispatch_bolos', (user) => {
       if (user.user.activeCommunity != null && user.user.activeCommunity != undefined) {
         Bolo.find({
@@ -3533,6 +3550,63 @@ module.exports = function (app, passport, server) {
         }, function (err) {
           if (err) return console.error(err)
           return socket.broadcast.emit('updated_status', req)
+        })
+      }
+    })
+
+    socket.on('delete_ems_vehicle', (req) => {
+      // console.debug(req.body)
+      var isValid = isValidObjectIdLength(req.vehicleID, "cannot lookup invalid length vehicleID, route: /deleteEmsVeh")
+      if (!isValid) {
+        return
+      }
+      EmsVehicle.findByIdAndDelete({
+        '_id': ObjectId(req.vehicleID)
+      }, function (err) {
+        if (err) return console.error(err);
+        return socket.broadcast.emit('deleted_ems_vehicle', req);
+      })
+    });
+
+    socket.on('update_ems_status', (req) => {
+      // console.debug('update ems req: ', req);
+      if (!exists(req.vehicleID) || req.vehicleID == '') {
+        return console.error('cannot update an empty vehicleID')
+      } else if (!exists(req.status) || req.status == '') {
+        return console.error('cannot update an empty status')
+      }
+      if (req.updateDuty) {
+        var isValid = isValidObjectIdLength(req.vehicleID, "cannot lookup invalid length vehicleID, socket: update_status")
+        if (!isValid) {
+          return
+        }
+        EmsVehicle.findByIdAndUpdate({
+          '_id': ObjectId(req.vehicleID)
+        }, {
+          $set: {
+            'emsVehicle.dispatchStatus': req.status,
+            'emsVehicle.dispatchStatusSetBy': req.setBy,
+            'emsVehicle.dispatchOnDuty': req.onDuty
+          }
+        }, function (err) {
+          if (err) return console.error(err)
+          return socket.broadcast.emit('updated_ems_status', req)
+        })
+      } else {
+        var isValid = isValidObjectIdLength(req.vehicleID, "cannot lookup invalid length vehicleID, socket: update_status")
+        if (!isValid) {
+          return
+        }
+        EmsVehicle.findByIdAndUpdate({
+          '_id': ObjectId(req.vehicleID)
+        }, {
+          $set: {
+            'emsVehicle.dispatchStatus': req.status,
+            'emsVehicle.dispatchStatusSetBy': req.setBy,
+          }
+        }, function (err) {
+          if (err) return console.error(err)
+          return socket.broadcast.emit('updated_ems_status', req)
         })
       }
     })

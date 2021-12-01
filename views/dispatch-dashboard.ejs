@@ -248,7 +248,7 @@
                                   <tr>
                                     <th>Engine #</th>
                                     <th>Model</th>
-                                    <th>Registered Owner</th>
+                                    <th>Status</th>
                                   </tr>
                                 </thead>
                               </table>
@@ -2246,6 +2246,63 @@
       </div>
     </div>
 
+    <div id="manageEmsDispatchStatusModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <!-- Modal Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+            <h4>Manage User Status</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            <div class="form-horizontal">
+              <fieldset>
+                <div class="form-group">
+                  <label class="col-md-4 control-label" for="accountUsername">Engine Number:</label>
+                  <div class="col-md-6">
+                    <h5 id="engineNumberDispatch" style="text-transform: capitalize;"></h5>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-md-4 control-label" for="accountUsername">Active Status:</label>
+                  <div class="col-md-6">
+                    <h5 id="emsStatusDispatch"></h5>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-md-4 control-label" for="accountUsername">Set By:</label>
+                  <div class="col-md-6">
+                    <h5 id="emsSetByDispatch" style="text-transform: capitalize;"></h5>
+                  </div>
+                </div>
+                <hr style="width: 88%;max-width: 100rem;">
+                <input id="vehicleIDDispatch" type="hidden" name="vehicleID" value="">
+                <div class="col-md-12 text-align-center margin-bottom-1">
+                  <button type="submit" name="status" value="10-8" class="btn btn-primary margin-bottom-1"
+                    title="In Service" onclick="updateEmsStatus('10-8')">10-8</button>
+                  <button type="submit" name="status" value="10-6" class="btn btn-primary margin-bottom-1" title="Busy"
+                    onclick="updateEmsStatus('10-6')">10-6</button>
+                  <button type="submit" name="status" value="10-7" class="btn btn-primary margin-bottom-1"
+                    title="Out of Service" onclick="updateEmsStatus('10-7')">10-7</button>
+                  <button type="submit" name="status" value="10-23" class="btn btn-primary margin-bottom-1"
+                    title="Arrived on Scene" onclick="updateEmsStatus('10-23')">10-23</button>
+                  <button type="submit" name="status" value="10-97" class="btn btn-primary margin-bottom-1"
+                    title="In Route" onclick="updateEmsStatus('10-97')">10-97</button>
+                </div>
+                <div class="col-md-12 text-align-center">
+                  <button type="submit" name="status" value="10-42" class="btn btn-warning btn-md"
+                    title="Log out of CAD" onclick="updateEmsStatus('10-42')">10-42</button>
+                  <button type="submit" name="status" value="10-41" class="btn btn-success btn-md" title="Log in to CAD"
+                    onclick="updateEmsStatus('10-41')">10-41</button>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div id="panicDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog">
@@ -2332,8 +2389,24 @@
 <script>
   $(function () {
     var socket=io();
+    socket.on('updated_ems_status', res => {
+      // console.log("ems res: ", res)
+      if (res.onDuty&&res.updateDuty) {
+        //socket coming in that a ems engine is going on-duty
+        $('#'+res.vehicleID+"-duty").removeClass('hide')
+        $('#'+res.vehicleID+"-duty").attr('style', 'cursor: pointer')
+      } else if (!res.onDuty&&res.updateDuty) {
+        //socket coming in that a ems engine is going off-duty
+        $('#'+res.vehicleID+"-duty").attr('style', 'background-color: #d9534f !important')
+        $('#'+res.vehicleID+"-duty").addClass('hide')
+      }
+      $('#'+res.vehicleID+"-status").text(res.status)
+
+      repopulateFireEmsList(res.vehicleID, res.status)
+    });
+
     socket.on('updated_status', res => {
-      console.log("res: ", res)
+      // console.log("res: ", res)
       if (res.onDuty&&res.updateDuty) {
         //socket coming in that a user is going on-duty
         $('#'+res.userID+"-duty").removeClass('hide')
@@ -2579,19 +2652,20 @@
         if (val.emsVehicle.model == undefined) {
           val.emsVehicle.model = ""
         }
-        if (val.emsVehicle.registeredOwner == undefined) {
-          val.emsVehicle.registeredOwner = "N/A"
+        if (val.emsVehicle.dispatchStatus == undefined ||val.emsVehicle.dispatchStatus == '') {
+          val.emsVehicle.dispatchStatus = "-" //set a default
         }
 
-        emsTable += `<tr id="${val._id}-en" class="gray-hover">
+        emsTable += `
+          <tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageEmsDispatchStatusModal"onclick="setEmsDispatchModalValues('${val._id}')">
           <td style="text-transform: capitalize;">
             Engine - ${val.emsVehicle.engineNumber}
           </td>
           <td style="text-transform: capitalize;">
             ${val.emsVehicle.model}
           </td>
-          <td id="${val._id}-ro">
-            ${val.emsVehicle.registeredOwner}
+          <td id="${val._id}-status">
+            ${val.emsVehicle.dispatchStatus}
           </td>
         </tr>`
       emsdatatable.row.add($(emsTable))
@@ -3176,6 +3250,34 @@
     })
   }
 
+  function setEmsDispatchModalValues(id) {
+    var socket=io();
+    let emsVehicles = <%-JSON.stringify(dbEmsEngines)%>
+    for (let i=0; i<emsVehicles.length; i++) {
+      if (emsVehicles[i]._id==id) {
+        socket.emit('load_ems_statuses', emsVehicles[i])
+        socket.on('load_ems_status_result', (res) => {
+          for (const i in res) {
+            if (res[i]._id==id) {
+              $('#engineNumberDispatch').text(res[i].emsVehicle.engineNumber)
+              if (res[i].emsVehicle.dispatchStatus==""||res[i].emsVehicle.dispatchStatus==undefined) {
+                $('#emsStatusDispatch').text("-")
+              } else {
+                $('#emsStatusDispatch').text(res[i].emsVehicle.dispatchStatus)
+              }
+              if (res[i].emsVehicle.dispatchStatusSetBy==""||res[i].emsVehicle.dispatchStatusSetBy==undefined) {
+                $('#emsSetByDispatch').text("-")
+              } else {
+                $('#emsSetByDispatch').text(res[i].emsVehicle.dispatchStatusSetBy)
+              }
+              $('#vehicleIDDispatch').val(res[i]._id)
+            } else continue
+          }
+        })
+      }
+    }
+  }
+
   $('#updateBolo').one('click', function () {
     var val=$(this).attr('value')
     var socket=io();
@@ -3291,6 +3393,31 @@
     socket.emit('clear_call', myReq)
   })
 
+  function updateEmsStatus(status) {
+    var socket=io();
+    var onDuty=null
+    var updateDuty=false
+    if (status=='10-41') {
+      onDuty=true
+      updateDuty=true
+      status="Online"
+    } else if (status=='10-42') {
+      onDuty=false
+      updateDuty=true
+      status="Offline"
+    }
+    myReq={
+      vehicleID: $('#vehicleIDDispatch').val(),
+      status: status,
+      setBy: 'Dispatch',
+      onDuty: onDuty,
+      updateDuty: updateDuty
+    }
+    socket.emit('update_ems_status', myReq)
+
+    $('#manageEmsDispatchStatusModal').modal('hide')
+  }
+
   function updateStatus(status) {
     var socket=io();
     var onDuty=null
@@ -3353,6 +3480,43 @@
   //Clears call form on button press because we are using sockets
   function clearCallForm() {
     document.getElementById("create-call-form").reset();
+  }
+
+  function repopulateFireEmsList(id, status) {
+    engines = <%-JSON.stringify(dbEmsEngines)%>
+    //override the values stored in memory, with the ones we just got back from the socket
+    for (i=0; i<engines.length; i++) {
+      if (engines[i]._id==id) {
+        engines[i].emsVehicle.dispatchStatus=status
+      }
+    }
+    var engineListNewCall=tail.select('#fireEms-select', {
+      search: true,
+      classNames: "default white",
+      descriptions: true,
+      sortGroups: "ASC",
+      sortItems: "ASC",
+      placeholder: "Fire/Ems Engine List",
+      multiPinSelected: true,
+      hideSelected: false,
+      hideDisabled: true,
+      multiShowCount: false,
+      multiContainer: true
+    })
+    var newCallItems={}
+    for (i=0; i<engines.length; i++) {
+      if (!engines[i].emsVehicle.engineNumber) {
+        engines[i].emsVehicle.engineNumber=""
+      }
+      newCallItems[engines[i]._id]={
+        value: 'Engine - '+engines[i].emsVehicle.engineNumber+' ( '+engines[i].emsVehicle.model+' )',
+        group: "#",
+        selected: false,
+        disabled: false,
+        description: engines[i].emsVehicle.registeredOwner
+      }
+    }
+    engineListNewCall.options.add(newCallItems)
   }
 
   function repopulateOfficerList(id, status) {

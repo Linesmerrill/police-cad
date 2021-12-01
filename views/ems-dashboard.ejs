@@ -619,7 +619,7 @@
       <div class="modal-content">
         <div class="modal-body">
 
-          <form action="/deleteEmsVeh" method="POST">
+          <!-- <form action="/updateOrDeleteEmsVeh" method="POST"> -->
             <fieldset>
               <!-- Form Name -->
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
@@ -648,25 +648,55 @@
                 <input id="engineNumVeh" type="text" value="" style="display:none">
               </div>
 
-              <!-- Select Basic -->
+              <!-- Text input-->
               <div class="col-md-7">
                 <label class="col-md-4 margin-bottom-1" for="color">Color:</label>
                 <label class="col-md-5" id="colorView">color here</label>
               </div>
 
-              <!-- Select Basic -->
+              <!-- Text input-->
               <div class="col-md-7">
                 <label class="col-md-4 margin-bottom-1" for="ro">RO:</label>
                 <label class="col-md-8" id="roView">ro here</label>
                 <input id="roVeh" type="text" value="" style="display:none">
               </div>
 
+              <!-- Text input-->
+              <div class="col-md-7">
+                <label class="col-md-4 margin-bottom-1" for="statusDispatch">Status:</label>
+                <label class="col-md-5" id="statusDispatch">status here</label>
+              </div>
+
+              <!-- Text input-->
+              <div class="col-md-7">
+                <label class="col-md-4 margin-bottom-1" for="statusDispatchSetBy">Set By:</label>
+                <label class="col-md-8" id="statusDispatchSetBy">status set by here</label>
+              </div>
+
+              <div class="col-md-12 text-align-center margin-bottom-1">
+                <button name="action" value="update" class="btn btn-primary margin-bottom-1"
+                  title="In Service" onclick="updateStatus('10-8')">10-8</button>
+                <button name="action" value="update" class="btn btn-primary margin-bottom-1" title="Busy"
+                  onclick="updateStatus('10-6')">10-6</button>
+                <button name="action" value="update" class="btn btn-primary margin-bottom-1"
+                  title="Out of Service" onclick="updateStatus('10-7')">10-7</button>
+                <button name="action" value="update" class="btn btn-primary margin-bottom-1"
+                  title="Arrived on Scene" onclick="updateStatus('10-23')">10-23</button>
+                <button name="action" value="update" class="btn btn-primary margin-bottom-1"
+                  title="In Route" onclick="updateStatus('10-97')">10-97</button>
+              </div>
+              <div class="col-md-12 text-align-center">
+                <button name="status" value="10-42" class="btn btn-warning btn-md"
+                  title="Log out of CAD" onclick="updateStatus('10-42')">10-42</button>
+                <button name="action" value="update" class="btn btn-success btn-md" title="Log in to CAD"
+                  onclick="updateStatus('10-41')">10-41</button>
+              </div>
+
               <div class="col-md-12 text-align-center">
                 <input id="vehicle-id" type="hidden" name="vehicleID" value="">
-                <button type="submit" class="btn btn-danger">Delete Vehicle</button>
+                <button onclick="deleteEmsVeh()" type="submit" name="action" value="delete" class="btn btn-danger">Delete Vehicle</button>
               </div>
             </fieldset>
-          </form>
         </div>
       </div>
     </div>
@@ -969,6 +999,13 @@
 <script type="text/javascript">
   $(function () {
     var socket=io()
+    socket.on('updated_ems_status', res => {
+      location.reload();
+    });
+    socket.on('deleted_ems_vehicle', req => {
+      location.reload();
+    })
+
     socket.on('created_call', res => {
       var myUser= <%-JSON.stringify(user)%>;
       if (res.call.communityID==myUser.user.activeCommunity) {
@@ -1070,6 +1107,37 @@
     $('#removeEms').val(emsFullName)
   }
 
+  function deleteEmsVeh() {
+    var socket=io()
+    myReq={
+      vehicleID: $('#vehicle-id').val()
+    }
+    socket.emit('delete_ems_vehicle', myReq)
+  }
+
+  function updateStatus(status) {
+    var socket=io();
+    var onDuty=null
+    var updateDuty=false
+    if (status=='10-41') {
+      onDuty=true
+      updateDuty=true
+      status="Online"
+    } else if (status=='10-42') {
+      onDuty=false
+      updateDuty=true
+      status="Offline"
+    }
+    myReq={
+      vehicleID: $('#vehicle-id').val(),
+      status: status,
+      setBy: 'Self',
+      onDuty: onDuty,
+      updateDuty: updateDuty
+    }
+    socket.emit('update_ems_status', myReq)
+  }
+
   function loadVehData(index) {
     var myVar= <%- JSON.stringify(vehicles)%>;
 
@@ -1078,6 +1146,8 @@
     var model=myVar[index].emsVehicle.model
     var engineNumber=myVar[index].emsVehicle.engineNumber
     var registeredOwner=myVar[index].emsVehicle.registeredOwner
+    var status=myVar[index].emsVehicle.dispatchStatus
+    var statusSetBy=myVar[index].emsVehicle.dispatchStatusSetBy
     $('#vehicle-id').val(myVar[index]._id)
     $('#plateView').text(plate)
     $('#modelView').text(model)
@@ -1088,7 +1158,8 @@
     $('#engineNumVeh').val(engineNumber)
     $('#roVeh').val(registeredOwner)
     $('#plateVeh').val(plate)
-
+    $('#statusDispatch').text(status)
+    $('#statusDispatchSetBy').text(statusSetBy)
   }
 
   function createNewEms() {
