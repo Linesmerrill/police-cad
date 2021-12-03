@@ -25,6 +25,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
   <script type="text/javascript" src="static/js/tail.select.min.js"></script>
+  <!-- To hide google translate header bar on each page -->
+  <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
+  <style type='text/css'> body {position: static !important; top:0px !important;}</style>
   <% include ad-header %>
 </head>
 
@@ -147,19 +150,29 @@
             </h1>
           </div>
         </div>
-      </nav>
-
-      <a data-toggle="modal" href="#signal100DetailModal" style="position: fixed;top: 64px;z-index: 8;width: 100%;">
-        <div id="signal-100-banner" class="panel panel-danger hide">
-          <div class="panel-heading">
-            <span class="panel-title">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
-            <button type="button" class="close" aria-label="Close"
-              style="position: absolute; margin-top: 5px; margin-left: 1em;">
-              <i class="fas fa-times"></i> Clear
-            </button>
+        <a data-toggle="modal" href="#signal100DetailModal" style="z-index: 8;width: 100%;">
+          <div id="signal-100-banner" class="panel panel-danger hide">
+            <div class="panel-heading">
+              <span class="panel-title">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
+              <button type="button" class="close" aria-label="Close"
+                style="position: absolute; margin-top: 5px; margin-left: 1em;">
+                <i class="fas fa-times"></i> Clear
+              </button>
+            </div>
           </div>
-        </div>
-      </a>
+        </a>
+        <a data-toggle="modal" href="#holdTrafficDetailModal" style="z-index: 8;width: 100%;">
+          <div id="hold-traffic-banner" class="panel panel-warning hide">
+            <div class="panel-heading">
+              <span class="panel-title">⚠️⚠️⚠️ 10-3 Active: hold all radio traffic! ⚠️⚠️⚠️</span>
+              <button type="button" class="close" aria-label="Close"
+                style="position: absolute; margin-top: 5px; margin-left: 1em;">
+                <i class="fas fa-times"></i> Clear
+              </button>
+            </div>
+          </div>
+        </a>
+      </nav>
 
       <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
 
@@ -210,6 +223,9 @@
                               <button type="button" class="btn btn-danger btn-lg margin-top-2 margin-bottom-1"
                                 onclick="signal100()"><i class="fas fa-exclamation-circle" aria-hidden="true"></i>
                                 Signal 100</button>
+                                <button type="button" class="btn btn-warning btn-lg margin-top-2 margin-bottom-1"
+                                onclick="holdTraffic()"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                10-3</button>
                               <% } else {%>
                                 <button type="button" data-toggle="modal" href="#nonCommunityBoloModal"
                                   class="btn btn-danger btn-lg margin-top-2 mock-disabled margin-bottom-1"><i
@@ -2348,6 +2364,21 @@
       </div>
     </div>
 
+    <div id="holdTrafficDetailModal" class="modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="modal-title" style="font-size: 18px;">Clear 10-3</span>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+          </div>
+          <div class="modal-footer text-align-center">
+            <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="clearHoldTraffic()">Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="officerHelpModal" class="modal" tabindex="-1" role="dialog">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -2384,6 +2415,7 @@
 <script src="/static/js/scripts.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
 <script>if (window.module) module = window.module;</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
 </html>
 <script>
@@ -2425,7 +2457,7 @@
       repopulateOfficerList(res.userID, res.status)
     })
 
-    socket.on('load_panic_status_update', (map, signal100Resp, origReq) => {
+    socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq) => {
       var myUser= <%- JSON.stringify(user)%>;
       if (myUser.user.activeCommunity==origReq.activeCommunity) {
         //load the signal 100 status to the page
@@ -2433,6 +2465,11 @@
           $('#signal-100-banner').removeClass('hide').addClass('show')
         } else {
           $('#signal-100-banner').removeClass('show').addClass('hide')
+        }
+        if (holdTrafficResp) {
+          $('#hold-traffic-banner').removeClass('hide').addClass('show')
+        } else {
+          $('#hold-traffic-banner').removeClass('show').addClass('hide')
         }
 
         //load the panic status items
@@ -2508,10 +2545,29 @@
       }
     })
 
+    socket.on('hold_traffic_button_updated', (origReq) => {
+      var myUser= <%- JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity==origReq.activeCommunity) {
+        if ($('#panic-button-check-sound').prop('checked')) {
+          var audioElement=document.createElement('audio');
+          audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound.wav');
+          audioElement.play();
+        }
+        $('#hold-traffic-banner').removeClass('hide').addClass('show')
+      }
+    })
+
     socket.on('clear_signal_100_updated', activeCommunity => {
       var myUser= <%- JSON.stringify(user)%>;
       if (myUser.user.activeCommunity==activeCommunity) {
         $('#signal-100-banner').removeClass('show').addClass('hide')
+      }
+    })
+
+    socket.on('clear_hold_traffic_updated', activeCommunity => {
+      var myUser= <%- JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity==activeCommunity) {
+        $('#hold-traffic-banner').removeClass('show').addClass('hide')
       }
     })
 
@@ -3328,6 +3384,13 @@
     $('#signal-100-banner').removeClass('show').addClass('hide')
   }
 
+  function clearHoldTraffic() {
+    var socket=io();
+    myUser= <%- JSON.stringify(user)%>
+      socket.emit('clear_hold_traffic', myUser.user.activeCommunity)
+    $('#hold-traffic-banner').removeClass('show').addClass('hide')
+  }
+
   $('#createBolo').one('click', function () {
     var socket=io();
     myUser= <%- JSON.stringify(user)%>
@@ -3921,6 +3984,27 @@
     }
   }
 
+  function holdTraffic() {
+    //if it is already showing we don't want to show it again (there can only be 1 active
+    // hold traffic per community)
+    if (!$('#hold-traffic-banner').hasClass('show')) {
+      var myUser= <%- JSON.stringify(user)%>;
+      var socket=io();
+      myReq={
+        userID: myUser._id,
+        userUsername: myUser.user.username,
+        activeCommunity: myUser.user.activeCommunity
+      }
+      if ($('#panic-button-check-sound').prop('checked')) {
+        var audioElement=document.createElement('audio');
+        audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound.wav');
+        audioElement.play();
+      }
+
+      socket.emit('hold_traffic_button_update', myReq)
+    }
+  }
+
   function populateDriversLicense(civ) {
     for (i=0; i<civ.length; i++) {
       var firstName=civ[i].civilian.firstName
@@ -4099,4 +4183,11 @@
     $('#notification-symbol').removeClass('notif');
     $('#notification-count').text('');
   }
+</script>
+
+<!--  added for google translate --> 
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+}
 </script>

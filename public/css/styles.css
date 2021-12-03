@@ -1627,3 +1627,8 @@ a[data-toggle="collapse"].collapsed .rotate {
     height: 100%;
     flex-direction: column;
 }
+
+.goog-te-banner {
+    top: initial;
+    bottom: 0;
+}

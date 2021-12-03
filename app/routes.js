@@ -36,6 +36,10 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.get('/discord-bot', function (req, res) {
+    res.redirect('https://discord.com/api/oauth2/authorize?client_id=860298681047056434&permissions=8&scope=bot');
+  });
+
   app.get('/release-log', function (req, res) {
     res.render('release-log');
   });
@@ -3657,7 +3661,7 @@ module.exports = function (app, passport, server) {
             if (resp.community != null) {
               // console.debug("resp", resp)
               // console.debug("resp.community", resp.community)
-              return socket.broadcast.emit('load_panic_status_update', resp.community.activePanics, resp.community.activeSignal100, req)
+              return socket.broadcast.emit('load_panic_status_update', resp.community.activePanics, resp.community.activeSignal100, resp.community.activeHoldTraffic, req)
             }
           }
         })
@@ -3793,6 +3797,35 @@ module.exports = function (app, passport, server) {
       }
     })
 
+    socket.on('hold_traffic_button_update', (req) => {
+      // console.debug('hold traffic button update req: ', req)
+      if (req.activeCommunity != null && req.activeCommunity != undefined) {
+        var isValid = isValidObjectIdLength(req.activeCommunity, "cannot lookup invalid length activeCommunity, socket: hold_traffic_button_update")
+        if (!isValid) {
+          return
+        }
+        Community.findById({
+          '_id': ObjectId(req.activeCommunity)
+        }, function (err, resp) {
+          if (err) return console.error(err)
+          if (resp != null) {
+            if (resp.community != null) {
+              Community.findByIdAndUpdate({
+                '_id': ObjectId(req.activeCommunity)
+              }, {
+                $set: {
+                  'community.activeHoldTraffic': true
+                }
+              }, function (err) {
+                if (err) return console.error(err)
+                return socket.broadcast.emit('hold_traffic_button_updated', req)
+              })
+            }
+          }
+        })
+      }
+    })
+
     socket.on('clear_signal_100', (activeCommunity) => {
       // console.debug('signal 100 clear button update req: ', activeCommunity)
       if (activeCommunity != null && activeCommunity != undefined) {
@@ -3815,6 +3848,35 @@ module.exports = function (app, passport, server) {
               }, function (err) {
                 if (err) return console.error(err)
                 return socket.broadcast.emit('clear_signal_100_updated', activeCommunity)
+              })
+            }
+          }
+        })
+      }
+    })
+
+    socket.on('clear_hold_traffic', (activeCommunity) => {
+      // console.debug('10-3 clear button update req: ', activeCommunity)
+      if (activeCommunity != null && activeCommunity != undefined) {
+        var isValid = isValidObjectIdLength(activeCommunity, "cannot lookup invalid length activeCommunity, socket: clear_hold_traffic")
+        if (!isValid) {
+          return
+        }
+        Community.findById({
+          '_id': ObjectId(activeCommunity)
+        }, function (err, resp) {
+          if (err) return console.error(err)
+          if (resp != null) {
+            if (resp.community != null) {
+              Community.findByIdAndUpdate({
+                '_id': ObjectId(activeCommunity)
+              }, {
+                $set: {
+                  'community.activeHoldTraffic': false
+                }
+              }, function (err) {
+                if (err) return console.error(err)
+                return socket.broadcast.emit('clear_hold_traffic_updated', activeCommunity)
               })
             }
           }
