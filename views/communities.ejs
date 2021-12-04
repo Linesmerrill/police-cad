@@ -15,6 +15,9 @@
     <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule="" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>
+    <!-- To hide google translate header bar on each page -->
+    <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
+    <style type='text/css'> body {position: static !important; top:0px !important;}</style>
     <% include ad-header %>
 </head>
 
@@ -192,6 +195,7 @@
     <script src="/static/js/wow.js"></script>
     <script src="/static/js/scripts.js"></script>
     <script>if (window.module) module = window.module;</script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 
 </html>
@@ -271,5 +275,12 @@ function cancelCommunityName() {
   });
     })
   }
+</script>
+
+<!--  added for google translate --> 
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+}
 </script>
 <!-- IE needs 512+ bytes: https://blogs.msdn.microsoft.com/ieinternals/2010/08/18/friendly-http-error-pages/ -->

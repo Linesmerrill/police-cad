@@ -7,6 +7,7 @@ var communitySchema = mongoose.Schema({
     code: String,
     activePanics: Map,
     activeSignal100: Boolean,
+    activeHoldTraffic: Boolean,
     createdAt: Date,
     updatedAt: Date
   }

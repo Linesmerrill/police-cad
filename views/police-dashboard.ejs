@@ -24,6 +24,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
   <script type="text/javascript" src="static/js/tail.select.min.js"></script>
+  <!-- To hide google translate header bar on each page -->
+  <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
+  <style type='text/css'> body {position: static !important; top:0px !important;}</style>
   <% include ad-header %>
 </head>
 
@@ -134,19 +137,25 @@
             <h1 class="cursive"><a href="/police-dashboard"><i class="fas fa-star"></i> Police Operations</a></h1>
           </div>
         </div>
-      </nav>
-
-      <a style="position: fixed;top: 64px;z-index: 8;width: 100%; cursor: default;">
-        <div id="signal-100-banner" class="panel panel-danger hide">
-          <div class="panel-heading">
-            <span class="panel-title">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
+        <a style="z-index: 8;width: 100%; cursor: default;">
+          <div id="signal-100-banner" class="panel panel-danger hide">
+            <div class="panel-heading">
+              <span class="panel-title">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
+            </div>
           </div>
-        </div>
-      </a>
+        </a>
+        <a style="z-index: 8;width: 100%; cursor: default;">
+          <div id="hold-traffic-banner" class="panel panel-warning hide">
+            <div class="panel-heading">
+              <span class="panel-title">⚠️⚠️⚠️ 10-3 Active: hold all radio traffic! ⚠️⚠️⚠️</span>
+            </div>
+          </div>
+        </a>
+      </nav>
 
       <header id="second" style='background-image: url("/static/images/hway_bkground.jpg");'>
         <div class="header-content margin-top-2">
-          <div class="inner">
+          <div class="inner" style="margin-top: 9em;">
             <% for(var i=0; i<communities.length; i++) {%>
               <% if (communities[i]._id==user.user.activeCommunity) {%>
                 <div id="panic-placeholder"></div>
@@ -194,7 +203,7 @@
                                 <!-- imports the community specific alerts -->
                                 <% include community-alerts %>
 
-                                  <div class="container text-center width-100">
+                                  <div class="container text-center width-100 margin-top-2">
                                     <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
                                       <% if (!user.user.dispatchOnDuty) {%>
                                         <h4><span id="<%=user._id%>-duty" class="red-dot"></span> <span
@@ -2037,6 +2046,7 @@
 <script src="/static/js/bootstrap.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
 <script>if (window.module) module = window.module;</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 
 </html>
@@ -2065,7 +2075,7 @@
       }
     })
 
-    socket.on('load_panic_status_update', (map, signal100Resp, origReq) => {
+    socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq) => {
       var myUser= <%-JSON.stringify(user)%>;
       if (myUser.user.activeCommunity==origReq.activeCommunity) {
         //load the signal 100 status to the page
@@ -2073,6 +2083,11 @@
           $('#signal-100-banner').removeClass('hide').addClass('show')
         } else {
           $('#signal-100-banner').removeClass('show').addClass('hide')
+        }
+        if (holdTrafficResp) {
+          $('#hold-traffic-banner').removeClass('hide').addClass('show')
+        } else {
+          $('#hold-traffic-banner').removeClass('show').addClass('hide')
         }
 
         //load the panic status items
@@ -2154,10 +2169,29 @@
       }
     })
 
+    socket.on('hold_traffic_button_updated', (origReq) => {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity==origReq.activeCommunity) {
+        if ($('#panic-button-check-sound').prop('checked')) {
+          var audioElement=document.createElement('audio');
+          audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound.wav');
+          audioElement.play();
+        }
+        $('#hold-traffic-banner').removeClass('hide').addClass('show')
+      }
+    })
+
     socket.on('clear_signal_100_updated', activeCommunity => {
       var myUser= <%-JSON.stringify(user)%>;
       if (myUser.user.activeCommunity==activeCommunity) {
         $('#signal-100-banner').removeClass('show').addClass('hide')
+      }
+    })
+
+    socket.on('clear_hold_traffic_updated', activeCommunity => {
+      var myUser= <%-JSON.stringify(user)%>;
+      if (myUser.user.activeCommunity==activeCommunity) {
+        $('#hold-traffic-banner').removeClass('show').addClass('hide')
       }
     })
 
@@ -3179,4 +3213,11 @@
     $('#notification-symbol').removeClass('notif');
     $('#notification-count').text('');
   }
+</script>
+
+<!--  added for google translate --> 
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+}
 </script>
