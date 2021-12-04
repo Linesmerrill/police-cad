@@ -1844,8 +1844,10 @@ module.exports = function (app, passport, server) {
       Civilian.findByIdAndUpdate({
         '_id': req.body.civilianID
       }, {
-        'civilian.deceased': req.body.deceased
-      }, function (err, civilian) {
+        $set: {
+          'civilian.deceased': 'yes'
+        }
+      }, function (err) {
         if (err) return console.error(err);
       });
     }
