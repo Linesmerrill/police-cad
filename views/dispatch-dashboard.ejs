@@ -258,7 +258,7 @@
                             <% if (dbEmsEngines!=null) { %>
                               <hr style="width: 88%;max-width: 100rem;">
                               <!-- Fire/Ems list -->
-                              <h4 id="fireEms-list">Fire/EMS List:</h4>
+                              <h4 id="fireEms-list">Fire/EMS List: <a data-toggle="modal" href="#fireEMSHelpModal"><i class="far fa-question-circle"></i></a> </h4>
                               <table id="fireEmsListTable" class="table table-hover table-bordered">
                                 <thead>
                                   <tr>
@@ -2390,6 +2390,23 @@
           <div class="modal-footer text-align-center">
             <p>If you see no records in the table, that means no officers have marked themselves 10-41 or "on-duty".</p><p> Remind
               your officers to make sure and mark themselves 10-41 when they go "on-duty" and 10-42 when they go "off-duty".
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="fireEMSHelpModal" class="modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="modal-title" style="font-size: 18px;">Fire/EMS List Help</span>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+          </div>
+          <div class="modal-footer text-align-center">
+            <p>If you see no records in the table, that means there are no active Engines created in your community.</p><p> Remind
+              your Fire/EMS personnel to make sure to create an Engine under "Vehicles".
             </p>
           </div>
         </div>
