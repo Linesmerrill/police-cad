@@ -460,7 +460,7 @@
                                                         <!-- <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button> -->
                                                       </div>
                                                       <hr />
-                                                      <% if (civilians[i].civilian.deceased=="yes") { %>
+                                                      <% if (civilians[i].civilian.deceased==true) { %>
                                                         <span>
                                                           <div class="alert alert-danger alert-dismissible"
                                                             style="display:block">
