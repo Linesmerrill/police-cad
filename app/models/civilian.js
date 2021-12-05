@@ -55,7 +55,7 @@ civilianSchema.methods.socketCreateUpdateCiv = function (req) {
     this.civilian.address = req.body.address.trim();
   }
   if (exists(req.body.deceased)) {
-    this.civilian.deceased = req.body.deceased.trim();
+    this.civilian.deceased = req.body.deceased;
   } else if (!exists(this.civilian.deceased)) {
     this.civilian.deceased = false
   }
