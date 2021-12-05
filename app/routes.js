@@ -1849,7 +1849,7 @@ module.exports = function (app, passport, server) {
         '_id': req.body.civilianID
       }, {
         $set: {
-          'civilian.deceased': 1
+          'civilian.deceased': true
         }
       }, function (err) {
         if (err) return console.error(err);

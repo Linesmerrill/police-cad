@@ -17,7 +17,7 @@ var civilianSchema = mongoose.Schema({
     }],
     gender: String,
     address: String,
-    deceased: String, // 1: no (alive), 0: yes (deceased)
+    deceased: Boolean, // true: yes (deceased), false: no (alive),
     race: String,
     hairColor: String,
     weight: String,
