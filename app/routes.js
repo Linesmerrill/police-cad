@@ -1844,7 +1844,7 @@ module.exports = function (app, passport, server) {
   app.post('/create-medical-report', auth, function (req, res) {
     var myReport = new MedicalReport()
     myReport.createReport(req, res)
-    if (req.body.deceased=="yes") {
+    if (req.body.deceased==true) {
       Civilian.findByIdAndUpdate({
         '_id': req.body.civilianID
       }, {
