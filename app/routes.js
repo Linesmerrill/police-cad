@@ -1849,7 +1849,7 @@ module.exports = function (app, passport, server) {
         '_id': req.body.civilianID
       }, {
         $set: {
-          'civilian.deceased': 'yes'
+          'civilian.deceased': 1
         }
       }, function (err) {
         if (err) return console.error(err);
@@ -3630,7 +3630,7 @@ module.exports = function (app, passport, server) {
         }, function (err) {
           if (err) return console.error(err)
           socket.broadcast.emit('updated_status', req);
-          return socket.emit('bot_updated_status', req);npm
+          return socket.emit('bot_updated_status', req);
         })
       } else {
         User.findByIdAndUpdate({
