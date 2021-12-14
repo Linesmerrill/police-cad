@@ -647,7 +647,7 @@
               <!-- Text input-->
               <div class="col-md-7">
                 <label class="col-md-4 margin-bottom-1" for="engineNumber">Engine #:</label>
-                <label class="col-md-8" id="engineNumView">engine nymber here</label>
+                <label class="col-md-8" id="engineNumView">engine number here</label>
                 <input id="engineNumVeh" type="text" value="" style="display:none">
               </div>
 
@@ -1152,6 +1152,11 @@
     var registeredOwner=myVar[index].emsVehicle.registeredOwner
     var status=myVar[index].emsVehicle.dispatchStatus
     var statusSetBy=myVar[index].emsVehicle.dispatchStatusSetBy
+    // If emsVehicle was created before fire_ems_update
+    // This converts the undefined values to blank spaces for UI
+    if (statusSetBy==undefined) statusSetBy="";
+    if (status==undefined) status="";
+    console.log(status)
     $('#vehicle-id').val(myVar[index]._id)
     $('#plateView').text(plate)
     $('#modelView').text(model)
@@ -1472,7 +1477,7 @@
   });
 </script>
 
-<!--  added for google translate --> 
+<!--  added for google translate -->
 <script type="text/javascript">
 function googleTranslateElementInit() {
   new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
