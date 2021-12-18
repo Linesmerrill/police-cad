@@ -355,6 +355,7 @@ module.exports = function (app, passport, server) {
               personas: dbPersonas,
               vehicles: dbVehicles,
               communities: dbCommunities,
+              calls: null,
               context: context
             });
           });
