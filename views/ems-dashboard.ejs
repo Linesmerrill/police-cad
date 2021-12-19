@@ -184,6 +184,7 @@
                   <th>Plate</th>
                   <th>Model</th>
                   <th>Engine #</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -193,6 +194,7 @@
                   <td><%= vehicles[i].emsVehicle.plate%></td>
                   <td> <%= vehicles[i].emsVehicle.model%></td>
                   <td> <%= vehicles[i].emsVehicle.engineNumber%></td>
+                  <td> <%= vehicles[i].emsVehicle.dispatchStatus%></td>
                 </tr>
                 <% } %>
               </tbody>
@@ -440,9 +442,9 @@
                     <option value="Fire Dept. Chief Vehicle">Fire Dept. Chief Vehicle</option>
                     <option value="Ambulance">Ambulance</option>
                     <option value="Medical Dept. Vehicle">Medical Dept. Vehicle</option>
-                    <option value="Medical Dept. Cheif Vehicle">Medical Dept. Cheif Vehicle</option>
-                    <option value="LifeGaurd Patrol Vehicle">LifeGaurd Patrol Vehicle</option>
-                    <option value="LifeGaurd Boat">LifeGaurd Boat</option>
+                    <option value="Medical Dept. Chief Vehicle">Medical Dept. Chief Vehicle</option>
+                    <option value="LifeGuard Patrol Vehicle">LifeGuard Patrol Vehicle</option>
+                    <option value="LifeGuard Boat">LifeGuard Boat</option>
                   </select>
                 </div>
               </div>
