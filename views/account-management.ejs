@@ -116,7 +116,7 @@
                     <% if (user.user.discordConnected==true) { %>
                       <button name="action" value="disconnectDiscord" class="btn btn-primary" type="submit">Disconnnect your Discord account</button>
                     <% } else if (user.user.discordConnected==false) { %>
-                      <a class="btn btn-primary" href="https://discord.com/api/oauth2/authorize?client_id=860298681047056434&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fauth%2Fdiscord&response_type=code&scope=identify&state=<%=referer%>">Connect your Discord account</a>
+                      <a class="btn btn-primary" href="https://discord.com/api/oauth2/authorize?client_id=860298681047056434&redirect_uri=https%3A%2F%2Fwww.linespolice-cad.com%2Fauth%2Fdiscord&response_type=code&scope=identify&state=<%=referer%>">Connect your Discord account</a>
                     <% } %>
                   </div>  
                 </div>
