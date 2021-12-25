@@ -884,6 +884,7 @@ module.exports = function (app, passport, server) {
                     tickets: null,
                     arrestReports: null,
                     warrants: null,
+                    dbEmsEngines: null,
                     communities: dbCommunities,
                     commUsers: null,
                     bolos: dbBolos,
@@ -903,6 +904,7 @@ module.exports = function (app, passport, server) {
                       tickets: null,
                       arrestReports: null,
                       warrants: null,
+                      dbEmsEngines: null,
                       communities: dbCommunities,
                       commUsers: dbCommUsers,
                       bolos: dbBolos,
@@ -946,6 +948,7 @@ module.exports = function (app, passport, server) {
                     tickets: null,
                     arrestReports: null,
                     warrants: null,
+                    dbEmsEngines: null,
                     communities: dbCommunities,
                     commUsers: null,
                     bolos: dbBolos,
@@ -956,6 +959,10 @@ module.exports = function (app, passport, server) {
                   User.find({
                     'user.activeCommunity': req.user.user.activeCommunity
                   }, function (err, dbCommUsers) {
+                    EmsVehicle.find({
+                      'emsVehicle.activeCommunityID': req.user.user.activeCommunity
+                    }, function (err, dbEmsEngines) {
+                      if (err) return console.error(err);
                     if (err) return console.error(err);
                     return res.render('dispatch-dashboard', {
                       user: req.user,
@@ -965,6 +972,7 @@ module.exports = function (app, passport, server) {
                       tickets: null,
                       arrestReports: null,
                       warrants: null,
+                      dbEmsEngines: dbEmsEngines,
                       communities: dbCommunities,
                       commUsers: dbCommUsers,
                       bolos: dbBolos,
@@ -972,6 +980,7 @@ module.exports = function (app, passport, server) {
                       context: null
                     });
                   });
+                });
                 }
               });
             });
@@ -1116,6 +1125,7 @@ module.exports = function (app, passport, server) {
                     tickets: null,
                     arrestReports: null,
                     warrants: null,
+                    dbEmsEngines: null,
                     communities: dbCommunities,
                     commUsers: null,
                     bolos: dbBolos,
@@ -1127,6 +1137,10 @@ module.exports = function (app, passport, server) {
                     'user.activeCommunity': req.user.user.activeCommunity
                   }, function (err, dbCommUsers) {
                     if (err) return console.error(err);
+                    EmsVehicle.find({
+                      'emsVehicle.activeCommunityID': req.user.user.activeCommunity
+                    }, function (err, dbEmsEngines) {
+                      if (err) return console.error(err);
                     return res.render('dispatch-dashboard', {
                       user: req.user,
                       vehicles: null,
@@ -1135,6 +1149,7 @@ module.exports = function (app, passport, server) {
                       tickets: null,
                       arrestReports: null,
                       warrants: null,
+                      dbEmsEngines: dbEmsEngines,
                       communities: dbCommunities,
                       commUsers: dbCommUsers,
                       bolos: dbBolos,
@@ -1142,6 +1157,7 @@ module.exports = function (app, passport, server) {
                       context: null
                     });
                   });
+                });
                 }
               });
             });
@@ -1178,6 +1194,7 @@ module.exports = function (app, passport, server) {
                     tickets: null,
                     arrestReports: null,
                     warrants: null,
+                    dbEmsEngines: null,
                     communities: dbCommunities,
                     commUsers: null,
                     bolos: dbBolos,
@@ -1189,6 +1206,10 @@ module.exports = function (app, passport, server) {
                     'user.activeCommunity': req.user.user.activeCommunity
                   }, function (err, dbCommUsers) {
                     if (err) return console.error(err);
+                    EmsVehicle.find({
+                      'emsVehicle.activeCommunityID': req.user.user.activeCommunity
+                    }, function (err, dbEmsEngines) {
+                      if (err) return console.error(err);
                     return res.render('dispatch-dashboard', {
                       user: req.user,
                       vehicles: null,
@@ -1197,6 +1218,7 @@ module.exports = function (app, passport, server) {
                       tickets: null,
                       arrestReports: null,
                       warrants: null,
+                      dbEmsEngines: dbEmsEngines,
                       communities: dbCommunities,
                       commUsers: dbCommUsers,
                       bolos: dbBolos,
@@ -1204,6 +1226,7 @@ module.exports = function (app, passport, server) {
                       context: null
                     });
                   });
+                });
                 }
               });
             });
