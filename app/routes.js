@@ -36,6 +36,12 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.get('/auth/discord', auth, passport.authenticate('discord', {
+    failureRedirect: '/'
+  }), (req, res) => {
+    return res.redirect(req.query.state);
+  });
+
   app.get('/discord-bot', function (req, res) {
     res.redirect('https://discord.com/api/oauth2/authorize?client_id=860298681047056434&permissions=8&scope=bot');
   });
@@ -184,7 +190,8 @@ module.exports = function (app, passport, server) {
           members: dbMembers,
           communities: dbCommunities,
           userID: req.session.passport.user,
-          user: req.user
+          user: req.user,
+          referer: '%2Fcommunities'
         });
       })
     })
@@ -203,7 +210,8 @@ module.exports = function (app, passport, server) {
       return res.render('communities-owned', {
         communities: dbCommunities,
         userID: req.session.passport.user,
-        user: req.user
+        user: req.user,
+        referer: '%2Fowned-communities'
       });
     })
   })
@@ -284,7 +292,8 @@ module.exports = function (app, passport, server) {
                 vehicles: dbVehicles,
                 firearms: dbFirearms,
                 communities: dbCommunities,
-                context: context
+                context: context,
+                referer: '%2Fciv-dashboard'
               });
             });
           });
@@ -321,7 +330,8 @@ module.exports = function (app, passport, server) {
                 vehicles: dbVehicles,
                 firearms: dbFirearms,
                 communities: dbCommunities,
-                context: context
+                context: context,
+                referer: '%2Fciv-dashboard'
               });
             });
           });
@@ -356,7 +366,8 @@ module.exports = function (app, passport, server) {
               vehicles: dbVehicles,
               communities: dbCommunities,
               calls: null,
-              context: context
+              context: context,
+              referer: '%2Fems-dashbaord'
             });
           });
         });
@@ -389,7 +400,8 @@ module.exports = function (app, passport, server) {
                 vehicles: dbVehicles,
                 communities: dbCommunities,
                 calls: dbCalls,
-                context: context
+                context: context,
+                referer: '%2Fems-dashbaord'
               });
             })
           });
@@ -416,7 +428,8 @@ module.exports = function (app, passport, server) {
           personas: null,
           vehicles: null,
           communities: dbCommunities,
-          context: context
+          context: context,
+          referer: '%2Fcommunity-dashboard'
         });
       });
     } else {
@@ -433,7 +446,8 @@ module.exports = function (app, passport, server) {
           personas: null,
           vehicles: null,
           communities: dbCommunities,
-          context: context
+          context: context,
+          referer: '%2Fcommunity-dashboard'
         });
       });
     }
@@ -470,7 +484,8 @@ module.exports = function (app, passport, server) {
             communities: dbCommunities,
             bolos: dbBolos,
             calls: dbCalls,
-            context: context
+            context: context,
+            referer: '%2Fpolice-dashboard'
           });
         });
       });
@@ -506,7 +521,8 @@ module.exports = function (app, passport, server) {
             bolos: dbBolos,
             commUsers: null,
             calls: null,
-            context: context
+            context: context,
+            referer: '%2Fdispatch-dashboard'
           });
         } else {
           User.find({
@@ -534,7 +550,8 @@ module.exports = function (app, passport, server) {
                   bolos: dbBolos,
                   commUsers: dbCommUsers,
                   calls: dbCalls,
-                  context: context
+                  context: context,
+                  referer: '%2Fdispatch-dashboard'
                 });
               });
             });
@@ -2165,9 +2182,21 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/manageAccount', auth, function (req, res) {
-    req.app.locals.specialContext = null;
-    var page = req.body.page;
-    if (req.body.action === 'updateUsername') {
+    if (req.body.action === 'disconnectDiscord') {
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.discord.id': null,
+          'user.discord.username': null,
+          'user.discord.discriminator': null,
+          'user.discordConnected': false
+        }
+      }, function (err) {
+        if (err) console.error(err);
+        return res.redirect('back');
+      });
+    } else if (req.body.action === 'updateUsername') {
       var username
       if (exists(req.body.accountUsername)) {
         username = req.body.accountUsername.trim()

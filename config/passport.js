@@ -1,8 +1,8 @@
 // local authentication
 // For more details go to https://github.com/jaredhanson/passport-local
-var LocalStrategy = require('passport-local').Strategy;
+const DiscordStrategy = require('passport-discord').Strategy;
+const LocalStrategy = require('passport-local').Strategy;
 var User = require('../app/models/user');
-let randomstring = require('randomstring');
 
 module.exports = function (passport) {
 
@@ -65,7 +65,7 @@ module.exports = function (passport) {
 							newUser.user.password = newUser.generateHash(password);
 							newUser.user.name = '';
 							newUser.user.address = '';
-							newUser.user.discordLoginToken = randomstring.generate(12);
+							newUser.user.discordConnected = false;
 							newUser.user.resetPasswordToken = '';
 							newUser.user.resetPasswordExpires = '';
 							newUser.user.createdAt = new Date();
@@ -84,7 +84,6 @@ module.exports = function (passport) {
 					user.user.password = user.generateHash(password);
 					user.user.name = ''
 					user.user.address = ''
-					user.user.discordLoginToken = randomstring.generate(12);
 					user.resetPasswordToken = ''
 					user.resetPasswordExpires = ''
 					user.save(function (err) {
@@ -95,4 +94,24 @@ module.exports = function (passport) {
 				}
 			});
 		}));
+
+		passport.use(new DiscordStrategy({
+			passReqToCallback: true,
+			clientID: process.env.CLIENT_ID,
+			clientSecret: process.env.CLIENT_SECRET,
+			callbackURL: '/auth/discord',
+			scope: ['identify'],
+		}, (req, accessToken, refreshToken, profile, done) => {
+			let user = req.user
+			user.user.discordConnected = true
+			user.user.discord = {
+				id: profile.id,
+				username: profile.username,
+				discriminator: profile.discriminator
+			}
+			user.save(function (err) {
+				if (err) throw err;
+				return done(null, user);
+			});
+		}));		
 };
