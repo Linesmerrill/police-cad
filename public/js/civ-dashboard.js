@@ -787,7 +787,7 @@ function autoCivCreator(gender, firearmLicenseMarker) {
     }) //feet
     pounds = faker.datatype.number({
       min: 75,
-      max: 10000
+      max: 700
     }) //lbs
   } else { //metric
     imperial = false;
