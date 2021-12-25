@@ -772,6 +772,8 @@ function autoCivCreator(gender, firearmLicenseMarker) {
   var imperial = false
   var weightImperial = false
   var metric = false
+  var heightInches = ""
+  var pounds = ""
   if (faker.datatype.boolean()) {
     imperial = true;
     weightImperial = true;
@@ -782,7 +784,7 @@ function autoCivCreator(gender, firearmLicenseMarker) {
     heightFoot = faker.datatype.number({
       min: 4,
       max: 7
-    }) //inches
+    }) //feet
     pounds = faker.datatype.number({
       min: 75,
       max: 10000
