@@ -28,6 +28,8 @@ var {
 } = require('util');
 var readFile = promisify(fs.readFile);
 
+const redirect = process.env.CLIENT_REDIRECT;
+
 module.exports = function (app, passport, server) {
 
   app.get('/', function (req, res) {
@@ -191,7 +193,8 @@ module.exports = function (app, passport, server) {
           communities: dbCommunities,
           userID: req.session.passport.user,
           user: req.user,
-          referer: '%2Fcommunities'
+          referer: encodeURIComponent('/communities'),
+          redirect: encodeURIComponent(redirect)
         });
       })
     })
@@ -211,7 +214,8 @@ module.exports = function (app, passport, server) {
         communities: dbCommunities,
         userID: req.session.passport.user,
         user: req.user,
-        referer: '%2Fowned-communities'
+        referer: encodeURIComponent('/owned-communities'),
+        redirect: encodeURIComponent(redirect)
       });
     })
   })
@@ -293,7 +297,8 @@ module.exports = function (app, passport, server) {
                 firearms: dbFirearms,
                 communities: dbCommunities,
                 context: context,
-                referer: '%2Fciv-dashboard'
+                referer: encodeURIComponent('/civ-dashboard'),
+                redirect: encodeURIComponent(redirect)
               });
             });
           });
@@ -331,7 +336,8 @@ module.exports = function (app, passport, server) {
                 firearms: dbFirearms,
                 communities: dbCommunities,
                 context: context,
-                referer: '%2Fciv-dashboard'
+                referer: encodeURIComponent('/civ-dashboard'),
+                redirect: encodeURIComponent(redirect)
               });
             });
           });
@@ -367,7 +373,8 @@ module.exports = function (app, passport, server) {
               communities: dbCommunities,
               calls: null,
               context: context,
-              referer: '%2Fems-dashbaord'
+              referer: encodeURIComponent('/ems-dashboard'),
+              redirect: encodeURIComponent(redirect)
             });
           });
         });
@@ -401,7 +408,8 @@ module.exports = function (app, passport, server) {
                 communities: dbCommunities,
                 calls: dbCalls,
                 context: context,
-                referer: '%2Fems-dashbaord'
+                referer: encodeURIComponent('/ems-dashboard'),
+                redirect: encodeURIComponent(redirect)
               });
             })
           });
@@ -429,7 +437,8 @@ module.exports = function (app, passport, server) {
           vehicles: null,
           communities: dbCommunities,
           context: context,
-          referer: '%2Fcommunity-dashboard'
+          referer: encodeURIComponent('/community-dashboard'),
+          redirect: encodeURIComponent(redirect)
         });
       });
     } else {
@@ -447,7 +456,8 @@ module.exports = function (app, passport, server) {
           vehicles: null,
           communities: dbCommunities,
           context: context,
-          referer: '%2Fcommunity-dashboard'
+          referer: encodeURIComponent('/community-dashboard'),
+          redirect: encodeURIComponent(redirect)
         });
       });
     }
@@ -485,7 +495,8 @@ module.exports = function (app, passport, server) {
             bolos: dbBolos,
             calls: dbCalls,
             context: context,
-            referer: '%2Fpolice-dashboard'
+            referer: encodeURIComponent('/police-dashboard'),
+            redirect: encodeURIComponent(redirect)
           });
         });
       });
@@ -522,7 +533,8 @@ module.exports = function (app, passport, server) {
             commUsers: null,
             calls: null,
             context: context,
-            referer: '%2Fdispatch-dashboard'
+            referer: encodeURIComponent('/dispatch-dashboard'),
+            redirect: encodeURIComponent(redirect)
           });
         } else {
           User.find({
@@ -551,7 +563,8 @@ module.exports = function (app, passport, server) {
                   commUsers: dbCommUsers,
                   calls: dbCalls,
                   context: context,
-                  referer: '%2Fdispatch-dashboard'
+                  referer: encodeURIComponent('/dispatch-dashboard'),
+                  redirect: encodeURIComponent(redirect)
                 });
               });
             });
