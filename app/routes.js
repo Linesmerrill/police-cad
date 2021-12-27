@@ -2904,11 +2904,57 @@ module.exports = function (app, passport, server) {
 
   var io = require('socket.io')(server);
 
-  io.sockets.on('connection', (socket) => {
+    io.sockets.on('connection', (socket) => {
 
     // For testing bot connection
     socket.on("botping", (data) => {
       socket.emit('botpong',{message:'pong'});
+    });
+    
+    socket.on('bot_join_community', (data) => {
+      var communityCode = data.communityCode.trim()
+      if (communityCode.length != 7) {
+        return socket.emit('bot_joined_community',{error:'Improper Community Code'});
+      }
+      Community.findOne({
+        'community.code': data.communityCode.toUpperCase()
+      }, function (err, community) {
+        if (err) return console.error(err);
+        if (community == null) {
+          return socket.emit('bot_joined_community',{error:'Community not found'});
+        }
+        var isValid = isValidObjectIdLength(data.userID, "cannot lookup invalid length userID")
+        if (!isValid) {
+          return socket.emit('bot_joined_community',{error:'Improper UserID'});
+        }
+        User.findOneAndUpdate({
+          '_id': ObjectId(data.userID),
+        }, {
+          $set: {
+            'user.activeCommunity': community._id
+          }
+        }, function (err) {
+          if (err) return console.error(err);
+          return socket.emit('bot_joined_community',{message:'success', commName:community.community.name});
+        })
+      })
+    });
+
+    socket.on('bot_leave_community', (data) => {
+      var isValid = isValidObjectIdLength(data.userID, "cannot lookup invalid length userID")
+      if (!isValid) {
+        return socket.emit('bot_left_community',{error:'Improper UserID'});
+      }
+      User.findOneAndUpdate({
+        '_id': ObjectId(data.userID),
+      }, {
+        $set: {
+          'user.activeCommunity': null
+        }
+      }, function (err) {
+        if (err) return console.error(err);
+        return socket.emit('bot_left_community',{message:'Successfully left community'});
+      })
     });
 
     socket.on('bot_name_search', (data) => {
@@ -2960,7 +3006,7 @@ module.exports = function (app, passport, server) {
                     }, function (err, dbCalls) {
                       if (err) return console.error(err);
                       if (data.user.user.activeCommunity == '' || data.user.user.activeCommunity == null) {
-                        return socket.emtit('bot_name_search_results', {
+                        return socket.emit('bot_name_search_results', {
                           user: data.user,
                           vehicles: null,
                           civilians: dbCivilians,
@@ -3626,7 +3672,7 @@ module.exports = function (app, passport, server) {
     })
 
     socket.on('clear_panic', (req) => {
-      // console.debug("clear req", req)
+      //console.log("clear req", req)
       if (req.communityID != null && req.communityID != undefined) {
         var isValid = isValidObjectIdLength(req.communityID, "cannot lookup invalid length communityID, socket: clear_panic")
         if (!isValid) {
@@ -3845,7 +3891,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on('update_drivers_license_status', (user) => {
-      // console.debug('update revoke drivers license status: ', user._id)
+      // console.debug('update revoke drivers license status: ', user)
       if (user != null && user != undefined) {
         if (user._id != null && user._id != undefined) {
           Civilian.findByIdAndUpdate({
@@ -3853,7 +3899,15 @@ module.exports = function (app, passport, server) {
           }, {
             'civilian.licenseStatus': user.status
           }, function (err, dbUser) {
-            if (err) return console.error(err);
+            if (err) {
+              console.error(err);
+              if (user.bot_request != null && user.bot_request != undefined && user.bot_request == true) {
+                return socket.emit('bot_updated_drivers_license_status',{success:false});
+              }  
+            }
+            if (user.bot_request != null && user.bot_request != undefined && user.bot_request == true) {
+              return socket.emit('bot_updated_drivers_license_status',{success:true});
+            }
             return socket.emit('load_updated_drivers_license_status_result', dbUser)
           })
         }
