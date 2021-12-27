@@ -115,12 +115,15 @@
                     <img alt="discord" class="margin-bottom-2" style="width: 40px;" src="./static/images/discord-icon.svg">
                   </br>
                     <% if (user.user.discordConnected) { %>
-                      <button name="action" value="disconnectDiscord" class="btn btn-primary" type="submit">Disconnect your Discord account</button>
+                      <h5 class="margin-bottom-1"><i style="color: #57C567" class="fas fa-check"></i> Discord account connected</h5>
+                      <button name="action" value="disconnectDiscord" class="btn btn-danger" type="submit">Disconnect your Discord account</button>
                     <% } else { %>
-                      <a href="https://discord.com/api/oauth2/authorize?client_id=860298681047056434&redirect_uri=<%=redirect%>&response_type=code&scope=identify&state=<%=referer%>" 
-                        target="_blank">Connect your Discord account <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
+                      <h5 class="margin-bottom-1"><i style="color: #A61F1E" class="fas fa-times"></i> Discord account not connected</h5>
+                        <a class="btn btn-primary" 
+                          href="https://discord.com/api/oauth2/authorize?client_id=860298681047056434&redirect_uri=<%=redirect%>&response_type=code&scope=identify&state=<%=referer%>" target="_blank">
+                          Connect your Discord account <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
                     <% } %>
-                  </div>  
+                  </div>
                 </div>
 
                 <hr style="width: 88%;max-width: 100rem;">
