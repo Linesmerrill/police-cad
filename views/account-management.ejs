@@ -105,23 +105,25 @@
                 <hr style="width: 88%;max-width: 100rem;">
                 
                 <h5>
-                  <ion-icon name="person-outline"></ion-icon> Connect Discord
+                  <ion-icon name="person-outline"></ion-icon> Discord
                 </h5>
 
                 <!-- Button -->
                 <div class="form-group text-align-center">
                   <input id="link" type="text" name="discordToken" value="<%= user.user.discordLoginToken %>" style="display: none;">
                   <div class="col-md-12">
-                    <img alt="discord" style="width: 40px;" src="./static/images/discord-icon.svg">
-                    <% if (user.user.discordConnected==true) { %>
-                      <button name="action" value="disconnectDiscord" class="btn btn-primary" type="submit">Disconnnect your Discord account</button>
-                    <% } else if (user.user.discordConnected==false) { %>
-                      <a class="btn btn-primary" 
-                          href="https://discord.com/api/oauth2/authorize?client_id=860298681047056434&redirect_uri=<%=redirect%>&response_type=code&scope=identify&state=<%=referer%>">
-                          Connect your Discord account
-                      </a>
+                    <img alt="discord" class="margin-bottom-2" style="width: 40px;" src="./static/images/discord-icon.svg">
+                  </br>
+                    <% if (user.user.discordConnected) { %>
+                      <h5 class="margin-bottom-1"><i style="color: #57C567" class="fas fa-check"></i> Discord account connected</h5>
+                      <button name="action" value="disconnectDiscord" class="btn btn-danger" type="submit">Disconnect your Discord account</button>
+                    <% } else { %>
+                      <h5 class="margin-bottom-1"><i style="color: #F8564E" class="fas fa-times"></i> Discord account not connected</h5>
+                        <a class="btn btn-primary" 
+                          href="https://discord.com/api/oauth2/authorize?client_id=860298681047056434&redirect_uri=<%=redirect%>&response_type=code&scope=identify&state=<%=referer%>" target="_blank">
+                          Connect your Discord account <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
                     <% } %>
-                  </div>  
+                  </div>
                 </div>
 
                 <hr style="width: 88%;max-width: 100rem;">
