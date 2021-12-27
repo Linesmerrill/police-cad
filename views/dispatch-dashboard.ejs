@@ -232,7 +232,7 @@
                                     class="fas fa-exclamation-circle" aria-hidden="true"></i> Signal 100</button>
                                 <% } %>
                           </div>
-                          <% if (commUsers==null) {%>
+                          <% if (user.user.activeCommunity =='' || user.user.activeCommunity ==null) {%>
                             <div class="col-md-10 col-md-offset-1 text-center">
                               <h3><i class="fas fa-arrow-left"></i> Click on any of the search buttons to get started
                               </h3>
@@ -324,7 +324,7 @@
               <% } %>
           </div>
           <div class="col-md-12 col-md-offset-0.75 margin-top-2">
-            <% if (commUsers !=null) {%>
+            <% if (commUsers !=null && user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
               <hr style="width: 88%;max-width: 100rem;">
               <!-- Active Calls -->
               <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Active Calls:</span> <button
@@ -2679,6 +2679,8 @@
     //load the officer list table, we do this because we want to filter out any
     //officers that are not currently on duty. DataTables is easier to leverage
     //than relying on the html above
+    var myUser= <%- JSON.stringify(user)%>;
+    if (myUser.user.activeCommunityID != '' && myUser.user.activeCommunityID != undefined){
     var myCommUsers= <%- JSON.stringify(commUsers)%>;
     let datatable = $('#officerListTable').DataTable();
         datatable.clear();
@@ -2754,6 +2756,7 @@
       "bLengthChange": false,
       "pageLength": 5,
     });
+  }
 
     if (($(window).height()+100)<$(document).height()) {
       $('#top-link-block').removeClass('hidden').affix({
