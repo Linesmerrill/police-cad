@@ -84,7 +84,6 @@ module.exports = function (passport) {
 					user.user.password = user.generateHash(password);
 					user.user.name = ''
 					user.user.address = ''
-					user.user.discordLoginToken = randomstring.generate(12);
 					user.resetPasswordToken = ''
 					user.resetPasswordExpires = ''
 					user.save(function (err) {
