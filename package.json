@@ -24,7 +24,7 @@
     "mongoose": "^5.9.19",
     "mpromise": "^0.5.5",
     "mquery": "^3.2.3",
-    "nodemailer": "^6.4.10",
+    "nodemailer": "^6.6.1",
     "nodemailer-sendgrid": "^1.0.3",
     "now": "^19.1.1",
     "passport": "^0.4.1",
