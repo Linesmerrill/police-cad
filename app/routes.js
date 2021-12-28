@@ -29,6 +29,7 @@ var {
 var readFile = promisify(fs.readFile);
 
 const redirect = process.env.CLIENT_REDIRECT;
+const discordClientID = process.env.CLIENT_ID;
 
 module.exports = function (app, passport, server) {
 
@@ -45,7 +46,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/discord-bot', function (req, res) {
-    res.redirect('https://discord.com/api/oauth2/authorize?client_id=860298681047056434&permissions=8&scope=bot');
+    res.redirect(`https://discord.com/api/oauth2/authorize?client_id=${discordClientID}&permissions=8&scope=bot`);
   });
 
   app.get('/release-log', function (req, res) {
@@ -194,7 +195,8 @@ module.exports = function (app, passport, server) {
           userID: req.session.passport.user,
           user: req.user,
           referer: encodeURIComponent('/communities'),
-          redirect: encodeURIComponent(redirect)
+          redirect: encodeURIComponent(redirect),
+          discordClientID: discordClientID
         });
       })
     })
@@ -215,7 +217,8 @@ module.exports = function (app, passport, server) {
         userID: req.session.passport.user,
         user: req.user,
         referer: encodeURIComponent('/owned-communities'),
-        redirect: encodeURIComponent(redirect)
+        redirect: encodeURIComponent(redirect),
+        discordClientID: discordClientID
       });
     })
   })
@@ -298,7 +301,8 @@ module.exports = function (app, passport, server) {
                 communities: dbCommunities,
                 context: context,
                 referer: encodeURIComponent('/civ-dashboard'),
-                redirect: encodeURIComponent(redirect)
+                redirect: encodeURIComponent(redirect),
+                discordClientID: discordClientID
               });
             });
           });
@@ -337,7 +341,8 @@ module.exports = function (app, passport, server) {
                 communities: dbCommunities,
                 context: context,
                 referer: encodeURIComponent('/civ-dashboard'),
-                redirect: encodeURIComponent(redirect)
+                redirect: encodeURIComponent(redirect),
+                discordClientID: discordClientID
               });
             });
           });
@@ -373,7 +378,8 @@ module.exports = function (app, passport, server) {
               communities: dbCommunities,
               context: context,
               referer: encodeURIComponent('/ems-dashboard'),
-              redirect: encodeURIComponent(redirect)
+              redirect: encodeURIComponent(redirect),
+              discordClientID: discordClientID
             });
           });
         });
@@ -404,7 +410,8 @@ module.exports = function (app, passport, server) {
               communities: dbCommunities,
               context: context,
               referer: encodeURIComponent('/ems-dashboard'),
-              redirect: encodeURIComponent(redirect)
+              redirect: encodeURIComponent(redirect),
+              discordClientID: discordClientID
             });
           });
         });
@@ -432,7 +439,8 @@ module.exports = function (app, passport, server) {
           communities: dbCommunities,
           context: context,
           referer: encodeURIComponent('/community-dashboard'),
-          redirect: encodeURIComponent(redirect)
+          redirect: encodeURIComponent(redirect),
+          discordClientID: discordClientID
         });
       });
     } else {
@@ -451,7 +459,8 @@ module.exports = function (app, passport, server) {
           communities: dbCommunities,
           context: context,
           referer: encodeURIComponent('/community-dashboard'),
-          redirect: encodeURIComponent(redirect)
+          redirect: encodeURIComponent(redirect),
+          discordClientID: discordClientID
         });
       });
     }
@@ -490,7 +499,8 @@ module.exports = function (app, passport, server) {
             calls: dbCalls,
             context: context,
             referer: encodeURIComponent('/police-dashboard'),
-            redirect: encodeURIComponent(redirect)
+            redirect: encodeURIComponent(redirect),
+            discordClientID: discordClientID
           });
         });
       });
@@ -527,7 +537,8 @@ module.exports = function (app, passport, server) {
             calls: null,
             context: context,
             referer: encodeURIComponent('/dispatch-dashboard'),
-            redirect: encodeURIComponent(redirect)
+            redirect: encodeURIComponent(redirect),
+            discordClientID: discordClientID
           });
         } else {
           User.find({
@@ -552,7 +563,8 @@ module.exports = function (app, passport, server) {
                 calls: dbCalls,
                 context: context,
                 referer: encodeURIComponent('/dispatch-dashboard'),
-                redirect: encodeURIComponent(redirect)
+                redirect: encodeURIComponent(redirect),
+                discordClientID: discordClientID
               });
             });
           });
