@@ -99,7 +99,7 @@ module.exports = function (passport) {
 			passReqToCallback: true,
 			clientID: process.env.CLIENT_ID,
 			clientSecret: process.env.CLIENT_SECRET,
-			callbackURL: '/auth/something',
+			callbackURL: process.env.CLIENT_REDIRECT,
 			scope: ['identify']
 		}, (req, accessToken, refreshToken, profile, done) => {
 			let user = req.user
