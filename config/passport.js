@@ -99,8 +99,8 @@ module.exports = function (passport) {
 			passReqToCallback: true,
 			clientID: process.env.CLIENT_ID,
 			clientSecret: process.env.CLIENT_SECRET,
-			callbackURL: '/auth/discord',
-			scope: ['identify'],
+			callbackURL: '/auth/something',
+			scope: ['identify']
 		}, (req, accessToken, refreshToken, profile, done) => {
 			let user = req.user
 			user.user.discordConnected = true
