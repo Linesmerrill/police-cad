@@ -102,6 +102,9 @@ module.exports = function (passport) {
 			callbackURL: '/auth/discord',
 			scope: ['identify'],
 		}, (req, accessToken, refreshToken, profile, done) => {
+			console.log("starting debug session for discord oauth issue")
+			console.log("req.rawHeaders: ", `${req.protocol}://${req.hostname}${req.originalUrl}`)
+			console.log("expected redirect url: ", process.env.CLIENT_REDIRECT)
 			let user = req.user
 			user.user.discordConnected = true
 			user.user.discord = {
