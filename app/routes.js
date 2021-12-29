@@ -632,7 +632,9 @@ module.exports = function (app, passport, server) {
                           commUsers: null,
                           bolos: dbBolos,
                           calls: dbCalls,
-                          context: null
+                          context: null,
+                          referer: encodeURIComponent('/dispatch-dashboard'),
+                          redirect: encodeURIComponent(redirect)
                         });
                       } else {
                         User.find({
@@ -651,7 +653,9 @@ module.exports = function (app, passport, server) {
                             commUsers: dbCommUsers,
                             bolos: dbBolos,
                             calls: dbCalls,
-                            context: null
+                            context: null,
+                            referer: encodeURIComponent('/dispatch-dashboard'),
+                            redirect: encodeURIComponent(redirect)
                           });
                         });
                       }
@@ -714,7 +718,9 @@ module.exports = function (app, passport, server) {
                           communities: dbCommunities,
                           bolos: dbBolos,
                           calls: dbCalls,
-                          context: null
+                          context: null,
+                          referer: encodeURIComponent('/dispatch-dashboard'),
+                          redirect: encodeURIComponent(redirect)
                         });
                       } else {
                         User.find({
@@ -733,7 +739,9 @@ module.exports = function (app, passport, server) {
                             commUsers: dbCommUsers,
                             bolos: dbBolos,
                             calls: dbCalls,
-                            context: null
+                            context: null,
+                            referer: encodeURIComponent('/dispatch-dashboard'),
+                            redirect: encodeURIComponent(redirect)
                           });
                         });
                       }
@@ -812,7 +820,9 @@ module.exports = function (app, passport, server) {
                         communities: dbCommunities,
                         bolos: dbBolos,
                         calls: dbCalls,
-                        context: null
+                        context: null,
+                        referer: encodeURIComponent('/police-dashboard'),
+                        redirect: encodeURIComponent(redirect)
                       });
                     });
                   });
@@ -872,7 +882,9 @@ module.exports = function (app, passport, server) {
                         communities: dbCommunities,
                         bolos: dbBolos,
                         calls: dbCalls,
-                        context: null
+                        context: null,
+                        referer: encodeURIComponent('/police-dashboard'),
+                        redirect: encodeURIComponent(redirect)
                       });
                     });
                   });
@@ -930,7 +942,9 @@ module.exports = function (app, passport, server) {
                     commUsers: null,
                     bolos: dbBolos,
                     calls: dbCalls,
-                    context: null
+                    context: null,
+                    referer: encodeURIComponent('/dispatch-dashboard'),
+                    redirect: encodeURIComponent(redirect)
                   });
                 } else {
                   User.find({
@@ -949,7 +963,9 @@ module.exports = function (app, passport, server) {
                       commUsers: dbCommUsers,
                       bolos: dbBolos,
                       calls: dbCalls,
-                      context: null
+                      context: null,
+                      referer: encodeURIComponent('/dispatch-dashboard'),
+                      redirect: encodeURIComponent(redirect)
                     });
                   });
                 }
@@ -992,7 +1008,9 @@ module.exports = function (app, passport, server) {
                     commUsers: null,
                     bolos: dbBolos,
                     calls: dbCalls,
-                    context: null
+                    context: null,
+                    referer: encodeURIComponent('/dispatch-dashboard'),
+                    redirect: encodeURIComponent(redirect)
                   });
                 } else {
                   User.find({
@@ -1011,7 +1029,9 @@ module.exports = function (app, passport, server) {
                       commUsers: dbCommUsers,
                       bolos: dbBolos,
                       calls: dbCalls,
-                      context: null
+                      context: null,
+                      referer: encodeURIComponent('/dispatch-dashboard'),
+                      redirect: encodeURIComponent(redirect)
                     });
                   });
                 }
@@ -1062,7 +1082,9 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   bolos: dbBolos,
                   calls: dbCalls,
-                  context: null
+                  context: null,
+                  referer: encodeURIComponent('/police-dashboard'),
+                  redirect: encodeURIComponent(redirect)
                 });
               });
             });
@@ -1106,7 +1128,9 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   bolos: dbBolos,
                   calls: dbCalls,
-                  context: null
+                  context: null,
+                  referer: encodeURIComponent('/police-dashboard'),
+                  redirect: encodeURIComponent(redirect)
                 });
               });
             });
@@ -1162,7 +1186,9 @@ module.exports = function (app, passport, server) {
                     commUsers: null,
                     bolos: dbBolos,
                     calls: dbCalls,
-                    context: null
+                    context: null,
+                    referer: encodeURIComponent('/dispatch-dashboard'),
+                    redirect: encodeURIComponent(redirect)
                   });
                 } else {
                   User.find({
@@ -1181,7 +1207,9 @@ module.exports = function (app, passport, server) {
                       commUsers: dbCommUsers,
                       bolos: dbBolos,
                       calls: dbCalls,
-                      context: null
+                      context: null,
+                      referer: encodeURIComponent('/dispatch-dashboard'),
+                      redirect: encodeURIComponent(redirect)
                     });
                   });
                 }
@@ -1224,7 +1252,9 @@ module.exports = function (app, passport, server) {
                     commUsers: null,
                     bolos: dbBolos,
                     calls: dbCalls,
-                    context: null
+                    context: null,
+                    referer: encodeURIComponent('/dispatch-dashboard'),
+                    redirect: encodeURIComponent(redirect)
                   });
                 } else {
                   User.find({
@@ -1243,7 +1273,9 @@ module.exports = function (app, passport, server) {
                       commUsers: dbCommUsers,
                       bolos: dbBolos,
                       calls: dbCalls,
-                      context: null
+                      context: null,
+                      referer: encodeURIComponent('/dispatch-dashboard'),
+                      redirect: encodeURIComponent(redirect)
                     });
                   });
                 }
@@ -1294,7 +1326,9 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   bolos: dbBolos,
                   calls: dbCalls,
-                  context: null
+                  context: null,
+                  referer: encodeURIComponent('/police-dashboard'),
+                  redirect: encodeURIComponent(redirect)
                 });
               });
             });
@@ -1338,7 +1372,9 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   bolos: dbBolos,
                   calls: dbCalls,
-                  context: null
+                  context: null,
+                  referer: encodeURIComponent('/police-dashboard'),
+                  redirect: encodeURIComponent(redirect)
                 });
               });
             });
