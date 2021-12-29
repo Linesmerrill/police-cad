@@ -11,7 +11,14 @@ var userSchema = mongoose.Schema({
         firstName: String,
         lastName: String,
         address: String,
-        discordLoginToken: String,
+        // Deprecated 2021/12/24 migrate to Discord Oauth2
+        // discordLoginToken: String,
+        discordConnected: Boolean,
+        discord: {
+            id: String,
+            username: String,
+            discriminator: String
+        },
         resetPasswordToken: String,
         resetPasswordExpires: Date,
         activeCommunity: String,

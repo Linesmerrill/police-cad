@@ -312,7 +312,7 @@ function toggleInput(showClass, hideClass) {
 }
 
 function markAsRead() {
-  document.cookie = "notification-symbol=v2.21.0";
+  document.cookie = "notification-symbol=v2.29.0";
   $('#notification-symbol').removeClass('notif');
   $('#notification-count').text('');
 }
