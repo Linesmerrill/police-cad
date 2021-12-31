@@ -118,7 +118,7 @@
             </button>
           </div>
           <div class="navbar-header" style="position: absolute; left: 85px;">
-            <h1 class="cursive"><a href="/police-dashboard"><i class="fas fa-star"></i> Fire/EMS Operations</a></h1>
+            <h1 class="cursive"><a href="/ems-dashboard"><i class="fas fa-star"></i> Fire/EMS Operations</a></h1>
           </div>
         </div>
       </nav>
@@ -717,8 +717,7 @@
             <fieldset>
 
               <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true"
-                onclick="createNewCiv()">X</button>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
               <h4>Create a New Report</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
@@ -777,6 +776,15 @@
 
               <!-- Text input-->
               <div class="form-group required">
+                <label class="col-md-4 control-label" for="reportTime">Time</label>
+                <div class="col-md-6">
+                  <input id="new-report-reportTime" name="reportTime" type="time" placeholder="hh:mm" 
+                  class="form-control input-md" required>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group required">
                 <label class="col-md-4 control-label" for="reportingEmsID">Fire/EMS ID</label>
                 <div class="col-md-6">
                   <input id="new-report-reportingEmsID" name="reportingEmsID" type="text"
@@ -797,9 +805,9 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="deceased">Deceased</label>
                 <div class="col-md-6">
-                  <select id="deceased" name="deceased" class="form-control" selected="no">
-                    <option value="false" selected>Flase</option>
-                    <option value="true">True</option>
+                  <select id="deceased" name="deceased" class="form-control" selected="selected">
+                    <option value="false" selected>No</option>
+                    <option value="true">Yes</option>
                   </select>
                 </div>
               </div>
@@ -815,12 +823,12 @@
 
               <!-- Button -->
               <div class="form-group">
-                <label class="col-md-4 control-label" for="submit-new-civ"></label>
+                <label class="col-md-4 control-label" for="submit-new-medical-report"></label>
                 <div class="col-md-4 text-center">
                   <input type="hidden" name="userID" value="<%= user._id %>">
                   <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID" ,
                     value="<%=user.user.activeCommunity%>">
-                  <button id="submit-new-civ" class="btn btn-primary" onclick="createNewMedicalReport()">Create</button>
+                  <button id="submit-new-medical-report" class="btn btn-primary">Create</button>
                 </div>
               </div>
             </fieldset>
@@ -848,8 +856,8 @@
             <fieldset>
 
               <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true"
-                onclick="createNewCiv()">X</button>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
               <h4>Join an Existing Community</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
@@ -866,8 +874,8 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="joinCommunity"></label>
                 <div class="col-md-4 text-align-center">
-                  <button id="joinCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary"
-                    onclick="createNewCiv()">Join</button>
+                  <input type="hidden" name="route" value="ems-dashboard">
+                  <button id="joinCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary">Join</button>
                 </div>
               </div>
             </fieldset>
@@ -890,8 +898,8 @@
               <h4>Leave Active Community</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
-              <p>NOTE: All personas and vehicles that you created in this community will no longer
-                show up on your dashboard after you leave.
+              <p>NOTE: All personnel and vehicles that were created in this community will no longer
+                show up when searching after you leave.
               </p>
               <p>Are you sure you want to leave this community?</p>
 
@@ -899,6 +907,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="leaveActiveCommunity"></label>
                 <div class="col-md-4 text-align-center">
+                  <input type="hidden" name="route" value="ems-dashboard">
                   <button id="leaveActiveCommunity" value="<%= user._id %>" name="userID"
                     class="btn btn-danger">Leave</button>
                 </div>
@@ -936,6 +945,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="createCommunity"></label>
                 <div class="col-md-4 text-align-center">
+                  <input type="hidden" name="route" value="ems-dashboard">
                   <button id="createCommunity" value="<%= user._id %>" name="userID"
                     class="btn btn-primary">Create</button>
                 </div>
@@ -952,8 +962,8 @@
       <div class="modal-content">
         <div class="modal-body">
           <fieldset>
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true"
-              onclick="createNewCiv()">X</button>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
             <h4>Check out the New Communities Section!</h4>
             <hr style="width: 88%;max-width: 100rem;">
             <a data-toggle="modal" href="#communitiesModal" onclick="dismissCommunitiesInfoModal()"><img
@@ -967,8 +977,8 @@
     </div>
   </div>
 
-  <% include notification-modal %>
   <% include account-management %>
+  <% include notification-modal %>
   <% include 10-codes %>
   <% include notepad %>
 
@@ -1192,18 +1202,14 @@
     })
   }
 
-  function CreateReport(firstName, lastName, civilianID, dateOfBirth) {
+  function CreateReport(firstName, lastName, civilianID, dateOfBirth, deceased) {
     var myUser= <%- JSON.stringify(user)%>;
     $('#new-report-civilianID').val(civilianID);
     $('#new-report-firstName').val(firstName);
     $('#new-report-lastName').val(lastName);
     $('#new-report-dateOfBirth').val(dateOfBirth);
     $('#new-report-reportingEmsID').val(myUser._id);
-  }
-
-  function pronounceDead(status) {
-    if (status) document.getElementById("deceased").value = "yes";
-    if (!status) document.getElementById("deceased").value = "no";
+    $('#deceased').val(deceased);
   }
 
   function searchMedicalNames() {
@@ -1254,6 +1260,8 @@
         } else {
           collapsed=""
         }
+        let deceasedState
+        e.civilian.deceased? deceasedState = 'Yes <i class="fas fa-skull-crossbones color-alert-red"></i>': deceasedState = 'No <i class="fas fa-user color-green"></i>'
         var newRowContent
         newRowContent=`
           <!-- List of Civilians -->
@@ -1270,15 +1278,15 @@
 
                             <div class="panel-body">
                                 <div class="text-align-center">
-                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="pronounceDead(false);CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`');setDateAndTime('#new-report-reportDate', '');">Create Report</button>
-                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="pronounceDead(true);CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`');setDateAndTime('#new-report-reportDate', '')">Pronounce Dead</button>
+                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`', 'false');setDateAndTime('#new-report-reportDate', '#new-report-reportTime');">Create Report</button>
+                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`', 'true');setDateAndTime('#new-report-reportDate', '#new-report-reportTime')">Pronounce Dead</button>
                                 </div>
                                 <hr/>
-                                Driver's ID #: `+e._id+`<br/>
-                                Date of Birth: `+e.civilian.birthday+`<br/>
-                                Address: `+e.civilian.address+`<br/>
-                                Occupation: `+e.civilian.occupation+`<br/>
-                                Deceased: `+e.civilian.deceased+`<br/>
+                                Driver's ID #: ${e._id}<br/>
+                                Date of Birth: ${e.civilian.birthday}<br/>
+                                Address: ${e.civilian.address}<br/>
+                                Occupation: ${e.civilian.occupation}<br/>
+                                Deceased: ${deceasedState}<br/>
                                 <hr style="width: 88%;max-width: 100rem;">
                                 <h4>Medical History</h4>
                                 <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">

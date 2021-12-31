@@ -1952,19 +1952,20 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-medical-report', auth, function (req, res) {
+    // console.debug('[DEBUG] (create-medical-report) req.body', req.body)
     var myReport = new MedicalReport()
     myReport.createReport(req, res)
-    if (req.body.deceased == true) {
-      Civilian.findByIdAndUpdate({
-        '_id': req.body.civilianID
-      }, {
-        $set: {
-          'civilian.deceased': true
-        }
-      }, function (err) {
-        if (err) return console.error(err);
-      });
-    }
+    let deceasedState = false
+    req.body.deceased === 'true' ? deceasedState = true : deceasedState = false
+    Civilian.findByIdAndUpdate({
+      '_id': req.body.civilianID
+    }, {
+      $set: {
+        'civilian.deceased': deceasedState
+      }
+    }, function (err) {
+      if (err) return console.error(err);
+    });
     myReport.save(function (err) {
       if (err) return console.error(err);
     });
