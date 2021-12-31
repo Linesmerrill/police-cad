@@ -2585,179 +2585,6 @@ module.exports = function (app, passport, server) {
     }
   })
 
-  // app.post('/updateOrDeleteCiv', auth, function (req, res) {
-  //   // console.debug(req.body)
-  //   req.app.locals.specialContext = null;
-  //   if (req.body.action === "update") {
-  //     var address
-  //     var occupation
-  //     var firearmLicense
-  //     var gender
-  //     var heightClassification
-  //     var height
-  //     var weightClassification
-  //     var weight
-  //     var eyeColor
-  //     var hairColor
-  //     var organDonor
-  //     var veteran
-  //     if (exists(req.body.address)) {
-  //       address = req.body.address.trim()
-  //     }
-  //     if (exists(req.body.occupation)) {
-  //       occupation = req.body.occupation.trim()
-  //     }
-  //     if (exists(req.body.firearmLicense)) {
-  //       firearmLicense = req.body.firearmLicense
-  //     }
-  //     if (exists(req.body.gender)) {
-  //       gender = req.body.gender
-  //     }
-  //     // height classification: imperial or metric, imperial will have 2 inputs and metric will have one
-  //     if (exists(req.body.heightClassification)) {
-  //       heightClassification = req.body.heightClassification;
-  //       // if user has selected 'imperial', then we should calculate USA maths for height
-  //       // else just grab whatever value was passed in for height
-  //       if (req.body.heightClassification === 'imperial') {
-  //         // because the USA is dumb, we gotta do some quick-maths to convert ft and inches to a single number :fml:
-  //         height = generateHeight(req.body.heightFoot, req.body.heightInches)
-  //       } else {
-  //         if (exists(req.body.heightCentimeters)) {
-  //           height = req.body.heightCentimeters;
-  //         }
-  //       }
-  //     }
-  //     // weight classification: imperial or metric, both will have a single input
-  //     if (exists(req.body.weightImperial) && req.body.weightImperial !== '') {
-  //       weight = req.body.weightImperial;
-  //     } else if (exists(req.body.weightMetric) && req.body.weightMetric !== '') {
-  //       weight = req.body.weightMetric;
-  //     }
-  //     if (exists(req.body.eyeColor)) {
-  //       eyeColor = req.body.eyeColor
-  //     }
-  //     if (exists(req.body.hairColor)) {
-  //       hairColor = req.body.hairColor
-  //     }
-  //     if (exists(req.body.heightClassification)) {
-  //       heightClassification = req.body.heightClassification
-  //     }
-  //     if (exists(req.body.weightClassification)) {
-  //       weightClassification = req.body.weightClassification
-  //     }
-  //     if (exists(req.body.organDonor)) {
-  //       organDonor = (req.body.organDonor === 'on') ? true : false;
-  //     }
-  //     if (exists(req.body.veteran)) {
-  //       veteran = (req.body.veteran === 'on') ? true : false;
-  //     }
-  //     var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
-  //     if (!isValid) {
-  //       req.app.locals.specialContext = "invalidRequest";
-  //       return res.redirect('/civ-dashboard')
-  //     }
-  //     Civilian.findByIdAndUpdate({
-  //       '_id': ObjectId(req.body.civilianID)
-  //     }, {
-  //       $set: {
-  //         //basic civ details
-  //         "civilian.firstName": req.body.firstName.trim().charAt(0).toUpperCase() + req.body.firstName.trim().slice(1),
-  //         "civilian.lastName": req.body.lastName.trim().charAt(0).toUpperCase() + req.body.lastName.trim().slice(1),
-  //         'civilian.birthday': req.body.birthday,
-  //         'civilian.address': address,
-  //         'civilian.occupation': occupation,
-  //         //advanced civ details
-  //         'civilian.gender': gender,
-  //         'civilian.heightClassification': heightClassification,
-  //         'civilian.height': height,
-  //         'civilian.weightClassification': weightClassification,
-  //         'civilian.weight': weight,
-  //         'civilian.eyeColor': eyeColor,
-  //         'civilian.hairColor': hairColor,
-  //         'civilian.organDonor': organDonor,
-  //         'civilian.veteran': veteran,
-  //         //additional civ details
-  //         'civilian.warrants': req.body.warrants,
-  //         'civilian.licenseStatus': (req.body.licenseStatus ? '1' : '3'),
-  //         'civilian.updatedAt': new Date()
-  //       }
-  //     }, function (err) {
-  //       if (err) return console.error(err);
-  //       return res.redirect('/civ-dashboard');
-  //     })
-  //   } else if (req.body.action == "createLicense") {
-  //     var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
-  //     if (!isValid) {
-  //       req.app.locals.specialContext = "invalidRequest";
-  //       return res.redirect('/civ-dashboard')
-  //     }
-  //     Civilian.findByIdAndUpdate({
-  //       '_id': ObjectId(req.body.civilianID)
-  //     }, {
-  //       $set: {
-  //         'civilian.licenseStatus': '1',
-  //         'civilian.updatedAt': new Date()
-  //       }
-  //     }, function (err) {
-  //       if (err) return console.error(err);
-  //       return res.redirect('/civ-dashboard');
-  //     })
-  //   } else if (req.body.action == "deleteLicense") {
-  //     var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
-  //     if (!isValid) {
-  //       req.app.locals.specialContext = "invalidRequest";
-  //       return res.redirect('/civ-dashboard')
-  //     }
-  //     Civilian.findByIdAndUpdate({
-  //       '_id': ObjectId(req.body.civilianID)
-  //     }, {
-  //       $set: {
-  //         'civilian.licenseStatus': '3',
-  //         'civilian.updatedAt': new Date()
-  //       }
-  //     }, function (err) {
-  //       if (err) return console.error(err);
-  //       return res.redirect('/civ-dashboard');
-  //     })
-  //   } else {
-  //     var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
-  //     if (!isValid) {
-  //       req.app.locals.specialContext = "invalidRequest";
-  //       return res.redirect('/civ-dashboard')
-  //     }
-  //     Civilian.findByIdAndDelete({
-  //       '_id': ObjectId(req.body.civilianID)
-  //     }, function (err) {
-  //       Ticket.deleteMany({
-  //         'ticket.civID': req.body.civilianID
-  //       }, function (err) {
-  //         if (err) return console.error(err);
-  //         ArrestReport.deleteMany({
-  //           'arrest.accusedID': req.body.civilianID
-  //         }, function (err) {
-  //           if (err) return console.error(err);
-  //           MedicalReport.deleteMany({
-  //             'report.civilianID': req.body.civilianID
-  //           }, function (err) {
-  //             if (err) return console.error(err);
-  //             Medication.deleteMany({
-  //               'medication.civilianID': req.body.civilianID
-  //             }, function (err) {
-  //               if (err) return console.error(err);
-  //               Condition.deleteMany({
-  //                 'condition.civilianID': req.body.civilianID
-  //               }, function (err) {
-  //                 if (err) return console.error(err);
-  //                 return res.redirect('/civ-dashboard');
-  //               })
-  //             })
-  //           })
-  //         })
-  //       })
-  //     })
-  //   }
-  // })
-
   app.post('/deleteEms', auth, function (req, res) {
     var nameArray = req.body.removeEms.split(' ')
     var firstName = nameArray[0]
@@ -2930,27 +2757,6 @@ module.exports = function (app, passport, server) {
       return res.redirect('back')
     })
   })
-
-  // Deprecated 2021/11/30
-  // app.post('/updateOrDeleteEmsVeh', auth, function (req, res) {
-  //   // console.debug(req.body)
-  //   if (req.body.action=="delete") {
-  //     var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /deleteEmsVeh")
-  //     if (!isValid) {
-  //       req.app.locals.specialContext = "invalidRequest";
-  //       return res.redirect('back')
-  //     }
-  //     EmsVehicle.findByIdAndDelete({
-  //       '_id': ObjectId(req.body.vehicleID)
-  //     }, function (err) {
-  //       if (err) return console.error(err);
-  //       return res.redirect('/ems-dashboard');
-  //     })
-  //   } else if (req.body.action=="update") {
-  //     // Let the socket update data and return
-  //     return res.redirect('/ems-dashboard');
-  //   }
-  // })
 
   app.post('/community', auth, function (req, res) {
     // console.debug("community req: ", req.body)
@@ -3873,7 +3679,7 @@ module.exports = function (app, passport, server) {
     })
 
     socket.on('clear_panic', (req) => {
-      //console.log("clear req", req)
+      //console.debug("clear req", req)
       if (req.communityID != null && req.communityID != undefined) {
         var isValid = isValidObjectIdLength(req.communityID, "cannot lookup invalid length communityID, socket: clear_panic")
         if (!isValid) {

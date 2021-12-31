@@ -254,8 +254,7 @@
                                   </tr>
                                 </thead>
                               </table>
-                              <%}%>
-                            <% if (dbEmsEngines!=null) { %>
+                              
                               <hr style="width: 88%;max-width: 100rem;">
                               <!-- Fire/Ems list -->
                               <h4 id="fireEms-list">Fire/EMS List: <a data-toggle="modal" href="#fireEMSHelpModal"><i class="far fa-question-circle"></i></a> </h4>
@@ -268,7 +267,7 @@
                                   </tr>
                                 </thead>
                               </table>
-                            <% } %>
+                            <%}%>
           </div>
 
         </div>
@@ -1801,7 +1800,7 @@
 
               <!-- Multiple Checkboxes (inline) -->
               <div class="form-group required">
-                <label class="col-md-4 control-label" for="classifier">Classifier</label>
+                <label class="col-md-4 control-label" for="classifier">Department(s)</label>
                 <div class="col-md-4">
                   <select id="classifier" name="classifier" class="select-manipulatable" multiple required>
                   </select>
@@ -1886,7 +1885,7 @@
 
               <!-- Text input-->
               <div class="form-group required">
-                <label class="col-md-4 control-label" for="classifier-details">Classifier:</label>
+                <label class="col-md-4 control-label" for="classifier-details">Department:</label>
                 <div class="col-md-4">
                   <select id="classifier-details" name="classifier" class="select-manipulatable" multiple>
                   </select>
@@ -2274,7 +2273,7 @@
             <div class="form-horizontal">
               <fieldset>
                 <div class="form-group">
-                  <label class="col-md-4 control-label" for="accountUsername">Engine Number:</label>
+                  <label class="col-md-4 control-label" for="accountUsername">Engine #:</label>
                   <div class="col-md-6">
                     <h5 id="engineNumberDispatch" style="text-transform: capitalize;"></h5>
                   </div>
@@ -2405,8 +2404,8 @@
               aria-hidden="true">X</button>
           </div>
           <div class="modal-footer text-align-center">
-            <p>If you see no records in the table, that means there are no active Engines created in your community.</p><p> Remind
-              your Fire/EMS personnel to make sure to create an Engine under "Vehicles".
+            <p>If you see no records in the table, that means there are no active Vehicles created in your community.</p><p> Remind
+              your Fire/EMS personnel to either create a new Vehicle or make sure it is not marked as'offline'.
             </p>
           </div>
         </div>
@@ -2439,7 +2438,6 @@
   $(function () {
     var socket=io();
     socket.on('updated_ems_status', res => {
-      // console.log("ems res: ", res)
       if (res.onDuty&&res.updateDuty) {
         //socket coming in that a ems engine is going on-duty
         $('#'+res.vehicleID+"-duty").removeClass('hide')
@@ -2680,7 +2678,7 @@
     //officers that are not currently on duty. DataTables is easier to leverage
     //than relying on the html above
     var myUser= <%- JSON.stringify(user)%>;
-    if (myUser.user.activeCommunityID != '' && myUser.user.activeCommunityID != undefined){
+    if (myUser.user.activeCommunity !== '' && myUser.user.activeCommunity !== undefined){
     var myCommUsers= <%- JSON.stringify(commUsers)%>;
     let datatable = $('#officerListTable').DataTable();
         datatable.clear();
@@ -2717,8 +2715,8 @@
         datatable.draw();
 
     let emsVehicles = <%-JSON.stringify(dbEmsEngines)%>;
-    let emsdatatable = $('#fireEmsListTable').DataTable();
-      emsdatatable.clear();
+    let emsDataTable = $('#fireEmsListTable').DataTable();
+      emsDataTable.clear();
       emsVehicles.forEach(val => {
         emsTable = ""
         if (val.emsVehicle.engineNumber == undefined) {
@@ -2734,7 +2732,7 @@
         emsTable += `
           <tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageEmsDispatchStatusModal"onclick="setEmsDispatchModalValues('${val._id}')">
           <td style="text-transform: capitalize;">
-            Engine - ${val.emsVehicle.engineNumber}
+            #${val.emsVehicle.engineNumber}
           </td>
           <td style="text-transform: capitalize;">
             ${val.emsVehicle.model}
@@ -2743,9 +2741,9 @@
             ${val.emsVehicle.dispatchStatus}
           </td>
         </tr>`
-      emsdatatable.row.add($(emsTable))
+      emsDataTable.row.add($(emsTable))
       });
-      emsdatatable.draw();
+      emsDataTable.draw();
 
     $('#boloTable').DataTable({
       "bLengthChange": false,
@@ -3649,7 +3647,7 @@
       descriptions: false,
       sortGroups: "ACS",
       sortItems: "ACS",
-      placeholder: "Classifier",
+      placeholder: "Department(s)",
       multiPinSelected: true,
       hideSelected: false,
       hideDisabled: true,
