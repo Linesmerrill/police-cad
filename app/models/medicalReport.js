@@ -3,6 +3,7 @@ var mongoose = require('mongoose');
 var medicalReportSchema = mongoose.Schema({
     report: {
         date: String,
+        time: String,
         details: String,
         civilianID: String,
         reportingEmsID: String,
@@ -20,6 +21,7 @@ var medicalReportSchema = mongoose.Schema({
 medicalReportSchema.methods.createReport = function (req, res) {
     // console.debug("create medical report req body: ", req.body)
     this.report.date = req.body.reportDate;
+    this.report.time = req.body.reportTime;
     this.report.details = req.body.details.trim();
     this.report.civilianID = req.body.civilianID;
     this.report.reportingEmsID = req.body.reportingEmsID;

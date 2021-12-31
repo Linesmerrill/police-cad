@@ -118,7 +118,7 @@
             </button>
           </div>
           <div class="navbar-header" style="position: absolute; left: 85px;">
-            <h1 class="cursive"><a href="/police-dashboard"><i class="fas fa-star"></i> Fire/EMS Operations</a></h1>
+            <h1 class="cursive"><a href="/ems-dashboard"><i class="fas fa-star"></i> Fire/EMS Operations</a></h1>
           </div>
         </div>
       </nav>
@@ -132,14 +132,12 @@
             <% include community-alerts %>
 
             <div class="col-lg-10 col-lg-offset-1 text-center">
+              <button data-toggle="modal" href="#searchMedicalRecords" class="btn btn-primary btn-lg margin-top-2">Medical
+                Database</button>
               <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg margin-top-2">Add New
                 Persona</button>
               <button data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-lg margin-top-2">Add New
                 Vehicle</button>
-              <button data-toggle="modal" href="#searchMedicalRecords" class="btn btn-primary btn-lg margin-top-2">Medical
-                Database</button>
-              <button data-toggle="modal" href="#10codesModal" class="btn btn-primary btn-lg margin-top-2">10-Codes</button>
-              <a href="/map-interactive" class="btn btn-primary btn-lg margin-top-2">Map</a>
             </div>
           </div>
         </div>
@@ -717,8 +715,7 @@
             <fieldset>
 
               <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true"
-                onclick="createNewCiv()">X</button>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
               <h4>Create a New Report</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
@@ -740,7 +737,7 @@
                 <label class="col-md-4 control-label" for="firstName">First Name</label>
                 <div class="col-md-6">
                   <input id="new-report-firstName" name="firstName" type="text"
-                    class="form-control input-md disabled-color" required readonly="readonly">
+                    class="form-control input-md disabled-color capitalize" required readonly="readonly">
                 </div>
               </div>
 
@@ -749,7 +746,7 @@
                 <label class="col-md-4 control-label" for="lastName">Last Name</label>
                 <div class="col-md-6">
                   <input id="new-report-lastName" name="lastName" type="text"
-                    class="form-control input-md disabled-color" required readonly="readonly">
+                    class="form-control input-md disabled-color capitalize" required readonly="readonly">
                 </div>
               </div>
 
@@ -777,6 +774,15 @@
 
               <!-- Text input-->
               <div class="form-group required">
+                <label class="col-md-4 control-label" for="reportTime">Time</label>
+                <div class="col-md-6">
+                  <input id="new-report-reportTime" name="reportTime" type="time" placeholder="hh:mm" 
+                  class="form-control input-md" required>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group required">
                 <label class="col-md-4 control-label" for="reportingEmsID">Fire/EMS ID</label>
                 <div class="col-md-6">
                   <input id="new-report-reportingEmsID" name="reportingEmsID" type="text"
@@ -797,9 +803,9 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="deceased">Deceased</label>
                 <div class="col-md-6">
-                  <select id="deceased" name="deceased" class="form-control" selected="no">
-                    <option value="false" selected>Flase</option>
-                    <option value="true">True</option>
+                  <select id="deceased" name="deceased" class="form-control" selected="selected">
+                    <option value="false" selected>No</option>
+                    <option value="true">Yes</option>
                   </select>
                 </div>
               </div>
@@ -815,12 +821,12 @@
 
               <!-- Button -->
               <div class="form-group">
-                <label class="col-md-4 control-label" for="submit-new-civ"></label>
+                <label class="col-md-4 control-label" for="submit-new-medical-report"></label>
                 <div class="col-md-4 text-center">
                   <input type="hidden" name="userID" value="<%= user._id %>">
                   <input type="hidden" id="new-civ-activeCommunityID" name="activeCommunityID" ,
                     value="<%=user.user.activeCommunity%>">
-                  <button id="submit-new-civ" class="btn btn-primary" onclick="createNewMedicalReport()">Create</button>
+                  <button id="submit-new-medical-report" class="btn btn-primary">Create</button>
                 </div>
               </div>
             </fieldset>
@@ -848,8 +854,8 @@
             <fieldset>
 
               <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true"
-                onclick="createNewCiv()">X</button>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
               <h4>Join an Existing Community</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
@@ -866,8 +872,8 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="joinCommunity"></label>
                 <div class="col-md-4 text-align-center">
-                  <button id="joinCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary"
-                    onclick="createNewCiv()">Join</button>
+                  <input type="hidden" name="route" value="ems-dashboard">
+                  <button id="joinCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary">Join</button>
                 </div>
               </div>
             </fieldset>
@@ -890,8 +896,8 @@
               <h4>Leave Active Community</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
-              <p>NOTE: All personas and vehicles that you created in this community will no longer
-                show up on your dashboard after you leave.
+              <p>NOTE: All personnel and vehicles that were created in this community will no longer
+                show up when searching after you leave.
               </p>
               <p>Are you sure you want to leave this community?</p>
 
@@ -899,6 +905,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="leaveActiveCommunity"></label>
                 <div class="col-md-4 text-align-center">
+                  <input type="hidden" name="route" value="ems-dashboard">
                   <button id="leaveActiveCommunity" value="<%= user._id %>" name="userID"
                     class="btn btn-danger">Leave</button>
                 </div>
@@ -936,6 +943,7 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="createCommunity"></label>
                 <div class="col-md-4 text-align-center">
+                  <input type="hidden" name="route" value="ems-dashboard">
                   <button id="createCommunity" value="<%= user._id %>" name="userID"
                     class="btn btn-primary">Create</button>
                 </div>
@@ -952,8 +960,8 @@
       <div class="modal-content">
         <div class="modal-body">
           <fieldset>
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true"
-              onclick="createNewCiv()">X</button>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
             <h4>Check out the New Communities Section!</h4>
             <hr style="width: 88%;max-width: 100rem;">
             <a data-toggle="modal" href="#communitiesModal" onclick="dismissCommunitiesInfoModal()"><img
@@ -967,22 +975,8 @@
     </div>
   </div>
 
-  <div id="notificationModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body text-center">
-          <fieldset>
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-              aria-hidden="true">X</button>
-            <h3>No Notifications :) </h3>
-            <h1 class="margin-top-2">🚀</h1>
-          </fieldset>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <% include account-management %>
+  <% include notification-modal %>
   <% include 10-codes %>
   <% include notepad %>
 
@@ -1206,18 +1200,14 @@
     })
   }
 
-  function CreateReport(firstName, lastName, civilianID, dateOfBirth) {
+  function CreateReport(firstName, lastName, civilianID, dateOfBirth, deceased) {
     var myUser= <%- JSON.stringify(user)%>;
     $('#new-report-civilianID').val(civilianID);
     $('#new-report-firstName').val(firstName);
     $('#new-report-lastName').val(lastName);
     $('#new-report-dateOfBirth').val(dateOfBirth);
     $('#new-report-reportingEmsID').val(myUser._id);
-  }
-
-  function pronounceDead(status) {
-    if (status) document.getElementById("deceased").value = "yes";
-    if (!status) document.getElementById("deceased").value = "no";
+    $('#deceased').val(deceased);
   }
 
   function searchMedicalNames() {
@@ -1268,6 +1258,8 @@
         } else {
           collapsed=""
         }
+        let deceasedState
+        e.civilian.deceased? deceasedState = 'Yes <i class="fas fa-skull-crossbones color-alert-red"></i>': deceasedState = 'No <i class="fas fa-user color-green"></i>'
         var newRowContent
         newRowContent=`
           <!-- List of Civilians -->
@@ -1284,15 +1276,15 @@
 
                             <div class="panel-body">
                                 <div class="text-align-center">
-                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="pronounceDead(false);CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`');setDateAndTime('#new-report-reportDate', '');">Create Report</button>
-                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="pronounceDead(true);CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`');setDateAndTime('#new-report-reportDate', '')">Pronounce Dead</button>
+                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`', 'false');setDateAndTime('#new-report-reportDate', '#new-report-reportTime');">Create Report</button>
+                                  <button data-toggle="modal" href="#createReportModal" class="btn btn-primary btn-md margin-bottom-05" onclick="CreateReport('`+e.civilian.firstName+`', '`+e.civilian.lastName+`', '`+e._id+`', '`+e.civilian.birthday+`', 'true');setDateAndTime('#new-report-reportDate', '#new-report-reportTime')">Pronounce Dead</button>
                                 </div>
                                 <hr/>
-                                Driver's ID #: `+e._id+`<br/>
-                                Date of Birth: `+e.civilian.birthday+`<br/>
-                                Address: `+e.civilian.address+`<br/>
-                                Occupation: `+e.civilian.occupation+`<br/>
-                                Deceased: `+e.civilian.deceased+`<br/>
+                                Driver's ID #: ${e._id}<br/>
+                                Date of Birth: ${e.civilian.birthday}<br/>
+                                Address: ${e.civilian.address}<br/>
+                                Occupation: ${e.civilian.occupation}<br/>
+                                Deceased: ${deceasedState}<br/>
                                 <hr style="width: 88%;max-width: 100rem;">
                                 <h4>Medical History</h4>
                                 <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
@@ -1432,6 +1424,12 @@
     })
   }
 
+  function markAsRead() {
+    document.cookie ="notification-symbol=v2.29.0";
+    $('#notification-symbol').removeClass('notif');
+    $('#notification-count').text('');
+  }
+
   $(document).ready(function () {
 
     $('#persona-table').DataTable({
@@ -1477,7 +1475,47 @@
         $('#last-name').popover('hide')
       }
     });
-  });
+
+    //CURRENT_VERSION
+    //the current version in production
+    let CURRENT_VERSION = "v2.29.0"
+    let MINOR_VERSION = CURRENT_VERSION.split(".")[1]
+
+    //check for notification cookie
+    let cookieVersion = undefined
+    let cookieValueSplit = document.cookie.split('; ')
+    if (cookieValueSplit.length > 0) {
+      let cookieValueNotifSymbol = cookieValueSplit.find(row => row.startsWith('notification-symbol='))
+      if (cookieValueNotifSymbol != undefined) {
+        let cookieVersionSplit = cookieValueNotifSymbol.split('=');
+        if (cookieVersionSplit.length > 1) {
+          cookieVersion = cookieVersionSplit[1];
+        }
+      }
+    }
+
+    // if we cannot find the cookie, then we will set it to be 1
+    if (cookieVersion === undefined) {
+      $('#notification-count').text(1)
+    } else if (cookieVersion == CURRENT_VERSION) {
+      // else if cookie version is equal to current version, then we don't set anything :mark-all-as-read:
+      $('#notification-symbol').removeClass('notif')
+      $('#notification-count').text('')
+    } else {
+      // else if we can find the cookie, then we will subtract whatever the cookie value is from the current version
+      let specificVersionSplit = cookieVersion.split(".")
+      if (specificVersionSplit.length == 3) {
+        let versionDifference = parseInt(MINOR_VERSION) - parseInt(specificVersionSplit[1])
+        $('#notification-count').text(versionDifference)
+      }
+    }
+
+    //load gravatar image
+  var MD5 = function(d){var r = M(V(Y(X(d),8*d.length)));return r.toLowerCase()};function M(d){for(var _,m="0123456789ABCDEF",f="",r=0;r<d.length;r++)_=d.charCodeAt(r),f+=m.charAt(_>>>4&15)+m.charAt(15&_);return f}function X(d){for(var _=Array(d.length>>2),m=0;m<_.length;m++)_[m]=0;for(m=0;m<8*d.length;m+=8)_[m>>5]|=(255&d.charCodeAt(m/8))<<m%32;return _}function V(d){for(var _="",m=0;m<32*d.length;m+=8)_+=String.fromCharCode(d[m>>5]>>>m%32&255);return _}function Y(d,_){d[_>>5]|=128<<_%32,d[14+(_+64>>>9<<4)]=_;for(var m=1732584193,f=-271733879,r=-1732584194,i=271733878,n=0;n<d.length;n+=16){var h=m,t=f,g=r,e=i;f=md5_ii(f=md5_ii(f=md5_ii(f=md5_ii(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_ff(f=md5_ff(f=md5_ff(f=md5_ff(f,r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+0],7,-680876936),f,r,d[n+1],12,-389564586),m,f,d[n+2],17,606105819),i,m,d[n+3],22,-1044525330),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+4],7,-176418897),f,r,d[n+5],12,1200080426),m,f,d[n+6],17,-1473231341),i,m,d[n+7],22,-45705983),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+8],7,1770035416),f,r,d[n+9],12,-1958414417),m,f,d[n+10],17,-42063),i,m,d[n+11],22,-1990404162),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+12],7,1804603682),f,r,d[n+13],12,-40341101),m,f,d[n+14],17,-1502002290),i,m,d[n+15],22,1236535329),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+1],5,-165796510),f,r,d[n+6],9,-1069501632),m,f,d[n+11],14,643717713),i,m,d[n+0],20,-373897302),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+5],5,-701558691),f,r,d[n+10],9,38016083),m,f,d[n+15],14,-660478335),i,m,d[n+4],20,-405537848),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+9],5,568446438),f,r,d[n+14],9,-1019803690),m,f,d[n+3],14,-187363961),i,m,d[n+8],20,1163531501),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+13],5,-1444681467),f,r,d[n+2],9,-51403784),m,f,d[n+7],14,1735328473),i,m,d[n+12],20,-1926607734),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+5],4,-378558),f,r,d[n+8],11,-2022574463),m,f,d[n+11],16,1839030562),i,m,d[n+14],23,-35309556),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+1],4,-1530992060),f,r,d[n+4],11,1272893353),m,f,d[n+7],16,-155497632),i,m,d[n+10],23,-1094730640),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+13],4,681279174),f,r,d[n+0],11,-358537222),m,f,d[n+3],16,-722521979),i,m,d[n+6],23,76029189),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+9],4,-640364487),f,r,d[n+12],11,-421815835),m,f,d[n+15],16,530742520),i,m,d[n+2],23,-995338651),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+0],6,-198630844),f,r,d[n+7],10,1126891415),m,f,d[n+14],15,-1416354905),i,m,d[n+5],21,-57434055),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+12],6,1700485571),f,r,d[n+3],10,-1894986606),m,f,d[n+10],15,-1051523),i,m,d[n+1],21,-2054922799),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+8],6,1873313359),f,r,d[n+15],10,-30611744),m,f,d[n+6],15,-1560198380),i,m,d[n+13],21,1309151649),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+4],6,-145523070),f,r,d[n+11],10,-1120210379),m,f,d[n+2],15,718787259),i,m,d[n+9],21,-343485551),m=safe_add(m,h),f=safe_add(f,t),r=safe_add(r,g),i=safe_add(i,e)}return Array(m,f,r,i)}function md5_cmn(d,_,m,f,r,i){return safe_add(bit_rol(safe_add(safe_add(_,d),safe_add(f,i)),r),m)}function md5_ff(d,_,m,f,r,i,n){return md5_cmn(_&m|~_&f,d,_,r,i,n)}function md5_gg(d,_,m,f,r,i,n){return md5_cmn(_&f|m&~f,d,_,r,i,n)}function md5_hh(d,_,m,f,r,i,n){return md5_cmn(_^m^f,d,_,r,i,n)}function md5_ii(d,_,m,f,r,i,n){return md5_cmn(m^(_|~f),d,_,r,i,n)}function safe_add(d,_){var m=(65535&d)+(65535&_);return(d>>16)+(_>>16)+(m>>16)<<16|65535&m}function bit_rol(d,_){return d<<_|d>>>32-_}
+  let hash = MD5(myUser.user.email.trim().toLowerCase())
+  $('.profile-picture').css("background-image", `url(https://www.gravatar.com/avatar/${hash}?s=200)`)
+
+  }); /* End of document.ready */
 </script>
 
 <!--  added for google translate -->
