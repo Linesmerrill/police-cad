@@ -1,0 +1,48 @@
+doctype html
+head
+    meta(charset='utf-8')
+    title LPC - 404 Page Not Found
+    meta(name='viewport' content='width=device-width, initial-scale=1')
+    link(rel='shortcut icon' type='image/ico' href='images/favicon.ico')
+    link(rel='stylesheet' href='/stylesheets/bootstrap.min.css')
+    link(rel='stylesheet' href='/stylesheets/animate.min.css')
+    link(rel='stylesheet' href='/stylesheets/ionicons.min.css')
+    link(rel='stylesheet' href='/stylesheets/styles.css')
+    link(rel='stylesheet' href='/stylesheets/pagenotfound.css')
+    script(src='https://code.iconify.design/1/1.0.3/iconify.min.js')
+    // To hide google translate header bar on each page
+    style(type='text/css').
+        iframe.goog-te-banner-frame{ display: none !important;}
+    style(type='text/css').
+        body {position: static !important; top:0px !important;}
+nav#topNav.navbar.navbar-default.navbar-fixed-top
+    .container-fluid
+        .navbar-header
+            button.navbar-toggle.collapsed(type='button' data-toggle='collapse' data-target='#bs-navbar')
+                span.sr-only Toggle navigation
+                span.icon-bar
+                span.icon-bar
+                span.icon-bar
+            a.navbar-brand.page-scroll(href='/')
+                img(style='display: inline; margin-top: -9px; vertical-align: text-top;' src='/images/favicon-32x32.png')
+                |  Lines Police CAD
+        #bs-navbar.navbar-collapse.collapse
+
+h1.page-not-found-header SORRY
+h2 we couldn&apos;t find that page
+p
+    | Try going to 
+    a(href='/') Lines Police CAD&apos;s home page
+    | .
+h4 If you see one of our developers please give them the below information:
+//- h1= message
+h2= error.status
+pre #{error.stack}
+// scripts loaded here
+script(type='text/javascript' src='//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit')
+// added for google translate
+script(type='text/javascript').
+    function googleTranslateElementInit() {
+    new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+    }
+// IE needs 512+ bytes: https://blogs.msdn.microsoft.com/ieinternals/2010/08/18/friendly-http-error-pages/

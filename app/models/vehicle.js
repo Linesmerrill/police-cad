@@ -52,7 +52,7 @@ vehicleSchema.methods.createVeh = function (req, res) {
   this.vehicle.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null
   this.vehicle.userID = req.body.userID; // we set this when submitting the from so it should not be null
   this.vehicle.createdAt = new Date();
-  res.redirect('/civ-dashboard');
+  res.redirect('/dashboard/civ');
 };
 
 vehicleSchema.methods.socketCreateVeh = function (req, res) {

@@ -38,12 +38,12 @@ ticketSchema.methods.updateTicket = function (req, res) {
       this.ticket.civLastName = req.body.civLastName.trim().charAt(0).toUpperCase() + req.body.civLastName.trim().slice(1);
     } else {
       console.error("cannot process empty values for civFirstName and civLastName");
-      res.redirect('/police-dashboard');
+      res.redirect('/dashboard/police');
       return
     }
   } else {
     console.error("cannot process null values for civFirstName and civLastName");
-    res.redirect('/police-dashboard');
+    res.redirect('/dashboard/police');
     return
   }
 

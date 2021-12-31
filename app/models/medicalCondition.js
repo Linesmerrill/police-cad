@@ -28,7 +28,7 @@ conditionSchema.methods.createCondition = function (req, res) {
     this.condition.lastName = req.body.lastName.trim().toLowerCase()
     this.condition.dateOfBirth = req.body.dateOfBirth.trim()
     this.condition.createdAt = new Date();
-    res.redirect('/civ-dashboard');
+    res.redirect('/dashboard/civ');
 };
 
 module.exports = mongoose.model('Condition', conditionSchema);

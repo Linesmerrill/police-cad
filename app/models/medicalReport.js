@@ -30,7 +30,7 @@ medicalReportSchema.methods.createReport = function (req, res) {
     this.report.lastName = req.body.lastName.trim().toLowerCase()
     this.report.dateOfBirth = req.body.dateOfBirth.trim()
     this.report.createdAt = new Date();
-    res.redirect('/ems-dashboard');
+    res.redirect('/dashboard/ems');
 };
 
 module.exports = mongoose.model('MedicalReport', medicalReportSchema);

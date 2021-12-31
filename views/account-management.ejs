@@ -34,7 +34,7 @@
                 <div class="img bg-wrap text-center py-4" style="background: transparent;">
                   <div class="user-logo">
                     <div class="img profile-picture"
-                      style="background-image: url(/static/images/civ-unknown-user.png);"></div>
+                      style="background-image: url(/images/civ-unknown-user.png);"></div>
                   </div>
                 </div>
 
@@ -64,7 +64,7 @@
                       maxlength="20" autocomplete="off" required>
                     <div id="updateUsernameBtns" class="margin-top-1" style="display: none">
                       <input type="hidden" name="userID" value="<%= user._id %>">
-                      <input type="hidden" name="page" value="/civ-dashboard">
+                      <input type="hidden" name="page" value="/dashboard/civ">
                       <button id="updateUsername" value="updateUsername" name="action" class="btn btn-info">Update
                         Username</button> <button type="button" class="btn btn-primary"
                         onclick="cancelUsername()">Cancel</button>
@@ -80,7 +80,7 @@
                     <input id="accountCallSign" name="accountCallSign" type="text" class="form-control input-md"
                       maxlength="10" autocomplete="off" required>
                     <div id="updateCallSignBtns" class="margin-top-1" style="display: none">
-                      <input type="hidden" name="page" value="/civ-dashboard">
+                      <input type="hidden" name="page" value="/dashboard/civ">
                       <button id="updateCallSign" value="updateCallSign" name="action" class="btn btn-info">Update Call
                         Sign</button> <button type="button" class="btn btn-primary"
                         onclick="cancelCallSign()">Cancel</button>
@@ -112,7 +112,7 @@
                 <div class="form-group text-align-center">
                   <input id="link" type="text" name="discordToken" value="<%= user.user.discordLoginToken %>" style="display: none;">
                   <div class="col-md-12">
-                    <img alt="discord" class="margin-bottom-2" style="width: 40px;" src="./static/images/discord-icon.svg">
+                    <img alt="discord" class="margin-bottom-2" style="width: 40px;" src="./images/discord-icon.svg">
                   </br>
                     <% if (user.user.discordConnected) { %>
                       <h5 class="margin-bottom-1"><i style="color: #57C567" class="fas fa-check"></i> Discord account connected</h5>
@@ -203,7 +203,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="deleteAccount"></label>
               <div class="col-md-4 text-align-center">
-                <input type="hidden" name="page" value="/civ-dashboard">
+                <input type="hidden" name="page" value="/dashboard/civ">
                 <button id="deleteAccount" value="<%= user._id %>" name="userID" class="btn btn-danger">Delete
                   account</button>
               </div>

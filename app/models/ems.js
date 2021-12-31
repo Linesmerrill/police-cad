@@ -27,7 +27,7 @@ emsSchema.methods.create = function (req, res) {
     this.ems.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null
     this.ems.userID = req.body.userID; // we set this when submitting the from so it should not be null
     this.ems.createdAt = new Date();
-    res.redirect('/ems-dashboard');
+    res.redirect('/dashboard/ems');
 };
 
 module.exports = mongoose.model('Ems', emsSchema);

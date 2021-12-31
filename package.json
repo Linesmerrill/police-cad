@@ -1,5 +1,5 @@
 {
-  "name": "police-cad",
+  "name": "lines-police-cad",
   "description": "This is a easy to setup and use police server CAD. Includes a signup/login for both Civilians and Police Officers. Also this is mobile friendly. Built for GTA V's Modding framework: FiveM.",
   "version": "0.3.2",
   "main": "server.js",
@@ -8,6 +8,7 @@
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.19.0",
     "chai": "^4.2.0",
+    "compression": "^1.7.4",
     "connect-flash": "^0.1.1",
     "connect-mongo": "^3.2.0",
     "cookie-parser": "^1.4.5",
@@ -18,10 +19,12 @@
     "express-session": "^1.16.2",
     "graceful-fs": "^4.2.4",
     "handlebars": "^4.7.7",
+    "helmet": "^4.6.0",
     "minimist": "^1.2.5",
     "mocha": "^7.2.0",
     "mongo-sanitize": "^1.1.0",
     "mongoose": "^5.9.19",
+    "morgan": "^1.10.0",
     "mpromise": "^0.5.5",
     "mquery": "^3.2.3",
     "nodemailer": "^6.6.1",
@@ -33,6 +36,7 @@
     "passport-google-oauth": "^2.0.0",
     "passport-local": "^1.0.0",
     "passport-twitter": ">= 0.0.0",
+    "pug": "^3.0.2",
     "randomstring": "^1.2.1",
     "rate-limit-mongo": "^2.2.0",
     "socket.io": "^4.1.2",
@@ -40,9 +44,10 @@
     "tail.select": "^0.5.15"
   },
   "scripts": {
-    "start": "node --optimize_for_size --max-old-space-size=6000 --gc_interval=100 app.js",
-    "test": "mocha",
-    "dev": "nodemon --optimize_for_size --max-old-space-size=6000 --gc_interval=100 app.js"
+    "start": "node ./bin/www",
+    "devstart": "nodemon ./bin/www",
+    "serverstart": "DEBUG=lines-police-cad:* npm run devstart",
+    "test": "mocha"
   },
   "engines": {
     "node": "14.x"

@@ -55,7 +55,7 @@ communitySchema.methods.createEmsCommunity = function (req, res) {
   this.community.code = makeID(7);
   this.community.createdAt = new Date();
 
-  res.redirect('/ems-dashboard');
+  res.redirect('/dashboard/ems');
 };
 
 module.exports = mongoose.model('Community', communitySchema);

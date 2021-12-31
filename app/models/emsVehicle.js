@@ -23,7 +23,7 @@ emsVehicleSchema.methods.createVeh = function (req, res) {
     this.emsVehicle.activeCommunityID = req.body.activeCommunityID; // we set this when submitting the from so it should not be null
     this.emsVehicle.userID = req.body.userID; // we set this when submitting the from so it should not be null
     this.emsVehicle.createdAt = new Date();
-    res.redirect('/ems-dashboard');
+    res.redirect('/dashboard/ems');
 };
 
 module.exports = mongoose.model('EmsVehicle', emsVehicleSchema);

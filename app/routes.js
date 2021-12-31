@@ -32,12 +32,6 @@ const redirect = process.env.CLIENT_REDIRECT;
 
 module.exports = function (app, passport, server) {
 
-  app.get('/', function (req, res) {
-    res.render('index', {
-      message: req.flash('info')
-    });
-  });
-
   app.get('/auth/discord', auth, passport.authenticate('discord', {
     failureRedirect: '/'
   }), (req, res) => {
@@ -46,110 +40,6 @@ module.exports = function (app, passport, server) {
 
   app.get('/discord-bot', function (req, res) {
     res.redirect('https://discord.com/api/oauth2/authorize?client_id=860298681047056434&permissions=8&scope=bot');
-  });
-
-  app.get('/release-log', function (req, res) {
-    res.render('release-log');
-  });
-
-  app.get('/about', function (req, res) {
-    res.render('about');
-  });
-
-  app.get('/not-authorized', function (req, res) {
-    res.render('not-authorized');
-  });
-
-  app.get('/map-interactive', function (req, res) {
-    res.render('map-interactive');
-  });
-
-  app.get('/map', function (req, res) {
-    res.render('map-popular')
-  })
-
-  app.get('/health', function (req, res) {
-    res.render('health');
-  });
-
-  app.get('/rules', function (req, res) {
-    res.render('rules');
-  });
-
-  app.get('/terms-and-conditions', function (req, res) {
-    res.render('terms-and-conditions');
-  });
-
-  app.get('/privacy-policy', function (req, res) {
-    res.render('privacy-policy');
-  });
-
-  app.get('/contact-us', function (req, res) {
-    res.render('contact-us');
-  });
-
-  app.get('/penal-code', function (req, res) {
-    res.render('penal-code');
-  });
-
-  app.get('/ads.txt', (req, res) => {
-    res.set('Content-Type', 'text');
-    let message = 'google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0'
-    return res.send(new Buffer.alloc(message.length, 'google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0'))
-  })
-
-  app.get('/login', function (req, res) {
-    return res.redirect('/');
-  });
-
-  app.get('/login-civ', authCivilian, function (req, res) {
-    return res.redirect('civ-dashboard');
-  });
-
-  app.get('/login-police', authPolice, function (req, res) {
-    return res.redirect('/police-dashboard')
-  });
-
-  app.get('/login-ems', authEms, function (req, res) {
-    return res.redirect('/ems-dashboard')
-  });
-
-  app.get('/login-community', authCommunity, function (req, res) {
-    return res.redirect('/community-dashboard')
-  });
-
-  app.get('/login-dispatch', authDispatch, function (req, res) {
-    return res.redirect('/dispatch-dashboard')
-  });
-
-  app.get('/signup-civ', function (req, res) {
-    return res.render('signup-civ', {
-      message: req.flash('signuperror')
-    });
-  });
-
-  app.get('/signup-police', function (req, res) {
-    return res.render('signup-police', {
-      message: req.flash('signuperror')
-    });
-  });
-
-  app.get('/signup-ems', function (req, res) {
-    return res.render('signup-ems', {
-      message: req.flash('signuperror')
-    });
-  });
-
-  app.get('/signup-community', function (req, res) {
-    return res.render('signup-community', {
-      message: req.flash('signuperror')
-    });
-  });
-
-  app.get('/signup-dispatch', function (req, res) {
-    return res.render('signup-dispatch', {
-      message: req.flash('signuperror')
-    });
   });
 
   app.get('/logout', function (req, res) {
@@ -220,13 +110,6 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.get('/forgot-password', function (req, res) {
-    return res.render('forgot-password', {
-      user: req.user,
-      message: req.flash('emailSend')
-    });
-  });
-
   app.get('/reset/:token', function (req, res) {
     if (req.params.token && req.params.token != 'encryptedToken') {
       req.session.resetToken = req.params.token
@@ -251,329 +134,19 @@ module.exports = function (app, passport, server) {
     }
   });
 
-  app.get('/civ-dashboard', authCivilian, function (req, res) {
-    var context = req.app.locals.specialContext;
-    req.app.locals.specialContext = null;
-    if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-      Civilian.find({
-        'civilian.userID': req.user._id,
-        '$or': [{ // some are stored as empty strings and others as null so we need to check for both
-          'civilian.activeCommunityID': ''
-        }, {
-          'civilian.activeCommunityID': null
-        }]
-      }, function (err, dbPersonas) {
-        if (err) return console.error(err);
-        Vehicle.find({
-          'vehicle.userID': req.user._id,
-          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
-            'vehicle.activeCommunityID': ''
-          }, {
-            'vehicle.activeCommunityID': null
-          }]
-        }, function (err, dbVehicles) {
-          if (err) return console.error(err);
-          Firearm.find({
-            'firearm.userID': req.user._id,
-            '$or': [{ // some are stored as empty strings and others as null so we need to check for both
-              'firearm.activeCommunityID': ''
-            }, {
-              'firearm.activeCommunityID': null
-            }]
-          }, function (err, dbFirearms) {
-            if (err) return console.error(err);
-            Community.find({
-              '$or': [{
-                'community.ownerID': req.user._id
-              }, {
-                '_id': req.user.user.activeCommunity
-              }]
-            }, function (err, dbCommunities) {
-              if (err) return console.error(err);
-              return res.render('civ-dashboard', {
-                user: req.user,
-                personas: dbPersonas,
-                vehicles: dbVehicles,
-                firearms: dbFirearms,
-                communities: dbCommunities,
-                context: context,
-                referer: encodeURIComponent('/civ-dashboard'),
-                redirect: encodeURIComponent(redirect)
-              });
-            });
-          });
-        });
-      });
-    } else {
-      Civilian.find({
-        'civilian.userID': req.user._id,
-        'civilian.activeCommunityID': req.user.user.activeCommunity
-      }, function (err, dbPersonas) {
-        if (err) return console.error(err);
-        Vehicle.find({
-          'vehicle.userID': req.user._id,
-          'vehicle.activeCommunityID': req.user.user.activeCommunity
-        }, function (err, dbVehicles) {
-          if (err) return console.error(err);
-
-          Firearm.find({
-            'firearm.userID': req.user._id,
-            'firearm.activeCommunityID': req.user.user.activeCommunity
-          }, function (err, dbFirearms) {
-            if (err) return console.error(err);
-            Community.find({
-              '$or': [{
-                'community.ownerID': req.user._id
-              }, {
-                '_id': req.user.user.activeCommunity
-              }]
-            }, function (err, dbCommunities) {
-              if (err) return console.error(err);
-              return res.render('civ-dashboard', {
-                user: req.user,
-                personas: dbPersonas,
-                vehicles: dbVehicles,
-                firearms: dbFirearms,
-                communities: dbCommunities,
-                context: context,
-                referer: encodeURIComponent('/civ-dashboard'),
-                redirect: encodeURIComponent(redirect)
-              });
-            });
-          });
-        });
-      });
-    }
-  });
-
-  app.get('/ems-dashboard', authEms, function (req, res) {
-    var context = req.app.locals.specialContext;
-    req.app.locals.specialContext = null;
-    if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-      Ems.find({
-        'ems.userID': req.user._id
-      }, function (err, dbPersonas) {
-        if (err) return console.error(err);
-        EmsVehicle.find({
-          'emsVehicle.userID': req.user._id,
-        }, function (err, dbVehicles) {
-          if (err) return console.error(err);
-          Community.find({
-            '$or': [{
-              'community.ownerID': req.user._id
-            }, {
-              '_id': req.user.user.activeCommunity
-            }]
-          }, function (err, dbCommunities) {
-            if (err) return console.error(err);
-            return res.render('ems-dashboard', {
-              user: req.user,
-              personas: dbPersonas,
-              vehicles: dbVehicles,
-              communities: dbCommunities,
-              context: context,
-              referer: encodeURIComponent('/ems-dashboard'),
-              redirect: encodeURIComponent(redirect)
-            });
-          });
-        });
-      })
-    } else {
-      Ems.find({
-        'ems.userID': req.user._id,
-        'ems.activeCommunityID': req.user.user.activeCommunity
-      }, function (err, dbPersonas) {
-        if (err) return console.error(err);
-        EmsVehicle.find({
-          'emsVehicle.userID': req.user._id,
-          'emsVehicle.activeCommunityID': req.user.user.activeCommunity
-        }, function (err, dbVehicles) {
-          if (err) return console.error(err);
-          Community.find({
-            '$or': [{
-              'community.ownerID': req.user._id
-            }, {
-              '_id': req.user.user.activeCommunity
-            }]
-          }, function (err, dbCommunities) {
-            if (err) return console.error(err);
-            return res.render('ems-dashboard', {
-              user: req.user,
-              personas: dbPersonas,
-              vehicles: dbVehicles,
-              communities: dbCommunities,
-              context: context,
-              referer: encodeURIComponent('/ems-dashboard'),
-              redirect: encodeURIComponent(redirect)
-            });
-          });
-        });
-      })
-    }
-  });
-
-  app.get('/community-dashboard', authCommunity, function (req, res) {
-    var context = req.app.locals.specialContext;
-    req.app.locals.specialContext = null;
-    if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-
-      Community.find({
-        '$or': [{
-          'community.ownerID': req.user._id
-        }, {
-          '_id': req.user.user.activeCommunity
-        }]
-      }, function (err, dbCommunities) {
-        if (err) return console.error(err);
-        return res.render('community-dashboard', {
-          user: req.user,
-          personas: null,
-          vehicles: null,
-          communities: dbCommunities,
-          context: context,
-          referer: encodeURIComponent('/community-dashboard'),
-          redirect: encodeURIComponent(redirect)
-        });
-      });
-    } else {
-      Community.find({
-        '$or': [{
-          'community.ownerID': req.user._id
-        }, {
-          '_id': req.user.user.activeCommunity
-        }]
-      }, function (err, dbCommunities) {
-        if (err) return console.error(err);
-        return res.render('community-dashboard', {
-          user: req.user,
-          personas: null,
-          vehicles: null,
-          communities: dbCommunities,
-          context: context,
-          referer: encodeURIComponent('/community-dashboard'),
-          redirect: encodeURIComponent(redirect)
-        });
-      });
-    }
-  });
-
-  app.get('/police-dashboard', authPolice, function (req, res) {
-    // console.debug("req: ", req.user)
-    var context = req.app.locals.specialContext;
-    req.app.locals.specialContext = null;
-    Community.find({
-      '$or': [{
-        'community.ownerID': req.user._id
-      }, {
-        '_id': req.user.user.activeCommunity
-      }]
-    }, function (err, dbCommunities) {
-      if (err) return console.error(err);
-      Bolo.find({
-        'bolo.communityID': req.user.user.activeCommunity
-      }, function (err, dbBolos) {
-        if (err) return console.error(err);
-        Call.find({
-          'call.communityID': req.user.user.activeCommunity,
-        }, function (err, dbCalls) {
-          if (err) return console.error(err);
-          return res.render('police-dashboard', {
-            user: req.user,
-            vehicles: null,
-            civilians: null,
-            firearms: null,
-            tickets: null,
-            arrestReports: null,
-            warrants: null,
-            communities: dbCommunities,
-            bolos: dbBolos,
-            calls: dbCalls,
-            context: context,
-            referer: encodeURIComponent('/police-dashboard'),
-            redirect: encodeURIComponent(redirect)
-          });
-        });
-      });
-    });
-  });
-
-  app.get('/dispatch-dashboard', authDispatch, function (req, res) {
-    var context = req.app.locals.specialContext;
-    req.app.locals.specialContext = null;
-    Community.find({
-      '$or': [{
-        'community.ownerID': req.user._id
-      }, {
-        '_id': req.user.user.activeCommunity
-      }]
-    }, function (err, dbCommunities) {
-      if (err) return console.error(err);
-      Bolo.find({
-        'bolo.communityID': req.user.user.activeCommunity
-      }, function (err, dbBolos) {
-        if (err) return console.error(err);
-        if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-          return res.render('dispatch-dashboard', {
-            user: req.user,
-            vehicles: null,
-            civilians: null,
-            firearms: null,
-            tickets: null,
-            arrestReports: null,
-            warrants: null,
-            communities: dbCommunities,
-            bolos: dbBolos,
-            commUsers: null,
-            calls: null,
-            context: context,
-            referer: encodeURIComponent('/dispatch-dashboard'),
-            redirect: encodeURIComponent(redirect)
-          });
-        } else {
-          User.find({
-            'user.activeCommunity': req.user.user.activeCommunity
-          }, function (err, dbCommUsers) {
-            if (err) return console.error(err);
-            Call.find({
-              'call.communityID': req.user.user.activeCommunity
-            }, function (err, dbCalls) {
-              if (err) return console.error(err);
-              return res.render('dispatch-dashboard', {
-                user: req.user,
-                vehicles: null,
-                civilians: null,
-                firearms: null,
-                tickets: null,
-                arrestReports: null,
-                warrants: null,
-                communities: dbCommunities,
-                bolos: dbBolos,
-                commUsers: dbCommUsers,
-                calls: dbCalls,
-                context: context,
-                referer: encodeURIComponent('/dispatch-dashboard'),
-                redirect: encodeURIComponent(redirect)
-              });
-            });
-          });
-        }
-      });
-    });
-  });
-
   //This is gross and I know it :yolo:
   app.get('/name-search', auth, function (req, res) {
     if (req.query.route == 'dispatch-dashboard') {
       if (req.query.firstName == undefined || req.query.lastName == undefined) {
         res.status(400)
-        return res.redirect('/dispatch-dashboard')
+        return res.redirect('/dashboard/dispatch')
       }
       let firstName = sanitize(req.query.firstName.trim().toLowerCase());
       let lastName = sanitize(req.query.lastName.trim().toLowerCase());
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         if (req.query.dateOfBirth == undefined) {
           res.status(400)
-          return res.redirect('/dispatch-dashboard')
+          return res.redirect('/dashboard/dispatch')
         }
         Civilian.find({
           '$text': {
@@ -633,7 +206,7 @@ module.exports = function (app, passport, server) {
                           bolos: dbBolos,
                           calls: dbCalls,
                           context: null,
-                          referer: encodeURIComponent('/dispatch-dashboard'),
+                          referer: encodeURIComponent('/dashboard/dispatch'),
                           redirect: encodeURIComponent(redirect)
                         });
                       } else {
@@ -654,7 +227,7 @@ module.exports = function (app, passport, server) {
                             bolos: dbBolos,
                             calls: dbCalls,
                             context: null,
-                            referer: encodeURIComponent('/dispatch-dashboard'),
+                            referer: encodeURIComponent('/dashboard/dispatch'),
                             redirect: encodeURIComponent(redirect)
                           });
                         });
@@ -719,7 +292,7 @@ module.exports = function (app, passport, server) {
                           bolos: dbBolos,
                           calls: dbCalls,
                           context: null,
-                          referer: encodeURIComponent('/dispatch-dashboard'),
+                          referer: encodeURIComponent('/dashboard/dispatch'),
                           redirect: encodeURIComponent(redirect)
                         });
                       } else {
@@ -740,7 +313,7 @@ module.exports = function (app, passport, server) {
                             bolos: dbBolos,
                             calls: dbCalls,
                             context: null,
-                            referer: encodeURIComponent('/dispatch-dashboard'),
+                            referer: encodeURIComponent('/dashboard/dispatch'),
                             redirect: encodeURIComponent(redirect)
                           });
                         });
@@ -756,14 +329,14 @@ module.exports = function (app, passport, server) {
     } else {
       if (req.query.firstName == undefined || req.query.lastName == undefined) {
         res.status(400)
-        return res.redirect('/police-dashboard')
+        return res.redirect('/dashboard/police')
       }
       let firstName = sanitize(req.query.firstName.trim().toLowerCase());
       let lastName = sanitize(req.query.lastName.trim().toLowerCase());
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         if (req.query.dateOfBirth == undefined) {
           res.status(400)
-          return res.redirect('/police-dashboard')
+          return res.redirect('/dashboard/police')
         }
         Civilian.find({
           '$text': {
@@ -821,7 +394,7 @@ module.exports = function (app, passport, server) {
                         bolos: dbBolos,
                         calls: dbCalls,
                         context: null,
-                        referer: encodeURIComponent('/police-dashboard'),
+                        referer: encodeURIComponent('/dashboard/police'),
                         redirect: encodeURIComponent(redirect)
                       });
                     });
@@ -883,7 +456,7 @@ module.exports = function (app, passport, server) {
                         bolos: dbBolos,
                         calls: dbCalls,
                         context: null,
-                        referer: encodeURIComponent('/police-dashboard'),
+                        referer: encodeURIComponent('/dashboard/police'),
                         redirect: encodeURIComponent(redirect)
                       });
                     });
@@ -901,7 +474,7 @@ module.exports = function (app, passport, server) {
     if (req.query.route == 'dispatch-dashboard') {
       if (req.query.plateNumber == undefined) {
         res.status(400)
-        return res.redirect('/dispatch-dashboard')
+        return res.redirect('/dashboard/dispatch')
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Vehicle.find({
@@ -943,7 +516,7 @@ module.exports = function (app, passport, server) {
                     bolos: dbBolos,
                     calls: dbCalls,
                     context: null,
-                    referer: encodeURIComponent('/dispatch-dashboard'),
+                    referer: encodeURIComponent('/dashboard/dispatch'),
                     redirect: encodeURIComponent(redirect)
                   });
                 } else {
@@ -964,7 +537,7 @@ module.exports = function (app, passport, server) {
                       bolos: dbBolos,
                       calls: dbCalls,
                       context: null,
-                      referer: encodeURIComponent('/dispatch-dashboard'),
+                      referer: encodeURIComponent('/dashboard/dispatch'),
                       redirect: encodeURIComponent(redirect)
                     });
                   });
@@ -1009,7 +582,7 @@ module.exports = function (app, passport, server) {
                     bolos: dbBolos,
                     calls: dbCalls,
                     context: null,
-                    referer: encodeURIComponent('/dispatch-dashboard'),
+                    referer: encodeURIComponent('/dashboard/dispatch'),
                     redirect: encodeURIComponent(redirect)
                   });
                 } else {
@@ -1030,7 +603,7 @@ module.exports = function (app, passport, server) {
                       bolos: dbBolos,
                       calls: dbCalls,
                       context: null,
-                      referer: encodeURIComponent('/dispatch-dashboard'),
+                      referer: encodeURIComponent('/dashboard/dispatch'),
                       redirect: encodeURIComponent(redirect)
                     });
                   });
@@ -1043,7 +616,7 @@ module.exports = function (app, passport, server) {
     } else {
       if (req.query.plateNumber == undefined) {
         res.status(400)
-        return res.redirect('/police-dashboard')
+        return res.redirect('/dashboard/police')
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Vehicle.find({
@@ -1083,7 +656,7 @@ module.exports = function (app, passport, server) {
                   bolos: dbBolos,
                   calls: dbCalls,
                   context: null,
-                  referer: encodeURIComponent('/police-dashboard'),
+                  referer: encodeURIComponent('/dashboard/police'),
                   redirect: encodeURIComponent(redirect)
                 });
               });
@@ -1099,7 +672,7 @@ module.exports = function (app, passport, server) {
           var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
           if (!isValid) {
             req.app.locals.specialContext = "invalidRequest";
-            return res.redirect('/police-dashboard')
+            return res.redirect('/dashboard/police')
           }
           Community.find({
             '$or': [{
@@ -1129,7 +702,7 @@ module.exports = function (app, passport, server) {
                   bolos: dbBolos,
                   calls: dbCalls,
                   context: null,
-                  referer: encodeURIComponent('/police-dashboard'),
+                  referer: encodeURIComponent('/dashboard/police'),
                   redirect: encodeURIComponent(redirect)
                 });
               });
@@ -1145,7 +718,7 @@ module.exports = function (app, passport, server) {
     if (req.query.route == 'dispatch-dashboard') {
       if (req.query.serialNumber == undefined) {
         res.status(400)
-        return res.redirect('/dispatch-dashboard')
+        return res.redirect('/dashboard/dispatch')
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Firearm.find({
@@ -1187,7 +760,7 @@ module.exports = function (app, passport, server) {
                     bolos: dbBolos,
                     calls: dbCalls,
                     context: null,
-                    referer: encodeURIComponent('/dispatch-dashboard'),
+                    referer: encodeURIComponent('/dashboard/dispatch'),
                     redirect: encodeURIComponent(redirect)
                   });
                 } else {
@@ -1208,7 +781,7 @@ module.exports = function (app, passport, server) {
                       bolos: dbBolos,
                       calls: dbCalls,
                       context: null,
-                      referer: encodeURIComponent('/dispatch-dashboard'),
+                      referer: encodeURIComponent('/dashboard/dispatch'),
                       redirect: encodeURIComponent(redirect)
                     });
                   });
@@ -1253,7 +826,7 @@ module.exports = function (app, passport, server) {
                     bolos: dbBolos,
                     calls: dbCalls,
                     context: null,
-                    referer: encodeURIComponent('/dispatch-dashboard'),
+                    referer: encodeURIComponent('/dashboard/dispatch'),
                     redirect: encodeURIComponent(redirect)
                   });
                 } else {
@@ -1274,7 +847,7 @@ module.exports = function (app, passport, server) {
                       bolos: dbBolos,
                       calls: dbCalls,
                       context: null,
-                      referer: encodeURIComponent('/dispatch-dashboard'),
+                      referer: encodeURIComponent('/dashboard/dispatch'),
                       redirect: encodeURIComponent(redirect)
                     });
                   });
@@ -1287,7 +860,7 @@ module.exports = function (app, passport, server) {
     } else {
       if (req.query.serialNumber == undefined) {
         res.status(400)
-        return res.redirect('/police-dashboard')
+        return res.redirect('/dashboard/police')
       }
       if (req.query.activeCommunityID == '' || req.query.activeCommunityID == null) {
         Firearm.find({
@@ -1327,7 +900,7 @@ module.exports = function (app, passport, server) {
                   bolos: dbBolos,
                   calls: dbCalls,
                   context: null,
-                  referer: encodeURIComponent('/police-dashboard'),
+                  referer: encodeURIComponent('/dashboard/police'),
                   redirect: encodeURIComponent(redirect)
                 });
               });
@@ -1343,7 +916,7 @@ module.exports = function (app, passport, server) {
           var isValid = isValidObjectIdLength(req.user.user.activeCommunity, "cannot lookup invalid length activeCommunityID, route: /plate-search")
           if (!isValid) {
             req.app.locals.specialContext = "invalidRequest";
-            return res.redirect('/police-dashboard')
+            return res.redirect('/dashboard/police')
           }
           Community.find({
             '$or': [{
@@ -1373,7 +946,7 @@ module.exports = function (app, passport, server) {
                   bolos: dbBolos,
                   calls: dbCalls,
                   context: null,
-                  referer: encodeURIComponent('/police-dashboard'),
+                  referer: encodeURIComponent('/dashboard/police'),
                   redirect: encodeURIComponent(redirect)
                 });
               });
@@ -1664,62 +1237,42 @@ module.exports = function (app, passport, server) {
     res.render('page-not-found');
   });
 
-  app.post('/login-civ', passport.authenticate('login', {
-    successRedirect: '/civ-dashboard',
-    failureRedirect: '/login-civ',
-    failureFlash: true
-  }));
+  
 
-  app.post('/login-police', passport.authenticate('login', {
-    successRedirect: '/police-dashboard',
-    failureRedirect: '/login-police',
-    failureFlash: true
-  }));
+  
 
-  app.post('/login-ems', passport.authenticate('login', {
-    successRedirect: '/ems-dashboard',
-    failureRedirect: '/login-ems',
-    failureFlash: true
-  }));
+  
 
-  app.post('/login-community', passport.authenticate('login', {
-    successRedirect: '/community-dashboard',
-    failureRedirect: '/login-community',
-    failureFlash: true
-  }));
+  
 
-  app.post('/login-dispatch', passport.authenticate('login', {
-    successRedirect: '/dispatch-dashboard',
-    failureRedirect: '/login-dispatch',
-    failureFlash: true
-  }));
+  
 
   app.post('/signup-civ', passport.authenticate('signup', {
-    successRedirect: '/civ-dashboard',
+    successRedirect: '/dashboard/civ',
     failureRedirect: '/signup-civ',
     failureFlash: true
   }));
 
   app.post('/signup-police', passport.authenticate('signup', {
-    successRedirect: '/police-dashboard',
+    successRedirect: '/dashboard/police',
     failureRedirect: '/signup-police',
     failureFlash: true
   }));
 
   app.post('/signup-ems', passport.authenticate('signup', {
-    successRedirect: '/ems-dashboard',
+    successRedirect: '/dashboard/ems',
     failureRedirect: '/signup-ems',
     failureFlash: true
   }));
 
   app.post('/signup-community', passport.authenticate('signup', {
-    successRedirect: '/community-dashboard',
+    successRedirect: '/dashboard/community',
     failureRedirect: '/signup-community',
     failureFlash: true
   }));
 
   app.post('/signup-dispatch', passport.authenticate('signup', {
-    successRedirect: '/dispatch-dashboard',
+    successRedirect: '/dashboard/dispatch',
     failureRedirect: '/signup-dispatch',
     failureFlash: true
   }));
@@ -2088,7 +1641,7 @@ module.exports = function (app, passport, server) {
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
-      return res.redirect('/ems-dashboard');
+      return res.redirect('/dashboard/ems');
     }
     Community.findOne({
       'community.code': req.body.communityCode.toUpperCase()
@@ -2096,12 +1649,12 @@ module.exports = function (app, passport, server) {
       if (err) return console.error(err);
       if (community == null) {
         req.app.locals.specialContext = "noCommunityFound";
-        return res.redirect('/ems-dashboard');
+        return res.redirect('/dashboard/ems');
       }
       var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /leavePoliceActiveCommunity")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/ems-dashboard')
+        return res.redirect('/dashboard/ems')
       }
       User.findOneAndUpdate({
         '_id': ObjectId(req.body.userID),
@@ -2112,7 +1665,7 @@ module.exports = function (app, passport, server) {
       }, function (err) {
         if (err) return console.error(err);
         req.app.locals.specialContext = "joinCommunitySuccess";
-        return res.redirect('/ems-dashboard');
+        return res.redirect('/dashboard/ems');
       })
     })
   })
@@ -2122,7 +1675,7 @@ module.exports = function (app, passport, server) {
     var isValid = isValidObjectIdLength(req.body.userID, "cannot lookup invalid length userID, route: /leaveEmsActiveCommunity")
     if (!isValid) {
       req.app.locals.specialContext = "invalidRequest";
-      return res.redirect("/ems-dashboard")
+      return res.redirect("/dashboard/ems")
     }
     User.findOneAndUpdate({
       '_id': ObjectId(req.body.userID),
@@ -2133,7 +1686,7 @@ module.exports = function (app, passport, server) {
     }, function (err) {
       if (err) return console.error(err);
       req.app.locals.specialContext = "leaveCommunitySuccess";
-      return res.redirect('/ems-dashboard');
+      return res.redirect('/dashboard/ems');
     })
   })
 
@@ -2578,7 +2131,7 @@ module.exports = function (app, passport, server) {
   //     var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
   //     if (!isValid) {
   //       req.app.locals.specialContext = "invalidRequest";
-  //       return res.redirect('/civ-dashboard')
+  //       return res.redirect('/dashboard/civ')
   //     }
   //     Civilian.findByIdAndUpdate({
   //       '_id': ObjectId(req.body.civilianID)
@@ -2607,13 +2160,13 @@ module.exports = function (app, passport, server) {
   //       }
   //     }, function (err) {
   //       if (err) return console.error(err);
-  //       return res.redirect('/civ-dashboard');
+  //       return res.redirect('/dashboard/civ');
   //     })
   //   } else if (req.body.action == "createLicense") {
   //     var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
   //     if (!isValid) {
   //       req.app.locals.specialContext = "invalidRequest";
-  //       return res.redirect('/civ-dashboard')
+  //       return res.redirect('/dashboard/civ')
   //     }
   //     Civilian.findByIdAndUpdate({
   //       '_id': ObjectId(req.body.civilianID)
@@ -2624,13 +2177,13 @@ module.exports = function (app, passport, server) {
   //       }
   //     }, function (err) {
   //       if (err) return console.error(err);
-  //       return res.redirect('/civ-dashboard');
+  //       return res.redirect('/dashboard/civ');
   //     })
   //   } else if (req.body.action == "deleteLicense") {
   //     var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
   //     if (!isValid) {
   //       req.app.locals.specialContext = "invalidRequest";
-  //       return res.redirect('/civ-dashboard')
+  //       return res.redirect('/dashboard/civ')
   //     }
   //     Civilian.findByIdAndUpdate({
   //       '_id': ObjectId(req.body.civilianID)
@@ -2641,13 +2194,13 @@ module.exports = function (app, passport, server) {
   //       }
   //     }, function (err) {
   //       if (err) return console.error(err);
-  //       return res.redirect('/civ-dashboard');
+  //       return res.redirect('/dashboard/civ');
   //     })
   //   } else {
   //     var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
   //     if (!isValid) {
   //       req.app.locals.specialContext = "invalidRequest";
-  //       return res.redirect('/civ-dashboard')
+  //       return res.redirect('/dashboard/civ')
   //     }
   //     Civilian.findByIdAndDelete({
   //       '_id': ObjectId(req.body.civilianID)
@@ -2672,7 +2225,7 @@ module.exports = function (app, passport, server) {
   //                 'condition.civilianID': req.body.civilianID
   //               }, function (err) {
   //                 if (err) return console.error(err);
-  //                 return res.redirect('/civ-dashboard');
+  //                 return res.redirect('/dashboard/civ');
   //               })
   //             })
   //           })
@@ -2691,7 +2244,7 @@ module.exports = function (app, passport, server) {
       'ems.lastName': lastName
     }, function (err) {
       if (err) return console.error(err);
-      res.redirect('/ems-dashboard');
+      res.redirect('/dashboard/ems');
     })
   })
 
@@ -2700,19 +2253,19 @@ module.exports = function (app, passport, server) {
     if (req.body.action === "update") {
       if (!exists(req.body.vehicleID)) {
         console.warn("cannot update vehicle with empty vehicleID, route: /updateOrDeleteVeh")
-        return res.redirect('/civ-dashboard');
+        return res.redirect('/dashboard/civ');
       }
       if (!exists(req.body.roVeh)) {
         req.body.roVeh = 'N/A'
       }
       if (req.body.vehicleID.length != 24) {
         console.warn("cannot delete vehicle with invalid vehicleID, route: /updateOrDeleteVeh", req.body.vehicleID)
-        return res.redirect('/civ-dashboard');
+        return res.redirect('/dashboard/civ');
       }
       var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /updateOrDeleteVeh")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/civ-dashboard')
+        return res.redirect('/dashboard/civ')
       }
       if (!exists(req.body.vinVeh)) {
         req.body.vinVeh = ""
@@ -2733,27 +2286,27 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/civ-dashboard');
+        return res.redirect('/dashboard/civ');
       })
     } else {
       if (!exists(req.body.vehicleID)) {
         console.warn("cannot delete vehicle with empty vehicleID, route: /updateOrDeleteVeh")
-        return res.redirect('/civ-dashboard');
+        return res.redirect('/dashboard/civ');
       }
       if (req.body.vehicleID.length != 24) {
         console.warn("cannot delete vehicle with invalid vehicleID, route: /updateOrDeleteVeh", req.body.vehicleID)
-        return res.redirect('/civ-dashboard');
+        return res.redirect('/dashboard/civ');
       }
       var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /updateOrDeleteVeh")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/civ-dashboard')
+        return res.redirect('/dashboard/civ')
       }
       Vehicle.findByIdAndDelete({
         '_id': ObjectId(req.body.vehicleID)
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/civ-dashboard');
+        return res.redirect('/dashboard/civ');
       })
     }
   })
@@ -2764,7 +2317,7 @@ module.exports = function (app, passport, server) {
     if (req.body.action === "update") {
       if (!exists(req.body.firearmID)) {
         console.warn("cannot update firearm with empty firearmID, route: /updateOrDeleteFirearm")
-        return res.redirect('/civ-dashboard');
+        return res.redirect('/dashboard/civ');
       }
       if (!exists(req.body.registeredOwner)) {
         req.body.registeredOwner = 'N/A'
@@ -2789,7 +2342,7 @@ module.exports = function (app, passport, server) {
       var isValid = isValidObjectIdLength(req.body.firearmID, "cannot lookup invalid length firearmID, route: /updateOrDeleteFirearm")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/civ-dashboard')
+        return res.redirect('/dashboard/civ')
       }
       Firearm.findOneAndUpdate({
         '_id': ObjectId(req.body.firearmID),
@@ -2804,23 +2357,23 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/civ-dashboard');
+        return res.redirect('/dashboard/civ');
       })
     } else {
       if (!exists(req.body.firearmID)) {
         console.warn("cannot delete firearm with empty firearmID, route: /updateOrDeleteFirearm")
-        return res.redirect('/civ-dashboard');
+        return res.redirect('/dashboard/civ');
       }
       var isValid = isValidObjectIdLength(req.body.firearmID, "cannot lookup invalid length firearmID, route: /updateOrDeleteFirearm")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect('/civ-dashboard')
+        return res.redirect('/dashboard/civ')
       }
       Firearm.deleteOne({
         '_id': ObjectId(req.body.firearmID),
       }, function (err) {
         if (err) return console.error(err);
-        return res.redirect('/civ-dashboard');
+        return res.redirect('/dashboard/civ');
       })
     }
   })
@@ -2866,7 +2419,7 @@ module.exports = function (app, passport, server) {
       '_id': ObjectId(req.body.vehicleID)
     }, function (err) {
       if (err) return console.error(err);
-      return res.redirect('/ems-dashboard');
+      return res.redirect('/dashboard/ems');
     })
   })
 

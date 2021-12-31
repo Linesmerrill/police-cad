@@ -269,7 +269,7 @@ header {
     color: #fff;
     width: 100%;
     background-color: #c9c9c9;
-    background-image: url("/static/images/gta-landing-page.jpg");
+    background-image: url("/images/gta-landing-page.jpg");
     background-position: center;
     -webkit-background-size: cover;
     -moz-background-size: cover;
@@ -1148,7 +1148,7 @@ a.link--inherit {
 
 @media (max-width: 594px) {
     #map-image {
-        background-image: url("/static/images/mobile-map.jpg");
+        background-image: url("/images/mobile-map.jpg");
         background-repeat: no-repeat;
         background-size: contain;
         width: 325px;
@@ -1158,7 +1158,7 @@ a.link--inherit {
 
 @media (min-width: 595px) and (max-width: 995px) {
     #map-image {
-        background-image: url("/static/images/desktop-map.jpg");
+        background-image: url("/images/desktop-map.jpg");
         background-repeat: no-repeat;
         background-size: contain;
         width: 565px;
@@ -1168,7 +1168,7 @@ a.link--inherit {
 
 @media (min-width: 996px) {
     #map-image {
-        background-image: url("/static/images/GTA-V-Custom-Postal-Code-Map.jpg");
+        background-image: url("/images/GTA-V-Custom-Postal-Code-Map.jpg");
         background-repeat: no-repeat;
         background-size: contain;
         width: 850px;

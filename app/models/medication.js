@@ -30,7 +30,7 @@ medicationSchema.methods.createMedication = function (req, res) {
     this.medication.lastName = req.body.lastName.trim().toLowerCase()
     this.medication.dateOfBirth = req.body.dateOfBirth.trim()
     this.medication.createdAt = new Date();
-    res.redirect('/civ-dashboard');
+    res.redirect('/dashboard/civ');
 };
 
 module.exports = mongoose.model('Medication', medicationSchema);
