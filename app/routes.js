@@ -1673,6 +1673,34 @@ module.exports = function (app, passport, server) {
       });
   })
 
+  app.delete('/warning/:id', auth, function (req, res) {
+    // console.debug("req params: ", req.params)
+    if (!isValidObjectIdLength(req.params.id, "cannot lookup invalid length condition id, route: /warning/:id")) {
+      return
+    }
+    Ticket.findByIdAndDelete({
+        '_id': ObjectId(req.params.id),
+      },
+      function (err, status) {
+        if (err) return console.error(err);
+        res.send(status)
+      });
+  })
+
+  app.delete('/arrestReport/:id', auth, function (req, res) {
+    // console.debug("req params: ", req.params)
+    if (!isValidObjectIdLength(req.params.id, "cannot lookup invalid length condition id, route: /arrestReport/:id")) {
+      return
+    }
+    ArrestReport.findByIdAndDelete({
+        '_id': ObjectId(req.params.id),
+      },
+      function (err, status) {
+        if (err) return console.error(err);
+        res.send(status)
+      });
+  })
+
   // Be sure to place all GET requests above this catchall
   app.get('*', function (req, res) {
     res.render('page-not-found');

@@ -766,20 +766,21 @@
                                                               </tbody>
                                                             </table>
                                                           </div>
-                                                          <div class="tab-pane fade" id="pills-warnings-<%=i%>" role="tabpanel"
-                                                            aria-labelledby="pills-warnings-tab-<%=i%>">
-                                                            <table id="warning-table-<%=i%>" class="table table-hover"
+                                                          <div class="tab-pane fade" id="pills-warnings-<%=civilians[i]._id%>" role="tabpanel"
+                                                            aria-labelledby="pills-warnings-tab-<%=civilians[i]._id%>">
+                                                            <table id="warning-table-<%=civilians[i]._id%>" class="table table-hover"
                                                               border="1" frame="box">
                                                               <thead>
                                                                 <tr style="background-color: #2d2d2d;">
                                                                   <td>Date<br><i><small>YYYY-M-D</small></i></td>
                                                                   <td>Warning</td>
+                                                                  <td>Delete</td>
                                                                 </tr>
                                                               </thead>
-                                                              <tbody id="warning-body-<%=i%>">
+                                                              <tbody id="warning-body-<%=civilians[i]._id%>">
                                                                 <% if (tickets !=null) {%>
                                                                   <% for(var j=0; j<tickets.length; j++) {%>
-                                                                    <tr>
+                                                                    <tr id="warning-<%=tickets[j]._id%>">
                                                                       <% if ((tickets[j].ticket.civID==civilians[i]._id)
                                                                         && (tickets[j].ticket.isWarning)) {%>
                                                                         <td>
@@ -788,38 +789,45 @@
                                                                         <td>
                                                                           <%= tickets[j].ticket.violation %>
                                                                         </td>
+                                                                        <td class="text-align-center">
+                                                                          <a class='clickable' onclick="deleteWarning('<%=tickets[j]._id%>', '<%=civilians[i]._id%>')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
+                                                                        </td>
+                                                                      <% } %>
+                                                                      <% if ((i==0) &&
+                                                                        (tickets[j].ticket.civID==null) &&
+                                                                        (tickets[j].ticket.isWarning)) {%>
+                                                                        <td>
+                                                                          <%= tickets[j].ticket.date %>
+                                                                        </td>
+                                                                        <td>
+                                                                          <%= tickets[j].ticket.violation %>
+                                                                        </td>
+                                                                        <td class="text-align-center">
+                                                                          <a class='clickable' onclick="deleteWarning('<%=tickets[j]._id%>', '<%=civilians[i]._id%>')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
+                                                                        </td>
                                                                         <% } %>
-                                                                          <% if ((i==0) &&
-                                                                            (tickets[j].ticket.civID==null) &&
-                                                                            (tickets[j].ticket.isWarning)) {%>
-                                                                            <td>
-                                                                              <%= tickets[j].ticket.date %>
-                                                                            </td>
-                                                                            <td>
-                                                                              <%= tickets[j].ticket.violation %>
-                                                                            </td>
-                                                                            <% } %>
                                                                     </tr>
                                                                     <% } %>
                                                                       <% } %>
                                                               </tbody>
                                                             </table>
                                                           </div>
-                                                          <div class="tab-pane fade" id="pills-arrests-<%=i%>" role="tabpanel"
-                                                            aria-labelledby="pills-arrests-tab-<%=i%>">
-                                                            <table id="arrest-table-<%=i%>" class="table table-hover"
+                                                          <div class="tab-pane fade" id="pills-arrests-<%=civilians[i]._id%>" role="tabpanel"
+                                                            aria-labelledby="pills-arrests-tab-<%=civilians[i]._id%>">
+                                                            <table id="arrest-table-<%=civilians[i]._id%>" class="table table-hover"
                                                               border="1" frame="box">
                                                               <thead>
                                                                 <tr style="background-color: #2d2d2d;">
                                                                   <td>Date<br><i><small>YYYY-M-D</small></i></td>
                                                                   <td>Charges</td>
                                                                   <td>Summary</td>
+                                                                  <td>Delete</td>
                                                                 </tr>
                                                               </thead>
-                                                              <tbody id="arrest-body-<%=i%>">
+                                                              <tbody id="arrest-body-<%=civilians[i]._id%>">
                                                                 <% if (arrestReports !=null) {%>
                                                                   <% for(var j=0; j<arrestReports.length; j++) {%>
-                                                                    <tr>
+                                                                    <tr id="<%=arrestReports[j]._id%>">
                                                                       <% if
                                                                         (arrestReports[j].arrestReport.accusedID==civilians[i]._id)
                                                                         {%>
@@ -831,6 +839,9 @@
                                                                         </td>
                                                                         <td>
                                                                           <%= arrestReports[j].arrestReport.summary %>
+                                                                        </td>
+                                                                        <td class="text-align-center">
+                                                                          <a class='clickable' onclick="deleteArrest('<%=arrestReports[j]._id%>', '<%=civilians[i]._id%>')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
                                                                         </td>
                                                                         <% } %>
                                                                     </tr>
@@ -3233,7 +3244,21 @@
   function deleteCitation(citationID, civilianID) {
     var parameters={ citationID: citationID };
     $.delete('/citation/'+citationID, parameters, function (data) {
-      $(`table#ticket-table-`+civilianID+` tr#`+citationID).remove()
+      $(`table#ticket-table-${civilianID} tr#${citationID}`).remove()
+    })
+  }
+
+  function deleteWarning(warningID, civilianID) {
+    var parameters={ citationID: warningID };
+    $.delete('/warning/'+warningID, parameters, function (data) {
+      $(`table#warning-table-${civilianID} tr#warning-${warningID}`).remove()
+    })
+  }
+
+  function deleteArrest(arrestID, civilianID) {
+    var parameters={ arrestID: arrestID };
+    $.delete('/arrestReport/'+arrestID, parameters, function (data) {
+      $(`table#arrest-table-${civilianID} tr#${arrestID}`).remove()
     })
   }
 </script>
