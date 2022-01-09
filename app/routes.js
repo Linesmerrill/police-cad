@@ -1659,6 +1659,20 @@ module.exports = function (app, passport, server) {
       });
   })
 
+  app.delete('/citation/:id', auth, function (req, res) {
+    // console.debug("req params: ", req.params)
+    if (!isValidObjectIdLength(req.params.id, "cannot lookup invalid length condition id, route: /citation/:id")) {
+      return
+    }
+    Ticket.findByIdAndDelete({
+        '_id': ObjectId(req.params.id),
+      },
+      function (err, status) {
+        if (err) return console.error(err);
+        res.send(status)
+      });
+  })
+
   // Be sure to place all GET requests above this catchall
   app.get('*', function (req, res) {
     res.render('page-not-found');

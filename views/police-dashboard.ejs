@@ -696,40 +696,41 @@
                                                         <ul class="nav nav-pills mb-3 margin-bottom-1"
                                                           role="tablist">
                                                           <li class="nav-item">
-                                                            <a class="nav-link" id="pills-citations-tab-<%=i%>"
-                                                              data-toggle="pill" href="#pills-citations-<%=i%>" role="tab"
+                                                            <a class="nav-link" id="pills-citations-tab-<%=civilians[i]._id%>"
+                                                              data-toggle="pill" href="#pills-citations-<%=civilians[i]._id%>" role="tab"
                                                               aria-controls="pills-citations-<%=i%>"
                                                               aria-selected="true">Citations</a>
                                                           </li>
                                                           <li class="nav-item">
-                                                            <a class="nav-link" id="pills-warnings-tab-<%=i%>"
-                                                              data-toggle="pill" href="#pills-warnings-<%=i%>" role="tab"
+                                                            <a class="nav-link" id="pills-warnings-tab-<%=civilians[i]._id%>"
+                                                              data-toggle="pill" href="#pills-warnings-<%=civilians[i]._id%>" role="tab"
                                                               aria-controls="pills-warnings-<%=i%>"
                                                               aria-selected="false">Warnings</a>
                                                           </li>
                                                           <li class="nav-item">
-                                                            <a class="nav-link" id="pills-arrests-tab-<%=i%>"
-                                                              data-toggle="pill" href="#pills-arrests-<%=i%>" role="tab"
+                                                            <a class="nav-link" id="pills-arrests-tab-<%=civilians[i]._id%>"
+                                                              data-toggle="pill" href="#pills-arrests-<%=civilians[i]._id%>" role="tab"
                                                               aria-controls="pills-arrests-<%=i%>"
                                                               aria-selected="false">Arrests</a>
                                                           </li>
                                                         </ul>
-                                                        <div class="tab-content" id="pills-tabContent-<%=i%>">
-                                                          <div class="tab-pane fade" id="pills-citations-<%=i%>"
-                                                            role="tabpanel" aria-labelledby="pills-citations-tab-<%=i%>">
-                                                            <table id="ticket-table-<%=i%>" class="table table-hover"
+                                                        <div class="tab-content" id="pills-tabContent-<%=civilians[i]._id%>">
+                                                          <div class="tab-pane fade" id="pills-citations-<%=civilians[i]._id%>"
+                                                            role="tabpanel" aria-labelledby="pills-citations-tab-<%=civilians[i]._id%>">
+                                                            <table id="ticket-table-<%=civilians[i]._id%>" class="table table-hover"
                                                               border="1" frame="box">
                                                               <thead>
                                                                 <tr style="background-color: #2d2d2d;">
                                                                   <td>Date<br><i><small>YYYY-M-D</small></i></td>
                                                                   <td>Violation</td>
                                                                   <td>Amount</td>
+                                                                  <td>Delete</td>
                                                                 </tr>
                                                               </thead>
-                                                              <tbody id="ticket-body-<%=i%>">
+                                                              <tbody id="ticket-body-<%=civilians[i]._id%>">
                                                                 <% if (tickets !=null) {%>
                                                                   <% for(var j=0; j<tickets.length; j++) {%>
-                                                                    <tr>
+                                                                    <tr id="<%=tickets[j]._id%>">
                                                                       <% if ((tickets[j].ticket.civID==civilians[i]._id)
                                                                         && (!tickets[j].ticket.isWarning)) {%>
                                                                         <td>
@@ -739,6 +740,9 @@
                                                                           <%= tickets[j].ticket.violation %>
                                                                         </td>
                                                                         <td>$<%= tickets[j].ticket.amount %>
+                                                                        </td>
+                                                                        <td class="text-align-center">
+                                                                          <a class='clickable' onclick="deleteCitation('<%=tickets[j]._id%>', '<%=civilians[i]._id%>')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
                                                                         </td>
                                                                         <% } %>
                                                                           <% if ((i==0) &&
@@ -751,6 +755,9 @@
                                                                               <%= tickets[j].ticket.violation %>
                                                                             </td>
                                                                             <td>$<%= tickets[j].ticket.amount %>
+                                                                            </td>
+                                                                            <td class="text-align-center">
+                                                                              <a class='clickable' onclick="deleteCitation('<%=tickets[j]._id%>', '<%=civilians[i]._id%>')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
                                                                             </td>
                                                                             <% } %>
                                                                     </tr>
@@ -2249,6 +2256,22 @@
   }); // end of sockets
 </script>
 <script type="text/javascript">
+  $.delete=function (url, data, callback, type) {
+    if ($.isFunction(data)) {
+      type=type||callback,
+        callback=data,
+        data={}
+    }
+
+    return $.ajax({
+      url: url,
+      type: 'DELETE',
+      success: callback,
+      data: data,
+      contentType: type
+    });
+  }
+
   $(document).ready(function () {
     // displays the Update Username and Cancel buttons for updating the username
     var myUser= <%-JSON.stringify(user)%>;
@@ -3205,6 +3228,13 @@
     document.cookie ="notification-symbol=v2.29.0";
     $('#notification-symbol').removeClass('notif');
     $('#notification-count').text('');
+  }
+
+  function deleteCitation(citationID, civilianID) {
+    var parameters={ citationID: citationID };
+    $.delete('/citation/'+citationID, parameters, function (data) {
+      $(`table#ticket-table-`+civilianID+` tr#`+citationID).remove()
+    })
   }
 </script>
 
