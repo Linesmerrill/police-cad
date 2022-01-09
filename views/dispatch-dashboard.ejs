@@ -374,7 +374,7 @@
                                 <% for(let k=0; k<dbEmsEngines.length; k++) { %>
                                   <% if (dbEmsEngines[k]._id==calls[i].call.assignedFireEms[j]) { %>
                                     <span class="badge badge-secondary">
-                                      Engine - <%=dbEmsEngines[k].emsVehicle.engineNumber%> | (<%=dbEmsEngines[k].emsVehicle.model%>)
+                                      Engine #<%=dbEmsEngines[k].emsVehicle.engineNumber%> | (<%=dbEmsEngines[k].emsVehicle.model%>)
                                     </span>
                                   <% } %>
                                 <% } %>
@@ -1928,11 +1928,11 @@
               </div>
 
               <!-- Text Area input-->
-              <div class="form-group required">
+              <div class="form-group">
                 <label class="col-md-4 control-label" for="callNotes">Call Notes:</label>
                 <div class="col-md-8 col-md-offset-2">
                   <textarea id="callNotesDetail" name="callNotes" type="text" rows="4" maxlength="500"
-                    placeholder="call notes" class="form-control input-md" required></textarea>
+                    placeholder="call notes" class="form-control input-md"></textarea>
                 </div>
               </div>
 
@@ -2619,8 +2619,10 @@
     })
 
     socket.on('created_call', res => {
+      // console.log("returned created call socket: ", res.call)
       var myUser= <%- JSON.stringify(user)%>;
       var myCommUsers= <%- JSON.stringify(commUsers)%>;
+      let emsVehicles = <%-JSON.stringify(dbEmsEngines)%>;
       if (res.call.communityID==myUser.user.activeCommunity) {
         var containsEmptyRow=$('#callTable tr>td').hasClass('dataTables_empty');
         if (containsEmptyRow) {
@@ -2640,16 +2642,27 @@
               }
             }
           }
-        } else {
+        } 
+
+        if (res.call.assignedFireEms != null && res.call.assignedFireEms.length> 0) { 
+          for(let j=0; j<res.call.assignedFireEms.length; j++) { 
+            for(let k=0; k<emsVehicles.length; k++) { 
+              if (emsVehicles[k]._id==res.call.assignedFireEms[j]) { 
+                assignedUnits+=`<span class="badge badge-secondary">Engine #${emsVehicles[k].emsVehicle.engineNumber} | (${emsVehicles[k].emsVehicle.model})</span>`
+              }
+            }
+          }
+        }
+        if (assignedUnits === "") {
           assignedUnits='<span class="badge badge-secondary">N/A</span>'
         }
 
         $('#callTable tr:last').after(
-          `<tr id="`+res._id+`-row" class="gray-hover" data-toggle="modal" data-target="#callDetailModal" onclick="populateCallDetails('`+res._id+`');populateOfficerList('`+res.call.assignedOfficers+`')">`+
-          '<td id="'+res._id+'-createdAt" style="text-transform: capitalize;">'+res.call.createdAtReadable+'</td>'+
-          '<td id="'+res._id+'-description">'+res.call.shortDescription+'</td>'+
-          '<td id="'+res._id+'-units-assigned">'+assignedUnits+'</td>'+
-          '</tr>').fadeTo(1, function () {
+          `<tr id="${res._id}-row" class="gray-hover" data-toggle="modal" data-target="#callDetailModal" onclick="populateCallDetails('${res._id}');populateOfficerList('${res.call.assignedOfficers}');populateFireEmsList('${res.call.assignedFireEms}');populateClassifierList('${res.call.classifier}')">`+
+          `<td id="${res._id}-createdAt" style="text-transform: capitalize;">${res.call.createdAtReadable}</td>`+
+          `<td id="${res._id}-description">${res.call.shortDescription}</td>`+
+          `<td id="${res._id}-units-assigned">${assignedUnits}</td>`+
+          `</tr>`).fadeTo(1, function () {
             $(this).add();
           })
       }
