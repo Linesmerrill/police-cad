@@ -254,7 +254,7 @@
                                   </tr>
                                 </thead>
                               </table>
-                              
+
                               <hr style="width: 88%;max-width: 100rem;">
                               <!-- Fire/Ems list -->
                               <h4 id="fireEms-list">Fire/EMS List: <a data-toggle="modal" href="#fireEMSHelpModal"><i class="far fa-question-circle"></i></a> </h4>
@@ -2642,12 +2642,12 @@
               }
             }
           }
-        } 
+        }
 
-        if (res.call.assignedFireEms != null && res.call.assignedFireEms.length> 0) { 
-          for(let j=0; j<res.call.assignedFireEms.length; j++) { 
-            for(let k=0; k<emsVehicles.length; k++) { 
-              if (emsVehicles[k]._id==res.call.assignedFireEms[j]) { 
+        if (res.call.assignedFireEms != null && res.call.assignedFireEms.length> 0) {
+          for(let j=0; j<res.call.assignedFireEms.length; j++) {
+            for(let k=0; k<emsVehicles.length; k++) {
+              if (emsVehicles[k]._id==res.call.assignedFireEms[j]) {
                 assignedUnits+=`<span class="badge badge-secondary">Engine #${emsVehicles[k].emsVehicle.engineNumber} | (${emsVehicles[k].emsVehicle.model})</span>`
               }
             }
@@ -3484,7 +3484,7 @@
       callID: $('#callIDDetail').val(),
       communityID: myUser.user.activeCommunity,
     }
-    socket.emit('clear_call', myReq)
+    socket.emit('clear_call', myReq);
   })
 
   function updateEmsStatus(status) {
@@ -4216,7 +4216,7 @@
   }
 </script>
 
-<!--  added for google translate --> 
+<!--  added for google translate -->
 <script type="text/javascript">
 function googleTranslateElementInit() {
   new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');

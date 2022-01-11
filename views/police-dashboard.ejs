@@ -1726,6 +1726,22 @@
 
               <!-- Text input-->
               <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Classifier:</label>
+                <div class="col-md-4">
+                  <h5 id="classifier"></h5>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Engines:</label>
+                <div class="col-md-4">
+                  <h5 id="engines"></h5>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
                 <label class="col-md-4 control-label" for="description">Description:</label>
                 <div class="col-md-4">
                   <h5 id="descriptionCallDetail" style="text-transform:capitalize"></h5>
@@ -2834,6 +2850,30 @@
       $('#createdAtCallDetail').empty().text(createdDate.toLocaleString())
       $('#descriptionCallDetail').empty().text(res.call.shortDescription)
       $('#callNotesDetail').empty().text(res.call.callNotes)
+      let selectedClassifiers = ""
+      for (let i=0; i<res.call.classifier.length; i++) {
+        selectedClassifiers += res.call.classifier[i] + ", "
+      }
+      $('#classifier').empty().text(selectedClassifiers)
+    })
+  }
+
+  function populateCallDetails(callID) {
+    var socket=io();
+    socket.emit('get_call_by_id', callID)
+    socket.on('load_call_by_id_result', (res) => {
+      //debug log
+      //console.log(res)
+      var createdDate=new Date(res.call.createdAt)
+      if (res.call.updatedAt===""||res.call.updatedAt===undefined||res.call.updatedAt==='undefined') {
+        $('#updatedAtCallDetail').empty().text("N/A")
+      } else {
+        var updatedDate=new Date(res.call.updatedAt)
+        $('#updatedAtCallDetail').empty().text(updatedDate.toLocaleString())
+      }
+      $('#createdAtCallDetail').empty().text(createdDate.toLocaleString())
+      $('#descriptionCallDetail').empty().text(res.call.shortDescription)
+      $('#callNotesDetail').empty().text(res.call.callNotes)
     })
   }
 
@@ -3215,7 +3255,7 @@
   }
 </script>
 
-<!--  added for google translate --> 
+<!--  added for google translate -->
 <script type="text/javascript">
 function googleTranslateElementInit() {
   new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');

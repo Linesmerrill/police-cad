@@ -776,7 +776,7 @@
               <div class="form-group required">
                 <label class="col-md-4 control-label" for="reportTime">Time</label>
                 <div class="col-md-6">
-                  <input id="new-report-reportTime" name="reportTime" type="time" placeholder="hh:mm" 
+                  <input id="new-report-reportTime" name="reportTime" type="time" placeholder="hh:mm"
                   class="form-control input-md" required>
                 </div>
               </div>
@@ -1013,7 +1013,7 @@
       if (res.call.communityID==myUser.user.activeCommunity) {
         let dbVehicles = <%-JSON.stringify(vehicles)%>
         for (let i=0; i < dbVehicles.length; i++) {
-          if (res.call.assignedFireEms.includes(dbVehciles[i]._id)==true) {
+          if (res.call.assignedFireEms.includes(dbVehicles[i]._id)==true) {
             $('#assigned-call-container').append(
               `<a id="${res._id}" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails('${res._id}')">
                 <div class="alert alert-success alert-dismissible show" role="alert">
