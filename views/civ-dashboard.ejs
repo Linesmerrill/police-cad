@@ -7,7 +7,7 @@
   <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="Codeply">
-  
+
   <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&display=swap" rel="stylesheet">
@@ -137,7 +137,7 @@
           </button>
         </div>
       </nav>
-      
+
       <section style='background-image: url("/static/images/blue-clouds.jpg");'>
         <div class="container">
           <!--Table for Personas  -->
@@ -149,7 +149,7 @@
                 <label>Search:
                   <input id="civilian-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
                 </label>
-                 <ion-icon id="app-icon-personas" name="apps-outline" class="color-white table-icon" onclick="showApps()"></ion-icon> 
+                 <ion-icon id="app-icon-personas" name="apps-outline" class="color-white table-icon" onclick="showApps()"></ion-icon>
                  <!-- <ion-icon id="list-icon-personas" name="list-outline" class="color-white table-icon" onclick="showList()"></ion-icon> -->
               </div>
               <div id="personas-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
@@ -176,7 +176,7 @@
         <label>Search:
           <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
         </label>
-        <ion-icon id="app-icon-vehicles" name="apps-outline" class="color-white table-icon" onclick="showVehicleApps()"></ion-icon> 
+        <ion-icon id="app-icon-vehicles" name="apps-outline" class="color-white table-icon" onclick="showVehicleApps()"></ion-icon>
       </div>
       <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
         <% for(var i=0; i<vehicles.length; i++) {%>
@@ -202,7 +202,7 @@
         <label>Search:
           <input id="firearm-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
         </label>
-        <ion-icon id="app-icon-firearms" name="apps-outline" class="color-white table-icon" onclick="showFirearmsApps()"></ion-icon> 
+        <ion-icon id="app-icon-firearms" name="apps-outline" class="color-white table-icon" onclick="showFirearmsApps()"></ion-icon>
       </div>
       <div id="firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
         <% for(var i=0; i<firearms.length; i++) {%>
@@ -219,7 +219,7 @@
         <% } %>
       </div>
     </div>
-    
+
         </div>
       </section>
       <div class="google-ad"></div>
@@ -296,7 +296,7 @@
             </div>
 
             <hr style="width: 88%;max-width: 100rem;">
-    
+
             <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details (optional)</h5>
 
             <!-- Select Basic -->
@@ -402,7 +402,7 @@
             </div>
 
             <hr style="width: 88%;max-width: 100rem;">
-    
+
             <h5><ion-icon name="id-card-outline"></ion-icon> License Details</h5>
 
             <!-- Select Basic -->
@@ -797,6 +797,13 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="deceasedView">Deceased:</label>
+            <div class="col-md-4">
+              <label id="deceasedView" name="deceased" type="text" placeholder="Deceased" class="form-control"></label>
+            </div>
+          </div>
+
           <div class="col-md-12 text-align-center margin-bottom-1">
             <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
             <input type="hidden" id="userBtnValue" value="">
@@ -908,7 +915,7 @@
               <input id="veteran-view" type="checkbox" name="veteran" class="form-control">
             </div>
           </div>
-          
+
 
           <div class="col-md-12 text-align-center margin-bottom-1">
             <button type="submit" value="update" name="action" style="cursor: pointer" class="btn btn-info" onclick="updateUserBtnValue('update')">Update Civilian</button>
@@ -942,7 +949,7 @@
               </div>
 
               <!-- first name -->
-              <div> 
+              <div>
                   <span class="first-name-title">FN </span>
                   <span id="firstNameLic" class="first-name" style="bottom: 123px;"></span>
               </div>
@@ -971,42 +978,42 @@
               </div>
 
               <!-- sex -->
-              <div> 
+              <div>
                   <span class="sex-title">SEX </span>
                   <span id="sexLic" class="sex"></span>
               </div>
 
               <!-- height -->
-              <div> 
+              <div>
                   <span class="height-title">HGT </span>
                   <span id="heightLic" class="height"></span>
               </div>
 
               <!-- weight -->
-              <div> 
+              <div>
                   <span class="weight-title">WGT </span>
                   <span id="weightLic" class="weight"></span>
               </div>
 
               <!-- eye color -->
-              <div> 
+              <div>
                   <span class="eye-title">EYES </span>
                   <span id="eyeLic" class="eye"></span>
               </div>
 
               <!-- hair color -->
-              <div> 
+              <div>
                   <span class="hair-title">HAIR </span>
                   <span id="hairLic" class="hair"></span>
               </div>
 
               <!-- donor -->
-              <div class="donor-block hide"> 
+              <div class="donor-block hide">
                   <span class="donor-title">DONOR ❤️</span>
               </div>
 
               <!-- veteran -->
-              <div class="veteran-block hide"> 
+              <div class="veteran-block hide">
                   <span class="veteran">VETERAN ⭐️</span>
               </div>
 
@@ -1029,7 +1036,7 @@
               <button id="click-to-delete-lic" type="submit" value="deleteLicense" name="action" style="cursor: pointer" class="btn btn-danger" onclick="updateUserBtnValue('deleteLicense')">Delete Driver's License</button>
             </div>
           </div>
-          
+
 
           <hr style="width: 88%;max-width: 100rem;">
           <h5><ion-icon name="browsers-outline"></ion-icon> Firearm License</h5>
@@ -1045,7 +1052,7 @@
               </div>
             </div>
 
-            
+
             </fieldset>
           </form>
           <hr style="width: 88%;max-width: 100rem;">
@@ -1366,7 +1373,7 @@
             <h4>Leave Active Community</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
-            <p>NOTE: All civilians and vehicles that you created in this community will no longer 
+            <p>NOTE: All civilians and vehicles that you created in this community will no longer
               show up on your dashboard after you leave.
             </p>
             <p>Are you sure you want to leave this community?</p>
@@ -1545,7 +1552,7 @@
 
 <script type="text/javascript">
   $(document).ready(function(){
-    
+
     // personas cards using data-tables to filter and sort
     if (document.cookie.split(';').some((item) => item.includes('persona_icon=list'))) {
       showList()
@@ -1611,7 +1618,7 @@
 
 
 
-  // check for license-notification 
+  // check for license-notification
   if (document.cookie.split(';').some((item) => item.includes('license_notice=hidden'))) {
       hideLicenseNotice()
     } else {
@@ -1718,7 +1725,7 @@ function loadVehData(index) {
      var myVar = <%- JSON.stringify(vehicles) %>;
      $('#vehicleID').val(myVar[index]._id)
      $('#plateVeh').val(myVar[index].vehicle.plate.toUpperCase())
- 
+
      // since only cars after 6/26/2020 will have this info, we need to check for empty values
      if (myVar[index].vehicle.vin == "" || myVar[index].vehicle.vin == undefined) {
        $('#vinVeh').val("")
@@ -1727,7 +1734,7 @@ function loadVehData(index) {
        $('#vinVeh').val(myVar[index].vehicle.vin.toUpperCase())
        $('#no-existing-vin').hide()
      }
-     
+
      $('#modelVeh').val(myVar[index].vehicle.model)
      $('#colorView').val(myVar[index].vehicle.color)
      $('#validRegView').val(myVar[index].vehicle.validRegistration)
@@ -1735,13 +1742,13 @@ function loadVehData(index) {
      $('#roVeh').val(myVar[index].vehicle.registeredOwner)
      $('#stolenView').val(myVar[index].vehicle.isStolen)
    }
- 
+
    function loadFirearmData(index) {
      var myVar = <%- JSON.stringify(firearms) %>;
      $('#firearmID').val(myVar[index]._id)
      $('#serial-number-details').val(myVar[index].firearm.serialNumber)
      $('#weapon-type-details').val(myVar[index].firearm.weaponType)
-     //Because from the backend we already split the person_id from the person name and dob, we now 
+     //Because from the backend we already split the person_id from the person name and dob, we now
      //need to rejoin those values back together for #registeredOwner-details
      if (myVar[index].firearm.registeredOwner == 'N/A') {
        $('#registeredOwner-details').val(`${myVar[index].firearm.registeredOwner}`)
@@ -1757,13 +1764,13 @@ function loadVehData(index) {
      $('#accountUsername').val(myUser.user.username)
      $('#accountCallSign').val(myUser.user.callSign)
    }
- 
+
    function cancelUsername() {
      var myUser = <%- JSON.stringify(user) %>;
      $('#accountUsername').val(myUser.user.username)
      $('#updateUsernameBtns').hide();
    }
- 
+
    function cancelCallSign() {
      var myUser = <%- JSON.stringify(user) %>;
      $('#accountCallSign').val(myUser.user.callSign)
@@ -1781,8 +1788,8 @@ function loadVehData(index) {
      })
    }
 
-   
-  
+
+
 </script>
 
 <!--  added for google translate --> 

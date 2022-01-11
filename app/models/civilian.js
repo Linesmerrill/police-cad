@@ -17,6 +17,7 @@ var civilianSchema = mongoose.Schema({
     }],
     gender: String,
     address: String,
+    deceased: Boolean, // true: yes (deceased), false: no (alive),
     race: String,
     hairColor: String,
     weight: String,
@@ -53,6 +54,11 @@ civilianSchema.methods.socketCreateUpdateCiv = function (req) {
   if (exists(req.body.address)) {
     this.civilian.address = req.body.address.trim();
   }
+  if (exists(req.body.deceased)) {
+    this.civilian.deceased = req.body.deceased;
+  } else if (!exists(this.civilian.deceased)) {
+    this.civilian.deceased = false
+  }
   if (exists(req.body.occupation)) {
     this.civilian.occupation = req.body.occupation.trim();
   }
@@ -66,7 +72,7 @@ civilianSchema.methods.socketCreateUpdateCiv = function (req) {
     this.civilian.gender = req.body.gender;
   }
   if (exists(req.body.imperial) && exists(req.body.metric)) {
-    // we have redundant boolean values for imperial and metric, 
+    // we have redundant boolean values for imperial and metric,
     //these will always be inverse values of one another.
     //
     // if user has selected 'imperial', then we should calculate USA maths for height
@@ -86,7 +92,7 @@ civilianSchema.methods.socketCreateUpdateCiv = function (req) {
     }
   }
   if (exists(req.body.weightImperial) && exists(req.body.weightMetric)) {
-    // we have redundant boolean values for imperial and metric, 
+    // we have redundant boolean values for imperial and metric,
     //these will always be inverse values of one another.
     if (req.body.weightImperial && exists(req.body.pounds)) {
       this.civilian.weight = req.body.pounds;
