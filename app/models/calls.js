@@ -3,7 +3,13 @@ var mongoose = require('mongoose');
 var callSchema = mongoose.Schema({
   call: {
     shortDescription: String,
+    classifier: [{
+      type: String
+    }],
     assignedOfficers: [{
+      type: String
+    }],
+    assignedFireEms: [{
       type: String
     }],
     callNotes: [{
@@ -22,13 +28,17 @@ var callSchema = mongoose.Schema({
 });
 
 callSchema.methods.createCall = function (req, res) {
-  // console.debug("call req body: ", req.body)
-
   if (exists(req.body.shortDescription)) {
     this.call.shortDescription = req.body.shortDescription.trim();
   }
+  if (exists(req.body.classifier)) {
+    this.call.classifier = req.body.classifier
+  }
   if (exists(req.body.assignedOfficers)) {
     this.call.assignedOfficers = req.body.assignedOfficers
+  }
+  if (exists(req.body.assignedFireEms)) {
+    this.call.assignedFireEms = req.body.assignedFireEms
   }
   if (exists(req.body.callNotes)) {
     this.call.callNotes = req.body.callNotes.trim();
@@ -58,8 +68,14 @@ callSchema.methods.socketCreateCall = function (req) {
   if (exists(req.shortDescription)) {
     this.call.shortDescription = req.shortDescription.trim();
   }
+  if (exists(req.classifier)) {
+    this.call.classifier = req.classifier
+  }
   if (exists(req.assignedOfficers)) {
     this.call.assignedOfficers = req.assignedOfficers
+  }
+  if (exists(req.assignedFireEms)) {
+    this.call.assignedFireEms = req.assignedFireEms
   }
   if (exists(req.callNotes)) {
     this.call.callNotes = req.callNotes.trim();
@@ -89,7 +105,7 @@ callSchema.methods.socketCreate911Call = function (req) {
   if (exists(req.body.name) && exists(req.body.location)) {
     this.call.shortDescription = `911 Caller: ${req.body.name.trim()}`
   }
-  
+
   if (exists(req.body.peopleDescription) && exists(req.body.peopleDescription) && exists(req.body.name) && exists(req.body.location)) {
     this.call.callNotes = `
     911 Caller: ${req.body.name.trim()}

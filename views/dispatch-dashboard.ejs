@@ -90,7 +90,7 @@
           </li>
           <li>
             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
-              <a data-toggle="modal" href="#callModal" onclick="fillOfficerList();clearCallForm()"><span
+              <a data-toggle="modal" href="#callModal" onclick="fillOfficerList();fillClassifierList();fillFireEmsList();clearCallForm()"><span
                   class="fas fa-plus-square ml-3 mr-3"></span> Create Call</a>
               <% } else {%>
                 <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span
@@ -232,7 +232,7 @@
                                     class="fas fa-exclamation-circle" aria-hidden="true"></i> Signal 100</button>
                                 <% } %>
                           </div>
-                          <% if (commUsers==null) {%>
+                          <% if (user.user.activeCommunity =='' || user.user.activeCommunity ==null) {%>
                             <div class="col-md-10 col-md-offset-1 text-center">
                               <h3><i class="fas fa-arrow-left"></i> Click on any of the search buttons to get started
                               </h3>
@@ -254,7 +254,20 @@
                                   </tr>
                                 </thead>
                               </table>
-                              <%}%>
+
+                              <hr style="width: 88%;max-width: 100rem;">
+                              <!-- Fire/Ems list -->
+                              <h4 id="fireEms-list">Fire/EMS List: <a data-toggle="modal" href="#fireEMSHelpModal"><i class="far fa-question-circle"></i></a> </h4>
+                              <table id="fireEmsListTable" class="table table-hover table-bordered">
+                                <thead>
+                                  <tr>
+                                    <th>Engine #</th>
+                                    <th>Model</th>
+                                    <th>Status</th>
+                                  </tr>
+                                </thead>
+                              </table>
+                            <%}%>
           </div>
 
         </div>
@@ -310,13 +323,13 @@
               <% } %>
           </div>
           <div class="col-md-12 col-md-offset-0.75 margin-top-2">
-            <% if (commUsers !=null) {%>
+            <% if (commUsers !=null && user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
               <hr style="width: 88%;max-width: 100rem;">
               <!-- Active Calls -->
               <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Active Calls:</span> <button
                 type="button" data-toggle="modal" href="#callModal"
                 class="btn btn-primary btn-md pull-right margin-bottom-1"
-                onclick="fillOfficerList();clearCallForm()">Create Call</button>
+                onclick="fillOfficerList();fillClassifierList();fillFireEmsList();clearCallForm()">Create Call</button>
               <table id="callTable" class="table table-hover table-bordered">
                 <thead>
                   <tr>
@@ -329,10 +342,9 @@
                   <% if (calls !=null && calls.length> 0) {%>
                     <% for(var i=0; i<calls.length; i++) {%>
                       <% if (calls[i].call.status) {%>
-
                         <tr id="<%=calls[i]._id%>-row" class="gray-hover" data-toggle="modal" data-id="<%=i%>"
                           data-target="#callDetailModal"
-                          onclick="populateCallDetails('<%=calls[i]._id%>');populateOfficerList('<%=calls[i].call.assignedOfficers%>')">
+                          onclick="populateCallDetails('<%=calls[i]._id%>');populateOfficerList('<%=calls[i].call.assignedOfficers%>');populateFireEmsList('<%=calls[i].call.assignedFireEms%>');populateClassifierList('<%=calls[i].call.classifier%>')">
                           <td id="<%=calls[i]._id%>-createdAt">
                             <%=calls[i].call.createdAtReadable%>
                           </td>
@@ -340,35 +352,47 @@
                             <%=calls[i].call.shortDescription%>
                           </td>
                           <td id="<%=calls[i]._id%>-units-assigned">
-                            <% if (calls[i].call.assignedOfficers !=null && calls[i].call.assignedOfficers.length> 0)
-                              {%>
-                              <% for(var j=0; j<calls[i].call.assignedOfficers.length; j++) {%>
-                                <% for(var k=0; k<commUsers.length; k++) {%>
-                                  <% if (commUsers[k]._id==calls[i].call.assignedOfficers[j]) {%>
+                          <% if ((calls[i].call.assignedOfficers !=null && calls[i].call.assignedOfficers.length> 0) || (calls[i].call.assignedFireEms != null && calls[i].call.assignedFireEms.length> 0)) { %>
+                            <% if (calls[i].call.assignedOfficers !=null && calls[i].call.assignedOfficers.length> 0) { %>
+                              <% for(var j=0; j<calls[i].call.assignedOfficers.length; j++) { %>
+                                <% for(var k=0; k<commUsers.length; k++) { %>
+                                  <% if (commUsers[k]._id==calls[i].call.assignedOfficers[j]) { %>
                                     <span class="badge badge-secondary">
                                       <%=commUsers[k].user.username%>
-                                        <% if (commUsers[k].user.callSign==undefined) {%>
-                                          ()
+                                      <% if (commUsers[k].user.callSign==undefined) { %>
+                                      () (Police)
+                                      </span>
+                                    <% } else { %>
+                                      (<%=commUsers[k].user.callSign%>) (Police)</span>
+                                    <%}%>
+                                  <%}%>
+                                <%}%>
+                              <%}%>
+                            <% } %>
+                            <% if (calls[i].call.assignedFireEms != null && calls[i].call.assignedFireEms.length> 0) { %>
+                              <% for(let j=0; j<calls[i].call.assignedFireEms.length; j++) { %>
+                                <% for(let k=0; k<dbEmsEngines.length; k++) { %>
+                                  <% if (dbEmsEngines[k]._id==calls[i].call.assignedFireEms[j]) { %>
+                                    <span class="badge badge-secondary">
+                                      Engine #<%=dbEmsEngines[k].emsVehicle.engineNumber%> | (<%=dbEmsEngines[k].emsVehicle.model%>)
                                     </span>
-                                    <%} else {%>
-                                      (<%=commUsers[k].user.callSign%>)</span>
-                                        <%}%>
-                                          <%}%>
-                                            <%}%>
-                                              <%}%>
-                                                <%} else {%>
-                                                  <span class="badge badge-secondary">N/A</span>
-                                                  <%}%>
+                                  <% } %>
+                                <% } %>
+                              <% } %>
+                            <% } %>
+                          <%} else {%>
+                            <span class="badge badge-secondary">N/A</span>
+                          <%}%>
                           </td>
                         </tr>
 
-                        <%}%>
-                          <%}%>
-                            <%}%>
+                      <%}%>
+                    <%}%>
+                  <%}%>
                 </tbody>
               </table>
 
-              <%}%>
+            <%}%>
           </div>
         </div>
       </section>
@@ -531,6 +555,14 @@
                                                               Warrant</button>
                                                             <!-- <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button> -->
                                                           </div>
+                                                          <% if (civilians[i].civilian.deceased==true) { %>
+                                                            <span>
+                                                              <div class="alert alert-danger alert-dismissible"
+                                                                style="display:block">
+                                                                <strong>Deceased!</strong>
+                                                              </div>
+                                                            </span>
+                                                          <% } %>
                                                           <h5>
                                                             <ion-icon name="browsers-outline"></ion-icon> Drivers
                                                             License
@@ -1766,6 +1798,15 @@
               <h4>Create Call</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
+              <!-- Multiple Checkboxes (inline) -->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="classifier">Department(s)</label>
+                <div class="col-md-4">
+                  <select id="classifier" name="classifier" class="select-manipulatable" multiple required>
+                  </select>
+                </div>
+              </div>
+
               <!-- Text input-->
               <div class="form-group required">
                 <label class="col-md-4 control-label" for="short-description">Short Description:</label>
@@ -1776,10 +1817,19 @@
               </div>
 
               <!-- Multiple Checkboxes (inline) -->
-              <div class="form-group required">
+              <div class="form-group">
                 <label class="col-md-4 control-label" for="officer-select">Assign Officer(s)</label>
                 <div class="col-md-4">
                   <select id="officer-select" name="assignedOfficers" class="select-manipulatable" multiple>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Multiple Checkboxes (inline) -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="fireEms-select">Assign Fire/EMS Engine(s)</label>
+                <div class="col-md-4">
+                  <select id="fireEms-select" name="assignedFireEms" class="select-manipulatable" multiple>
                   </select>
                 </div>
               </div>
@@ -1834,6 +1884,15 @@
               </div>
 
               <!-- Text input-->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="classifier-details">Department:</label>
+                <div class="col-md-4">
+                  <select id="classifier-details" name="classifier" class="select-manipulatable" multiple>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Text input-->
               <div class="form-group">
                 <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
                 <div class="col-md-4">
@@ -1851,20 +1910,29 @@
               </div>
 
               <!-- Multiple Checkboxes (inline) -->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="officer-select-details">Units Assigned:</label>
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="officer-select-details">Assigned Officer(s):</label>
                 <div class="col-md-4">
                   <select id="officer-select-details" name="assignedOfficers" class="select-manipulatable" multiple>
                   </select>
                 </div>
               </div>
 
+              <!-- Multiple Checkboxes (inline) -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="fireEms-select-details">Assigned Fire/EMS:</label>
+                <div class="col-md-4">
+                  <select id="fireEms-select-details" name="assignedFireEms" class="select-manipulatable" multiple>
+                  </select>
+                </div>
+              </div>
+
               <!-- Text Area input-->
-              <div class="form-group required">
+              <div class="form-group">
                 <label class="col-md-4 control-label" for="callNotes">Call Notes:</label>
                 <div class="col-md-8 col-md-offset-2">
                   <textarea id="callNotesDetail" name="callNotes" type="text" rows="4" maxlength="500"
-                    placeholder="call notes" class="form-control input-md" required></textarea>
+                    placeholder="call notes" class="form-control input-md"></textarea>
                 </div>
               </div>
 
@@ -2193,6 +2261,63 @@
       </div>
     </div>
 
+    <div id="manageEmsDispatchStatusModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <!-- Modal Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+            <h4>Manage User Status</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            <div class="form-horizontal">
+              <fieldset>
+                <div class="form-group">
+                  <label class="col-md-4 control-label" for="accountUsername">Engine #:</label>
+                  <div class="col-md-6">
+                    <h5 id="engineNumberDispatch" style="text-transform: capitalize;"></h5>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-md-4 control-label" for="accountUsername">Active Status:</label>
+                  <div class="col-md-6">
+                    <h5 id="emsStatusDispatch"></h5>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="col-md-4 control-label" for="accountUsername">Set By:</label>
+                  <div class="col-md-6">
+                    <h5 id="emsSetByDispatch" style="text-transform: capitalize;"></h5>
+                  </div>
+                </div>
+                <hr style="width: 88%;max-width: 100rem;">
+                <input id="vehicleIDDispatch" type="hidden" name="vehicleID" value="">
+                <div class="col-md-12 text-align-center margin-bottom-1">
+                  <button type="submit" name="status" value="10-8" class="btn btn-primary margin-bottom-1"
+                    title="In Service" onclick="updateEmsStatus('10-8')">10-8</button>
+                  <button type="submit" name="status" value="10-6" class="btn btn-primary margin-bottom-1" title="Busy"
+                    onclick="updateEmsStatus('10-6')">10-6</button>
+                  <button type="submit" name="status" value="10-7" class="btn btn-primary margin-bottom-1"
+                    title="Out of Service" onclick="updateEmsStatus('10-7')">10-7</button>
+                  <button type="submit" name="status" value="10-23" class="btn btn-primary margin-bottom-1"
+                    title="Arrived on Scene" onclick="updateEmsStatus('10-23')">10-23</button>
+                  <button type="submit" name="status" value="10-97" class="btn btn-primary margin-bottom-1"
+                    title="In Route" onclick="updateEmsStatus('10-97')">10-97</button>
+                </div>
+                <div class="col-md-12 text-align-center">
+                  <button type="submit" name="status" value="10-42" class="btn btn-warning btn-md"
+                    title="Log out of CAD" onclick="updateEmsStatus('10-42')">10-42</button>
+                  <button type="submit" name="status" value="10-41" class="btn btn-success btn-md" title="Log in to CAD"
+                    onclick="updateEmsStatus('10-41')">10-41</button>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div id="panicDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog">
@@ -2262,8 +2387,25 @@
               aria-hidden="true">X</button>
           </div>
           <div class="modal-footer text-align-center">
-            <p>If you see no records in the table, that means no officers have marked themselves 10-41 or "on-duty".</p><p> Remind 
+            <p>If you see no records in the table, that means no officers have marked themselves 10-41 or "on-duty".</p><p> Remind
               your officers to make sure and mark themselves 10-41 when they go "on-duty" and 10-42 when they go "off-duty".
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="fireEMSHelpModal" class="modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="modal-title" style="font-size: 18px;">Fire/EMS List Help</span>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+          </div>
+          <div class="modal-footer text-align-center">
+            <p>If you see no records in the table, that means there are no active Vehicles created in your community.</p><p> Remind
+              your Fire/EMS personnel to either create a new Vehicle or make sure it is not marked as'offline'.
             </p>
           </div>
         </div>
@@ -2272,7 +2414,7 @@
 
     <% include notification-modal %>
     <% include 10-codes %>
-      <% include notepad %>
+    <% include notepad %>
 </body>
 
 <!--scripts loaded here -->
@@ -2295,6 +2437,21 @@
 <script>
   $(function () {
     var socket=io();
+    socket.on('updated_ems_status', res => {
+      if (res.onDuty&&res.updateDuty) {
+        //socket coming in that a ems engine is going on-duty
+        $('#'+res.vehicleID+"-duty").removeClass('hide')
+        $('#'+res.vehicleID+"-duty").attr('style', 'cursor: pointer')
+      } else if (!res.onDuty&&res.updateDuty) {
+        //socket coming in that a ems engine is going off-duty
+        $('#'+res.vehicleID+"-duty").attr('style', 'background-color: #d9534f !important')
+        $('#'+res.vehicleID+"-duty").addClass('hide')
+      }
+      $('#'+res.vehicleID+"-status").text(res.status)
+
+      repopulateFireEmsList(res.vehicleID, res.status)
+    });
+
     socket.on('updated_status', res => {
       // console.log("res: ", res)
       if (res.onDuty&&res.updateDuty) {
@@ -2462,8 +2619,10 @@
     })
 
     socket.on('created_call', res => {
+      // console.log("returned created call socket: ", res.call)
       var myUser= <%- JSON.stringify(user)%>;
       var myCommUsers= <%- JSON.stringify(commUsers)%>;
+      let emsVehicles = <%-JSON.stringify(dbEmsEngines)%>;
       if (res.call.communityID==myUser.user.activeCommunity) {
         var containsEmptyRow=$('#callTable tr>td').hasClass('dataTables_empty');
         if (containsEmptyRow) {
@@ -2483,16 +2642,27 @@
               }
             }
           }
-        } else {
+        }
+
+        if (res.call.assignedFireEms != null && res.call.assignedFireEms.length> 0) {
+          for(let j=0; j<res.call.assignedFireEms.length; j++) {
+            for(let k=0; k<emsVehicles.length; k++) {
+              if (emsVehicles[k]._id==res.call.assignedFireEms[j]) {
+                assignedUnits+=`<span class="badge badge-secondary">Engine #${emsVehicles[k].emsVehicle.engineNumber} | (${emsVehicles[k].emsVehicle.model})</span>`
+              }
+            }
+          }
+        }
+        if (assignedUnits === "") {
           assignedUnits='<span class="badge badge-secondary">N/A</span>'
         }
 
         $('#callTable tr:last').after(
-          `<tr id="`+res._id+`-row" class="gray-hover" data-toggle="modal" data-target="#callDetailModal" onclick="populateCallDetails('`+res._id+`');populateOfficerList('`+res.call.assignedOfficers+`')">`+
-          '<td id="'+res._id+'-createdAt" style="text-transform: capitalize;">'+res.call.createdAtReadable+'</td>'+
-          '<td id="'+res._id+'-description">'+res.call.shortDescription+'</td>'+
-          '<td id="'+res._id+'-units-assigned">'+assignedUnits+'</td>'+
-          '</tr>').fadeTo(1, function () {
+          `<tr id="${res._id}-row" class="gray-hover" data-toggle="modal" data-target="#callDetailModal" onclick="populateCallDetails('${res._id}');populateOfficerList('${res.call.assignedOfficers}');populateFireEmsList('${res.call.assignedFireEms}');populateClassifierList('${res.call.classifier}')">`+
+          `<td id="${res._id}-createdAt" style="text-transform: capitalize;">${res.call.createdAtReadable}</td>`+
+          `<td id="${res._id}-description">${res.call.shortDescription}</td>`+
+          `<td id="${res._id}-units-assigned">${assignedUnits}</td>`+
+          `</tr>`).fadeTo(1, function () {
             $(this).add();
           })
       }
@@ -2509,11 +2679,20 @@
       ]
     });
 
-//load the officer list table, we do this because we want to filter out any 
+    $('#fireEmsListTable').DataTable({
+      "bLengthChange": false,
+      "pageLength": 5,
+      columnDefs: [
+        { type: 'title-numeric', targets: 0 }
+      ]
+    });
+
+    //load the officer list table, we do this because we want to filter out any
     //officers that are not currently on duty. DataTables is easier to leverage
     //than relying on the html above
+    var myUser= <%- JSON.stringify(user)%>;
+    if (myUser.user.activeCommunity !== '' && myUser.user.activeCommunity !== undefined){
     var myCommUsers= <%- JSON.stringify(commUsers)%>;
-    // console.log("myCommUsers: ", myCommUsers)
     let datatable = $('#officerListTable').DataTable();
         datatable.clear();
         myCommUsers.forEach(val => {
@@ -2532,7 +2711,7 @@
           } else if (val.user.dispatchStatus == 'Panic') {
             val.user.dispatchStatus = "🚨 Panic 🚨" //set a custom panic message
           }
-          
+
           officerTable += `<tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageUserDispatchStatusModal"onclick="setDispatchModalValues('${val._id}')">
             <td style="text-transform: capitalize;">
               ${val.user.username}
@@ -2548,6 +2727,37 @@
         })
         datatable.draw();
 
+    let emsVehicles = <%-JSON.stringify(dbEmsEngines)%>;
+    let emsDataTable = $('#fireEmsListTable').DataTable();
+      emsDataTable.clear();
+      emsVehicles.forEach(val => {
+        emsTable = ""
+        if (val.emsVehicle.engineNumber == undefined) {
+          val.emsVehicle.engineNumber = ""
+        }
+        if (val.emsVehicle.model == undefined) {
+          val.emsVehicle.model = ""
+        }
+        if (val.emsVehicle.dispatchStatus == undefined ||val.emsVehicle.dispatchStatus == '') {
+          val.emsVehicle.dispatchStatus = "-" //set a default
+        }
+
+        emsTable += `
+          <tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageEmsDispatchStatusModal"onclick="setEmsDispatchModalValues('${val._id}')">
+          <td style="text-transform: capitalize;">
+            #${val.emsVehicle.engineNumber}
+          </td>
+          <td style="text-transform: capitalize;">
+            ${val.emsVehicle.model}
+          </td>
+          <td id="${val._id}-status">
+            ${val.emsVehicle.dispatchStatus}
+          </td>
+        </tr>`
+      emsDataTable.row.add($(emsTable))
+      });
+      emsDataTable.draw();
+
     $('#boloTable').DataTable({
       "bLengthChange": false,
       "pageLength": 5,
@@ -2557,6 +2767,7 @@
       "bLengthChange": false,
       "pageLength": 5,
     });
+  }
 
     if (($(window).height()+100)<$(document).height()) {
       $('#top-link-block').removeClass('hidden').affix({
@@ -2661,7 +2872,7 @@
 
     //CURRENT_VERSION
     //the current version in production
-    let CURRENT_VERSION = "v2.29.0"
+    let CURRENT_VERSION = "v2.30.0"
     let MINOR_VERSION = CURRENT_VERSION.split(".")[1]
 
     //check for notification cookie
@@ -2746,7 +2957,7 @@
         )
         return
       }
-      
+
       $('#registered-firearms').append(
         `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`
       )
@@ -2994,7 +3205,7 @@
     //Super gross date calculation, thx javascript
     let date=new Date()
     let yyyy=date.getFullYear().toString();
-    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based         
+    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based
     let dd=date.getDate().toString();
     $('#warrant-date').val(yyyy+'-'+(mm[1]? mm:"0"+mm[0])+'-'+(dd[1]? dd:"0"+dd[0]))
     $('#warrant-time').val(new Date().toLocaleTimeString('en-GB', {
@@ -3011,7 +3222,7 @@
     //Super gross date calculation, thx javascript
     let date=new Date()
     let yyyy=date.getFullYear().toString();
-    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based         
+    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based
     let dd=date.getDate().toString();
     $('#warrant-clear-date').val(yyyy+'-'+(mm[1]? mm:"0"+mm[0])+'-'+(dd[1]? dd:"0"+dd[0]))
     $('#warrant-clear-time').val(new Date().toLocaleTimeString('en-GB', {
@@ -3126,6 +3337,34 @@
     })
   }
 
+  function setEmsDispatchModalValues(id) {
+    var socket=io();
+    let emsVehicles = <%-JSON.stringify(dbEmsEngines)%>
+    for (let i=0; i<emsVehicles.length; i++) {
+      if (emsVehicles[i]._id==id) {
+        socket.emit('load_ems_statuses', emsVehicles[i])
+        socket.on('load_ems_status_result', (res) => {
+          for (const i in res) {
+            if (res[i]._id==id) {
+              $('#engineNumberDispatch').text(res[i].emsVehicle.engineNumber)
+              if (res[i].emsVehicle.dispatchStatus==""||res[i].emsVehicle.dispatchStatus==undefined) {
+                $('#emsStatusDispatch').text("-")
+              } else {
+                $('#emsStatusDispatch').text(res[i].emsVehicle.dispatchStatus)
+              }
+              if (res[i].emsVehicle.dispatchStatusSetBy==""||res[i].emsVehicle.dispatchStatusSetBy==undefined) {
+                $('#emsSetByDispatch').text("-")
+              } else {
+                $('#emsSetByDispatch').text(res[i].emsVehicle.dispatchStatusSetBy)
+              }
+              $('#vehicleIDDispatch').val(res[i]._id)
+            } else continue
+          }
+        })
+      }
+    }
+  }
+
   $('#updateBolo').one('click', function () {
     var val=$(this).attr('value')
     var socket=io();
@@ -3211,8 +3450,10 @@
         myCreatedDate=new Date(myCreatedAt);
 
         var myCreateReq={
+          classifier: $('#classifier').val(),
           shortDescription: $('#short-description').val(),
           assignedOfficers: $('#officer-select').val(),
+          assignedFireEms: $('#fireEms-select').val(),
           callNotes: $('#call-notes').val(),
           createdByUsername: myUser.user.username,
           createdByID: myUser._id,
@@ -3243,8 +3484,33 @@
       callID: $('#callIDDetail').val(),
       communityID: myUser.user.activeCommunity,
     }
-    socket.emit('clear_call', myReq)
+    socket.emit('clear_call', myReq);
   })
+
+  function updateEmsStatus(status) {
+    var socket=io();
+    var onDuty=null
+    var updateDuty=false
+    if (status=='10-41') {
+      onDuty=true
+      updateDuty=true
+      status="Online"
+    } else if (status=='10-42') {
+      onDuty=false
+      updateDuty=true
+      status="Offline"
+    }
+    myReq={
+      vehicleID: $('#vehicleIDDispatch').val(),
+      status: status,
+      setBy: 'Dispatch',
+      onDuty: onDuty,
+      updateDuty: updateDuty
+    }
+    socket.emit('update_ems_status', myReq)
+
+    $('#manageEmsDispatchStatusModal').modal('hide')
+  }
 
   function updateStatus(status) {
     var socket=io();
@@ -3310,6 +3576,43 @@
     document.getElementById("create-call-form").reset();
   }
 
+  function repopulateFireEmsList(id, status) {
+    engines = <%-JSON.stringify(dbEmsEngines)%>
+    //override the values stored in memory, with the ones we just got back from the socket
+    for (i=0; i<engines.length; i++) {
+      if (engines[i]._id==id) {
+        engines[i].emsVehicle.dispatchStatus=status
+      }
+    }
+    var engineListNewCall=tail.select('#fireEms-select', {
+      search: true,
+      classNames: "default white",
+      descriptions: true,
+      sortGroups: "ASC",
+      sortItems: "ASC",
+      placeholder: "Fire/Ems Engine List",
+      multiPinSelected: true,
+      hideSelected: false,
+      hideDisabled: true,
+      multiShowCount: false,
+      multiContainer: true
+    })
+    var newCallItems={}
+    for (i=0; i<engines.length; i++) {
+      if (!engines[i].emsVehicle.engineNumber) {
+        engines[i].emsVehicle.engineNumber=""
+      }
+      newCallItems[engines[i]._id]={
+        value: 'Engine - '+engines[i].emsVehicle.engineNumber+' ( '+engines[i].emsVehicle.model+' )',
+        group: "#",
+        selected: false,
+        disabled: false,
+        description: engines[i].emsVehicle.registeredOwner
+      }
+    }
+    engineListNewCall.options.add(newCallItems)
+  }
+
   function repopulateOfficerList(id, status) {
     officers= <%- JSON.stringify(commUsers)%>;
     //override the values stored in memory, with the ones we just got back from the socket
@@ -3350,6 +3653,73 @@
     officerListNewCall.options.add(newCallItems)
   }
 
+  function fillClassifierList() {
+    var classifierList=tail.select('#classifier', {
+      search: false,
+      classNames: "default white",
+      descriptions: false,
+      sortGroups: "ACS",
+      sortItems: "ACS",
+      placeholder: "Department(s)",
+      multiPinSelected: true,
+      hideSelected: false,
+      hideDisabled: true,
+      multiShowCount: false,
+      multiContainer: true
+    })
+    var items = {}
+    items["Police"]={
+      value: "Police",
+      group: "#",
+      selected: false,
+      disabled: false
+    }
+    items["Fire"]={
+      value: "Fire",
+      group: "#",
+      selected: false,
+      disabled: false
+    }
+    items["EMS"]={
+      value: "EMS",
+      group: "#",
+      selected: false,
+      disabled: false
+    }
+    classifierList.options.add(items)
+  }
+
+  function fillFireEmsList() {
+    engines = <%-JSON.stringify(dbEmsEngines)%>
+    var engineList=tail.select('#fireEms-select', {
+      search: true,
+      classNames: "default white",
+      descriptions: true,
+      sortGroups: "ASC",
+      sortItems: "ASC",
+      placeholder: "Fire/Ems Engine List",
+      multiPinSelected: true,
+      hideSelected: false,
+      hideDisabled: true,
+      multiShowCount: false,
+      multiContainer: true
+    })
+    var items={}
+    for (i=0; i<engines.length; i++) {
+      if (!engines[i].emsVehicle.engineNumber) {
+        engines[i].emsVehicle.engineNumber=""
+      }
+      items[engines[i]._id]={
+        value: 'Engine - '+engines[i].emsVehicle.engineNumber+' ( '+engines[i].emsVehicle.model+' )',
+        group: "#",
+        selected: false,
+        disabled: false,
+        description: engines[i].emsVehicle.registeredOwner
+      }
+    }
+    engineList.options.add(items)
+  }
+
   function fillOfficerList() {
     officers= <%- JSON.stringify(commUsers)%>
     var officerList=tail.select('#officer-select', {
@@ -3380,6 +3750,127 @@
       }
     }
     officerList.options.add(items)
+  }
+
+  function populateClassifierList(classifiers) {
+    let classifierDb = ['Police','Fire','EMS']
+    var classifierList = tail.select('#classifier-details', {
+      search: false,
+      classNames: "default white",
+      descriptions: true,
+      sortGroups: "ASC",
+      sortItems: "ASC",
+      placeholder: "Classifier List",
+      multiPinSelected: true,
+      hideSelected: false,
+      hideDisabled: true,
+      multiShowCount: false,
+      multiContainer: true
+    }).reload()
+    let items={}
+
+    // If there are none assigned
+    if (classifiers.length==0) {
+      for (i=0; i<classifierDb.length; i++) {
+        items[i]={
+          value: classifierDb[i],
+          group: "#",
+          selected: false,
+          disabled: false,
+          description: null
+        }
+      }
+    } else {
+      classifierSplit = classifiers.split(",")
+      for (i=0; i<classifierDb.length; i++) {
+        for (j=0; j<classifiers.length; j++) {
+          if (classifierDb[i] == classifierSplit[j]) {
+            items[classifierDb[i]]={
+              value: classifierDb[i],
+              group: "#",
+              selected: true,
+              disabled: false,
+              description: null
+            }
+            break
+          } else {
+            items[classifierDb[i]]={
+              value: classifierDb[i],
+              group: "#",
+              selected: false,
+              disabled: false,
+              description: null
+            }
+          }
+        }
+      }
+    }
+    classifierList.options.add(items);
+  }
+
+  function populateFireEmsList(dbFireEms) {
+    engines = <%-JSON.stringify(dbEmsEngines)%>
+    var emsList = tail.select('#fireEms-select-details', {
+      search: true,
+      classNames: "default white",
+      descriptions: true,
+      sortGroups: "ASC",
+      sortItems: "ASC",
+      placeholder: "Fire/EMS List",
+      multiPinSelected: true,
+      hideSelected: false,
+      hideDisabled: true,
+      multiShowCount: false,
+      multiContainer: true
+    }).reload();
+    let items={}
+
+    // If there are none assigned
+    if (dbFireEms.length==0) {
+      for (i=0; i<engines.length; i++) {
+        if (!engines[i].emsVehicle.engineNumber) {
+          engines[i].emsVehicle.engineNumber=""
+        }
+        items[engines[i]._id]={
+          value: 'Engine - '+engines[i].emsVehicle.engineNumber+' ( '+engines[i].emsVehicle.model+' )',
+          group: "#",
+          selected: false,
+          disabled: false,
+          description: engines[i].emsVehicle.registeredOwner
+        }
+      }
+    } else {
+      emsSplit = dbFireEms.split(",")
+      for (i=0; i<engines.length; i++) {
+        for (j=0; j<dbFireEms.length; j++) {
+          if (engines[i]._id == emsSplit[j]) {
+            if (!engines[i].emsVehicle.engineNumber) {
+              engines[i].emsVehicle.engineNumber=""
+            }
+            items[engines[i]._id]={
+              value: 'Engine - '+engines[i].emsVehicle.engineNumber+' ( '+engines[i].emsVehicle.model+' )',
+              group: "#",
+              selected: true,
+              disabled: false,
+              description: engines[i].emsVehicle.registeredOwner
+            }
+            break
+          } else {
+            if (!engines[i].emsVehicle.engineNumber) {
+              engines[i].emsVehicle.engineNumber=""
+            }
+            items[engines[i]._id]={
+              value: 'Engine - '+engines[i].emsVehicle.engineNumber+' ( '+engines[i].emsVehicle.model+' )',
+              group: "#",
+              selected: false,
+              disabled: false,
+              description: engines[i].emsVehicle.registeredOwner
+            }
+          }
+        }
+      }
+    }
+    emsList.options.add(items)
   }
 
   // Param: dbOfficers, contains a list of IDs of the active officers assigned to the call
@@ -3555,7 +4046,7 @@
       var expMonth=(createdDate.getMonth())+1
       var expYear=(createdDate.getFullYear())+10
 
-      // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional, 
+      // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional,
       // we will do a check to see if its undefined or empty and if so just set it to an
       // empty string (or false for booleans), otherwise set it to the value from the db.
       var gender=(civ[i].civilian.gender==undefined||civ[i].civilian.gender=='')? '':civ[i].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
@@ -3706,7 +4197,7 @@
       }
       return document.location.href=`name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
     }
-    //check to see if we are in a community, if we are not, 
+    //check to see if we are in a community, if we are not,
     //then we need to use the DOB to do the name search
     if (activeCommunityID.length==0) {
       let dob=nameAndDOB[1].split(" ")
@@ -3719,13 +4210,13 @@
   }
 
   function markAsRead() {
-    document.cookie ="notification-symbol=v2.29.0";
+    document.cookie ="notification-symbol=v2.30.0";
     $('#notification-symbol').removeClass('notif');
     $('#notification-count').text('');
   }
 </script>
 
-<!--  added for google translate --> 
+<!--  added for google translate -->
 <script type="text/javascript">
 function googleTranslateElementInit() {
   new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
