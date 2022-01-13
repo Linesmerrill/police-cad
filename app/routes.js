@@ -602,18 +602,18 @@ module.exports = function (app, passport, server) {
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
           Ticket.find({
-            'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-            'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+            'ticket.civFirstName': firstName.capitalize(),
+            'ticket.civLastName': lastName.capitalize()
           }, function (err, dbTickets) {
             if (err) return console.error(err);
             ArrestReport.find({
-              'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-              'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+              'arrestReport.accusedFirstName': firstName.capitalize(),
+              'arrestReport.accusedLastName': lastName.capitalize()
             }, function (err, dbArrestReports) {
               if (err) return console.error(err);
               Warrant.find({
-                'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-                'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+                'warrant.accusedFirstName': firstName.capitalize(),
+                'warrant.accusedLastName': lastName.capitalize(),
                 'warrant.status': true
               }, function (err, dbWarrants) {
                 if (err) return console.error(err);
@@ -695,18 +695,18 @@ module.exports = function (app, passport, server) {
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
           Ticket.find({
-            'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-            'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+            'ticket.civFirstName': firstName.capitalize(),
+            'ticket.civLastName': lastName.capitalize()
           }, function (err, dbTickets) {
             if (err) return console.error(err);
             ArrestReport.find({
-              'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-              'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+              'arrestReport.accusedFirstName': firstName.capitalize(),
+              'arrestReport.accusedLastName': lastName.capitalize()
             }, function (err, dbArrestReports) {
               if (err) return console.error(err);
               Warrant.find({
-                'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-                'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+                'warrant.accusedFirstName': firstName.capitalize(),
+                'warrant.accusedLastName': lastName.capitalize(),
                 'warrant.status': true
               }, function (err, dbWarrants) {
                 if (err) return console.error(err);
@@ -810,18 +810,18 @@ module.exports = function (app, passport, server) {
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
           Ticket.find({
-            'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-            'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+            'ticket.civFirstName': firstName.capitalize(),
+            'ticket.civLastName': lastName.capitalize()
           }, function (err, dbTickets) {
             if (err) return console.error(err);
             ArrestReport.find({
-              'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-              'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+              'arrestReport.accusedFirstName': firstName.capitalize(),
+              'arrestReport.accusedLastName': lastName.capitalize()
             }, function (err, dbArrestReports) {
               if (err) return console.error(err);
               Warrant.find({
-                'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-                'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+                'warrant.accusedFirstName': firstName.capitalize(),
+                'warrant.accusedLastName': lastName.capitalize(),
                 'warrant.status': true
               }, function (err, dbWarrants) {
                 if (err) return console.error(err);
@@ -872,18 +872,18 @@ module.exports = function (app, passport, server) {
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
           Ticket.find({
-            'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-            'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+            'ticket.civFirstName': firstName.capitalize(),
+            'ticket.civLastName': lastName.capitalize()
           }, function (err, dbTickets) {
             if (err) return console.error(err);
             ArrestReport.find({
-              'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-              'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+              'arrestReport.accusedFirstName': firstName.capitalize(),
+              'arrestReport.accusedLastName': lastName.capitalize()
             }, function (err, dbArrestReports) {
               if (err) return console.error(err);
               Warrant.find({
-                'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-                'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+                'warrant.accusedFirstName': firstName.capitalize(),
+                'warrant.accusedLastName': lastName.capitalize(),
                 'warrant.status': true
               }, function (err, dbWarrants) {
                 if (err) return console.error(err);
@@ -1498,16 +1498,16 @@ module.exports = function (app, passport, server) {
     var lName;
     var medLName; //names are stored differently in the civilian and medical databases so we have to store 2 different values here
     if (exists(req.query.firstName)) {
-      fName = req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1);
-      medFName = req.query.firstName.trim().toLowerCase();
+      fName = sanitize(req.query.firstName.trim().capitalize());
+      medFName = sanitize(req.query.firstName.trim().toLowerCase());
     } else {
       console.error('cannot lookup medical database without firstName');
       res.status(400);
       return res.redirect('back');
     }
     if (exists(req.query.lastName)) {
-      lName = req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1);
-      medLName = req.query.lastName.trim().toLowerCase();
+      lName = sanitize(req.query.lastName.trim().capitalize());
+      medLName = sanitize(req.query.lastName.trim().toLowerCase());
     } else {
       console.error('cannot lookup medical database without lastName');
       res.status(400);
@@ -4204,3 +4204,15 @@ function generateHeight(heightFoot, heightInches) {
     return parseInt(heightInches)
   }
 }
+
+/* Capitalize function
+*  Usage: 
+*   Input: "hello there!".capitalize();
+*   Output: "Hello there!"
+*/
+Object.defineProperty(String.prototype, 'capitalize', {
+  value: function() {
+    return this.charAt(0).toUpperCase() + this.slice(1);
+  },
+  enumerable: false
+});
