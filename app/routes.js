@@ -2051,6 +2051,9 @@ module.exports = function (app, passport, server) {
 
   app.post('/joinCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
+    if (!exists(req.body.communityCode)) {
+      return res.redirect('back');
+    }
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
@@ -2105,6 +2108,9 @@ module.exports = function (app, passport, server) {
 
   app.post('/joinPoliceCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
+    if (!exists(req.body.communityCode)) {
+      return res.redirect('back');
+    }
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
@@ -2159,6 +2165,9 @@ module.exports = function (app, passport, server) {
 
   app.post('/joinEmsCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
+    if (!exists(req.body.communityCode)) {
+      return res.redirect('back');
+    }
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
@@ -2845,6 +2854,11 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on('bot_join_community', (data) => {
+      if (!exists(data.communityCode)) {
+        return socket.emit('bot_joined_community', {
+          error: 'Improper Community Code'
+        });
+      }
       var communityCode = data.communityCode.trim()
       if (communityCode.length != 7) {
         return socket.emit('bot_joined_community', {
