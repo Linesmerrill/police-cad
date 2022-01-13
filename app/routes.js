@@ -28,12 +28,20 @@ var {
 } = require('util');
 var readFile = promisify(fs.readFile);
 
+const redirect = process.env.CLIENT_REDIRECT;
+
 module.exports = function (app, passport, server) {
 
   app.get('/', function (req, res) {
     res.render('index', {
       message: req.flash('info')
     });
+  });
+
+  app.get('/auth/discord', auth, passport.authenticate('discord', {
+    failureRedirect: '/'
+  }), (req, res) => {
+    return res.redirect(req.query.state);
   });
 
   app.get('/discord-bot', function (req, res) {
@@ -86,9 +94,9 @@ module.exports = function (app, passport, server) {
 
   app.get('/ads.txt', (req, res) => {
     res.set('Content-Type', 'text');
-    let message = 'google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0'
-    return res.send(new Buffer.alloc(message.length, 'google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0'))
-  })
+    let message = 'google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0';
+    return res.send(new Buffer.alloc(message.length, 'google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0'));
+  });
 
   app.get('/login', function (req, res) {
     return res.redirect('/');
@@ -184,7 +192,9 @@ module.exports = function (app, passport, server) {
           members: dbMembers,
           communities: dbCommunities,
           userID: req.session.passport.user,
-          user: req.user
+          user: req.user,
+          referer: encodeURIComponent('/communities'),
+          redirect: encodeURIComponent(redirect)
         });
       })
     })
@@ -203,7 +213,9 @@ module.exports = function (app, passport, server) {
       return res.render('communities-owned', {
         communities: dbCommunities,
         userID: req.session.passport.user,
-        user: req.user
+        user: req.user,
+        referer: encodeURIComponent('/owned-communities'),
+        redirect: encodeURIComponent(redirect)
       });
     })
   })
@@ -284,7 +296,9 @@ module.exports = function (app, passport, server) {
                 vehicles: dbVehicles,
                 firearms: dbFirearms,
                 communities: dbCommunities,
-                context: context
+                context: context,
+                referer: encodeURIComponent('/civ-dashboard'),
+                redirect: encodeURIComponent(redirect)
               });
             });
           });
@@ -321,7 +335,9 @@ module.exports = function (app, passport, server) {
                 vehicles: dbVehicles,
                 firearms: dbFirearms,
                 communities: dbCommunities,
-                context: context
+                context: context,
+                referer: encodeURIComponent('/civ-dashboard'),
+                redirect: encodeURIComponent(redirect)
               });
             });
           });
@@ -355,7 +371,10 @@ module.exports = function (app, passport, server) {
               personas: dbPersonas,
               vehicles: dbVehicles,
               communities: dbCommunities,
-              context: context
+              calls: null,
+              context: context,
+              referer: encodeURIComponent('/ems-dashboard'),
+              redirect: encodeURIComponent(redirect)
             });
           });
         });
@@ -379,13 +398,20 @@ module.exports = function (app, passport, server) {
             }]
           }, function (err, dbCommunities) {
             if (err) return console.error(err);
-            return res.render('ems-dashboard', {
-              user: req.user,
-              personas: dbPersonas,
-              vehicles: dbVehicles,
-              communities: dbCommunities,
-              context: context
-            });
+            Call.find({
+              'call.communityID': req.user.user.activeCommunity,
+            }, function (err, dbCalls) {
+              return res.render('ems-dashboard', {
+                user: req.user,
+                personas: dbPersonas,
+                vehicles: dbVehicles,
+                communities: dbCommunities,
+                calls: dbCalls,
+                context: context,
+                referer: encodeURIComponent('/ems-dashboard'),
+                redirect: encodeURIComponent(redirect)
+              });
+            })
           });
         });
       })
@@ -410,7 +436,9 @@ module.exports = function (app, passport, server) {
           personas: null,
           vehicles: null,
           communities: dbCommunities,
-          context: context
+          context: context,
+          referer: encodeURIComponent('/community-dashboard'),
+          redirect: encodeURIComponent(redirect)
         });
       });
     } else {
@@ -427,7 +455,9 @@ module.exports = function (app, passport, server) {
           personas: null,
           vehicles: null,
           communities: dbCommunities,
-          context: context
+          context: context,
+          referer: encodeURIComponent('/community-dashboard'),
+          redirect: encodeURIComponent(redirect)
         });
       });
     }
@@ -464,7 +494,9 @@ module.exports = function (app, passport, server) {
             communities: dbCommunities,
             bolos: dbBolos,
             calls: dbCalls,
-            context: context
+            context: context,
+            referer: encodeURIComponent('/police-dashboard'),
+            redirect: encodeURIComponent(redirect)
           });
         });
       });
@@ -495,11 +527,14 @@ module.exports = function (app, passport, server) {
             tickets: null,
             arrestReports: null,
             warrants: null,
+            dbEmsEngines: null,
             communities: dbCommunities,
             bolos: dbBolos,
             commUsers: null,
             calls: null,
-            context: context
+            context: context,
+            referer: encodeURIComponent('/dispatch-dashboard'),
+            redirect: encodeURIComponent(redirect)
           });
         } else {
           User.find({
@@ -510,19 +545,27 @@ module.exports = function (app, passport, server) {
               'call.communityID': req.user.user.activeCommunity
             }, function (err, dbCalls) {
               if (err) return console.error(err);
-              return res.render('dispatch-dashboard', {
-                user: req.user,
-                vehicles: null,
-                civilians: null,
-                firearms: null,
-                tickets: null,
-                arrestReports: null,
-                warrants: null,
-                communities: dbCommunities,
-                bolos: dbBolos,
-                commUsers: dbCommUsers,
-                calls: dbCalls,
-                context: context
+              EmsVehicle.find({
+                'emsVehicle.activeCommunityID': req.user.user.activeCommunity
+              }, function (err, dbEmsEngines) {
+                if (err) return console.error(err);
+                return res.render('dispatch-dashboard', {
+                  user: req.user,
+                  vehicles: null,
+                  civilians: null,
+                  firearms: null,
+                  tickets: null,
+                  arrestReports: null,
+                  warrants: null,
+                  dbEmsEngines: dbEmsEngines,
+                  communities: dbCommunities,
+                  bolos: dbBolos,
+                  commUsers: dbCommUsers,
+                  calls: dbCalls,
+                  context: context,
+                  referer: encodeURIComponent('/dispatch-dashboard'),
+                  redirect: encodeURIComponent(redirect)
+                });
               });
             });
           });
@@ -533,6 +576,7 @@ module.exports = function (app, passport, server) {
 
   //This is gross and I know it :yolo:
   app.get('/name-search', auth, function (req, res) {
+    // console.debug("req: ", req.query)
     if (req.query.route == 'dispatch-dashboard') {
       if (req.query.firstName == undefined || req.query.lastName == undefined) {
         res.status(400)
@@ -558,18 +602,18 @@ module.exports = function (app, passport, server) {
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
           Ticket.find({
-            'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-            'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+            'ticket.civFirstName': firstName.capitalize(),
+            'ticket.civLastName': lastName.capitalize()
           }, function (err, dbTickets) {
             if (err) return console.error(err);
             ArrestReport.find({
-              'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-              'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+              'arrestReport.accusedFirstName': firstName.capitalize(),
+              'arrestReport.accusedLastName': lastName.capitalize()
             }, function (err, dbArrestReports) {
               if (err) return console.error(err);
               Warrant.find({
-                'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-                'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+                'warrant.accusedFirstName': firstName.capitalize(),
+                'warrant.accusedLastName': lastName.capitalize(),
                 'warrant.status': true
               }, function (err, dbWarrants) {
                 if (err) return console.error(err);
@@ -589,26 +633,11 @@ module.exports = function (app, passport, server) {
                       'call.communityID': req.user.user.activeCommunity,
                     }, function (err, dbCalls) {
                       if (err) return console.error(err);
-                      if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-                        return res.render('dispatch-dashboard', {
-                          user: req.user,
-                          vehicles: null,
-                          civilians: dbCivilians,
-                          firearms: null,
-                          tickets: dbTickets,
-                          arrestReports: dbArrestReports,
-                          warrants: dbWarrants,
-                          communities: dbCommunities,
-                          commUsers: null,
-                          bolos: dbBolos,
-                          calls: dbCalls,
-                          context: null
-                        });
-                      } else {
-                        User.find({
-                          'user.activeCommunity': req.user.user.activeCommunity
-                        }, function (err, dbCommUsers) {
-                          if (err) return console.error(err);
+                      User.find({
+                        'user.activeCommunity': req.user.user.activeCommunity
+                      }, function (err, dbCommUsers) {
+                        if (err) return console.error(err);
+                        if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
                           return res.render('dispatch-dashboard', {
                             user: req.user,
                             vehicles: null,
@@ -617,17 +646,42 @@ module.exports = function (app, passport, server) {
                             tickets: dbTickets,
                             arrestReports: dbArrestReports,
                             warrants: dbWarrants,
+                            dbEmsEngines: null,
                             communities: dbCommunities,
                             commUsers: dbCommUsers,
                             bolos: dbBolos,
                             calls: dbCalls,
-                            context: null
+                            context: null,
+                            referer: encodeURIComponent('/dispatch-dashboard'),
+                            redirect: encodeURIComponent(redirect)
                           });
-                        });
-                      }
+                        } else {
+                          User.find({
+                            'user.activeCommunity': req.user.user.activeCommunity
+                          }, function (err, dbCommUsers) {
+                            if (err) return console.error(err);
+                            return res.render('dispatch-dashboard', {
+                              user: req.user,
+                              vehicles: null,
+                              civilians: dbCivilians,
+                              firearms: null,
+                              tickets: dbTickets,
+                              arrestReports: dbArrestReports,
+                              warrants: dbWarrants,
+                              communities: dbCommunities,
+                              commUsers: dbCommUsers,
+                              bolos: dbBolos,
+                              calls: dbCalls,
+                              context: null,
+                              referer: encodeURIComponent('/dispatch-dashboard'),
+                              redirect: encodeURIComponent(redirect)
+                            });
+                          });
+                        }
+                      });
                     });
-                  });
-                })
+                  })
+                });
               });
             });
           });
@@ -641,18 +695,18 @@ module.exports = function (app, passport, server) {
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
           Ticket.find({
-            'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-            'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+            'ticket.civFirstName': firstName.capitalize(),
+            'ticket.civLastName': lastName.capitalize()
           }, function (err, dbTickets) {
             if (err) return console.error(err);
             ArrestReport.find({
-              'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-              'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+              'arrestReport.accusedFirstName': firstName.capitalize(),
+              'arrestReport.accusedLastName': lastName.capitalize()
             }, function (err, dbArrestReports) {
               if (err) return console.error(err);
               Warrant.find({
-                'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-                'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+                'warrant.accusedFirstName': firstName.capitalize(),
+                'warrant.accusedLastName': lastName.capitalize(),
                 'warrant.status': true
               }, function (err, dbWarrants) {
                 if (err) return console.error(err);
@@ -672,41 +726,57 @@ module.exports = function (app, passport, server) {
                       'call.communityID': req.user.user.activeCommunity,
                     }, function (err, dbCalls) {
                       if (err) return console.error(err);
-                      if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-                        return res.render('dispatch-dashboard', {
-                          user: req.user,
-                          vehicles: null,
-                          civilians: dbCivilians,
-                          firearms: null,
-                          tickets: dbTickets,
-                          arrestReports: dbArrestReports,
-                          warrants: dbWarrants,
-                          communities: dbCommunities,
-                          bolos: dbBolos,
-                          calls: dbCalls,
-                          context: null
-                        });
-                      } else {
+                      EmsVehicle.find({
+                        'emsVehicle.activeCommunityID': req.user.user.activeCommunity
+                      }, function (err, dbEmsEngines) {
+                        if (err) return console.error(err);
                         User.find({
                           'user.activeCommunity': req.user.user.activeCommunity
                         }, function (err, dbCommUsers) {
                           if (err) return console.error(err);
-                          return res.render('dispatch-dashboard', {
-                            user: req.user,
-                            vehicles: null,
-                            civilians: dbCivilians,
-                            firearms: null,
-                            tickets: dbTickets,
-                            arrestReports: dbArrestReports,
-                            warrants: dbWarrants,
-                            communities: dbCommunities,
-                            commUsers: dbCommUsers,
-                            bolos: dbBolos,
-                            calls: dbCalls,
-                            context: null
-                          });
+                          if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+                            return res.render('dispatch-dashboard', {
+                              user: req.user,
+                              vehicles: null,
+                              civilians: dbCivilians,
+                              firearms: null,
+                              tickets: dbTickets,
+                              arrestReports: dbArrestReports,
+                              warrants: dbWarrants,
+                              dbEmsEngines: dbEmsEngines,
+                              communities: dbCommunities,
+                              commUsers: dbCommUsers,
+                              bolos: dbBolos,
+                              calls: dbCalls,
+                              context: null,
+                              referer: encodeURIComponent('/dispatch-dashboard'),
+                              redirect: encodeURIComponent(redirect)
+                            });
+                          } else {
+                            User.find({
+                              'user.activeCommunity': req.user.user.activeCommunity
+                            }, function (err, dbCommUsers) {
+                              if (err) return console.error(err);
+                              return res.render('dispatch-dashboard', {
+                                user: req.user,
+                                vehicles: null,
+                                civilians: dbCivilians,
+                                firearms: null,
+                                tickets: dbTickets,
+                                arrestReports: dbArrestReports,
+                                warrants: dbWarrants,
+                                communities: dbCommunities,
+                                commUsers: dbCommUsers,
+                                bolos: dbBolos,
+                                calls: dbCalls,
+                                context: null,
+                                referer: encodeURIComponent('/dispatch-dashboard'),
+                                redirect: encodeURIComponent(redirect)
+                              });
+                            });
+                          }
                         });
-                      }
+                      });
                     });
                   });
                 });
@@ -740,18 +810,18 @@ module.exports = function (app, passport, server) {
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
           Ticket.find({
-            'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-            'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+            'ticket.civFirstName': firstName.capitalize(),
+            'ticket.civLastName': lastName.capitalize()
           }, function (err, dbTickets) {
             if (err) return console.error(err);
             ArrestReport.find({
-              'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-              'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+              'arrestReport.accusedFirstName': firstName.capitalize(),
+              'arrestReport.accusedLastName': lastName.capitalize()
             }, function (err, dbArrestReports) {
               if (err) return console.error(err);
               Warrant.find({
-                'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-                'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+                'warrant.accusedFirstName': firstName.capitalize(),
+                'warrant.accusedLastName': lastName.capitalize(),
                 'warrant.status': true
               }, function (err, dbWarrants) {
                 if (err) return console.error(err);
@@ -782,7 +852,9 @@ module.exports = function (app, passport, server) {
                         communities: dbCommunities,
                         bolos: dbBolos,
                         calls: dbCalls,
-                        context: null
+                        context: null,
+                        referer: encodeURIComponent('/police-dashboard'),
+                        redirect: encodeURIComponent(redirect)
                       });
                     });
                   });
@@ -800,18 +872,18 @@ module.exports = function (app, passport, server) {
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
           Ticket.find({
-            'ticket.civFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-            'ticket.civLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+            'ticket.civFirstName': firstName.capitalize(),
+            'ticket.civLastName': lastName.capitalize()
           }, function (err, dbTickets) {
             if (err) return console.error(err);
             ArrestReport.find({
-              'arrestReport.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-              'arrestReport.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1)
+              'arrestReport.accusedFirstName': firstName.capitalize(),
+              'arrestReport.accusedLastName': lastName.capitalize()
             }, function (err, dbArrestReports) {
               if (err) return console.error(err);
               Warrant.find({
-                'warrant.accusedFirstName': req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1),
-                'warrant.accusedLastName': req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1),
+                'warrant.accusedFirstName': firstName.capitalize(),
+                'warrant.accusedLastName': lastName.capitalize(),
                 'warrant.status': true
               }, function (err, dbWarrants) {
                 if (err) return console.error(err);
@@ -842,7 +914,9 @@ module.exports = function (app, passport, server) {
                         communities: dbCommunities,
                         bolos: dbBolos,
                         calls: dbCalls,
-                        context: null
+                        context: null,
+                        referer: encodeURIComponent('/police-dashboard'),
+                        redirect: encodeURIComponent(redirect)
                       });
                     });
                   });
@@ -896,11 +970,14 @@ module.exports = function (app, passport, server) {
                     tickets: null,
                     arrestReports: null,
                     warrants: null,
+                    dbEmsEngines: null,
                     communities: dbCommunities,
                     commUsers: null,
                     bolos: dbBolos,
                     calls: dbCalls,
-                    context: null
+                    context: null,
+                    referer: encodeURIComponent('/dispatch-dashboard'),
+                    redirect: encodeURIComponent(redirect)
                   });
                 } else {
                   User.find({
@@ -915,11 +992,14 @@ module.exports = function (app, passport, server) {
                       tickets: null,
                       arrestReports: null,
                       warrants: null,
+                      dbEmsEngines: null,
                       communities: dbCommunities,
                       commUsers: dbCommUsers,
                       bolos: dbBolos,
                       calls: dbCalls,
-                      context: null
+                      context: null,
+                      referer: encodeURIComponent('/dispatch-dashboard'),
+                      redirect: encodeURIComponent(redirect)
                     });
                   });
                 }
@@ -958,30 +1038,41 @@ module.exports = function (app, passport, server) {
                     tickets: null,
                     arrestReports: null,
                     warrants: null,
+                    dbEmsEngines: null,
                     communities: dbCommunities,
                     commUsers: null,
                     bolos: dbBolos,
                     calls: dbCalls,
-                    context: null
+                    context: null,
+                    referer: encodeURIComponent('/dispatch-dashboard'),
+                    redirect: encodeURIComponent(redirect)
                   });
                 } else {
                   User.find({
                     'user.activeCommunity': req.user.user.activeCommunity
                   }, function (err, dbCommUsers) {
-                    if (err) return console.error(err);
-                    return res.render('dispatch-dashboard', {
-                      user: req.user,
-                      vehicles: dbVehicles,
-                      civilians: null,
-                      firearms: null,
-                      tickets: null,
-                      arrestReports: null,
-                      warrants: null,
-                      communities: dbCommunities,
-                      commUsers: dbCommUsers,
-                      bolos: dbBolos,
-                      calls: dbCalls,
-                      context: null
+                    EmsVehicle.find({
+                      'emsVehicle.activeCommunityID': req.user.user.activeCommunity
+                    }, function (err, dbEmsEngines) {
+                      if (err) return console.error(err);
+                      if (err) return console.error(err);
+                      return res.render('dispatch-dashboard', {
+                        user: req.user,
+                        vehicles: dbVehicles,
+                        civilians: null,
+                        firearms: null,
+                        tickets: null,
+                        arrestReports: null,
+                        warrants: null,
+                        dbEmsEngines: dbEmsEngines,
+                        communities: dbCommunities,
+                        commUsers: dbCommUsers,
+                        bolos: dbBolos,
+                        calls: dbCalls,
+                        context: null,
+                        referer: encodeURIComponent('/dispatch-dashboard'),
+                        redirect: encodeURIComponent(redirect)
+                      });
                     });
                   });
                 }
@@ -1032,7 +1123,9 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   bolos: dbBolos,
                   calls: dbCalls,
-                  context: null
+                  context: null,
+                  referer: encodeURIComponent('/police-dashboard'),
+                  redirect: encodeURIComponent(redirect)
                 });
               });
             });
@@ -1076,7 +1169,9 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   bolos: dbBolos,
                   calls: dbCalls,
-                  context: null
+                  context: null,
+                  referer: encodeURIComponent('/police-dashboard'),
+                  redirect: encodeURIComponent(redirect)
                 });
               });
             });
@@ -1128,30 +1223,41 @@ module.exports = function (app, passport, server) {
                     tickets: null,
                     arrestReports: null,
                     warrants: null,
+                    dbEmsEngines: null,
                     communities: dbCommunities,
                     commUsers: null,
                     bolos: dbBolos,
                     calls: dbCalls,
-                    context: null
+                    context: null,
+                    referer: encodeURIComponent('/dispatch-dashboard'),
+                    redirect: encodeURIComponent(redirect)
                   });
                 } else {
                   User.find({
                     'user.activeCommunity': req.user.user.activeCommunity
                   }, function (err, dbCommUsers) {
                     if (err) return console.error(err);
-                    return res.render('dispatch-dashboard', {
-                      user: req.user,
-                      vehicles: null,
-                      firearms: dbFirearms,
-                      civilians: null,
-                      tickets: null,
-                      arrestReports: null,
-                      warrants: null,
-                      communities: dbCommunities,
-                      commUsers: dbCommUsers,
-                      bolos: dbBolos,
-                      calls: dbCalls,
-                      context: null
+                    EmsVehicle.find({
+                      'emsVehicle.activeCommunityID': req.user.user.activeCommunity
+                    }, function (err, dbEmsEngines) {
+                      if (err) return console.error(err);
+                      return res.render('dispatch-dashboard', {
+                        user: req.user,
+                        vehicles: null,
+                        firearms: dbFirearms,
+                        civilians: null,
+                        tickets: null,
+                        arrestReports: null,
+                        warrants: null,
+                        dbEmsEngines: dbEmsEngines,
+                        communities: dbCommunities,
+                        commUsers: dbCommUsers,
+                        bolos: dbBolos,
+                        calls: dbCalls,
+                        context: null,
+                        referer: encodeURIComponent('/dispatch-dashboard'),
+                        redirect: encodeURIComponent(redirect)
+                      });
                     });
                   });
                 }
@@ -1190,30 +1296,41 @@ module.exports = function (app, passport, server) {
                     tickets: null,
                     arrestReports: null,
                     warrants: null,
+                    dbEmsEngines: null,
                     communities: dbCommunities,
                     commUsers: null,
                     bolos: dbBolos,
                     calls: dbCalls,
-                    context: null
+                    context: null,
+                    referer: encodeURIComponent('/dispatch-dashboard'),
+                    redirect: encodeURIComponent(redirect)
                   });
                 } else {
                   User.find({
                     'user.activeCommunity': req.user.user.activeCommunity
                   }, function (err, dbCommUsers) {
                     if (err) return console.error(err);
-                    return res.render('dispatch-dashboard', {
-                      user: req.user,
-                      vehicles: null,
-                      firearms: dbFirearms,
-                      civilians: null,
-                      tickets: null,
-                      arrestReports: null,
-                      warrants: null,
-                      communities: dbCommunities,
-                      commUsers: dbCommUsers,
-                      bolos: dbBolos,
-                      calls: dbCalls,
-                      context: null
+                    EmsVehicle.find({
+                      'emsVehicle.activeCommunityID': req.user.user.activeCommunity
+                    }, function (err, dbEmsEngines) {
+                      if (err) return console.error(err);
+                      return res.render('dispatch-dashboard', {
+                        user: req.user,
+                        vehicles: null,
+                        firearms: dbFirearms,
+                        civilians: null,
+                        tickets: null,
+                        arrestReports: null,
+                        warrants: null,
+                        dbEmsEngines: dbEmsEngines,
+                        communities: dbCommunities,
+                        commUsers: dbCommUsers,
+                        bolos: dbBolos,
+                        calls: dbCalls,
+                        context: null,
+                        referer: encodeURIComponent('/dispatch-dashboard'),
+                        redirect: encodeURIComponent(redirect)
+                      });
                     });
                   });
                 }
@@ -1264,7 +1381,9 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   bolos: dbBolos,
                   calls: dbCalls,
-                  context: null
+                  context: null,
+                  referer: encodeURIComponent('/police-dashboard'),
+                  redirect: encodeURIComponent(redirect)
                 });
               });
             });
@@ -1308,7 +1427,9 @@ module.exports = function (app, passport, server) {
                   communities: dbCommunities,
                   bolos: dbBolos,
                   calls: dbCalls,
-                  context: null
+                  context: null,
+                  referer: encodeURIComponent('/police-dashboard'),
+                  redirect: encodeURIComponent(redirect)
                 });
               });
             });
@@ -1377,16 +1498,16 @@ module.exports = function (app, passport, server) {
     var lName;
     var medLName; //names are stored differently in the civilian and medical databases so we have to store 2 different values here
     if (exists(req.query.firstName)) {
-      fName = req.query.firstName.trim().charAt(0).toUpperCase() + req.query.firstName.trim().slice(1);
-      medFName = req.query.firstName.trim().toLowerCase();
+      fName = sanitize(req.query.firstName.trim().capitalize());
+      medFName = sanitize(req.query.firstName.trim().toLowerCase());
     } else {
       console.error('cannot lookup medical database without firstName');
       res.status(400);
       return res.redirect('back');
     }
     if (exists(req.query.lastName)) {
-      lName = req.query.lastName.trim().charAt(0).toUpperCase() + req.query.lastName.trim().slice(1);
-      medLName = req.query.lastName.trim().toLowerCase();
+      lName = sanitize(req.query.lastName.trim().capitalize());
+      medLName = sanitize(req.query.lastName.trim().toLowerCase());
     } else {
       console.error('cannot lookup medical database without lastName');
       res.status(400);
@@ -1401,7 +1522,7 @@ module.exports = function (app, passport, server) {
       }
       // We have legacy data with first/last names
       // that do not have a consistent format. Some show up as "First Last" and all permutations of this
-      // to "first last". If there is a cleaner way to do this plz fix. 
+      // to "first last". If there is a cleaner way to do this plz fix.
       Civilian.find({
           '$or': [{
             'civilian.firstName': fName, //capitalized first-name
@@ -1494,7 +1615,7 @@ module.exports = function (app, passport, server) {
     } else {
       // We have legacy data with first/last names
       // that do not have a consistent format. Some show up as "First Last" and all permutations of this
-      // to "first last". If there is a cleaner way to do this plz fix. 
+      // to "first last". If there is a cleaner way to do this plz fix.
       Civilian.find({
           '$or': [{
             'civilian.firstName': fName, //capitalized first-name
@@ -1831,8 +1952,20 @@ module.exports = function (app, passport, server) {
   });
 
   app.post('/create-medical-report', auth, function (req, res) {
+    // console.debug('[DEBUG] (create-medical-report) req.body', req.body)
     var myReport = new MedicalReport()
     myReport.createReport(req, res)
+    let deceasedState = false
+    req.body.deceased === 'true' ? deceasedState = true : deceasedState = false
+    Civilian.findByIdAndUpdate({
+      '_id': req.body.civilianID
+    }, {
+      $set: {
+        'civilian.deceased': deceasedState
+      }
+    }, function (err) {
+      if (err) return console.error(err);
+    });
     myReport.save(function (err) {
       if (err) return console.error(err);
     });
@@ -2142,8 +2275,21 @@ module.exports = function (app, passport, server) {
 
   app.post('/manageAccount', auth, function (req, res) {
     req.app.locals.specialContext = null;
-    var page = req.body.page;
-    if (req.body.action === 'updateUsername') {
+    if (req.body.action === 'disconnectDiscord') {
+      User.findOneAndUpdate({
+        '_id': ObjectId(req.body.userID),
+      }, {
+        $set: {
+          'user.discord.id': null,
+          'user.discord.username': null,
+          'user.discord.discriminator': null,
+          'user.discordConnected': false
+        }
+      }, function (err) {
+        if (err) console.error(err);
+        return res.redirect('back');
+      });
+    } else if (req.body.action === 'updateUsername') {
       var username
       if (exists(req.body.accountUsername)) {
         username = req.body.accountUsername.trim()
@@ -2208,8 +2354,7 @@ module.exports = function (app, passport, server) {
         }
         return res.redirect('back')
       })
-    }
-     else {
+    } else {
       return res.redirect('back')
     }
   })
@@ -2366,15 +2511,23 @@ module.exports = function (app, passport, server) {
         return res.redirect('/' + req.body.route);
       })
     } else if (req.body.action === "update") {
+      let classifier
       var shortDescription
       var assignedOfficers
+      let assignerFireEms
       var callNotes
       var callID
+      if (exists(req.body.classifier)) {
+        classifier = req.body.classifier
+      }
       if (exists(req.body.shortDescription)) {
         shortDescription = req.body.shortDescription.trim()
       }
       if (exists(req.body.assignedOfficers)) {
         assignedOfficers = req.body.assignedOfficers
+      }
+      if (exists(req.body.assignedFireEms)) {
+        assignedFireEms = req.body.assignedFireEms
       }
       if (exists(req.body.callNotes)) {
         callNotes = req.body.callNotes.trim()
@@ -2395,8 +2548,10 @@ module.exports = function (app, passport, server) {
         '_id': ObjectId(callID)
       }, {
         $set: {
+          'call.classifier': classifier,
           'call.shortDescription': shortDescription,
           'call.assignedOfficers': assignedOfficers,
+          'call.assignedFireEms': assignedFireEms,
           'call.callNotes': callNotes,
           'call.updatedAt': new Date()
         }
@@ -2429,179 +2584,6 @@ module.exports = function (app, passport, server) {
       })
     }
   })
-
-  // app.post('/updateOrDeleteCiv', auth, function (req, res) {
-  //   // console.debug(req.body)
-  //   req.app.locals.specialContext = null;
-  //   if (req.body.action === "update") {
-  //     var address
-  //     var occupation
-  //     var firearmLicense
-  //     var gender
-  //     var heightClassification
-  //     var height
-  //     var weightClassification
-  //     var weight
-  //     var eyeColor
-  //     var hairColor
-  //     var organDonor
-  //     var veteran
-  //     if (exists(req.body.address)) {
-  //       address = req.body.address.trim()
-  //     }
-  //     if (exists(req.body.occupation)) {
-  //       occupation = req.body.occupation.trim()
-  //     }
-  //     if (exists(req.body.firearmLicense)) {
-  //       firearmLicense = req.body.firearmLicense
-  //     }
-  //     if (exists(req.body.gender)) {
-  //       gender = req.body.gender
-  //     }
-  //     // height classification: imperial or metric, imperial will have 2 inputs and metric will have one
-  //     if (exists(req.body.heightClassification)) {
-  //       heightClassification = req.body.heightClassification;
-  //       // if user has selected 'imperial', then we should calculate USA maths for height
-  //       // else just grab whatever value was passed in for height
-  //       if (req.body.heightClassification === 'imperial') {
-  //         // because the USA is dumb, we gotta do some quick-maths to convert ft and inches to a single number :fml:
-  //         height = generateHeight(req.body.heightFoot, req.body.heightInches)
-  //       } else {
-  //         if (exists(req.body.heightCentimeters)) {
-  //           height = req.body.heightCentimeters;
-  //         }
-  //       }
-  //     }
-  //     // weight classification: imperial or metric, both will have a single input
-  //     if (exists(req.body.weightImperial) && req.body.weightImperial !== '') {
-  //       weight = req.body.weightImperial;
-  //     } else if (exists(req.body.weightMetric) && req.body.weightMetric !== '') {
-  //       weight = req.body.weightMetric;
-  //     }
-  //     if (exists(req.body.eyeColor)) {
-  //       eyeColor = req.body.eyeColor
-  //     }
-  //     if (exists(req.body.hairColor)) {
-  //       hairColor = req.body.hairColor
-  //     }
-  //     if (exists(req.body.heightClassification)) {
-  //       heightClassification = req.body.heightClassification
-  //     }
-  //     if (exists(req.body.weightClassification)) {
-  //       weightClassification = req.body.weightClassification
-  //     }
-  //     if (exists(req.body.organDonor)) {
-  //       organDonor = (req.body.organDonor === 'on') ? true : false;
-  //     }
-  //     if (exists(req.body.veteran)) {
-  //       veteran = (req.body.veteran === 'on') ? true : false;
-  //     }
-  //     var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
-  //     if (!isValid) {
-  //       req.app.locals.specialContext = "invalidRequest";
-  //       return res.redirect('/civ-dashboard')
-  //     }
-  //     Civilian.findByIdAndUpdate({
-  //       '_id': ObjectId(req.body.civilianID)
-  //     }, {
-  //       $set: {
-  //         //basic civ details
-  //         "civilian.firstName": req.body.firstName.trim().charAt(0).toUpperCase() + req.body.firstName.trim().slice(1),
-  //         "civilian.lastName": req.body.lastName.trim().charAt(0).toUpperCase() + req.body.lastName.trim().slice(1),
-  //         'civilian.birthday': req.body.birthday,
-  //         'civilian.address': address,
-  //         'civilian.occupation': occupation,
-  //         //advanced civ details
-  //         'civilian.gender': gender,
-  //         'civilian.heightClassification': heightClassification,
-  //         'civilian.height': height,
-  //         'civilian.weightClassification': weightClassification,
-  //         'civilian.weight': weight,
-  //         'civilian.eyeColor': eyeColor,
-  //         'civilian.hairColor': hairColor,
-  //         'civilian.organDonor': organDonor,
-  //         'civilian.veteran': veteran,
-  //         //additional civ details
-  //         'civilian.warrants': req.body.warrants,
-  //         'civilian.licenseStatus': (req.body.licenseStatus ? '1' : '3'),
-  //         'civilian.updatedAt': new Date()
-  //       }
-  //     }, function (err) {
-  //       if (err) return console.error(err);
-  //       return res.redirect('/civ-dashboard');
-  //     })
-  //   } else if (req.body.action == "createLicense") {
-  //     var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
-  //     if (!isValid) {
-  //       req.app.locals.specialContext = "invalidRequest";
-  //       return res.redirect('/civ-dashboard')
-  //     }
-  //     Civilian.findByIdAndUpdate({
-  //       '_id': ObjectId(req.body.civilianID)
-  //     }, {
-  //       $set: {
-  //         'civilian.licenseStatus': '1',
-  //         'civilian.updatedAt': new Date()
-  //       }
-  //     }, function (err) {
-  //       if (err) return console.error(err);
-  //       return res.redirect('/civ-dashboard');
-  //     })
-  //   } else if (req.body.action == "deleteLicense") {
-  //     var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
-  //     if (!isValid) {
-  //       req.app.locals.specialContext = "invalidRequest";
-  //       return res.redirect('/civ-dashboard')
-  //     }
-  //     Civilian.findByIdAndUpdate({
-  //       '_id': ObjectId(req.body.civilianID)
-  //     }, {
-  //       $set: {
-  //         'civilian.licenseStatus': '3',
-  //         'civilian.updatedAt': new Date()
-  //       }
-  //     }, function (err) {
-  //       if (err) return console.error(err);
-  //       return res.redirect('/civ-dashboard');
-  //     })
-  //   } else {
-  //     var isValid = isValidObjectIdLength(req.body.civilianID, "cannot lookup invalid length civilianID, route: /updateOrDeleteCiv")
-  //     if (!isValid) {
-  //       req.app.locals.specialContext = "invalidRequest";
-  //       return res.redirect('/civ-dashboard')
-  //     }
-  //     Civilian.findByIdAndDelete({
-  //       '_id': ObjectId(req.body.civilianID)
-  //     }, function (err) {
-  //       Ticket.deleteMany({
-  //         'ticket.civID': req.body.civilianID
-  //       }, function (err) {
-  //         if (err) return console.error(err);
-  //         ArrestReport.deleteMany({
-  //           'arrest.accusedID': req.body.civilianID
-  //         }, function (err) {
-  //           if (err) return console.error(err);
-  //           MedicalReport.deleteMany({
-  //             'report.civilianID': req.body.civilianID
-  //           }, function (err) {
-  //             if (err) return console.error(err);
-  //             Medication.deleteMany({
-  //               'medication.civilianID': req.body.civilianID
-  //             }, function (err) {
-  //               if (err) return console.error(err);
-  //               Condition.deleteMany({
-  //                 'condition.civilianID': req.body.civilianID
-  //               }, function (err) {
-  //                 if (err) return console.error(err);
-  //                 return res.redirect('/civ-dashboard');
-  //               })
-  //             })
-  //           })
-  //         })
-  //       })
-  //     })
-  //   }
-  // })
 
   app.post('/deleteEms', auth, function (req, res) {
     var nameArray = req.body.removeEms.split(' ')
@@ -2776,21 +2758,6 @@ module.exports = function (app, passport, server) {
     })
   })
 
-  app.post('/deleteEmsVeh', auth, function (req, res) {
-    // console.debug(req.body)
-    var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /deleteEmsVeh")
-    if (!isValid) {
-      req.app.locals.specialContext = "invalidRequest";
-      return res.redirect('back')
-    }
-    EmsVehicle.findByIdAndDelete({
-      '_id': ObjectId(req.body.vehicleID)
-    }, function (err) {
-      if (err) return console.error(err);
-      return res.redirect('/ems-dashboard');
-    })
-  })
-
   app.post('/community', auth, function (req, res) {
     // console.debug("community req: ", req.body)
     req.app.locals.specialContext = null;
@@ -2861,28 +2828,36 @@ module.exports = function (app, passport, server) {
 
   var io = require('socket.io')(server);
 
-    io.sockets.on('connection', (socket) => {
+  io.sockets.on('connection', (socket) => {
 
     // For testing bot connection
     socket.on("botping", (data) => {
-      socket.emit('botpong',{message:'pong'});
+      socket.emit('botpong', {
+        message: 'pong'
+      });
     });
-    
+
     socket.on('bot_join_community', (data) => {
       var communityCode = data.communityCode.trim()
       if (communityCode.length != 7) {
-        return socket.emit('bot_joined_community',{error:'Improper Community Code'});
+        return socket.emit('bot_joined_community', {
+          error: 'Improper Community Code'
+        });
       }
       Community.findOne({
         'community.code': data.communityCode.toUpperCase()
       }, function (err, community) {
         if (err) return console.error(err);
         if (community == null) {
-          return socket.emit('bot_joined_community',{error:'Community not found'});
+          return socket.emit('bot_joined_community', {
+            error: 'Community not found'
+          });
         }
         var isValid = isValidObjectIdLength(data.userID, "cannot lookup invalid length userID")
         if (!isValid) {
-          return socket.emit('bot_joined_community',{error:'Improper UserID'});
+          return socket.emit('bot_joined_community', {
+            error: 'Improper UserID'
+          });
         }
         User.findOneAndUpdate({
           '_id': ObjectId(data.userID),
@@ -2892,7 +2867,10 @@ module.exports = function (app, passport, server) {
           }
         }, function (err) {
           if (err) return console.error(err);
-          return socket.emit('bot_joined_community',{message:'success', commName:community.community.name});
+          return socket.emit('bot_joined_community', {
+            message: 'success',
+            commName: community.community.name
+          });
         })
       })
     });
@@ -2900,7 +2878,9 @@ module.exports = function (app, passport, server) {
     socket.on('bot_leave_community', (data) => {
       var isValid = isValidObjectIdLength(data.userID, "cannot lookup invalid length userID")
       if (!isValid) {
-        return socket.emit('bot_left_community',{error:'Improper UserID'});
+        return socket.emit('bot_left_community', {
+          error: 'Improper UserID'
+        });
       }
       User.findOneAndUpdate({
         '_id': ObjectId(data.userID),
@@ -2910,7 +2890,9 @@ module.exports = function (app, passport, server) {
         }
       }, function (err) {
         if (err) return console.error(err);
-        return socket.emit('bot_left_community',{message:'Successfully left community'});
+        return socket.emit('bot_left_community', {
+          message: 'Successfully left community'
+        });
       })
     });
 
@@ -3365,6 +3347,17 @@ module.exports = function (app, passport, server) {
       }
     })
 
+    socket.on('load_ems_statuses', (vehicle) => {
+      if (vehicle.emsVehicle.activeCommunityID != null && vehicle.emsVehicle.activeCommunityID != undefined) {
+        EmsVehicle.find({
+          'emsVehicle.activeCommunityID': vehicle.emsVehicle.activeCommunityID
+        }, function (err, dbCommEms) {
+          if (err) return console.error(err);
+          return socket.emit('load_ems_status_result', dbCommEms);
+        });
+      }
+    });
+
     socket.on('load_dispatch_bolos', (user) => {
       if (user.user.activeCommunity != null && user.user.activeCommunity != undefined) {
         Bolo.find({
@@ -3511,6 +3504,63 @@ module.exports = function (app, passport, server) {
       }
     })
 
+    socket.on('delete_ems_vehicle', (req) => {
+      // console.debug(req.body)
+      var isValid = isValidObjectIdLength(req.vehicleID, "cannot lookup invalid length vehicleID, route: /deleteEmsVeh")
+      if (!isValid) {
+        return
+      }
+      EmsVehicle.findByIdAndDelete({
+        '_id': ObjectId(req.vehicleID)
+      }, function (err) {
+        if (err) return console.error(err);
+        return socket.broadcast.emit('deleted_ems_vehicle', req);
+      })
+    });
+
+    socket.on('update_ems_status', (req) => {
+      // console.debug('update ems req: ', req);
+      if (!exists(req.vehicleID) || req.vehicleID == '') {
+        return console.error('cannot update an empty vehicleID')
+      } else if (!exists(req.status) || req.status == '') {
+        return console.error('cannot update an empty status')
+      }
+      if (req.updateDuty) {
+        var isValid = isValidObjectIdLength(req.vehicleID, "cannot lookup invalid length vehicleID, socket: update_status")
+        if (!isValid) {
+          return
+        }
+        EmsVehicle.findByIdAndUpdate({
+          '_id': ObjectId(req.vehicleID)
+        }, {
+          $set: {
+            'emsVehicle.dispatchStatus': req.status,
+            'emsVehicle.dispatchStatusSetBy': req.setBy,
+            'emsVehicle.dispatchOnDuty': req.onDuty
+          }
+        }, function (err) {
+          if (err) return console.error(err)
+          return socket.broadcast.emit('updated_ems_status', req)
+        })
+      } else {
+        var isValid = isValidObjectIdLength(req.vehicleID, "cannot lookup invalid length vehicleID, socket: update_status")
+        if (!isValid) {
+          return
+        }
+        EmsVehicle.findByIdAndUpdate({
+          '_id': ObjectId(req.vehicleID)
+        }, {
+          $set: {
+            'emsVehicle.dispatchStatus': req.status,
+            'emsVehicle.dispatchStatusSetBy': req.setBy,
+          }
+        }, function (err) {
+          if (err) return console.error(err)
+          return socket.broadcast.emit('updated_ems_status', req)
+        })
+      }
+    })
+
     socket.on('bot_update_status', (req) => {
       if (req.updateDuty) {
         User.findByIdAndUpdate({
@@ -3524,7 +3574,7 @@ module.exports = function (app, passport, server) {
         }, function (err) {
           if (err) return console.error(err)
           socket.broadcast.emit('updated_status', req);
-          return socket.emit('bot_updated_status', req);npm 
+          return socket.emit('bot_updated_status', req);
         })
       } else {
         User.findByIdAndUpdate({
@@ -3629,7 +3679,7 @@ module.exports = function (app, passport, server) {
     })
 
     socket.on('clear_panic', (req) => {
-      //console.log("clear req", req)
+      //console.debug("clear req", req)
       if (req.communityID != null && req.communityID != undefined) {
         var isValid = isValidObjectIdLength(req.communityID, "cannot lookup invalid length communityID, socket: clear_panic")
         if (!isValid) {
@@ -3791,7 +3841,6 @@ module.exports = function (app, passport, server) {
     })
 
     socket.on('create_call', (req) => {
-      // console.debug('create call socket: ', req)
       var myCall = new Call()
       myCall.socketCreateCall(req)
       myCall.save(function (err, dbCalls) {
@@ -3859,11 +3908,15 @@ module.exports = function (app, passport, server) {
             if (err) {
               console.error(err);
               if (user.bot_request != null && user.bot_request != undefined && user.bot_request == true) {
-                return socket.emit('bot_updated_drivers_license_status',{success:false});
-              }  
+                return socket.emit('bot_updated_drivers_license_status', {
+                  success: false
+                });
+              }
             }
             if (user.bot_request != null && user.bot_request != undefined && user.bot_request == true) {
-              return socket.emit('bot_updated_drivers_license_status',{success:true});
+              return socket.emit('bot_updated_drivers_license_status', {
+                success: true
+              });
             }
             return socket.emit('load_updated_drivers_license_status_result', dbUser)
           })
@@ -4151,3 +4204,15 @@ function generateHeight(heightFoot, heightInches) {
     return parseInt(heightInches)
   }
 }
+
+/* Capitalize function
+*  Usage: 
+*   Input: "hello there!".capitalize();
+*   Output: "Hello there!"
+*/
+Object.defineProperty(String.prototype, 'capitalize', {
+  value: function() {
+    return this.charAt(0).toUpperCase() + this.slice(1);
+  },
+  enumerable: false
+});
