@@ -61,7 +61,7 @@
         </li>
         <div class="collapse in" id="toggleSearch">
           <li>
-            <a data-toggle="modal" href="#newCivModal"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Civilian</a>
+            <a data-toggle="modal" href="#newCivChoiceModal"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Civilian</a>
           </li>
           <li>
             <a data-toggle="modal" href="#newVehicleModal" onclick="generateSerialNumber(17, 'vin')"><span class="fa fa-car ml-3 mr-3"></span> Add New Vehicle</a>
@@ -143,7 +143,7 @@
           <!--Table for Personas  -->
           <div class="col-md-12 col-md-offset-0.75 margin-top-5">
             <div class="margin-bottom-2">
-              <span id="active-bolos margin-right-1" style="font-size: 18px;">Civilians:</span> <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-md pull-right">Add New Civilian</button>
+              <span id="active-bolos margin-right-1" style="font-size: 18px;">Civilians:</span> <button data-toggle="modal" href="#newCivChoiceModal"  class="btn btn-primary btn-md pull-right">Add New Civilian</button>
             </div>
               <div>
                 <label>Search:
@@ -236,6 +236,26 @@
             <br/>
             <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i class="ion-android-close"></i></button>
           </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newCivChoiceModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+        <div class="modal-body">
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4>New Civilian Choice</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            <div class="text-align-center margin-bottom-1">
+              <button data-toggle="modal" href="#newAutoCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fas fa-magic"></i> Auto</button>
+              <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fas fa-hammer"></i> Manual</button>
+            </div>
+            <div>
+              <span> <i class="fas fa-magic"></i></span> <strong>Auto:</strong> We will generate a new civilian for you <br/>
+              <span> <i class="fas fa-hammer"></i></span> <strong>Manual:</strong> You specify the details for your new civilian
+            </div>
         </div>
       </div>
     </div>
@@ -425,6 +445,66 @@
                 <input id="newCivUserID" type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-civ-activeCommunityID-new-civ" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                 <button id="submitNewCiv" type="submit" name="submitNewCivForm" value="submit" class="btn btn-info">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newAutoCivModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="create-auto-civ-form" class="form-horizontal" action="#" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <h4>Automatically Generate a New Civilian</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5><ion-icon name="person-add-outline"></ion-icon> Details</h5>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="genderAuto">Gender</label>
+              <div class="col-md-4">
+                <select id="genderAuto" name="genderAuto" class="form-control">
+                  <option value="unspecified">Unspecified</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="non-binary">Non-Binary</option>
+                </select>
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+    
+            <h5><ion-icon name="id-card-outline"></ion-icon> License Details</h5>
+
+            <!-- Select Basic -->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="firearmLicenseAuto">Firearm License:</label>
+              <div class="col-md-4">
+                <select id="firearmLicenseAuto" name="firearmLicenseAuto" class="form-control">
+                  <option value="1">None</option>
+                  <option value="2">Valid</option>
+                  <option value="3">Revoked</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="submitNewAutoCiv"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" name="route" value="civ-dashboard">
+                <input id="newCivUserID" type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-civ-activeCommunityID-new-civ" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submitNewAutoCiv" type="submit" name="submitNewAutoCivForm" value="submit" class="btn btn-info">Create</button>
               </div>
             </div>
             </fieldset>
@@ -1540,10 +1620,13 @@
   <script src="/static/js/popper.js"></script>
   <script src="/static/js/main.js"></script>
   <script src="/static/js/scripts.js"></script>
+  <script src="/static/js/faker.js"></script>
+  <script src="/static/js/moment.js"></script>
   <script src="/static/js/civ-dashboard.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
   <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule="" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>
+  
   <script>if (window.module) module = window.module;</script>
   <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
