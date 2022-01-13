@@ -2521,7 +2521,7 @@ module.exports = function (app, passport, server) {
       let classifier
       var shortDescription
       var assignedOfficers
-      let assignerFireEms
+      let assignedFireEms
       var callNotes
       var callID
       if (exists(req.body.classifier)) {
