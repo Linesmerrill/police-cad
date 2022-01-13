@@ -18,8 +18,12 @@ var emsSchema = mongoose.Schema({
 });
 
 emsSchema.methods.create = function (req, res) {
-    this.ems.firstName = req.body.emsFirstName.trim();
-    this.ems.lastName = req.body.emsLastName.trim();
+    if (exists(req.body.emsFirstName)) {
+        this.ems.firstName = req.body.emsFirstName.trim();
+    }
+    if (exists(req.body.emsLastName)) {
+        this.ems.lastName = req.body.emsLastName.trim();
+    }
     this.ems.department = req.body.department;
     this.ems.assignmentArea = req.body.assignmentArea;
     this.ems.station = req.body.station;
@@ -29,5 +33,13 @@ emsSchema.methods.create = function (req, res) {
     this.ems.createdAt = new Date();
     res.redirect('/ems-dashboard');
 };
+
+function exists(v) {
+    if (v !== undefined) {
+        return true
+    } else {
+        return false
+    }
+}
 
 module.exports = mongoose.model('Ems', emsSchema);
