@@ -4202,13 +4202,13 @@ function exists(v) {
 function isValidObjectIdLength(value, errorMessage) {
   if (value != null && value != undefined) {
     if (value.length != 24) {
-      console.warn(`[LPS WARN] [method=isValidObjectIdLength] errorMessage: ${errorMessage}, value: ${value}`)
+      console.warn(`[LPS] [level=warn] [method=isValidObjectIdLength] errorMessage: ${errorMessage}, value: ${value}`)
       return false
     } else {
       return true
     }
   } else {
-    console.warn(`[LPS WARN] [method=isValidObjectIdLength] cannot check length of a null value. errorMessage: ${errorMessage}`)
+    console.warn(`[LPS] [level=warn] [method=isValidObjectIdLength] cannot check length of a null value. errorMessage: ${errorMessage}`)
     return false
   }
 }
