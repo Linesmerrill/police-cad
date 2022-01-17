@@ -159,14 +159,10 @@ module.exports = function (app, passport, server) {
 
   app.get('/communities', auth, function (req, res) {
     req.app.locals.specialContext = null;
-    if (!exists(req.session.communityID)) {
-      console.warn("cannot render empty communityID, route: /communities")
-      res.status(400)
-      return res.redirect('back')
-    }
     var isValid = isValidObjectIdLength(req.session.communityID, "cannot lookup invalid length communityID, route: /communities")
     if (!isValid) {
       req.app.locals.specialContext = "invalidRequest";
+      res.status(400)
       return res.redirect('back')
     }
     Community.findOne({
