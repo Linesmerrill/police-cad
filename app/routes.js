@@ -2617,18 +2617,10 @@ module.exports = function (app, passport, server) {
   app.post('/updateOrDeleteVeh', auth, function (req, res) {
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
-      if (!exists(req.body.vehicleID)) {
-        console.warn("cannot update vehicle with empty vehicleID, route: /updateOrDeleteVeh")
-        return res.redirect('/civ-dashboard');
-      }
       if (!exists(req.body.roVeh)) {
         req.body.roVeh = 'N/A'
       }
-      if (req.body.vehicleID.length != 24) {
-        console.warn("cannot delete vehicle with invalid vehicleID, route: /updateOrDeleteVeh", req.body.vehicleID)
-        return res.redirect('/civ-dashboard');
-      }
-      var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /updateOrDeleteVeh")
+      var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot update vehicle with invalid vehicleID, route: /updateOrDeleteVeh")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect('/civ-dashboard')
@@ -2655,15 +2647,7 @@ module.exports = function (app, passport, server) {
         return res.redirect('/civ-dashboard');
       })
     } else {
-      if (!exists(req.body.vehicleID)) {
-        console.warn("cannot delete vehicle with empty vehicleID, route: /updateOrDeleteVeh")
-        return res.redirect('/civ-dashboard');
-      }
-      if (req.body.vehicleID.length != 24) {
-        console.warn("cannot delete vehicle with invalid vehicleID, route: /updateOrDeleteVeh", req.body.vehicleID)
-        return res.redirect('/civ-dashboard');
-      }
-      var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /updateOrDeleteVeh")
+      var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot delete vehicle with invalid vehicleID, route: /updateOrDeleteVeh")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect('/civ-dashboard')
@@ -4200,7 +4184,7 @@ function exists(v) {
 }
 
 function isValidObjectIdLength(value, errorMessage) {
-  if (value != null && value != undefined) {
+  if (value != null && value !== undefined) {
     if (value.length != 24) {
       console.warn(`[LPS] [level=warn] [method=isValidObjectIdLength] errorMessage: ${errorMessage}, value: ${value}`)
       return false
