@@ -2727,11 +2727,7 @@ module.exports = function (app, passport, server) {
   app.post('/updateUserDispatchStatus', auth, function (req, res) {
     // console.debug(req.body)
     req.app.locals.specialContext = null;
-    if (!exists(req.body.userID) || req.body.userID == '') {
-      console.error('cannot update an empty userID')
-      res.status(400)
-      return res.redirect('back');
-    } else if (!exists(req.body.status) || req.body.status == '') {
+    if (!exists(req.body.status) || req.body.status == '') {
       console.error('cannot update an empty status')
       res.status(400)
       return res.redirect('back');
@@ -2739,6 +2735,7 @@ module.exports = function (app, passport, server) {
     var isValid = isValidObjectIdLength(req.body.userID, "cannot delete vehicle with invalid userID, route: /updateUserDispatchStatus")
     if (!isValid) {
       req.app.locals.specialContext = "invalidRequest";
+      res.status(400)
       return res.redirect('back')
     }
     User.findByIdAndUpdate({
