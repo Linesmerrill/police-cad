@@ -3523,9 +3523,7 @@ module.exports = function (app, passport, server) {
 
     socket.on('update_ems_status', (req) => {
       // console.debug('update ems req: ', req);
-      if (!exists(req.vehicleID) || req.vehicleID == '') {
-        return console.error('cannot update an empty vehicleID')
-      } else if (!exists(req.status) || req.status == '') {
+      if (!exists(req.status) || req.status == '') {
         return console.error('cannot update an empty status')
       }
       if (req.updateDuty) {
