@@ -285,14 +285,14 @@
               <div class="form-group">
                 <label class="col-md-4 control-label" for="createdBy">Classifier:</label>
                 <div class="col-md-4">
-                  <h5 id="classifier"></h5>
+                  <h4 id="classifier"></h4>
                 </div>
               </div>
 
               <!-- Text input-->
               <div class="form-group">
                 <label class="col-md-4 control-label" for="createdBy">Engines:</label>
-                <div class="col-md-4">
+                <div class="col-md-8 margin-left-neg-2">
                   <h5 id="engines"></h5>
                 </div>
               </div>
@@ -1019,10 +1019,16 @@
     
 
     socket.on('created_call', res => {
-      if (res.call.communityID==dbUser.user.activeCommunity) {
+      if (res.call.communityID === dbUser.user.activeCommunity) {
+        let containsVeh = false;
         for (let i=0; i < dbVehicles.length; i++) {
-          if (res.call.assignedFireEms.includes(dbVehicles[i]._id)==true) {
-            $('#assigned-call-container').append(
+          if (res.call.assignedFireEms.includes(dbVehicles[i]._id)) {
+            containsVeh = true;
+            break;
+          }
+        }
+        if (containsVeh) {
+          $('#assigned-call-container').append(
               `<a id="${res._id}" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails('${res._id}')">
                 <div class="alert alert-success alert-dismissible show" role="alert">
                   Opened: <span id="${res._id}-createdAt" style="text-transform:capitalize">
@@ -1032,7 +1038,6 @@
             ).fadeTo(1, function () {
               $(this).add();
             })
-          }
         }
       }
     })
@@ -1080,18 +1085,31 @@
       $('#callNotesDetail').empty().text(res.call.callNotes)
       let selectedClassifiers = ""
       for (let i=0; i<res.call.classifier.length; i++) {
-        selectedClassifiers += res.call.classifier[i] + ", "
+        switch (res.call.classifier[i].toLowerCase()) {
+          case "police":
+            selectedClassifiers += `<span class="badge badge-primary">${res.call.classifier[i]}</span>  `    
+            break;
+          case "fire":
+            selectedClassifiers += `<span class="badge badge-danger">${res.call.classifier[i]}</span>  `
+            break;
+          case "ems":
+            selectedClassifiers += `<span class="badge badge-success">${res.call.classifier[i]}</span>  `
+            break;
+          default:
+            selectedClassifiers += `<span class="badge badge-secondary">${res.call.classifier[i]}</span>  `
+            break;
+        }
       }
-      $('#classifier').empty().text(selectedClassifiers)
+      $('#classifier').empty().html(selectedClassifiers)
       let assignedFireEms = ""
       for (let i=0; i<res.call.assignedFireEms.length; i++) {
         for (let j=0; j<dbVehicles.length; j++) {
           if (dbVehicles[j]._id==res.call.assignedFireEms[i]) {
-            assignedFireEms = assignedFireEms + `Engine - ${dbVehicles[i].emsVehicle.engineNumber} (${dbVehicles[i].emsVehicle.model}), `
+            assignedFireEms = assignedFireEms + `<li>Engine - ${dbVehicles[i].emsVehicle.engineNumber} (${dbVehicles[i].emsVehicle.model})</li>`
           }
         }
       }
-      $('#engines').empty().text(assignedFireEms)
+      $('#engines').empty().html(`<ul>${assignedFireEms}</ul>`)
     })
   }
 
