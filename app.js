@@ -2,7 +2,7 @@ var dotenv = require('dotenv');
 var express = require('express');
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
-var MongoStore = require('connect-mongo')(session);
+var MongoStore = require('connect-mongodb-session')(session);
 var mongoose = require('mongoose');
 var passport = require('passport');
 var flash = require('connect-flash');
@@ -25,7 +25,7 @@ gracefulFs.gracefulify(realFs)
 
 // Connect to MongoDB database.
 mongoose.connect(process.env.DB_URI || 'mongodb://localhost/knoldus' );
-mongoose.set('useFindAndModify', false);
+// mongoose.set('useFindAndModify', false);
 
 // Setup passport.
 require('./config/passport')(passport);
