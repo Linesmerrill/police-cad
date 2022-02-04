@@ -294,13 +294,16 @@
 
 </html>
 <script type="text/javascript">
+  // all global router vars declared here to reduce duplication
+  var dbCommunities = <%- JSON.stringify(communities) %>;
+  var dbUser = <%- JSON.stringify(user) %>;
+
 $(document).ready(function () {
     $('#example').DataTable();
 
     // displays the Update and Cancel buttons for updating the community name
-    var myCommunities = <%- JSON.stringify(communities) %>;
     $('#communityName').on('keyup', function(e) {
-      if(e.target.value != myCommunities.community.name && e.target.value != '') {
+      if(e.target.value != dbCommunities.community.name && e.target.value != '') {
         $('#updateCommunityNameBtns').show();
       } else {
         $('#updateCommunityNameBtns').hide();
@@ -308,9 +311,8 @@ $(document).ready(function () {
     })
 
     // displays the Update Username and Cancel buttons for updating the username
-    var myUser = <%- JSON.stringify(user) %>;
     $('#accountUsername').on('keyup', function(e) {
-    if(e.target.value != myUser.user.username && e.target.value != '') {
+    if(e.target.value != dbUser.user.username && e.target.value != '') {
         $('#updateUsernameBtns').show();
     } else {
         $('#updateUsernameBtns').hide();
@@ -318,14 +320,14 @@ $(document).ready(function () {
     })
 
     $('#accountCallSign').on('keyup', function(e) {
-        if(e.target.value != myUser.user.callSign && e.target.value != '') {
+        if(e.target.value != dbUser.user.callSign && e.target.value != '') {
             $('#updateCallSignBtns').show();
         } else {
             $('#updateCallSignBtns').hide();
         }
     })
 
-    $('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
+    $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
 });
 
 function copyText(element) {
@@ -335,33 +337,29 @@ function copyText(element) {
 }
 
 function cancelCommunityName() {
-    var myCommunities = <%- JSON.stringify(communities) %>;
-    $('#communityName').val(myCommunities.community.name)
+    $('#communityName').val(dbCommunities.community.name)
     $('#updateCommunityNameBtns').hide();
   }
 
   function fillAccountDetails() {
-    var myUser = <%- JSON.stringify(user) %>;
-    $('#accountEmail').val(myUser.user.email)
-    $('#accountUsername').val(myUser.user.username)
-    $('#accountCallSign').val(myUser.user.callSign)
+    $('#accountEmail').val(dbUser.user.email)
+    $('#accountUsername').val(dbUser.user.username)
+    $('#accountCallSign').val(dbUser.user.callSign)
   }
   
   function cancelUsername() {
-    var myUser = <%- JSON.stringify(user) %>;
-    $('#accountUsername').val(myUser.user.username)
+    $('#accountUsername').val(dbUser.user.username)
     $('#updateUsernameBtns').hide();
   }
 
   function cancelCallSign() {
-    var myUser = <%- JSON.stringify(user) %>;
-    $('#accountCallSign').val(myUser.user.callSign)
+    $('#accountCallSign').val(dbUser.user.callSign)
     $('#updateCallSignBtns').hide();
   }
 
   function togglePanicBtnSound() {
     var socket = io();
-    socket.emit('update_panic_btn_sound', <%- JSON.stringify(user) %>)
+    socket.emit('update_panic_btn_sound', dbUser)
     socket.on('load_panic_btn_result', (res) => {
       $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
       $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function() {
