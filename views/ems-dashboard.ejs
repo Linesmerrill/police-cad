@@ -1004,9 +1004,10 @@
 </html>
 
 <script type="text/javascript">
-    var dbUser = <%-JSON.stringify(user)%>;
-    var dbVehicles = <%-JSON.stringify(vehicles)%>;
-    var dbPersonas = <%- JSON.stringify(personas)%>;
+  // all global router vars declared here to reduce duplication
+  var dbUser = <%-JSON.stringify(user)%>;
+  var dbVehicles = <%-JSON.stringify(vehicles)%>;
+  var dbPersonas = <%- JSON.stringify(personas)%>;
   $(function () {
     var socket=io()
     socket.on('updated_ems_status', res => {
