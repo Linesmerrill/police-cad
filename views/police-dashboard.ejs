@@ -2635,7 +2635,7 @@
     if (dbCivilians===null||dbTickets===null) {
       hideCivPopover();
       return
-    } else if (myCiv.length===0) {
+    } else if (dbCivilians.length===0) {
       let civDetails=document.getElementById('civDetails')
       civDetails.style.display='none'
       let civNotFoundMsg=document.getElementById('civilianNotFound')
