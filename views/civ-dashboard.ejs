@@ -7,7 +7,7 @@
   <meta name="description" content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="Codeply">
-  
+
   <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&display=swap" rel="stylesheet">
@@ -61,7 +61,7 @@
         </li>
         <div class="collapse in" id="toggleSearch">
           <li>
-            <a data-toggle="modal" href="#newCivModal"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Civilian</a>
+            <a data-toggle="modal" href="#newCivChoiceModal"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Civilian</a>
           </li>
           <li>
             <a data-toggle="modal" href="#newVehicleModal" onclick="generateSerialNumber(17, 'vin')"><span class="fa fa-car ml-3 mr-3"></span> Add New Vehicle</a>
@@ -137,19 +137,19 @@
           </button>
         </div>
       </nav>
-      
+
       <section style='background-image: url("/static/images/blue-clouds.jpg");'>
         <div class="container">
           <!--Table for Personas  -->
           <div class="col-md-12 col-md-offset-0.75 margin-top-5">
             <div class="margin-bottom-2">
-              <span id="active-bolos margin-right-1" style="font-size: 18px;">Civilians:</span> <button data-toggle="modal" href="#newCivModal"  class="btn btn-primary btn-md pull-right">Add New Civilian</button>
+              <span id="active-bolos margin-right-1" style="font-size: 18px;">Civilians:</span> <button data-toggle="modal" href="#newCivChoiceModal"  class="btn btn-primary btn-md pull-right">Add New Civilian</button>
             </div>
               <div>
                 <label>Search:
                   <input id="civilian-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
                 </label>
-                 <ion-icon id="app-icon-personas" name="apps-outline" class="color-white table-icon" onclick="showApps()"></ion-icon> 
+                 <ion-icon id="app-icon-personas" name="apps-outline" class="color-white table-icon" onclick="showApps()"></ion-icon>
                  <!-- <ion-icon id="list-icon-personas" name="list-outline" class="color-white table-icon" onclick="showList()"></ion-icon> -->
               </div>
               <div id="personas-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
@@ -176,7 +176,7 @@
         <label>Search:
           <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
         </label>
-        <ion-icon id="app-icon-vehicles" name="apps-outline" class="color-white table-icon" onclick="showVehicleApps()"></ion-icon> 
+        <ion-icon id="app-icon-vehicles" name="apps-outline" class="color-white table-icon" onclick="showVehicleApps()"></ion-icon>
       </div>
       <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
         <% for(var i=0; i<vehicles.length; i++) {%>
@@ -202,7 +202,7 @@
         <label>Search:
           <input id="firearm-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
         </label>
-        <ion-icon id="app-icon-firearms" name="apps-outline" class="color-white table-icon" onclick="showFirearmsApps()"></ion-icon> 
+        <ion-icon id="app-icon-firearms" name="apps-outline" class="color-white table-icon" onclick="showFirearmsApps()"></ion-icon>
       </div>
       <div id="firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
         <% for(var i=0; i<firearms.length; i++) {%>
@@ -219,7 +219,7 @@
         <% } %>
       </div>
     </div>
-    
+
         </div>
       </section>
       <div class="google-ad"></div>
@@ -236,6 +236,26 @@
             <br/>
             <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i class="ion-android-close"></i></button>
           </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newCivChoiceModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+        <div class="modal-body">
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4>New Civilian Choice</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+            <div class="text-align-center margin-bottom-1">
+              <button data-toggle="modal" href="#newAutoCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fas fa-magic"></i> Auto</button>
+              <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fas fa-hammer"></i> Manual</button>
+            </div>
+            <div>
+              <span> <i class="fas fa-magic"></i></span> <strong>Auto:</strong> We will generate a new civilian for you <br/>
+              <span> <i class="fas fa-hammer"></i></span> <strong>Manual:</strong> You specify the details for your new civilian
+            </div>
         </div>
       </div>
     </div>
@@ -296,7 +316,7 @@
             </div>
 
             <hr style="width: 88%;max-width: 100rem;">
-    
+
             <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details (optional)</h5>
 
             <!-- Select Basic -->
@@ -402,7 +422,7 @@
             </div>
 
             <hr style="width: 88%;max-width: 100rem;">
-    
+
             <h5><ion-icon name="id-card-outline"></ion-icon> License Details</h5>
 
             <!-- Select Basic -->
@@ -425,6 +445,66 @@
                 <input id="newCivUserID" type="hidden" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-civ-activeCommunityID-new-civ" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                 <button id="submitNewCiv" type="submit" name="submitNewCivForm" value="submit" class="btn btn-info">Create</button>
+              </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newAutoCivModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="create-auto-civ-form" class="form-horizontal" action="#" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
+            <h4>Automatically Generate a New Civilian</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <h5><ion-icon name="person-add-outline"></ion-icon> Details</h5>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="genderAuto">Gender</label>
+              <div class="col-md-4">
+                <select id="genderAuto" name="genderAuto" class="form-control">
+                  <option value="unspecified">Unspecified</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="non-binary">Non-Binary</option>
+                </select>
+              </div>
+            </div>
+
+            <hr style="width: 88%;max-width: 100rem;">
+    
+            <h5><ion-icon name="id-card-outline"></ion-icon> License Details</h5>
+
+            <!-- Select Basic -->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="firearmLicenseAuto">Firearm License:</label>
+              <div class="col-md-4">
+                <select id="firearmLicenseAuto" name="firearmLicenseAuto" class="form-control">
+                  <option value="1">None</option>
+                  <option value="2">Valid</option>
+                  <option value="3">Revoked</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="submitNewAutoCiv"></label>
+              <div class="col-md-4 text-align-center">
+                <input type="hidden" name="route" value="civ-dashboard">
+                <input id="newCivUserID" type="hidden" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-civ-activeCommunityID-new-civ" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <button id="submitNewAutoCiv" type="submit" name="submitNewAutoCivForm" value="submit" class="btn btn-info">Create</button>
               </div>
             </div>
             </fieldset>
@@ -749,7 +829,7 @@
           <form id="update-delete-civ-form" class="form-horizontal" action="#" method="POST">
           <fieldset>
 
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="clearHelpText()">X</button>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="clearHelpText();updateUserBtnValue('')">X</button>
             <h4>Details about your Civilian</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
@@ -794,6 +874,13 @@
             <label class="col-md-4 control-label" for="occupationView">Occupation:</label>
             <div class="col-md-4">
               <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md capitalize">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="col-md-4 control-label" for="deceasedView">Deceased:</label>
+            <div class="col-md-4">
+              <label id="deceasedView" name="deceased" type="text" placeholder="Deceased" class="form-control"></label>
             </div>
           </div>
 
@@ -908,7 +995,7 @@
               <input id="veteran-view" type="checkbox" name="veteran" class="form-control">
             </div>
           </div>
-          
+
 
           <div class="col-md-12 text-align-center margin-bottom-1">
             <button type="submit" value="update" name="action" style="cursor: pointer" class="btn btn-info" onclick="updateUserBtnValue('update')">Update Civilian</button>
@@ -942,7 +1029,7 @@
               </div>
 
               <!-- first name -->
-              <div> 
+              <div>
                   <span class="first-name-title">FN </span>
                   <span id="firstNameLic" class="first-name" style="bottom: 123px;"></span>
               </div>
@@ -971,42 +1058,42 @@
               </div>
 
               <!-- sex -->
-              <div> 
+              <div>
                   <span class="sex-title">SEX </span>
                   <span id="sexLic" class="sex"></span>
               </div>
 
               <!-- height -->
-              <div> 
+              <div>
                   <span class="height-title">HGT </span>
                   <span id="heightLic" class="height"></span>
               </div>
 
               <!-- weight -->
-              <div> 
+              <div>
                   <span class="weight-title">WGT </span>
                   <span id="weightLic" class="weight"></span>
               </div>
 
               <!-- eye color -->
-              <div> 
+              <div>
                   <span class="eye-title">EYES </span>
                   <span id="eyeLic" class="eye"></span>
               </div>
 
               <!-- hair color -->
-              <div> 
+              <div>
                   <span class="hair-title">HAIR </span>
                   <span id="hairLic" class="hair"></span>
               </div>
 
               <!-- donor -->
-              <div class="donor-block hide"> 
+              <div class="donor-block hide">
                   <span class="donor-title">DONOR ❤️</span>
               </div>
 
               <!-- veteran -->
-              <div class="veteran-block hide"> 
+              <div class="veteran-block hide">
                   <span class="veteran">VETERAN ⭐️</span>
               </div>
 
@@ -1029,7 +1116,7 @@
               <button id="click-to-delete-lic" type="submit" value="deleteLicense" name="action" style="cursor: pointer" class="btn btn-danger" onclick="updateUserBtnValue('deleteLicense')">Delete Driver's License</button>
             </div>
           </div>
-          
+
 
           <hr style="width: 88%;max-width: 100rem;">
           <h5><ion-icon name="browsers-outline"></ion-icon> Firearm License</h5>
@@ -1045,7 +1132,7 @@
               </div>
             </div>
 
-            
+
             </fieldset>
           </form>
           <hr style="width: 88%;max-width: 100rem;">
@@ -1366,7 +1453,7 @@
             <h4>Leave Active Community</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
-            <p>NOTE: All civilians and vehicles that you created in this community will no longer 
+            <p>NOTE: All civilians and vehicles that you created in this community will no longer
               show up on your dashboard after you leave.
             </p>
             <p>Are you sure you want to leave this community?</p>
@@ -1533,10 +1620,13 @@
   <script src="/static/js/popper.js"></script>
   <script src="/static/js/main.js"></script>
   <script src="/static/js/scripts.js"></script>
+  <script src="/static/js/faker.js"></script>
+  <script src="/static/js/moment.js"></script>
   <script src="/static/js/civ-dashboard.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
   <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule="" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>
+  
   <script>if (window.module) module = window.module;</script>
   <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
@@ -1544,8 +1634,14 @@
 </html>
 
 <script type="text/javascript">
+  // all global router vars declared here to reduce duplication
+  var dbUser = <%- JSON.stringify(user) %>;
+  var dbVehicles= <%- JSON.stringify(vehicles) %>;
+  var dbFirearms = <%- JSON.stringify(firearms) %>;
+
+
   $(document).ready(function(){
-    
+
     // personas cards using data-tables to filter and sort
     if (document.cookie.split(';').some((item) => item.includes('persona_icon=list'))) {
       showList()
@@ -1611,7 +1707,7 @@
 
 
 
-  // check for license-notification 
+  // check for license-notification
   if (document.cookie.split(';').some((item) => item.includes('license_notice=hidden'))) {
       hideLicenseNotice()
     } else {
@@ -1619,9 +1715,8 @@
     }
 
 // displays the Update Username and Cancel buttons for updating the username
-var myUser = <%- JSON.stringify(user) %>;
 $('#accountUsername').on('keyup', function(e) {
-  if(e.target.value != myUser.user.username && e.target.value != '') {
+  if(e.target.value != dbUser.user.username && e.target.value != '') {
     $('#updateUsernameBtns').show();
   } else {
     $('#updateUsernameBtns').hide();
@@ -1629,14 +1724,14 @@ $('#accountUsername').on('keyup', function(e) {
 })
 
 $('#accountCallSign').on('keyup', function(e) {
-  if(e.target.value != myUser.user.callSign && e.target.value != '') {
+  if(e.target.value != dbUser.user.callSign && e.target.value != '') {
     $('#updateCallSignBtns').show();
   } else {
     $('#updateCallSignBtns').hide();
   }
 })
 
-$('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
+$('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
 
 // prevents spaces from user input
 $("#civ-first-name").keydown(function(event) {
@@ -1674,7 +1769,7 @@ $("#lastName").keydown(function(event) {
 
 //CURRENT_VERSION
     //the current version in production
-    let CURRENT_VERSION = "v2.29.0"
+    let CURRENT_VERSION = "v2.31.0"
     let MINOR_VERSION = CURRENT_VERSION.split(".")[1]
 
     //check for notification cookie
@@ -1708,71 +1803,66 @@ $("#lastName").keydown(function(event) {
 
   //load gravatar image
   var MD5 = function(d){var r = M(V(Y(X(d),8*d.length)));return r.toLowerCase()};function M(d){for(var _,m="0123456789ABCDEF",f="",r=0;r<d.length;r++)_=d.charCodeAt(r),f+=m.charAt(_>>>4&15)+m.charAt(15&_);return f}function X(d){for(var _=Array(d.length>>2),m=0;m<_.length;m++)_[m]=0;for(m=0;m<8*d.length;m+=8)_[m>>5]|=(255&d.charCodeAt(m/8))<<m%32;return _}function V(d){for(var _="",m=0;m<32*d.length;m+=8)_+=String.fromCharCode(d[m>>5]>>>m%32&255);return _}function Y(d,_){d[_>>5]|=128<<_%32,d[14+(_+64>>>9<<4)]=_;for(var m=1732584193,f=-271733879,r=-1732584194,i=271733878,n=0;n<d.length;n+=16){var h=m,t=f,g=r,e=i;f=md5_ii(f=md5_ii(f=md5_ii(f=md5_ii(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_ff(f=md5_ff(f=md5_ff(f=md5_ff(f,r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+0],7,-680876936),f,r,d[n+1],12,-389564586),m,f,d[n+2],17,606105819),i,m,d[n+3],22,-1044525330),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+4],7,-176418897),f,r,d[n+5],12,1200080426),m,f,d[n+6],17,-1473231341),i,m,d[n+7],22,-45705983),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+8],7,1770035416),f,r,d[n+9],12,-1958414417),m,f,d[n+10],17,-42063),i,m,d[n+11],22,-1990404162),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+12],7,1804603682),f,r,d[n+13],12,-40341101),m,f,d[n+14],17,-1502002290),i,m,d[n+15],22,1236535329),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+1],5,-165796510),f,r,d[n+6],9,-1069501632),m,f,d[n+11],14,643717713),i,m,d[n+0],20,-373897302),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+5],5,-701558691),f,r,d[n+10],9,38016083),m,f,d[n+15],14,-660478335),i,m,d[n+4],20,-405537848),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+9],5,568446438),f,r,d[n+14],9,-1019803690),m,f,d[n+3],14,-187363961),i,m,d[n+8],20,1163531501),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+13],5,-1444681467),f,r,d[n+2],9,-51403784),m,f,d[n+7],14,1735328473),i,m,d[n+12],20,-1926607734),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+5],4,-378558),f,r,d[n+8],11,-2022574463),m,f,d[n+11],16,1839030562),i,m,d[n+14],23,-35309556),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+1],4,-1530992060),f,r,d[n+4],11,1272893353),m,f,d[n+7],16,-155497632),i,m,d[n+10],23,-1094730640),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+13],4,681279174),f,r,d[n+0],11,-358537222),m,f,d[n+3],16,-722521979),i,m,d[n+6],23,76029189),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+9],4,-640364487),f,r,d[n+12],11,-421815835),m,f,d[n+15],16,530742520),i,m,d[n+2],23,-995338651),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+0],6,-198630844),f,r,d[n+7],10,1126891415),m,f,d[n+14],15,-1416354905),i,m,d[n+5],21,-57434055),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+12],6,1700485571),f,r,d[n+3],10,-1894986606),m,f,d[n+10],15,-1051523),i,m,d[n+1],21,-2054922799),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+8],6,1873313359),f,r,d[n+15],10,-30611744),m,f,d[n+6],15,-1560198380),i,m,d[n+13],21,1309151649),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+4],6,-145523070),f,r,d[n+11],10,-1120210379),m,f,d[n+2],15,718787259),i,m,d[n+9],21,-343485551),m=safe_add(m,h),f=safe_add(f,t),r=safe_add(r,g),i=safe_add(i,e)}return Array(m,f,r,i)}function md5_cmn(d,_,m,f,r,i){return safe_add(bit_rol(safe_add(safe_add(_,d),safe_add(f,i)),r),m)}function md5_ff(d,_,m,f,r,i,n){return md5_cmn(_&m|~_&f,d,_,r,i,n)}function md5_gg(d,_,m,f,r,i,n){return md5_cmn(_&f|m&~f,d,_,r,i,n)}function md5_hh(d,_,m,f,r,i,n){return md5_cmn(_^m^f,d,_,r,i,n)}function md5_ii(d,_,m,f,r,i,n){return md5_cmn(m^(_|~f),d,_,r,i,n)}function safe_add(d,_){var m=(65535&d)+(65535&_);return(d>>16)+(_>>16)+(m>>16)<<16|65535&m}function bit_rol(d,_){return d<<_|d>>>32-_}
-  let hash = MD5(myUser.user.email.trim().toLowerCase())
+  let hash = MD5(dbUser.user.email.trim().toLowerCase())
   $('.profile-picture').css("background-image", `url(https://www.gravatar.com/avatar/${hash}?s=200)`)
 
 
 }); /* End of document.ready */
 
 function loadVehData(index) {
-     var myVar = <%- JSON.stringify(vehicles) %>;
-     $('#vehicleID').val(myVar[index]._id)
-     $('#plateVeh').val(myVar[index].vehicle.plate.toUpperCase())
- 
+     $('#vehicleID').val(dbVehicles[index]._id)
+     $('#plateVeh').val(dbVehicles[index].vehicle.plate.toUpperCase())
+
      // since only cars after 6/26/2020 will have this info, we need to check for empty values
-     if (myVar[index].vehicle.vin == "" || myVar[index].vehicle.vin == undefined) {
+     if (dbVehicles[index].vehicle.vin == "" || dbVehicles[index].vehicle.vin == undefined) {
        $('#vinVeh').val("")
        $('#no-existing-vin').show()
      } else {
-       $('#vinVeh').val(myVar[index].vehicle.vin.toUpperCase())
+       $('#vinVeh').val(dbVehicles[index].vehicle.vin.toUpperCase())
        $('#no-existing-vin').hide()
      }
-     
-     $('#modelVeh').val(myVar[index].vehicle.model)
-     $('#colorView').val(myVar[index].vehicle.color)
-     $('#validRegView').val(myVar[index].vehicle.validRegistration)
-     $('#validInsView').val(myVar[index].vehicle.validInsurance)
-     $('#roVeh').val(myVar[index].vehicle.registeredOwner)
-     $('#stolenView').val(myVar[index].vehicle.isStolen)
+
+     $('#modelVeh').val(dbVehicles[index].vehicle.model)
+     $('#colorView').val(dbVehicles[index].vehicle.color)
+     $('#validRegView').val(dbVehicles[index].vehicle.validRegistration)
+     $('#validInsView').val(dbVehicles[index].vehicle.validInsurance)
+     $('#roVeh').val(dbVehicles[index].vehicle.registeredOwner)
+     $('#stolenView').val(dbVehicles[index].vehicle.isStolen)
    }
- 
+
    function loadFirearmData(index) {
-     var myVar = <%- JSON.stringify(firearms) %>;
-     $('#firearmID').val(myVar[index]._id)
-     $('#serial-number-details').val(myVar[index].firearm.serialNumber)
-     $('#weapon-type-details').val(myVar[index].firearm.weaponType)
-     //Because from the backend we already split the person_id from the person name and dob, we now 
+     $('#firearmID').val(dbFirearms[index]._id)
+     $('#serial-number-details').val(dbFirearms[index].firearm.serialNumber)
+     $('#weapon-type-details').val(dbFirearms[index].firearm.weaponType)
+     //Because from the backend we already split the person_id from the person name and dob, we now
      //need to rejoin those values back together for #registeredOwner-details
-     if (myVar[index].firearm.registeredOwner == 'N/A') {
-       $('#registeredOwner-details').val(`${myVar[index].firearm.registeredOwner}`)
+     if (dbFirearms[index].firearm.registeredOwner == 'N/A') {
+       $('#registeredOwner-details').val(`${dbFirearms[index].firearm.registeredOwner}`)
      } else {
-       $('#registeredOwner-details').val(`${myVar[index].firearm.registeredOwnerID}+${myVar[index].firearm.registeredOwner}`)
+       $('#registeredOwner-details').val(`${dbFirearms[index].firearm.registeredOwnerID}+${dbFirearms[index].firearm.registeredOwner}`)
      }
-     $('#is-stolen-details').val(myVar[index].firearm.isStolen)
+     $('#is-stolen-details').val(dbFirearms[index].firearm.isStolen)
    }
 
    function fillAccountDetails() {
-     var myUser = <%- JSON.stringify(user) %>;
-     $('#accountEmail').val(myUser.user.email)
-     $('#accountUsername').val(myUser.user.username)
-     $('#accountCallSign').val(myUser.user.callSign)
+     $('#accountEmail').val(dbUser.user.email)
+     $('#accountUsername').val(dbUser.user.username)
+     $('#accountCallSign').val(dbUser.user.callSign)
    }
- 
+
    function cancelUsername() {
-     var myUser = <%- JSON.stringify(user) %>;
-     $('#accountUsername').val(myUser.user.username)
+     $('#accountUsername').val(dbUser.user.username)
      $('#updateUsernameBtns').hide();
    }
- 
+
    function cancelCallSign() {
-     var myUser = <%- JSON.stringify(user) %>;
-     $('#accountCallSign').val(myUser.user.callSign)
+     $('#accountCallSign').val(dbUser.user.callSign)
      $('#updateCallSignBtns').hide();
    }
 
    function togglePanicBtnSound() {
      var socket = io();
-     socket.emit('update_panic_btn_sound', <%- JSON.stringify(user) %>)
+     socket.emit('update_panic_btn_sound', dbUser)
      socket.on('load_panic_btn_result', (res) => {
        $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
        $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function() {
@@ -1781,8 +1871,8 @@ function loadVehData(index) {
      })
    }
 
-   
-  
+
+
 </script>
 
 <!--  added for google translate --> 

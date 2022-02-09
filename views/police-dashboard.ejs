@@ -440,7 +440,7 @@
                                 <% } %>
                                   <div class="panel-body">
 
-                                    
+
                                                       <div class="text-align-center">
                                                         <button data-toggle="modal" href="#ticketModal"
                                                           class="btn btn-primary btn-md margin-bottom-05"
@@ -460,7 +460,14 @@
                                                         <!-- <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button> -->
                                                       </div>
                                                       <hr />
-
+                                                      <% if (civilians[i].civilian.deceased==true) { %>
+                                                        <span>
+                                                          <div class="alert alert-danger alert-dismissible"
+                                                            style="display:block">
+                                                            <strong>Deceased!</strong>
+                                                          </div>
+                                                        </span>
+                                                      <% } %>
                                                       <h5>
                                                         <ion-icon name="browsers-outline"></ion-icon> Drivers License
                                                       </h5>
@@ -1504,8 +1511,7 @@
                 <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
                 <div class="col-md-4">
                   <input type="hidden" name="route" value="police-dashboard">
-                  <button id="submitWarrantCreation" class="btn btn-primary"
-                    onclick="hideWarrantCreatePopover()">Submit</button>
+                  <button id="submitWarrantCreation" class="btn btn-primary">Submit</button>
                 </div>
               </div>
             </fieldset>
@@ -1732,6 +1738,22 @@
                 <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
                 <div class="col-md-4">
                   <h5 id="updatedAtCallDetail"></h5>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Classifier:</label>
+                <div class="col-md-4">
+                  <h5 id="classifier"></h5>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Engines:</label>
+                <div class="col-md-4">
+                  <h5 id="engines"></h5>
                 </div>
               </div>
 
@@ -2066,8 +2088,7 @@
     var socket=io();
 
     socket.on('updated_status', res => {
-      var myUser= <%-JSON.stringify(user)%>;
-      if (res.userID==myUser._id) {
+      if (res.userID==dbUser._id) {
         if (res.onDuty&&res.updateDuty) {
           $('#'+res.userID+"-duty").attr('style', 'background-color: #5cb85c !important');
           $('#'+res.userID+"-duty-text").text(' On Duty');
@@ -2087,8 +2108,7 @@
     })
 
     socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq) => {
-      var myUser= <%-JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity==origReq.activeCommunity) {
+      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
         //load the signal 100 status to the page
         if (signal100Resp) {
           $('#signal-100-banner').removeClass('hide').addClass('show')
@@ -2129,8 +2149,7 @@
     })
 
     socket.on('panic_button_updated', (map, origReq) => {
-      var myUser= <%-JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity==origReq.activeCommunity) {
+      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound.wav');
@@ -2169,8 +2188,7 @@
     })
 
     socket.on('signal_100_button_updated', (origReq) => {
-      var myUser= <%-JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity==origReq.activeCommunity) {
+      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep.wav');
@@ -2181,8 +2199,7 @@
     })
 
     socket.on('hold_traffic_button_updated', (origReq) => {
-      var myUser= <%-JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity==origReq.activeCommunity) {
+      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound.wav');
@@ -2193,15 +2210,13 @@
     })
 
     socket.on('clear_signal_100_updated', activeCommunity => {
-      var myUser= <%-JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity==activeCommunity) {
+      if (dbUser.user.activeCommunity==activeCommunity) {
         $('#signal-100-banner').removeClass('show').addClass('hide')
       }
     })
 
     socket.on('clear_hold_traffic_updated', activeCommunity => {
-      var myUser= <%-JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity==activeCommunity) {
+      if (dbUser.user.activeCommunity==activeCommunity) {
         $('#hold-traffic-banner').removeClass('show').addClass('hide')
       }
     })
@@ -2219,8 +2234,7 @@
     })
 
     socket.on('created_bolo', res => {
-      var myUser= <%-JSON.stringify(user)%>;
-      if (res.bolo.communityID==myUser.user.activeCommunity) {
+      if (res.bolo.communityID==dbUser.user.activeCommunity) {
         $('#active-bolo-container').append(
           '<a id="'+res._id+
           '-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails(\''+res._id+
@@ -2238,9 +2252,8 @@
     })
 
     socket.on('created_call', res => {
-      var myUser= <%-JSON.stringify(user)%>;
-      if (res.call.communityID==myUser.user.activeCommunity) {
-        if (res.call.assignedOfficers.includes(myUser._id)==true) {
+      if (res.call.communityID==dbUser.user.activeCommunity) {
+        if (res.call.assignedOfficers.includes(dbUser._id)==true) {
           $('#assigned-call-container').append(
             `<a id="${res._id}" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails('${res._id}')">
               <div class="alert alert-success alert-dismissible show" role="alert">
@@ -2256,8 +2269,7 @@
     })
 
     socket.on('cleared_call', res => {
-      var myUser= <%-JSON.stringify(user)%>;
-      if (res.communityID==myUser.user.activeCommunity) {
+      if (res.communityID==dbUser.user.activeCommunity) {
         $('#'+res.callID+'-row').remove().fadeOut(5, function () {
           $(this).remove();
         })
@@ -2267,6 +2279,13 @@
   }); // end of sockets
 </script>
 <script type="text/javascript">
+  // all global router vars declared here to reduce duplication
+  var dbUser = <%-JSON.stringify(user)%>;
+  var dbVehicles = <%-JSON.stringify(vehicles)%>;
+  var dbCivilians = <%-JSON.stringify(civilians)%>;
+  var dbFirearms = <%-JSON.stringify(firearms)%>;
+  var dbTickets = <%-JSON.stringify(tickets)%>;
+
   $.delete=function (url, data, callback, type) {
     if ($.isFunction(data)) {
       type=type||callback,
@@ -2285,9 +2304,8 @@
 
   $(document).ready(function () {
     // displays the Update Username and Cancel buttons for updating the username
-    var myUser= <%-JSON.stringify(user)%>;
     $('#accountUsername').on('keyup', function (e) {
-      if (e.target.value!=myUser.user.username&&e.target.value!='') {
+      if (e.target.value!=dbUser.user.username&&e.target.value!='') {
         $('#updateUsernameBtns').show();
       } else {
         $('#updateUsernameBtns').hide();
@@ -2295,28 +2313,25 @@
     })
 
     $('#accountCallSign').on('keyup', function (e) {
-      if (e.target.value!=myUser.user.callSign&&e.target.value!='') {
+      if (e.target.value!=dbUser.user.callSign&&e.target.value!='') {
         $('#updateCallSignBtns').show();
       } else {
         $('#updateCallSignBtns').hide();
       }
     })
 
-    $('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
+    $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
 
-    let allVehicles= <%-JSON.stringify(vehicles)%>;
-    let allCivilians= <%-JSON.stringify(civilians)%>;
-    let allFirearms= <%-JSON.stringify(firearms)%>;
-    if (allVehicles!=null) {
+    if (dbVehicles!=null) {
       $('#plateDetails').show()
       $('#plateDatabaseModal').modal('toggle');
       searchPlate()
-    } else if (allCivilians!=null) {
+    } else if (dbCivilians!=null) {
       $('#civDetails').show()
       $('#nameDatabaseModal').modal('toggle');
       searchNames()
-      populateDriversLicense(allCivilians)
-    } else if (allFirearms!=null) {
+      populateDriversLicense(dbCivilians)
+    } else if (dbFirearms!=null) {
       $('#firearmDetails').show()
       $('#firearmDatabaseModal').modal('toggle');
       searchFirearm()
@@ -2382,7 +2397,7 @@
 
     //CURRENT_VERSION
     //the current version in production
-    let CURRENT_VERSION = "v2.29.0"
+    let CURRENT_VERSION = "v2.31.0"
     let MINOR_VERSION = CURRENT_VERSION.split(".")[1]
 
     //check for notification cookie
@@ -2413,11 +2428,11 @@
         $('#notification-count').text(versionDifference)
       }
     }
-    
+
 
     //load gravatar image
   var MD5 = function(d){var r = M(V(Y(X(d),8*d.length)));return r.toLowerCase()};function M(d){for(var _,m="0123456789ABCDEF",f="",r=0;r<d.length;r++)_=d.charCodeAt(r),f+=m.charAt(_>>>4&15)+m.charAt(15&_);return f}function X(d){for(var _=Array(d.length>>2),m=0;m<_.length;m++)_[m]=0;for(m=0;m<8*d.length;m+=8)_[m>>5]|=(255&d.charCodeAt(m/8))<<m%32;return _}function V(d){for(var _="",m=0;m<32*d.length;m+=8)_+=String.fromCharCode(d[m>>5]>>>m%32&255);return _}function Y(d,_){d[_>>5]|=128<<_%32,d[14+(_+64>>>9<<4)]=_;for(var m=1732584193,f=-271733879,r=-1732584194,i=271733878,n=0;n<d.length;n+=16){var h=m,t=f,g=r,e=i;f=md5_ii(f=md5_ii(f=md5_ii(f=md5_ii(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_ff(f=md5_ff(f=md5_ff(f=md5_ff(f,r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+0],7,-680876936),f,r,d[n+1],12,-389564586),m,f,d[n+2],17,606105819),i,m,d[n+3],22,-1044525330),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+4],7,-176418897),f,r,d[n+5],12,1200080426),m,f,d[n+6],17,-1473231341),i,m,d[n+7],22,-45705983),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+8],7,1770035416),f,r,d[n+9],12,-1958414417),m,f,d[n+10],17,-42063),i,m,d[n+11],22,-1990404162),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+12],7,1804603682),f,r,d[n+13],12,-40341101),m,f,d[n+14],17,-1502002290),i,m,d[n+15],22,1236535329),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+1],5,-165796510),f,r,d[n+6],9,-1069501632),m,f,d[n+11],14,643717713),i,m,d[n+0],20,-373897302),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+5],5,-701558691),f,r,d[n+10],9,38016083),m,f,d[n+15],14,-660478335),i,m,d[n+4],20,-405537848),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+9],5,568446438),f,r,d[n+14],9,-1019803690),m,f,d[n+3],14,-187363961),i,m,d[n+8],20,1163531501),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+13],5,-1444681467),f,r,d[n+2],9,-51403784),m,f,d[n+7],14,1735328473),i,m,d[n+12],20,-1926607734),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+5],4,-378558),f,r,d[n+8],11,-2022574463),m,f,d[n+11],16,1839030562),i,m,d[n+14],23,-35309556),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+1],4,-1530992060),f,r,d[n+4],11,1272893353),m,f,d[n+7],16,-155497632),i,m,d[n+10],23,-1094730640),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+13],4,681279174),f,r,d[n+0],11,-358537222),m,f,d[n+3],16,-722521979),i,m,d[n+6],23,76029189),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+9],4,-640364487),f,r,d[n+12],11,-421815835),m,f,d[n+15],16,530742520),i,m,d[n+2],23,-995338651),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+0],6,-198630844),f,r,d[n+7],10,1126891415),m,f,d[n+14],15,-1416354905),i,m,d[n+5],21,-57434055),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+12],6,1700485571),f,r,d[n+3],10,-1894986606),m,f,d[n+10],15,-1051523),i,m,d[n+1],21,-2054922799),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+8],6,1873313359),f,r,d[n+15],10,-30611744),m,f,d[n+6],15,-1560198380),i,m,d[n+13],21,1309151649),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+4],6,-145523070),f,r,d[n+11],10,-1120210379),m,f,d[n+2],15,718787259),i,m,d[n+9],21,-343485551),m=safe_add(m,h),f=safe_add(f,t),r=safe_add(r,g),i=safe_add(i,e)}return Array(m,f,r,i)}function md5_cmn(d,_,m,f,r,i){return safe_add(bit_rol(safe_add(safe_add(_,d),safe_add(f,i)),r),m)}function md5_ff(d,_,m,f,r,i,n){return md5_cmn(_&m|~_&f,d,_,r,i,n)}function md5_gg(d,_,m,f,r,i,n){return md5_cmn(_&f|m&~f,d,_,r,i,n)}function md5_hh(d,_,m,f,r,i,n){return md5_cmn(_^m^f,d,_,r,i,n)}function md5_ii(d,_,m,f,r,i,n){return md5_cmn(m^(_|~f),d,_,r,i,n)}function safe_add(d,_){var m=(65535&d)+(65535&_);return(d>>16)+(_>>16)+(m>>16)<<16|65535&m}function bit_rol(d,_){return d<<_|d>>>32-_}
-  let hash = MD5(myUser.user.email.trim().toLowerCase())
+  let hash = MD5(dbUser.user.email.trim().toLowerCase())
   $('.profile-picture').css("background-image", `url(https://www.gravatar.com/avatar/${hash}?s=200)`)
 
   }); /* End of document.ready */
@@ -2435,11 +2450,10 @@
 
   window.onload=function () {
     var socket=io();
-    var myUser= <%-JSON.stringify(user)%>;
     var myReq={
-      userID: myUser._id,
-      userUsername: myUser.user.username,
-      activeCommunity: myUser.user.activeCommunity
+      userID: dbUser._id,
+      userUsername: dbUser.user.username,
+      activeCommunity: dbUser.user.activeCommunity
     }
     socket.emit('load_panic_statuses', myReq)
   }
@@ -2449,16 +2463,15 @@
     $('.reg-arm').remove();
     $(`#registered-firearms`).show()
 
-    var myUser = <%-JSON.stringify(user)%>;
     var socket=io();
 
     myReq={
       regOwnerID: registeredOwnerID,
-      communityID: myUser.user.activeCommunity
+      communityID: dbUser.user.activeCommunity
     }
     socket.emit('get_reg_arm', myReq)
     socket.on('load_reg_arm_result', res => {
-      
+
       if (res.length==0) {
         $('#registered-firearms').append(
           `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`+
@@ -2497,13 +2510,12 @@
     $('.reg-car').remove();
     $(`#registered-cars`).show()
 
-    var myUser= <%-JSON.stringify(user)%>;
     var socket=io();
 
     myReq={
       regOwner: registeredOwner,
       regOwnerID: registeredOwnerID, //new ID established 1/30/2021 so will only work on vehicles after this date
-      communityID: myUser.user.activeCommunity
+      communityID: dbUser.user.activeCommunity
     }
     socket.emit('get_reg_veh', myReq)
     socket.on('load_reg_veh_result', res => {
@@ -2569,7 +2581,6 @@
     $('.active-reg').remove();
     $(`#active-warrants`).show()
 
-    var myUser= <%-JSON.stringify(user)%>;
     var socket=io();
 
     myReq={
@@ -2624,11 +2635,10 @@
       x.style.display='block';
     } else { }
 
-    let myVar= <%-JSON.stringify(vehicles)%>;
-    if (myVar===null) {
+    if (dbVehicles===null) {
       return
     }
-    if (myVar.length===0) {
+    if (dbVehicles.length===0) {
       $('#plateDetails').removeAttr("style").hide()
       $('#vehicleNotFound').show()
       return
@@ -2641,11 +2651,10 @@
       x.style.display='block';
     } else { }
 
-    let myVar= <%-JSON.stringify(firearms)%>;
-    if (myVar===null) {
+    if (dbFirearms===null) {
       return
     }
-    if (myVar.length===0) {
+    if (dbFirearms.length===0) {
       $('#firearmDetails').removeAttr("style").hide()
       $('#firearmNotFound').show()
       return
@@ -2657,12 +2666,10 @@
     if (x.style.display==='none') {
       x.style.display='block';
     } else { }
-    let myCiv= <%-JSON.stringify(civilians)%>;
-    let myTicket= <%-JSON.stringify(tickets)%>;
-    if (myCiv===null||myTicket===null) {
+    if (dbCivilians===null||dbTickets===null) {
       hideCivPopover();
       return
-    } else if (myCiv.length===0) {
+    } else if (dbCivilians.length===0) {
       let civDetails=document.getElementById('civDetails')
       civDetails.style.display='none'
       let civNotFoundMsg=document.getElementById('civilianNotFound')
@@ -2767,7 +2774,7 @@
     //Super gross date calculation, thx javascript
     let date=new Date()
     let yyyy=date.getFullYear().toString();
-    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based         
+    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based
     let dd=date.getDate().toString();
     $('#warrant-date').val(yyyy+'-'+(mm[1]? mm:"0"+mm[0])+'-'+(dd[1]? dd:"0"+dd[0]))
     $('#warrant-time').val(new Date().toLocaleTimeString('en-GB', {
@@ -2784,7 +2791,7 @@
     //Super gross date calculation, thx javascript
     let date=new Date()
     let yyyy=date.getFullYear().toString();
-    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based         
+    let mm=(date.getMonth()+1).toString(); // getMonth() is zero-based
     let dd=date.getDate().toString();
     $('#warrant-clear-date').val(yyyy+'-'+(mm[1]? mm:"0"+mm[0])+'-'+(dd[1]? dd:"0"+dd[0]))
     $('#warrant-clear-time').val(new Date().toLocaleTimeString('en-GB', {
@@ -2799,27 +2806,24 @@
   }
 
   function fillAccountDetails() {
-    var myUser= <%-JSON.stringify(user)%>;
-    $('#accountEmail').val(myUser.user.email)
-    $('#accountUsername').val(myUser.user.username)
-    $('#accountCallSign').val(myUser.user.callSign)
+    $('#accountEmail').val(dbUser.user.email)
+    $('#accountUsername').val(dbUser.user.username)
+    $('#accountCallSign').val(dbUser.user.callSign)
   }
 
   function cancelUsername() {
-    var myUser= <%-JSON.stringify(user)%>;
-    $('#accountUsername').val(myUser.user.username)
+    $('#accountUsername').val(dbUser.user.username)
     $('#updateUsernameBtns').hide();
   }
 
   function cancelCallSign() {
-    var myUser= <%- JSON.stringify(user)%>;
-    $('#accountCallSign').val(myUser.user.callSign)
+    $('#accountCallSign').val(dbUser.user.callSign)
     $('#updateCallSignBtns').hide();
   }
 
   function populateBoloDetails(id) {
     var socket=io();
-    socket.emit('load_police_bolos', <%-JSON.stringify(user)%>)
+    socket.emit('load_police_bolos', dbUser)
     socket.on('load_police_bolos_result', (res) => {
       for (const i in res) {
         if (res[i]._id!=id) {
@@ -2861,6 +2865,30 @@
       $('#createdAtCallDetail').empty().text(createdDate.toLocaleString())
       $('#descriptionCallDetail').empty().text(res.call.shortDescription)
       $('#callNotesDetail').empty().text(res.call.callNotes)
+      let selectedClassifiers = ""
+      for (let i=0; i<res.call.classifier.length; i++) {
+        selectedClassifiers += res.call.classifier[i] + ", "
+      }
+      $('#classifier').empty().text(selectedClassifiers)
+    })
+  }
+
+  function populateCallDetails(callID) {
+    var socket=io();
+    socket.emit('get_call_by_id', callID)
+    socket.on('load_call_by_id_result', (res) => {
+      //debug log
+      //console.log(res)
+      var createdDate=new Date(res.call.createdAt)
+      if (res.call.updatedAt===""||res.call.updatedAt===undefined||res.call.updatedAt==='undefined') {
+        $('#updatedAtCallDetail').empty().text("N/A")
+      } else {
+        var updatedDate=new Date(res.call.updatedAt)
+        $('#updatedAtCallDetail').empty().text(updatedDate.toLocaleString())
+      }
+      $('#createdAtCallDetail').empty().text(createdDate.toLocaleString())
+      $('#descriptionCallDetail').empty().text(res.call.shortDescription)
+      $('#callNotesDetail').empty().text(res.call.callNotes)
     })
   }
 
@@ -2869,7 +2897,6 @@
   }
 
   function updateStatus(status) {
-    var myUser= <%-JSON.stringify(user)%>;
     var socket=io();
     var onDuty=null
     var updateDuty=false
@@ -2883,7 +2910,7 @@
       status='Offline'
     }
     myReq={
-      userID: myUser._id,
+      userID: dbUser._id,
       status: status,
       setBy: 'Self',
       onDuty: onDuty,
@@ -2897,12 +2924,11 @@
 
   function panicButtonPressed() {
     if (panicButtonEnabled) {
-      var myUser= <%-JSON.stringify(user)%>;
       var socket=io();
       myReq={
-        userID: myUser._id,
-        userUsername: myUser.user.username,
-        activeCommunity: myUser.user.activeCommunity
+        userID: dbUser._id,
+        userUsername: dbUser.user.username,
+        activeCommunity: dbUser.user.activeCommunity
       }
       if ($('#panic-button-check-sound').prop('checked')) {
         var audioElement=document.createElement('audio');
@@ -2937,16 +2963,15 @@
 
   $('#createBolo').one('click', function () {
     var socket=io();
-    myUser= <%-JSON.stringify(user)%>
       $('#create-bolo-form').submit(function (e) {
         e.preventDefault(); //prevents page from reloading
         var myCreateReq={
           boloType: $('#type option:selected').text(),
           location: $('#location').val(),
-          communityID: myUser.user.activeCommunity,
+          communityID: dbUser.user.activeCommunity,
           description: $('#description').val(),
-          reportingOfficerUsername: myUser.user.username,
-          reportingOfficerID: myUser._id
+          reportingOfficerUsername: dbUser.user.username,
+          reportingOfficerID: dbUser._id
         }
         socket.emit('create_bolo', myCreateReq)
         return true;
@@ -2977,13 +3002,12 @@
   })
 
   $('#clearPanic').one('click', function () {
-    myUser= <%-JSON.stringify(user)%>
       var socket=io();
     $('#clear-panic-form').submit(function (e) {
       e.preventDefault(); //prevents page from reloading
       var myReq={
         userID: $('#panic-id').val(),
-        communityID: myUser.user.activeCommunity
+        communityID: dbUser.user.activeCommunity
       }
       socket.emit('clear_panic', myReq)
       panicButtonEnabled=true
@@ -3048,7 +3072,7 @@
 
   function togglePanicBtnSound() {
     var socket=io();
-    socket.emit('update_panic_btn_sound', <%-JSON.stringify(user)%>)
+    socket.emit('update_panic_btn_sound', dbUser)
     socket.on('load_panic_btn_result', (res) => {
       $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
       $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function () {
@@ -3067,7 +3091,7 @@
       var expMonth=(createdDate.getMonth())+1
       var expYear=(createdDate.getFullYear())+10
 
-      // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional, 
+      // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional,
       // we will do a check to see if its undefined or empty and if so just set it to an
       // empty string (or false for booleans), otherwise set it to the value from the db.
       var gender=(civ[i].civilian.gender==undefined||civ[i].civilian.gender=='')? '':civ[i].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
@@ -3223,7 +3247,7 @@
       }
       return document.location.href=`name-search?firstName=&lastName=&activeCommunityID=${activeCommunityID}`
     }
-    //check to see if we are in a community, if we are not, 
+    //check to see if we are in a community, if we are not,
     //then we need to use the DOB to do the name search
     if (activeCommunityID.length==0) {
       let dob=nameAndDOB[1].split(" ")
@@ -3236,7 +3260,7 @@
   }
 
   function markAsRead() {
-    document.cookie ="notification-symbol=v2.29.0";
+    document.cookie ="notification-symbol=v2.31.0";
     $('#notification-symbol').removeClass('notif');
     $('#notification-count').text('');
   }
@@ -3263,7 +3287,7 @@
   }
 </script>
 
-<!--  added for google translate --> 
+<!--  added for google translate -->
 <script type="text/javascript">
 function googleTranslateElementInit() {
   new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');

@@ -606,6 +606,10 @@ img::-moz-selection {
     margin-bottom: 2rem;
 }
 
+.margin-left-neg-2 {
+    margin-left: -2em;
+}
+
 .details {
     position: absolute;
     margin-left: -19rem;
