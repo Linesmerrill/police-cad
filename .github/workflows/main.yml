@@ -1,0 +1,73 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Deploy every 12 hours
+
+# Controls when the workflow will run
+on:
+  schedule:
+    # Run at 00:00 and 12:00 every day
+    - cron: "0 */12 * * *"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Runs a single command using the runners shell
+      - name: Deploy to Heroku
+        # You may pin to the exact commit or the version.
+        # uses: AkhileshNS/heroku-deploy@79ef2ae4ff9b897010907016b268fd0f88561820
+        uses: AkhileshNS/heroku-deploy@v3.12.12
+        with:
+          # This will be used for authentication. You can find it in your heroku homepage account settings
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          # Email that you use with heroku
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          # The appname to use for deploying/updating
+          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
+          # An optional buildpack to use when creating the heroku application
+          #buildpack: # optional
+          # The branch that you would like to deploy to Heroku
+          branch: master
+          # Set this to true if you don't want to use --force when switching branches
+          #dontuseforce: # optional, default is false
+          # Set this to true if you don't want to automatically create the Heroku app
+          #dontautocreate: # optional, default is false
+          # Will deploy using Dockerfile in project root.
+          #usedocker: # optional, default is false
+          # Type of heroku process (web, worker, etc). This option only makes sense when usedocker enabled
+          #docker_heroku_process_type: # optional, default is web
+          # A list of args to pass into the Docker build. This option only makes sense when usedocker enabled
+          #docker_build_args: # optional
+          # Set if your app is located in a subdirectory.
+          #appdir: # optional, default is 
+          # A URL to which a healthcheck is performed (checks for 200 request)
+          #healthcheck: # optional, default is 
+          # Value to check for when conducting healthcheck request
+          #checkstring: # optional, default is 
+          # Time (in seconds) to wait before performing healthcheck
+          #delay: # optional, default is 0
+          # Contents of the Procfile to save and deploy
+          #procfile: # optional, default is 
+          # When set to true this will attempt to rollback to the previous release if the healthcheck fails
+          #rollbackonhealthcheckfailed: # optional, default is false
+          # Path to an localized env file
+          #env_file: # optional, default is 
+          # Set to true if you want the action to just login to Heroku and nothing else
+          #justlogin: # optional, default is false
+          # The region in which you would like to deploy a server
+          #region: # optional, default is 
+          # Set stack of your heroku app if you need to change.Default : heroku-20
+          #stack: # optional, default is 
+          # If deploying to an organization, then specify the name of the team or organization here
+          #team: # optional, default is 

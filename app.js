@@ -1,7 +1,6 @@
 var dotenv = require('dotenv');
 var express = require('express');
 var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
 var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
 var mongoose = require('mongoose');
@@ -46,11 +45,11 @@ const limiter = rateLimit({
 // Use cookie parser.
 app.use(cookieParser());
 
-app.use(bodyParser.urlencoded({
+app.use(express.urlencoded({
 	extended: false,
 }));
 
-app.use(bodyParser({
+app.use(express.json({
 	uploadDir: '/images'
 }));
 

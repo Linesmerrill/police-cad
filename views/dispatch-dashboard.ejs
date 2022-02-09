@@ -256,17 +256,7 @@
                               </table>
 
                               <hr style="width: 88%;max-width: 100rem;">
-                              <!-- Fire/Ems list -->
-                              <h4 id="fireEms-list">Fire/EMS List: <a data-toggle="modal" href="#fireEMSHelpModal"><i class="far fa-question-circle"></i></a> </h4>
-                              <table id="fireEmsListTable" class="table table-hover table-bordered">
-                                <thead>
-                                  <tr>
-                                    <th>Engine #</th>
-                                    <th>Model</th>
-                                    <th>Status</th>
-                                  </tr>
-                                </thead>
-                              </table>
+                              
                             <%}%>
           </div>
 
@@ -288,6 +278,22 @@
         </div>
 
         <div class="container">
+          <div class="col-md-12 col-md-offset-0.75 margin-top-2 margin-bottom-2">
+            <!-- Fire/Ems list -->
+            <h4 id="fireEms-list">Fire/EMS List: <a data-toggle="modal" href="#fireEMSHelpModal"><i class="far fa-question-circle"></i></a> </h4>
+            <table id="fireEmsListTable" class="table table-hover table-bordered">
+              <thead>
+                <tr>
+                  <th>Engine #</th>
+                  <th>Model</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+
+          <hr style="width: 88%;max-width: 100rem;">
+
           <div id="active-bolo-container" class="col-md-12 col-md-offset-0.75 margin-top-2">
             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
               <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Active BOLOs:</span> <button
@@ -1581,8 +1587,7 @@
                   <label class="col-md-4 control-label" for="submitWarrantCreation"></label>
                   <div class="col-md-4">
                     <input type="hidden" name="route" value="dispatch-dashboard">
-                    <button id="submitWarrantCreation" class="btn btn-primary"
-                      onclick="hideWarrantCreatePopover()">Submit</button>
+                    <button id="submitWarrantCreation" class="btn btn-primary">Submit</button>
                   </div>
                 </div>
             </fieldset>
@@ -2473,8 +2478,7 @@
     })
 
     socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq) => {
-      var myUser= <%- JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity==origReq.activeCommunity) {
+      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
         //load the signal 100 status to the page
         if (signal100Resp) {
           $('#signal-100-banner').removeClass('hide').addClass('show')
@@ -2512,8 +2516,7 @@
     })
 
     socket.on('panic_button_updated', (map, origReq) => {
-      var myUser= <%- JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity==origReq.activeCommunity) {
+      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound.wav');
@@ -2549,8 +2552,7 @@
     })
 
     socket.on('signal_100_button_updated', (origReq) => {
-      var myUser= <%- JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity==origReq.activeCommunity) {
+      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep.wav');
@@ -2561,8 +2563,7 @@
     })
 
     socket.on('hold_traffic_button_updated', (origReq) => {
-      var myUser= <%- JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity==origReq.activeCommunity) {
+      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound.wav');
@@ -2573,15 +2574,13 @@
     })
 
     socket.on('clear_signal_100_updated', activeCommunity => {
-      var myUser= <%- JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity==activeCommunity) {
+      if (dbUser.user.activeCommunity==activeCommunity) {
         $('#signal-100-banner').removeClass('show').addClass('hide')
       }
     })
 
     socket.on('clear_hold_traffic_updated', activeCommunity => {
-      var myUser= <%- JSON.stringify(user)%>;
-      if (myUser.user.activeCommunity==activeCommunity) {
+      if (dbUser.user.activeCommunity==activeCommunity) {
         $('#hold-traffic-banner').removeClass('show').addClass('hide')
       }
     })
@@ -2599,8 +2598,7 @@
     })
 
     socket.on('created_bolo', res => {
-      var myUser= <%- JSON.stringify(user)%>;
-      if (res.bolo.communityID==myUser.user.activeCommunity) {
+      if (res.bolo.communityID==dbUser.user.activeCommunity) {
         var containsEmptyRow=$('#boloTable tr>td').hasClass('dataTables_empty');
         if (containsEmptyRow) {
           $('#boloTable tbody>tr:first').fadeOut(1, function () {
@@ -2620,10 +2618,7 @@
 
     socket.on('created_call', res => {
       // console.log("returned created call socket: ", res.call)
-      var myUser= <%- JSON.stringify(user)%>;
-      var myCommUsers= <%- JSON.stringify(commUsers)%>;
-      let emsVehicles = <%-JSON.stringify(dbEmsEngines)%>;
-      if (res.call.communityID==myUser.user.activeCommunity) {
+      if (res.call.communityID==dbUser.user.activeCommunity) {
         var containsEmptyRow=$('#callTable tr>td').hasClass('dataTables_empty');
         if (containsEmptyRow) {
           $('#callTable tbody>tr:first').fadeOut(1, function () {
@@ -2633,12 +2628,12 @@
         var assignedUnits=""
         if (res.call.assignedOfficers!=null&&res.call.assignedOfficers.length>0) {
           for (var j=0; j<res.call.assignedOfficers.length; j++) {
-            for (var k=0; k<myCommUsers.length; k++) {
-              if (myCommUsers[k]._id==res.call.assignedOfficers[j]) {
-                if (myCommUsers[k].user.callSign==undefined) {
-                  myCommUsers[k].user.callSign=""
+            for (var k=0; k<dbCommUsers.length; k++) {
+              if (dbCommUsers[k]._id==res.call.assignedOfficers[j]) {
+                if (dbCommUsers[k].user.callSign==undefined) {
+                  dbCommUsers[k].user.callSign=""
                 }
-                assignedUnits+='<span class="badge badge-secondary">'+myCommUsers[k].user.username+' ('+myCommUsers[k].user.callSign+')'+'</span> '
+                assignedUnits+='<span class="badge badge-secondary">'+dbCommUsers[k].user.username+' ('+dbCommUsers[k].user.callSign+')'+'</span> '
               }
             }
           }
@@ -2646,9 +2641,9 @@
 
         if (res.call.assignedFireEms != null && res.call.assignedFireEms.length> 0) {
           for(let j=0; j<res.call.assignedFireEms.length; j++) {
-            for(let k=0; k<emsVehicles.length; k++) {
-              if (emsVehicles[k]._id==res.call.assignedFireEms[j]) {
-                assignedUnits+=`<span class="badge badge-secondary">Engine #${emsVehicles[k].emsVehicle.engineNumber} | (${emsVehicles[k].emsVehicle.model})</span>`
+            for(let k=0; k<dbEmsVehicles.length; k++) {
+              if (dbEmsVehicles[k]._id==res.call.assignedFireEms[j]) {
+                assignedUnits+=`<span class="badge badge-secondary">Engine #${dbEmsVehicles[k].emsVehicle.engineNumber} | (${dbEmsVehicles[k].emsVehicle.model})</span>`
               }
             }
           }
@@ -2670,6 +2665,16 @@
   });
 </script>
 <script type="text/javascript">
+
+  // Router variables should be used over allocating per use
+  var dbUser= <%- JSON.stringify(user)%>;
+  var dbCommUsers = <%- JSON.stringify(commUsers)%>;
+  var dbEmsVehicles = <%-JSON.stringify(dbEmsEngines)%>;
+  var dbVehicles= <%-JSON.stringify(vehicles)%>;
+  var dbCivilians= <%-JSON.stringify(civilians)%>;
+  var dbFirearms= <%-JSON.stringify(firearms)%>;
+  var dbTickets = <%-JSON.stringify(tickets)%>;
+
   $(document).ready(function () {
     $('#officerListTable').DataTable({
       "bLengthChange": false,
@@ -2690,12 +2695,10 @@
     //load the officer list table, we do this because we want to filter out any
     //officers that are not currently on duty. DataTables is easier to leverage
     //than relying on the html above
-    var myUser= <%- JSON.stringify(user)%>;
-    if (myUser.user.activeCommunity !== '' && myUser.user.activeCommunity !== undefined){
-    var myCommUsers= <%- JSON.stringify(commUsers)%>;
+    if (dbUser.user.activeCommunity !== '' && dbUser.user.activeCommunity !== undefined){
     let datatable = $('#officerListTable').DataTable();
         datatable.clear();
-        myCommUsers.forEach(val => {
+        dbCommUsers.forEach(val => {
           officerTable = ""
           if (!val.user.dispatchOnDuty) {
             return;
@@ -2727,10 +2730,9 @@
         })
         datatable.draw();
 
-    let emsVehicles = <%-JSON.stringify(dbEmsEngines)%>;
     let emsDataTable = $('#fireEmsListTable').DataTable();
       emsDataTable.clear();
-      emsVehicles.forEach(val => {
+      dbEmsVehicles.forEach(val => {
         emsTable = ""
         if (val.emsVehicle.engineNumber == undefined) {
           val.emsVehicle.engineNumber = ""
@@ -2777,9 +2779,8 @@
     }
 
     // displays the Update Username and Cancel buttons for updating the username
-    var myUser= <%- JSON.stringify(user)%>;
     $('#accountUsername').on('keyup', function (e) {
-      if (e.target.value!=myUser.user.username&&e.target.value!='') {
+      if (e.target.value!=dbUser.user.username&&e.target.value!='') {
         $('#updateUsernameBtns').show();
       } else {
         $('#updateUsernameBtns').hide();
@@ -2787,28 +2788,26 @@
     })
 
     $('#accountCallSign').on('keyup', function (e) {
-      if (e.target.value!=myUser.user.callSign&&e.target.value!='') {
+      if (e.target.value!=dbUser.user.callSign&&e.target.value!='') {
         $('#updateCallSignBtns').show();
       } else {
         $('#updateCallSignBtns').hide();
       }
     })
 
-    $('#panic-button-check-sound').prop("checked", myUser.user.panicButtonSound)
+    $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
 
-    let allVehicles= <%-JSON.stringify(vehicles)%>;
-    let allCivilians= <%-JSON.stringify(civilians)%>;
-    let allFirearms= <%-JSON.stringify(firearms)%>;
-    if (allVehicles!=null) {
+    
+    if (dbVehicles!=null) {
       $('#plateDetails').show()
       $('#plateDatabaseModal').modal('toggle');
       searchPlate()
-    } else if (allCivilians!=null) {
+    } else if (dbCivilians!=null) {
       $('#civDetails').show()
       $('#nameDatabaseModal').modal('toggle');
       searchNames()
-      populateDriversLicense(allCivilians)
-    } else if (allFirearms!=null) {
+      populateDriversLicense(dbCivilians)
+    } else if (dbFirearms!=null) {
       $('#firearmDetails').show()
       $('#firearmDatabaseModal').modal('toggle');
       searchFirearm()
@@ -2906,7 +2905,7 @@
 
     //load gravatar image
   var MD5 = function(d){var r = M(V(Y(X(d),8*d.length)));return r.toLowerCase()};function M(d){for(var _,m="0123456789ABCDEF",f="",r=0;r<d.length;r++)_=d.charCodeAt(r),f+=m.charAt(_>>>4&15)+m.charAt(15&_);return f}function X(d){for(var _=Array(d.length>>2),m=0;m<_.length;m++)_[m]=0;for(m=0;m<8*d.length;m+=8)_[m>>5]|=(255&d.charCodeAt(m/8))<<m%32;return _}function V(d){for(var _="",m=0;m<32*d.length;m+=8)_+=String.fromCharCode(d[m>>5]>>>m%32&255);return _}function Y(d,_){d[_>>5]|=128<<_%32,d[14+(_+64>>>9<<4)]=_;for(var m=1732584193,f=-271733879,r=-1732584194,i=271733878,n=0;n<d.length;n+=16){var h=m,t=f,g=r,e=i;f=md5_ii(f=md5_ii(f=md5_ii(f=md5_ii(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_hh(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_gg(f=md5_ff(f=md5_ff(f=md5_ff(f=md5_ff(f,r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+0],7,-680876936),f,r,d[n+1],12,-389564586),m,f,d[n+2],17,606105819),i,m,d[n+3],22,-1044525330),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+4],7,-176418897),f,r,d[n+5],12,1200080426),m,f,d[n+6],17,-1473231341),i,m,d[n+7],22,-45705983),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+8],7,1770035416),f,r,d[n+9],12,-1958414417),m,f,d[n+10],17,-42063),i,m,d[n+11],22,-1990404162),r=md5_ff(r,i=md5_ff(i,m=md5_ff(m,f,r,i,d[n+12],7,1804603682),f,r,d[n+13],12,-40341101),m,f,d[n+14],17,-1502002290),i,m,d[n+15],22,1236535329),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+1],5,-165796510),f,r,d[n+6],9,-1069501632),m,f,d[n+11],14,643717713),i,m,d[n+0],20,-373897302),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+5],5,-701558691),f,r,d[n+10],9,38016083),m,f,d[n+15],14,-660478335),i,m,d[n+4],20,-405537848),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+9],5,568446438),f,r,d[n+14],9,-1019803690),m,f,d[n+3],14,-187363961),i,m,d[n+8],20,1163531501),r=md5_gg(r,i=md5_gg(i,m=md5_gg(m,f,r,i,d[n+13],5,-1444681467),f,r,d[n+2],9,-51403784),m,f,d[n+7],14,1735328473),i,m,d[n+12],20,-1926607734),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+5],4,-378558),f,r,d[n+8],11,-2022574463),m,f,d[n+11],16,1839030562),i,m,d[n+14],23,-35309556),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+1],4,-1530992060),f,r,d[n+4],11,1272893353),m,f,d[n+7],16,-155497632),i,m,d[n+10],23,-1094730640),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+13],4,681279174),f,r,d[n+0],11,-358537222),m,f,d[n+3],16,-722521979),i,m,d[n+6],23,76029189),r=md5_hh(r,i=md5_hh(i,m=md5_hh(m,f,r,i,d[n+9],4,-640364487),f,r,d[n+12],11,-421815835),m,f,d[n+15],16,530742520),i,m,d[n+2],23,-995338651),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+0],6,-198630844),f,r,d[n+7],10,1126891415),m,f,d[n+14],15,-1416354905),i,m,d[n+5],21,-57434055),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+12],6,1700485571),f,r,d[n+3],10,-1894986606),m,f,d[n+10],15,-1051523),i,m,d[n+1],21,-2054922799),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+8],6,1873313359),f,r,d[n+15],10,-30611744),m,f,d[n+6],15,-1560198380),i,m,d[n+13],21,1309151649),r=md5_ii(r,i=md5_ii(i,m=md5_ii(m,f,r,i,d[n+4],6,-145523070),f,r,d[n+11],10,-1120210379),m,f,d[n+2],15,718787259),i,m,d[n+9],21,-343485551),m=safe_add(m,h),f=safe_add(f,t),r=safe_add(r,g),i=safe_add(i,e)}return Array(m,f,r,i)}function md5_cmn(d,_,m,f,r,i){return safe_add(bit_rol(safe_add(safe_add(_,d),safe_add(f,i)),r),m)}function md5_ff(d,_,m,f,r,i,n){return md5_cmn(_&m|~_&f,d,_,r,i,n)}function md5_gg(d,_,m,f,r,i,n){return md5_cmn(_&f|m&~f,d,_,r,i,n)}function md5_hh(d,_,m,f,r,i,n){return md5_cmn(_^m^f,d,_,r,i,n)}function md5_ii(d,_,m,f,r,i,n){return md5_cmn(m^(_|~f),d,_,r,i,n)}function safe_add(d,_){var m=(65535&d)+(65535&_);return(d>>16)+(_>>16)+(m>>16)<<16|65535&m}function bit_rol(d,_){return d<<_|d>>>32-_}
-  let hash = MD5(myUser.user.email.trim().toLowerCase())
+  let hash = MD5(dbUser.user.email.trim().toLowerCase())
   $('.profile-picture').css("background-image", `url(https://www.gravatar.com/avatar/${hash}?s=200)`)
 
   }); /* End of document.ready */
@@ -2923,13 +2922,12 @@
   });
 
   window.onload=function () {
-    var myUser= <%- JSON.stringify(user)%>;
-    if (myUser.user.activeCommunity!=null&&myUser.user.activeCommunity!=undefined) {
+    if (dbUser.user.activeCommunity!=null&&dbUser.user.activeCommunity!=undefined) {
       var socket=io();
       var myReq={
-        userID: myUser._id,
-        userUsername: myUser.user.username,
-        activeCommunity: myUser.user.activeCommunity
+        userID: dbUser._id,
+        userUsername: dbUser.user.username,
+        activeCommunity: dbUser.user.activeCommunity
       }
       socket.emit('load_panic_statuses', myReq)
     }
@@ -2940,12 +2938,11 @@
     $('.reg-arm').remove();
     $(`#registered-firearms`).show()
 
-    var myUser = <%-JSON.stringify(user)%>;
     var socket=io();
 
     myReq={
       regOwnerID: registeredOwnerID,
-      communityID: myUser.user.activeCommunity
+      communityID: dbUser.user.activeCommunity
     }
     socket.emit('get_reg_arm', myReq)
     socket.on('load_reg_arm_result', res => {
@@ -2988,13 +2985,12 @@
     $('.reg-car').remove();
     $(`#registered-cars`).show()
 
-    var myUser= <%-JSON.stringify(user)%>;
     var socket=io();
 
     myReq={
       regOwner: registeredOwner,
       regOwnerID: registeredOwnerID, //new ID established 1/30/2021 so will only work on vehicles after this date
-      communityID: myUser.user.activeCommunity
+      communityID: dbUser.user.activeCommunity
     }
     socket.emit('get_reg_veh', myReq)
     socket.on('load_reg_veh_result', res => {
@@ -3062,11 +3058,10 @@
       x.style.display='block';
     } else { }
 
-    let myVar= <%-JSON.stringify(vehicles)%>;
-    if (myVar===null) {
+    if (dbVehicles===null) {
       return
     }
-    if (myVar.length===0) {
+    if (dbVehicles.length===0) {
       $('#plateDetails').removeAttr("style").hide()
       $('#vehicleNotFound').show()
       return
@@ -3079,11 +3074,10 @@
       x.style.display='block';
     } else { }
 
-    let myVar= <%-JSON.stringify(firearms)%>;
-    if (myVar===null) {
+    if (dbFirearms===null) {
       return
     }
-    if (myVar.length===0) {
+    if (dbFirearms.length===0) {
       $('#firearmDetails').removeAttr("style").hide()
       $('#firearmNotFound').show()
       return
@@ -3095,12 +3089,10 @@
     if (x.style.display==='none') {
       x.style.display='block';
     } else { }
-    let myCiv= <%-JSON.stringify(civilians)%>;
-    let myTicket= <%-JSON.stringify(tickets)%>;
-    if (myCiv===null||myTicket===null) {
+    if (dbCivilians===null||dbTickets===null) {
       hideCivPopover();
       return
-    } else if (myCiv.length===0) {
+    } else if (dbCivilians.length===0) {
       let civDetails=document.getElementById('civDetails')
       civDetails.style.display='none'
       let civNotFoundMsg=document.getElementById('civilianNotFound')
@@ -3237,27 +3229,24 @@
   }
 
   function fillAccountDetails() {
-    var myUser= <%- JSON.stringify(user)%>;
-    $('#accountEmail').val(myUser.user.email)
-    $('#accountUsername').val(myUser.user.username)
-    $('#accountCallSign').val(myUser.user.callSign)
+    $('#accountEmail').val(dbUser.user.email)
+    $('#accountUsername').val(dbUser.user.username)
+    $('#accountCallSign').val(dbUser.user.callSign)
   }
 
   function cancelUsername() {
-    var myUser= <%- JSON.stringify(user)%>;
-    $('#accountUsername').val(myUser.user.username)
+    $('#accountUsername').val(dbUser.user.username)
     $('#updateUsernameBtns').hide();
   }
 
   function cancelCallSign() {
-    var myUser= <%- JSON.stringify(user)%>;
-    $('#accountCallSign').val(myUser.user.callSign)
+    $('#accountCallSign').val(dbUser.user.callSign)
     $('#updateCallSignBtns').hide();
   }
 
   function populateBoloDetails(id) {
     var socket=io();
-    socket.emit('load_dispatch_bolos', <%- JSON.stringify(user)%>)
+    socket.emit('load_dispatch_bolos', dbUser)
     socket.on('load_dispatch_bolos_result', (res) => {
       for (const i in res) {
         if (res[i]._id!=id) {
@@ -3285,7 +3274,7 @@
 
   function populateCallDetails(id) {
     var socket=io();
-    socket.emit('load_dispatch_calls', <%- JSON.stringify(user)%>)
+    socket.emit('load_dispatch_calls', dbUser)
     socket.on('load_dispatch_calls_result', (res) => {
       for (const i in res) {
         if (res[i]._id!=id) {
@@ -3312,7 +3301,7 @@
 
   function setDispatchModalValues(id) {
     var socket=io();
-    socket.emit('load_statuses', <%- JSON.stringify(user)%>)
+    socket.emit('load_statuses', dbUser)
     socket.on('load_status_result', (res) => {
       for (const i in res) {
         if (res[i]._id!=id) {
@@ -3339,10 +3328,9 @@
 
   function setEmsDispatchModalValues(id) {
     var socket=io();
-    let emsVehicles = <%-JSON.stringify(dbEmsEngines)%>
-    for (let i=0; i<emsVehicles.length; i++) {
-      if (emsVehicles[i]._id==id) {
-        socket.emit('load_ems_statuses', emsVehicles[i])
+    for (let i=0; i<dbEmsVehicles.length; i++) {
+      if (dbEmsVehicles[i]._id==id) {
+        socket.emit('load_ems_statuses', dbEmsVehicles[i])
         socket.on('load_ems_status_result', (res) => {
           for (const i in res) {
             if (res[i]._id==id) {
@@ -3410,30 +3398,27 @@
 
   function clearSignal100() {
     var socket=io();
-    myUser= <%- JSON.stringify(user)%>
-      socket.emit('clear_signal_100', myUser.user.activeCommunity)
+      socket.emit('clear_signal_100', dbUser.user.activeCommunity)
     $('#signal-100-banner').removeClass('show').addClass('hide')
   }
 
   function clearHoldTraffic() {
     var socket=io();
-    myUser= <%- JSON.stringify(user)%>
-      socket.emit('clear_hold_traffic', myUser.user.activeCommunity)
+      socket.emit('clear_hold_traffic', dbUser.user.activeCommunity)
     $('#hold-traffic-banner').removeClass('show').addClass('hide')
   }
 
   $('#createBolo').one('click', function () {
     var socket=io();
-    myUser= <%- JSON.stringify(user)%>
       $('#create-bolo-form').submit(function (e) {
         e.preventDefault(); //prevents page from reloading
         var myCreateReq={
           boloType: $('#type option:selected').text(),
           location: $('#location').val(),
-          communityID: myUser.user.activeCommunity,
+          communityID: dbUser.user.activeCommunity,
           description: $('#description').val(),
-          reportingOfficerUsername: myUser.user.username,
-          reportingOfficerID: myUser._id
+          reportingOfficerUsername: dbUser.user.username,
+          reportingOfficerID: dbUser._id
         }
         socket.emit('create_bolo', myCreateReq)
         return true;
@@ -3443,7 +3428,6 @@
 
   $('#createCall').one('click', function () {
     var socket=io();
-    myUser= <%- JSON.stringify(user)%>
       $('#create-call-form').submit(function (e) {
         e.preventDefault(); //prevents page from reloading
         myCreatedAt=new Date();
@@ -3455,9 +3439,9 @@
           assignedOfficers: $('#officer-select').val(),
           assignedFireEms: $('#fireEms-select').val(),
           callNotes: $('#call-notes').val(),
-          createdByUsername: myUser.user.username,
-          createdByID: myUser._id,
-          communityID: myUser.user.activeCommunity,
+          createdByUsername: dbUser.user.username,
+          createdByID: dbUser._id,
+          communityID: dbUser.user.activeCommunity,
           createdAt: myCreatedAt,
           createdAtReadable: myCreatedDate.toLocaleString()
         }
@@ -3469,20 +3453,18 @@
 
   $('#closeCall').click(function () {
     var socket=io();
-    myUser= <%- JSON.stringify(user)%>
     var myReq={
       callID: $('#callIDDetail').val(),
-      communityID: myUser.user.activeCommunity,
+      communityID: dbUser.user.activeCommunity,
     }
     socket.emit('clear_call', myReq)
   })
 
   $('#deleteCall').click(function () {
     var socket=io();
-    myUser= <%- JSON.stringify(user)%>
     var myReq={
       callID: $('#callIDDetail').val(),
-      communityID: myUser.user.activeCommunity,
+      communityID: dbUser.user.activeCommunity,
     }
     socket.emit('clear_call', myReq);
   })
@@ -3538,13 +3520,12 @@
   }
 
   $('#clearPanic').one('click', function () {
-    myUser= <%- JSON.stringify(user)%>
     var socket=io();
     $('#clear-panic-form').submit(function (e) {
       e.preventDefault(); //prevents page from reloading
       var myReq={
         userID: $('#panic-id').val(),
-        communityID: myUser.user.activeCommunity
+        communityID: dbUser.user.activeCommunity
       }
       socket.emit('clear_panic', myReq)
       panicButtonEnabled=true
@@ -3577,11 +3558,11 @@
   }
 
   function repopulateFireEmsList(id, status) {
-    engines = <%-JSON.stringify(dbEmsEngines)%>
+    
     //override the values stored in memory, with the ones we just got back from the socket
-    for (i=0; i<engines.length; i++) {
-      if (engines[i]._id==id) {
-        engines[i].emsVehicle.dispatchStatus=status
+    for (i=0; i<dbEmsVehicles.length; i++) {
+      if (dbEmsVehicles[i]._id==id) {
+        dbEmsVehicles[i].emsVehicle.dispatchStatus=status
       }
     }
     var engineListNewCall=tail.select('#fireEms-select', {
@@ -3598,27 +3579,26 @@
       multiContainer: true
     })
     var newCallItems={}
-    for (i=0; i<engines.length; i++) {
-      if (!engines[i].emsVehicle.engineNumber) {
-        engines[i].emsVehicle.engineNumber=""
+    for (i=0; i<dbEmsVehicles.length; i++) {
+      if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
+        dbEmsVehicles[i].emsVehicle.engineNumber=""
       }
-      newCallItems[engines[i]._id]={
-        value: 'Engine - '+engines[i].emsVehicle.engineNumber+' ( '+engines[i].emsVehicle.model+' )',
+      newCallItems[dbEmsVehicles[i]._id]={
+        value: 'Engine - '+dbEmsVehicles[i].emsVehicle.engineNumber+' ( '+dbEmsVehicles[i].emsVehicle.model+' )',
         group: "#",
         selected: false,
         disabled: false,
-        description: engines[i].emsVehicle.registeredOwner
+        description: dbEmsVehicles[i].emsVehicle.registeredOwner
       }
     }
     engineListNewCall.options.add(newCallItems)
   }
 
   function repopulateOfficerList(id, status) {
-    officers= <%- JSON.stringify(commUsers)%>;
     //override the values stored in memory, with the ones we just got back from the socket
-    for (i=0; i<officers.length; i++) {
-      if (officers[i]._id==id) {
-        officers[i].user.dispatchStatus=status
+    for (i=0; i<dbCommUsers.length; i++) {
+      if (dbCommUsers[i]._id==id) {
+        dbCommUsers[i].user.dispatchStatus=status
       }
     }
 
@@ -3637,17 +3617,17 @@
       multiContainer: true
     })
     var newCallItems={}
-    for (i=0; i<officers.length; i++) {
+    for (i=0; i<dbCommUsers.length; i++) {
       //To be deprecated once all users have set a call sign, going into effect 11/25/2020
-      if (!officers[i].user.callSign) {
-        officers[i].user.callSign=""
+      if (!dbCommUsers[i].user.callSign) {
+        dbCommUsers[i].user.callSign=""
       }
-      newCallItems[officers[i]._id]={
-        value: officers[i].user.username+' ('+officers[i].user.callSign+')',
+      newCallItems[dbCommUsers[i]._id]={
+        value: dbCommUsers[i].user.username+' ('+dbCommUsers[i].user.callSign+')',
         group: "#",
         selected: false,
         disabled: false,
-        description: officers[i].user.dispatchStatus
+        description: dbCommUsers[i].user.dispatchStatus
       }
     }
     officerListNewCall.options.add(newCallItems)
@@ -3690,7 +3670,6 @@
   }
 
   function fillFireEmsList() {
-    engines = <%-JSON.stringify(dbEmsEngines)%>
     var engineList=tail.select('#fireEms-select', {
       search: true,
       classNames: "default white",
@@ -3705,23 +3684,22 @@
       multiContainer: true
     })
     var items={}
-    for (i=0; i<engines.length; i++) {
-      if (!engines[i].emsVehicle.engineNumber) {
-        engines[i].emsVehicle.engineNumber=""
+    for (i=0; i<dbEmsVehicles.length; i++) {
+      if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
+        dbEmsVehicles[i].emsVehicle.engineNumber=""
       }
-      items[engines[i]._id]={
-        value: 'Engine - '+engines[i].emsVehicle.engineNumber+' ( '+engines[i].emsVehicle.model+' )',
+      items[dbEmsVehicles[i]._id]={
+        value: 'Engine - '+dbEmsVehicles[i].emsVehicle.engineNumber+' ( '+dbEmsVehicles[i].emsVehicle.model+' )',
         group: "#",
         selected: false,
         disabled: false,
-        description: engines[i].emsVehicle.registeredOwner
+        description: dbEmsVehicles[i].emsVehicle.registeredOwner
       }
     }
     engineList.options.add(items)
   }
 
   function fillOfficerList() {
-    officers= <%- JSON.stringify(commUsers)%>
     var officerList=tail.select('#officer-select', {
       search: true,
       classNames: "default white",
@@ -3736,17 +3714,17 @@
       multiContainer: true
     })
     var items={}
-    for (i=0; i<officers.length; i++) {
+    for (i=0; i<dbCommUsers.length; i++) {
       //To be deprecated once all users have set a call sign, going into effect 11/25/2020
-      if (!officers[i].user.callSign) {
-        officers[i].user.callSign=""
+      if (!dbCommUsers[i].user.callSign) {
+        dbCommUsers[i].user.callSign=""
       }
-      items[officers[i]._id]={
-        value: officers[i].user.username+' ('+officers[i].user.callSign+')',
+      items[dbCommUsers[i]._id]={
+        value: dbCommUsers[i].user.username+' ('+dbCommUsers[i].user.callSign+')',
         group: "#",
         selected: false,
         disabled: false,
-        description: officers[i].user.dispatchStatus
+        description: dbCommUsers[i].user.dispatchStatus
       }
     }
     officerList.options.add(items)
@@ -3809,7 +3787,6 @@
   }
 
   function populateFireEmsList(dbFireEms) {
-    engines = <%-JSON.stringify(dbEmsEngines)%>
     var emsList = tail.select('#fireEms-select-details', {
       search: true,
       classNames: "default white",
@@ -3827,44 +3804,44 @@
 
     // If there are none assigned
     if (dbFireEms.length==0) {
-      for (i=0; i<engines.length; i++) {
-        if (!engines[i].emsVehicle.engineNumber) {
-          engines[i].emsVehicle.engineNumber=""
+      for (i=0; i<dbEmsVehicles.length; i++) {
+        if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
+          dbEmsVehicles[i].emsVehicle.engineNumber=""
         }
-        items[engines[i]._id]={
-          value: 'Engine - '+engines[i].emsVehicle.engineNumber+' ( '+engines[i].emsVehicle.model+' )',
+        items[dbEmsVehicles[i]._id]={
+          value: 'Engine - '+dbEmsVehicles[i].emsVehicle.engineNumber+' ( '+dbEmsVehicles[i].emsVehicle.model+' )',
           group: "#",
           selected: false,
           disabled: false,
-          description: engines[i].emsVehicle.registeredOwner
+          description: dbEmsVehicles[i].emsVehicle.registeredOwner
         }
       }
     } else {
       emsSplit = dbFireEms.split(",")
-      for (i=0; i<engines.length; i++) {
+      for (i=0; i<dbEmsVehicles.length; i++) {
         for (j=0; j<dbFireEms.length; j++) {
-          if (engines[i]._id == emsSplit[j]) {
-            if (!engines[i].emsVehicle.engineNumber) {
-              engines[i].emsVehicle.engineNumber=""
+          if (dbEmsVehicles[i]._id == emsSplit[j]) {
+            if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
+              dbEmsVehicles[i].emsVehicle.engineNumber=""
             }
-            items[engines[i]._id]={
-              value: 'Engine - '+engines[i].emsVehicle.engineNumber+' ( '+engines[i].emsVehicle.model+' )',
+            items[dbEmsVehicles[i]._id]={
+              value: 'Engine - '+dbEmsVehicles[i].emsVehicle.engineNumber+' ( '+dbEmsVehicles[i].emsVehicle.model+' )',
               group: "#",
               selected: true,
               disabled: false,
-              description: engines[i].emsVehicle.registeredOwner
+              description: dbEmsVehicles[i].emsVehicle.registeredOwner
             }
             break
           } else {
-            if (!engines[i].emsVehicle.engineNumber) {
-              engines[i].emsVehicle.engineNumber=""
+            if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
+              dbEmsVehicles[i].emsVehicle.engineNumber=""
             }
-            items[engines[i]._id]={
-              value: 'Engine - '+engines[i].emsVehicle.engineNumber+' ( '+engines[i].emsVehicle.model+' )',
+            items[dbEmsVehicles[i]._id]={
+              value: 'Engine - '+dbEmsVehicles[i].emsVehicle.engineNumber+' ( '+dbEmsVehicles[i].emsVehicle.model+' )',
               group: "#",
               selected: false,
               disabled: false,
-              description: engines[i].emsVehicle.registeredOwner
+              description: dbEmsVehicles[i].emsVehicle.registeredOwner
             }
           }
         }
@@ -3876,7 +3853,6 @@
   // Param: dbOfficers, contains a list of IDs of the active officers assigned to the call
   // Example: 5edeeaa078cf272b2ce9e40e,5ee00e3adde8ab0344ea49a2
   function populateOfficerList(dbOfficers) {
-    officers= <%- JSON.stringify(commUsers)%>
     var officerList=tail.select('#officer-select-details', {
       search: true,
       classNames: "default white",
@@ -3894,47 +3870,47 @@
 
     // if there are none assigned
     if (dbOfficers.length==0) {
-      for (i=0; i<officers.length; i++) {
+      for (i=0; i<dbCommUsers.length; i++) {
         //To be deprecated once all users have set a call sign, going into effect 11/25/2020
-        if (!officers[i].user.callSign) {
-          officers[i].user.callSign=""
+        if (!dbCommUsers[i].user.callSign) {
+          dbCommUsers[i].user.callSign=""
         }
-        items[officers[i]._id]={
-          value: officers[i].user.username+' ('+officers[i].user.callSign+')',
+        items[dbCommUsers[i]._id]={
+          value: dbCommUsers[i].user.username+' ('+dbCommUsers[i].user.callSign+')',
           group: "#",
           selected: false,
           disabled: false,
-          description: officers[i].user.dispatchStatus
+          description: dbCommUsers[i].user.dispatchStatus
         }
       }
     } else {
       officersSplit=dbOfficers.split(",")
-      for (i=0; i<officers.length; i++) {
+      for (i=0; i<dbCommUsers.length; i++) {
         for (j=0; j<dbOfficers.length; j++) {
-          if (officers[i]._id==officersSplit[j]) {
+          if (dbCommUsers[i]._id==officersSplit[j]) {
             //To be deprecated once all users have set a call sign, going into effect 11/25/2020
-            if (!officers[i].user.callSign) {
-              officers[i].user.callSign=""
+            if (!dbCommUsers[i].user.callSign) {
+              dbCommUsers[i].user.callSign=""
             }
-            items[officers[i]._id]={
-              value: officers[i].user.username+' ('+officers[i].user.callSign+')',
+            items[dbCommUsers[i]._id]={
+              value: dbCommUsers[i].user.username+' ('+dbCommUsers[i].user.callSign+')',
               group: "#",
               selected: true,
               disabled: false,
-              description: officers[i].user.dispatchStatus
+              description: dbCommUsers[i].user.dispatchStatus
             }
             break //if we found a match we want to break out
           } else {
             //To be deprecated once all users have set a call sign, going into effect 11/25/2020
-            if (!officers[i].user.callSign) {
-              officers[i].user.callSign=""
+            if (!dbCommUsers[i].user.callSign) {
+              dbCommUsers[i].user.callSign=""
             }
-            items[officers[i]._id]={
-              value: officers[i].user.username+' ('+officers[i].user.callSign+')',
+            items[dbCommUsers[i]._id]={
+              value: dbCommUsers[i].user.username+' ('+dbCommUsers[i].user.callSign+')',
               group: "#",
               selected: false,
               disabled: false,
-              description: officers[i].user.dispatchStatus
+              description: dbCommUsers[i].user.dispatchStatus
             }
           }
         }
@@ -3985,7 +3961,7 @@
 
   function togglePanicBtnSound() {
     var socket=io();
-    socket.emit('update_panic_btn_sound', <%- JSON.stringify(user)%>)
+    socket.emit('update_panic_btn_sound', dbUser)
     socket.on('load_panic_btn_result', (res) => {
       $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
       $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function () {
@@ -3998,12 +3974,12 @@
     //if it is already showing we don't want to show it again (there can only be 1 active
     // signal 100 per community)
     if (!$('#signal-100-banner').hasClass('show')) {
-      var myUser= <%- JSON.stringify(user)%>;
+      
       var socket=io();
       myReq={
-        userID: myUser._id,
-        userUsername: myUser.user.username,
-        activeCommunity: myUser.user.activeCommunity
+        userID: dbUser._id,
+        userUsername: dbUser.user.username,
+        activeCommunity: dbUser.user.activeCommunity
       }
       if ($('#panic-button-check-sound').prop('checked')) {
         var audioElement=document.createElement('audio');
@@ -4019,12 +3995,11 @@
     //if it is already showing we don't want to show it again (there can only be 1 active
     // hold traffic per community)
     if (!$('#hold-traffic-banner').hasClass('show')) {
-      var myUser= <%- JSON.stringify(user)%>;
       var socket=io();
       myReq={
-        userID: myUser._id,
-        userUsername: myUser.user.username,
-        activeCommunity: myUser.user.activeCommunity
+        userID: dbUser._id,
+        userUsername: dbUser.user.username,
+        activeCommunity: dbUser.user.activeCommunity
       }
       if ($('#panic-button-check-sound').prop('checked')) {
         var audioElement=document.createElement('audio');

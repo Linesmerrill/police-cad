@@ -159,14 +159,10 @@ module.exports = function (app, passport, server) {
 
   app.get('/communities', auth, function (req, res) {
     req.app.locals.specialContext = null;
-    if (!exists(req.session.communityID)) {
-      console.warn("cannot render empty communityID, route: /communities")
-      res.status(400)
-      return res.redirect('back')
-    }
     var isValid = isValidObjectIdLength(req.session.communityID, "cannot lookup invalid length communityID, route: /communities")
     if (!isValid) {
       req.app.locals.specialContext = "invalidRequest";
+      res.status(400)
       return res.redirect('back')
     }
     Community.findOne({
@@ -2051,6 +2047,9 @@ module.exports = function (app, passport, server) {
 
   app.post('/joinCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
+    if (!exists(req.body.communityCode)) {
+      return res.redirect('back');
+    }
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
@@ -2105,6 +2104,9 @@ module.exports = function (app, passport, server) {
 
   app.post('/joinPoliceCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
+    if (!exists(req.body.communityCode)) {
+      return res.redirect('back');
+    }
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
@@ -2159,6 +2161,9 @@ module.exports = function (app, passport, server) {
 
   app.post('/joinEmsCommunity', auth, function (req, res) {
     req.app.locals.specialContext = null;
+    if (!exists(req.body.communityCode)) {
+      return res.redirect('back');
+    }
     var communityCode = req.body.communityCode.trim()
     if (communityCode.length != 7) {
       req.app.locals.specialContext = "improperCommunityCodeLength";
@@ -2521,7 +2526,7 @@ module.exports = function (app, passport, server) {
       let classifier
       var shortDescription
       var assignedOfficers
-      let assignerFireEms
+      let assignedFireEms
       var callNotes
       var callID
       if (exists(req.body.classifier)) {
@@ -2608,18 +2613,10 @@ module.exports = function (app, passport, server) {
   app.post('/updateOrDeleteVeh', auth, function (req, res) {
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
-      if (!exists(req.body.vehicleID)) {
-        console.warn("cannot update vehicle with empty vehicleID, route: /updateOrDeleteVeh")
-        return res.redirect('/civ-dashboard');
-      }
       if (!exists(req.body.roVeh)) {
         req.body.roVeh = 'N/A'
       }
-      if (req.body.vehicleID.length != 24) {
-        console.warn("cannot delete vehicle with invalid vehicleID, route: /updateOrDeleteVeh", req.body.vehicleID)
-        return res.redirect('/civ-dashboard');
-      }
-      var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /updateOrDeleteVeh")
+      var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot update vehicle with invalid vehicleID, route: /updateOrDeleteVeh")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect('/civ-dashboard')
@@ -2646,15 +2643,7 @@ module.exports = function (app, passport, server) {
         return res.redirect('/civ-dashboard');
       })
     } else {
-      if (!exists(req.body.vehicleID)) {
-        console.warn("cannot delete vehicle with empty vehicleID, route: /updateOrDeleteVeh")
-        return res.redirect('/civ-dashboard');
-      }
-      if (req.body.vehicleID.length != 24) {
-        console.warn("cannot delete vehicle with invalid vehicleID, route: /updateOrDeleteVeh", req.body.vehicleID)
-        return res.redirect('/civ-dashboard');
-      }
-      var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot lookup invalid length vehicleID, route: /updateOrDeleteVeh")
+      var isValid = isValidObjectIdLength(req.body.vehicleID, "cannot delete vehicle with invalid vehicleID, route: /updateOrDeleteVeh")
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect('/civ-dashboard')
@@ -2738,11 +2727,7 @@ module.exports = function (app, passport, server) {
   app.post('/updateUserDispatchStatus', auth, function (req, res) {
     // console.debug(req.body)
     req.app.locals.specialContext = null;
-    if (!exists(req.body.userID) || req.body.userID == '') {
-      console.error('cannot update an empty userID')
-      res.status(400)
-      return res.redirect('back');
-    } else if (!exists(req.body.status) || req.body.status == '') {
+    if (!exists(req.body.status) || req.body.status == '') {
       console.error('cannot update an empty status')
       res.status(400)
       return res.redirect('back');
@@ -2750,6 +2735,7 @@ module.exports = function (app, passport, server) {
     var isValid = isValidObjectIdLength(req.body.userID, "cannot delete vehicle with invalid userID, route: /updateUserDispatchStatus")
     if (!isValid) {
       req.app.locals.specialContext = "invalidRequest";
+      res.status(400)
       return res.redirect('back')
     }
     User.findByIdAndUpdate({
@@ -2845,6 +2831,11 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on('bot_join_community', (data) => {
+      if (!exists(data.communityCode)) {
+        return socket.emit('bot_joined_community', {
+          error: 'Improper Community Code'
+        });
+      }
       var communityCode = data.communityCode.trim()
       if (communityCode.length != 7) {
         return socket.emit('bot_joined_community', {
@@ -3388,8 +3379,9 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on('get_call_by_id', (callID) => {
-      if (!isValidObjectIdLength(callID)) {
-        return console.error(`invalid call ID length for socket: get_call_by_id, callID: ${callID}`)
+      var isValid = isValidObjectIdLength(callID, "invalid call ID length for socket: get_call_by_id")
+      if (!isValid) {
+        return
       }
       Call.findById({
         '_id': ObjectId(callID)
@@ -3453,13 +3445,14 @@ module.exports = function (app, passport, server) {
     socket.on('delete_bolo_info', (req) => {
       // console.debug('delete req backend: ', req)
       var boloID
-      if (exists(req.boloID) && req.boloID.length != 0) {
-        boloID = req.boloID
+      if (exists(req.boloID)) {
+        if (req.boloID.length !== 0) {
+          boloID = req.boloID
+        }
       }
       var isValid = isValidObjectIdLength(boloID, "cannot lookup invalid length boloID, socket: delete_bolo_info")
       if (!isValid) {
         return
-
       }
       Bolo.findByIdAndDelete({
         '_id': ObjectId(boloID)
@@ -3527,9 +3520,7 @@ module.exports = function (app, passport, server) {
 
     socket.on('update_ems_status', (req) => {
       // console.debug('update ems req: ', req);
-      if (!exists(req.vehicleID) || req.vehicleID == '') {
-        return console.error('cannot update an empty vehicleID')
-      } else if (!exists(req.status) || req.status == '') {
+      if (!exists(req.status) || req.status == '') {
         return console.error('cannot update an empty status')
       }
       if (req.updateDuty) {
@@ -4005,61 +3996,61 @@ module.exports = function (app, passport, server) {
 
     socket.on('update_civilian', (req) => {
       // console.debug('update civilian socket: ', req)
-      if (!isValidObjectIdLength(req.body.civID)) {
-        return console.error(`[LPS Error] cannot update civilian with invalid objectID, got: ${req.body.civID}`)
-      } else {
-        Civilian.findById({
-          '_id': ObjectId(req.body.civID)
-        }, (err, doc) => {
-          if (err) return console.error(err);
-          if (!exists(doc)) return console.error(`[LPS Error] cannot update civ when doc cannot be found, civID: ${req.body.civID}`);
-          var civ = doc
-          if (civ === undefined || civ === null) return console.error(`[LPS Error] cannot update civ when civ cannot be found, civID: ${req.body.civID}`);
-          civ.socketCreateUpdateCiv(req)
-          civ.save(function (err, dbCivilian) {
-            if (err) return console.error(err);
-            return socket.emit('updated_civilian', dbCivilian)
-          })
-        })
+      var isValid = isValidObjectIdLength(req.body.civID, "cannot update civilian with invalid objectID, socket: update_civilian")
+      if (!isValid) {
+        return
       }
+      Civilian.findById({
+        '_id': ObjectId(req.body.civID)
+      }, (err, doc) => {
+        if (err) return console.error(err);
+        if (!exists(doc)) return console.error(`[LPS Error] cannot update civ when doc cannot be found, civID: ${req.body.civID}`);
+        var civ = doc
+        if (civ === undefined || civ === null) return console.error(`[LPS Error] cannot update civ when civ cannot be found, civID: ${req.body.civID}`);
+        civ.socketCreateUpdateCiv(req)
+        civ.save(function (err, dbCivilian) {
+          if (err) return console.error(err);
+          return socket.emit('updated_civilian', dbCivilian)
+        })
+      })
     })
 
     socket.on('delete_civilian', (req) => {
       // console.debug('delete civilian socket: ', req)
-      if (!isValidObjectIdLength(req.body.civID)) {
-        return console.error(`[LPS Error] cannot delete civilian with invalid objectID, got: ${req.body.civID}`)
-      } else {
-        Civilian.findByIdAndDelete({
-          '_id': ObjectId(req.body.civID)
+      var isValid = isValidObjectIdLength(req.body.civID, "cannot delete civilian with invalid objectID, socket: delete_civilian")
+      if (!isValid) {
+        return
+      }
+      Civilian.findByIdAndDelete({
+        '_id': ObjectId(req.body.civID)
+      }, function (err) {
+        Ticket.deleteMany({
+          'ticket.civID': req.body.civID
         }, function (err) {
-          Ticket.deleteMany({
-            'ticket.civID': req.body.civID
+          if (err) return console.error(err);
+          ArrestReport.deleteMany({
+            'arrest.accusedID': req.body.civID
           }, function (err) {
             if (err) return console.error(err);
-            ArrestReport.deleteMany({
-              'arrest.accusedID': req.body.civID
+            MedicalReport.deleteMany({
+              'report.civilianID': req.body.civID
             }, function (err) {
               if (err) return console.error(err);
-              MedicalReport.deleteMany({
-                'report.civilianID': req.body.civID
+              Medication.deleteMany({
+                'medication.civilianID': req.body.civID
               }, function (err) {
                 if (err) return console.error(err);
-                Medication.deleteMany({
-                  'medication.civilianID': req.body.civID
+                Condition.deleteMany({
+                  'condition.civilianID': req.body.civID
                 }, function (err) {
                   if (err) return console.error(err);
-                  Condition.deleteMany({
-                    'condition.civilianID': req.body.civID
-                  }, function (err) {
-                    if (err) return console.error(err);
-                    return socket.emit('deleted_civilian', req)
-                  })
+                  return socket.emit('deleted_civilian', req)
                 })
               })
             })
           })
         })
-      }
+      })
     })
 
     socket.on('lookup_civ_by_id', (req) => {
@@ -4184,15 +4175,15 @@ function exists(v) {
 }
 
 function isValidObjectIdLength(value, errorMessage) {
-  if (value != null && value != undefined) {
+  if (value != null && value !== undefined) {
     if (value.length != 24) {
-      console.warn(errorMessage + ",", "id: " + value)
+      console.warn(`[LPS] [level=warn] [method=isValidObjectIdLength] errorMessage: ${errorMessage}, value: ${value}`)
       return false
     } else {
       return true
     }
   } else {
-    console.warn("cannot check length of null value: ", value)
+    console.warn(`[LPS] [level=warn] [method=isValidObjectIdLength] cannot check length of a null value. errorMessage: ${errorMessage}`)
     return false
   }
 }
@@ -4213,12 +4204,12 @@ function generateHeight(heightFoot, heightInches) {
 }
 
 /* Capitalize function
-*  Usage: 
-*   Input: "hello there!".capitalize();
-*   Output: "Hello there!"
-*/
+ *  Usage: 
+ *   Input: "hello there!".capitalize();
+ *   Output: "Hello there!"
+ */
 Object.defineProperty(String.prototype, 'capitalize', {
-  value: function() {
+  value: function () {
     return this.charAt(0).toUpperCase() + this.slice(1);
   },
   enumerable: false
