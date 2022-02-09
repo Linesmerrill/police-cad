@@ -992,6 +992,9 @@ This is to move away from reloading the page on civilian updates/deletions */
 $("#update-delete-civ-form button").click(function (e) {
   e.preventDefault(); //prevents page from reloading
   var submitter_btn = $('#userBtnValue').val();
+  if (submitter_btn == "") { // if user hits the 'x' to close the window, just return
+    return
+  }
   var socket = io();
   var myReq = {
     body: {
