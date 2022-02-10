@@ -23,6 +23,17 @@ var fs = require('fs');
 var handlebars = require('handlebars');
 var sanitize = require('mongo-sanitize');
 let randomstring = require('randomstring');
+var axios = require('axios');
+
+var policeCadApiUrl = process.env.POLICE_CAD_API_URL
+var policeCadApiToken = process.env.POLICE_CAD_API_TOKEN
+
+// Config for axios requests, can be reused and only declared once
+var config = {
+  headers: {
+    "Authorization": policeCadApiToken
+  }
+}
 var {
   promisify
 } = require('util');
@@ -197,22 +208,24 @@ module.exports = function (app, passport, server) {
   })
 
   app.get('/owned-communities', auth, function (req, res) {
-    Community.find({
-      'community.ownerID': req.session.passport.user
-    }, function (err, dbCommunities) {
-      if (err) return console.error(err);
-      if (!exists(dbCommunities)) {
-        console.warn("cannot render empty dbCommunity, route: /owned-communities")
+    axios.get(`${policeCadApiUrl}/api/v1/communities/${req.session.passport.user}`, config)
+    .then(function(response) {
+      if (!exists(response.data)) {
         res.status(400)
-        return res.redirect('back')
+        res.redirect('back')
       }
-      return res.render('communities-owned', {
-        communities: dbCommunities,
+      else {
+      res.render('communities-owned', {
+        communities: response.data,
         userID: req.session.passport.user,
         user: req.user,
         referer: encodeURIComponent('/owned-communities'),
-        redirect: encodeURIComponent(redirect)
+        redirect: encodeURIComponent(redirect),
       });
+    }
+    }).catch((err) => {
+      res.status(400)
+      res.redirect('back')
     })
   })
 
