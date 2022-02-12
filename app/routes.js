@@ -168,12 +168,11 @@ module.exports = function (app, passport, server) {
     return res.redirect('/');
   });
 
-  /* /communities loads the Community Dashboard view. Contains the current
-  *   'Active Community' as well as a list of 'Communities owned by you'.
-  *   This is the default landing page when a user clicks on the 'Community'
-  *   button on the Landing Page. Users can 'Join' or 'Create' new communities.
-  *   Also users can 'Leave' a community or click on a community to go to the
-  *   community management page.
+  /* /communities loads the Community view. Contains the current
+  *   community that was clicked on to be edited.
+  *   This is the default landing page when a user clicks on one of the listed 'Communities'.
+  *   Users can 'copy' the community code or 'edit' the community name.
+  *   Also community admins can 'kick' members from their community.
   */
   app.get('/communities', auth, function (req, res) {
     req.app.locals.specialContext = null;
@@ -187,10 +186,11 @@ module.exports = function (app, passport, server) {
     axios.get(`${policeCadApiUrl}/api/v1/community/${req.session.communityID}/${req.session.passport.user}`, config)
       .then(function (dbCommunities) {
         if (!exists(dbCommunities.data)) {
+          console.error()
           res.status(400)
           res.redirect('back')
         } else {
-          axios.get(`${policeCadApiUrl}/api/v1/users/${active_community_id}`, config)
+          axios.get(`${policeCadApiUrl}/api/v1/users/${req.session.communityID}`, config)
             .then(function (dbMembers) {
               if (!exists(dbMembers.data)) {
                 res.status(400)
