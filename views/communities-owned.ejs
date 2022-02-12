@@ -95,7 +95,7 @@
                         </thead>
                         <tbody>
                                 <input id="link" type="text" value="" style="opacity: 0;">
-
+                            <% if (communities != undefined && communities != null) {%>
                             <% for(var i=0; i<communities.length; i++) {%>
                                     <tr>
                                         <td style="text-transform: capitalize;"><%=communities[i].community.name%></td>
@@ -103,6 +103,7 @@
                                         <td class="text-align-center"><button type="submit" name="communityID" value="<%= communities[i]._id %>" class="btn btn-md btn-primary hide-button-outline"><span class="iconify" data-icon="jam:write" style="color:#337ab7;" data-inline="false" data-width="25" data-height="25"></span></button>
                                         <td class="text-align-center"><a class="btn btn-md btn-danger" data-toggle="modal" href="#deleteCommunityModal" onclick="populateCommunityID('<%=communities[i]._id%>')">Delete</a></td>
                                     </tr>
+                            <%}%>
                             <%}%>
                         </tbody>
                     </table>
