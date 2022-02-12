@@ -169,11 +169,11 @@ module.exports = function (app, passport, server) {
   });
 
   /* /communities loads the Community view. Contains the current
-  *   community that was clicked on to be edited.
-  *   This is the default landing page when a user clicks on one of the listed 'Communities'.
-  *   Users can 'copy' the community code or 'edit' the community name.
-  *   Also community admins can 'kick' members from their community.
-  */
+   *   community that was clicked on to be edited.
+   *   This is the default landing page when a user clicks on one of the listed 'Communities'.
+   *   Users can 'copy' the community code or 'edit' the community name.
+   *   Also community admins can 'kick' members from their community.
+   */
   app.get('/communities', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(req.session.communityID, "cannot lookup invalid length communityID, route: /communities")
