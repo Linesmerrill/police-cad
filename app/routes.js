@@ -168,6 +168,12 @@ module.exports = function (app, passport, server) {
     return res.redirect('/');
   });
 
+  /* /communities loads the Community view. Contains the current
+   *   community that was clicked on to be edited.
+   *   This is the default landing page when a user clicks on one of the listed 'Communities'.
+   *   Users can 'copy' the community code or 'edit' the community name.
+   *   Also community admins can 'kick' members from their community.
+   */
   app.get('/communities', auth, function (req, res) {
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(req.session.communityID, "cannot lookup invalid length communityID, route: /communities")
@@ -176,57 +182,59 @@ module.exports = function (app, passport, server) {
       res.status(400)
       return res.redirect('back')
     }
-    Community.findOne({
-      '_id': ObjectId(req.session.communityID),
-      'community.ownerID': req.session.passport.user
-    }, function (err, dbCommunities) {
-      if (err) return console.error(err);
-      if (!exists(dbCommunities)) {
-        console.warn("cannot render empty communityID after searching community, route: /communities")
-        res.status(400)
-        return res.redirect('back')
-      }
-      User.find({
-        'user.activeCommunity': req.session.communityID
-      }, function (err, dbMembers) {
-        if (err) return console.error(err);
-        if (dbCommunities == null) {
-          console.warn("cannot render empty communityID after searching users, route: /communities")
+
+    axios.get(`${policeCadApiUrl}/api/v1/community/${req.session.communityID}/${req.session.passport.user}`, config)
+      .then(function (dbCommunities) {
+        if (!exists(dbCommunities.data)) {
+          console.error()
           res.status(400)
-          return res.redirect('back')
+          res.redirect('back')
+        } else {
+          axios.get(`${policeCadApiUrl}/api/v1/users/${req.session.communityID}`, config)
+            .then(function (dbMembers) {
+              if (!exists(dbMembers.data)) {
+                res.status(400)
+                res.redirect('back')
+              } else {
+                return res.render('communities', {
+                  members: dbMembers.data,
+                  communities: dbCommunities.data,
+                  userID: req.session.passport.user,
+                  user: req.user,
+                  referer: encodeURIComponent('/communities'),
+                  redirect: encodeURIComponent(redirect)
+                });
+              }
+            }).catch((err) => {
+              res.status(400)
+              res.redirect('back')
+            })
         }
-        return res.render('communities', {
-          members: dbMembers,
-          communities: dbCommunities,
-          userID: req.session.passport.user,
-          user: req.user,
-          referer: encodeURIComponent('/communities'),
-          redirect: encodeURIComponent(redirect)
-        });
+      }).catch((err) => {
+        res.status(400)
+        res.redirect('back')
       })
-    })
   })
 
   app.get('/owned-communities', auth, function (req, res) {
     axios.get(`${policeCadApiUrl}/api/v1/communities/${req.session.passport.user}`, config)
-    .then(function(response) {
-      if (!exists(response.data)) {
+      .then(function (response) {
+        if (!exists(response.data)) {
+          res.status(400)
+          res.redirect('back')
+        } else {
+          res.render('communities-owned', {
+            communities: response.data,
+            userID: req.session.passport.user,
+            user: req.user,
+            referer: encodeURIComponent('/owned-communities'),
+            redirect: encodeURIComponent(redirect),
+          });
+        }
+      }).catch((err) => {
         res.status(400)
         res.redirect('back')
-      }
-      else {
-      res.render('communities-owned', {
-        communities: response.data,
-        userID: req.session.passport.user,
-        user: req.user,
-        referer: encodeURIComponent('/owned-communities'),
-        redirect: encodeURIComponent(redirect),
-      });
-    }
-    }).catch((err) => {
-      res.status(400)
-      res.redirect('back')
-    })
+      })
   })
 
   app.get('/forgot-password', function (req, res) {
