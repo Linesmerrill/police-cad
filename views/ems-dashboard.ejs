@@ -1384,26 +1384,29 @@
               $("#reports-table-"+r.report.civilianID+" tbody").append(newReportContent)
             }
           });
+          if (data.medications != null && data.medications != undefined) {
+            data.medications.forEach(function (m) {
+              if (e._id==m.medication.civilianID) {
+                var newReportContent
+                newReportContent=`
+                <tr id="`+m._id+`"><td>`+m.medication.startDate+`</td><td style='text-transform: capitalize;'>`+m.medication.name+`</td><td>`+m.medication.dosage+`</td><td style='text-transform: capitalize;'>`+m.medication.frequency+`</td><td class="text-align-center"><a class='clickable' onclick="deleteMedication('`+m._id+`', '`+m.medication.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+                `
+                $("#medications-table-"+m.medication.civilianID+" tbody").append(newReportContent)
+              }
+            });
+          }
 
-          data.medications.forEach(function (m) {
-            if (e._id==m.medication.civilianID) {
-              var newReportContent
-              newReportContent=`
-              <tr id="`+m._id+`"><td>`+m.medication.startDate+`</td><td style='text-transform: capitalize;'>`+m.medication.name+`</td><td>`+m.medication.dosage+`</td><td style='text-transform: capitalize;'>`+m.medication.frequency+`</td><td class="text-align-center"><a class='clickable' onclick="deleteMedication('`+m._id+`', '`+m.medication.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
-              `
-              $("#medications-table-"+m.medication.civilianID+" tbody").append(newReportContent)
-            }
-          });
-
-          data.conditions.forEach(function (c) {
-            if (e._id==c.condition.civilianID) {
-              var newReportContent
-              newReportContent=`
-              <tr id="`+c._id+`"><td>`+c.condition.dateOccurred+`</td><td style='text-transform: capitalize;'>`+c.condition.name+`</td><td style='text-transform: capitalize;'>`+c.condition.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteCondition('`+c._id+`', '`+c.condition.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
-              `
-              $("#conditions-table-"+c.condition.civilianID+" tbody").append(newReportContent)
-            }
-          });
+          if (data.conditions != null && data.conditions != undefined) {
+            data.conditions.forEach(function (c) {
+              if (e._id==c.condition.civilianID) {
+                var newReportContent
+                newReportContent=`
+                <tr id="`+c._id+`"><td>`+c.condition.dateOccurred+`</td><td style='text-transform: capitalize;'>`+c.condition.name+`</td><td style='text-transform: capitalize;'>`+c.condition.details+`</td><td class="text-align-center"><a class='clickable' onclick="deleteCondition('`+c._id+`', '`+c.condition.civilianID+`')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>
+                `
+                $("#conditions-table-"+c.condition.civilianID+" tbody").append(newReportContent)
+              }
+            });
+          }
 
         });
       }
