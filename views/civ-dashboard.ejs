@@ -153,16 +153,18 @@
                  <!-- <ion-icon id="list-icon-personas" name="list-outline" class="color-white table-icon" onclick="showList()"></ion-icon> -->
               </div>
               <div id="personas-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
-                <% for(var i=0; i<personas.length; i++) {%>
-                <div id="personas-thumbnail-<%=personas[i]._id%>" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-                  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivSocketData('<%= personas[i]._id%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
-                    <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
-                    <div class="caption">
-                      <h4 id="personas-thumbnail-name-<%=personas[i]._id%>" class="color-white capitalize"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></h4>
-                      <h5 id="personas-thumbnail-dob-<%=personas[i]._id%>" class="color-white"><%= personas[i].civilian.birthday%></h5>
+                <% if(personas != undefined && personas != null) {%>
+                  <% for(var i=0; i<personas.length; i++) {%>
+                  <div id="personas-thumbnail-<%=personas[i]._id%>" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+                    <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivSocketData('<%= personas[i]._id%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
+                      <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+                      <div class="caption">
+                        <h4 id="personas-thumbnail-name-<%=personas[i]._id%>" class="color-white capitalize"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></h4>
+                        <h5 id="personas-thumbnail-dob-<%=personas[i]._id%>" class="color-white"><%= personas[i].civilian.birthday%></h5>
+                      </div>
                     </div>
                   </div>
-                </div>
+                  <% } %>
                 <% } %>
               </div>
         </div>
@@ -179,16 +181,18 @@
         <ion-icon id="app-icon-vehicles" name="apps-outline" class="color-white table-icon" onclick="showVehicleApps()"></ion-icon>
       </div>
       <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
-        <% for(var i=0; i<vehicles.length; i++) {%>
-        <div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
-          <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id='<%=i%>' data-target="#viewVeh" onclick="loadVehData('<%=i%>')">
-            <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
-            <div class="caption">
-              <h4 class="color-white license-plate">#<%= vehicles[i].vehicle.plate%>)</h4>
-              <h5 class="color-white"><%= vehicles[i].vehicle.color%></td> <%= vehicles[i].vehicle.model%></h5>
+        <% if(vehicles != undefined && vehicles != null) {%>
+          <% for(var i=0; i<vehicles.length; i++) {%>
+          <div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+            <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id='<%=i%>' data-target="#viewVeh" onclick="loadVehData('<%=i%>')">
+              <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
+              <div class="caption">
+                <h4 class="color-white license-plate">#<%= vehicles[i].vehicle.plate%>)</h4>
+                <h5 class="color-white"><%= vehicles[i].vehicle.color%></td> <%= vehicles[i].vehicle.model%></h5>
+              </div>
             </div>
           </div>
-        </div>
+          <% } %>
         <% } %>
       </div>
     </div>
@@ -205,17 +209,19 @@
         <ion-icon id="app-icon-firearms" name="apps-outline" class="color-white table-icon" onclick="showFirearmsApps()"></ion-icon>
       </div>
       <div id="firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
-        <% for(var i=0; i<firearms.length; i++) {%>
-        <div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
-          <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id='<%=i%>' data-target="#viewFirearm" onclick="loadFirearmData('<%=i%>')">
-            <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
-            <div class="caption text-capitalize">
-              <h4 class="color-white" style="font-family: dealerplatecalifornia;"><%= firearms[i].firearm.serialNumber%></h4>
-              <h5 class="color-white"><%= firearms[i].firearm.weaponType%></h5>
-              <p class="color-white" style="font-size: 12px;"><%= firearms[i].firearm.registeredOwner%></p>
+        <% if(firearms != undefined && firearms != null) {%>
+          <% for(var i=0; i<firearms.length; i++) {%>
+          <div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
+            <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id='<%=i%>' data-target="#viewFirearm" onclick="loadFirearmData('<%=i%>')">
+              <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
+              <div class="caption text-capitalize">
+                <h4 class="color-white" style="font-family: dealerplatecalifornia;"><%= firearms[i].firearm.serialNumber%></h4>
+                <h5 class="color-white"><%= firearms[i].firearm.weaponType%></h5>
+                <p class="color-white" style="font-size: 12px;"><%= firearms[i].firearm.registeredOwner%></p>
+              </div>
             </div>
           </div>
-        </div>
+          <% } %>
         <% } %>
       </div>
     </div>
@@ -589,8 +595,10 @@
               <div class="col-md-4">
                 <select id="registeredOwner-new-veh" name="registeredOwner" class="form-control capitalize">
                   <option value="N/A">N/A</option>
-                  <% for(var i=0; i<personas.length; i++) {%>
-                    <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                  <% if(personas != undefined && personas != null) {%>
+                    <% for(var i=0; i<personas.length; i++) {%>
+                      <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                    <% } %>
                    <% } %>
                 </select>
               </div>
@@ -668,8 +676,10 @@
               <div class="col-md-4">
                 <select id="registeredOwner-new-firearm" name="registeredOwner" class="form-control">
                   <option value="N/A">N/A</option>
-                  <% for(var i=0; i<personas.length; i++) {%>
-                    <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                  <% if(personas != undefined && personas != null) {%>
+                    <% for(var i=0; i<personas.length; i++) {%>
+                      <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                    <% } %>
                    <% } %>
                 </select>
               </div>
@@ -1296,8 +1306,10 @@
                 <div class="col-md-4">
                   <select id="roVeh" name="roVeh" class="form-control capitalize" selected="selected">
                     <option value="N/A">N/A</option>
-                    <% for(var i=0; i<personas.length; i++) {%>
-                      <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                    <% if(personas != undefined && personas != null) {%>
+                      <% for(var i=0; i<personas.length; i++) {%>
+                        <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                      <% } %>
                      <% } %>
                   </select>
                 </div>
@@ -1367,8 +1379,10 @@
               <div class="col-md-6">
                 <select id="registeredOwner-details" name="registeredOwner" class="form-control text-capitalize">
                   <option value="N/A">N/A</option>
-                  <% for(var i=0; i<personas.length; i++) {%>
-                    <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                  <% if(personas != undefined && personas != null) {%>
+                    <% for(var i=0; i<personas.length; i++) {%>
+                      <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
+                    <% } %>
                    <% } %>
                 </select>
               </div>
@@ -1775,12 +1789,16 @@ $("#lastName").keydown(function(event) {
     //check for notification cookie
     let cookieVersion = undefined
     let cookieValueSplit = document.cookie.split('; ')
-    if (cookieValueSplit.length > 0) {
-      let cookieValueNotifSymbol = cookieValueSplit.find(row => row.startsWith('notification-symbol='))
-      if (cookieValueNotifSymbol != undefined) {
-        let cookieVersionSplit = cookieValueNotifSymbol.split('=');
-        if (cookieVersionSplit.length > 1) {
-          cookieVersion = cookieVersionSplit[1];
+    if (cookieValueSplit != undefined && cookieValueSplit != null) {
+      if (cookieValueSplit.length > 0) {
+        let cookieValueNotifSymbol = cookieValueSplit.find(row => row.startsWith('notification-symbol='))
+        if (cookieValueNotifSymbol != undefined) {
+          let cookieVersionSplit = cookieValueNotifSymbol.split('=');
+          if (cookieVersionSplit != undefined && cookieVersionSplit != null) {
+            if (cookieVersionSplit.length > 1) {
+              cookieVersion = cookieVersionSplit[1];
+            }
+          }
         }
       }
     }
@@ -1795,9 +1813,11 @@ $("#lastName").keydown(function(event) {
     } else {
       // else if we can find the cookie, then we will subtract whatever the cookie value is from the current version
       let specificVersionSplit = cookieVersion.split(".")
-      if (specificVersionSplit.length == 3) {
-        let versionDifference = parseInt(MINOR_VERSION) - parseInt(specificVersionSplit[1])
-        $('#notification-count').text(versionDifference)
+      if (specificVersionSplit != undefined && specificVersionSplit != null) {
+        if (specificVersionSplit.length == 3) {
+          let versionDifference = parseInt(MINOR_VERSION) - parseInt(specificVersionSplit[1])
+          $('#notification-count').text(versionDifference)
+        }
       }
     }
 
