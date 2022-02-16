@@ -268,16 +268,20 @@
       <section style='background-image: url("/static/images/blue-clouds.jpg"); padding: 0;'>
         <div class="container">
           <div class="col-lg-10 col-lg-offset-1 margin-top-1">
-            <% for(var i=0; i<communities.length; i++) {%>
-              <% if (communities[i]._id==user.user.activeCommunity) {%>
-                <div id="panic-placeholder"></div>
-                <div id="panic-placeholder-socket"></div>
+            <% if(communities != undefined && communities != null) {%>
+              <% for(var i=0; i<communities.length; i++) {%>
+                <% if (communities[i]._id==user.user.activeCommunity) {%>
+                  <div id="panic-placeholder"></div>
+                  <div id="panic-placeholder-socket"></div>
                 <%}%>
-                  <%}%>
+              <%}%>
+            <%}%>
           </div>
         </div>
 
+        
         <div class="container">
+          <% if (user.user.activeCommunity !='' && user.user.activeCommunity != null) {%>
           <div class="col-md-12 col-md-offset-0.75 margin-top-2 margin-bottom-2">
             <!-- Fire/Ems list -->
             <h4 id="fireEms-list">Fire/EMS List: <a data-toggle="modal" href="#fireEMSHelpModal"><i class="far fa-question-circle"></i></a> </h4>
@@ -293,7 +297,7 @@
           </div>
 
           <hr style="width: 88%;max-width: 100rem;">
-
+          <%}%>
           <div id="active-bolo-container" class="col-md-12 col-md-offset-0.75 margin-top-2">
             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
               <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Active BOLOs:</span> <button
@@ -308,7 +312,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <% if (bolos !=null && bolos.length> 0) {%>
+                  <% if (bolos !=null && bolos != undefined) {%>
                     <% for(var i=0; i<bolos.length; i++) {%>
                       <tr id="<%=bolos[i]._id%>-row" class="gray-hover" data-toggle="modal" data-id="<%=i%>"
                         data-target="#boloDetailModal" onclick="populateBoloDetails('<%=bolos[i]._id%>')">
@@ -345,7 +349,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <% if (calls !=null && calls.length> 0) {%>
+                  <% if (calls !=null && calls != undefined) {%>
                     <% for(var i=0; i<calls.length; i++) {%>
                       <% if (calls[i].call.status) {%>
                         <tr id="<%=calls[i]._id%>-row" class="gray-hover" data-toggle="modal" data-id="<%=i%>"
@@ -358,30 +362,34 @@
                             <%=calls[i].call.shortDescription%>
                           </td>
                           <td id="<%=calls[i]._id%>-units-assigned">
-                          <% if ((calls[i].call.assignedOfficers !=null && calls[i].call.assignedOfficers.length> 0) || (calls[i].call.assignedFireEms != null && calls[i].call.assignedFireEms.length> 0)) { %>
-                            <% if (calls[i].call.assignedOfficers !=null && calls[i].call.assignedOfficers.length> 0) { %>
+                          <% if ((calls[i].call.assignedOfficers !=null && calls[i].call.assignedOfficers != undefined) || (calls[i].call.assignedFireEms != null && calls[i].call.assignedFireEms != undefined)) { %>
+                            <% if (calls[i].call.assignedOfficers !=null && calls[i].call.assignedOfficers != undefined) { %>
                               <% for(var j=0; j<calls[i].call.assignedOfficers.length; j++) { %>
-                                <% for(var k=0; k<commUsers.length; k++) { %>
-                                  <% if (commUsers[k]._id==calls[i].call.assignedOfficers[j]) { %>
-                                    <span class="badge badge-secondary">
-                                      <%=commUsers[k].user.username%>
-                                      <% if (commUsers[k].user.callSign==undefined) { %>
-                                      () (Police)
-                                      </span>
-                                    <% } else { %>
-                                      (<%=commUsers[k].user.callSign%>) (Police)</span>
+                                <% if(commUsers != undefined && commUsers != null) {%>
+                                  <% for(var k=0; k<commUsers.length; k++) { %>
+                                    <% if (commUsers[k]._id==calls[i].call.assignedOfficers[j]) { %>
+                                      <span class="badge badge-secondary">
+                                        <%=commUsers[k].user.username%>
+                                        <% if (commUsers[k].user.callSign==undefined) { %>
+                                        () (Police)
+                                        </span>
+                                      <% } else { %>
+                                        (<%=commUsers[k].user.callSign%>) (Police)</span>
+                                      <%}%>
                                     <%}%>
                                   <%}%>
                                 <%}%>
                               <%}%>
                             <% } %>
-                            <% if (calls[i].call.assignedFireEms != null && calls[i].call.assignedFireEms.length> 0) { %>
+                            <% if (calls[i].call.assignedFireEms != null && calls[i].call.assignedFireEms != undefined) { %>
                               <% for(let j=0; j<calls[i].call.assignedFireEms.length; j++) { %>
-                                <% for(let k=0; k<dbEmsEngines.length; k++) { %>
-                                  <% if (dbEmsEngines[k]._id==calls[i].call.assignedFireEms[j]) { %>
-                                    <span class="badge badge-secondary">
-                                      Engine #<%=dbEmsEngines[k].emsVehicle.engineNumber%> | (<%=dbEmsEngines[k].emsVehicle.model%>)
-                                    </span>
+                                <% if(dbEmsEngines != undefined && dbEmsEngines != null) {%>
+                                  <% for(let k=0; k<dbEmsEngines.length; k++) { %>
+                                    <% if (dbEmsEngines[k]._id==calls[i].call.assignedFireEms[j]) { %>
+                                      <span class="badge badge-secondary">
+                                        Engine #<%=dbEmsEngines[k].emsVehicle.engineNumber%> | (<%=dbEmsEngines[k].emsVehicle.model%>)
+                                      </span>
+                                    <% } %>
                                   <% } %>
                                 <% } %>
                               <% } %>
@@ -492,7 +500,7 @@
                     }
 
                   </script>
-                  <% if (civilians !=null) {%>
+                  <% if (civilians !=null && civilians != undefined) {%>
                     <% for(var i=0; i<civilians.length; i++) {%>
                       <div class="panel panel-default background-transparent">
                         <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
@@ -511,7 +519,7 @@
                                 <% } %>
                                   <div class="panel-body">
 
-                                    <% if (warrants !=null) {%>
+                                    <% if (warrants !=null && warrants != undefined) {%>
                                       <% if (warrants.length==0) {%>
                                         <div id="noWarrantMessage" class="alert alert-success alert-dismissible"
                                           style="display:block">
@@ -823,7 +831,7 @@
                                                                     </tr>
                                                                   </thead>
                                                                   <tbody id="ticket-body-<%=i%>">
-                                                                    <% if (tickets !=null) {%>
+                                                                    <% if (tickets !=null && tickets != undefined) {%>
                                                                       <% for(var j=0; j<tickets.length; j++) {%>
                                                                         <tr>
                                                                           <% if
@@ -868,7 +876,7 @@
                                                                     </tr>
                                                                   </thead>
                                                                   <tbody id="warning-body-<%=i%>">
-                                                                    <% if (tickets !=null) {%>
+                                                                    <% if (tickets !=null && tickets != undefined) {%>
                                                                       <% for(var j=0; j<tickets.length; j++) {%>
                                                                         <tr>
                                                                           <% if
@@ -910,7 +918,7 @@
                                                                     </tr>
                                                                   </thead>
                                                                   <tbody id="arrest-body-<%=i%>">
-                                                                    <% if (arrestReports !=null) {%>
+                                                                    <% if (arrestReports !=null && arrestReports != undefined) {%>
                                                                       <% for(var j=0; j<arrestReports.length; j++) {%>
                                                                         <tr>
                                                                           <% if
@@ -985,7 +993,7 @@
               <!-- List of Plates -->
               <div id="plateDetails" style="display:none">
                 <div class="panel-group" id="accordion">
-                  <% if (vehicles !=null) {%>
+                  <% if (vehicles !=null && vehicles != undefined) {%>
                     <% for(var i=0; i<vehicles.length; i++) {%>
                       <div class="panel panel-default background-transparent">
                         <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
@@ -1078,7 +1086,7 @@
               <!-- List of Firearms -->
               <div id="firearmDetails" style="display:none">
                 <div class="panel-group" id="accordion">
-                  <% if (firearms !=null) {%>
+                  <% if (firearms !=null && firearms != undefined) {%>
                     <% for(var i=0; i<firearms.length; i++) {%>
                       <div class="panel panel-default background-transparent">
                         <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
@@ -2626,24 +2634,31 @@
           })
         }
         var assignedUnits=""
-        if (res.call.assignedOfficers!=null&&res.call.assignedOfficers.length>0) {
-          for (var j=0; j<res.call.assignedOfficers.length; j++) {
-            for (var k=0; k<dbCommUsers.length; k++) {
-              if (dbCommUsers[k]._id==res.call.assignedOfficers[j]) {
-                if (dbCommUsers[k].user.callSign==undefined) {
-                  dbCommUsers[k].user.callSign=""
+        if (assignedOfficers != undefined && assignedOfficers != null) {
+          if (res.call.assignedOfficers!=null&&res.call.assignedOfficers.length>0) {
+            for (var j=0; j<res.call.assignedOfficers.length; j++) {
+              if (dbCommUsers != undefined && dbCommUsers != null) {
+                for (var k=0; k<dbCommUsers.length; k++) {
+                  if (dbCommUsers[k]._id==res.call.assignedOfficers[j]) {
+                    if (dbCommUsers[k].user.callSign==undefined) {
+                      dbCommUsers[k].user.callSign=""
+                    }
+                    assignedUnits+='<span class="badge badge-secondary">'+dbCommUsers[k].user.username+' ('+dbCommUsers[k].user.callSign+')'+'</span> '
+                  }
                 }
-                assignedUnits+='<span class="badge badge-secondary">'+dbCommUsers[k].user.username+' ('+dbCommUsers[k].user.callSign+')'+'</span> '
               }
             }
           }
         }
-
-        if (res.call.assignedFireEms != null && res.call.assignedFireEms.length> 0) {
-          for(let j=0; j<res.call.assignedFireEms.length; j++) {
-            for(let k=0; k<dbEmsVehicles.length; k++) {
-              if (dbEmsVehicles[k]._id==res.call.assignedFireEms[j]) {
-                assignedUnits+=`<span class="badge badge-secondary">Engine #${dbEmsVehicles[k].emsVehicle.engineNumber} | (${dbEmsVehicles[k].emsVehicle.model})</span>`
+        if (assignedFireEms != undefined && assignedFireEms != null) {
+          if (res.call.assignedFireEms != null && res.call.assignedFireEms.length> 0) {
+            for(let j=0; j<res.call.assignedFireEms.length; j++) {
+              if (dbEmsVehicles != undefined && dbEmsVehicles != null) {
+                for(let k=0; k<dbEmsVehicles.length; k++) {
+                  if (dbEmsVehicles[k]._id==res.call.assignedFireEms[j]) {
+                    assignedUnits+=`<span class="badge badge-secondary">Engine #${dbEmsVehicles[k].emsVehicle.engineNumber} | (${dbEmsVehicles[k].emsVehicle.model})</span>`
+                  }
+                }
               }
             }
           }
@@ -2696,79 +2711,83 @@
     //officers that are not currently on duty. DataTables is easier to leverage
     //than relying on the html above
     if (dbUser.user.activeCommunity !== '' && dbUser.user.activeCommunity !== undefined){
-    let datatable = $('#officerListTable').DataTable();
-        datatable.clear();
-        dbCommUsers.forEach(val => {
-          officerTable = ""
-          if (!val.user.dispatchOnDuty) {
-            return;
-          }
-          if (val.user.username == undefined) {
-            val.user.username = ""
-          }
-          if (val.user.callSign == undefined) {
-            val.user.callSign = ""
-          }
-          if (val.user.dispatchStatus == undefined ||val.user.dispatchStatus == '') {
-            val.user.dispatchStatus = "-" //set a default
-          } else if (val.user.dispatchStatus == 'Panic') {
-            val.user.dispatchStatus = "🚨 Panic 🚨" //set a custom panic message
-          }
+      if (dbCommUsers != null && dbCommUsers != undefined) {
+        let datatable = $('#officerListTable').DataTable();
+            datatable.clear();
+            dbCommUsers.forEach(val => {
+              officerTable = ""
+              if (!val.user.dispatchOnDuty) {
+                return;
+              }
+              if (val.user.username == undefined) {
+                val.user.username = ""
+              }
+              if (val.user.callSign == undefined) {
+                val.user.callSign = ""
+              }
+              if (val.user.dispatchStatus == undefined ||val.user.dispatchStatus == '') {
+                val.user.dispatchStatus = "-" //set a default
+              } else if (val.user.dispatchStatus == 'Panic') {
+                val.user.dispatchStatus = "🚨 Panic 🚨" //set a custom panic message
+              }
 
-          officerTable += `<tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageUserDispatchStatusModal"onclick="setDispatchModalValues('${val._id}')">
-            <td style="text-transform: capitalize;">
-              ${val.user.username}
-            </td>
-            <td style="text-transform: capitalize;">
-              ${val.user.callSign}
-            </td>
-            <td id="${val._id}-status">
-              ${val.user.dispatchStatus}
-            </td>
-          </tr>`
-        datatable.row.add($(officerTable))
-        })
-        datatable.draw();
+              officerTable += `<tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageUserDispatchStatusModal"onclick="setDispatchModalValues('${val._id}')">
+                <td style="text-transform: capitalize;">
+                  ${val.user.username}
+                </td>
+                <td style="text-transform: capitalize;">
+                  ${val.user.callSign}
+                </td>
+                <td id="${val._id}-status">
+                  ${val.user.dispatchStatus}
+                </td>
+              </tr>`
+            datatable.row.add($(officerTable))
+            })
+            datatable.draw();
+      }
+      if (dbEmsVehicles != null && dbEmsVehicles != undefined) {
+        let emsDataTable = $('#fireEmsListTable').DataTable();
+          emsDataTable.clear();
+          
+          dbEmsVehicles.forEach(val => {
+            emsTable = ""
+            if (val.emsVehicle.engineNumber == undefined) {
+              val.emsVehicle.engineNumber = ""
+            }
+            if (val.emsVehicle.model == undefined) {
+              val.emsVehicle.model = ""
+            }
+            if (val.emsVehicle.dispatchStatus == undefined ||val.emsVehicle.dispatchStatus == '') {
+              val.emsVehicle.dispatchStatus = "-" //set a default
+            }
 
-    let emsDataTable = $('#fireEmsListTable').DataTable();
-      emsDataTable.clear();
-      dbEmsVehicles.forEach(val => {
-        emsTable = ""
-        if (val.emsVehicle.engineNumber == undefined) {
-          val.emsVehicle.engineNumber = ""
-        }
-        if (val.emsVehicle.model == undefined) {
-          val.emsVehicle.model = ""
-        }
-        if (val.emsVehicle.dispatchStatus == undefined ||val.emsVehicle.dispatchStatus == '') {
-          val.emsVehicle.dispatchStatus = "-" //set a default
-        }
+            emsTable += `
+              <tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageEmsDispatchStatusModal"onclick="setEmsDispatchModalValues('${val._id}')">
+              <td style="text-transform: capitalize;">
+                #${val.emsVehicle.engineNumber}
+              </td>
+              <td style="text-transform: capitalize;">
+                ${val.emsVehicle.model}
+              </td>
+              <td id="${val._id}-status">
+                ${val.emsVehicle.dispatchStatus}
+              </td>
+            </tr>`
+          emsDataTable.row.add($(emsTable))
+          });
+          emsDataTable.draw();
 
-        emsTable += `
-          <tr id="${val._id}-duty" class="gray-hover" data-toggle="modal"data-target="#manageEmsDispatchStatusModal"onclick="setEmsDispatchModalValues('${val._id}')">
-          <td style="text-transform: capitalize;">
-            #${val.emsVehicle.engineNumber}
-          </td>
-          <td style="text-transform: capitalize;">
-            ${val.emsVehicle.model}
-          </td>
-          <td id="${val._id}-status">
-            ${val.emsVehicle.dispatchStatus}
-          </td>
-        </tr>`
-      emsDataTable.row.add($(emsTable))
-      });
-      emsDataTable.draw();
+        $('#boloTable').DataTable({
+          "bLengthChange": false,
+          "pageLength": 5,
+        });
 
-    $('#boloTable').DataTable({
-      "bLengthChange": false,
-      "pageLength": 5,
-    });
-
-    $('#callTable').DataTable({
-      "bLengthChange": false,
-      "pageLength": 5,
-    });
+        $('#callTable').DataTable({
+          "bLengthChange": false,
+          "pageLength": 5,
+        });
+    }
   }
 
     if (($(window).height()+100)<$(document).height()) {
@@ -2877,12 +2896,16 @@
     //check for notification cookie
     let cookieVersion = undefined
     let cookieValueSplit = document.cookie.split('; ')
-    if (cookieValueSplit.length > 0) {
-      let cookieValueNotifSymbol = cookieValueSplit.find(row => row.startsWith('notification-symbol='))
-      if (cookieValueNotifSymbol != undefined) {
-        let cookieVersionSplit = cookieValueNotifSymbol.split('=');
-        if (cookieVersionSplit.length > 1) {
-          cookieVersion = cookieVersionSplit[1];
+    if (cookieValueSplit != undefined && cookieValueSplit != null) {
+      if (cookieValueSplit.length > 0) {
+        let cookieValueNotifSymbol = cookieValueSplit.find(row => row.startsWith('notification-symbol='))
+        if (cookieValueNotifSymbol != undefined && cookieValueNotifSymbol != null) {
+          let cookieVersionSplit = cookieValueNotifSymbol.split('=');
+          if (cookieVersionSplit != null && cookieVersionSplit != undefined) {
+            if (cookieVersionSplit.length > 1) {
+              cookieVersion = cookieVersionSplit[1];
+            }
+          }
         }
       }
     }
@@ -2897,9 +2920,11 @@
     } else {
       // else if we can find the cookie, then we will subtract whatever the cookie value is from the current version
       let specificVersionSplit = cookieVersion.split(".")
-      if (specificVersionSplit.length == 3) {
-        let versionDifference = parseInt(MINOR_VERSION) - parseInt(specificVersionSplit[1])
-        $('#notification-count').text(versionDifference)
+      if (specificVersionSplit != null && specificVersionSplit != undefined) {
+        if (specificVersionSplit.length == 3) {
+          let versionDifference = parseInt(MINOR_VERSION) - parseInt(specificVersionSplit[1])
+          $('#notification-count').text(versionDifference)
+        }
       }
     }
 
@@ -2946,37 +2971,39 @@
     }
     socket.emit('get_reg_arm', myReq)
     socket.on('load_reg_arm_result', res => {
-      if (res.length==0) {
-        $('#registered-firearms').append(
-          `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`+
-          `<h5 style="text-align: center;">No Registered Firearms</h5>`+
-          `</div>`
-        )
-        return
-      }
-
-      $('#registered-firearms').append(
-        `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`
-      )
-      for (i=0; i<res.length; i++) {
-        if (i!=0) { //if we are not on the first loop, add a divider between each record
-          $('#registered-firearms-panel-body-'+index).append(
-            '<hr>'
-          )
-        }
-        // Check if firearm is stolen and append result
-        if (res[i].firearm.isStolen=="true") {
-          $('#registered-firearms-panel-body-'+index).append(
-            `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
-            `<strong>Danger!</strong> #${res[i].firearm.serialNumber} reported as stolen.`+
+      if (res != undefined && res != null) {
+        if (res.length==0) {
+          $('#registered-firearms').append(
+            `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`+
+            `<h5 style="text-align: center;">No Registered Firearms</h5>`+
             `</div>`
           )
+          return
         }
-        $('#registered-firearms-panel-body-'+index).append(
-          `Serial #: ${res[i].firearm.serialNumber}<br/>`+
-          `Weapon Type: ${res[i].firearm.weaponType}<br/>`
+
+        $('#registered-firearms').append(
+          `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`
         )
-      }
+        for (i=0; i<res.length; i++) {
+          if (i!=0) { //if we are not on the first loop, add a divider between each record
+            $('#registered-firearms-panel-body-'+index).append(
+              '<hr>'
+            )
+          }
+          // Check if firearm is stolen and append result
+          if (res[i].firearm.isStolen=="true") {
+            $('#registered-firearms-panel-body-'+index).append(
+              `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
+              `<strong>Danger!</strong> #${res[i].firearm.serialNumber} reported as stolen.`+
+              `</div>`
+            )
+          }
+          $('#registered-firearms-panel-body-'+index).append(
+            `Serial #: ${res[i].firearm.serialNumber}<br/>`+
+            `Weapon Type: ${res[i].firearm.weaponType}<br/>`
+          )
+        }
+    }
     });
   }
 
@@ -2994,59 +3021,61 @@
     }
     socket.emit('get_reg_veh', myReq)
     socket.on('load_reg_veh_result', res => {
-      if (res.length==0) {
-        $('#registered-cars').append(
-          `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`+
-          `<h5 style="text-align: center;">No Registered Vehicles</h5>`+
-          `</div>`
-        )
-        return
-      }
-      $('#registered-cars').append(
-        `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`
-      )
-      for (i=0; i<res.length; i++) {
-
-        if (i!=0) { //if we are not on the first loop, add a divider between each record
-          $('#registered-cars-panel-body-'+index).append(
-            `<hr>`
-          )
-        }
-        //check if vehicle is stolen and append result
-        if (res[i].vehicle.isStolen==2) {
-          $('#registered-cars-panel-body-'+index).append(
-            `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
-            `<strong>Danger!</strong> Vehicle reported as stolen.`+
+      if (res != undefined && res != null) {
+        if (res.length==0) {
+          $('#registered-cars').append(
+            `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`+
+            `<h5 style="text-align: center;">No Registered Vehicles</h5>`+
             `</div>`
           )
+          return
         }
-        $('#registered-cars-panel-body-'+index).append(
-          `Vin #: ${res[i].vehicle.vin}<br/>`+
-          `License Plate #: ${res[i].vehicle.plate}<br/>`+
-          `Color: ${res[i].vehicle.color}<br/>`+
-          `Model: ${res[i].vehicle.model}<br/>`
+        $('#registered-cars').append(
+          `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`
         )
-        //check for valid/invalid insurance and append result
-        if (res[i].vehicle.validInsurance==1) {
-          $('#registered-cars-panel-body-'+index).append(
-            `<p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i></p>`
-          )
-        } else {
-          $('#registered-cars-panel-body-'+index).append(
-            `<p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>`
-          )
-        }
-        //check for valid/invalid registration and append result
-        if (res[i].vehicle.validRegistration==1) {
-          $('#registered-cars-panel-body-'+index).append(
-            `<p class="plate-body-text">Registration: Valid <i class="ion-checkmark-circled color-green"></i></p>`
-          )
-        } else {
-          $('#registered-cars-panel-body-'+index).append(
-            `<p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>`
-          )
-        }
+        for (i=0; i<res.length; i++) {
 
+          if (i!=0) { //if we are not on the first loop, add a divider between each record
+            $('#registered-cars-panel-body-'+index).append(
+              `<hr>`
+            )
+          }
+          //check if vehicle is stolen and append result
+          if (res[i].vehicle.isStolen==2) {
+            $('#registered-cars-panel-body-'+index).append(
+              `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
+              `<strong>Danger!</strong> Vehicle reported as stolen.`+
+              `</div>`
+            )
+          }
+          $('#registered-cars-panel-body-'+index).append(
+            `Vin #: ${res[i].vehicle.vin}<br/>`+
+            `License Plate #: ${res[i].vehicle.plate}<br/>`+
+            `Color: ${res[i].vehicle.color}<br/>`+
+            `Model: ${res[i].vehicle.model}<br/>`
+          )
+          //check for valid/invalid insurance and append result
+          if (res[i].vehicle.validInsurance==1) {
+            $('#registered-cars-panel-body-'+index).append(
+              `<p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i></p>`
+            )
+          } else {
+            $('#registered-cars-panel-body-'+index).append(
+              `<p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>`
+            )
+          }
+          //check for valid/invalid registration and append result
+          if (res[i].vehicle.validRegistration==1) {
+            $('#registered-cars-panel-body-'+index).append(
+              `<p class="plate-body-text">Registration: Valid <i class="ion-checkmark-circled color-green"></i></p>`
+            )
+          } else {
+            $('#registered-cars-panel-body-'+index).append(
+              `<p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>`
+            )
+          }
+
+        }
       }
     })
   }
@@ -3058,7 +3087,7 @@
       x.style.display='block';
     } else { }
 
-    if (dbVehicles===null) {
+    if (dbVehicles===null || dbVehicles == undefined) {
       return
     }
     if (dbVehicles.length===0) {
@@ -3074,7 +3103,7 @@
       x.style.display='block';
     } else { }
 
-    if (dbFirearms===null) {
+    if (dbFirearms===null || dbFirearms == undefined) {
       return
     }
     if (dbFirearms.length===0) {
@@ -3089,7 +3118,7 @@
     if (x.style.display==='none') {
       x.style.display='block';
     } else { }
-    if (dbCivilians===null||dbTickets===null) {
+    if (dbCivilians===null||dbTickets===null || dbCivilians == undefined || dbTickets == undefined) {
       hideCivPopover();
       return
     } else if (dbCivilians.length===0) {
@@ -3328,27 +3357,29 @@
 
   function setEmsDispatchModalValues(id) {
     var socket=io();
-    for (let i=0; i<dbEmsVehicles.length; i++) {
-      if (dbEmsVehicles[i]._id==id) {
-        socket.emit('load_ems_statuses', dbEmsVehicles[i])
-        socket.on('load_ems_status_result', (res) => {
-          for (const i in res) {
-            if (res[i]._id==id) {
-              $('#engineNumberDispatch').text(res[i].emsVehicle.engineNumber)
-              if (res[i].emsVehicle.dispatchStatus==""||res[i].emsVehicle.dispatchStatus==undefined) {
-                $('#emsStatusDispatch').text("-")
-              } else {
-                $('#emsStatusDispatch').text(res[i].emsVehicle.dispatchStatus)
-              }
-              if (res[i].emsVehicle.dispatchStatusSetBy==""||res[i].emsVehicle.dispatchStatusSetBy==undefined) {
-                $('#emsSetByDispatch').text("-")
-              } else {
-                $('#emsSetByDispatch').text(res[i].emsVehicle.dispatchStatusSetBy)
-              }
-              $('#vehicleIDDispatch').val(res[i]._id)
-            } else continue
-          }
-        })
+    if (dbEmsVehicles != null && dbEmsVehicles != undefined) {
+      for (let i=0; i<dbEmsVehicles.length; i++) {
+        if (dbEmsVehicles[i]._id==id) {
+          socket.emit('load_ems_statuses', dbEmsVehicles[i])
+          socket.on('load_ems_status_result', (res) => {
+            for (const i in res) {
+              if (res[i]._id==id) {
+                $('#engineNumberDispatch').text(res[i].emsVehicle.engineNumber)
+                if (res[i].emsVehicle.dispatchStatus==""||res[i].emsVehicle.dispatchStatus==undefined) {
+                  $('#emsStatusDispatch').text("-")
+                } else {
+                  $('#emsStatusDispatch').text(res[i].emsVehicle.dispatchStatus)
+                }
+                if (res[i].emsVehicle.dispatchStatusSetBy==""||res[i].emsVehicle.dispatchStatusSetBy==undefined) {
+                  $('#emsSetByDispatch').text("-")
+                } else {
+                  $('#emsSetByDispatch').text(res[i].emsVehicle.dispatchStatusSetBy)
+                }
+                $('#vehicleIDDispatch').val(res[i]._id)
+              } else continue
+            }
+          })
+        }
       }
     }
   }
@@ -3560,77 +3591,81 @@
   function repopulateFireEmsList(id, status) {
     
     //override the values stored in memory, with the ones we just got back from the socket
-    for (i=0; i<dbEmsVehicles.length; i++) {
-      if (dbEmsVehicles[i]._id==id) {
-        dbEmsVehicles[i].emsVehicle.dispatchStatus=status
+    if (dbEmsVehicles != null && dbEmsVehicles != undefined) {
+      for (i=0; i<dbEmsVehicles.length; i++) {
+        if (dbEmsVehicles[i]._id==id) {
+          dbEmsVehicles[i].emsVehicle.dispatchStatus=status
+        }
       }
+      var engineListNewCall=tail.select('#fireEms-select', {
+        search: true,
+        classNames: "default white",
+        descriptions: true,
+        sortGroups: "ASC",
+        sortItems: "ASC",
+        placeholder: "Fire/Ems Engine List",
+        multiPinSelected: true,
+        hideSelected: false,
+        hideDisabled: true,
+        multiShowCount: false,
+        multiContainer: true
+      })
+      var newCallItems={}
+      for (i=0; i<dbEmsVehicles.length; i++) {
+        if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
+          dbEmsVehicles[i].emsVehicle.engineNumber=""
+        }
+        newCallItems[dbEmsVehicles[i]._id]={
+          value: 'Engine - '+dbEmsVehicles[i].emsVehicle.engineNumber+' ( '+dbEmsVehicles[i].emsVehicle.model+' )',
+          group: "#",
+          selected: false,
+          disabled: false,
+          description: dbEmsVehicles[i].emsVehicle.registeredOwner
+        }
+      }
+      engineListNewCall.options.add(newCallItems)
     }
-    var engineListNewCall=tail.select('#fireEms-select', {
-      search: true,
-      classNames: "default white",
-      descriptions: true,
-      sortGroups: "ASC",
-      sortItems: "ASC",
-      placeholder: "Fire/Ems Engine List",
-      multiPinSelected: true,
-      hideSelected: false,
-      hideDisabled: true,
-      multiShowCount: false,
-      multiContainer: true
-    })
-    var newCallItems={}
-    for (i=0; i<dbEmsVehicles.length; i++) {
-      if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
-        dbEmsVehicles[i].emsVehicle.engineNumber=""
-      }
-      newCallItems[dbEmsVehicles[i]._id]={
-        value: 'Engine - '+dbEmsVehicles[i].emsVehicle.engineNumber+' ( '+dbEmsVehicles[i].emsVehicle.model+' )',
-        group: "#",
-        selected: false,
-        disabled: false,
-        description: dbEmsVehicles[i].emsVehicle.registeredOwner
-      }
-    }
-    engineListNewCall.options.add(newCallItems)
   }
 
   function repopulateOfficerList(id, status) {
     //override the values stored in memory, with the ones we just got back from the socket
-    for (i=0; i<dbCommUsers.length; i++) {
-      if (dbCommUsers[i]._id==id) {
-        dbCommUsers[i].user.dispatchStatus=status
+    if (dbCommUsers != undefined && dbCommUsers != null) {
+      for (i=0; i<dbCommUsers.length; i++) {
+        if (dbCommUsers[i]._id==id) {
+          dbCommUsers[i].user.dispatchStatus=status
+        }
       }
-    }
 
-    //List containing all officers when creating a new call
-    var officerListNewCall=tail.select('#officer-select', {
-      search: true,
-      classNames: "default white",
-      descriptions: true,
-      sortGroups: "ASC",
-      sortItems: "ASC",
-      placeholder: "Officer List",
-      multiPinSelected: true,
-      hideSelected: false,
-      hideDisabled: true,
-      multiShowCount: false,
-      multiContainer: true
-    })
-    var newCallItems={}
-    for (i=0; i<dbCommUsers.length; i++) {
-      //To be deprecated once all users have set a call sign, going into effect 11/25/2020
-      if (!dbCommUsers[i].user.callSign) {
-        dbCommUsers[i].user.callSign=""
+      //List containing all officers when creating a new call
+      var officerListNewCall=tail.select('#officer-select', {
+        search: true,
+        classNames: "default white",
+        descriptions: true,
+        sortGroups: "ASC",
+        sortItems: "ASC",
+        placeholder: "Officer List",
+        multiPinSelected: true,
+        hideSelected: false,
+        hideDisabled: true,
+        multiShowCount: false,
+        multiContainer: true
+      })
+      var newCallItems={}
+      for (i=0; i<dbCommUsers.length; i++) {
+        //To be deprecated once all users have set a call sign, going into effect 11/25/2020
+        if (!dbCommUsers[i].user.callSign) {
+          dbCommUsers[i].user.callSign=""
+        }
+        newCallItems[dbCommUsers[i]._id]={
+          value: dbCommUsers[i].user.username+' ('+dbCommUsers[i].user.callSign+')',
+          group: "#",
+          selected: false,
+          disabled: false,
+          description: dbCommUsers[i].user.dispatchStatus
+        }
       }
-      newCallItems[dbCommUsers[i]._id]={
-        value: dbCommUsers[i].user.username+' ('+dbCommUsers[i].user.callSign+')',
-        group: "#",
-        selected: false,
-        disabled: false,
-        description: dbCommUsers[i].user.dispatchStatus
-      }
+      officerListNewCall.options.add(newCallItems)
     }
-    officerListNewCall.options.add(newCallItems)
   }
 
   function fillClassifierList() {
@@ -3684,19 +3719,21 @@
       multiContainer: true
     })
     var items={}
-    for (i=0; i<dbEmsVehicles.length; i++) {
-      if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
-        dbEmsVehicles[i].emsVehicle.engineNumber=""
+    if (dbEmsVehicles != null && dbEmsVehicles != undefined) {
+      for (i=0; i<dbEmsVehicles.length; i++) {
+        if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
+          dbEmsVehicles[i].emsVehicle.engineNumber=""
+        }
+        items[dbEmsVehicles[i]._id]={
+          value: 'Engine - '+dbEmsVehicles[i].emsVehicle.engineNumber+' ( '+dbEmsVehicles[i].emsVehicle.model+' )',
+          group: "#",
+          selected: false,
+          disabled: false,
+          description: dbEmsVehicles[i].emsVehicle.registeredOwner
+        }
       }
-      items[dbEmsVehicles[i]._id]={
-        value: 'Engine - '+dbEmsVehicles[i].emsVehicle.engineNumber+' ( '+dbEmsVehicles[i].emsVehicle.model+' )',
-        group: "#",
-        selected: false,
-        disabled: false,
-        description: dbEmsVehicles[i].emsVehicle.registeredOwner
-      }
+      engineList.options.add(items)
     }
-    engineList.options.add(items)
   }
 
   function fillOfficerList() {
@@ -3713,21 +3750,23 @@
       multiShowCount: false,
       multiContainer: true
     })
-    var items={}
-    for (i=0; i<dbCommUsers.length; i++) {
-      //To be deprecated once all users have set a call sign, going into effect 11/25/2020
-      if (!dbCommUsers[i].user.callSign) {
-        dbCommUsers[i].user.callSign=""
+    if (dbCommUsers != undefined && dbCommUsers != null) {
+      var items={}
+      for (i=0; i<dbCommUsers.length; i++) {
+        //To be deprecated once all users have set a call sign, going into effect 11/25/2020
+        if (!dbCommUsers[i].user.callSign) {
+          dbCommUsers[i].user.callSign=""
+        }
+        items[dbCommUsers[i]._id]={
+          value: dbCommUsers[i].user.username+' ('+dbCommUsers[i].user.callSign+')',
+          group: "#",
+          selected: false,
+          disabled: false,
+          description: dbCommUsers[i].user.dispatchStatus
+        }
       }
-      items[dbCommUsers[i]._id]={
-        value: dbCommUsers[i].user.username+' ('+dbCommUsers[i].user.callSign+')',
-        group: "#",
-        selected: false,
-        disabled: false,
-        description: dbCommUsers[i].user.dispatchStatus
-      }
+      officerList.options.add(items)
     }
-    officerList.options.add(items)
   }
 
   function populateClassifierList(classifiers) {
@@ -3746,44 +3785,50 @@
       multiContainer: true
     }).reload()
     let items={}
-
-    // If there are none assigned
-    if (classifiers.length==0) {
-      for (i=0; i<classifierDb.length; i++) {
-        items[i]={
-          value: classifierDb[i],
-          group: "#",
-          selected: false,
-          disabled: false,
-          description: null
+    
+    if (classifiers != undefined && classifiers != null) {
+      // If there are none assigned
+      if (classifiers.length==0) {
+        for (i=0; i<classifierDb.length; i++) {
+          items[i]={
+            value: classifierDb[i],
+            group: "#",
+            selected: false,
+            disabled: false,
+            description: null
+          }
         }
-      }
-    } else {
-      classifierSplit = classifiers.split(",")
-      for (i=0; i<classifierDb.length; i++) {
-        for (j=0; j<classifiers.length; j++) {
-          if (classifierDb[i] == classifierSplit[j]) {
-            items[classifierDb[i]]={
-              value: classifierDb[i],
-              group: "#",
-              selected: true,
-              disabled: false,
-              description: null
-            }
-            break
-          } else {
-            items[classifierDb[i]]={
-              value: classifierDb[i],
-              group: "#",
-              selected: false,
-              disabled: false,
-              description: null
+      } else {
+        if (classifierSplit != undefined && classifierSplit != null) {
+        classifierSplit = classifiers.split(",")
+          if (classifierDb != undefined && classifierDb != null) {
+            for (i=0; i<classifierDb.length; i++) {
+              for (j=0; j<classifiers.length; j++) {
+                if (classifierDb[i] == classifierSplit[j]) {
+                  items[classifierDb[i]]={
+                    value: classifierDb[i],
+                    group: "#",
+                    selected: true,
+                    disabled: false,
+                    description: null
+                  }
+                  break
+                } else {
+                  items[classifierDb[i]]={
+                    value: classifierDb[i],
+                    group: "#",
+                    selected: false,
+                    disabled: false,
+                    description: null
+                  }
+                }
+              }
             }
           }
         }
       }
+      classifierList.options.add(items);
     }
-    classifierList.options.add(items);
   }
 
   function populateFireEmsList(dbFireEms) {
@@ -3800,39 +3845,14 @@
       multiShowCount: false,
       multiContainer: true
     }).reload();
-    let items={}
 
-    // If there are none assigned
-    if (dbFireEms.length==0) {
-      for (i=0; i<dbEmsVehicles.length; i++) {
-        if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
-          dbEmsVehicles[i].emsVehicle.engineNumber=""
-        }
-        items[dbEmsVehicles[i]._id]={
-          value: 'Engine - '+dbEmsVehicles[i].emsVehicle.engineNumber+' ( '+dbEmsVehicles[i].emsVehicle.model+' )',
-          group: "#",
-          selected: false,
-          disabled: false,
-          description: dbEmsVehicles[i].emsVehicle.registeredOwner
-        }
-      }
-    } else {
-      emsSplit = dbFireEms.split(",")
-      for (i=0; i<dbEmsVehicles.length; i++) {
-        for (j=0; j<dbFireEms.length; j++) {
-          if (dbEmsVehicles[i]._id == emsSplit[j]) {
-            if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
-              dbEmsVehicles[i].emsVehicle.engineNumber=""
-            }
-            items[dbEmsVehicles[i]._id]={
-              value: 'Engine - '+dbEmsVehicles[i].emsVehicle.engineNumber+' ( '+dbEmsVehicles[i].emsVehicle.model+' )',
-              group: "#",
-              selected: true,
-              disabled: false,
-              description: dbEmsVehicles[i].emsVehicle.registeredOwner
-            }
-            break
-          } else {
+    if (dbFireEms != null && dbFireEms != undefined) {
+      if (dbEmsVehicles != null && dbEmsVehicles != undefined) {
+        let items={}
+
+        // If there are none assigned
+        if (dbFireEms.length==0) {
+          for (i=0; i<dbEmsVehicles.length; i++) {
             if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
               dbEmsVehicles[i].emsVehicle.engineNumber=""
             }
@@ -3844,10 +3864,40 @@
               description: dbEmsVehicles[i].emsVehicle.registeredOwner
             }
           }
+        } else {
+          emsSplit = dbFireEms.split(",")
+          for (i=0; i<dbEmsVehicles.length; i++) {
+            for (j=0; j<dbFireEms.length; j++) {
+              if (dbEmsVehicles[i]._id == emsSplit[j]) {
+                if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
+                  dbEmsVehicles[i].emsVehicle.engineNumber=""
+                }
+                items[dbEmsVehicles[i]._id]={
+                  value: 'Engine - '+dbEmsVehicles[i].emsVehicle.engineNumber+' ( '+dbEmsVehicles[i].emsVehicle.model+' )',
+                  group: "#",
+                  selected: true,
+                  disabled: false,
+                  description: dbEmsVehicles[i].emsVehicle.registeredOwner
+                }
+                break
+              } else {
+                if (!dbEmsVehicles[i].emsVehicle.engineNumber) {
+                  dbEmsVehicles[i].emsVehicle.engineNumber=""
+                }
+                items[dbEmsVehicles[i]._id]={
+                  value: 'Engine - '+dbEmsVehicles[i].emsVehicle.engineNumber+' ( '+dbEmsVehicles[i].emsVehicle.model+' )',
+                  group: "#",
+                  selected: false,
+                  disabled: false,
+                  description: dbEmsVehicles[i].emsVehicle.registeredOwner
+                }
+              }
+            }
+          }
         }
+        emsList.options.add(items)
       }
     }
-    emsList.options.add(items)
   }
 
   // Param: dbOfficers, contains a list of IDs of the active officers assigned to the call
@@ -3868,39 +3918,11 @@
     }).reload();
     var items={}
 
-    // if there are none assigned
-    if (dbOfficers.length==0) {
-      for (i=0; i<dbCommUsers.length; i++) {
-        //To be deprecated once all users have set a call sign, going into effect 11/25/2020
-        if (!dbCommUsers[i].user.callSign) {
-          dbCommUsers[i].user.callSign=""
-        }
-        items[dbCommUsers[i]._id]={
-          value: dbCommUsers[i].user.username+' ('+dbCommUsers[i].user.callSign+')',
-          group: "#",
-          selected: false,
-          disabled: false,
-          description: dbCommUsers[i].user.dispatchStatus
-        }
-      }
-    } else {
-      officersSplit=dbOfficers.split(",")
-      for (i=0; i<dbCommUsers.length; i++) {
-        for (j=0; j<dbOfficers.length; j++) {
-          if (dbCommUsers[i]._id==officersSplit[j]) {
-            //To be deprecated once all users have set a call sign, going into effect 11/25/2020
-            if (!dbCommUsers[i].user.callSign) {
-              dbCommUsers[i].user.callSign=""
-            }
-            items[dbCommUsers[i]._id]={
-              value: dbCommUsers[i].user.username+' ('+dbCommUsers[i].user.callSign+')',
-              group: "#",
-              selected: true,
-              disabled: false,
-              description: dbCommUsers[i].user.dispatchStatus
-            }
-            break //if we found a match we want to break out
-          } else {
+    if (dbOfficers != undefined && dbOfficers != null) {
+      if (dbCommUsers != undefined && dbCommUsers != null) {
+        // if there are none assigned
+        if (dbOfficers.length==0) {
+          for (i=0; i<dbCommUsers.length; i++) {
             //To be deprecated once all users have set a call sign, going into effect 11/25/2020
             if (!dbCommUsers[i].user.callSign) {
               dbCommUsers[i].user.callSign=""
@@ -3913,10 +3935,42 @@
               description: dbCommUsers[i].user.dispatchStatus
             }
           }
+        } else {
+          officersSplit=dbOfficers.split(",")
+          for (i=0; i<dbCommUsers.length; i++) {
+            for (j=0; j<dbOfficers.length; j++) {
+              if (dbCommUsers[i]._id==officersSplit[j]) {
+                //To be deprecated once all users have set a call sign, going into effect 11/25/2020
+                if (!dbCommUsers[i].user.callSign) {
+                  dbCommUsers[i].user.callSign=""
+                }
+                items[dbCommUsers[i]._id]={
+                  value: dbCommUsers[i].user.username+' ('+dbCommUsers[i].user.callSign+')',
+                  group: "#",
+                  selected: true,
+                  disabled: false,
+                  description: dbCommUsers[i].user.dispatchStatus
+                }
+                break //if we found a match we want to break out
+              } else {
+                //To be deprecated once all users have set a call sign, going into effect 11/25/2020
+                if (!dbCommUsers[i].user.callSign) {
+                  dbCommUsers[i].user.callSign=""
+                }
+                items[dbCommUsers[i]._id]={
+                  value: dbCommUsers[i].user.username+' ('+dbCommUsers[i].user.callSign+')',
+                  group: "#",
+                  selected: false,
+                  disabled: false,
+                  description: dbCommUsers[i].user.dispatchStatus
+                }
+              }
+            }
+          }
         }
+        officerList.options.add(items)
       }
     }
-    officerList.options.add(items)
   }
 
   function hideModal(modalID) {
@@ -4012,107 +4066,111 @@
   }
 
   function populateDriversLicense(civ) {
-    for (i=0; i<civ.length; i++) {
-      var firstName=civ[i].civilian.firstName
-      var lastName=civ[i].civilian.lastName
-      var birthday=civ[i].civilian.birthday
-      var createdDate=new Date(civ[i].civilian.createdAt)
-      var expDay=createdDate.getDate()
-      var expMonth=(createdDate.getMonth())+1
-      var expYear=(createdDate.getFullYear())+10
+    if (civ != undefined && civ != null) {
+      for (i=0; i<civ.length; i++) {
+        var firstName=civ[i].civilian.firstName
+        var lastName=civ[i].civilian.lastName
+        var birthday=civ[i].civilian.birthday
+        var createdDate=new Date(civ[i].civilian.createdAt)
+        var expDay=createdDate.getDate()
+        var expMonth=(createdDate.getMonth())+1
+        var expYear=(createdDate.getFullYear())+10
 
-      // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional,
-      // we will do a check to see if its undefined or empty and if so just set it to an
-      // empty string (or false for booleans), otherwise set it to the value from the db.
-      var gender=(civ[i].civilian.gender==undefined||civ[i].civilian.gender=='')? '':civ[i].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
-      // height needs to be converted to ft in or cm depending on the heightClassification
-      if (civ[i].civilian.height==undefined||civ[i].civilian.height=='') {
-        height=''
-      } else {
-        switch (civ[i].civilian.heightClassification) {
-          case 'imperial':
-            var feet=Math.floor(civ[i].civilian.height/12); // just dividing by 12 to get the feet
-            var inches=("0"+civ[i].civilian.height%12).slice(-2); // mod by 12 to get remainder, but also pad with a '0' if less than '10'
-            height=`${feet}'-${inches}"` // ex: 5'-07"
+        // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional,
+        // we will do a check to see if its undefined or empty and if so just set it to an
+        // empty string (or false for booleans), otherwise set it to the value from the db.
+        var gender=(civ[i].civilian.gender==undefined||civ[i].civilian.gender=='')? '':civ[i].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
+        // height needs to be converted to ft in or cm depending on the heightClassification
+        if (civ[i].civilian.height==undefined||civ[i].civilian.height=='') {
+          height=''
+        } else {
+          switch (civ[i].civilian.heightClassification) {
+            case 'imperial':
+              var feet=Math.floor(civ[i].civilian.height/12); // just dividing by 12 to get the feet
+              var inches=("0"+civ[i].civilian.height%12).slice(-2); // mod by 12 to get remainder, but also pad with a '0' if less than '10'
+              height=`${feet}'-${inches}"` // ex: 5'-07"
+              break;
+            case 'metric':
+              height=`${civ[i].civilian.height} cm`
+              break;
+            default:
+              height=civ[i].civilian.height
+          }
+        }
+        // weight just needs the appropriate label based on the weightClassification (lb or kg)
+        if (civ[i].civilian.weight==undefined||civ[i].civilian.weight=='') {
+          weight=''
+        } else {
+          switch (civ[i].civilian.weightClassification) {
+            case 'imperial':
+              weight=`${civ[i].civilian.weight} lb`
+              break;
+            case 'metric':
+              weight=`${civ[i].civilian.weight} kg`
+              break;
+            default:
+              weight=civ[i].civilian.weight
+          }
+        }
+        var eyeColor=(civ[i].civilian.eyeColor==undefined||civ[i].civilian.eyeColor=='')? '':civ[i].civilian.eyeColor.substring(0, 3); //only grab first 3 characters of string
+        var hairColor=(civ[i].civilian.hairColor==undefined||civ[i].civilian.hairColor=='')? '':civ[i].civilian.hairColor.substring(0, 3); //only grab first 3 characters of string
+        var donor=(civ[i].civilian.organDonor==undefined||civ[i].civilian.organDonor=='')? false:civ[i].civilian.organDonor;
+        var veteran=(civ[i].civilian.veteran==undefined||civ[i].civilian.veteran=='')? false:civ[i].civilian.veteran;
+
+        $('#civilianIDViewLic-'+i).text('DL: '+civ[i]._id)
+        $('#firstNameLic-'+i).text(firstName)
+        $('#lastNameLic-'+i).text(lastName)
+        $('#addressViewLic-'+i).text(civ[i].civilian.address)
+        $('#sexLic-'+i).text(gender);
+        $('#heightLic-'+i).text(height);
+        $('#weightLic-'+i).text(weight);
+        $('#eyeLic-'+i).text(eyeColor);
+        $('#hairLic-'+i).text(hairColor);
+        if (donor===true) {
+          $('.donor-block-'+i).removeClass('hide').addClass('show');
+        }
+        if (veteran===true) {
+          $('.veteran-block-'+i).removeClass('hide').addClass('show');
+        }
+        switch (civ[i].civilian.licenseStatus) {
+          case '1':
+            $('#licenseStatusViewLic-'+i).text('Valid ').removeClass('color-red').addClass('color-black').append('<i class="ion-checkmark-circled color-green"></i>')
+            $('#click-to-revoke-lic-'+i).removeClass('hide')
+            $('#licenseRevokedMessage-'+i).addClass('hide')
+            $('#noLicenseMessage-'+i).addClass('hide')
             break;
-          case 'metric':
-            height=`${civ[i].civilian.height} cm`
+          case '2':
+            $('#licenseStatusViewLic-'+i).text('Revoked ').removeClass('color-black').addClass('color-red').append('<i class="ion-alert-circled color-red"></i>')
+            $('#click-to-revoke-lic-'+i).addClass('hide')
+            $('#click-to-reinstate-lic-'+i).removeClass('hide')
+            $('#licenseRevokedMessage-'+i).removeClass('hide')
+            $('#noLicenseMessage-'+i).addClass('hide')
             break;
           default:
-            height=civ[i].civilian.height
+            $('#drivers-license-'+i).hide();
+            $('#click-to-reinstate-lic-'+i).addClass('hide')
+            $('#licenseStatusViewLic-'+i).text('None').removeClass('color-black').addClass('color-red')
+            $('#licenseRevokedMessage-'+i).addClass('hide')
+            $('#click-to-revoke-lic-'+i).addClass('hide')
+            $('#drivers-license-details-'+i).addClass('hide')
+            $('#noLicenseMessage-'+i).removeClass('hide')
         }
-      }
-      // weight just needs the appropriate label based on the weightClassification (lb or kg)
-      if (civ[i].civilian.weight==undefined||civ[i].civilian.weight=='') {
-        weight=''
-      } else {
-        switch (civ[i].civilian.weightClassification) {
-          case 'imperial':
-            weight=`${civ[i].civilian.weight} lb`
-            break;
-          case 'metric':
-            weight=`${civ[i].civilian.weight} kg`
-            break;
-          default:
-            weight=civ[i].civilian.weight
+        var licenseDOB=birthday.split('-')
+        if (licenseDOB != null && licenseDOB != undefined) {
+          if (licenseDOB.length==3) {
+            $('#birthdayViewLic-'+i).text(licenseDOB[1]+'/'+licenseDOB[2]+'/'+licenseDOB[0])
+          } else {
+            $('#birthdayViewLic-'+i).text(birthday)
+          }
         }
-      }
-      var eyeColor=(civ[i].civilian.eyeColor==undefined||civ[i].civilian.eyeColor=='')? '':civ[i].civilian.eyeColor.substring(0, 3); //only grab first 3 characters of string
-      var hairColor=(civ[i].civilian.hairColor==undefined||civ[i].civilian.hairColor=='')? '':civ[i].civilian.hairColor.substring(0, 3); //only grab first 3 characters of string
-      var donor=(civ[i].civilian.organDonor==undefined||civ[i].civilian.organDonor=='')? false:civ[i].civilian.organDonor;
-      var veteran=(civ[i].civilian.veteran==undefined||civ[i].civilian.veteran=='')? false:civ[i].civilian.veteran;
 
-      $('#civilianIDViewLic-'+i).text('DL: '+civ[i]._id)
-      $('#firstNameLic-'+i).text(firstName)
-      $('#lastNameLic-'+i).text(lastName)
-      $('#addressViewLic-'+i).text(civ[i].civilian.address)
-      $('#sexLic-'+i).text(gender);
-      $('#heightLic-'+i).text(height);
-      $('#weightLic-'+i).text(weight);
-      $('#eyeLic-'+i).text(eyeColor);
-      $('#hairLic-'+i).text(hairColor);
-      if (donor===true) {
-        $('.donor-block-'+i).removeClass('hide').addClass('show');
+        $('#license-expiration-'+i).text(expMonth.toString().padStart(2, '0')+'/'+expDay.toString().padStart(2, '0')+'/'+expYear) //Janky AF
+        $('#license-issued-'+i).text(createdDate.toLocaleDateString('en-US', {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric"
+        }))
       }
-      if (veteran===true) {
-        $('.veteran-block-'+i).removeClass('hide').addClass('show');
-      }
-      switch (civ[i].civilian.licenseStatus) {
-        case '1':
-          $('#licenseStatusViewLic-'+i).text('Valid ').removeClass('color-red').addClass('color-black').append('<i class="ion-checkmark-circled color-green"></i>')
-          $('#click-to-revoke-lic-'+i).removeClass('hide')
-          $('#licenseRevokedMessage-'+i).addClass('hide')
-          $('#noLicenseMessage-'+i).addClass('hide')
-          break;
-        case '2':
-          $('#licenseStatusViewLic-'+i).text('Revoked ').removeClass('color-black').addClass('color-red').append('<i class="ion-alert-circled color-red"></i>')
-          $('#click-to-revoke-lic-'+i).addClass('hide')
-          $('#click-to-reinstate-lic-'+i).removeClass('hide')
-          $('#licenseRevokedMessage-'+i).removeClass('hide')
-          $('#noLicenseMessage-'+i).addClass('hide')
-          break;
-        default:
-          $('#drivers-license-'+i).hide();
-          $('#click-to-reinstate-lic-'+i).addClass('hide')
-          $('#licenseStatusViewLic-'+i).text('None').removeClass('color-black').addClass('color-red')
-          $('#licenseRevokedMessage-'+i).addClass('hide')
-          $('#click-to-revoke-lic-'+i).addClass('hide')
-          $('#drivers-license-details-'+i).addClass('hide')
-          $('#noLicenseMessage-'+i).removeClass('hide')
-      }
-      var licenseDOB=birthday.split('-')
-      if (licenseDOB.length==3) {
-        $('#birthdayViewLic-'+i).text(licenseDOB[1]+'/'+licenseDOB[2]+'/'+licenseDOB[0])
-      } else {
-        $('#birthdayViewLic-'+i).text(birthday)
-      }
-
-      $('#license-expiration-'+i).text(expMonth.toString().padStart(2, '0')+'/'+expDay.toString().padStart(2, '0')+'/'+expYear) //Janky AF
-      $('#license-issued-'+i).text(createdDate.toLocaleDateString('en-US', {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric"
-      }))
     }
   }
 
@@ -4152,36 +4210,47 @@
   }
 
   function openNameDatabase(registeredOwner, activeCommunityID) {
+    var activeCommID = ""
+    if (activeCommunityID != null && activeCommunityID != undefined) {
+      activeCommID = activeCommunityID
+    }
     if (registeredOwner==null||registeredOwner==undefined) {
-      if (activeCommunityID.length==0) {
-        return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+      if (activeCommID.length==0) {
+        return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommID}`
       }
-      return document.location.href=`name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+      return document.location.href=`name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommID}`
     }
     let nameAndDOB=registeredOwner.split(" | ")
-    if (nameAndDOB.length!==2) {
-      if (activeCommunityID.length==0) {
-        return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+    if (nameAndDOB != null && nameAndDOB != undefined) {
+      if (nameAndDOB.length!==2) {
+        if (activeCommID.length==0) {
+          return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommID}`
+        }
+        return document.location.href=`name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommID}`
       }
-      return document.location.href=`name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
     }
     let firstNameLastName=nameAndDOB[0].split(" ")
-    if (firstNameLastName.length!==2) {
-      if (activeCommunityID.length==0) {
-        return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+    if (firstNameLastName != null && firstNameLastName != undefined) {
+      if (firstNameLastName.length!==2) {
+        if (activeCommID.length==0) {
+          return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommID}`
+        }
+        return document.location.href=`name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommID}`
       }
-      return document.location.href=`name-search?firstName=&lastName=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
     }
     //check to see if we are in a community, if we are not,
     //then we need to use the DOB to do the name search
-    if (activeCommunityID.length==0) {
+    if (activeCommID.length==0) {
       let dob=nameAndDOB[1].split(" ")
-      if (dob.length!==2) {
-        return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+      if (dob != null && dob != undefined) {
+        if (dob.length!==2) {
+          return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=&route=dispatch-dashboard&activeCommunityID=${activeCommID}`
+        }
+      return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=${dob[1]}&route=dispatch-dashboard&activeCommunityID=${activeCommID}`
       }
-      return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=${dob[1]}&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
     }
-    return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&route=dispatch-dashboard&activeCommunityID=${activeCommunityID}`
+    return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&route=dispatch-dashboard&activeCommunityID=${activeCommID}`
+  
   }
 
   function markAsRead() {
