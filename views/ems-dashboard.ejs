@@ -185,7 +185,9 @@
                   <th>Plate</th>
                   <th>Model</th>
                   <th>Engine #</th>
-                  <th>Status</th>
+                  <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+                    <th>Status</th>
+                  <% } %>
                 </tr>
               </thead>
               <tbody>
@@ -196,7 +198,9 @@
                     <td><%= vehicles[i].emsVehicle.plate%></td>
                     <td> <%= vehicles[i].emsVehicle.model%></td>
                     <td> <%= vehicles[i].emsVehicle.engineNumber%></td>
-                    <td> <%= vehicles[i].emsVehicle.dispatchStatus%></td>
+                    <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+                      <td> <%= vehicles[i].emsVehicle.dispatchStatus%></td>
+                    <% } %>
                   </tr>
                   <% } %>
                 <% } %>
@@ -204,6 +208,7 @@
             </table>
           </div>
         </div>
+        <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
         <div class="container">
           <div id="assigned-call-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
             <!-- active calls -->
@@ -238,6 +243,7 @@
 
           </div>
         </div>
+        <% } %>
       </section>
       <div class="google-ad"></div>
       <% include footer %>
@@ -673,41 +679,44 @@
                 <input id="roVeh" type="text" value="" style="display:none">
               </div>
 
-              <!-- Text input-->
-              <div class="col-md-7">
-                <label class="col-md-4 margin-bottom-1" for="statusDispatch">Status:</label>
-                <label class="col-md-5" id="statusDispatch">status here</label>
-              </div>
+              <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+                <!-- Text input-->
+                <div class="col-md-7">
+                  <label class="col-md-4 margin-bottom-1" for="statusDispatch">Status:</label>
+                  <label class="col-md-5" id="statusDispatch">status here</label>
+                </div>
 
-              <!-- Text input-->
-              <div class="col-md-7">
-                <label class="col-md-4 margin-bottom-1" for="statusDispatchSetBy">Set By:</label>
-                <label class="col-md-8" id="statusDispatchSetBy">status set by here</label>
-              </div>
+                <!-- Text input-->
+                <div class="col-md-7">
+                  <label class="col-md-4 margin-bottom-1" for="statusDispatchSetBy">Set By:</label>
+                  <label class="col-md-8" id="statusDispatchSetBy">status set by here</label>
+                </div>
+              <% } %>
 
               <div class="col-md-12">
                 <hr style="width: 88%;max-width: 100rem;">
               </div>
 
-              <div class="col-md-12 text-align-center margin-bottom-1">
-                <button name="action" value="update" class="btn btn-primary margin-bottom-1"
-                  title="In Service" onclick="updateStatus('10-8')">10-8</button>
-                <button name="action" value="update" class="btn btn-primary margin-bottom-1" title="Busy"
-                  onclick="updateStatus('10-6')">10-6</button>
-                <button name="action" value="update" class="btn btn-primary margin-bottom-1"
-                  title="Out of Service" onclick="updateStatus('10-7')">10-7</button>
-                <button name="action" value="update" class="btn btn-primary margin-bottom-1"
-                  title="Arrived on Scene" onclick="updateStatus('10-23')">10-23</button>
-                <button name="action" value="update" class="btn btn-primary margin-bottom-1"
-                  title="In Route" onclick="updateStatus('10-97')">10-97</button>
-              </div>
-              <div class="col-md-12 text-align-center margin-bottom-2">
-                <button name="status" value="10-42" class="btn btn-warning btn-md"
-                  title="Log out of CAD" onclick="updateStatus('10-42')">10-42</button>
-                <button name="action" value="update" class="btn btn-success btn-md" title="Log in to CAD"
-                  onclick="updateStatus('10-41')">10-41</button>
-              </div>
-
+              <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+                <div class="col-md-12 text-align-center margin-bottom-1">
+                  <button name="action" value="update" class="btn btn-primary margin-bottom-1"
+                    title="In Service" onclick="updateStatus('10-8')">10-8</button>
+                  <button name="action" value="update" class="btn btn-primary margin-bottom-1" title="Busy"
+                    onclick="updateStatus('10-6')">10-6</button>
+                  <button name="action" value="update" class="btn btn-primary margin-bottom-1"
+                    title="Out of Service" onclick="updateStatus('10-7')">10-7</button>
+                  <button name="action" value="update" class="btn btn-primary margin-bottom-1"
+                    title="Arrived on Scene" onclick="updateStatus('10-23')">10-23</button>
+                  <button name="action" value="update" class="btn btn-primary margin-bottom-1"
+                    title="In Route" onclick="updateStatus('10-97')">10-97</button>
+                </div>
+                <div class="col-md-12 text-align-center margin-bottom-2">
+                  <button name="status" value="10-42" class="btn btn-warning btn-md"
+                    title="Log out of CAD" onclick="updateStatus('10-42')">10-42</button>
+                  <button name="action" value="update" class="btn btn-success btn-md" title="Log in to CAD"
+                    onclick="updateStatus('10-41')">10-41</button>
+                </div>
+              <% } %>
               
 
               <div class="col-md-12 text-align-center">
