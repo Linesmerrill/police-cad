@@ -65,10 +65,12 @@
                             <a href="/login-dispatch" class="btn btn-primary btn-xl page-scroll margin-bottom-1">Dispatch</a>
                         </br><a href="/login-community" class="btn btn-primary btn-xl page-scroll margin-bottom-1">Communities</a>
                         <hr>
-                        <% if ( message.length > 0) { %>
-                        <div class="alert alert-info col-md-4 col-md-offset-4">
-                            <strong><%= message %> </strong>
-                        </div>
+                        <% if(message != undefined && message != null) {%>
+                            <% if ( message.length > 0) { %>
+                            <div class="alert alert-info col-md-4 col-md-offset-4">
+                                <strong><%= message %> </strong>
+                            </div>
+                            <% } %>
                         <% } %>
                     </div>
                 </div>

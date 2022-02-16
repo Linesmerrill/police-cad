@@ -156,12 +156,14 @@
       <header id="second" style='background-image: url("/static/images/hway_bkground.jpg");'>
         <div class="header-content margin-top-2">
           <div class="inner" style="margin-top: 9em;">
-            <% for(var i=0; i<communities.length; i++) {%>
-              <% if (communities[i]._id==user.user.activeCommunity) {%>
-                <div id="panic-placeholder"></div>
-                <div id="panic-placeholder-socket"></div>
+            <% if(communities != undefined && communities != null) {%>
+              <% for(var i=0; i<communities.length; i++) {%>
+                <% if (communities[i]._id==user.user.activeCommunity) {%>
+                  <div id="panic-placeholder"></div>
+                  <div id="panic-placeholder-socket"></div>
                 <%}%>
-                  <%}%>
+              <%}%>
+            <%}%>
 
                     <% if (context=="createTicketSuccess" ) {%>
                       <div class="alert alert-success alert-dismissible show" role="alert">
@@ -287,7 +289,7 @@
             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
               <h4>Active BOLOs: </h4>
               <h5>Click for details</h5>
-              <% if (bolos !=null && bolos.length> 0) {%>
+              <% if (bolos !=null && bolos != undefined) {%>
                 <% for(var i=0; i<bolos.length; i++) {%>
                   <% if (bolos[i].bolo.status==true) {%>
                     <a id="<%=bolos[i]._id%>-row" data-toggle="modal" href="#boloDetailModal"
@@ -312,7 +314,7 @@
             <!-- active calls -->
             <h4>Assigned Calls: </h4>
             <h5>Click for details</h5>
-            <% if (calls !=null && calls.length> 0) {%>
+            <% if (calls !=null && calls != undefined) {%>
               <% for(var i=0; i<calls.length; i++) {%>
                 <% if (calls[i].call.status==true) {%>
                   <% if (calls[i].call.assignedOfficers !=null && calls[i].call.assignedOfficers !='' ) {%>
@@ -421,7 +423,7 @@
                     }
 
                   </script>
-                  <% if (civilians !=null) {%>
+                  <% if (civilians !=null && civilians != undefined) {%>
                     <% for(var i=0; i<civilians.length; i++) {%>
                       <div class="panel panel-default background-transparent">
                         <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
@@ -735,7 +737,7 @@
                                                                 </tr>
                                                               </thead>
                                                               <tbody id="ticket-body-<%=civilians[i]._id%>">
-                                                                <% if (tickets !=null) {%>
+                                                                <% if (tickets !=null && tickets != undefined) {%>
                                                                   <% for(var j=0; j<tickets.length; j++) {%>
                                                                     <tr id="<%=tickets[j]._id%>">
                                                                       <% if ((tickets[j].ticket.civID==civilians[i]._id)
@@ -785,7 +787,7 @@
                                                                 </tr>
                                                               </thead>
                                                               <tbody id="warning-body-<%=civilians[i]._id%>">
-                                                                <% if (tickets !=null) {%>
+                                                                <% if (tickets !=null && tickets != undefined) {%>
                                                                   <% for(var j=0; j<tickets.length; j++) {%>
                                                                     <tr id="warning-<%=tickets[j]._id%>">
                                                                       <% if ((tickets[j].ticket.civID==civilians[i]._id)
@@ -832,7 +834,7 @@
                                                                 </tr>
                                                               </thead>
                                                               <tbody id="arrest-body-<%=civilians[i]._id%>">
-                                                                <% if (arrestReports !=null) {%>
+                                                                <% if (arrestReports !=null && arrestReports != undefined) {%>
                                                                   <% for(var j=0; j<arrestReports.length; j++) {%>
                                                                     <tr id="<%=arrestReports[j]._id%>">
                                                                       <% if
@@ -910,7 +912,7 @@
               <!-- List of Plates -->
               <div id="plateDetails" style="display:none">
                 <div class="panel-group" id="accordion">
-                  <% if (vehicles !=null) {%>
+                  <% if (vehicles !=null && vehicles != undefined) {%>
                     <% for(var i=0; i<vehicles.length; i++) {%>
                       <div class="panel panel-default background-transparent">
                         <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
@@ -1004,7 +1006,7 @@
               <!-- List of Plates -->
               <div id="firearmDetails" style="display:none">
                 <div class="panel-group" id="accordion">
-                  <% if (firearms !=null) {%>
+                  <% if (firearms !=null && firearms != undefined) {%>
                     <% for(var i=0; i<firearms.length; i++) {%>
                       <div class="panel panel-default background-transparent">
                         <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
@@ -2403,12 +2405,16 @@
     //check for notification cookie
     let cookieVersion = undefined
     let cookieValueSplit = document.cookie.split('; ')
-    if (cookieValueSplit.length > 0) {
-      let cookieValueNotifSymbol = cookieValueSplit.find(row => row.startsWith('notification-symbol='))
-      if (cookieValueNotifSymbol != undefined) {
-        let cookieVersionSplit = cookieValueNotifSymbol.split('=');
-        if (cookieVersionSplit.length > 1) {
-          cookieVersion = cookieVersionSplit[1];
+    if (cookieValueSplit != null && cookieValueSplit != undefined) {
+      if (cookieValueSplit.length > 0) {
+        let cookieValueNotifSymbol = cookieValueSplit.find(row => row.startsWith('notification-symbol='))
+        if (cookieValueNotifSymbol != undefined) {
+          let cookieVersionSplit = cookieValueNotifSymbol.split('=');
+          if (cookieVersionSplit != null && cookieVersionSplit != undefined) {
+            if (cookieVersionSplit.length > 1) {
+              cookieVersion = cookieVersionSplit[1];
+            }
+          }
         }
       }
     }
@@ -2423,9 +2429,11 @@
     } else {
       // else if we can find the cookie, then we will subtract whatever the cookie value is from the current version
       let specificVersionSplit = cookieVersion.split(".")
-      if (specificVersionSplit.length == 3) {
-        let versionDifference = parseInt(MINOR_VERSION) - parseInt(specificVersionSplit[1])
-        $('#notification-count').text(versionDifference)
+      if (specificVersionSplit != null && specificVersionSplit != undefined) {
+        if (specificVersionSplit.length == 3) {
+          let versionDifference = parseInt(MINOR_VERSION) - parseInt(specificVersionSplit[1])
+          $('#notification-count').text(versionDifference)
+        }
       }
     }
 
@@ -2471,36 +2479,37 @@
     }
     socket.emit('get_reg_arm', myReq)
     socket.on('load_reg_arm_result', res => {
-
-      if (res.length==0) {
-        $('#registered-firearms').append(
-          `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`+
-          `<h5 style="text-align: center;">No Registered Firearms</h5>`+
-          `</div>`
-        )
-        return
-      }
-      $('#registered-firearms').append(
-        `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`
-      )
-      for (i=0; i<res.length; i++) {
-        if (i!=0) { //if we are not on the first loop, add a divider between each record
-          $('#registered-firearms-panel-body-'+index).append(
-            '<hr>'
-          )
-        }
-        // Check if firearm is stolen and append result
-        if (res[i].firearm.isStolen=="true") {
-          $('#registered-firearms-panel-body-'+index).append(
-            `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
-            `<strong>Danger!</strong> #${res[i].firearm.serialNumber} reported as stolen.`+
+      if (res != undefined && res != null) {
+        if (res.length==0) {
+          $('#registered-firearms').append(
+            `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`+
+            `<h5 style="text-align: center;">No Registered Firearms</h5>`+
             `</div>`
           )
+          return
         }
-        $('#registered-firearms-panel-body-'+index).append(
-          `Serial #: ${res[i].firearm.serialNumber}<br/>`+
-          `Weapon Type: ${res[i].firearm.weaponType}<br/>`
+        $('#registered-firearms').append(
+          `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`
         )
+        for (i=0; i<res.length; i++) {
+          if (i!=0) { //if we are not on the first loop, add a divider between each record
+            $('#registered-firearms-panel-body-'+index).append(
+              '<hr>'
+            )
+          }
+          // Check if firearm is stolen and append result
+          if (res[i].firearm.isStolen=="true") {
+            $('#registered-firearms-panel-body-'+index).append(
+              `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
+              `<strong>Danger!</strong> #${res[i].firearm.serialNumber} reported as stolen.`+
+              `</div>`
+            )
+          }
+          $('#registered-firearms-panel-body-'+index).append(
+            `Serial #: ${res[i].firearm.serialNumber}<br/>`+
+            `Weapon Type: ${res[i].firearm.weaponType}<br/>`
+          )
+        }
       }
     });
   }
@@ -2519,59 +2528,61 @@
     }
     socket.emit('get_reg_veh', myReq)
     socket.on('load_reg_veh_result', res => {
-      if (res.length==0) {
-        $('#registered-cars').append(
-          `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`+
-          `<h5 style="text-align: center;">No Registered Vehicles</h5>`+
-          `</div>`
-        )
-        return
-      }
-      $('#registered-cars').append(
-        `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`
-      )
-      for (i=0; i<res.length; i++) {
-
-        if (i!=0) { //if we are not on the first loop, add a divider between each record
-          $('#registered-cars-panel-body-'+index).append(
-            `<hr>`
-          )
-        }
-        //check if vehicle is stolen and append result
-        if (res[i].vehicle.isStolen==2) {
-          $('#registered-cars-panel-body-'+index).append(
-            `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
-            `<strong>Danger!</strong> Vehicle reported as stolen.`+
+      if (res != null && res != undefined) {
+        if (res.length==0) {
+          $('#registered-cars').append(
+            `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`+
+            `<h5 style="text-align: center;">No Registered Vehicles</h5>`+
             `</div>`
           )
+          return
         }
-        $('#registered-cars-panel-body-'+index).append(
-          `Vin #: ${res[i].vehicle.vin}<br/>`+
-          `License Plate #: ${res[i].vehicle.plate}<br/>`+
-          `Color: ${res[i].vehicle.color}<br/>`+
-          `Model: ${res[i].vehicle.model}<br/>`
+        $('#registered-cars').append(
+          `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`
         )
-        //check for valid/invalid insurance and append result
-        if (res[i].vehicle.validInsurance==1) {
-          $('#registered-cars-panel-body-'+index).append(
-            `<p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i></p>`
-          )
-        } else {
-          $('#registered-cars-panel-body-'+index).append(
-            `<p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>`
-          )
-        }
-        //check for valid/invalid registration and append result
-        if (res[i].vehicle.validRegistration==1) {
-          $('#registered-cars-panel-body-'+index).append(
-            `<p class="plate-body-text">Registration: Valid <i class="ion-checkmark-circled color-green"></i></p>`
-          )
-        } else {
-          $('#registered-cars-panel-body-'+index).append(
-            `<p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>`
-          )
-        }
+        for (i=0; i<res.length; i++) {
 
+          if (i!=0) { //if we are not on the first loop, add a divider between each record
+            $('#registered-cars-panel-body-'+index).append(
+              `<hr>`
+            )
+          }
+          //check if vehicle is stolen and append result
+          if (res[i].vehicle.isStolen==2) {
+            $('#registered-cars-panel-body-'+index).append(
+              `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
+              `<strong>Danger!</strong> Vehicle reported as stolen.`+
+              `</div>`
+            )
+          }
+          $('#registered-cars-panel-body-'+index).append(
+            `Vin #: ${res[i].vehicle.vin}<br/>`+
+            `License Plate #: ${res[i].vehicle.plate}<br/>`+
+            `Color: ${res[i].vehicle.color}<br/>`+
+            `Model: ${res[i].vehicle.model}<br/>`
+          )
+          //check for valid/invalid insurance and append result
+          if (res[i].vehicle.validInsurance==1) {
+            $('#registered-cars-panel-body-'+index).append(
+              `<p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i></p>`
+            )
+          } else {
+            $('#registered-cars-panel-body-'+index).append(
+              `<p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>`
+            )
+          }
+          //check for valid/invalid registration and append result
+          if (res[i].vehicle.validRegistration==1) {
+            $('#registered-cars-panel-body-'+index).append(
+              `<p class="plate-body-text">Registration: Valid <i class="ion-checkmark-circled color-green"></i></p>`
+            )
+          } else {
+            $('#registered-cars-panel-body-'+index).append(
+              `<p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>`
+            )
+          }
+
+        }
       }
     })
   }
@@ -2588,43 +2599,45 @@
     }
     socket.emit('get_active_warrants', myReq)
     socket.on('load_active_warrants_result', res => {
-      $('#active-warrants').append(
-        `<div id="active-warrants-panel-body-${index}" class="panel-body active-reg">`
-      )
-      let counter = 0
-      for (i=0; i<res.length; i++) {
-        //check if warrant is active and append result
-        if (res[i].warrant.status) {
-          if (i!=0) { //if we are not on the first loop, add a divider between each record
-          $('#active-warrants-panel-body-'+index).append(
-            `<hr>`
+      if (res != undefined && res != null) {
+        $('#active-warrants').append(
+          `<div id="active-warrants-panel-body-${index}" class="panel-body active-reg">`
+        )
+        let counter = 0
+        for (i=0; i<res.length; i++) {
+          //check if warrant is active and append result
+          if (res[i].warrant.status) {
+            if (i!=0) { //if we are not on the first loop, add a divider between each record
+            $('#active-warrants-panel-body-'+index).append(
+              `<hr>`
+            )
+          }
+            $('#active-warrants-panel-body-'+index).append(
+              `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
+              `<strong>Danger!</strong> Active Warrant.`+
+              `</div>`
+            )
+            $('#active-warrants-panel-body-'+index).append(
+            `Date Created: ${res[i].warrant.date}<br/>`+
+            `Time Created: ${res[i].warrant.time}<br/>`+
+            `Reporting Officer: ${res[i].warrant.reportingOfficer}<br/>`+
+            `Reason(s): ${res[i].warrant.reasons}<br/>`
           )
-        }
+
           $('#active-warrants-panel-body-'+index).append(
-            `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
-            `<strong>Danger!</strong> Active Warrant.`+
+            `<button type="button" class="btn btn-info margin-bottom-05" id="confirmWarrantModal" data-toggle="modal" href="#confirmClearWarrantModal" onclick="clearWarrantWithValues('${res[i]._id}', '${res[i].warrant.reasons}')">Clear</button>`
+          )
+          counter++
+          }
+        }
+        if (counter === 0) {
+          $('#active-warrants').append(
+            `<div id="active-warrants-panel-body-${index}" class="panel-body active-reg">`+
+            `<h5 style="text-align: center;">No Active Warrants</h5>`+
             `</div>`
           )
-          $('#active-warrants-panel-body-'+index).append(
-          `Date Created: ${res[i].warrant.date}<br/>`+
-          `Time Created: ${res[i].warrant.time}<br/>`+
-          `Reporting Officer: ${res[i].warrant.reportingOfficer}<br/>`+
-          `Reason(s): ${res[i].warrant.reasons}<br/>`
-        )
-
-        $('#active-warrants-panel-body-'+index).append(
-          `<button type="button" class="btn btn-info margin-bottom-05" id="confirmWarrantModal" data-toggle="modal" href="#confirmClearWarrantModal" onclick="clearWarrantWithValues('${res[i]._id}', '${res[i].warrant.reasons}')">Clear</button>`
-        )
-        counter++
+          return
         }
-      }
-      if (counter === 0) {
-        $('#active-warrants').append(
-          `<div id="active-warrants-panel-body-${index}" class="panel-body active-reg">`+
-          `<h5 style="text-align: center;">No Active Warrants</h5>`+
-          `</div>`
-        )
-        return
       }
     })
   }
@@ -2635,7 +2648,7 @@
       x.style.display='block';
     } else { }
 
-    if (dbVehicles===null) {
+    if (dbVehicles===null || dbVehicles == undefined) {
       return
     }
     if (dbVehicles.length===0) {
@@ -2651,7 +2664,7 @@
       x.style.display='block';
     } else { }
 
-    if (dbFirearms===null) {
+    if (dbFirearms===null || dbFirearms == undefined) {
       return
     }
     if (dbFirearms.length===0) {
@@ -2666,7 +2679,7 @@
     if (x.style.display==='none') {
       x.style.display='block';
     } else { }
-    if (dbCivilians===null||dbTickets===null) {
+    if (dbCivilians===null||dbTickets===null || dbCivilians == undefined || dbCivilians == undefined) {
       hideCivPopover();
       return
     } else if (dbCivilians.length===0) {
@@ -2866,8 +2879,10 @@
       $('#descriptionCallDetail').empty().text(res.call.shortDescription)
       $('#callNotesDetail').empty().text(res.call.callNotes)
       let selectedClassifiers = ""
-      for (let i=0; i<res.call.classifier.length; i++) {
-        selectedClassifiers += res.call.classifier[i] + ", "
+      if (res.call.classifier != null && res.call.classifier != undefined) {
+        for (let i=0; i<res.call.classifier.length; i++) {
+          selectedClassifiers += res.call.classifier[i] + ", "
+        }
       }
       $('#classifier').empty().text(selectedClassifiers)
     })
@@ -3082,110 +3097,114 @@
   }
 
   function populateDriversLicense(civ) {
-    for (i=0; i<civ.length; i++) {
-      var firstName=civ[i].civilian.firstName
-      var lastName=civ[i].civilian.lastName
-      var birthday=civ[i].civilian.birthday
-      var createdDate=new Date(civ[i].civilian.createdAt)
-      var expDay=createdDate.getDate()
-      var expMonth=(createdDate.getMonth())+1
-      var expYear=(createdDate.getFullYear())+10
+    if (civ != null && civ != undefined) {
+      for (i=0; i<civ.length; i++) {
+        var firstName=civ[i].civilian.firstName
+        var lastName=civ[i].civilian.lastName
+        var birthday=civ[i].civilian.birthday
+        var createdDate=new Date(civ[i].civilian.createdAt)
+        var expDay=createdDate.getDate()
+        var expMonth=(createdDate.getMonth())+1
+        var expYear=(createdDate.getFullYear())+10
 
-      // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional,
-      // we will do a check to see if its undefined or empty and if so just set it to an
-      // empty string (or false for booleans), otherwise set it to the value from the db.
-      var gender=(civ[i].civilian.gender==undefined||civ[i].civilian.gender=='')? '':civ[i].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
-      // height needs to be converted to ft in or cm depending on the heightClassification
-      if (civ[i].civilian.height==undefined||civ[i].civilian.height=='') {
-        height=''
-      } else {
-        switch (civ[i].civilian.heightClassification) {
-          case 'imperial':
-            var feet=Math.floor(civ[i].civilian.height/12); // just dividing by 12 to get the feet
-            var inches=("0"+civ[i].civilian.height%12).slice(-2); // mod by 12 to get remainder, but also pad with a '0' if less than '10'
-            height=`${feet}'-${inches}"` // ex: 5'-07"
+        // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional,
+        // we will do a check to see if its undefined or empty and if so just set it to an
+        // empty string (or false for booleans), otherwise set it to the value from the db.
+        var gender=(civ[i].civilian.gender==undefined||civ[i].civilian.gender=='')? '':civ[i].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
+        // height needs to be converted to ft in or cm depending on the heightClassification
+        if (civ[i].civilian.height==undefined||civ[i].civilian.height=='') {
+          height=''
+        } else {
+          switch (civ[i].civilian.heightClassification) {
+            case 'imperial':
+              var feet=Math.floor(civ[i].civilian.height/12); // just dividing by 12 to get the feet
+              var inches=("0"+civ[i].civilian.height%12).slice(-2); // mod by 12 to get remainder, but also pad with a '0' if less than '10'
+              height=`${feet}'-${inches}"` // ex: 5'-07"
+              break;
+            case 'metric':
+              height=`${civ[i].civilian.height} cm`
+              break;
+            default:
+              height=civ[i].civilian.height
+          }
+        }
+        // weight just needs the appropriate label based on the weightClassification (lb or kg)
+        if (civ[i].civilian.weight==undefined||civ[i].civilian.weight=='') {
+          weight=''
+        } else {
+          switch (civ[i].civilian.weightClassification) {
+            case 'imperial':
+              weight=`${civ[i].civilian.weight} lb`
+              break;
+            case 'metric':
+              weight=`${civ[i].civilian.weight} kg`
+              break;
+            default:
+              weight=civ[i].civilian.weight
+          }
+        }
+        var eyeColor=(civ[i].civilian.eyeColor==undefined||civ[i].civilian.eyeColor=='')? '':civ[i].civilian.eyeColor.substring(0, 3); //only grab first 3 characters of string
+        var hairColor=(civ[i].civilian.hairColor==undefined||civ[i].civilian.hairColor=='')? '':civ[i].civilian.hairColor.substring(0, 3); //only grab first 3 characters of string
+        var donor=(civ[i].civilian.organDonor==undefined||civ[i].civilian.organDonor=='')? false:civ[i].civilian.organDonor;
+        var veteran=(civ[i].civilian.veteran==undefined||civ[i].civilian.veteran=='')? false:civ[i].civilian.veteran;
+
+        $('#civilianIDViewLic-'+i).text('DL: '+civ[i]._id)
+        $('#firstNameLic-'+i).text(firstName)
+        $('#lastNameLic-'+i).text(lastName)
+        $('#addressViewLic-'+i).text(civ[i].civilian.address)
+        $('#sexLic-'+i).text(gender);
+        $('#heightLic-'+i).text(height);
+        $('#weightLic-'+i).text(weight);
+        $('#eyeLic-'+i).text(eyeColor);
+        $('#hairLic-'+i).text(hairColor);
+        if (donor===true) {
+          $('.donor-block-'+i).removeClass('hide').addClass('show');
+        }
+        if (veteran===true) {
+          $('.veteran-block-'+i).removeClass('hide').addClass('show');
+        }
+        switch (civ[i].civilian.licenseStatus) {
+          case '1':
+            $('#licenseStatusViewLic-'+i).text('Valid ').removeClass('color-red').addClass('color-black').append(
+              '<i class="ion-checkmark-circled color-green"></i>')
+            $('#click-to-revoke-lic-'+i).removeClass('hide')
+            $('#licenseRevokedMessage-'+i).addClass('hide')
+            $('#noLicenseMessage-'+i).addClass('hide')
             break;
-          case 'metric':
-            height=`${civ[i].civilian.height} cm`
+          case '2':
+            $('#licenseStatusViewLic-'+i).text('Revoked ').removeClass('color-black').addClass('color-red').append(
+              '<i class="ion-alert-circled color-red"></i>')
+            $('#click-to-revoke-lic-'+i).addClass('hide')
+            $('#click-to-reinstate-lic-'+i).removeClass('hide')
+            $('#licenseRevokedMessage-'+i).removeClass('hide')
+            $('#noLicenseMessage-'+i).addClass('hide')
             break;
           default:
-            height=civ[i].civilian.height
+            $('#drivers-license-'+i).hide();
+            $('#click-to-reinstate-lic-'+i).addClass('hide')
+            $('#licenseStatusViewLic-'+i).text('None').removeClass('color-black').addClass('color-red')
+            $('#licenseRevokedMessage-'+i).addClass('hide')
+            $('#click-to-revoke-lic-'+i).addClass('hide')
+            $('#drivers-license-details-'+i).addClass('hide')
+            $('#noLicenseMessage-'+i).removeClass('hide')
         }
-      }
-      // weight just needs the appropriate label based on the weightClassification (lb or kg)
-      if (civ[i].civilian.weight==undefined||civ[i].civilian.weight=='') {
-        weight=''
-      } else {
-        switch (civ[i].civilian.weightClassification) {
-          case 'imperial':
-            weight=`${civ[i].civilian.weight} lb`
-            break;
-          case 'metric':
-            weight=`${civ[i].civilian.weight} kg`
-            break;
-          default:
-            weight=civ[i].civilian.weight
+        var licenseDOB=birthday.split('-')
+        if (licenseDOB != null && licenseDOB != undefined) {
+          if (licenseDOB.length==3) {
+            $('#birthdayViewLic-'+i).text(licenseDOB[1]+'/'+licenseDOB[2]+'/'+licenseDOB[0])
+          } else {
+            $('#birthdayViewLic-'+i).text(birthday)
+          }
         }
-      }
-      var eyeColor=(civ[i].civilian.eyeColor==undefined||civ[i].civilian.eyeColor=='')? '':civ[i].civilian.eyeColor.substring(0, 3); //only grab first 3 characters of string
-      var hairColor=(civ[i].civilian.hairColor==undefined||civ[i].civilian.hairColor=='')? '':civ[i].civilian.hairColor.substring(0, 3); //only grab first 3 characters of string
-      var donor=(civ[i].civilian.organDonor==undefined||civ[i].civilian.organDonor=='')? false:civ[i].civilian.organDonor;
-      var veteran=(civ[i].civilian.veteran==undefined||civ[i].civilian.veteran=='')? false:civ[i].civilian.veteran;
 
-      $('#civilianIDViewLic-'+i).text('DL: '+civ[i]._id)
-      $('#firstNameLic-'+i).text(firstName)
-      $('#lastNameLic-'+i).text(lastName)
-      $('#addressViewLic-'+i).text(civ[i].civilian.address)
-      $('#sexLic-'+i).text(gender);
-      $('#heightLic-'+i).text(height);
-      $('#weightLic-'+i).text(weight);
-      $('#eyeLic-'+i).text(eyeColor);
-      $('#hairLic-'+i).text(hairColor);
-      if (donor===true) {
-        $('.donor-block-'+i).removeClass('hide').addClass('show');
+        $('#license-expiration-'+i).text(expMonth.toString().padStart(2, '0')+'/'+expDay.toString().padStart(2,
+          '0')+'/'+expYear) //Janky AF
+        $('#license-issued-'+i).text(createdDate.toLocaleDateString('en-US', {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric"
+        }))
       }
-      if (veteran===true) {
-        $('.veteran-block-'+i).removeClass('hide').addClass('show');
-      }
-      switch (civ[i].civilian.licenseStatus) {
-        case '1':
-          $('#licenseStatusViewLic-'+i).text('Valid ').removeClass('color-red').addClass('color-black').append(
-            '<i class="ion-checkmark-circled color-green"></i>')
-          $('#click-to-revoke-lic-'+i).removeClass('hide')
-          $('#licenseRevokedMessage-'+i).addClass('hide')
-          $('#noLicenseMessage-'+i).addClass('hide')
-          break;
-        case '2':
-          $('#licenseStatusViewLic-'+i).text('Revoked ').removeClass('color-black').addClass('color-red').append(
-            '<i class="ion-alert-circled color-red"></i>')
-          $('#click-to-revoke-lic-'+i).addClass('hide')
-          $('#click-to-reinstate-lic-'+i).removeClass('hide')
-          $('#licenseRevokedMessage-'+i).removeClass('hide')
-          $('#noLicenseMessage-'+i).addClass('hide')
-          break;
-        default:
-          $('#drivers-license-'+i).hide();
-          $('#click-to-reinstate-lic-'+i).addClass('hide')
-          $('#licenseStatusViewLic-'+i).text('None').removeClass('color-black').addClass('color-red')
-          $('#licenseRevokedMessage-'+i).addClass('hide')
-          $('#click-to-revoke-lic-'+i).addClass('hide')
-          $('#drivers-license-details-'+i).addClass('hide')
-          $('#noLicenseMessage-'+i).removeClass('hide')
-      }
-      var licenseDOB=birthday.split('-')
-      if (licenseDOB.length==3) {
-        $('#birthdayViewLic-'+i).text(licenseDOB[1]+'/'+licenseDOB[2]+'/'+licenseDOB[0])
-      } else {
-        $('#birthdayViewLic-'+i).text(birthday)
-      }
-
-      $('#license-expiration-'+i).text(expMonth.toString().padStart(2, '0')+'/'+expDay.toString().padStart(2,
-        '0')+'/'+expYear) //Janky AF
-      $('#license-issued-'+i).text(createdDate.toLocaleDateString('en-US', {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric"
-      }))
     }
   }
 
@@ -3227,36 +3246,46 @@
   }
 
   function openNameDatabase(registeredOwner, activeCommunityID) {
+    var activeCommID = ""
+    if (activeCommunityID != null && activeCommunityID != undefined) {
+      activeCommID = activeCommunityID
+    }
     if (registeredOwner==null||registeredOwner==undefined) {
-      if (activeCommunityID.length==0) {
-        return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommunityID}`
+      if (activeCommID.length==0) {
+        return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommID}`
       }
-      return document.location.href=`name-search?firstName=&lastName=&activeCommunityID=${activeCommunityID}`
+      return document.location.href=`name-search?firstName=&lastName=&activeCommunityID=${activeCommID}`
     }
     let nameAndDOB=registeredOwner.split(" | ")
-    if (nameAndDOB.length!==2) {
-      if (activeCommunityID.length==0) {
-        return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommunityID}`
+    if (nameAndDOB != null && nameAndDOB != undefined) {
+      if (nameAndDOB.length!==2) {
+        if (activeCommID.length==0) {
+          return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommID}`
+        }
+        return document.location.href=`name-search?firstName=&lastName=&activeCommunityID=${activeCommID}`
       }
-      return document.location.href=`name-search?firstName=&lastName=&activeCommunityID=${activeCommunityID}`
     }
     let firstNameLastName=nameAndDOB[0].split(" ")
-    if (firstNameLastName.length!==2) {
-      if (activeCommunityID.length==0) {
-        return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommunityID}`
+    if (firstNameLastName != null && firstNameLastName != undefined) {
+      if (firstNameLastName.length!==2) {
+        if (activeCommID.length==0) {
+          return document.location.href=`name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommID}`
+        }
+        return document.location.href=`name-search?firstName=&lastName=&activeCommunityID=${activeCommID}`
       }
-      return document.location.href=`name-search?firstName=&lastName=&activeCommunityID=${activeCommunityID}`
     }
     //check to see if we are in a community, if we are not,
     //then we need to use the DOB to do the name search
-    if (activeCommunityID.length==0) {
+    if (activeCommID.length==0) {
       let dob=nameAndDOB[1].split(" ")
-      if (dob.length!==2) {
-        return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=&activeCommunityID=${activeCommunityID}`
+      if (dob != null && dob != undefined) {
+        if (dob.length!==2) {
+          return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=&activeCommunityID=${activeCommID}`
+        }
+        return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=${dob[1]}&activeCommunityID=${activeCommID}`
       }
-      return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=${dob[1]}&activeCommunityID=${activeCommunityID}`
     }
-    return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&activeCommunityID=${activeCommunityID}`
+    return document.location.href=`name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&activeCommunityID=${activeCommID}`
   }
 
   function markAsRead() {
