@@ -594,6 +594,9 @@ module.exports = function (app, passport, server) {
   //This is gross and I know it :yolo:
   app.get('/name-search', auth, function (req, res) {
     // console.debug("req: ", req.query)
+
+
+
     if (req.query.route == 'dispatch-dashboard') {
       if (req.query.firstName == undefined || req.query.lastName == undefined) {
         res.status(400)
@@ -4170,6 +4173,229 @@ module.exports = function (app, passport, server) {
         if (err) return console.error(err);
         return socket.emit('created_new_firearm', dbFirearms)
       });
+    })
+
+    socket.on('name-search', (req) => {
+      var nameSearchResults = {}
+      console.debug('name search socket: ', req)
+      // if (req.query.route == 'dispatch-dashboard') {
+        if (req.firstName == undefined || req.lastName == undefined) {
+          // res.status(400)
+          return socket.emit('name-search-results', nameSearchResults)
+        }
+        let firstName = sanitize(req.firstName.trim().toLowerCase());
+        let lastName = sanitize(req.lastName.trim().toLowerCase());
+        if (req.activeCommunityID == '' || req.activeCommunityID == null) {
+          if (req.dateOfBirth == undefined) {
+            // res.status(400)
+            return socket.emit('name-search-results', nameSearchResults)
+          }
+          Civilian.find({
+            '$text': {
+              '$search': `"${firstName}" "${lastName}"`
+            },
+            'civilian.birthday': req.dateOfBirth,
+            '$or': [{ // some are stored as empty strings and others as null so we need to check for both
+              'civilian.activeCommunityID': ''
+            }, {
+              'civilian.activeCommunityID': null
+            }]
+          }, function (err, dbCivilians) {
+            if (err) return console.error(err);
+            Ticket.find({
+              'ticket.civFirstName': firstName.capitalize(),
+              'ticket.civLastName': lastName.capitalize()
+            }, function (err, dbTickets) {
+              if (err) return console.error(err);
+              ArrestReport.find({
+                'arrestReport.accusedFirstName': firstName.capitalize(),
+                'arrestReport.accusedLastName': lastName.capitalize()
+              }, function (err, dbArrestReports) {
+                if (err) return console.error(err);
+                Warrant.find({
+                  'warrant.accusedFirstName': firstName.capitalize(),
+                  'warrant.accusedLastName': lastName.capitalize(),
+                  'warrant.status': true
+                }, function (err, dbWarrants) {
+                  if (err) return console.error(err);
+                  Community.find({
+                    '$or': [{
+                      'community.ownerID': req.userID
+                    }, {
+                      '_id': req.activeCommunityID
+                    }]
+                  }, function (err, dbCommunities) {
+                    if (err) return console.error(err);
+                    Bolo.find({
+                      'bolo.communityID': req.activeCommunityID
+                    }, function (err, dbBolos) {
+                      if (err) return console.error(err);
+                      Call.find({
+                        'call.communityID': req.activeCommunityID,
+                      }, function (err, dbCalls) {
+                        if (err) return console.error(err);
+                        User.find({
+                          'user.activeCommunity': req.activeCommunityID
+                        }, function (err, dbCommUsers) {
+                          if (err) return console.error(err);
+                          EmsVehicle.find({
+                            'emsVehicle.activeCommunityID': req.activeCommunityID
+                          }, function (err, dbEmsEngines) {
+                            if (err) return console.error(err);
+                            if (req.activeCommunityID == '' || req.activeCommunityID == null) {
+                              return socket.emit('name-search-results', {
+                                // user: req.user,
+                                vehicles: null,
+                                civilians: dbCivilians,
+                                firearms: null,
+                                tickets: dbTickets,
+                                arrestReports: dbArrestReports,
+                                warrants: dbWarrants,
+                                dbEmsEngines: null,
+                                communities: dbCommunities,
+                                commUsers: dbCommUsers,
+                                bolos: dbBolos,
+                                calls: dbCalls,
+                                context: null,
+                                referer: encodeURIComponent('/dispatch-dashboard'),
+                                redirect: encodeURIComponent(redirect)
+                              });
+                            } else {
+                              User.find({
+                                'user.activeCommunity': req.activeCommunityID
+                              }, function (err, dbCommUsers) {
+                                if (err) return console.error(err);
+                                return socket.emit('name-search-results', {
+                                  // user: req.user,
+                                  vehicles: null,
+                                  civilians: dbCivilians,
+                                  firearms: null,
+                                  tickets: dbTickets,
+                                  arrestReports: dbArrestReports,
+                                  warrants: dbWarrants,
+                                  dbEmsEngines: dbEmsEngines,
+                                  communities: dbCommunities,
+                                  commUsers: dbCommUsers,
+                                  bolos: dbBolos,
+                                  calls: dbCalls,
+                                  context: null,
+                                  referer: encodeURIComponent('/dispatch-dashboard'),
+                                  redirect: encodeURIComponent(redirect)
+                                });
+                              });
+                            }
+                          });
+                        });
+                      });
+                    })
+                  });
+                });
+              });
+            });
+          });
+        } else {
+          Civilian.find({
+            '$text': {
+              '$search': `"${firstName}" "${lastName}"`
+            },
+            'civilian.activeCommunityID': req.activeCommunityID
+          }, function (err, dbCivilians) {
+            if (err) return console.error(err);
+            Ticket.find({
+              'ticket.civFirstName': firstName.capitalize(),
+              'ticket.civLastName': lastName.capitalize()
+            }, function (err, dbTickets) {
+              if (err) return console.error(err);
+              ArrestReport.find({
+                'arrestReport.accusedFirstName': firstName.capitalize(),
+                'arrestReport.accusedLastName': lastName.capitalize()
+              }, function (err, dbArrestReports) {
+                if (err) return console.error(err);
+                Warrant.find({
+                  'warrant.accusedFirstName': firstName.capitalize(),
+                  'warrant.accusedLastName': lastName.capitalize(),
+                  'warrant.status': true
+                }, function (err, dbWarrants) {
+                  if (err) return console.error(err);
+                  Community.find({
+                    '$or': [{
+                      'community.ownerID': req.userID
+                    }, {
+                      '_id': req.activeCommunityID
+                    }]
+                  }, function (err, dbCommunities) {
+                    if (err) return console.error(err);
+                    Bolo.find({
+                      'bolo.communityID': req.activeCommunityID
+                    }, function (err, dbBolos) {
+                      if (err) return console.error(err);
+                      Call.find({
+                        'call.communityID': req.activeCommunityID,
+                      }, function (err, dbCalls) {
+                        if (err) return console.error(err);
+                        EmsVehicle.find({
+                          'emsVehicle.activeCommunityID': req.activeCommunityID
+                        }, function (err, dbEmsEngines) {
+                          if (err) return console.error(err);
+                          User.find({
+                            'user.activeCommunity': req.activeCommunityID
+                          }, function (err, dbCommUsers) {
+                            if (err) return console.error(err);
+                            if (req.activeCommunityID == '' || req.activeCommunityID == null) {
+                              return socket.emit('name-search-results', {
+                                // user: req.user,
+                                vehicles: null,
+                                civilians: dbCivilians,
+                                firearms: null,
+                                tickets: dbTickets,
+                                arrestReports: dbArrestReports,
+                                warrants: dbWarrants,
+                                dbEmsEngines: dbEmsEngines,
+                                communities: dbCommunities,
+                                commUsers: dbCommUsers,
+                                bolos: dbBolos,
+                                calls: dbCalls,
+                                context: null,
+                                referer: encodeURIComponent('/dispatch-dashboard'),
+                                redirect: encodeURIComponent(redirect)
+                              });
+                            } else {
+                              User.find({
+                                'user.activeCommunity': req.activeCommunityID
+                              }, function (err, dbCommUsers) {
+                                if (err) return console.error(err);
+                                return socket.emit('name-search-results', {
+                                  // user: req.user,
+                                  vehicles: null,
+                                  civilians: dbCivilians,
+                                  firearms: null,
+                                  tickets: dbTickets,
+                                  arrestReports: dbArrestReports,
+                                  warrants: dbWarrants,
+                                  dbEmsEngines: dbEmsEngines,
+                                  communities: dbCommunities,
+                                  commUsers: dbCommUsers,
+                                  bolos: dbBolos,
+                                  calls: dbCalls,
+                                  context: null,
+                                  referer: encodeURIComponent('/dispatch-dashboard'),
+                                  redirect: encodeURIComponent(redirect)
+                                });
+                              });
+                            }
+                          });
+                        });
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        }
+      // }
+
+
     })
 
   }); //end of sockets
