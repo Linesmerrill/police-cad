@@ -19,7 +19,7 @@
     "got": "^12.0.1",
     "graceful-fs": "^4.2.4",
     "handlebars": "^4.7.7",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.6",
     "mocha": "^7.2.0",
     "mongo-sanitize": "^1.1.0",
     "mongoose": "^5.9.19",
