@@ -2,7 +2,7 @@
 
 ![lines police cad logo](lines-police-cad.png)
 
-[![build](https://travis-ci.com/Linesmerrill/police-cad.svg?branch=master)](https://travis-ci.com/Linesmerrill/police-cad)
+[![build](https://travis-ci.com/Linesmerrill/police-cad.svg?branch=main)](https://travis-ci.com/Linesmerrill/police-cad)
 [![Repository](https://img.shields.io/github/tag/linesmerrill/police-cad.svg?color=blue)](https://github.com/linesmerrill/police-cad)
 [![dependencies Status](https://david-dm.org/linesmerrill/police-cad/status.svg)](https://david-dm.org/linesmerrill/police-cad)
 
