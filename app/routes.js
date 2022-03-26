@@ -788,55 +788,35 @@ module.exports = function (app, passport, server) {
           }]
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
-          Ticket.find({
-            'ticket.civFirstName': firstName.capitalize(),
-            'ticket.civLastName': lastName.capitalize()
-          }, function (err, dbTickets) {
+
+          if (err) return console.error(err);
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
             if (err) return console.error(err);
-            ArrestReport.find({
-              'arrestReport.accusedFirstName': firstName.capitalize(),
-              'arrestReport.accusedLastName': lastName.capitalize()
-            }, function (err, dbArrestReports) {
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
               if (err) return console.error(err);
-              Warrant.find({
-                'warrant.accusedFirstName': firstName.capitalize(),
-                'warrant.accusedLastName': lastName.capitalize(),
-                'warrant.status': true
-              }, function (err, dbWarrants) {
+              Call.find({
+                'call.communityID': req.user.user.activeCommunity,
+              }, function (err, dbCalls) {
                 if (err) return console.error(err);
-                Community.find({
-                  '$or': [{
-                    'community.ownerID': req.user._id
-                  }, {
-                    '_id': req.user.user.activeCommunity
-                  }]
-                }, function (err, dbCommunities) {
-                  if (err) return console.error(err);
-                  Bolo.find({
-                    'bolo.communityID': req.user.user.activeCommunity
-                  }, function (err, dbBolos) {
-                    if (err) return console.error(err);
-                    Call.find({
-                      'call.communityID': req.user.user.activeCommunity,
-                    }, function (err, dbCalls) {
-                      if (err) return console.error(err);
-                      return res.render('police-dashboard', {
-                        user: req.user,
-                        vehicles: null,
-                        civilians: dbCivilians,
-                        firearms: null,
-                        tickets: dbTickets,
-                        arrestReports: dbArrestReports,
-                        warrants: dbWarrants,
-                        communities: dbCommunities,
-                        bolos: dbBolos,
-                        calls: dbCalls,
-                        context: null,
-                        referer: encodeURIComponent('/police-dashboard'),
-                        redirect: encodeURIComponent(redirect)
-                      });
-                    });
-                  });
+                return res.render('police-dashboard', {
+                  user: req.user,
+                  vehicles: null,
+                  civilians: dbCivilians,
+                  firearms: null,
+                  communities: dbCommunities,
+                  bolos: dbBolos,
+                  calls: dbCalls,
+                  context: null,
+                  referer: encodeURIComponent('/police-dashboard'),
+                  redirect: encodeURIComponent(redirect)
                 });
               });
             });
@@ -850,55 +830,33 @@ module.exports = function (app, passport, server) {
           'civilian.activeCommunityID': req.query.activeCommunityID
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
-          Ticket.find({
-            'ticket.civFirstName': firstName.capitalize(),
-            'ticket.civLastName': lastName.capitalize()
-          }, function (err, dbTickets) {
+          Community.find({
+            '$or': [{
+              'community.ownerID': req.user._id
+            }, {
+              '_id': req.user.user.activeCommunity
+            }]
+          }, function (err, dbCommunities) {
             if (err) return console.error(err);
-            ArrestReport.find({
-              'arrestReport.accusedFirstName': firstName.capitalize(),
-              'arrestReport.accusedLastName': lastName.capitalize()
-            }, function (err, dbArrestReports) {
+            Bolo.find({
+              'bolo.communityID': req.user.user.activeCommunity
+            }, function (err, dbBolos) {
               if (err) return console.error(err);
-              Warrant.find({
-                'warrant.accusedFirstName': firstName.capitalize(),
-                'warrant.accusedLastName': lastName.capitalize(),
-                'warrant.status': true
-              }, function (err, dbWarrants) {
+              Call.find({
+                'call.communityID': req.user.user.activeCommunity,
+              }, function (err, dbCalls) {
                 if (err) return console.error(err);
-                Community.find({
-                  '$or': [{
-                    'community.ownerID': req.user._id
-                  }, {
-                    '_id': req.user.user.activeCommunity
-                  }]
-                }, function (err, dbCommunities) {
-                  if (err) return console.error(err);
-                  Bolo.find({
-                    'bolo.communityID': req.user.user.activeCommunity
-                  }, function (err, dbBolos) {
-                    if (err) return console.error(err);
-                    Call.find({
-                      'call.communityID': req.user.user.activeCommunity,
-                    }, function (err, dbCalls) {
-                      if (err) return console.error(err);
-                      return res.render('police-dashboard', {
-                        user: req.user,
-                        vehicles: null,
-                        civilians: dbCivilians,
-                        firearms: null,
-                        tickets: dbTickets,
-                        arrestReports: dbArrestReports,
-                        warrants: dbWarrants,
-                        communities: dbCommunities,
-                        bolos: dbBolos,
-                        calls: dbCalls,
-                        context: null,
-                        referer: encodeURIComponent('/police-dashboard'),
-                        redirect: encodeURIComponent(redirect)
-                      });
-                    });
-                  });
+                return res.render('police-dashboard', {
+                  user: req.user,
+                  vehicles: null,
+                  civilians: dbCivilians,
+                  firearms: null,
+                  communities: dbCommunities,
+                  bolos: dbBolos,
+                  calls: dbCalls,
+                  context: null,
+                  referer: encodeURIComponent('/police-dashboard'),
+                  redirect: encodeURIComponent(redirect)
                 });
               });
             });
@@ -4113,7 +4071,7 @@ module.exports = function (app, passport, server) {
       myNewVeh.socketCreateVeh(req)
       myNewVeh.save(function (err, dbVehicles) {
         if (err) return console.error(err);
-        return socket.emit('created_new_veh', dbVehicles)
+        return socket.emit('created_new_veh', dbVehicles) //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
       });
     })
 
@@ -4123,8 +4081,46 @@ module.exports = function (app, passport, server) {
       myNewFirearm.socketCreateFirearm(req)
       myNewFirearm.save(function (err, dbFirearms) {
         if (err) return console.error(err);
-        return socket.emit('created_new_firearm', dbFirearms)
+        return socket.emit('created_new_firearm', dbFirearms) //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
       });
+    })
+
+    socket.on('search_citation', (req) => {
+      // console.debug('search citation socket: ', req)
+      if (exists(req.civID)) {
+        Ticket.find({
+          'ticket.civID': req.civID,
+          'ticket.isWarning': false
+        }, function (err, dbTickets) {
+          if (err) return console.error(err);
+          return socket.emit('load_citation_result', dbTickets) //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
+        });
+      }
+    })
+
+    socket.on('search_warnings', (req) => {
+      // console.debug('search warnings socket: ', req)
+      if (exists(req.civID)) {
+        Ticket.find({
+          'ticket.civID': req.civID,
+          'ticket.isWarning': true
+        }, function (err, dbTickets) {
+          if (err) return console.error(err);
+          return socket.emit('load_warnings_result', dbTickets) //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
+        });
+      }
+    })
+
+    socket.on('search_arrests', (req) => {
+      // console.debug('search arrests socket: ', req)
+      if (exists(req.civID)) {
+        ArrestReport.find({
+          'arrestReport.accusedID': req.civID,
+        }, function (err, dbArrests) {
+          if (err) return console.error(err);
+          return socket.emit('load_arrests_result', dbArrests) //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
+        });
+      }
     })
 
   }); //end of sockets
