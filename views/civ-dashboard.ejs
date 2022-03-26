@@ -1411,131 +1411,6 @@
     </div>
   </div>
 
-  <div id="communitiesModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-            <% include community-management %>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="joinCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form class="form-horizontal" action="/joinCommunity" method="post">
-            <fieldset>
-
-            <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
-            <h4>Join an Existing Community</h4>
-            <hr style="width: 88%;max-width: 100rem;">
-
-            <!-- Text input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="communityCode">Community Code:</label>
-              <div class="col-md-4">
-              <input id="communityCode" name="communityCode" style="text-transform: uppercase;" type="text" placeholder="Example: YRFGHHP" class="form-control input-md" minlength="7" maxlength="7" required>
-              </div>
-            </div>
-
-            <!-- Button -->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="joinCommunity"></label>
-              <div class="col-md-4 text-align-center">
-                <button id="joinCommunity" value="<%= user._id %>" name="userID"  class="btn btn-primary" onclick="createNewCiv()">Join</button>
-              </div>
-            </div>
-            </fieldset>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="leaveActiveCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form class="form-horizontal" action="/leaveActiveCommunity" method="post">
-            <fieldset>
-
-            <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-            <h4>Leave Active Community</h4>
-            <hr style="width: 88%;max-width: 100rem;">
-
-            <p>NOTE: All civilians and vehicles that you created in this community will no longer
-              show up on your dashboard after you leave.
-            </p>
-            <p>Are you sure you want to leave this community?</p>
-
-            <!-- Button -->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="leaveActiveCommunity"></label>
-              <div class="col-md-4 text-align-center">
-                <button id="leaveActiveCommunity" value="<%= user._id %>" name="userID"  class="btn btn-danger">Leave</button>
-              </div>
-            </div>
-            </fieldset>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="createCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form class="form-horizontal" action="/createCommunity" method="post">
-            <fieldset>
-
-            <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
-            <h4>Create a New Community</h4>
-            <hr style="width: 88%;max-width: 100rem;">
-
-            <!-- Text input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="communityName">Community Name:</label>
-              <div class="col-md-4">
-              <input id="communityName" name="communityName" style="text-transform: capitalize;" type="text" placeholder="Community Name" class="form-control input-md" maxlength="25" required>
-              </div>
-            </div>
-
-            <!-- Button -->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="createCommunity"></label>
-              <div class="col-md-4 text-align-center">
-                <button id="createCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary" onclick="createNewCiv()">Create</button>
-              </div>
-            </div>
-            </fieldset>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="communitiesInfoModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-            <fieldset>
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="createNewCiv()">X</button>
-            <h4>Check out the New Communities Section!</h4>
-            <hr style="width: 88%;max-width: 100rem;">
-            <a data-toggle="modal" href="#communitiesModal" onclick="dismissCommunitiesInfoModal()"><img src="/images/communities-example.png" class="diagonal-arrow float-right" alt="communities example screenshot"></a>
-            <img src="/static/images/diagonal-arrow-white.png" class="diagonal-arrow" alt="diagonal arrow pointing to top right of page">
-            </fieldset>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div id="nonCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1546,7 +1421,7 @@
             </p>
             <p>To join or
               create a community for free, click on the communities button in the Left Menu.</p>
-            <p>Or just click here: <a data-toggle="modal" href="#communitiesModal">Communities</a>
+            <p>Or just click here: <a href="/community-dashboard">Communities</a>
             </p>
             <br />
             <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK <i

@@ -271,96 +271,51 @@ module.exports = function (app, passport, server) {
   app.get('/civ-dashboard', authCivilian, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
-    if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-      Civilian.find({
-        'civilian.userID': req.user._id,
-        '$or': [{ // some are stored as empty strings and others as null so we need to check for both
-          'civilian.activeCommunityID': ''
-        }, {
-          'civilian.activeCommunityID': null
-        }]
-      }, function (err, dbPersonas) {
-        if (err) return console.error(err);
-        Vehicle.find({
-          'vehicle.userID': req.user._id,
-          '$or': [{ // some are stored as empty strings and others as null so we need to check for both
-            'vehicle.activeCommunityID': ''
-          }, {
-            'vehicle.activeCommunityID': null
-          }]
-        }, function (err, dbVehicles) {
-          if (err) return console.error(err);
-          Firearm.find({
-            'firearm.userID': req.user._id,
-            '$or': [{ // some are stored as empty strings and others as null so we need to check for both
-              'firearm.activeCommunityID': ''
-            }, {
-              'firearm.activeCommunityID': null
-            }]
-          }, function (err, dbFirearms) {
-            if (err) return console.error(err);
-            Community.find({
-              '$or': [{
-                'community.ownerID': req.user._id
-              }, {
-                '_id': req.user.user.activeCommunity
-              }]
-            }, function (err, dbCommunities) {
-              if (err) return console.error(err);
-              return res.render('civ-dashboard', {
-                user: req.user,
-                personas: dbPersonas,
-                vehicles: dbVehicles,
-                firearms: dbFirearms,
-                communities: dbCommunities,
-                context: context,
-                referer: encodeURIComponent('/civ-dashboard'),
-                redirect: encodeURIComponent(redirect)
-              });
-            });
-          });
-        });
-      });
-    } else {
-      Civilian.find({
-        'civilian.userID': req.user._id,
-        'civilian.activeCommunityID': req.user.user.activeCommunity
-      }, function (err, dbPersonas) {
-        if (err) return console.error(err);
-        Vehicle.find({
-          'vehicle.userID': req.user._id,
-          'vehicle.activeCommunityID': req.user.user.activeCommunity
-        }, function (err, dbVehicles) {
-          if (err) return console.error(err);
-
-          Firearm.find({
-            'firearm.userID': req.user._id,
-            'firearm.activeCommunityID': req.user.user.activeCommunity
-          }, function (err, dbFirearms) {
-            if (err) return console.error(err);
-            Community.find({
-              '$or': [{
-                'community.ownerID': req.user._id
-              }, {
-                '_id': req.user.user.activeCommunity
-              }]
-            }, function (err, dbCommunities) {
-              if (err) return console.error(err);
-              return res.render('civ-dashboard', {
-                user: req.user,
-                personas: dbPersonas,
-                vehicles: dbVehicles,
-                firearms: dbFirearms,
-                communities: dbCommunities,
-                context: context,
-                referer: encodeURIComponent('/civ-dashboard'),
-                redirect: encodeURIComponent(redirect)
-              });
-            });
-          });
-        });
-      });
-    }
+    // TODO future spot of improvement; create a single route in the external api to
+    // fetch all this information. Could leverage concurrency and return all that info
+    // in a single call back to this app.
+    axios.get(`${policeCadApiUrl}/api/v1/civilians/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`, config)
+      .then(function (dbCivilians) {
+        if (!exists(dbCivilians.data)) {
+          res.status(400)
+          res.redirect('back')
+        } else {
+          axios.get(`${policeCadApiUrl}/api/v1/vehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`, config)
+            .then(function (dbVehicles) {
+              if (!exists(dbVehicles.data)) {
+                res.status(400)
+                res.redirect('back')
+              } else {
+                axios.get(`${policeCadApiUrl}/api/v1/firearms/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`, config)
+                  .then(function (dbFirearms) {
+                    if (!exists(dbFirearms.data)) {
+                      res.status(400)
+                      res.redirect('back')
+                    } else {
+                      res.render('civ-dashboard', {
+                        user: req.user,
+                        personas: dbCivilians.data,
+                        vehicles: dbVehicles.data,
+                        firearms: dbFirearms.data,
+                        context: context,
+                        referer: encodeURIComponent('/civ-dashboard'),
+                        redirect: encodeURIComponent(redirect)
+                      });
+                    }
+                  }).catch((err) => {
+                    res.status(400)
+                    res.redirect('back')
+                  })
+              }
+            }).catch((err) => {
+              res.status(400)
+              res.redirect('back')
+            })
+        }
+      }).catch((err) => {
+        res.status(400)
+        res.redirect('back')
+      })
   });
 
   app.get('/ems-dashboard', authEms, function (req, res) {
