@@ -573,94 +573,78 @@ module.exports = function (app, passport, server) {
           }]
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
-          Ticket.find({
-            'ticket.civFirstName': firstName.capitalize(),
-            'ticket.civLastName': lastName.capitalize()
-          }, function (err, dbTickets) {
+          Warrant.find({
+            'warrant.accusedFirstName': firstName.capitalize(),
+            'warrant.accusedLastName': lastName.capitalize(),
+            'warrant.status': true
+          }, function (err, dbWarrants) {
             if (err) return console.error(err);
-            ArrestReport.find({
-              'arrestReport.accusedFirstName': firstName.capitalize(),
-              'arrestReport.accusedLastName': lastName.capitalize()
-            }, function (err, dbArrestReports) {
+            Community.find({
+              '$or': [{
+                'community.ownerID': req.user._id
+              }, {
+                '_id': req.user.user.activeCommunity
+              }]
+            }, function (err, dbCommunities) {
               if (err) return console.error(err);
-              Warrant.find({
-                'warrant.accusedFirstName': firstName.capitalize(),
-                'warrant.accusedLastName': lastName.capitalize(),
-                'warrant.status': true
-              }, function (err, dbWarrants) {
+              Bolo.find({
+                'bolo.communityID': req.user.user.activeCommunity
+              }, function (err, dbBolos) {
                 if (err) return console.error(err);
-                Community.find({
-                  '$or': [{
-                    'community.ownerID': req.user._id
-                  }, {
-                    '_id': req.user.user.activeCommunity
-                  }]
-                }, function (err, dbCommunities) {
+                Call.find({
+                  'call.communityID': req.user.user.activeCommunity,
+                }, function (err, dbCalls) {
                   if (err) return console.error(err);
-                  Bolo.find({
-                    'bolo.communityID': req.user.user.activeCommunity
-                  }, function (err, dbBolos) {
+                  User.find({
+                    'user.activeCommunity': req.user.user.activeCommunity
+                  }, function (err, dbCommUsers) {
                     if (err) return console.error(err);
-                    Call.find({
-                      'call.communityID': req.user.user.activeCommunity,
-                    }, function (err, dbCalls) {
+                    EmsVehicle.find({
+                      'emsVehicle.activeCommunityID': req.user.user.activeCommunity
+                    }, function (err, dbEmsEngines) {
                       if (err) return console.error(err);
-                      User.find({
-                        'user.activeCommunity': req.user.user.activeCommunity
-                      }, function (err, dbCommUsers) {
-                        if (err) return console.error(err);
-                        EmsVehicle.find({
-                          'emsVehicle.activeCommunityID': req.user.user.activeCommunity
-                        }, function (err, dbEmsEngines) {
-                          if (err) return console.error(err);
-                          if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-                            return res.render('dispatch-dashboard', {
-                              user: req.user,
-                              vehicles: null,
-                              civilians: dbCivilians,
-                              firearms: null,
-                              tickets: dbTickets,
-                              arrestReports: dbArrestReports,
-                              warrants: dbWarrants,
-                              dbEmsEngines: null,
-                              communities: dbCommunities,
-                              commUsers: dbCommUsers,
-                              bolos: dbBolos,
-                              calls: dbCalls,
-                              context: null,
-                              referer: encodeURIComponent('/dispatch-dashboard'),
-                              redirect: encodeURIComponent(redirect)
-                            });
-                          } else {
-                            User.find({
-                              'user.activeCommunity': req.user.user.activeCommunity
-                            }, function (err, dbCommUsers) {
-                              if (err) return console.error(err);
-                              return res.render('dispatch-dashboard', {
-                                user: req.user,
-                                vehicles: null,
-                                civilians: dbCivilians,
-                                firearms: null,
-                                tickets: dbTickets,
-                                arrestReports: dbArrestReports,
-                                warrants: dbWarrants,
-                                dbEmsEngines: dbEmsEngines,
-                                communities: dbCommunities,
-                                commUsers: dbCommUsers,
-                                bolos: dbBolos,
-                                calls: dbCalls,
-                                context: null,
-                                referer: encodeURIComponent('/dispatch-dashboard'),
-                                redirect: encodeURIComponent(redirect)
-                              });
-                            });
-                          }
+                      if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+                        return res.render('dispatch-dashboard', {
+                          user: req.user,
+                          vehicles: null,
+                          civilians: dbCivilians,
+                          firearms: null,
+                          warrants: dbWarrants,
+                          dbEmsEngines: null,
+                          communities: dbCommunities,
+                          commUsers: dbCommUsers,
+                          bolos: dbBolos,
+                          calls: dbCalls,
+                          context: null,
+                          referer: encodeURIComponent('/dispatch-dashboard'),
+                          redirect: encodeURIComponent(redirect)
                         });
-                      });
+                      } else {
+                        User.find({
+                          'user.activeCommunity': req.user.user.activeCommunity
+                        }, function (err, dbCommUsers) {
+                          if (err) return console.error(err);
+                          return res.render('dispatch-dashboard', {
+                            user: req.user,
+                            vehicles: null,
+                            civilians: dbCivilians,
+                            firearms: null,
+                            warrants: dbWarrants,
+                            dbEmsEngines: dbEmsEngines,
+                            communities: dbCommunities,
+                            commUsers: dbCommUsers,
+                            bolos: dbBolos,
+                            calls: dbCalls,
+                            context: null,
+                            referer: encodeURIComponent('/dispatch-dashboard'),
+                            redirect: encodeURIComponent(redirect)
+                          });
+                        });
+                      }
                     });
-                  })
+                  });
                 });
-              });
+              })
             });
           });
         });
@@ -672,90 +656,74 @@ module.exports = function (app, passport, server) {
           'civilian.activeCommunityID': req.query.activeCommunityID
         }, function (err, dbCivilians) {
           if (err) return console.error(err);
-          Ticket.find({
-            'ticket.civFirstName': firstName.capitalize(),
-            'ticket.civLastName': lastName.capitalize()
-          }, function (err, dbTickets) {
+          Warrant.find({
+            'warrant.accusedFirstName': firstName.capitalize(),
+            'warrant.accusedLastName': lastName.capitalize(),
+            'warrant.status': true
+          }, function (err, dbWarrants) {
             if (err) return console.error(err);
-            ArrestReport.find({
-              'arrestReport.accusedFirstName': firstName.capitalize(),
-              'arrestReport.accusedLastName': lastName.capitalize()
-            }, function (err, dbArrestReports) {
+            Community.find({
+              '$or': [{
+                'community.ownerID': req.user._id
+              }, {
+                '_id': req.user.user.activeCommunity
+              }]
+            }, function (err, dbCommunities) {
               if (err) return console.error(err);
-              Warrant.find({
-                'warrant.accusedFirstName': firstName.capitalize(),
-                'warrant.accusedLastName': lastName.capitalize(),
-                'warrant.status': true
-              }, function (err, dbWarrants) {
+              Bolo.find({
+                'bolo.communityID': req.user.user.activeCommunity
+              }, function (err, dbBolos) {
                 if (err) return console.error(err);
-                Community.find({
-                  '$or': [{
-                    'community.ownerID': req.user._id
-                  }, {
-                    '_id': req.user.user.activeCommunity
-                  }]
-                }, function (err, dbCommunities) {
+                Call.find({
+                  'call.communityID': req.user.user.activeCommunity,
+                }, function (err, dbCalls) {
                   if (err) return console.error(err);
-                  Bolo.find({
-                    'bolo.communityID': req.user.user.activeCommunity
-                  }, function (err, dbBolos) {
+                  EmsVehicle.find({
+                    'emsVehicle.activeCommunityID': req.user.user.activeCommunity
+                  }, function (err, dbEmsEngines) {
                     if (err) return console.error(err);
-                    Call.find({
-                      'call.communityID': req.user.user.activeCommunity,
-                    }, function (err, dbCalls) {
+                    User.find({
+                      'user.activeCommunity': req.user.user.activeCommunity
+                    }, function (err, dbCommUsers) {
                       if (err) return console.error(err);
-                      EmsVehicle.find({
-                        'emsVehicle.activeCommunityID': req.user.user.activeCommunity
-                      }, function (err, dbEmsEngines) {
-                        if (err) return console.error(err);
+                      if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
+                        return res.render('dispatch-dashboard', {
+                          user: req.user,
+                          vehicles: null,
+                          civilians: dbCivilians,
+                          firearms: null,
+                          warrants: dbWarrants,
+                          dbEmsEngines: dbEmsEngines,
+                          communities: dbCommunities,
+                          commUsers: dbCommUsers,
+                          bolos: dbBolos,
+                          calls: dbCalls,
+                          context: null,
+                          referer: encodeURIComponent('/dispatch-dashboard'),
+                          redirect: encodeURIComponent(redirect)
+                        });
+                      } else {
                         User.find({
                           'user.activeCommunity': req.user.user.activeCommunity
                         }, function (err, dbCommUsers) {
                           if (err) return console.error(err);
-                          if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-                            return res.render('dispatch-dashboard', {
-                              user: req.user,
-                              vehicles: null,
-                              civilians: dbCivilians,
-                              firearms: null,
-                              tickets: dbTickets,
-                              arrestReports: dbArrestReports,
-                              warrants: dbWarrants,
-                              dbEmsEngines: dbEmsEngines,
-                              communities: dbCommunities,
-                              commUsers: dbCommUsers,
-                              bolos: dbBolos,
-                              calls: dbCalls,
-                              context: null,
-                              referer: encodeURIComponent('/dispatch-dashboard'),
-                              redirect: encodeURIComponent(redirect)
-                            });
-                          } else {
-                            User.find({
-                              'user.activeCommunity': req.user.user.activeCommunity
-                            }, function (err, dbCommUsers) {
-                              if (err) return console.error(err);
-                              return res.render('dispatch-dashboard', {
-                                user: req.user,
-                                vehicles: null,
-                                civilians: dbCivilians,
-                                firearms: null,
-                                tickets: dbTickets,
-                                arrestReports: dbArrestReports,
-                                warrants: dbWarrants,
-                                dbEmsEngines: dbEmsEngines,
-                                communities: dbCommunities,
-                                commUsers: dbCommUsers,
-                                bolos: dbBolos,
-                                calls: dbCalls,
-                                context: null,
-                                referer: encodeURIComponent('/dispatch-dashboard'),
-                                redirect: encodeURIComponent(redirect)
-                              });
-                            });
-                          }
+                          return res.render('dispatch-dashboard', {
+                            user: req.user,
+                            vehicles: null,
+                            civilians: dbCivilians,
+                            firearms: null,
+                            warrants: dbWarrants,
+                            dbEmsEngines: dbEmsEngines,
+                            communities: dbCommunities,
+                            commUsers: dbCommUsers,
+                            bolos: dbBolos,
+                            calls: dbCalls,
+                            context: null,
+                            referer: encodeURIComponent('/dispatch-dashboard'),
+                            redirect: encodeURIComponent(redirect)
+                          });
                         });
-                      });
+                      }
                     });
                   });
                 });
