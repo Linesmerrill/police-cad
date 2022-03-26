@@ -802,19 +802,19 @@
                                                                 <a class="nav-link" id="pills-citations-tab-<%=i%>"
                                                                   data-toggle="tab" href="#pills-citations-<%=i%>" role="tab"
                                                                   aria-controls="pills-citations-<%=i%>"
-                                                                  aria-selected="true">Citations</a>
+                                                                  aria-selected="true" onclick="loadCitations('<%=civilians[i]._id%>')">Citations</a>
                                                               </li>
                                                               <li class="nav-item">
                                                                 <a class="nav-link" id="pills-warnings-tab-<%=i%>"
                                                                   data-toggle="tab" href="#pills-warnings-<%=i%>" role="tab"
                                                                   aria-controls="pills-warnings-<%=i%>"
-                                                                  aria-selected="false">Warnings</a>
+                                                                  aria-selected="false" onclick="loadWarnings('<%=civilians[i]._id%>')">Warnings</a>
                                                               </li>
                                                               <li class="nav-item">
                                                                 <a class="nav-link" id="pills-arrests-tab-<%=i%>"
                                                                   data-toggle="tab" href="#pills-arrests-<%=i%>" role="tab"
                                                                   aria-controls="pills-arrests-<%=i%>"
-                                                                  aria-selected="false">Arrests</a>
+                                                                  aria-selected="false" onclick="loadArrests('<%=civilians[i]._id%>')">Arrests</a>
                                                               </li>
                                                             </ul>
                                                             <div class="tab-content" id="pills-tabContent-<%=i%>">
@@ -830,37 +830,8 @@
                                                                       <td>Amount</td>
                                                                     </tr>
                                                                   </thead>
-                                                                  <tbody id="ticket-body-<%=i%>">
-                                                                    <% if (tickets !=null && tickets != undefined) {%>
-                                                                      <% for(var j=0; j<tickets.length; j++) {%>
-                                                                        <tr>
-                                                                          <% if
-                                                                            ((tickets[j].ticket.civID==civilians[i]._id)
-                                                                            && (!tickets[j].ticket.isWarning)) {%>
-                                                                            <td>
-                                                                              <%= tickets[j].ticket.date %>
-                                                                            </td>
-                                                                            <td>
-                                                                              <%= tickets[j].ticket.violation %>
-                                                                            </td>
-                                                                            <td>$<%= tickets[j].ticket.amount %>
-                                                                            </td>
-                                                                            <% } %>
-                                                                              <% if ((i==0) &&
-                                                                                (tickets[j].ticket.civID==null) &&
-                                                                                (!tickets[j].ticket.isWarning)) {%>
-                                                                                <td>
-                                                                                  <%= tickets[j].ticket.date %>
-                                                                                </td>
-                                                                                <td>
-                                                                                  <%= tickets[j].ticket.violation %>
-                                                                                </td>
-                                                                                <td>$<%= tickets[j].ticket.amount %>
-                                                                                </td>
-                                                                                <% } %>
-                                                                        </tr>
-                                                                        <% } %>
-                                                                          <% } %>
+                                                                  <tbody id="ticket-body-<%=civilians[i]._id%>">
+                                                                    <!-- populated by socket -->
                                                                   </tbody>
                                                                 </table>
                                                               </div>
@@ -875,33 +846,8 @@
                                                                       <td>Warning</td>
                                                                     </tr>
                                                                   </thead>
-                                                                  <tbody id="warning-body-<%=i%>">
-                                                                    <% if (tickets !=null && tickets != undefined) {%>
-                                                                      <% for(var j=0; j<tickets.length; j++) {%>
-                                                                        <tr>
-                                                                          <% if
-                                                                            ((tickets[j].ticket.civID==civilians[i]._id)
-                                                                            && (tickets[j].ticket.isWarning)) {%>
-                                                                            <td>
-                                                                              <%= tickets[j].ticket.date %>
-                                                                            </td>
-                                                                            <td>
-                                                                              <%= tickets[j].ticket.violation %>
-                                                                            </td>
-                                                                            <% } %>
-                                                                              <% if ((i==0) &&
-                                                                                (tickets[j].ticket.civID==null) &&
-                                                                                (tickets[j].ticket.isWarning)) {%>
-                                                                                <td>
-                                                                                  <%= tickets[j].ticket.date %>
-                                                                                </td>
-                                                                                <td>
-                                                                                  <%= tickets[j].ticket.violation %>
-                                                                                </td>
-                                                                                <% } %>
-                                                                        </tr>
-                                                                        <% } %>
-                                                                          <% } %>
+                                                                  <tbody id="warning-body-<%=civilians[i]._id%>">
+                                                                    <!-- populated by socket -->
                                                                   </tbody>
                                                                 </table>
                                                               </div>
@@ -917,28 +863,8 @@
                                                                       <td>Summary</td>
                                                                     </tr>
                                                                   </thead>
-                                                                  <tbody id="arrest-body-<%=i%>">
-                                                                    <% if (arrestReports !=null && arrestReports != undefined) {%>
-                                                                      <% for(var j=0; j<arrestReports.length; j++) {%>
-                                                                        <tr>
-                                                                          <% if
-                                                                            (arrestReports[j].arrestReport.accusedID==civilians[i]._id)
-                                                                            {%>
-                                                                            <td>
-                                                                              <%= arrestReports[j].arrestReport.date %>
-                                                                            </td>
-                                                                            <td>
-                                                                              <%= arrestReports[j].arrestReport.charges
-                                                                                %>
-                                                                            </td>
-                                                                            <td>
-                                                                              <%= arrestReports[j].arrestReport.summary
-                                                                                %>
-                                                                            </td>
-                                                                            <% } %>
-                                                                        </tr>
-                                                                        <% } %>
-                                                                          <% } %>
+                                                                  <tbody id="arrest-body-<%=civilians[i]._id%>">
+                                                                    <!-- populated by socket -->
                                                                   </tbody>
                                                                 </table>
                                                               </div>
@@ -2688,7 +2614,6 @@
   var dbVehicles= <%-JSON.stringify(vehicles)%>;
   var dbCivilians= <%-JSON.stringify(civilians)%>;
   var dbFirearms= <%-JSON.stringify(firearms)%>;
-  var dbTickets = <%-JSON.stringify(tickets)%>;
 
   $(document).ready(function () {
     $('#officerListTable').DataTable({
@@ -3118,7 +3043,7 @@
     if (x.style.display==='none') {
       x.style.display='block';
     } else { }
-    if (dbCivilians===null||dbTickets===null || dbCivilians == undefined || dbTickets == undefined) {
+    if (dbCivilians===null || dbCivilians == undefined) {
       hideCivPopover();
       return
     } else if (dbCivilians.length===0) {
@@ -4208,6 +4133,99 @@
       }
     })
   }
+
+  function loadCitations(civID) {
+    $(`#ticket-body-${civID}`).empty(); //clears the table before loading results
+    var data = {
+      civID: civID
+    }
+    var socket=io();
+    socket.emit('search_citation', data)
+    socket.on('load_citation_result', (res) => {
+      res.forEach(citation => {
+      $(`#ticket-body-${civID}`).append(
+        `<tr id="${citation._id}">
+            <td>
+              ${citation.ticket.date}
+            </td>
+            <td>
+              ${citation.ticket.violation}
+            </td>
+            <td>
+              $${citation.ticket.amount}
+            </td>
+            <td class="text-align-center">
+              <a class='clickable' onclick="deleteCitation('${citation._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
+            </td>
+        </tr>`
+        ).fadeTo(1, function () {
+            $(this).add();
+          })
+      });
+    })
+  }
+
+  function loadWarnings(civID) {
+    $(`#warning-body-${civID}`).empty();
+    var data = {
+      civID: civID
+    }
+    var socket=io();
+    socket.emit('search_warnings', data)
+    socket.on('load_warnings_result', (res) => {
+      res.forEach(citation => {
+      $(`#warning-body-${civID}`).append(
+        `<tr id="${citation._id}">
+            <td>
+              ${citation.ticket.date}
+            </td>
+            <td>
+              ${citation.ticket.violation}
+            </td>
+            <td class="text-align-center">
+              <a class='clickable' onclick="deleteWarning('${citation._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
+            </td>
+        </tr>`
+        ).fadeTo(1, function () {
+            $(this).add();
+          })
+      });
+    })
+  }
+
+  function loadArrests(civID) {
+    $(`#arrest-body-${civID}`).empty();
+    var data = {
+      civID: civID
+    }
+    var socket=io();
+    socket.emit('search_arrests', data)
+    socket.on('load_arrests_result', (res) => {
+      res.forEach(arrest => {
+      $(`#arrest-body-${civID}`).append(
+        `
+          <tr id="${arrest._id}">
+              <td>
+                ${arrest.arrestReport.date}
+              </td>
+              <td>
+                ${arrest.arrestReport.charges}
+              </td>
+              <td>
+                ${arrest.arrestReport.summary}
+              </td>
+              <td class="text-align-center">
+                <a class='clickable' onclick="deleteArrest('${arrest._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
+              </td>
+          </tr>
+        `
+        ).fadeTo(1, function () {
+            $(this).add();
+          })
+      });
+    })
+  }
+
 
   function openNameDatabase(registeredOwner, activeCommunityID) {
     var activeCommID = ""
