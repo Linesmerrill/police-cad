@@ -321,73 +321,93 @@ module.exports = function (app, passport, server) {
   app.get('/ems-dashboard', authEms, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
-    if (req.user.user.activeCommunity == '' || req.user.user.activeCommunity == null) {
-      Ems.find({
-        'ems.userID': req.user._id
-      }, function (err, dbPersonas) {
-        if (err) return console.error(err);
-        EmsVehicle.find({
-          'emsVehicle.userID': req.user._id,
-        }, function (err, dbVehicles) {
-          if (err) return console.error(err);
-          Community.find({
-            '$or': [{
-              'community.ownerID': req.user._id
-            }, {
-              '_id': req.user.user.activeCommunity
-            }]
-          }, function (err, dbCommunities) {
-            if (err) return console.error(err);
-            return res.render('ems-dashboard', {
-              user: req.user,
-              personas: dbPersonas,
-              vehicles: dbVehicles,
-              communities: dbCommunities,
-              calls: null,
-              context: context,
-              referer: encodeURIComponent('/ems-dashboard'),
-              redirect: encodeURIComponent(redirect)
-            });
+    axios.get(`${policeCadApiUrl}/api/v1/ems/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`, config)
+      .then(function (dbEms) {
+        if (!exists(dbEms.data)) {
+          return res.render('ems-dashboard', {
+            user: req.user,
+            personas: null,
+            vehicles: null,
+            calls: null,
+            context: context,
+            referer: encodeURIComponent('/ems-dashboard'),
+            redirect: encodeURIComponent(redirect)
           });
-        });
-      })
-    } else {
-      Ems.find({
-        'ems.userID': req.user._id,
-        'ems.activeCommunityID': req.user.user.activeCommunity
-      }, function (err, dbPersonas) {
-        if (err) return console.error(err);
-        EmsVehicle.find({
-          'emsVehicle.userID': req.user._id,
-          'emsVehicle.activeCommunityID': req.user.user.activeCommunity
-        }, function (err, dbVehicles) {
-          if (err) return console.error(err);
-          Community.find({
-            '$or': [{
-              'community.ownerID': req.user._id
-            }, {
-              '_id': req.user.user.activeCommunity
-            }]
-          }, function (err, dbCommunities) {
-            if (err) return console.error(err);
-            Call.find({
-              'call.communityID': req.user.user.activeCommunity,
-            }, function (err, dbCalls) {
+        } else {
+          axios.get(`${policeCadApiUrl}/api/v1/emsVehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`, config)
+            .then(function (dbEmsVehicles) {
+              if (!exists(dbEmsVehicles.data)) {
+                return res.render('ems-dashboard', {
+                  user: req.user,
+                  personas: dbEms.data,
+                  vehicles: null,
+                  calls: null,
+                  context: context,
+                  referer: encodeURIComponent('/ems-dashboard'),
+                  redirect: encodeURIComponent(redirect)
+                });
+              } else {
+                axios.get(`${policeCadApiUrl}/api/v1/calls/community/${req.user.user.activeCommunity}?status=true`, config)
+                  .then(function (dbCalls) {
+                    if (!exists(dbCalls.data)) {
+                      return res.render('ems-dashboard', {
+                        user: req.user,
+                        personas: dbEms.data,
+                        vehicles: dbEmsVehicles.data,
+                        calls: null,
+                        context: context,
+                        referer: encodeURIComponent('/ems-dashboard'),
+                        redirect: encodeURIComponent(redirect)
+                      });
+                    } else {
+                      return res.render('ems-dashboard', {
+                        user: req.user,
+                        personas: dbEms.data,
+                        vehicles: dbEmsVehicles.data,
+                        calls: dbCalls.data,
+                        context: context,
+                        referer: encodeURIComponent('/ems-dashboard'),
+                        redirect: encodeURIComponent(redirect)
+                      });
+                    }
+                  }).catch((err) => {
+                    console.error(err);
+                    return res.render('ems-dashboard', {
+                      user: req.user,
+                      personas: dbEms.data,
+                      vehicles: dbEmsVehicles.data,
+                      calls: null,
+                      context: context,
+                      referer: encodeURIComponent('/ems-dashboard'),
+                      redirect: encodeURIComponent(redirect)
+                    });
+                  });
+              }
+            }).catch((err) => {
+              console.error(err);
               return res.render('ems-dashboard', {
                 user: req.user,
-                personas: dbPersonas,
-                vehicles: dbVehicles,
-                communities: dbCommunities,
-                calls: dbCalls,
+                personas: dbEms.data,
+                vehicles: null,
+                calls: null,
                 context: context,
                 referer: encodeURIComponent('/ems-dashboard'),
                 redirect: encodeURIComponent(redirect)
               });
-            })
-          });
+            });
+        }
+      }).catch((err) => {
+        console.error(err);
+        return res.render('ems-dashboard', {
+          user: req.user,
+          personas: null,
+          vehicles: null,
+          calls: null,
+          context: context,
+          referer: encodeURIComponent('/ems-dashboard'),
+          redirect: encodeURIComponent(redirect)
         });
-      })
-    }
+      });
   });
 
   app.get('/community-dashboard', authCommunity, function (req, res) {

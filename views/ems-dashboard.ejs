@@ -167,7 +167,9 @@
                     <td><%= personas[i].ems.department%></td>
                   </tr>
                   <% } %>
-                <% } %>
+                <% } else {%>
+                  <p style="font-style: italic;">⚠️ Issue loading personnel, try refreshing the page...</p>
+                  <% } %>
               </tbody>
             </table>
           </div>
@@ -203,7 +205,9 @@
                     <% } %>
                   </tr>
                   <% } %>
-                <% } %>
+                <% } else {%>
+                  <p style="font-style: italic;">⚠️ Issue loading vehicles, try refreshing the page...</p>
+                  <% } %>
               </tbody>
             </table>
           </div>
@@ -239,7 +243,9 @@
                   <% } %>
                 <% } %>
               <% } %>
-            <% } %>
+            <% } else {%>
+              <p style="font-style: italic;">⚠️ Issue loading calls, try refreshing the page...</p>
+              <% } %>
 
           </div>
         </div>
@@ -858,16 +864,6 @@
     </div>
   </div>
 
-  <div id="communitiesModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <% include community-management %>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div id="joinCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -972,26 +968,6 @@
               </div>
             </fieldset>
           </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="communitiesInfoModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <fieldset>
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-              aria-hidden="true">X</button>
-            <h4>Check out the New Communities Section!</h4>
-            <hr style="width: 88%;max-width: 100rem;">
-            <a data-toggle="modal" href="#communitiesModal" onclick="dismissCommunitiesInfoModal()"><img
-                src="/images/communities-example.png" class="diagonal-arrow float-right"
-                alt="communities example screenshot"></a>
-            <img src="/static/images/diagonal-arrow-white.png" class="diagonal-arrow"
-              alt="diagonal arrow pointing to top right of page">
-          </fieldset>
         </div>
       </div>
     </div>
