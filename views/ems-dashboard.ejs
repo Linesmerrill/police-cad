@@ -484,12 +484,7 @@
                 <div class="col-md-4">
                   <select id="registeredOwner" name="registeredOwner" class="form-control">
                     <option value="N/A">N/A</option>
-                    <% if(personas != undefined && personas != null) {%>
-                      <% for(var i=0; i<personas.length; i++) {%>
-                      <option value="<%= personas[i].ems.firstName %> <%= personas[i].ems.lastName%>">
-                        <%= personas[i].ems.firstName %> <%= personas[i].ems.lastName%></option>
-                      <% } %>
-                    <% } %>
+                    <!-- populated by socket -->
                   </select>
                 </div>
               </div>
@@ -994,7 +989,6 @@
   // all global router vars declared here to reduce duplication
   var dbUser = <%-JSON.stringify(user)%>;
   var dbVehicles = <%-JSON.stringify(vehicles)%>;
-  var dbPersonas = <%- JSON.stringify(personas)%>;
   $(function () {
     var socket=io()
     socket.on('updated_ems_status', res => {
@@ -1062,6 +1056,15 @@
                   </tr>`
         
         datatable.row.add($(personTable))
+
+        // appends to the dropdown for vehicle registered owners
+        $('#registeredOwner').append(
+            `
+            <option value="${person.ems.firstName} ${person.ems.lastName}">${person.ems.firstName} ${person.ems.lastName}</option>
+            `
+        ).fadeTo(1, function () {
+              $(this).add();
+            })
       });
     datatable.draw();
     }
@@ -1135,22 +1138,25 @@
     })
   }
 
-  function loadEmsData(index) {
-    var firstName=dbPersonas[index].ems.firstName
-    var lastName=dbPersonas[index].ems.lastName
-    var department=dbPersonas[index].ems.department
-    var assignmentArea=dbPersonas[index].ems.assignmentArea
-    var station=dbPersonas[index].ems.station
-    var callSign=dbPersonas[index].ems.callSign
-
-    $('#firstNameView').text(firstName)
-    $('#lastNameView').text(lastName)
-    $('#departmentView').text(department)
-    $('#assignmentAreaView').text(assignmentArea)
-    $('#stationView').text(station)
-    $('#callSignView').text(callSign)
-    emsFullName=firstName+' '+lastName
-    $('#removeEms').val(emsFullName)
+  function loadEmsData(personaID) {
+    var socket=io();
+    myReq = {
+      personaID: personaID
+    }
+    socket.emit('get_persona_data', myReq);
+    socket.on('load_persona_data', (res) => {
+      if (res === null || res === undefined) {
+        return //maybe display warning message here?
+      } else {
+        $('#firstNameView').text(res.ems.firstName)
+        $('#lastNameView').text(res.ems.lastName)
+        $('#departmentView').text(res.ems.department)
+        $('#assignmentAreaView').text(res.ems.assignmentArea)
+        $('#stationView').text(res.ems.station)
+        $('#callSignView').text(res.ems.callSign)
+        $('#removeEms').val(personaID)
+      }
+    });
   }
 
   function deleteEmsVeh() {
