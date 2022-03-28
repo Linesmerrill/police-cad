@@ -152,6 +152,9 @@
               <span id="active-bolos margin-right-1" style="font-size: 18px;">Personnel:</span> <button data-toggle="modal"
                 href="#newCivModal" class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Persona</button>
             </div>
+            <div id="issue-loading-personnel-alert" style="display:none">
+              <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading personnel, try refreshing the page...</p>
+            </div>
             <table id="persona-table" class="table table-hover table-bordered">
               <thead>
                 <tr>
@@ -159,17 +162,8 @@
                   <th>Department</th>
                 </tr>
               </thead>
-              <tbody>
-                <% if(personas != undefined && personas != null) {%>
-                  <% for(var i=0; i<personas.length; i++) {%>
-                  <tr data-toggle="modal" data-id=<%=i%> data-target="#viewEms" onclick="loadEmsData(<%=i%>)">
-                    <td><%= personas[i].ems.firstName%> <%= personas[i].ems.lastName%></td>
-                    <td><%= personas[i].ems.department%></td>
-                  </tr>
-                  <% } %>
-                <% } else {%>
-                  <p style="font-style: italic;">⚠️ Issue loading personnel, try refreshing the page...</p>
-                  <% } %>
+              <tbody id="persona-body">
+                <!-- populated by socket -->
               </tbody>
             </table>
           </div>
@@ -1045,6 +1039,32 @@
         })
       }
     })
+  })
+
+  var socket=io();
+  var personaReq = {
+    userID: dbUser._id,
+    activeCommunityID: dbUser.user.activeCommunity
+  }
+  socket.emit('get_personas', personaReq)
+  socket.on('load_personas', (res) => {
+    if (res === undefined || res === null) {
+      $('#issue-loading-personnel-alert').show();
+    } else {
+      $('#issue-loading-personnel-alert').hide();
+      let datatable = $('#persona-table').DataTable();
+      datatable.clear();
+      res.forEach(person => {
+        personTable = ""
+        personTable +=`<tr data-toggle="modal" data-id=${person._id} data-target="#viewEms" onclick="loadEmsData('${person._id}')">
+                    <td>${person.ems.firstName} ${person.ems.lastName}</td>
+                    <td>${person.ems.department}</td>
+                  </tr>`
+        
+        datatable.row.add($(personTable))
+      });
+    datatable.draw();
+    }
   })
 
   $.delete=function (url, data, callback, type) {

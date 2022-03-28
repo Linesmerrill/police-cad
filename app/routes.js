@@ -4111,6 +4111,21 @@ module.exports = function (app, passport, server) {
       }
     })
 
+    socket.on('get_personas', (req) => {
+      // console.debug("get personas socket: ", req)
+      axios.get(`${policeCadApiUrl}/api/v1/ems/user/${req.userID}?active_community_id=${req.activeCommunityID}`, config)
+        .then(function (dbEms) {
+          if (!exists(dbEms.data)) {
+            return socket.emit('load_personas', undefined)
+          } else {
+            return socket.emit('load_personas', dbEms.data)
+          }
+        }).catch((err) => {
+          console.error(err);
+          return socket.emit('load_personas', undefined)
+        });
+    })
+
   }); //end of sockets
 
 }; //end of routes
