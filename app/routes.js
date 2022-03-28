@@ -2532,12 +2532,18 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/deleteEms', auth, function (req, res) {
-    var nameArray = req.body.removeEms.split(' ')
-    var firstName = nameArray[0]
-    var lastName = nameArray[1]
+    // console.debug("deleteEms request: ", req.body)
+    if (!exists(req.body.removeEms)) {
+      console.error('cannot deleteEms with an empty persona ID')
+      res.status(400)
+      return res.redirect('back');
+    }
+    if (!isValidObjectIdLength(req.body.removeEms, "cannot lookup invalid length removeEms persona ID, route: /deleteEms")) {
+        res.status(400)
+        return res.redirect('back');
+    }
     Ems.deleteOne({
-      'ems.firstName': firstName,
-      'ems.lastName': lastName
+    '_id': ObjectId(req.body.removeEms),
     }, function (err) {
       if (err) return console.error(err);
       res.redirect('/ems-dashboard');
