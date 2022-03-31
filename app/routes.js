@@ -321,12 +321,12 @@ module.exports = function (app, passport, server) {
   app.get('/ems-dashboard', authEms, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
-    axios.get(`${policeCadApiUrl}/api/v1/ems/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`, config)
-      .then(function (dbEms) {
-        if (!exists(dbEms.data)) {
+
+    axios.get(`${policeCadApiUrl}/api/v1/emsVehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`, config)
+      .then(function (dbEmsVehicles) {
+        if (!exists(dbEmsVehicles.data)) {
           return res.render('ems-dashboard', {
             user: req.user,
-            personas: null,
             vehicles: null,
             calls: null,
             context: context,
@@ -334,61 +334,32 @@ module.exports = function (app, passport, server) {
             redirect: encodeURIComponent(redirect)
           });
         } else {
-          axios.get(`${policeCadApiUrl}/api/v1/emsVehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`, config)
-            .then(function (dbEmsVehicles) {
-              if (!exists(dbEmsVehicles.data)) {
+          axios.get(`${policeCadApiUrl}/api/v1/calls/community/${req.user.user.activeCommunity}?status=true`, config)
+            .then(function (dbCalls) {
+              if (!exists(dbCalls.data)) {
                 return res.render('ems-dashboard', {
                   user: req.user,
-                  personas: dbEms.data,
-                  vehicles: null,
+                  vehicles: dbEmsVehicles.data,
                   calls: null,
                   context: context,
                   referer: encodeURIComponent('/ems-dashboard'),
                   redirect: encodeURIComponent(redirect)
                 });
               } else {
-                axios.get(`${policeCadApiUrl}/api/v1/calls/community/${req.user.user.activeCommunity}?status=true`, config)
-                  .then(function (dbCalls) {
-                    if (!exists(dbCalls.data)) {
-                      return res.render('ems-dashboard', {
-                        user: req.user,
-                        personas: dbEms.data,
-                        vehicles: dbEmsVehicles.data,
-                        calls: null,
-                        context: context,
-                        referer: encodeURIComponent('/ems-dashboard'),
-                        redirect: encodeURIComponent(redirect)
-                      });
-                    } else {
-                      return res.render('ems-dashboard', {
-                        user: req.user,
-                        personas: dbEms.data,
-                        vehicles: dbEmsVehicles.data,
-                        calls: dbCalls.data,
-                        context: context,
-                        referer: encodeURIComponent('/ems-dashboard'),
-                        redirect: encodeURIComponent(redirect)
-                      });
-                    }
-                  }).catch((err) => {
-                    console.error(err);
-                    return res.render('ems-dashboard', {
-                      user: req.user,
-                      personas: dbEms.data,
-                      vehicles: dbEmsVehicles.data,
-                      calls: null,
-                      context: context,
-                      referer: encodeURIComponent('/ems-dashboard'),
-                      redirect: encodeURIComponent(redirect)
-                    });
-                  });
+                return res.render('ems-dashboard', {
+                  user: req.user,
+                  vehicles: dbEmsVehicles.data,
+                  calls: dbCalls.data,
+                  context: context,
+                  referer: encodeURIComponent('/ems-dashboard'),
+                  redirect: encodeURIComponent(redirect)
+                });
               }
             }).catch((err) => {
               console.error(err);
               return res.render('ems-dashboard', {
                 user: req.user,
-                personas: dbEms.data,
-                vehicles: null,
+                vehicles: dbEmsVehicles.data,
                 calls: null,
                 context: context,
                 referer: encodeURIComponent('/ems-dashboard'),
@@ -400,7 +371,6 @@ module.exports = function (app, passport, server) {
         console.error(err);
         return res.render('ems-dashboard', {
           user: req.user,
-          personas: null,
           vehicles: null,
           calls: null,
           context: context,
@@ -2562,12 +2532,18 @@ module.exports = function (app, passport, server) {
   })
 
   app.post('/deleteEms', auth, function (req, res) {
-    var nameArray = req.body.removeEms.split(' ')
-    var firstName = nameArray[0]
-    var lastName = nameArray[1]
+    // console.debug("deleteEms request: ", req.body)
+    if (!exists(req.body.removeEms)) {
+      console.error('cannot deleteEms with an empty persona ID')
+      res.status(400)
+      return res.redirect('back');
+    }
+    if (!isValidObjectIdLength(req.body.removeEms, "cannot lookup invalid length removeEms persona ID, route: /deleteEms")) {
+        res.status(400)
+        return res.redirect('back');
+    }
     Ems.deleteOne({
-      'ems.firstName': firstName,
-      'ems.lastName': lastName
+    '_id': ObjectId(req.body.removeEms),
     }, function (err) {
       if (err) return console.error(err);
       res.redirect('/ems-dashboard');
@@ -4109,6 +4085,36 @@ module.exports = function (app, passport, server) {
           return socket.emit('load_arrests_result', dbArrests) //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
         });
       }
+    })
+
+    socket.on('get_personas', (req) => {
+      // console.debug("get personas socket: ", req)
+      axios.get(`${policeCadApiUrl}/api/v1/ems/user/${req.userID}?active_community_id=${req.activeCommunityID}`, config)
+        .then(function (dbEms) {
+          if (!exists(dbEms.data)) {
+            return socket.emit('load_personas', undefined)
+          } else {
+            return socket.emit('load_personas', dbEms.data)
+          }
+        }).catch((err) => {
+          console.error(err);
+          return socket.emit('load_personas', undefined)
+        });
+    })
+
+    socket.on('get_persona_data', (req) => {
+      // console.debug("get personas_data socket: ", req)
+      axios.get(`${policeCadApiUrl}/api/v1/ems/${req.personaID}`, config)
+        .then(function (dbEms) {
+          if (!exists(dbEms.data)) {
+            return socket.emit('load_persona_data', undefined)
+          } else {
+            return socket.emit('load_persona_data', dbEms.data)
+          }
+        }).catch((err) => {
+          console.error(err);
+          return socket.emit('load_persona_data', undefined)
+        });
     })
 
   }); //end of sockets
