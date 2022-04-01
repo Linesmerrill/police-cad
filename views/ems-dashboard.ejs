@@ -155,17 +155,22 @@
             <div id="issue-loading-personnel-alert" style="display:none">
               <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading personnel, try refreshing the page...</p>
             </div>
-            <table id="persona-table" class="table table-hover table-bordered">
-              <thead>
-                <tr>
-                  <th>Persona Name</th>
-                  <th>Department</th>
-                </tr>
-              </thead>
-              <tbody id="persona-body">
-                <!-- populated by socket -->
-              </tbody>
-            </table>
+            <div id="persona-table-div">
+              <table id="persona-table" class="table table-hover table-bordered">
+                <thead>
+                  <tr>
+                    <th>Persona Name</th>
+                    <th>Department</th>
+                  </tr>
+                </thead>
+                <tbody id="persona-body">
+                  <!-- populated by socket -->
+                  <div id="persona-loading" class="text-align-center">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!--Table for Vehicles  -->
@@ -1043,6 +1048,7 @@
   socket.emit('get_personas', personaReq)
   socket.on('load_personas', (res) => {
     if (res === undefined || res === null) {
+      $('#persona-table-div').hide();
       $('#issue-loading-personnel-alert').show();
     } else {
       $('#issue-loading-personnel-alert').hide();
@@ -1067,6 +1073,7 @@
             })
       });
     datatable.draw();
+    $('#persona-loading').hide();
     }
   })
 
