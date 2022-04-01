@@ -155,17 +155,22 @@
             <div id="issue-loading-personnel-alert" style="display:none">
               <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading personnel, try refreshing the page...</p>
             </div>
-            <table id="persona-table" class="table table-hover table-bordered">
-              <thead>
-                <tr>
-                  <th>Persona Name</th>
-                  <th>Department</th>
-                </tr>
-              </thead>
-              <tbody id="persona-body">
-                <!-- populated by socket -->
-              </tbody>
-            </table>
+            <div id="persona-table-div">
+              <table id="persona-table" class="table table-hover table-bordered">
+                <thead>
+                  <tr>
+                    <th>Persona Name</th>
+                    <th>Department</th>
+                  </tr>
+                </thead>
+                <tbody id="persona-body">
+                  <!-- populated by socket -->
+                  <div id="persona-loading" class="text-align-center">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <!--Table for Vehicles  -->
@@ -200,7 +205,7 @@
                   </tr>
                   <% } %>
                 <% } else {%>
-                  <p style="font-style: italic;">⚠️ Issue loading vehicles, try refreshing the page...</p>
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading vehicles, try refreshing the page...</p>
                   <% } %>
               </tbody>
             </table>
@@ -238,7 +243,7 @@
                 <% } %>
               <% } %>
             <% } else {%>
-              <p style="font-style: italic;">⚠️ Issue loading calls, try refreshing the page...</p>
+              <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading calls, try refreshing the page...</p>
               <% } %>
 
           </div>
@@ -586,40 +591,47 @@
                 aria-hidden="true">X</button>
               <h4>Details about your Persona</h4>
               <hr style="width: 88%;max-width: 100rem;">
-
-              <div class="col-md-9">
-                <label class="col-md-4 control-label margin-bottom-1" for="first-name">First Name:</label>
-                <label id="firstNameView" class="col-md-5">FirstName here</label>
+              <div id="issue-loading-persona-details-alert" style="display:none">
+                <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading persona details, try refreshing the page...</p>
               </div>
-
-              <div class="col-md-9">
-                <label class="col-md-4 control-label margin-bottom-1" for="last-name">Last Name:</label>
-                <label id="lastNameView" class="col-md-5">LastName here</label>
+              <div id="persona-details-loading" class="text-align-center">
+                <div class="lds-facebook"><div></div><div></div><div></div></div>
               </div>
+              <div id="persona-details-div" style="display:none">
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="first-name">First Name:</label>
+                  <label id="firstNameView" class="col-md-5"></label>
+                </div>
 
-              <div class="col-md-9">
-                <label class="col-md-4 control-label margin-bottom-1" for="department">Department:</label>
-                <label id="departmentView" class="col-md-5">department here</label>
-              </div>
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="last-name">Last Name:</label>
+                  <label id="lastNameView" class="col-md-5"></label>
+                </div>
 
-              <div class="col-md-9">
-                <label class="col-md-4 control-label margin-bottom-1" for="assignment-area">Assignment Area:</label>
-                <label id="assignmentAreaView" class="col-md-5">assignment area here</label>
-              </div>
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="department">Department:</label>
+                  <label id="departmentView" class="col-md-5"></label>
+                </div>
 
-              <div class="col-md-9">
-                <label class="col-md-4 control-label margin-bottom-1" for="station">Station:</label>
-                <label id="stationView" class="col-md-5">station here</label>
-              </div>
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="assignment-area">Assignment Area:</label>
+                  <label id="assignmentAreaView" class="col-md-5"></label>
+                </div>
 
-              <div class="col-md-9">
-                <label class="col-md-4 control-label margin-bottom-1" for="call-sign">Call Sign:</label>
-                <label id="callSignView" class="col-md-5">call sign here</label>
-              </div>
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="station">Station:</label>
+                  <label id="stationView" class="col-md-5"></label>
+                </div>
 
-              <div class="col-md-12 text-align-center">
-                <button id="removeEms" type="submit" name="removeEms" class="btn btn-danger">Delete Persona</button>
-              </div>
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="call-sign">Call Sign:</label>
+                  <label id="callSignView" class="col-md-5"></label>
+                </div>
+
+                <div class="col-md-12 text-align-center">
+                  <button id="removeEms" type="submit" name="removeEms" class="btn btn-danger">Delete Persona</button>
+                </div>
+            </div>
             </fieldset>
           </form>
         </div>
@@ -1043,6 +1055,7 @@
   socket.emit('get_personas', personaReq)
   socket.on('load_personas', (res) => {
     if (res === undefined || res === null) {
+      $('#persona-table-div').hide();
       $('#issue-loading-personnel-alert').show();
     } else {
       $('#issue-loading-personnel-alert').hide();
@@ -1067,6 +1080,7 @@
             })
       });
     datatable.draw();
+    $('#persona-loading').hide();
     }
   })
 
@@ -1146,6 +1160,8 @@
     socket.emit('get_persona_data', myReq);
     socket.on('load_persona_data', (res) => {
       if (res === null || res === undefined) {
+        $('#persona-details-loading').hide();
+        $('#issue-loading-persona-details-alert').show();
         return //maybe display warning message here?
       } else {
         $('#firstNameView').text(res.ems.firstName)
@@ -1155,6 +1171,9 @@
         $('#stationView').text(res.ems.station)
         $('#callSignView').text(res.ems.callSign)
         $('#removeEms').val(personaID)
+        $('#issue-loading-persona-details-alert').hide();
+        $('#persona-details-loading').hide();
+        $('#persona-details-div').show();
       }
     });
   }
