@@ -552,9 +552,8 @@ module.exports = function (app, passport, server) {
           return res.redirect('/dispatch-dashboard')
         }
         Civilian.find({
-          '$text': {
-            '$search': `"${firstName}" "${lastName}"`
-          },
+          'civilian.fistName': firstName,
+          'civilian.lastName': lastName,
           'civilian.birthday': req.query.dateOfBirth,
           '$or': [{ // some are stored as empty strings and others as null so we need to check for both
             'civilian.activeCommunityID': ''
@@ -735,9 +734,8 @@ module.exports = function (app, passport, server) {
           return res.redirect('/police-dashboard')
         }
         Civilian.find({
-          '$text': {
-            '$search': `"${firstName}" "${lastName}"`
-          },
+          'civilian.fistName': firstName,
+          'civilian.lastName': lastName,
           'civilian.birthday': req.query.dateOfBirth,
           '$or': [{ // some are stored as empty strings and others as null so we need to check for both
             'civilian.activeCommunityID': ''
