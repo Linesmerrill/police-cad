@@ -441,340 +441,346 @@
                               <div id="collapse<%=i%>" class="panel-collapse collapse">
                                 <% } %>
                                   <div class="panel-body">
+                                    <div class="text-align-center">
+                                      <button data-toggle="modal" href="#ticketModal"
+                                        class="btn btn-primary btn-md margin-bottom-05"
+                                        onclick="OpenCitation('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#date', '#time');">Issue
+                                        Citation</button>
+                                      <button data-toggle="modal" href="#warningModal"
+                                        class="btn btn-primary btn-md margin-bottom-05"
+                                        onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue
+                                        Warning</button>
+                                      <button data-toggle="modal" href="#arrestModal"
+                                        class="btn btn-primary btn-md margin-bottom-05"
+                                        onclick="OpenArrest('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
+                                        <% if (user.user.activeCommunity !='' &&
+                                        user.user.activeCommunity !=null) {%>
+                                          <button data-toggle="modal" href="#createWarrantModal"
+                                          class="btn btn-primary btn-md margin-bottom-05"
+                                          onclick="OpenCreateWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Create
+                                          Warrant</button>
+                                      <% } else {%>
+                                          <button type="button" data-toggle="modal"
+                                            href="#nonCommunityBoloModal"
+                                            class="btn btn-primary btn-md margin-bottom-05 mock-disabled"
+                                            style="cursor: not-allowed;"> Create Warrant
+                                          </button>
+                                      <% } %>
+                                    </div>
+                                    <hr />
+                                    <% if (civilians[i].civilian.deceased==true) { %>
+                                      <span>
+                                        <div class="alert alert-danger alert-dismissible"
+                                          style="display:block">
+                                          <strong>Deceased!</strong>
+                                        </div>
+                                      </span>
+                                    <% } %>
+                                    <h5>
+                                      <ion-icon name="browsers-outline"></ion-icon> Drivers License
+                                    </h5>
 
+                                    <!-- Drivers License -->
+                                    <div id="drivers-license" class="row">
+                                      <div class="col-md-12">
+                                        <div id="licenseRevokedMessage-<%=i%>"
+                                          class="alert alert-warning hide">
+                                          <strong>Warning!</strong> License is Revoked.
+                                        </div>
+                                        <div id="noLicenseMessage-<%=i%>"
+                                          class="alert alert-danger hide">
+                                          <strong>Alert!</strong> No License Found.
+                                        </div>
+                                        <div id="drivers-license-details-<%=i%>"
+                                          class="container col-sm-offset-2 col-md-offset-2"
+                                          style="position: relative;">
+                                          <img src="/static/images/id-license.png"
+                                            style="width: 301px; height: 186px; border-radius: 4%;">
 
-                                                      <div class="text-align-center">
-                                                        <button data-toggle="modal" href="#ticketModal"
-                                                          class="btn btn-primary btn-md margin-bottom-05"
-                                                          onclick="OpenCitation('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#date', '#time');">Issue
-                                                          Citation</button>
-                                                        <button data-toggle="modal" href="#warningModal"
-                                                          class="btn btn-primary btn-md margin-bottom-05"
-                                                          onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue
-                                                          Warning</button>
-                                                        <button data-toggle="modal" href="#arrestModal"
-                                                          class="btn btn-primary btn-md margin-bottom-05"
-                                                          onclick="OpenArrest('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
-                                                        <button data-toggle="modal" href="#createWarrantModal"
-                                                          class="btn btn-primary btn-md margin-bottom-05"
-                                                          onclick="OpenCreateWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Create
-                                                          Warrant</button>
-                                                        <!-- <button data-toggle="modal" href="#clearWarrantModal" class="btn btn-primary btn-md margin-bottom-05" onclick="OpenClearWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Clear Warrant</button> -->
-                                                      </div>
-                                                      <hr />
-                                                      <% if (civilians[i].civilian.deceased==true) { %>
-                                                        <span>
-                                                          <div class="alert alert-danger alert-dismissible"
-                                                            style="display:block">
-                                                            <strong>Deceased!</strong>
-                                                          </div>
-                                                        </span>
-                                                      <% } %>
-                                                      <h5>
-                                                        <ion-icon name="browsers-outline"></ion-icon> Drivers License
-                                                      </h5>
+                                          <!-- drivers license # -->
+                                          <div>
+                                            <label id="civilianIDViewLic-<%=i%>"
+                                              class="drivers-license-number"></label>
+                                          </div>
 
-                                                      <!-- Drivers License -->
-                                                      <div id="drivers-license" class="row">
-                                                        <div class="col-md-12">
-                                                          <div id="licenseRevokedMessage-<%=i%>"
-                                                            class="alert alert-warning hide">
-                                                            <strong>Warning!</strong> License is Revoked.
-                                                          </div>
-                                                          <div id="noLicenseMessage-<%=i%>"
-                                                            class="alert alert-danger hide">
-                                                            <strong>Alert!</strong> No License Found.
-                                                          </div>
-                                                          <div id="drivers-license-details-<%=i%>"
-                                                            class="container col-sm-offset-2 col-md-offset-2"
-                                                            style="position: relative;">
-                                                            <img src="/static/images/id-license.png"
-                                                              style="width: 301px; height: 186px; border-radius: 4%;">
+                                          <!-- expiration date -->
+                                          <div>
+                                            <span class="expiration-title">EXP </span>
+                                            <span id="license-expiration-<%=i%>"
+                                              class="expiration"></span>
+                                          </div>
 
-                                                            <!-- drivers license # -->
-                                                            <div>
-                                                              <label id="civilianIDViewLic-<%=i%>"
-                                                                class="drivers-license-number"></label>
-                                                            </div>
+                                          <!-- last name -->
+                                          <div>
+                                            <span class="last-name-title">LN </span>
+                                            <span id="lastNameLic-<%=i%>"
+                                              class="last-name-search"></span>
+                                          </div>
 
-                                                            <!-- expiration date -->
-                                                            <div>
-                                                              <span class="expiration-title">EXP </span>
-                                                              <span id="license-expiration-<%=i%>"
-                                                                class="expiration"></span>
-                                                            </div>
+                                          <!-- first name -->
+                                          <div>
+                                            <span class="first-name-title">FN </span>
+                                            <span id="firstNameLic-<%=i%>" class="first-name"></span>
+                                          </div>
 
-                                                            <!-- last name -->
-                                                            <div>
-                                                              <span class="last-name-title">LN </span>
-                                                              <span id="lastNameLic-<%=i%>"
-                                                                class="last-name-search"></span>
-                                                            </div>
+                                          <!-- address -->
+                                          <div>
+                                            <span id="addressViewLic-<%=i%>" class="address"></span>
+                                          </div>
 
-                                                            <!-- first name -->
-                                                            <div>
-                                                              <span class="first-name-title">FN </span>
-                                                              <span id="firstNameLic-<%=i%>" class="first-name"></span>
-                                                            </div>
+                                          <!-- dob -->
+                                          <div>
+                                            <span class="dob-title">DOB </span>
+                                            <span id="birthdayViewLic-<%=i%>" class="dob"></span>
+                                          </div>
 
-                                                            <!-- address -->
-                                                            <div>
-                                                              <span id="addressViewLic-<%=i%>" class="address"></span>
-                                                            </div>
+                                          <!-- license status -->
+                                          <div>
+                                            <span class="status-title">STA </span>
+                                            <span id="licenseStatusViewLic-<%=i%>"
+                                              class="status"></span>
+                                          </div>
 
-                                                            <!-- dob -->
-                                                            <div>
-                                                              <span class="dob-title">DOB </span>
-                                                              <span id="birthdayViewLic-<%=i%>" class="dob"></span>
-                                                            </div>
+                                          <!-- issued date -->
+                                          <div>
+                                            <span class="issued-title">ISS </span>
+                                            <span id="license-issued-<%=i%>" class="issued"></span>
+                                          </div>
 
-                                                            <!-- license status -->
-                                                            <div>
-                                                              <span class="status-title">STA </span>
-                                                              <span id="licenseStatusViewLic-<%=i%>"
-                                                                class="status"></span>
-                                                            </div>
+                                          <!-- sex -->
+                                          <div>
+                                            <span class="sex-title">SEX </span>
+                                            <span id="sexLic-<%=i%>" class="sex"></span>
+                                          </div>
 
-                                                            <!-- issued date -->
-                                                            <div>
-                                                              <span class="issued-title">ISS </span>
-                                                              <span id="license-issued-<%=i%>" class="issued"></span>
-                                                            </div>
+                                          <!-- height -->
+                                          <div>
+                                            <span class="height-title">HGT </span>
+                                            <span id="heightLic-<%=i%>" class="height"></span>
+                                          </div>
 
-                                                            <!-- sex -->
-                                                            <div>
-                                                              <span class="sex-title">SEX </span>
-                                                              <span id="sexLic-<%=i%>" class="sex"></span>
-                                                            </div>
+                                          <!-- weight -->
+                                          <div>
+                                            <span class="weight-title">WGT </span>
+                                            <span id="weightLic-<%=i%>" class="weight"></span>
+                                          </div>
 
-                                                            <!-- height -->
-                                                            <div>
-                                                              <span class="height-title">HGT </span>
-                                                              <span id="heightLic-<%=i%>" class="height"></span>
-                                                            </div>
+                                          <!-- eye color -->
+                                          <div>
+                                            <span class="eye-title">EYES </span>
+                                            <span id="eyeLic-<%=i%>" class="eye"></span>
+                                          </div>
 
-                                                            <!-- weight -->
-                                                            <div>
-                                                              <span class="weight-title">WGT </span>
-                                                              <span id="weightLic-<%=i%>" class="weight"></span>
-                                                            </div>
+                                          <!-- hair color -->
+                                          <div>
+                                            <span class="hair-title">HAIR </span>
+                                            <span id="hairLic-<%=i%>" class="hair"></span>
+                                          </div>
 
-                                                            <!-- eye color -->
-                                                            <div>
-                                                              <span class="eye-title">EYES </span>
-                                                              <span id="eyeLic-<%=i%>" class="eye"></span>
-                                                            </div>
+                                          <!-- donor -->
+                                          <div class="donor-block-<%=i%> hide">
+                                            <span class="donor-title">DONOR
+                                              ❤️</span>
+                                          </div>
 
-                                                            <!-- hair color -->
-                                                            <div>
-                                                              <span class="hair-title">HAIR </span>
-                                                              <span id="hairLic-<%=i%>" class="hair"></span>
-                                                            </div>
+                                          <!-- veteran -->
+                                          <div class="veteran-block-<%=i%> hide">
+                                            <span class="veteran">VETERAN
+                                              ⭐️</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
 
-                                                            <!-- donor -->
-                                                            <div class="donor-block-<%=i%> hide">
-                                                              <span class="donor-title">DONOR
-                                                                ❤️</span>
-                                                            </div>
+                                    <!-- Reinstate Drivers License Button -->
+                                    <div id="click-to-reinstate-lic-<%=i%>"
+                                      class="form-group col-md-12 text-align-center margin-top-1 hide">
+                                      <button type="button" value="reinstateLicense" name="action"
+                                        class="btn btn-info"
+                                        onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','1')">Reinstate
+                                        Driver's License</button>
+                                    </div>
 
-                                                            <!-- veteran -->
-                                                            <div class="veteran-block-<%=i%> hide">
-                                                              <span class="veteran">VETERAN
-                                                                ⭐️</span>
-                                                            </div>
-                                                          </div>
-                                                        </div>
-                                                      </div>
+                                    <!-- Delete Drivers License Button -->
+                                    <div id="click-to-revoke-lic-<%=i%>"
+                                      class="form-group col-md-13 text-align-center hide"
+                                      style="margin-top: -5em">
+                                      <button type="button" value="deleteLicense" name="action"
+                                        class="btn btn-danger"
+                                        onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','2')">Revoke
+                                        Driver's License</button>
+                                    </div>
 
-                                                      <!-- Reinstate Drivers License Button -->
-                                                      <div id="click-to-reinstate-lic-<%=i%>"
-                                                        class="form-group col-md-12 text-align-center margin-top-1 hide">
-                                                        <button type="button" value="reinstateLicense" name="action"
-                                                          class="btn btn-info"
-                                                          onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','1')">Reinstate
-                                                          Driver's License</button>
-                                                      </div>
+                                    <hr style="width: 88%;max-width: 100rem;">
+                                    <h5>
+                                      <ion-icon name="alert-circle-outline"></ion-icon> NCIC Warrant Check
+                                    </h5>
+                                    <div class="text-center">
+                                      <% if (user.user.activeCommunity !='' &&
+                                        user.user.activeCommunity !=null) {%>
+                                        <button type="button" class="btn btn-info margin-bottom-05"
+                                          data-toggle="modal" href="#activeWarrants"
+                                          id="activeWarrantsButton-<%=i%>"
+                                          onclick="getActiveWarrants('<%=i%>', '<%=civilians[i]._id%>')">
+                                          Search Active Warrants
+                                        </button>
+                                        <% } else {%>
+                                          <button type="button" data-toggle="modal"
+                                            href="#nonCommunityBoloModal"
+                                            class="btn btn-info margin-bottom-05 mock-disabled"
+                                            style="cursor: not-allowed;"> Search Active Warrants
+                                          </button>
+                                          <% } %>
+                                    </div>
 
-                                                      <!-- Delete Drivers License Button -->
-                                                      <div id="click-to-revoke-lic-<%=i%>"
-                                                        class="form-group col-md-13 text-align-center hide"
-                                                        style="margin-top: -5em">
-                                                        <button type="button" value="deleteLicense" name="action"
-                                                          class="btn btn-danger"
-                                                          onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','2')">Revoke
-                                                          Driver's License</button>
-                                                      </div>
+                                    <hr style="width: 88%;max-width: 100rem;">
+                                    <h5>
+                                      <ion-icon name="car-sport-outline"></ion-icon> Registered Vehicles
+                                    </h5>
+                                    <div class="text-center">
+                                      <% if (user.user.activeCommunity !='' &&
+                                        user.user.activeCommunity !=null) {%>
+                                        <button type="button" class="btn btn-info margin-bottom-05"
+                                          data-toggle="modal" href="#registeredVehicles"
+                                          id="registeredCarButton-<%=i%>"
+                                          onclick="getRegisteredCars('<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>', '<%=i%>', '<%=civilians[i]._id%>')">
+                                          Search Registered Vehicles
+                                        </button>
+                                        <% } else {%>
+                                          <button type="button" data-toggle="modal"
+                                            href="#nonCommunityBoloModal"
+                                            class="btn btn-info margin-bottom-05 mock-disabled"
+                                            style="cursor: not-allowed;"> Search Registered Vehicles
+                                          </button>
+                                          <% } %>
+                                    </div>
+                                    <hr style="width: 88%;max-width: 100rem;">
+                                    <h5>
+                                      <ion-icon name="browsers-outline"></ion-icon> Firearm
+                                      License
+                                    </h5>
 
-                                                      <hr style="width: 88%;max-width: 100rem;">
-                                                      <h5>
-                                                        <ion-icon name="alert-circle-outline"></ion-icon> NCIC Warrant Check
-                                                      </h5>
-                                                      <div class="text-center">
-                                                        <% if (user.user.activeCommunity !='' &&
-                                                          user.user.activeCommunity !=null) {%>
-                                                          <button type="button" class="btn btn-info margin-bottom-05"
-                                                            data-toggle="modal" href="#activeWarrants"
-                                                            id="activeWarrantsButton-<%=i%>"
-                                                            onclick="getActiveWarrants('<%=i%>', '<%=civilians[i]._id%>')">
-                                                            Search Active Warrants
-                                                          </button>
-                                                          <% } else {%>
-                                                            <button type="button" data-toggle="modal"
-                                                              href="#nonCommunityBoloModal"
-                                                              class="btn btn-info margin-bottom-05 mock-disabled"
-                                                              style="cursor: not-allowed;"> Search Active Warrants
-                                                            </button>
-                                                            <% } %>
-                                                      </div>
+                                    <div class="form-group">
+                                      <label class="col-md-4 control-label"
+                                        for="firearmLicenseView"></label>
+                                      <div class="col-md-4">
+                                        <% if (civilians[i].civilian.firearmLicense==2) {%>
+                                          <p class="plate-body-text">Valid <i
+                                              class="ion-checkmark-circled color-green"></i></p>
+                                          <% } else if (civilians[i].civilian.firearmLicense==3) {%>
+                                            <p class="plate-body-text">Revoked <i
+                                                class="ion-alert-circled color-red"></i></p>
+                                            <% } else {%>
+                                              <p class="plate-body-text">None <i
+                                                  class="ion-alert-circled color-yellow"></i>
+                                              </p>
+                                              <% } %>
+                                      </div>
+                                    </div>
+                                    <hr style="width: 88%;max-width: 100rem;">
 
-                                                      <hr style="width: 88%;max-width: 100rem;">
-                                                      <h5>
-                                                        <ion-icon name="car-sport-outline"></ion-icon> Registered Vehicles
-                                                      </h5>
-                                                      <div class="text-center">
-                                                        <% if (user.user.activeCommunity !='' &&
-                                                          user.user.activeCommunity !=null) {%>
-                                                          <button type="button" class="btn btn-info margin-bottom-05"
-                                                            data-toggle="modal" href="#registeredVehicles"
-                                                            id="registeredCarButton-<%=i%>"
-                                                            onclick="getRegisteredCars('<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>', '<%=i%>', '<%=civilians[i]._id%>')">
-                                                            Search Registered Vehicles
-                                                          </button>
-                                                          <% } else {%>
-                                                            <button type="button" data-toggle="modal"
-                                                              href="#nonCommunityBoloModal"
-                                                              class="btn btn-info margin-bottom-05 mock-disabled"
-                                                              style="cursor: not-allowed;"> Search Registered Vehicles
-                                                            </button>
-                                                            <% } %>
-                                                      </div>
-                                                      <hr style="width: 88%;max-width: 100rem;">
-                                                      <h5>
-                                                        <ion-icon name="browsers-outline"></ion-icon> Firearm
-                                                        License
-                                                      </h5>
+                                    <h5>
+                                          <ion-icon name="browsers-outline"></ion-icon> Registered
+                                          Firearms
+                                        </h5>
+                                        <div class="text-center">
+                                          <% if (user.user.activeCommunity !='' &&
+                                            user.user.activeCommunity !=null) {%>
+                                            <button type="button"
+                                              class="btn btn-info margin-bottom-05"
+                                              data-toggle="modal" href="#registeredFirearms"
+                                              id="registeredFirearmButton-<%=i%>"
+                                              onclick="getRegisteredFirearms('<%=civilians[i]._id%>', '<%=i%>')">
+                                              Search Registered Firearms
+                                            </button>
+                                            <% } else {%>
+                                              <button type="button" data-toggle="modal"
+                                                href="#nonCommunityBoloModal"
+                                                class="btn btn-info margin-bottom-05 mock-disabled"
+                                                style="cursor: not-allowed;"> Search Registered
+                                                Firearms
+                                              </button>
+                                              <% } %>
+                                        </div>
+                                      <hr style="width: 88%;max-width: 100rem;">
 
-                                                      <div class="form-group">
-                                                        <label class="col-md-4 control-label"
-                                                          for="firearmLicenseView"></label>
-                                                        <div class="col-md-4">
-                                                          <% if (civilians[i].civilian.firearmLicense==2) {%>
-                                                            <p class="plate-body-text">Valid <i
-                                                                class="ion-checkmark-circled color-green"></i></p>
-                                                            <% } else if (civilians[i].civilian.firearmLicense==3) {%>
-                                                              <p class="plate-body-text">Revoked <i
-                                                                  class="ion-alert-circled color-red"></i></p>
-                                                              <% } else {%>
-                                                                <p class="plate-body-text">None <i
-                                                                    class="ion-alert-circled color-yellow"></i>
-                                                                </p>
-                                                                <% } %>
-                                                        </div>
-                                                      </div>
-                                                      <hr style="width: 88%;max-width: 100rem;">
+                                    Occupation: <%= civilians[i].civilian.occupation%><br />
 
-                                                      <h5>
-                                                            <ion-icon name="browsers-outline"></ion-icon> Registered
-                                                            Firearms
-                                                          </h5>
-                                                          <div class="text-center">
-                                                            <% if (user.user.activeCommunity !='' &&
-                                                              user.user.activeCommunity !=null) {%>
-                                                              <button type="button"
-                                                                class="btn btn-info margin-bottom-05"
-                                                                data-toggle="modal" href="#registeredFirearms"
-                                                                id="registeredFirearmButton-<%=i%>"
-                                                                onclick="getRegisteredFirearms('<%=civilians[i]._id%>', '<%=i%>')">
-                                                                Search Registered Firearms
-                                                              </button>
-                                                              <% } else {%>
-                                                                <button type="button" data-toggle="modal"
-                                                                  href="#nonCommunityBoloModal"
-                                                                  class="btn btn-info margin-bottom-05 mock-disabled"
-                                                                  style="cursor: not-allowed;"> Search Registered
-                                                                  Firearms
-                                                                </button>
-                                                                <% } %>
-                                                          </div>
-                                                        <hr style="width: 88%;max-width: 100rem;">
-
-                                                      Occupation: <%= civilians[i].civilian.occupation%><br />
-
-                                                        <hr style="width: 88%;max-width: 100rem;">
-                                                        <h4>Criminal History</h4>
-                                                        <ul class="nav nav-pills mb-3 margin-bottom-1"
-                                                          role="tablist">
-                                                          <li class="nav-item">
-                                                            <a class="nav-link" id="pills-citations-tab-<%=civilians[i]._id%>"
-                                                              data-toggle="pill" href="#pills-citations-<%=civilians[i]._id%>" role="tab"
-                                                              aria-controls="pills-citations-<%=i%>"
-                                                              aria-selected="true" onclick="loadCitations('<%=civilians[i]._id%>')">Citations</a>
-                                                          </li>
-                                                          <li class="nav-item">
-                                                            <a class="nav-link" id="pills-warnings-tab-<%=civilians[i]._id%>"
-                                                              data-toggle="pill" href="#pills-warnings-<%=civilians[i]._id%>" role="tab"
-                                                              aria-controls="pills-warnings-<%=i%>"
-                                                              aria-selected="false" onclick="loadWarnings('<%=civilians[i]._id%>')">Warnings</a>
-                                                          </li>
-                                                          <li class="nav-item">
-                                                            <a class="nav-link" id="pills-arrests-tab-<%=civilians[i]._id%>"
-                                                              data-toggle="pill" href="#pills-arrests-<%=civilians[i]._id%>" role="tab"
-                                                              aria-controls="pills-arrests-<%=i%>"
-                                                              aria-selected="false" onclick="loadArrests('<%=civilians[i]._id%>')">Arrests</a>
-                                                          </li>
-                                                        </ul>
-                                                        <div class="tab-content" id="pills-tabContent-<%=civilians[i]._id%>">
-                                                          <div class="tab-pane fade" id="pills-citations-<%=civilians[i]._id%>"
-                                                            role="tabpanel" aria-labelledby="pills-citations-tab-<%=civilians[i]._id%>">
-                                                            <table id="ticket-table-<%=civilians[i]._id%>" class="table table-hover"
-                                                              border="1" frame="box">
-                                                              <thead>
-                                                                <tr style="background-color: #2d2d2d;">
-                                                                  <td>Date<br><i><small>YYYY-M-D</small></i></td>
-                                                                  <td>Violation</td>
-                                                                  <td>Amount</td>
-                                                                  <td>Delete</td>
-                                                                </tr>
-                                                              </thead>
-                                                              <tbody id="ticket-body-<%=civilians[i]._id%>">
-                                                                <!-- populated by socket -->
-                                                              </tbody>
-                                                            </table>
-                                                          </div>
-                                                          <div class="tab-pane fade" id="pills-warnings-<%=civilians[i]._id%>" role="tabpanel"
-                                                            aria-labelledby="pills-warnings-tab-<%=civilians[i]._id%>">
-                                                            <table id="warning-table-<%=civilians[i]._id%>" class="table table-hover"
-                                                              border="1" frame="box">
-                                                              <thead>
-                                                                <tr style="background-color: #2d2d2d;">
-                                                                  <td>Date<br><i><small>YYYY-M-D</small></i></td>
-                                                                  <td>Warning</td>
-                                                                  <td>Delete</td>
-                                                                </tr>
-                                                              </thead>
-                                                              <tbody id="warning-body-<%=civilians[i]._id%>">
-                                                                <!-- populated by socket -->
-                                                              </tbody>
-                                                            </table>
-                                                          </div>
-                                                          <div class="tab-pane fade" id="pills-arrests-<%=civilians[i]._id%>" role="tabpanel"
-                                                            aria-labelledby="pills-arrests-tab-<%=civilians[i]._id%>">
-                                                            <table id="arrest-table-<%=civilians[i]._id%>" class="table table-hover"
-                                                              border="1" frame="box">
-                                                              <thead>
-                                                                <tr style="background-color: #2d2d2d;">
-                                                                  <td>Date<br><i><small>YYYY-M-D</small></i></td>
-                                                                  <td>Charges</td>
-                                                                  <td>Summary</td>
-                                                                  <td>Delete</td>
-                                                                </tr>
-                                                              </thead>
-                                                              <tbody id="arrest-body-<%=civilians[i]._id%>">
-                                                                <!-- populated by socket -->
-                                                              </tbody>
-                                                            </table>
-                                                          </div>
-                                                        </div>
+                                      <hr style="width: 88%;max-width: 100rem;">
+                                      <h4>Criminal History</h4>
+                                      <ul class="nav nav-pills mb-3 margin-bottom-1"
+                                        role="tablist">
+                                        <li class="nav-item">
+                                          <a class="nav-link" id="pills-citations-tab-<%=civilians[i]._id%>"
+                                            data-toggle="pill" href="#pills-citations-<%=civilians[i]._id%>" role="tab"
+                                            aria-controls="pills-citations-<%=i%>"
+                                            aria-selected="true" onclick="loadCitations('<%=civilians[i]._id%>')">Citations</a>
+                                        </li>
+                                        <li class="nav-item">
+                                          <a class="nav-link" id="pills-warnings-tab-<%=civilians[i]._id%>"
+                                            data-toggle="pill" href="#pills-warnings-<%=civilians[i]._id%>" role="tab"
+                                            aria-controls="pills-warnings-<%=i%>"
+                                            aria-selected="false" onclick="loadWarnings('<%=civilians[i]._id%>')">Warnings</a>
+                                        </li>
+                                        <li class="nav-item">
+                                          <a class="nav-link" id="pills-arrests-tab-<%=civilians[i]._id%>"
+                                            data-toggle="pill" href="#pills-arrests-<%=civilians[i]._id%>" role="tab"
+                                            aria-controls="pills-arrests-<%=i%>"
+                                            aria-selected="false" onclick="loadArrests('<%=civilians[i]._id%>')">Arrests</a>
+                                        </li>
+                                      </ul>
+                                      <div class="tab-content" id="pills-tabContent-<%=civilians[i]._id%>">
+                                        <div class="tab-pane fade" id="pills-citations-<%=civilians[i]._id%>"
+                                          role="tabpanel" aria-labelledby="pills-citations-tab-<%=civilians[i]._id%>">
+                                          <table id="ticket-table-<%=civilians[i]._id%>" class="table table-hover"
+                                            border="1" frame="box">
+                                            <thead>
+                                              <tr style="background-color: #2d2d2d;">
+                                                <td>Date<br><i><small>YYYY-M-D</small></i></td>
+                                                <td>Violation</td>
+                                                <td>Amount</td>
+                                                <td>Delete</td>
+                                              </tr>
+                                            </thead>
+                                            <tbody id="ticket-body-<%=civilians[i]._id%>">
+                                              <!-- populated by socket -->
+                                            </tbody>
+                                          </table>
+                                        </div>
+                                        <div class="tab-pane fade" id="pills-warnings-<%=civilians[i]._id%>" role="tabpanel"
+                                          aria-labelledby="pills-warnings-tab-<%=civilians[i]._id%>">
+                                          <table id="warning-table-<%=civilians[i]._id%>" class="table table-hover"
+                                            border="1" frame="box">
+                                            <thead>
+                                              <tr style="background-color: #2d2d2d;">
+                                                <td>Date<br><i><small>YYYY-M-D</small></i></td>
+                                                <td>Warning</td>
+                                                <td>Delete</td>
+                                              </tr>
+                                            </thead>
+                                            <tbody id="warning-body-<%=civilians[i]._id%>">
+                                              <!-- populated by socket -->
+                                            </tbody>
+                                          </table>
+                                        </div>
+                                        <div class="tab-pane fade" id="pills-arrests-<%=civilians[i]._id%>" role="tabpanel"
+                                          aria-labelledby="pills-arrests-tab-<%=civilians[i]._id%>">
+                                          <table id="arrest-table-<%=civilians[i]._id%>" class="table table-hover"
+                                            border="1" frame="box">
+                                            <thead>
+                                              <tr style="background-color: #2d2d2d;">
+                                                <td>Date<br><i><small>YYYY-M-D</small></i></td>
+                                                <td>Charges</td>
+                                                <td>Summary</td>
+                                                <td>Delete</td>
+                                              </tr>
+                                            </thead>
+                                            <tbody id="arrest-body-<%=civilians[i]._id%>">
+                                              <!-- populated by socket -->
+                                            </tbody>
+                                          </table>
+                                        </div>
+                                      </div>
                                   </div>
                               </div>
 
