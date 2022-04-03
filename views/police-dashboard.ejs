@@ -1713,6 +1713,12 @@
             <h2 class="text-center">Registered Firearms</h2>
             <div class="form-group">
               <div id="registered-firearms">
+                <div id="registered-firearms-loading" class="text-align-center">
+                  <div class="lds-facebook"><div></div><div></div><div></div></div>
+                </div>
+                <div id="issue-loading-registered-firearms-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading firearms, try refreshing the page...</p>
+                </div>
               </div>
             </div>
           </div>
@@ -2396,6 +2402,8 @@
     //remove any existing panel body on button click
     $('.reg-arm').remove();
     $(`#registered-firearms`).show()
+    $('#registered-firearms-loading').show()
+    $('#issue-loading-registered-firearms-alert').hide()
 
     var socket=io();
 
@@ -2436,7 +2444,10 @@
             `Weapon Type: ${res[i].firearm.weaponType}<br/>`
           )
         }
+      } else {
+        $('#issue-loading-registered-firearms-alert').show()
       }
+      $('#registered-firearms-loading').hide();
     });
   }
 
