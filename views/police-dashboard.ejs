@@ -444,20 +444,20 @@
                                     <div class="text-align-center">
                                       <button data-toggle="modal" href="#ticketModal"
                                         class="btn btn-primary btn-md margin-bottom-05"
-                                        onclick="OpenCitation('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#date', '#time');">Issue
+                                        onclick="OpenCitation(`<%= civilians[i].civilian.firstName%>`, `<%=civilians[i].civilian.lastName %>`, '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#date', '#time');">Issue
                                         Citation</button>
                                       <button data-toggle="modal" href="#warningModal"
                                         class="btn btn-primary btn-md margin-bottom-05"
-                                        onclick="OpenWarning('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue
+                                        onclick="OpenWarning(`<%= civilians[i].civilian.firstName%>`, `<%=civilians[i].civilian.lastName %>`, '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue
                                         Warning</button>
                                       <button data-toggle="modal" href="#arrestModal"
                                         class="btn btn-primary btn-md margin-bottom-05"
-                                        onclick="OpenArrest('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
+                                        onclick="OpenArrest(`<%= civilians[i].civilian.firstName%>`, `<%=civilians[i].civilian.lastName %>`, '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
                                         <% if (user.user.activeCommunity !='' &&
                                         user.user.activeCommunity !=null) {%>
                                           <button data-toggle="modal" href="#createWarrantModal"
                                           class="btn btn-primary btn-md margin-bottom-05"
-                                          onclick="OpenCreateWarrant('<%= civilians[i].civilian.firstName%>', '<%=civilians[i].civilian.lastName %>', '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Create
+                                          onclick="OpenCreateWarrant(`<%= civilians[i].civilian.firstName%>`, `<%=civilians[i].civilian.lastName %>`, '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Create
                                           Warrant</button>
                                       <% } else {%>
                                           <button type="button" data-toggle="modal"
@@ -643,7 +643,7 @@
                                         <button type="button" class="btn btn-info margin-bottom-05"
                                           data-toggle="modal" href="#registeredVehicles"
                                           id="registeredCarButton-<%=i%>"
-                                          onclick="getRegisteredCars('<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>', '<%=i%>', '<%=civilians[i]._id%>')">
+                                          onclick="getRegisteredCars(`<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>`, '<%=i%>', '<%=civilians[i]._id%>')">
                                           Search Registered Vehicles
                                         </button>
                                         <% } else {%>
