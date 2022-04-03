@@ -1912,6 +1912,12 @@
             <h2 class="text-center">Registered Vehicles</h2>
             <div class="form-group">
               <div id="registered-cars">
+                <div id="registered-cars-loading" class="text-align-center">
+                  <div class="lds-facebook"><div></div><div></div><div></div></div>
+                </div>
+                <div id="issue-loading-registered-cars-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading registered vehicles, try refreshing the page...</p>
+                </div>
               </div>
             </div>
           </div>
@@ -1930,6 +1936,12 @@
             <h2 class="text-center">Active Warrants</h2>
             <div class="form-group">
               <div id="active-warrants">
+                <div id="active-warrants-loading" class="text-align-center">
+                  <div class="lds-facebook"><div></div><div></div><div></div></div>
+                </div>
+                <div id="issue-loading-active-warrants-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading warrants, try refreshing the page...</p>
+                </div>
               </div>
             </div>
           </div>
@@ -1948,6 +1960,12 @@
             <h2 class="text-center">Registered Firearms</h2>
             <div class="form-group">
               <div id="registered-firearms">
+                <div id="registered-firearms-loading" class="text-align-center">
+                  <div class="lds-facebook"><div></div><div></div><div></div></div>
+                </div>
+                <div id="issue-loading-registered-firearms-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading firearms, try refreshing the page...</p>
+                </div>
               </div>
             </div>
           </div>
@@ -2906,6 +2924,8 @@
     //remove any existing panel body on button click
     $('.reg-arm').remove();
     $(`#registered-firearms`).show()
+    $('#registered-firearms-loading').show()
+    $('#issue-loading-registered-firearms-alert').hide()
 
     var socket=io();
 
@@ -2922,9 +2942,9 @@
             `<h5 style="text-align: center;">No Registered Firearms</h5>`+
             `</div>`
           )
+          $('#registered-firearms-loading').hide();
           return
         }
-
         $('#registered-firearms').append(
           `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`
         )
@@ -2947,7 +2967,10 @@
             `Weapon Type: ${res[i].firearm.weaponType}<br/>`
           )
         }
-    }
+      } else {
+        $('#issue-loading-registered-firearms-alert').show()
+      }
+      $('#registered-firearms-loading').hide();
     });
   }
 
@@ -2955,7 +2978,8 @@
     //remove any existing panel body on button click
     $('.reg-car').remove();
     $(`#registered-cars`).show()
-
+    $('#registered-cars-loading').show()
+    $('#issue-loading-registered-cars-alert').hide()
     var socket=io();
 
     myReq={
@@ -2965,13 +2989,14 @@
     }
     socket.emit('get_reg_veh', myReq)
     socket.on('load_reg_veh_result', res => {
-      if (res != undefined && res != null) {
+      if (res != null && res != undefined) {
         if (res.length==0) {
           $('#registered-cars').append(
             `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`+
             `<h5 style="text-align: center;">No Registered Vehicles</h5>`+
             `</div>`
           )
+          $('#registered-cars-loading').hide();
           return
         }
         $('#registered-cars').append(
@@ -3018,9 +3043,11 @@
               `<p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>`
             )
           }
-
         }
+      } else {
+        $('#issue-loading-registered-cars-alert').show()
       }
+      $('#registered-cars-loading').hide();
     })
   }
 
@@ -3028,6 +3055,8 @@
     //remove any existing panel body on button click
     $('.active-reg').remove();
     $(`#active-warrants`).show()
+    $('#active-warrants-loading').show()
+    $('#issue-loading-active-warrants-alert').hide()
 
     var socket=io();
 
@@ -3073,9 +3102,11 @@
             `<h5 style="text-align: center;">No Active Warrants</h5>`+
             `</div>`
           )
-          return
         }
+      } else {
+        $('#issue-loading-active-warrants-alert').show()
       }
+      $('#active-warrants-loading').hide();
     })
   }
 
