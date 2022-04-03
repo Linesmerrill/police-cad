@@ -1749,6 +1749,12 @@
             <h2 class="text-center">Registered Vehicles</h2>
             <div class="form-group">
               <div id="registered-cars">
+                <div id="registered-cars-loading" class="text-align-center">
+                  <div class="lds-facebook"><div></div><div></div><div></div></div>
+                </div>
+                <div id="issue-loading-registered-cars-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading registered vehicles, try refreshing the page...</p>
+                </div>
               </div>
             </div>
           </div>
@@ -2438,7 +2444,8 @@
     //remove any existing panel body on button click
     $('.reg-car').remove();
     $(`#registered-cars`).show()
-
+    $('#registered-cars-loading').show()
+    $('#issue-loading-registered-cars-alert').hide()
     var socket=io();
 
     myReq={
@@ -2501,9 +2508,11 @@
               `<p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>`
             )
           }
-
         }
+      } else {
+        $('#issue-loading-registered-cars-alert').show()
       }
+      $('#registered-cars-loading').hide();
     })
   }
 
