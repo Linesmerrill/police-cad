@@ -2683,6 +2683,7 @@ module.exports = function (app, passport, server) {
 
     // For testing bot connection
     socket.on("botping", (data) => {
+      console.debug(data) // Prove socket connection to bot works
       socket.emit('botpong', {
         message: 'pong'
       });
