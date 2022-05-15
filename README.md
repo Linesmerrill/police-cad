@@ -21,6 +21,16 @@ This is a easy to setup and use police server CAD. Includes a signup/login for b
 1. Run `npm start` to boot up server.
 1. Go to http://localhost:8080.
 
+#### Running the backend server via our microservice
+
+We have since began migrating most of our backend code to our [police-cad-api](https://github.com/Linesmerrill/police-cad-api). This is now required to be running in order to access certain parts of
+the app.
+
+Follow along with the instructions on how to start and run that service [here](https://github.com/Linesmerrill/police-cad-api#police-cad-api).
+
+Once Running, you will need to add two new environment variables, you can an example of those
+[here](https://github.com/Linesmerrill/police-cad/blob/main/.env.example#L12).
+
 ### Setting up MongoDB
 1. Install mongodb via brew [Step by step instructions](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-os-x/)
 1. Start mongodb via brew [Step by step instructions](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-os-x/#run-mongodb-community-edition)
