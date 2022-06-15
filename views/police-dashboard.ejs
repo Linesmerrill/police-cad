@@ -2093,7 +2093,8 @@
       if (dbUser.user.activeCommunity==origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
-          audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound.wav');
+          audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
+          audioElement.volume = dbUser.user.alertVolume || 0.1;
           audioElement.play();
         }
         $('#panic-placeholder-socket').empty();
@@ -2132,7 +2133,8 @@
       if (dbUser.user.activeCommunity==origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
-          audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep.wav');
+          audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
+          audioElement.volume = dbUser.user.alertVolume || 0.1;
           audioElement.play();
         }
         $('#signal-100-banner').removeClass('hide').addClass('show')
@@ -2143,7 +2145,8 @@
       if (dbUser.user.activeCommunity==origReq.activeCommunity) {
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
-          audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound.wav');
+          audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound_adj.mp3');
+          audioElement.volume = dbUser.user.alertVolume || 0.1;
           audioElement.play();
         }
         $('#hold-traffic-banner').removeClass('hide').addClass('show')
@@ -2899,7 +2902,8 @@
       }
       if ($('#panic-button-check-sound').prop('checked')) {
         var audioElement=document.createElement('audio');
-        audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound.wav');
+        audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
+        audioElement.volume = dbUser.user.alertVolume || 0.1;
         audioElement.play();
       }
 
