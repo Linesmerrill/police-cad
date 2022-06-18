@@ -9,36 +9,32 @@
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-          aria-hidden="true">X</button>
+        <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
 
-
-        <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
-          <li class="nav-item active">
-            <a class="nav-link active" id="pills-account-tab" data-toggle="pill" href="#pills-account" role="tab"
-              aria-controls="pills-account" aria-selected="true">Manage Account</a>
+        <ul class="nav nav-pills margin-bottom-1">
+          <li role="presentation" class="active">
+            <a data-toggle="pill" href="#pills-account">Manage Account</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" id="pills-settings-tab" data-toggle="pill" href="#pills-settings" role="tab"
-              aria-controls="pills-settings" aria-selected="false">Settings</a>
+          <li>
+            <a data-toggle="pill" href="#pills-settings">Settings</a>
           </li>
         </ul>
+
         <hr style="width: 88%;max-width: 100rem;">
-        <div class="tab-content" id="pills-tabContent">
-          <div class="tab-pane fade active in" id="pills-account" role="tabpanel" aria-labelledby="pills-account-tab">
+        <div class="tab-content">
+          <div class="tab-pane fade in active" id="pills-account">
             <form class="form-horizontal" action="/manageAccount" method="post">
               <fieldset>
 
-                <!-- Form Name -->
+
                 <h5>Profile</h5>
                 <div class="img bg-wrap text-center py-4" style="background: transparent;">
                   <div class="user-logo">
-                    <div class="img profile-picture"
-                      style="background-image: url(/static/images/civ-unknown-user.png);"></div>
+                    <div class="img profile-picture" style="background-image: url(/static/images/civ-unknown-user.png);"></div>
                   </div>
                 </div>
 
-                <!-- Text input-->
+
                 <div class="form-group">
                   <label class="col-md-4 control-label" for="profileImage">Profile Image:</label>
                   <div class="col-md-6" style="margin-top: 7px;">
@@ -46,44 +42,39 @@
                   </div>
                 </div>
 
-                <!-- Text input-->
+
                 <div class="form-group">
                   <label class="col-md-4 control-label" for="accountEmail">Email:</label>
                   <div class="col-md-6">
-                    <input id="accountEmail" name="accountEmail" type="email" class="form-control input-md"
-                      readonly="readonly">
+                    <input id="accountEmail" name="accountEmail" type="email" class="form-control input-md" readonly="readonly">
                   </div>
                 </div>
 
-                <!-- Update Username input-->
+
                 <div class="form-group">
                   <label class="col-md-4 control-label" for="accountUsername">Username:<br><small>Max 20
                       characters</small></label>
                   <div class="col-md-6">
-                    <input id="accountUsername" name="accountUsername" type="text" class="form-control input-md"
-                      maxlength="20" autocomplete="off" required>
+                    <input id="accountUsername" name="accountUsername" type="text" class="form-control input-md" maxlength="20" autocomplete="off" required>
                     <div id="updateUsernameBtns" class="margin-top-1" style="display: none">
                       <input type="hidden" name="userID" value="<%= user._id %>">
                       <input type="hidden" name="page" value="/civ-dashboard">
                       <button id="updateUsername" value="updateUsername" name="action" class="btn btn-info">Update
-                        Username</button> <button type="button" class="btn btn-primary"
-                        onclick="cancelUsername()">Cancel</button>
+                        Username</button> <button type="button" class="btn btn-primary" onclick="cancelUsername()">Cancel</button>
                     </div>
                   </div>
                 </div>
 
-                <!-- Update Call Sign input-->
+
                 <div class="form-group">
                   <label class="col-md-4 control-label" for="accountCallSign">Call Sign:<br><small>Max 10
                       characters</small></label>
                   <div class="col-md-6">
-                    <input id="accountCallSign" name="accountCallSign" type="text" class="form-control input-md"
-                      maxlength="10" autocomplete="off" required>
+                    <input id="accountCallSign" name="accountCallSign" type="text" class="form-control input-md" maxlength="10" autocomplete="off" required>
                     <div id="updateCallSignBtns" class="margin-top-1" style="display: none">
                       <input type="hidden" name="page" value="/civ-dashboard">
                       <button id="updateCallSign" value="updateCallSign" name="action" class="btn btn-info">Update Call
-                        Sign</button> <button type="button" class="btn btn-primary"
-                        onclick="cancelCallSign()">Cancel</button>
+                        Sign</button> <button type="button" class="btn btn-primary" onclick="cancelCallSign()">Cancel</button>
                     </div>
                   </div>
                 </div>
@@ -94,34 +85,32 @@
                   <ion-icon name="lock-closed-outline"></ion-icon> Password
                 </h5>
 
-                <!-- Button -->
+
                 <div class="form-group text-align-center">
                   <div class="col-md-12">
-                    <button id="updatePassword" type="button" class="btn btn-primary"
-                      onclick="document.location.href='forgot-password'">Update Password</button>
+                    <button id="updatePassword" type="button" class="btn btn-primary" onclick="document.location.href='forgot-password'">Update Password</button>
                   </div>
                 </div>
 
                 <hr style="width: 88%;max-width: 100rem;">
-                
+
                 <h5>
                   <ion-icon name="person-outline"></ion-icon> Discord
                 </h5>
 
-                <!-- Button -->
+
                 <div class="form-group text-align-center">
                   <input id="link" type="text" name="discordToken" value="<%= user.user.discordLoginToken %>" style="display: none;">
                   <div class="col-md-12">
                     <img alt="discord" class="margin-bottom-2" style="width: 40px;" src="./static/images/discord-icon.svg">
-                  </br>
+                    </br>
                     <% if (user.user.discordConnected) { %>
-                      <h5 class="margin-bottom-1"><i style="color: #57C567" class="fas fa-check"></i> Discord account connected</h5>
-                      <button name="action" value="disconnectDiscord" class="btn btn-danger" type="submit">Disconnect your Discord account</button>
+                    <h5 class="margin-bottom-1"><i style="color: #57C567" class="fas fa-check"></i> Discord account connected</h5>
+                    <button name="action" value="disconnectDiscord" class="btn btn-danger" type="submit">Disconnect your Discord account</button>
                     <% } else { %>
-                      <h5 class="margin-bottom-1"><i style="color: #F8564E" class="fas fa-times"></i> Discord account not connected</h5>
-                        <a class="btn btn-primary" 
-                          href="https://discord.com/api/oauth2/authorize?client_id=898727969005121566&redirect_uri=<%=redirect%>&response_type=code&scope=identify&state=<%=referer%>">
-                          Connect your Discord account <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
+                    <h5 class="margin-bottom-1"><i style="color: #F8564E" class="fas fa-times"></i> Discord account not connected</h5>
+                    <a class="btn btn-primary" href="https://discord.com/api/oauth2/authorize?client_id=898727969005121566&redirect_uri=<%=redirect%>&response_type=code&scope=identify&state=<%=referer%>">
+                      Connect your Discord account <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
                     <% } %>
                   </div>
                 </div>
@@ -132,11 +121,10 @@
                   <ion-icon name="log-out-outline"></ion-icon> Sign out
                 </h5>
 
-                <!-- Button -->
+
                 <div class="form-group text-align-center">
                   <div class="col-md-12">
-                    <button id="sign-out" type="button" class="btn btn-primary"
-                      onclick="document.location.href='logout'">Sign out</button>
+                    <button id="sign-out" type="button" class="btn btn-primary" onclick="document.location.href='logout'">Sign out</button>
                   </div>
                 </div>
 
@@ -147,36 +135,34 @@
                 </h5>
 
                 <h6><strong>Warning:</strong> Deleting your account is irreversible.</h6>
-                <!-- Button -->
+
                 <div class="form-group text-align-center">
                   <div class="col-md-12">
-                    <button data-toggle="modal" type="button" href="#deleteAccountConfirmModal"
-                      class="btn btn-danger">Delete account</button>
+                    <button data-toggle="modal" type="button" href="#deleteAccountConfirmModal" class="btn btn-danger">Delete account</button>
                   </div>
                 </div>
               </fieldset>
             </form>
           </div>
-          <div class="tab-pane fade" id="pills-settings" role="tabpanel" aria-labelledby="pills-settings-tab">
+          <div class="tab-pane fade" id="pills-settings">
             <form class="form-horizontal" action="/updateSettings" method="post">
               <fieldset>
 
-                <!-- Form Name -->
+
                 <h5>Panic Button</h5>
 
-                <!-- checkbox input-->
+
                 <div class="form-group">
                   <label class="col-md-4 control-label" for="enableSound">Enable Sound:</label>
                   <div class="col-md-1">
-                    <input id="panic-button-check-sound" type="checkbox" name="enableSound" class="form-control"
-                      onclick="togglePanicBtnSound()">
+                    <input id="panic-button-check-sound" type="checkbox" name="enableSound" class="form-control" onclick="togglePanicBtnSound()">
                   </div>
                 </div>
 
-                <!-- Form Name -->
+
                 <h5>Alert Volume</h5>
 
-                <!-- checkbox input-->
+
                 <div class="form-group">
                   <label class="col-md-4 control-label" for="alertVolume">Adjust Sound Level:</label>
                   <div class="col-md-6">
@@ -200,8 +186,7 @@
           <fieldset>
 
             <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-              aria-hidden="true">X</button>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Delete Account</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
