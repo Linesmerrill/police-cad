@@ -2905,7 +2905,7 @@
         var audioElement=document.createElement('audio');
         audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
         audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
-        audioElement.play();
+        // audioElement.play();
       }
 
       socket.emit('panic_button_update', myReq)
