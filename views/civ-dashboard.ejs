@@ -1621,6 +1621,7 @@ $('#accountCallSign').on('keyup', function(e) {
 })
 
 $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
+$('#alert-volume-slider').val(dbUser.user.alertVolumeLevel)
 
 // prevents spaces from user input
 $("#civ-first-name").keydown(function(event) {
@@ -1765,6 +1766,21 @@ function loadVehData(index) {
    });
      })
    }
+
+   function adjustAlertVolumeSlider() {
+    var socket=io();
+    var volumeAmount = $('#alert-volume-slider').val()
+    var myObj = {
+      dbUser: dbUser,
+      volume: volumeAmount
+    }
+    socket.emit('update_alert_volume_slider', myObj)
+    socket.on('load_alert_volume_result', (res) => {
+      $('#successfully-updated-alert').removeClass('hide').addClass('show').delay(2000).fadeOut(1000, function () {
+        $(this).addClass('hide').removeClass('show');
+      });
+    })
+  }
 
 
 

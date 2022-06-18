@@ -3753,6 +3753,42 @@ module.exports = function (app, passport, server) {
       }
     });
 
+    socket.on('update_alert_volume_slider', (myObj) => {
+      //console.debug('update alert volume slider: ', myObj)
+      if (exists(myObj)) {
+      if (exists(myObj.dbUser)) {
+        if (exists(myObj.dbUser._id)) {
+          User.findById({
+            '_id': ObjectId(myObj.dbUser._id)
+          }, function (err, dbUser) {
+            if (err) return console.error(err);
+            if (!exists(dbUser) || dbUser == null) {
+              return console.error("cannot update_alert_volume_slider with null dbUser: ", dbUser)
+            }
+            if (!exists(dbUser.user) || dbUser.user == null) {
+              return console.error("cannot update_alert_volume_slider with null dbUser.user: ", dbUser)
+            }
+            User.findByIdAndUpdate({
+              '_id': ObjectId(myObj.dbUser._id)
+            }, {
+              'user.alertVolumeLevel': myObj.volume
+            }, function (err, dbUserUpdtd) {
+              if (err) return console.error(err);
+              return socket.emit('load_alert_volume_result', dbUserUpdtd)
+            })
+          });
+        } else {
+          return console.error("cannot update_alert_volume_slider with null user._id: ", myObj.dbUser)
+        }
+      } else {
+        return console.error("cannot update_alert_volume_slider with null user: ", myObj.dbUser)
+      }
+    }
+      else {
+        return console.error("cannot update_alert_volume_slider with null user: ", myObj.dbUser)
+      }
+    });
+
     socket.on('update_drivers_license_status', (user) => {
       // console.debug('update revoke drivers license status: ', user)
       if (user != null && user != undefined) {

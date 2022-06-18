@@ -26,6 +26,7 @@ var userSchema = mongoose.Schema({
         dispatchStatusSetBy: String,
         dispatchOnDuty: Boolean,
         panicButtonSound: Boolean,
+        alertVolumeLevel: String,
         createdAt: Date,
         updatedAt: Date
     }

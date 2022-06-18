@@ -2491,7 +2491,7 @@
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
-          audioElement.volume = dbUser.user.alertVolume || 0.1;
+          audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
           audioElement.play();
         }
         $('#panic-placeholder-socket').empty();
@@ -2528,7 +2528,7 @@
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
-          audioElement.volume = dbUser.user.alertVolume || 0.1;
+          audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
           audioElement.play();
         }
         $('#signal-100-banner').removeClass('hide').addClass('show')
@@ -2540,7 +2540,7 @@
         if ($('#panic-button-check-sound').prop('checked')) {
           var audioElement=document.createElement('audio');
           audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound_adj.mp3');
-          audioElement.volume = dbUser.user.alertVolume || 0.1;
+          audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
           audioElement.play();
         }
         $('#hold-traffic-banner').removeClass('hide').addClass('show')
@@ -2780,6 +2780,7 @@
     })
 
     $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
+    $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel)
 
     
     if (dbVehicles!=null) {
@@ -4057,6 +4058,21 @@
     })
   }
 
+  function adjustAlertVolumeSlider() {
+    var socket=io();
+    var volumeAmount = $('#alert-volume-slider').val()
+    var myObj = {
+      dbUser: dbUser,
+      volume: volumeAmount
+    }
+    socket.emit('update_alert_volume_slider', myObj)
+    socket.on('load_alert_volume_result', (res) => {
+      $('#successfully-updated-alert').removeClass('hide').addClass('show').delay(2000).fadeOut(1000, function () {
+        $(this).addClass('hide').removeClass('show');
+      });
+    })
+  }
+
   function signal100() {
     //if it is already showing we don't want to show it again (there can only be 1 active
     // signal 100 per community)
@@ -4071,7 +4087,7 @@
       if ($('#panic-button-check-sound').prop('checked')) {
         var audioElement=document.createElement('audio');
         audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
-        audioElement.volume = dbUser.user.alertVolume || 0.1;
+        audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
         audioElement.play();
       }
 
@@ -4092,7 +4108,7 @@
       if ($('#panic-button-check-sound').prop('checked')) {
         var audioElement=document.createElement('audio');
         audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound_adj.mp3');
-        audioElement.volume = dbUser.user.alertVolume || 0.1;
+        audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
         audioElement.play();
       }
 
