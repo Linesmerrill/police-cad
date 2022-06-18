@@ -1860,7 +1860,7 @@
 
               <!-- Multiple Checkboxes (inline) -->
               <div class="form-group">
-                <label class="col-md-4 control-label" for="fireEms-select-details">Assigned Fire/EMS:</label>
+                <label class="col-md-4 control-label" for="fireEms-select-details">Assigned Fire/EMS: <a data-toggle="modal" href="#assignedFireEmsHelpModal"><i class="fas fa-exclamation-circle"></i></a></label>
                 <div class="col-md-4">
                   <select id="fireEms-select-details" name="assignedFireEms" class="select-manipulatable" multiple>
                   </select>
@@ -2379,9 +2379,27 @@
             <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
               aria-hidden="true">X</button>
           </div>
-          <div class="modal-footer text-align-center">
+          <div class="modal-footer text-align-left">
             <p>If you see no records in the table, that means there are no active Vehicles created in your community.</p><p> Remind
               your Fire/EMS personnel to either create a new Vehicle or make sure it is not marked as'offline'.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="assignedFireEmsHelpModal" class="modal" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="modal-title" style="font-size: 18px;">Fire/EMS Assigned List Help</span>
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+          </div>
+          <div class="modal-footer text-align-left">
+            <p>If you see no records in the dropdown, that means there are no active Vehicles with Personnel assigned in your community.</p>
+            <p> Remind
+              your Fire/EMS personnel to either create a new Vehicle or make sure it is not marked as 'offline', and then assign that vehicle to a Personnel.
             </p>
           </div>
         </div>
