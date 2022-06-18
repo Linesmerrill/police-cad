@@ -2780,7 +2780,7 @@
     })
 
     $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
-    $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel)
+    $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 10)
 
     
     if (dbVehicles!=null) {

@@ -1621,7 +1621,7 @@ $('#accountCallSign').on('keyup', function(e) {
 })
 
 $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
-$('#alert-volume-slider').val(dbUser.user.alertVolumeLevel)
+$('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 10);
 
 // prevents spaces from user input
 $("#civ-first-name").keydown(function(event) {
