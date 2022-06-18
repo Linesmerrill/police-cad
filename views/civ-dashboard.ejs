@@ -1760,8 +1760,8 @@ function loadVehData(index) {
      socket.emit('update_panic_btn_sound', dbUser)
      socket.on('load_panic_btn_result', (res) => {
        $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
-       $('#successfully-updated-alert').removeClass('hide').delay(2000).fadeOut(1000, function() {
-     $(this).hide();
+       $('#successfully-updated-alert').removeClass('hide').addClass('show').delay(2000).fadeOut(1000, function () {
+        $(this).addClass('hide').removeClass('show');
    });
      })
    }
