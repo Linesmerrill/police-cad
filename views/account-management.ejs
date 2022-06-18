@@ -157,7 +157,7 @@
                   </div>
                 </div>
 
-                <h5>Alert Volume</h5>
+                <h5>Alert Volume <a data-toggle="modal" href="#alertVolumeHelpModal"><i class="fas fa-exclamation-circle"></i></a></h5>
 
                 <div class="form-group">
                   <label class="col-md-4 control-label" for="alertVolume">Adjust Sound Level:</label>
@@ -206,6 +206,25 @@
     </div>
   </div>
 </div>
+
+<div id="alertVolumeHelpModal" class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-title" style="font-size: 18px;">Alert Volume Help</span>
+        <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+          aria-hidden="true">X</button>
+      </div>
+      <div class="modal-footer text-align-left">
+        <p>If the volume does not seem to be updating, try refreshing your page or updating the value again.</p>
+        <p> Also make sure that you have 'Enable Sound' checked
+          or you will not hear any of the alerts. 👍
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script type="text/javascript">
   function copyText(element) {
     $(element).select();
