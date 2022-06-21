@@ -3850,6 +3850,27 @@
             description: null
           }
         }
+      } else if (classifiers.includes(0) || classifiers.includes(1) || classifiers.includes(2)) {
+        classifierSplit = classifiers.split(",")
+        for (i=0; i < classifierDb.length; i++) {
+          if (classifiers.includes(i)) {
+            items[classifierDb[i]]={
+                    value: classifierDb[i],
+                    group: "#",
+                    selected: true,
+                    disabled: false,
+                    description: null
+                  }
+          } else {
+            items[classifierDb[i]]={
+                    value: classifierDb[i],
+                    group: "#",
+                    selected: false,
+                    disabled: false,
+                    description: null
+                  }
+          }
+        }
       } else if (classifiers.length > 0) {
         classifierSplit = classifiers.split(",")
           if (classifierDb != undefined && classifierDb != null) {
