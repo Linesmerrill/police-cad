@@ -3238,6 +3238,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on('get_call_by_id', (callID) => {
+      // console.debug("get_call_by_id has been called", callID)
       var isValid = isValidObjectIdLength(callID, "invalid call ID length for socket: get_call_by_id")
       if (!isValid) {
         return

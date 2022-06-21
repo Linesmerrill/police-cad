@@ -1674,7 +1674,7 @@
 
               <!-- Text input-->
               <div class="form-group">
-                <label class="col-md-4 control-label" for="createdBy">Engines:</label>
+                <label class="col-md-4 control-label" for="createdBy">Fire/EMS:</label>
                 <div class="col-md-4">
                   <h5 id="engines"></h5>
                 </div>
@@ -2823,7 +2823,7 @@
     socket.emit('get_call_by_id', callID)
     socket.on('load_call_by_id_result', (res) => {
       //debug log
-      //console.log(res)
+      // console.log(res)
       var createdDate=new Date(res.call.createdAt)
       if (res.call.updatedAt===""||res.call.updatedAt===undefined||res.call.updatedAt==='undefined') {
         $('#updatedAtCallDetail').empty().text("N/A")
@@ -2835,31 +2835,36 @@
       $('#descriptionCallDetail').empty().text(res.call.shortDescription)
       $('#callNotesDetail').empty().text(res.call.callNotes)
       let selectedClassifiers = ""
-      if (res.call.classifier != null && res.call.classifier != undefined) {
+      if (res.call.classifier != undefined && res.call.classifier != null) {
         for (let i=0; i<res.call.classifier.length; i++) {
-          selectedClassifiers += res.call.classifier[i] + ", "
+          switch (res.call.classifier[i].toLowerCase()) {
+            case "police":
+              selectedClassifiers += `<span class="badge badge-primary">${res.call.classifier[i]}</span>  `    
+              break;
+            case "fire":
+              selectedClassifiers += `<span class="badge badge-danger">${res.call.classifier[i]}</span>  `
+              break;
+            case "ems":
+              selectedClassifiers += `<span class="badge badge-success">${res.call.classifier[i]}</span>  `
+              break;
+            default:
+              selectedClassifiers += `<span class="badge badge-secondary">${res.call.classifier[i]}</span>  `
+              break;
+          }
         }
-      }
-      $('#classifier').empty().text(selectedClassifiers)
-    })
-  }
-
-  function populateCallDetails(callID) {
-    var socket=io();
-    socket.emit('get_call_by_id', callID)
-    socket.on('load_call_by_id_result', (res) => {
-      //debug log
-      //console.log(res)
-      var createdDate=new Date(res.call.createdAt)
-      if (res.call.updatedAt===""||res.call.updatedAt===undefined||res.call.updatedAt==='undefined') {
-        $('#updatedAtCallDetail').empty().text("N/A")
       } else {
-        var updatedDate=new Date(res.call.updatedAt)
-        $('#updatedAtCallDetail').empty().text(updatedDate.toLocaleString())
+        selectedClassifiers += `<span class="badge badge-warn">N/A</span>  `
       }
-      $('#createdAtCallDetail').empty().text(createdDate.toLocaleString())
-      $('#descriptionCallDetail').empty().text(res.call.shortDescription)
-      $('#callNotesDetail').empty().text(res.call.callNotes)
+      $('#classifier').empty().html(selectedClassifiers)
+      if (res.call.assignedFireEms != undefined && res.call.assignedFireEms != null) {
+        if (res.call.assignedFireEms.length === 1) {
+          $('#engines').empty().html(`<span class="badge badge-danger">Dispatched (${res.call.assignedFireEms.length}) Resource</span>`)
+        } else {
+          $('#engines').empty().html(`<span class="badge badge-danger">Dispatched (${res.call.assignedFireEms.length}) Resources</span>`)
+        }
+      } else {
+        $('#engines').empty().html(`<span class="badge badge-warn">N/A</span>  `)
+      }
     })
   }
 
