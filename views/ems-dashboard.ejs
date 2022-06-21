@@ -1123,11 +1123,20 @@
             case "police":
               selectedClassifiers += `<span class="badge badge-primary">${res.call.classifier[i]}</span>  `    
               break;
+            case "0":
+              selectedClassifiers += `<span class="badge badge-primary">Police</span>  `    
+              break;
             case "fire":
               selectedClassifiers += `<span class="badge badge-danger">${res.call.classifier[i]}</span>  `
               break;
+            case "1":
+              selectedClassifiers += `<span class="badge badge-danger">Fire</span>  `
+              break;
             case "ems":
               selectedClassifiers += `<span class="badge badge-success">${res.call.classifier[i]}</span>  `
+              break;
+            case "2":
+              selectedClassifiers += `<span class="badge badge-success">EMS</span>  `
               break;
             default:
               selectedClassifiers += `<span class="badge badge-secondary">${res.call.classifier[i]}</span>  `
