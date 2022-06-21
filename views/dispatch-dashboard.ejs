@@ -2618,7 +2618,7 @@
           })
         }
         var assignedUnits=""
-        if (assignedOfficers != undefined && assignedOfficers != null) {
+        if (res.call.assignedOfficers != undefined && res.call.assignedOfficers != null) {
           if (res.call.assignedOfficers!=null&&res.call.assignedOfficers.length>0) {
             for (var j=0; j<res.call.assignedOfficers.length; j++) {
               if (dbCommUsers != undefined && dbCommUsers != null) {
@@ -2634,7 +2634,7 @@
             }
           }
         }
-        if (assignedFireEms != undefined && assignedFireEms != null) {
+        if (res.call.assignedFireEms != undefined && res.call.assignedFireEms != null) {
           if (res.call.assignedFireEms != null && res.call.assignedFireEms.length> 0) {
             for(let j=0; j<res.call.assignedFireEms.length; j++) {
               if (dbEmsVehicles != undefined && dbEmsVehicles != null) {
