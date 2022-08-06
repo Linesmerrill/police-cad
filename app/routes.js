@@ -56,7 +56,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get('/discord-bot', function (req, res) {
-    res.redirect('https://discord.com/api/oauth2/authorize?client_id=898727969005121566&permissions=8&scope=bot%20applications.commands');
+    res.redirect('https://discord.com/api/oauth2/authorize?client_id=860298681047056434&permissions=8&scope=bot%20applications.commands');
   });
 
   app.get('/release-log', function (req, res) {
