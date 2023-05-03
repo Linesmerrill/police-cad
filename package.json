@@ -36,7 +36,7 @@
     "passport-twitter": ">= 0.0.0",
     "randomstring": "^1.2.1",
     "rate-limit-mongo": "^2.2.0",
-    "socket.io": "^4.1.2",
+    "socket.io": "^4.6.1",
     "stream": "^0.0.2",
     "svg-captcha": "^1.4.0",
     "tail.select": "^0.5.15"
