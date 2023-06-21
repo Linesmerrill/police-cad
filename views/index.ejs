@@ -1,593 +1,1305 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <% include ad-header %>
-    <meta charset="utf-8" />
-    <title>Lines Police CAD - World Leading Free to Use Roleplay Service</title>
-    <meta
-      name="description"
-      content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay for police, civilians and much more!"
-    />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="generator" content="Codeply" />
-    <link
-      rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"
-    />
-    <script
-      src="https://kit.fontawesome.com/e048807041.js"
-      crossorigin="anonymous"
-    ></script>
-    <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="/static/css/animate.min.css" />
-    <link rel="stylesheet" href="/static/css/ionicons.min.css" />
-    <link rel="stylesheet" href="/static/css/styles.css" />
-    <link
-      rel="shortcut icon"
-      type="image/ico"
-      href="static/images/favicon.ico"
-    />
-    <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
-    <!-- To hide google translate header bar on each page -->
-    <style type="text/css">
-      iframe.goog-te-banner-frame {
-        display: none !important;
+    <style rc-util-key="@ant-design-icons">
+      .anticon {
+        display: inline-block;
+        color: inherit;
+        font-style: normal;
+        line-height: 0;
+        text-align: center;
+        text-transform: none;
+        vertical-align: -0.125em;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      .anticon > * {
+        line-height: 1;
+      }
+
+      .anticon svg {
+        display: inline-block;
+      }
+
+      .anticon::before {
+        display: none;
+      }
+
+      .anticon .anticon-icon {
+        display: block;
+      }
+
+      .anticon[tabindex] {
+        cursor: pointer;
+      }
+
+      .anticon-spin::before,
+      .anticon-spin {
+        display: inline-block;
+        -webkit-animation: loadingCircle 1s infinite linear;
+        animation: loadingCircle 1s infinite linear;
+      }
+
+      @-webkit-keyframes loadingCircle {
+        100% {
+          -webkit-transform: rotate(360deg);
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes loadingCircle {
+        100% {
+          -webkit-transform: rotate(360deg);
+          transform: rotate(360deg);
+        }
       }
     </style>
-    <style type="text/css">
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Ant Design Landing - Ant Design Landing Page 的模板与规范</title>
+    <meta
+      name="Description"
+      content="Ant Design Landing 平台拥有丰富的各类首页模板，下载模板代码包，即可快速使用，也可使用首页编辑器，快速搭建一个属于你的专属首页"
+    />
+
+    <link rel="stylesheet" type="text/css" href="/static/css/templates.css" />
+    <link
+      rel="icon"
+      href="/static/images/lpc_logo_new_2023_main_transparentv2_favicon.png"
+      type="image/x-icon"
+    />
+    <!--[if lt IE 10]>
+      <script src="https://as.alipayobjects.com/g/component/??console-polyfill/0.2.2/index.js,es5-shim/4.1.14/es5-shim.min.js,es5-shim/4.1.14/es5-sham.min.js,html5shiv/3.7.2/html5shiv.min.js,media-match/2.0.2/media.match.min.js"></script>
+    <![endif]-->
+    <script>
+      if (window.location.port) {
+        document.domain = document.domain;
+      }
+    </script>
+    <style>
+      html,
       body {
-        position: static !important;
-        top: 0px !important;
+        width: 100%;
+        min-height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      ul,
+      li {
+        list-style: none;
+      }
+
+      #ant-motion-load {
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        top: 0;
+        -webkit-filter: url("#goo");
+        filter: url("#goo");
+        opacity: 0;
+        transition: opacity 0.5s;
+      }
+
+      #ant-motion-load ul {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+      }
+
+      #ant-motion-load ul li {
+        width: 18px;
+        height: 18px;
+        border-radius: 100%;
+        background: #019bf0;
+        position: absolute;
+        transition: all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        left: 0;
+        top: 0;
+        transform: scale(1);
+      }
+
+      #react-content:empty + #ant-motion-load {
+        opacity: 1;
       }
     </style>
   </head>
-
-  <body>
-    <nav
-      id="topNav"
-      class="navbar navbar-default"
-      style="background-color: #001529; margin-bottom: 0"
-    >
-      <div class="container-fluid">
-        <div class="navbar-header">
-          <button
-            type="button"
-            class="navbar-toggle collapsed"
-            data-toggle="collapse"
-            data-target="#bs-navbar"
-          >
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a
-            class="navbar-brand page-scroll"
-            style="margin-left: 1.5em"
-            href="#first"
-          >
-            <img
-              style="
-                display: inline;
-                margin-top: -21px;
-                vertical-align: text-top;
-                width: 150px;
-                height: 60px;
-              "
-              src="/static/images/lpc_logo_new_2023_landscape_transparent.png"
-            />
-          </a>
-        </div>
-
-        <div class="navbar-collapse collapse" id="bs-navbar">
-          <% include index-navbar %>
-        </div>
-      </div>
-    </nav>
-
-    <header id="first">
-      <div
-        id="Banner0_1"
-        style="
-          width: 100%;
-          height: 100vh;
-          position: relative;
-          text-align: center;
-          border-color: #666;
-          background-image: url(https://zos.alipayobjects.com/rmsportal/gGlUMYGEIvjDOOw.jpg);
-          background-size: cover;
-          background-attachment: fixed;
-          background-position: center;
-        "
-      >
-        <div
-          id="banner0-text-wrapper"
-          style="
-            display: inline-block;
-            position: absolute;
-            top: 20%;
-            margin: auto;
-            left: 0;
-            right: 0;
-            font-size: 14px;
-            color: #fff;
-            width: 550px;
-          "
+  <body onload="load()">
+    <div id="react-content">
+      <div id="templates-wrapper" class="templates-wrapper">
+        <header
+          class="header0 home-page-wrapper"
+          id="Nav0_0"
+          style="opacity: 1"
         >
-          <div
-            id="banner0-title"
-            style="
-              width: 350px;
-              min-height: 60px;
-              margin: auto;
-              display: inline-block;
-              font-size: 40px;
-              position: relative;
-            "
-          >
-            <img
-              src="/static/images/lpc_logo_new_2023_main_transparentv2.png"
-              alt="img"
-              width="100%"
-            />
-          </div>
-          <div
-            id="banner0-content"
-            style="margin-bottom: 20px; word-wrap: break-word; min-height: 24px"
-          >
-            <span>
-              <p>
-                World's Leading Free-to-use service for Role-play communities
-              </p>
-            </span>
-          </div>
-          <a class="btn btn-primary btn-xl banner0-button">
-            <span>
-              <p>Get Started</p>
-            </span>
-          </a>
-          <span> <% include global-status %> </span>
-        </div>
-        <div
-          id="banner0-icon"
-          class="bounce"
-          style="
-            bottom: 20px;
-            font-size: 24px;
-            position: absolute;
-            left: 50%;
-            margin-left: -12px;
-            color: #fff;
-          "
-        >
-          <span class=""
-            ><i class="icon-lg ion-chevron-down" style="font-size: 25px"></i>
-          </span>
-        </div>
-      </div>
-    </header>
-    <!-- <section id="dashboards"> -->
-    <div class="home-page-wrapper content0-wrapper">
-      <div class="home-page content0">
-        <div class="title-wrapper" style="margin: 0 auto 48px">
-          <h1
-            name="title"
-            style="font-size: 32px; color: #fff; margin-bottom: 16px"
-          >
-            <span><p style="font-size: 32px">Dashboards</p></span>
-          </h1>
-        </div>
-        <div class="">
-          <div data-edit="Row" class="ant-row content0-block-wrapper">
+          <div class="home-page">
             <div
-              name="block0"
-              data-edit="Col"
-              class="ant-col content0-block ant-col-xs-24 ant-col-md-8"
+              class="header0-logo lj33lqeb18b-editor_css"
+              style="transform: translate(0px)"
+            >
+              <img
+                src="/static/images/lpc_logo_new_2023_landscape_transparent.png"
+                alt="img"
+                width="100%"
+              />
+            </div>
+            <div class="header0-menu" data-edit="Menu">
+              <ul
+                class="ant-menu ant-menu-dark ant-menu-root ant-menu-horizontal"
+                role="menu"
+              >
+                <li
+                  class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu"
+                  style="display: none"
+                  role="menuitem"
+                >
+                  <div
+                    class="ant-menu-submenu-title"
+                    role="button"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                  >
+                    <span>···</span><i class="ant-menu-submenu-arrow"></i>
+                  </div>
+                </li>
+                <li
+                  name="item0"
+                  class="ant-menu-item header0-item ant-menu-item-only-child"
+                  data-edit="Menu"
+                  role="menuitem"
+                >
+                  <a
+                    href="/"
+                    class="header0-item-block undefined"
+                    data-edit="linkA,textAndImage"
+                    ><div name="text">
+                      <span
+                        ><span><p>Home</p></span></span
+                      >
+                    </div></a
+                  >
+                </li>
+                <li
+                  class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu"
+                  style="display: none"
+                  role="menuitem"
+                >
+                  <div
+                    class="ant-menu-submenu-title"
+                    role="button"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                  >
+                    <span>···</span><i class="ant-menu-submenu-arrow"></i>
+                  </div>
+                </li>
+                <li
+                  name="item2"
+                  class="ant-menu-item header0-item ant-menu-item-only-child"
+                  data-edit="Menu"
+                  role="menuitem"
+                >
+                  <a
+                    href="/about-us"
+                    class="header0-item-block undefined"
+                    data-edit="linkA,textAndImage"
+                    ><div name="text">
+                      <span
+                        ><span><p>About</p></span></span
+                      >
+                    </div></a
+                  >
+                </li>
+                <li
+                  class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu"
+                  style="display: none"
+                  role="menuitem"
+                >
+                  <div
+                    class="ant-menu-submenu-title"
+                    role="button"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                  >
+                    <span>···</span><i class="ant-menu-submenu-arrow"></i>
+                  </div>
+                </li>
+                <li
+                  name="item~lig6g12fgs"
+                  class="ant-menu-item header0-item ant-menu-item-only-child"
+                  data-edit="Menu"
+                  role="menuitem"
+                >
+                  <a
+                    href="/contact-us"
+                    target=""
+                    class="header0-item-block undefined"
+                    data-edit="linkA,textAndImage"
+                    ><div name="text">
+                      <span
+                        ><span
+                          ><p>Contact Us<br /></p></span
+                      ></span></div
+                  ></a>
+                </li>
+                <li
+                  class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu"
+                  style="display: none"
+                  role="menuitem"
+                >
+                  <div
+                    class="ant-menu-submenu-title"
+                    role="button"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                  >
+                    <span>···</span><i class="ant-menu-submenu-arrow"></i>
+                  </div>
+                </li>
+                <li
+                  name="item~lj2yllcqn7"
+                  class="ant-menu-item header0-item ant-menu-item-only-child"
+                  data-edit="Menu"
+                  role="menuitem"
+                >
+                  <a
+                    href="https://www.linespolice-cad.com/discord-bot"
+                    target="_blank"
+                    class="header0-item-block undefined"
+                    data-edit="linkA,textAndImage"
+                    ><div name="text">
+                      <span
+                        ><span
+                          ><p>Discord Bot<br /></p></span
+                      ></span></div
+                  ></a>
+                </li>
+                <li
+                  class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu"
+                  style="display: none"
+                  role="menuitem"
+                >
+                  <div
+                    class="ant-menu-submenu-title"
+                    role="button"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                  >
+                    <span>···</span><i class="ant-menu-submenu-arrow"></i>
+                  </div>
+                </li>
+                <li
+                  name="item~lj3c2crocd"
+                  class="ant-menu-item header0-item ant-menu-item-only-child"
+                  data-edit="Menu"
+                  role="menuitem"
+                >
+                  <a
+                    href="/login"
+                    target=""
+                    class="header0-item-block undefined"
+                    data-edit="linkA,textAndImage"
+                    ><div name="text">
+                      <span
+                        ><span><p>Login</p></span></span
+                      >
+                    </div></a
+                  >
+                </li>
+                <li
+                  class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu"
+                  style="visibility: hidden; position: absolute; display: none"
+                  role="menuitem"
+                >
+                  <div
+                    class="ant-menu-submenu-title"
+                    role="button"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                  >
+                    <span>···</span><i class="ant-menu-submenu-arrow"></i>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </header>
+        <div id="Banner0_1" class="banner0 likygdl71t-editor_css">
+          <div class="banner0-text-wrapper lig76kd43qs-editor_css">
+            <div
+              class="banner0-title lig76enk3kh-editor_css"
+              data-edit="text,image"
               style="opacity: 1; transform: translate(0px)"
             >
-              <div class="content0-block-item" data-edit="childWrapper">
-                <div name="image" class="content0-block-icon">
-                  <img
-                    src="https://zos.alipayobjects.com/rmsportal/WBnVOjtIlGWbzyQivuyq.png"
-                    alt="img"
-                  />
-                </div>
-                <h1 name="title" class="content0-block-title">
-                  <span
-                    ><span><p>Civilian</p></span></span
-                  >
-                </h1>
-                <div name="content">
-                  <span
+              <img
+                src="/static/images/lpc_logo_new_2023_main_transparentv2.png"
+                alt="img"
+                width="100%"
+              />
+            </div>
+            <div
+              class="banner0-content lig7ognf8u-editor_css"
+              style="opacity: 1; transform: translate(0px)"
+            >
+              <span
+                ><p>
+                  World's Leading Free-to-use service for Role-play communities
+                </p></span
+              >
+            </div>
+            <a
+              href="/login-civ"
+              data-edit="link,text"
+              class="ant-btn banner0-button ligdeo3ow6-editor_css ant-btn-background-ghost"
+              style="opacity: 1; transform: translate(0px)"
+              ><span
+                ><span
+                  ><span
                     ><span
                       ><span
-                        ><p>
-                          Quickly and easily create and manage all your
-                          civilians, vehicles, firearms and more<br /></p></span></span
-                  ></span>
-                </div>
-              </div>
-            </div>
-            <div
-              name="block1"
-              data-edit="Col"
-              class="ant-col content0-block ant-col-xs-24 ant-col-md-8"
-              style="opacity: 1; transform: translate(0px)"
-            >
-              <div class="content0-block-item" data-edit="childWrapper">
-                <div name="image" class="content0-block-icon">
-                  <img
-                    src="https://zos.alipayobjects.com/rmsportal/WBnVOjtIlGWbzyQivuyq.png"
-                    alt="img"
-                  />
-                </div>
-                <h1 name="title" class="content0-block-title">
-                  <span
-                    ><span><p>Police</p></span></span
-                  >
-                </h1>
-                <div name="content">
-                  <span
-                    ><span
-                      ><p>
-                        Create citations, issue warrants, and mark yourself
-                        '10-8' with our snappy police controls<br /></p></span
-                  ></span>
-                </div>
-              </div>
-            </div>
-            <div
-              name="block2"
-              data-edit="Col"
-              class="ant-col content0-block ant-col-xs-24 ant-col-md-8"
-              style="opacity: 1; transform: translate(0px)"
-            >
-              <div class="content0-block-item" data-edit="childWrapper">
-                <div name="image" class="content0-block-icon">
-                  <img
-                    src="https://zos.alipayobjects.com/rmsportal/WBnVOjtIlGWbzyQivuyq.png"
-                    alt="img"
-                  />
-                </div>
-                <h1 name="title" class="content0-block-title">
-                  <span
-                    ><span><p>Dispatch</p></span></span
-                  >
-                </h1>
-                <div name="content">
-                  <span
-                    ><span
-                      ><p>
-                        Coordinate all the officers in your community. Set a
-                        status, assign officers to calls and much more.<br /></p></span
-                  ></span>
-                </div>
-              </div>
-            </div>
-            <div
-              name="block~ligdkrl2f56"
-              data-edit="Col"
-              class="ant-col content0-block ant-col-xs-24 ant-col-md-8"
-              style="opacity: 1; transform: translate(0px)"
-            >
-              <div class="content0-block-item" data-edit="childWrapper">
-                <div name="image" class="content0-block-icon">
-                  <img
-                    src="https://zos.alipayobjects.com/rmsportal/WBnVOjtIlGWbzyQivuyq.png"
-                    alt="img"
-                  />
-                </div>
-                <h1 name="title" class="content0-block-title">
-                  <span
-                    ><span
-                      ><p>Fire &amp; EMS<br /></p></span
-                  ></span>
-                </h1>
-                <div name="content">
-                  <span
-                    ><span
-                      ><p>
-                        Create a fire or EMS personnel to aid civilians. Access
-                        medical history and create medical reports
-                      </p></span
-                    ></span
-                  >
-                </div>
-              </div>
-            </div>
-            <div
-              name="block~ligdktt31z"
-              data-edit="Col"
-              class="ant-col content0-block ant-col-xs-24 ant-col-md-8"
-              style="opacity: 1; transform: translate(0px)"
-            >
-              <div class="content0-block-item" data-edit="childWrapper">
-                <div name="image" class="content0-block-icon">
-                  <img
-                    src="https://zos.alipayobjects.com/rmsportal/WBnVOjtIlGWbzyQivuyq.png"
-                    alt="img"
-                  />
-                </div>
-                <h1 name="title" class="content0-block-title">
-                  <span
-                    ><span><p>Community</p></span></span
-                  >
-                </h1>
-                <div name="content">
-                  <span
-                    ><span
-                      ><p>
-                        Create your own community exclusively for private use of
-                        all your own data, civilians and much more
-                      </p></span
-                    ></span
-                  >
-                </div>
-              </div>
-            </div>
-            <div
-              name="block~ligdkwtkuw6"
-              data-edit="Col"
-              class="ant-col content0-block ant-col-xs-24 ant-col-md-8"
-              style="opacity: 1; transform: translate(0px)"
-            >
-              <div class="content0-block-item" data-edit="childWrapper">
-                <div name="image" class="content0-block-icon">
-                  <img
-                    src="https://zos.alipayobjects.com/rmsportal/WBnVOjtIlGWbzyQivuyq.png"
-                    alt="img"
-                  />
-                </div>
-                <h1 name="title" class="content0-block-title">
-                  <span
-                    ><span
-                      ><p>Create your own<br /></p></span
-                  ></span>
-                </h1>
-                <div name="content">
-                  <span
-                    ><span
-                      ><span
-                        ><p>
-                          <b>Coming soon</b> we will have the ability to create
-                          your own department, aside from the default we give
-                          you.
-                        </p></span
-                      ></span
-                    ></span
-                  >
-                </div>
-              </div>
-            </div>
+                        ><span
+                          ><span
+                            ><span
+                              ><span
+                                ><p>
+                                  Get Started<br /></p></span></span></span></span></span></span></span></span></span
+            ></a>
           </div>
-        </div>
-      </div>
-    </div>
-    <!-- </section> -->
-    <section id="police-dashboard" class="white-dashboard">
-      <div class="container">
-        <div id="about" class="section wide img">
-          <div class="col-lg-8 col-lg-offset-2 text-center">
-            <h2 class="margin-top-0 wow fadeIn color-black">
-              Police Dashboard
-            </h2>
-            <hr class="primary color-black opacity-1" />
-            <p class="wow fadeIn color-black">
-              Create citations, issue warrants and mark yourself 10-8 with our
-              snappy police controls.
-            </p>
-          </div>
-          <div class="wrapper">
-            <img
-              src="/static/images/police_dashboard.png"
-              srcset="
-                /static/images/police_dashboard-500.png   500w,
-                /static/images/police_dashboard-800.png   800w,
-                /static/images/police_dashboard-1080.png 1080w,
-                /static/images/police_dashboard-1600.png 1600w,
-                /static/images/police_dashboard-1903.png 1903w
-              "
-              sizes="90vw"
-              alt=""
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-    <section id="fire-ems-dashboard">
-      <div class="container">
-        <div id="about" class="section wide img">
-          <div class="col-lg-8 col-lg-offset-2 text-center">
-            <h2 class="margin-top-0 wow fadeIn">Fire/EMS Dashboard</h2>
-            <hr class="primary" />
-            <p class="wow fadeIn">
-              Create a fire or EMS persona to aid civilians, access medical
-              history and create medical reports.
-            </p>
-          </div>
-          <div class="wrapper">
-            <img
-              src="/static/images/fire_ems_dashboard.png"
-              srcset="
-                /static/images/fire_ems_dashboard-500.png   500w,
-                /static/images/fire_ems_dashboard-800.png   800w,
-                /static/images/fire_ems_dashboard-1080.png 1080w,
-                /static/images/fire_ems_dashboard-1600.png 1600w,
-                /static/images/fire_ems_dashboard-1903.png 1903w
-              "
-              sizes="90vw"
-              alt=""
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-    <section id="dispatch-dashboard" class="white-dashboard">
-      <div class="container">
-        <div id="about" class="section wide img">
-          <div class="col-lg-8 col-lg-offset-2 text-center">
-            <h2 class="margin-top-0 wow fadeIn color-black">
-              Dispatch Dashboard
-            </h2>
-            <hr class="primary color-black opacity-1" />
-            <p class="wow fadeIn color-black">
-              Coordinate all the officers in your community: Set a status,
-              assign officers to calls and create/view BOLOs.
-            </p>
-          </div>
-          <div class="wrapper">
-            <img
-              src="/static/images/dispatch_dashboard.png"
-              srcset="
-                /static/images/dispatch_dashboard-500.png   500w,
-                /static/images/dispatch_dashboard-800.png   800w,
-                /static/images/dispatch_dashboard-1080.png 1080w,
-                /static/images/dispatch_dashboard-1600.png 1600w,
-                /static/images/dispatch_dashboard-1903.png 1903w
-              "
-              sizes="90vw"
-              alt=""
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-    <section id="last">
-      <div class="container">
-        <div class="row">
-          <div class="col-lg-8 col-lg-offset-2 text-center">
-            <h2 class="margin-top-0 wow fadeIn">Get in Touch</h2>
-            <hr class="primary" />
-            <p>
-              We love feedback. Visit our Contact Us page to see how to get in
-              touch with us.
-            </p>
-          </div>
-          <div class="col-lg-10 col-lg-offset-1 text-center">
-            <div class="col-md-4 col-md-offset-4">
-              <a href="/contact-us">
-                <button type="button" class="btn btn-primary btn-block btn-lg">
-                  Contact Us <i class="ion-android-arrow-forward"></i>
-                </button>
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-    <div class="google-ad"></div>
-    <% include footer-index %>
-    <div
-      id="galleryModal"
-      class="modal fade"
-      tabindex="-1"
-      role="dialog"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-body">
-            <img src="" id="galleryImage" class="img-responsive" />
-            <p>
-              <br />
-              <button
-                class="btn btn-primary btn-lg center-block"
-                data-dismiss="modal"
+          <div class="banner0-icon bounce">
+            <span role="img" aria-label="down" class="anticon anticon-down"
+              ><svg
+                viewBox="64 64 896 896"
+                focusable="false"
+                data-icon="down"
+                width="1em"
+                height="1em"
+                fill="currentColor"
                 aria-hidden="true"
               >
-                Close <i class="ion-android-close"></i>
-              </button>
-            </p>
+                <path
+                  d="M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z"
+                ></path>
+              </svg>
+            </span>
           </div>
         </div>
-      </div>
-    </div>
-    <div
-      id="aboutModal"
-      class="modal fade"
-      tabindex="-1"
-      role="dialog"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-body">
-            <h2 class="text-center">Lines Police CAD</h2>
-            <h5 class="text-center">CAD (Computer Aided Dispatch)</h5>
-            <p class="text-justify">
-              Developed with users in mind. Easy to log in and create an
-              account. From there you can take the freedom of playing with a
-              certain persona in GTA V. Buy cars, apartments, make a living
-              online. Or join the law, become a police officer and patrol the
-              streets. You decide your own fate.
-            </p>
-
-            <br />
-            <button
-              class="btn btn-primary btn-lg center-block"
-              data-dismiss="modal"
-              aria-hidden="true"
+        <div id="Content0_0" class="home-page-wrapper content0-wrapper">
+          <div class="home-page content0">
+            <div class="title-wrapper" data-edit="titleWrapper">
+              <h1 name="title">
+                <span
+                  ><span><p>Dashboards</p></span></span
+                >
+              </h1>
+            </div>
+            <div class="">
+              <div data-edit="Row" class="ant-row content0-block-wrapper">
+                <div
+                  name="block0"
+                  data-edit="Col"
+                  class="ant-col content0-block ant-col-xs-24 ant-col-md-8 dashboards-section hide"
+                >
+                  <div class="content0-block-item" data-edit="childWrapper">
+                    <div name="image" class="content0-block-icon">
+                      <img
+                        src="/static/images/civilian-logo-512.png"
+                        alt="img"
+                      />
+                    </div>
+                    <h1 name="title" class="content0-block-title">
+                      <span
+                        ><span><p>Civilian</p></span></span
+                      >
+                    </h1>
+                    <div name="content">
+                      <span
+                        ><span
+                          ><span
+                            ><p>
+                              Quickly and easily create and manage all your
+                              civilians, vehicles, firearms and more<br /></p></span></span
+                      ></span>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  name="block1"
+                  data-edit="Col"
+                  class="ant-col content0-block ant-col-xs-24 ant-col-md-8 dashboards-section hide"
+                >
+                  <div class="content0-block-item" data-edit="childWrapper">
+                    <div name="image" class="content0-block-icon">
+                      <img src="/static/images/police-logo-512.png" alt="img" />
+                    </div>
+                    <h1 name="title" class="content0-block-title">
+                      <span
+                        ><span><p>Police</p></span></span
+                      >
+                    </h1>
+                    <div name="content">
+                      <span
+                        ><span
+                          ><p>
+                            Create citations, issue warrants, and mark yourself
+                            '10-8' with our snappy police controls<br /></p></span
+                      ></span>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  name="block2"
+                  data-edit="Col"
+                  class="ant-col content0-block ant-col-xs-24 ant-col-md-8 dashboards-section hide"
+                >
+                  <div class="content0-block-item" data-edit="childWrapper">
+                    <div name="image" class="content0-block-icon">
+                      <img
+                        src="/static/images/dispatch-logo-512.png"
+                        alt="img"
+                      />
+                    </div>
+                    <h1 name="title" class="content0-block-title">
+                      <span
+                        ><span><p>Dispatch</p></span></span
+                      >
+                    </h1>
+                    <div name="content">
+                      <span
+                        ><span
+                          ><p>
+                            Coordinate all the officers in your community. Set a
+                            status, assign officers to calls and much more.<br /></p></span
+                      ></span>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  name="block~ligdkrl2f56"
+                  data-edit="Col"
+                  class="ant-col content0-block ant-col-xs-24 ant-col-md-8 dashboards-section hide"
+                >
+                  <div class="content0-block-item" data-edit="childWrapper">
+                    <div name="image" class="content0-block-icon">
+                      <img src="/static/images/ems-logo-512.png" alt="img" />
+                    </div>
+                    <h1 name="title" class="content0-block-title">
+                      <span
+                        ><span
+                          ><p>Fire &amp; EMS<br /></p></span
+                      ></span>
+                    </h1>
+                    <div name="content">
+                      <span
+                        ><span
+                          ><p>
+                            Create a fire or EMS personnel to aid civilians.
+                            Access medical history and create medical reports
+                          </p></span
+                        ></span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <div
+                  name="block~ligdktt31z"
+                  data-edit="Col"
+                  class="ant-col content0-block ant-col-xs-24 ant-col-md-8 dashboards-section hide"
+                >
+                  <div class="content0-block-item" data-edit="childWrapper">
+                    <div name="image" class="content0-block-icon">
+                      <img
+                        src="/static/images/community-logo-512.png"
+                        alt="img"
+                      />
+                    </div>
+                    <h1 name="title" class="content0-block-title">
+                      <span
+                        ><span><p>Community</p></span></span
+                      >
+                    </h1>
+                    <div name="content">
+                      <span
+                        ><span
+                          ><p>
+                            Create your own community exclusively for private
+                            use of all your own data, civilians and much more
+                          </p></span
+                        ></span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <div
+                  name="block~ligdkwtkuw6"
+                  data-edit="Col"
+                  class="ant-col content0-block ant-col-xs-24 ant-col-md-8 dashboards-section hide"
+                >
+                  <div class="content0-block-item" data-edit="childWrapper">
+                    <div name="image" class="content0-block-icon">
+                      <img
+                        src="/static/images/create-your-own-logo-512.png"
+                        alt="img"
+                      />
+                    </div>
+                    <h1 name="title" class="content0-block-title">
+                      <span
+                        ><span
+                          ><p>Create your own<br /></p></span
+                      ></span>
+                    </h1>
+                    <div name="content">
+                      <span
+                        ><span
+                          ><span
+                            ><p>
+                              <b>Coming soon</b> we will have the ability to
+                              create your own department, aside from the default
+                              we give you.
+                            </p></span
+                          ></span
+                        ></span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          id="Feature6_0"
+          class="home-page-wrapper feature6-wrapper"
+          data-comp='carousel-switch={ "current": 1, "total": 1 ,"childRoute": ["Carousel"] }'
+          style="
+            background-image: url(https://zos.alipayobjects.com/rmsportal/gGlUMYGEIvjDOOw.jpg);
+          "
+        >
+          <div data-edit="Carousel">
+            <div class="home-page feature6">
+              <div class="feature6-content-wrapper">
+                <div
+                  class="feature6-title-wrapper"
+                  style="opacity: 1; transform: translate(0px)"
+                >
+                  <div class="feature6-title">
+                    <div
+                      class="feature6-title-text active dashboards-section hide"
+                    >
+                      <span
+                        ><span
+                          ><p style="color: #fff">Site Metrics<br /></p></span
+                      ></span>
+                    </div>
+                    <div
+                      class="feature6-title-bar-wrapper"
+                      style="width: 100%; left: 0%"
+                    >
+                      <em class="feature6-title-bar"></em>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="ant-carousel"
+                  style="opacity: 1; transform: translate(0px)"
+                >
+                  <div class="slick-slider feature6-content slick-initialized">
+                    <div class="slick-list">
+                      <div
+                        class="slick-track"
+                        style="
+                          width: 1152px;
+                          opacity: 1;
+                          transform: translate3d(0px, 0px, 0px);
+                        "
+                      >
+                        <div
+                          data-index="0"
+                          class="slick-slide slick-active slick-current dashboards-section hide"
+                          tabindex="-1"
+                          aria-hidden="false"
+                          style="outline: none; width: 1152px"
+                        >
+                          <div>
+                            <div
+                              tabindex="-1"
+                              style="width: 100%; display: inline-block"
+                            >
+                              <div
+                                name="block0"
+                                data-edit="Row"
+                                class="ant-row feature6-item"
+                              >
+                                <div
+                                  name="child0"
+                                  data-edit="Col"
+                                  class="ant-col feature6-number-wrapper ant-col-xs-24 ant-col-md-8"
+                                  style="opacity: 1; transform: translate(0px)"
+                                >
+                                  <span
+                                    id="0101"
+                                    class="feature6-number"
+                                    style="color: #fff"
+                                    >7,500</span
+                                  ><span class="feature6-unit"
+                                    ><span
+                                      ><span><br /></span></span
+                                  ></span>
+                                  <p class="feature6-text">
+                                    <span
+                                      ><span
+                                        ><p style="color: #fff">
+                                          New Users per Week<br /></p></span
+                                    ></span>
+                                  </p>
+                                </div>
+                                <div
+                                  name="child1"
+                                  data-edit="Col"
+                                  class="ant-col feature6-number-wrapper ant-col-xs-24 ant-col-md-8"
+                                  style="opacity: 1; transform: translate(0px)"
+                                >
+                                  <span
+                                    id="0102"
+                                    class="feature6-number"
+                                    style="color: #fff"
+                                    >47,401,426</span
+                                  ><span class="feature6-unit"
+                                    ><span
+                                      ><span><br /></span></span
+                                  ></span>
+                                  <p class="feature6-text">
+                                    <span
+                                      ><span
+                                        ><p style="color: #fff">
+                                          Pageviews
+                                        </p></span
+                                      ></span
+                                    >
+                                  </p>
+                                </div>
+                                <div
+                                  name="child2"
+                                  data-edit="Col"
+                                  class="ant-col feature6-number-wrapper ant-col-xs-24 ant-col-md-8"
+                                  style="opacity: 1; transform: translate(0px)"
+                                >
+                                  <span
+                                    id="0103"
+                                    class="feature6-number"
+                                    style="color: #fff"
+                                    >87</span
+                                  ><span class="feature6-unit"
+                                    ><span
+                                      ><span><br /></span></span
+                                  ></span>
+                                  <p class="feature6-text">
+                                    <span
+                                      ><span
+                                        ><p style="color: #fff">
+                                          Different Countries<br /></p></span
+                                    ></span>
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="Content3_0" class="home-page-wrapper content3-wrapper">
+          <div class="home-page content3">
+            <div class="title-wrapper" data-edit="titleWrapper">
+              <h1 name="title" class="title-h1 dashboards-section hide">
+                <span
+                  ><span
+                    ><p>Suggestions or Feedback<br /></p></span
+                ></span>
+              </h1>
+              <div name="content" class="title-content dashboards-section hide">
+                <span
+                  ><span
+                    ><span
+                      ><p>
+                        We love feedback. Click on any of the buttons to get the
+                        conversation started<br /></p></span></span
+                ></span>
+              </div>
+            </div>
+            <div>
+              <div>
+                <div
+                  data-edit="Row"
+                  class="ant-row content3-block-wrapper"
+                  style="opacity: 1; transform: translate(0px)"
+                >
+                  <div
+                    name="block0"
+                    data-edit="Col"
+                    class="ant-col content3-block ant-col-xs-24 ant-col-md-8"
+                    style="opacity: 1"
+                  >
+                    <div
+                      class="content3-icon"
+                      style="transform: translate(0px); opacity: 1"
+                    >
+                      <img
+                        src="/static/images/email-logo-512.png"
+                        alt="img"
+                        width="100%"
+                      />
+                    </div>
+                    <div class="content3-text">
+                      <h2
+                        class="content3-title"
+                        style="opacity: 1; transform: translate(0px)"
+                      >
+                        <span
+                          ><span
+                            ><span
+                              ><p>
+                                <a
+                                  href="mailto:support@linespolice-cad.com"
+                                  target="_blank"
+                                  >Email</a
+                                >
+                              </p></span
+                            ></span
+                          ></span
+                        >
+                      </h2>
+                      <div
+                        class="content3-content"
+                        style="opacity: 1; transform: translate(0px)"
+                      >
+                        <span
+                          ><span
+                            ><span><br /></span></span
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    name="block1"
+                    data-edit="Col"
+                    class="ant-col content3-block ant-col-xs-24 ant-col-md-8"
+                    style="opacity: 1"
+                  >
+                    <div
+                      class="content3-icon"
+                      style="transform: translate(0px); opacity: 1"
+                    >
+                      <img
+                        src="/static/images/report-bug-logo-512.png"
+                        alt="img"
+                        width="100%"
+                      />
+                    </div>
+                    <div class="content3-text">
+                      <h2
+                        class="content3-title"
+                        style="opacity: 1; transform: translate(0px)"
+                      >
+                        <span
+                          ><span
+                            ><span
+                              ><p>
+                                <a
+                                  href="https://github.com/Linesmerrill/police-cad/issues/new?assignees=&amp;amp;labels=&amp;amp;template=bug_report.md&amp;amp;title="
+                                  target="_blank"
+                                  >Report a Bug</a
+                                ><br /></p></span></span
+                        ></span>
+                      </h2>
+                      <div
+                        class="content3-content"
+                        style="opacity: 1; transform: translate(0px)"
+                      >
+                        <span
+                          ><span><br /></span
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    name="block2"
+                    data-edit="Col"
+                    class="ant-col content3-block ant-col-xs-24 ant-col-md-8"
+                    style="opacity: 1"
+                  >
+                    <div
+                      class="content3-icon"
+                      style="transform: translate(0px); opacity: 1"
+                    >
+                      <img
+                        src="/static/images/request-feature-logo-512.png"
+                        alt="img"
+                        width="100%"
+                      />
+                    </div>
+                    <div class="content3-text">
+                      <h2
+                        class="content3-title"
+                        style="opacity: 1; transform: translate(0px)"
+                      >
+                        <span
+                          ><span
+                            ><span
+                              ><span
+                                ><p>
+                                  <a
+                                    href="https://github.com/Linesmerrill/police-cad/issues/new?assignees=&amp;labels=&amp;template=feature_request.md&amp;title="
+                                    target="_blank"
+                                    >Request a Feature</a
+                                  ><br /></p></span></span></span
+                        ></span>
+                      </h2>
+                      <div
+                        class="content3-content"
+                        style="opacity: 1; transform: translate(0px)"
+                      >
+                        <span
+                          ><span><br /></span
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    name="block3"
+                    data-edit="Col"
+                    class="ant-col content3-block clear-both ant-col-xs-24 ant-col-md-8"
+                    style="opacity: 1"
+                  >
+                    <div
+                      class="content3-icon"
+                      style="transform: translate(0px); opacity: 1"
+                    >
+                      <img
+                        src="/static/images/discord-logo-512.png"
+                        alt="img"
+                        width="100%"
+                      />
+                    </div>
+                    <div class="content3-text">
+                      <h2
+                        class="content3-title"
+                        style="opacity: 1; transform: translate(0px)"
+                      >
+                        <span
+                          ><span
+                            ><span
+                              ><p>
+                                <a
+                                  href="https://discord.gg/3ECFhqe"
+                                  target="_blank"
+                                  >Discord</a
+                                >
+                              </p></span
+                            ></span
+                          ></span
+                        >
+                      </h2>
+                      <div
+                        class="content3-content"
+                        style="opacity: 1; transform: translate(0px)"
+                      >
+                        <span
+                          ><span><br /></span
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    name="block4"
+                    data-edit="Col"
+                    class="ant-col content3-block ant-col-xs-24 ant-col-md-8"
+                    style="opacity: 1"
+                  >
+                    <div
+                      class="content3-icon"
+                      style="transform: translate(0px); opacity: 1"
+                    >
+                      <img
+                        src="/static/images/twitter-logo-512.png"
+                        alt="img"
+                        width="100%"
+                      />
+                    </div>
+                    <div class="content3-text">
+                      <h2
+                        class="content3-title"
+                        style="opacity: 1; transform: translate(0px)"
+                      >
+                        <span
+                          ><span
+                            ><span
+                              ><p>
+                                <a
+                                  href="https://twitter.com/LinesPoliceCAD"
+                                  target="_blank"
+                                  >Twitter</a
+                                >
+                              </p></span
+                            ></span
+                          ></span
+                        >
+                      </h2>
+                      <div
+                        class="content3-content"
+                        style="opacity: 1; transform: translate(0px)"
+                      >
+                        <span
+                          ><span><br /></span
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    name="block5"
+                    data-edit="Col"
+                    class="ant-col content3-block ant-col-xs-24 ant-col-md-8"
+                    style="opacity: 1"
+                  >
+                    <div
+                      class="content3-icon"
+                      style="transform: translate(0px); opacity: 1"
+                    >
+                      <img
+                        src="/static/images/facebook-logo-512.png"
+                        alt="img"
+                        width="100%"
+                      />
+                    </div>
+                    <div class="content3-text">
+                      <h2
+                        class="content3-title"
+                        style="opacity: 1; transform: translate(0px)"
+                      >
+                        <span
+                          ><span
+                            ><span
+                              ><p>
+                                <a
+                                  href="https://www.facebook.com/linespoliceserver/"
+                                  target="_blank"
+                                  >Facebook</a
+                                >
+                              </p></span
+                            ></span
+                          ></span
+                        >
+                      </h2>
+                      <div
+                        class="content3-content"
+                        style="opacity: 1; transform: translate(0px)"
+                      >
+                        <span
+                          ><span><br /></span
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="Footer1_0" class="home-page-wrapper footer1-wrapper">
+          <div class="footer1">
+            <div data-edit="Row" class="ant-row home-page">
+              <div
+                name="block0"
+                data-edit="Col"
+                class="ant-col block ant-col-xs-24 ant-col-md-6"
+                style="opacity: 1; transform: translate(0px)"
+              >
+                <h2 class="logo" data-edit="image,text">
+                  <img
+                    src="/static/images/lpc_logo_new_2023_landscape_transparent.png"
+                    alt="img"
+                    width="100%"
+                  />
+                </h2>
+                <div class="slogan">
+                  <div name="content0">
+                    <span
+                      ><span
+                        ><span
+                          ><span
+                            ><p>
+                              World's Leading Free-to-use role-play
+                              facilitator<br /></p></span></span></span
+                    ></span>
+                  </div>
+                </div>
+              </div>
+              <div
+                name="block1"
+                data-edit="Col"
+                class="ant-col block ant-col-xs-24 ant-col-md-6"
+                style="opacity: 1; transform: translate(0px)"
+              >
+                <h2 data-edit="image,text">
+                  <span
+                    ><span><p>Information</p></span></span
+                  >
+                </h2>
+                <div>
+                  <a
+                    name="link0"
+                    href="https://github.com/Linesmerrill/police-cad/releases"
+                    target=""
+                    data-edit="linkA,text"
+                    ><span
+                      ><span
+                        ><p>Release Log<br /></p></span></span></a
+                  ><a
+                    name="link1"
+                    href="https://linesmerrill.github.io/MerrillLines/"
+                    data-edit="linkA,text"
+                    ><span
+                      ><span><p>Developers</p></span>
+                    </span>
+                  </a>
+                  <a
+                    name="link2"
+                    href="https://www.patreon.com/linespolicecad"
+                    data-edit="linkA,text"
+                    ><span
+                      ><span><p>Patreon</p></span></span
+                    ></a
+                  ><a
+                    name="link3"
+                    href="https://github.com/linesmerrill/police-cad"
+                    data-edit="linkA,text"
+                    ><span
+                      ><span><p>GitHub</p></span></span
+                    ></a
+                  >
+                </div>
+              </div>
+              <div
+                name="block2"
+                data-edit="Col"
+                class="ant-col block ant-col-xs-24 ant-col-md-6"
+                style="opacity: 1; transform: translate(0px)"
+              >
+                <h2 data-edit="image,text">
+                  <span
+                    ><span><p>About</p></span></span
+                  >
+                </h2>
+                <div>
+                  <a href="/faq" name="link0" data-edit="linkA,text"
+                    ><span>FAQ</span></a
+                  ><a href="/contact-us" name="link1" data-edit="linkA,text"
+                    ><span
+                      ><span
+                        ><p>Contact Us<br /></p></span></span
+                  ></a>
+                  <a
+                    href="/terms-and-conditions"
+                    name="link1"
+                    data-edit="linkA,text"
+                    ><span
+                      ><span
+                        ><p>Terms and Conditions<br /></p></span></span
+                  ></a>
+                  <a href="/privacy-policy" name="link1" data-edit="linkA,text"
+                    ><span
+                      ><span
+                        ><p>Privacy Policy<br /></p></span></span
+                  ></a>
+                </div>
+              </div>
+              <div
+                name="block3"
+                data-edit="Col"
+                class="ant-col block ant-col-xs-24 ant-col-md-6"
+                style="opacity: 1; transform: translate(0px)"
+              >
+                <h2 data-edit="image,text">
+                  <span
+                    ><span><p>Follow</p></span></span
+                  >
+                </h2>
+                <div>
+                  <a
+                    href="https://discord.gg/3ECFhqe"
+                    name="link0"
+                    target="_blank"
+                    data-edit="linkA,text"
+                    ><span
+                      ><span><p>Discord</p></span></span
+                    ></a
+                  ><a
+                    href="https://twitter.com/LinesPoliceCAD"
+                    name="link1"
+                    target="_blank"
+                    data-edit="linkA,text"
+                    ><span
+                      ><span><p>Twitter</p></span></span
+                    ></a
+                  >
+                  <a
+                    href="https://www.facebook.com/linespoliceserver"
+                    name="link1"
+                    target="_blank"
+                    data-edit="linkA,text"
+                    ><span
+                      ><span><p>Facebook</p></span></span
+                    ></a
+                  >
+                </div>
+              </div>
+            </div>
+            <div
+              class="copyright-wrapper"
+              style="transform: translate(0px); opacity: 1"
             >
-              OK
-            </button>
+              <div class="home-page">
+                <div class="copyright">
+                  <span
+                    ><span
+                      ><span
+                        >©2023 by
+                        <a
+                          href="https://sites.google.com/view/tlps-dev/home"
+                          target="_blank"
+                          >TLPS</a
+                        >
+                        All Rights Reserved
+                      </span>
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-    <div
-      id="alertModal"
-      class="modal fade"
-      tabindex="-1"
-      role="dialog"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-          <div class="modal-body">
-            <h2 class="text-center">Coming Soon!</h2>
-            <p class="text-center">
-              This is still being developed. Please check back later ;)
-            </p>
-            <br />
-            <button
-              class="btn btn-primary btn-lg center-block"
-              data-dismiss="modal"
-              aria-hidden="true"
-            >
-              OK <i class="ion-android-close"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!--scripts loaded here -->
-    <script>
-      if (typeof module === "object") {
-        window.module = module;
-        module = undefined;
-      }
-    </script>
     <script src="/static/js/jquery.min.js"></script>
-    <script src="/static/js/bootstrap.min.js"></script>
-    <script src="/static/js/jquery.easing.min.js"></script>
-    <script src="/static/js/wow.js"></script>
-    <script src="/static/js/scripts.js"></script>
-    <script>
-      if (window.module) module = window.module;
-    </script>
-    <script
-      type="text/javascript"
-      src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
-    ></script>
-  </body>
 
-  <!--  added for google translate -->
-  <script type="text/javascript">
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement(
-        { pageLanguage: "en" },
-        "google_translate_element"
-      );
-    }
-  </script>
+    <script>
+      function animate(obj, initVal, lastVal, duration) {
+        let startTime = null;
+
+        //get the current timestamp and assign it to the currentTime variable
+        let currentTime = Date.now();
+
+        //pass the current timestamp to the step function
+        const step = (currentTime) => {
+          //if the start time is null, assign the current time to startTime
+          if (!startTime) {
+            startTime = currentTime;
+          }
+
+          //calculate the value to be used in calculating the number to be displayed
+          const progress = Math.min((currentTime - startTime) / duration, 1);
+
+          //calculate what to be displayed using the value gotten above
+          obj.innerHTML = Math.floor(
+            progress * (lastVal - initVal) + initVal
+          ).toLocaleString("en");
+
+          //checking to make sure the counter does not exceed the last value (lastVal)
+          if (progress < 1) {
+            window.requestAnimationFrame(step);
+          } else {
+            window.cancelAnimationFrame(window.requestAnimationFrame(step));
+          }
+        };
+        //start animating
+        window.requestAnimationFrame(step);
+      }
+      let text1 = document.getElementById("0101");
+      let text2 = document.getElementById("0102");
+      let text3 = document.getElementById("0103");
+      const load = () => {
+        animate(text1, 0, 7500, 7000);
+        animate(text2, 0, 47401426, 7000);
+        animate(text3, 0, 87, 7000);
+      };
+    </script>
+    <script type="text/javascript">
+      // 해당 요소가 viewport 내에 있는지 확인하는 함수
+      // 대표적인 예시로 사용되고 있는 stackoverflow의 예시를 가져왔습니다.
+      // https://stackoverflow.com/questions/123999/how-to-tell-if-a-dom-element-is-visible-in-the-current-viewport/7557433#7557433
+      function isElementInViewport(el) {
+        var rect = el.getBoundingClientRect();
+        return (
+          rect.top >= 0 &&
+          rect.left >= 0 &&
+          rect.bottom <=
+            (window.innerHeight || document.documentElement.clientHeight) &&
+          rect.right <=
+            (window.innerWidth || document.documentElement.clientWidth)
+        );
+      }
+
+      // scroll 이벤트를 추가하고, 해당 element에 callback 함수를 등록하는 함수
+      const addEventToEl = (elList) => {
+        document.addEventListener("scroll", () => {
+          elList.forEach((el) => {
+            if (isElementInViewport(el)) {
+              el.classList.add("faded");
+              el.classList.remove("hide");
+            } else {
+              // el.classList.remove("hide");
+            }
+          });
+        });
+      };
+
+      // 동작시킬 elements리스트에 이벤트를 등록
+      const boxElList = document.querySelectorAll(".dashboards-section");
+      addEventToEl(boxElList);
+    </script>
+
+    <style id=""></style>
+    <style id="Bannerligkdqseditorcss">
+      #Banner0_1 .lig76kd43qs-editor_css {
+        justify-content: space-around;
+      }
+    </style>
+    <style id="Bannerbannertextwrapperligenkkheditorcss">
+      #Banner0_1 .banner0-text-wrapper > .lig76enk3kh-editor_css {
+        display: flex;
+        left: 0px;
+      }
+    </style>
+    <style id="Bannerlikygdlteditorcss">
+      #Banner0_1.likygdl71t-editor_css {
+        top: 0;
+      }
+    </style>
+    <style id="Bannerbannertextwrapperligdeooweditorcss">
+      #Banner0_1 .banner0-text-wrapper > .ligdeo3ow6-editor_css {
+        top: 0px;
+      }
+    </style>
+    <style id="Bannerbannertextwrapperligognfueditorcss">
+      #Banner0_1 .banner0-text-wrapper > .lig7ognf8u-editor_css {
+        color: #fbfbfb;
+        width: 100%;
+        position: relative;
+      }
+    </style>
+    <style id="Navhomepageljlqebbeditorcss">
+      #Nav0_0 .home-page > .lj33lqeb18b-editor_css {
+        cursor: pointer;
+      }
+    </style>
+  </body>
 </html>
