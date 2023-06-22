@@ -75,6 +75,14 @@ module.exports = function (app, passport, server) {
     res.render("about-us");
   });
 
+  app.get("/faq", function (req, res) {
+    res.render("faq");
+  });
+
+  app.get("/login", function (req, res) {
+    res.render("login");
+  });
+
   app.get("/not-authorized", function (req, res) {
     res.render("not-authorized");
   });
