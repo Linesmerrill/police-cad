@@ -67,7 +67,10 @@
       name="Description"
       content="Ant Design Landing 平台拥有丰富的各类首页模板，下载模板代码包，即可快速使用，也可使用首页编辑器，快速搭建一个属于你的专属首页"
     />
-
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
     <link rel="stylesheet" type="text/css" href="/static/css/templates.css" />
     <link
       rel="icon"
@@ -148,28 +151,17 @@
                 width="100%"
               />
             </div>
+
             <div class="header0-menu" data-edit="Menu">
               <ul
-                class="ant-menu ant-menu-dark ant-menu-root ant-menu-horizontal"
+                id="myTopnav"
+                class="ant-menu ant-menu-dark ant-menu-root ant-menu-horizontal topnav"
                 role="menu"
               >
                 <li
-                  class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu"
-                  style="display: none"
-                  role="menuitem"
-                >
-                  <div
-                    class="ant-menu-submenu-title"
-                    role="button"
-                    aria-expanded="false"
-                    aria-haspopup="true"
-                  >
-                    <span>···</span><i class="ant-menu-submenu-arrow"></i>
-                  </div>
-                </li>
-                <li
+                  id="item0"
                   name="item0"
-                  class="ant-menu-item header0-item ant-menu-item-only-child"
+                  class="ant-menu-item header0-item ant-menu-item-only-child navitem"
                   data-edit="Menu"
                   role="menuitem"
                 >
@@ -185,22 +177,9 @@
                   >
                 </li>
                 <li
-                  class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu"
-                  style="display: none"
-                  role="menuitem"
-                >
-                  <div
-                    class="ant-menu-submenu-title"
-                    role="button"
-                    aria-expanded="false"
-                    aria-haspopup="true"
-                  >
-                    <span>···</span><i class="ant-menu-submenu-arrow"></i>
-                  </div>
-                </li>
-                <li
-                  name="item2"
-                  class="ant-menu-item header0-item ant-menu-item-only-child"
+                  id="item1"
+                  name="item1"
+                  class="ant-menu-item header0-item ant-menu-item-only-child navitem"
                   data-edit="Menu"
                   role="menuitem"
                 >
@@ -216,22 +195,9 @@
                   >
                 </li>
                 <li
-                  class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu"
-                  style="display: none"
-                  role="menuitem"
-                >
-                  <div
-                    class="ant-menu-submenu-title"
-                    role="button"
-                    aria-expanded="false"
-                    aria-haspopup="true"
-                  >
-                    <span>···</span><i class="ant-menu-submenu-arrow"></i>
-                  </div>
-                </li>
-                <li
-                  name="item~lig6g12fgs"
-                  class="ant-menu-item header0-item ant-menu-item-only-child"
+                  id="item2"
+                  name="item2"
+                  class="ant-menu-item header0-item ant-menu-item-only-child navitem"
                   data-edit="Menu"
                   role="menuitem"
                 >
@@ -248,22 +214,9 @@
                   ></a>
                 </li>
                 <li
-                  class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu"
-                  style="display: none"
-                  role="menuitem"
-                >
-                  <div
-                    class="ant-menu-submenu-title"
-                    role="button"
-                    aria-expanded="false"
-                    aria-haspopup="true"
-                  >
-                    <span>···</span><i class="ant-menu-submenu-arrow"></i>
-                  </div>
-                </li>
-                <li
-                  name="item~lj2yllcqn7"
-                  class="ant-menu-item header0-item ant-menu-item-only-child"
+                  id="item3"
+                  name="item3"
+                  class="ant-menu-item header0-item ant-menu-item-only-child navitem"
                   data-edit="Menu"
                   role="menuitem"
                 >
@@ -280,22 +233,9 @@
                   ></a>
                 </li>
                 <li
-                  class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu"
-                  style="display: none"
-                  role="menuitem"
-                >
-                  <div
-                    class="ant-menu-submenu-title"
-                    role="button"
-                    aria-expanded="false"
-                    aria-haspopup="true"
-                  >
-                    <span>···</span><i class="ant-menu-submenu-arrow"></i>
-                  </div>
-                </li>
-                <li
-                  name="item~lj3c2crocd"
-                  class="ant-menu-item header0-item ant-menu-item-only-child"
+                  id="item4"
+                  name="item4"
+                  class="ant-menu-item header0-item ant-menu-item-only-child navitem"
                   data-edit="Menu"
                   role="menuitem"
                 >
@@ -312,20 +252,138 @@
                   >
                 </li>
                 <li
-                  class="ant-menu-submenu ant-menu-submenu-horizontal ant-menu-overflowed-submenu"
-                  style="visibility: hidden; position: absolute; display: none"
+                  id="item5"
+                  name="item5"
+                  class="ant-menu-item header0-item ant-menu-item-only-child icon"
+                  data-edit="Menu"
                   role="menuitem"
                 >
-                  <div
-                    class="ant-menu-submenu-title"
-                    role="button"
-                    aria-expanded="false"
-                    aria-haspopup="true"
-                  >
-                    <span>···</span><i class="ant-menu-submenu-arrow"></i>
-                  </div>
+                  <a href="javascript:void(0);" class="" onclick="myFunction()">
+                    <i
+                      id="submenu-button"
+                      class="fa fa-bars"
+                      style="font-size: 20px"
+                    ></i>
+                  </a>
                 </li>
               </ul>
+            </div>
+            <div
+              id="submenu"
+              class="header0-menu"
+              style="height: 18em; display: none; width: 100%"
+            >
+              <ul
+                class="ant-menu ant-menu-root ant-menu-inline ant-menu-dark"
+                role="menu"
+                tabindex="0"
+                data-menu-list="true"
+              >
+                <li
+                  class="ant-menu-item ant-menu-item-only-child header0-item"
+                  role="menuitem"
+                  tabindex="-1"
+                  data-menu-id="rc-menu-uuid-72423-1-item0"
+                  name="item0"
+                  style="padding-left: 24px; line-height: 40px"
+                >
+                  <span class="ant-menu-title-content"
+                    ><a href="/" class="header0-item-block undefined"
+                      ><div name="text">
+                        <span
+                          ><p style="color: rgba(255, 255, 255, 0.65)">
+                            Home
+                          </p></span
+                        >
+                      </div></a
+                    ></span
+                  >
+                </li>
+                <li
+                  class="ant-menu-item ant-menu-item-only-child header0-item"
+                  role="menuitem"
+                  tabindex="-1"
+                  data-menu-id="rc-menu-uuid-72423-1-item2"
+                  name="item2"
+                  style="padding-left: 24px; line-height: 40px"
+                >
+                  <span class="ant-menu-title-content"
+                    ><a href="/about-us" class="header0-item-block undefined"
+                      ><div name="text">
+                        <span
+                          ><p style="color: rgba(255, 255, 255, 0.65)">
+                            About
+                          </p></span
+                        >
+                      </div></a
+                    ></span
+                  >
+                </li>
+                <li
+                  class="ant-menu-item ant-menu-item-only-child header0-item"
+                  role="menuitem"
+                  tabindex="-1"
+                  data-menu-id="rc-menu-uuid-72423-1-item~lig6g12fgs"
+                  name="item~lig6g12fgs"
+                  style="padding-left: 24px; line-height: 40px"
+                >
+                  <span class="ant-menu-title-content"
+                    ><a
+                      href="/contact-us"
+                      target=""
+                      class="header0-item-block undefined"
+                      ><div name="text">
+                        <span
+                          ><p style="color: rgba(255, 255, 255, 0.65)">
+                            Contact Us<br /></p
+                        ></span></div></a
+                  ></span>
+                </li>
+                <li
+                  class="ant-menu-item ant-menu-item-only-child header0-item"
+                  role="menuitem"
+                  tabindex="-1"
+                  data-menu-id="rc-menu-uuid-72423-1-item~lj2yllcqn7"
+                  name="item~lj2yllcqn7"
+                  style="padding-left: 24px; line-height: 40px"
+                >
+                  <span class="ant-menu-title-content"
+                    ><a
+                      href="https://www.linespolice-cad.com/discord-bot"
+                      target="_blank"
+                      class="header0-item-block undefined"
+                      ><div name="text">
+                        <span
+                          ><p style="color: rgba(255, 255, 255, 0.65)">
+                            Discord Bot<br /></p
+                        ></span></div></a
+                  ></span>
+                </li>
+                <li
+                  class="ant-menu-item ant-menu-item-only-child header0-item"
+                  role="menuitem"
+                  tabindex="-1"
+                  data-menu-id="rc-menu-uuid-72423-1-item~lj3c2crocd"
+                  name="item~lj3c2crocd"
+                  style="padding-left: 24px; line-height: 40px"
+                >
+                  <span class="ant-menu-title-content"
+                    ><a
+                      href="/login"
+                      target=""
+                      class="header0-item-block undefined"
+                      ><div name="text">
+                        <span
+                          ><p style="color: rgba(255, 255, 255, 0.65)">
+                            Login
+                          </p></span
+                        >
+                      </div></a
+                    ></span
+                  >
+                </li>
+              </ul>
+              <div aria-hidden="true" style="display: none"></div>
             </div>
           </div>
         </header>
@@ -1265,6 +1323,31 @@
       // 동작시킬 elements리스트에 이벤트를 등록
       const boxElList = document.querySelectorAll(".dashboards-section");
       addEventToEl(boxElList);
+    </script>
+
+    <script type="text/javascript">
+      /* Toggle between adding and removing the "responsive" class to topnav when the user clicks on the icon */
+      function myFunction() {
+        if ($("#submenu").attr("style").includes("display: none")) {
+          $("#submenu").show();
+          $("#submenu-button").removeClass("fa-bars");
+          $("#submenu-button").addClass("fa-times");
+        } else {
+          $("#submenu").hide();
+          $("#submenu-button").addClass("fa-bars");
+          $("#submenu-button").removeClass("fa-times");
+        }
+      }
+
+      $(window).on("resize", function () {
+        if ($(window).width() > 768) {
+          $("#submenu").hide();
+          // $('.show').show();
+        } else if ($(window).width() <= 768) {
+          $("#submenu-button").addClass("fa-bars");
+          $("#submenu-button").removeClass("fa-times");
+        }
+      });
     </script>
 
     <style id=""></style>
