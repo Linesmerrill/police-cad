@@ -9378,7 +9378,7 @@
                       name: "image",
                       className: "content0-block-icon",
                       children:
-                        "https://www.linespolice-cad.com/static/images/create-you-own-logo-512.png",
+                        "https://www.linespolice-cad.com/static/images/create-your-own-logo-512.png",
                     },
                     {
                       name: "title",
