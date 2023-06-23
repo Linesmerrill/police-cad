@@ -15638,7 +15638,8 @@ a.ant-btn-sm {
     }
 
     .content6-wrapper .content6-img {
-        margin-top: 20px
+        margin-top: 20px;
+        height: auto;
     }
 }
 
