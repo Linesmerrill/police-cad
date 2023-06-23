@@ -6614,7 +6614,7 @@
           },
           img: {
             children:
-              "https://pics.freeicons.io/uploads/icons/png/1037823441685671725-512.png",
+              "https://linespolice-cad.com/static/images/faq-logo-512.png",
             className: "content6-img",
             xs: 24,
             md: 14,
@@ -8963,7 +8963,7 @@
                       name: "image",
                       className: "content0-block-icon",
                       children:
-                        "https://pics.freeicons.io/uploads/icons/png/14636759541686329548-512.png",
+                        "https://linespolice-cad.com/static/images/civilian-logo-512.png",
                     },
                     {
                       name: "title",
@@ -9057,7 +9057,7 @@
                       name: "image",
                       className: "content0-block-icon",
                       children:
-                        "https://pics.freeicons.io/uploads/icons/png/1385283861686329547-512.png",
+                        "https://linespolice-cad.com/static/images/police-logo-512.png",
                     },
                     {
                       name: "title",
@@ -9140,7 +9140,7 @@
                       name: "image",
                       className: "content0-block-icon",
                       children:
-                        "https://pics.freeicons.io/uploads/icons/png/1932627721686331583-512.png",
+                        "https://linespolice-cad.com/static/images/dispatch-logo-512.png",
                     },
                     {
                       name: "title",
@@ -9223,7 +9223,7 @@
                       name: "image",
                       className: "content0-block-icon",
                       children:
-                        "https://pics.freeicons.io/uploads/icons/png/800368781686242184-512.png",
+                        "https://linespolice-cad.com/static/images/ems-logo-512.png",
                     },
                     {
                       name: "title",
@@ -9306,7 +9306,7 @@
                       name: "image",
                       className: "content0-block-icon",
                       children:
-                        "https://pics.freeicons.io/uploads/icons/png/7073526361686242185-512.png",
+                        "https://linespolice-cad.com/static/images/community-logo-512.png",
                     },
                     {
                       name: "title",
@@ -9378,7 +9378,7 @@
                       name: "image",
                       className: "content0-block-icon",
                       children:
-                        "https://pics.freeicons.io/uploads/icons/png/20836089141686094149-512.png",
+                        "https://linespolice-cad.com/static/images/create-you-own-logo-512.png",
                     },
                     {
                       name: "title",
@@ -9879,7 +9879,7 @@
                   icon: {
                     className: "content3-icon",
                     children:
-                      "https://pics.freeicons.io/uploads/icons/png/11134489561686240028-512.png",
+                      "https://linespolice-cad.com/static/images/email-logo-512.png",
                   },
                   textWrapper: {
                     className: "content3-text",
@@ -9984,7 +9984,7 @@
                   icon: {
                     className: "content3-icon",
                     children:
-                      "https://pics.freeicons.io/uploads/icons/png/18068038051686240023-512.png",
+                      "https://linespolice-cad.com/static/images/report-bug-logo-512.png",
                   },
                   textWrapper: {
                     className: "content3-text",
@@ -10089,7 +10089,7 @@
                   icon: {
                     className: "content3-icon",
                     children:
-                      "https://pics.freeicons.io/uploads/icons/png/5381792551686240023-512.png",
+                      "https://linespolice-cad.com/static/images/request-feature-logo-512.png",
                   },
                   textWrapper: {
                     className: "content3-text",
@@ -10205,7 +10205,7 @@
                   icon: {
                     className: "content3-icon",
                     children:
-                      "https://pics.freeicons.io/uploads/icons/png/20090193001656047560-512.png",
+                      "https://linespolice-cad.com/static/images/discord-logo-512.png",
                   },
                   textWrapper: {
                     className: "content3-text",
@@ -10299,7 +10299,7 @@
                   icon: {
                     className: "content3-icon",
                     children:
-                      "https://pics.freeicons.io/uploads/icons/png/11776157001556105726-512.png",
+                      "https://linespolice-cad.com/static/images/twitter-logo-512.png",
                   },
                   textWrapper: {
                     className: "content3-text",
@@ -10393,7 +10393,7 @@
                   icon: {
                     className: "content3-icon",
                     children:
-                      "https://pics.freeicons.io/uploads/icons/png/7407886901556105704-512.png",
+                      "https://linespolice-cad.com/static/images/facebook-logo-512.png",
                   },
                   textWrapper: {
                     className: "content3-text",
