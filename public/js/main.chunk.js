@@ -11763,6 +11763,7 @@
                 children: {
                   wrapper: {
                     className: "content5-block-content",
+                    href: "/login-civ",
                   },
                   img: {
                     children:
@@ -11790,18 +11791,7 @@
                               columnNumber: 17,
                             },
                           },
-                          "Civilian",
-                          /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                            "br",
-                            {
-                              __self: undefined,
-                              __source: {
-                                fileName: _jsxFileName,
-                                lineNumber: 162,
-                                columnNumber: 19,
-                              },
-                            }
-                          )
+                          "Civilian"
                         )
                       ),
                   },
@@ -11815,6 +11805,7 @@
                 children: {
                   wrapper: {
                     className: "content5-block-content",
+                    href: "/login-police",
                   },
                   img: {
                     children:
@@ -11856,6 +11847,7 @@
                 children: {
                   wrapper: {
                     className: "content5-block-content",
+                    href: "/login-dispatch",
                   },
                   img: {
                     children:
@@ -11869,7 +11861,7 @@
                           __self: undefined,
                           __source: {
                             fileName: _jsxFileName,
-                            lineNumber: 202,
+                            lineNumber: 205,
                             columnNumber: 15,
                           },
                         },
@@ -11879,7 +11871,7 @@
                             __self: undefined,
                             __source: {
                               fileName: _jsxFileName,
-                              lineNumber: 203,
+                              lineNumber: 206,
                               columnNumber: 17,
                             },
                           },
@@ -11897,6 +11889,7 @@
                 children: {
                   wrapper: {
                     className: "content5-block-content",
+                    href: "/login-community",
                   },
                   img: {
                     children:
@@ -11910,7 +11903,7 @@
                           __self: undefined,
                           __source: {
                             fileName: _jsxFileName,
-                            lineNumber: 222,
+                            lineNumber: 228,
                             columnNumber: 15,
                           },
                         },
@@ -11920,7 +11913,7 @@
                             __self: undefined,
                             __source: {
                               fileName: _jsxFileName,
-                              lineNumber: 223,
+                              lineNumber: 229,
                               columnNumber: 17,
                             },
                           },
@@ -11938,6 +11931,7 @@
                 children: {
                   wrapper: {
                     className: "content5-block-content",
+                    href: "/login-ems",
                   },
                   img: {
                     children:
@@ -11951,7 +11945,7 @@
                           __self: undefined,
                           __source: {
                             fileName: _jsxFileName,
-                            lineNumber: 242,
+                            lineNumber: 248,
                             columnNumber: 15,
                           },
                         },
@@ -11961,7 +11955,7 @@
                             __self: undefined,
                             __source: {
                               fileName: _jsxFileName,
-                              lineNumber: 243,
+                              lineNumber: 249,
                               columnNumber: 17,
                             },
                           },
@@ -11979,6 +11973,7 @@
                 children: {
                   wrapper: {
                     className: "content5-block-content",
+                    href: "/login-ems",
                   },
                   img: {
                     children:
@@ -11992,7 +11987,7 @@
                           __self: undefined,
                           __source: {
                             fileName: _jsxFileName,
-                            lineNumber: 262,
+                            lineNumber: 268,
                             columnNumber: 15,
                           },
                         },
@@ -12002,7 +11997,7 @@
                             __self: undefined,
                             __source: {
                               fileName: _jsxFileName,
-                              lineNumber: 263,
+                              lineNumber: 269,
                               columnNumber: 17,
                             },
                           },
