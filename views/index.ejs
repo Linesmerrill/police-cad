@@ -12000,7 +12000,12 @@
   </head>
 
   <body>
-    <% include global-status %>
+    <% include global-status %> <% if(message != undefined && message != null)
+    {%> <% if ( message.length > 0) { %>
+    <div class="alert alert-info col-md-4 col-md-offset-4">
+      <strong><%= message %> </strong>
+    </div>
+    <% } %> <% } %>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root">
       <div>
