@@ -83,6 +83,10 @@ module.exports = function (app, passport, server) {
     res.render("login");
   });
 
+  app.get("/signup", function (req, res) {
+    res.render("signup");
+  });
+
   app.get("/not-authorized", function (req, res) {
     res.render("not-authorized");
   });
