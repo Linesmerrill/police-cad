@@ -12000,10 +12000,42 @@
   </head>
 
   <body>
-    <% include global-status %> <% if(message != undefined && message != null)
-    {%> <% if ( message.length > 0) { %>
-    <div class="alert alert-info col-md-4 col-md-offset-4">
-      <strong><%= message %> </strong>
+    <% include global-status %>
+    <% if(message != undefined && message != null) {%> <% if ( message.length >
+    0) { %>
+    <div
+      class="toast"
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
+      data-bs-autohide="false"
+      style="
+        display: block;
+        position: absolute;
+        z-index: 3;
+        right: 0;
+        background-color: #24282c;
+        color: #adb5bd;
+      "
+    >
+      <div
+        class="toast-header"
+        style="background-color: #24282c; color: #adb5bd"
+      >
+        <img src="..." class="rounded me-2" alt="✅" />
+        <strong class="me-auto">Message</strong>
+        <small class="text-body-secondary" style="color: #adb5bd !important"
+          >just now</small
+        >
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="toast"
+          aria-label="Close"
+          style="background-color: #adb5bd"
+        ></button>
+      </div>
+      <div class="toast-body"><%= message %></div>
     </div>
     <% } %> <% } %>
     <noscript>You need to enable JavaScript to run this app.</noscript>
@@ -12409,6 +12441,12 @@
         }
       });
     </script>
+    <script>
+      $(document).ready(function () {
+        $(".toast").toast("show");
+      });
+    </script>
+
     <script src="/static/js/bundle.js"></script>
     <script src="/static/js/1.chunk.js"></script>
     <script src="/static/js/main.chunk.js"></script>
