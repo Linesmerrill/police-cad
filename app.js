@@ -103,5 +103,10 @@ const server = app.listen(port, function () {
   console.log("Server started.", server.address());
 });
 
+server.on("clientError", (err, socket) => {
+  console.error(err);
+  socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
+});
+
 // Setup routes.
 require("./app/routes")(app, passport, server);
