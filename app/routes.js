@@ -188,6 +188,10 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.get("/sockjs-node", function (req, res) {
+    return res.redirect("/");
+  });
+
   app.get("/logout", function (req, res) {
     req.logout();
     return res.redirect("/");
@@ -5437,6 +5441,11 @@ module.exports = function (app, passport, server) {
           }
         );
       }
+    });
+
+    socket.on("clientError", (err, socket) => {
+      console.warn(err);
+      socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
     });
 
     socket.on("search_arrests", (req) => {
