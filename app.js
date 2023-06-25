@@ -67,7 +67,7 @@ app.use(
     secret: "knoldus",
     resave: false,
     saveUninitialized: true,
-    expires: 1000 * 60 * 60 * 24 * 30, // 1 Month (30 days) see: https://www.npmjs.com/package/connect-mongodb-session
+    //expires: 1000 * 60 * 60 * 24 * 30, // 1 Month (30 days) see: https://www.npmjs.com/package/connect-mongodb-session
     cookie: {
       path: "/",
       maxAge: 1000 * 60 * 60 * 24 * 30, // 1 Month (30 days) see: https://www.npmjs.com/package/connect-mongodb-session
