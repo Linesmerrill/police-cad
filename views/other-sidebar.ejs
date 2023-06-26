@@ -1,0 +1,43 @@
+<li class="background-color-222">
+  <a
+    type="button"
+    data-toggle="collapse"
+    data-target="#toggleOther"
+    aria-expanded="false"
+    aria-controls="toggleOther"
+    onclick="toggleCaret()"
+  >
+    Other
+    <i
+      class="fas fa-caret-right pull-right rotate"
+      style="margin-top: 0.3em"
+    ></i
+  ></a>
+</li>
+<div class="collapse in" id="toggleOther">
+  <li>
+    <a data-toggle="modal" href="#notificationModal" onclick="markAsRead()"
+      ><span id="notification-symbol" class="fa fa-bell mr-3 notif"
+        ><small
+          class="d-flex align-items-center justify-content-center"
+          id="notification-count"
+        ></small
+      ></span>
+      Notifications</a
+    >
+  </li>
+  <li>
+    <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"
+      ><span class="fa fa-cog mr-3"></span> Settings</a
+    >
+  </li>
+  <li>
+    <a href="/contact-us"
+      ><span class="fa fa-support mr-3"></span> Support
+      <i class="fas fa-external-link-alt"></i
+    ></a>
+  </li>
+  <li>
+    <a href="/logout"><span class="fa fa-sign-out mr-3"></span> Sign Out</a>
+  </li>
+</div>
