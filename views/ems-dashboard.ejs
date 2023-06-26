@@ -86,25 +86,8 @@
                 class="fas fa-external-link-alt"></i></a>
           </li>
         </div>
-        <li>
-          <a data-toggle="modal" href="/community-dashboard"><span class="fa fa-users mr-3"></span> Communities <i
-            class="fas fa-external-link-alt"></i></a>
-        </li>
-        <li>
-          <a data-toggle="modal" href="#notificationModal" onclick="markAsRead()"><span id="notification-symbol" class="fa fa-bell mr-3 notif"><small
-                class="d-flex align-items-center justify-content-center" id="notification-count"></small></span> Notifications</a>
-        </li>
-        <li>
-          <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"><span
-              class="fa fa-cog mr-3"></span> Settings</a>
-        </li>
-        <li>
-          <a href="/contact-us"><span class="fa fa-support mr-3"></span> Support <i
-              class="fas fa-external-link-alt"></i></a>
-        </li>
-        <li>
-          <a href="/logout"><span class="fa fa-sign-out mr-3"></span> Sign Out</a>
-        </li>
+        <% include departments-sidebar %>
+        <% include other-sidebar %>
       </ul>
 
     </nav>

@@ -1,0 +1,48 @@
+<li class="background-color-222">
+  <a
+    type="button"
+    data-toggle="collapse"
+    data-target="#toggleDepartment"
+    aria-expanded="false"
+    aria-controls="toggleDepartment"
+    onclick="toggleCaret()"
+  >
+    Departments
+    <i
+      class="fas fa-caret-right pull-right rotate"
+      style="margin-top: 0.3em"
+    ></i
+  ></a>
+</li>
+<div class="collapse in" id="toggleDepartment">
+  <li>
+    <a href="/civ-dashboard"
+      ><span class="fa fa-user ml-3 mr-3"></span> Civilian
+    </a>
+  </li>
+  <li>
+    <a href="/police-dashboard"
+      ><span class="fa fa-cab ml-3 mr-3"></span> Police
+    </a>
+  </li>
+  <li>
+    <a href="/dispatch-dashboard"
+      ><span class="fa fa-headset ml-3 mr-3"></span> Dispatch
+    </a>
+  </li>
+  <li>
+    <a href="/ems-dashboard"
+      ><span class="fa fa-fire-extinguisher ml-3 mr-3"></span> Fire
+    </a>
+  </li>
+  <li>
+    <a href="/ems-dashboard"
+      ><span class="fa fa-medkit ml-3 mr-3"></span> EMS
+    </a>
+  </li>
+  <li>
+    <a data-toggle="modal" href="/community-dashboard"
+      ><span class="fa fa-users ml-3 mr-3"></span> Communities
+    </a>
+  </li>
+</div>
