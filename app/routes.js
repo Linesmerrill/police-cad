@@ -138,54 +138,44 @@ module.exports = function (app, passport, server) {
     return res.redirect("/");
   });
 
-  app.get("/login-civ", authCivilian, function (req, res) {
+  app.get("/login-civ", authCheck, function (req, res) {
     return res.redirect("civ-dashboard");
   });
 
-  app.get("/login-police", authPolice, function (req, res) {
+  app.get("/login-police", authCheck, function (req, res) {
     return res.redirect("/police-dashboard");
   });
 
-  app.get("/login-ems", authEms, function (req, res) {
+  app.get("/login-ems", authCheck, function (req, res) {
     return res.redirect("/ems-dashboard");
   });
 
-  app.get("/login-community", authCommunity, function (req, res) {
+  app.get("/login-community", authCheck, function (req, res) {
     return res.redirect("/community-dashboard");
   });
 
-  app.get("/login-dispatch", authDispatch, function (req, res) {
+  app.get("/login-dispatch", authCheck, function (req, res) {
     return res.redirect("/dispatch-dashboard");
   });
 
-  app.get("/signup-civ", function (req, res) {
-    return res.render("signup-civ", {
-      message: req.flash("signuperror"),
-    });
+  app.get("/signup-civ", authCheck, function (req, res) {
+    return res.redirect("/civ-dashboard");
   });
 
-  app.get("/signup-police", function (req, res) {
-    return res.render("signup-police", {
-      message: req.flash("signuperror"),
-    });
+  app.get("/signup-police", authCheck, function (req, res) {
+    return res.redirect("/police-dashboard");
   });
 
-  app.get("/signup-ems", function (req, res) {
-    return res.render("signup-ems", {
-      message: req.flash("signuperror"),
-    });
+  app.get("/signup-ems", authCheck, function (req, res) {
+    return res.redirect("/ems-dashboard");
   });
 
-  app.get("/signup-community", function (req, res) {
-    return res.render("signup-community", {
-      message: req.flash("signuperror"),
-    });
+  app.get("/signup-community", authCheck, function (req, res) {
+    return res.redirect("/community-dashboard");
   });
 
-  app.get("/signup-dispatch", function (req, res) {
-    return res.render("signup-dispatch", {
-      message: req.flash("signuperror"),
-    });
+  app.get("/signup-dispatch", authCheck, function (req, res) {
+    return res.redirect("/dispatch-dashboard");
   });
 
   app.get("/sockjs-node", function (req, res) {
@@ -321,7 +311,7 @@ module.exports = function (app, passport, server) {
     }
   });
 
-  app.get("/civ-dashboard", authCivilian, function (req, res) {
+  app.get("/civ-dashboard", authCheck, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     // TODO future spot of improvement; create a single route in the external api to
@@ -386,7 +376,7 @@ module.exports = function (app, passport, server) {
       });
   });
 
-  app.get("/ems-dashboard", authEms, function (req, res) {
+  app.get("/ems-dashboard", authCheck, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
 
@@ -458,7 +448,7 @@ module.exports = function (app, passport, server) {
       });
   });
 
-  app.get("/community-dashboard", authCommunity, function (req, res) {
+  app.get("/community-dashboard", authCheck, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     if (
@@ -517,7 +507,7 @@ module.exports = function (app, passport, server) {
     }
   });
 
-  app.get("/police-dashboard", authPolice, function (req, res) {
+  app.get("/police-dashboard", authCheck, function (req, res) {
     // console.debug("req: ", req.user)
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
@@ -569,7 +559,7 @@ module.exports = function (app, passport, server) {
     );
   });
 
-  app.get("/dispatch-dashboard", authDispatch, function (req, res) {
+  app.get("/dispatch-dashboard", authCheck, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     Community.find(
@@ -5510,49 +5500,20 @@ function auth(req, res, next) {
   return res.render("not-authorized");
 }
 
-function authCivilian(req, res, next) {
+function authCheck(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
+  } else {
+    if (req.route.path.includes("signup")) {
+      res.render(req.route.path.substring(1), {
+        message: req.flash("signuperror"),
+      });
+    } else if (req.route.path.includes("login")) {
+      res.render(req.route.path.substring(1), { message: req.flash("error") });
+    } else {
+      res.redirect("login");
+    }
   }
-  res.render("login-civ", {
-    message: req.flash("error"),
-  });
-}
-
-function authPolice(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.render("login-police", {
-    message: req.flash("error"),
-  });
-}
-
-function authEms(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.render("login-ems", {
-    message: req.flash("error"),
-  });
-}
-
-function authCommunity(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.render("login-community", {
-    message: req.flash("error"),
-  });
-}
-
-function authDispatch(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.render("login-dispatch", {
-    message: req.flash("error"),
-  });
 }
 
 function exists(v) {
