@@ -156,8 +156,8 @@
               <div>
                 <nav aria-label="...">
                   <ul class="pager">
-                    <li><a id="prev-page-btn" class="" onclick="getPrevPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
-                    <li><a id="next-page-btn" onclick="getNextPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                    <li><a id="prev-civ-page-btn" class="" onclick="getPrevCivPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                    <li><a id="next-civ-page-btn" onclick="getNextCivPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
                   </ul>
                 </nav>
               </div>
@@ -1777,7 +1777,7 @@ function loadVehData(index) {
     })
   }
 
-  function getNextPage() {
+  function getNextCivPage() {
     page = page + 1
     console.log("page: ", page)
     var socket=io();
@@ -1804,25 +1804,25 @@ function loadVehData(index) {
     )
             }
             if (res.length < 12) { // if we have reached the end of the data, then gray out the 'next' button
-              $('#next-page-btn').addClass("isDisabled")
+              $('#next-civ-page-btn').addClass("isDisabled")
               // page = page - 1
-              $('#next-page-btn').attr("onclick", "").unbind("click");
+              $('#next-civ-page-btn').attr("onclick", "").unbind("click");
             } else {
-            $('#next-page-btn').attr("onclick", "getNextPage()").bind("click");
+            $('#next-civ-page-btn').attr("onclick", "getNextCivPage()").bind("click");
             }
-            $('#prev-page-btn').removeClass("isDisabled")
-            $('#prev-page-btn').attr("onclick", "getPrevPage()").bind("click");
+            $('#prev-civ-page-btn').removeClass("isDisabled")
+            $('#prev-civ-page-btn').attr("onclick", "getPrevCivPage()").bind("click");
 
 
     })
   }
 
-  function getPrevPage() {
+  function getPrevCivPage() {
     page = page - 1
     if (page < 1) {
       page = 0
-      $('#prev-page-btn').addClass("isDisabled")
-      $('#prev-page-btn').attr("onclick", "").unbind("click");
+      $('#prev-civ-page-btn').addClass("isDisabled")
+      $('#prev-civ-page-btn').attr("onclick", "").unbind("click");
     }
     console.log("page: ", page)
     var socket=io();
@@ -1848,8 +1848,8 @@ function loadVehData(index) {
               </div>`
     )
             }
-            $('#next-page-btn').removeClass("isDisabled")
-            $('#next-page-btn').attr("onclick", "getNextPage()").bind("click");
+            $('#next-civ-page-btn').removeClass("isDisabled")
+            $('#next-civ-page-btn').attr("onclick", "getNextCivPage()").bind("click");
     })
   }
 

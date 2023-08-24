@@ -2730,25 +2730,25 @@ a[data-toggle="collapse"].collapsed .rotate {
 
 /* checkpoint */
 
-#next-page-btn {
+#next-civ-page-btn {
     color: white;
     background: transparent;
     cursor: pointer;
 }
 
-#next-page-btn:hover {
+#next-civ-page-btn:hover {
     color: white;
     background-color: #00aced;
     cursor: pointer;
 }
 
-#prev-page-btn {
+#prev-civ-page-btn {
     color: white;
     background: transparent;
     cursor: pointer;
 }
 
-#prev-page-btn:hover {
+#prev-civ-page-btn:hover {
     color: white;
     background-color: #00aced;
     cursor: pointer;
