@@ -5454,10 +5454,9 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("update_page", (req) => {
-      console.debug("get update_page socket: ", req);
+      // console.debug("get update_page socket: ", req);
       axios
         .get(
-          ///api/v1/civilians/user/61be0ebf22cfea7e7550f00e?active_community_id=61c74b7b88e1abdac307bb39&limit=5&page=2
           `${policeCadApiUrl}/api/v1/civilians/user/${req.dbUser._id}?active_community_id=${req.dbUser.activeCommunityID}&limit=12&page=${req.page}`,
           config
         )
@@ -5475,7 +5474,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("update_veh_page", (req) => {
-      console.debug("get update_veh_page socket: ", req);
+      // console.debug("get update_veh_page socket: ", req);
       axios
         .get(
           `${policeCadApiUrl}/api/v1/vehicles/user/${req.dbUser._id}?active_community_id=${req.dbUser.activeCommunityID}&limit=12&page=${req.page}`,
@@ -5495,7 +5494,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("update_gun_page", (req) => {
-      console.debug("get update_gun_page socket: ", req);
+      // console.debug("get update_gun_page socket: ", req);
       axios
         .get(
           `${policeCadApiUrl}/api/v1/firearms/user/${req.dbUser._id}?active_community_id=${req.dbUser.activeCommunityID}&limit=12&page=${req.page}`,
