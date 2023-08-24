@@ -2729,3 +2729,48 @@ a[data-toggle="collapse"].collapsed .rotate {
 }
 
 /* checkpoint */
+
+#next-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#next-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
+.prev-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+.prev-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
+.isDisabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.isDisabled>a {
+    color: currentColor;
+    display: inline-block;
+    /* For IE11/ MS Edge bug */
+    pointer-events: none;
+    text-decoration: none;
+}
+
+a[aria-disabled="true"] {
+    color: currentColor;
+    display: inline-block;
+    /* For IE11/ MS Edge bug */
+    pointer-events: none;
+    text-decoration: none;
+}

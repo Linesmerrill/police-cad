@@ -151,6 +151,16 @@
                   <% } %>
                 <% } %>
               </div>
+
+              <!-- Paginated navigation list -->
+              <div>
+                <nav aria-label="...">
+                  <ul class="pager">
+                    <li><a id="prev-page-btn" class="isDisabled !important" onclick="getPrevPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                    <li><a id="next-page-btn" onclick="getNextPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                  </ul>
+                </nav>
+              </div>
         </div>
         <hr class="margin-top-1" style="width: 88%;max-width: 100rem;">
     <!--Table for Vehicles  -->
@@ -1511,6 +1521,7 @@
   var dbUser = <%- JSON.stringify(user) %>;
   var dbVehicles= <%- JSON.stringify(vehicles) %>;
   var dbFirearms = <%- JSON.stringify(firearms) %>;
+  var page = 0
 
 
   $(document).ready(function(){
@@ -1763,6 +1774,67 @@ function loadVehData(index) {
       $('#successfully-updated-alert').removeClass('hide').addClass('show').delay(2000).fadeOut(1000, function () {
         $(this).addClass('hide').removeClass('show');
       });
+    })
+  }
+
+  function getNextPage() {
+    page = page + 1
+    console.log("page: ", page)
+    var socket=io();
+    var myObj = {
+      dbUser: dbUser,
+      page: page
+    }
+    socket.emit('update_page', myObj)
+    socket.on('load_page_result', (res) => {
+      console.log("res: ", res)
+      // load content on page
+      $('#personas-thumbnail').empty()
+      for (i=0; i < res.length; i++) {
+      $('#personas-thumbnail').append(
+      `<div id="personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+                <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
+                  <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+                  <div class="caption capitalize">
+                    <h4 id="personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
+                    <h5 id="personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
+                  </div>
+                </div> 
+              </div>`
+    )
+            }
+    })
+  }
+
+  function getPrevPage() {
+    page = page - 1
+    if (page < 1) {
+      page = 0
+    }
+    console.log("page: ", page)
+    var socket=io();
+    var myObj = {
+      dbUser: dbUser,
+      page: page
+    }
+    socket.emit('update_page', myObj)
+    socket.on('load_page_result', (res) => {
+      console.log("res: ", res)
+      // load content on page
+      $('#personas-thumbnail').empty()
+      for (i=0; i < res.length; i++) {
+      $('#personas-thumbnail').append(
+      `<div id="personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+                <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
+                  <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+                  <div class="caption capitalize">
+                    <h4 id="personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
+                    <h5 id="personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
+                  </div>
+                </div> 
+              </div>`
+    )
+            }
     })
   }
 

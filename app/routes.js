@@ -319,7 +319,7 @@ module.exports = function (app, passport, server) {
     // in a single call back to this app.
     axios
       .get(
-        `${policeCadApiUrl}/api/v1/civilians/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
+        `${policeCadApiUrl}/api/v1/civilians/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}&limit=12`,
         config
       )
       .then(function (dbCivilians) {
@@ -5451,6 +5451,27 @@ module.exports = function (app, passport, server) {
           }
         );
       }
+    });
+
+    socket.on("update_page", (req) => {
+      console.debug("get update_page socket: ", req);
+      axios
+        .get(
+          ///api/v1/civilians/user/61be0ebf22cfea7e7550f00e?active_community_id=61c74b7b88e1abdac307bb39&limit=5&page=2
+          `${policeCadApiUrl}/api/v1/civilians/user/${req.dbUser._id}?active_community_id=${req.dbUser.activeCommunityID}&limit=12&page=${req.page}`,
+          config
+        )
+        .then(function (dbPersonas) {
+          if (!exists(dbPersonas.data)) {
+            return socket.emit("load_page_result", undefined);
+          } else {
+            return socket.emit("load_page_result", dbPersonas.data);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          return socket.emit("load_page_result", undefined);
+        });
     });
 
     socket.on("get_personas", (req) => {
