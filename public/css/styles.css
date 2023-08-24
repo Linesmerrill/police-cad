@@ -2742,35 +2742,35 @@ a[data-toggle="collapse"].collapsed .rotate {
     cursor: pointer;
 }
 
-.prev-page-btn {
+#prev-page-btn {
     color: white;
     background: transparent;
     cursor: pointer;
 }
 
-.prev-page-btn:hover {
+#prev-page-btn:hover {
     color: white;
     background-color: #00aced;
     cursor: pointer;
 }
 
 .isDisabled {
-    cursor: not-allowed;
-    opacity: 0.5;
+    cursor: not-allowed !important;
+    opacity: 0.5 !important;
 }
 
 .isDisabled>a {
-    color: currentColor;
-    display: inline-block;
+    color: currentColor !important;
+    display: inline-block !important;
     /* For IE11/ MS Edge bug */
-    pointer-events: none;
-    text-decoration: none;
+    pointer-events: none !important;
+    text-decoration: none !important;
 }
 
 a[aria-disabled="true"] {
-    color: currentColor;
-    display: inline-block;
+    color: currentColor !important;
+    display: inline-block !important;
     /* For IE11/ MS Edge bug */
-    pointer-events: none;
-    text-decoration: none;
+    pointer-events: none !important;
+    text-decoration: none !important;
 }

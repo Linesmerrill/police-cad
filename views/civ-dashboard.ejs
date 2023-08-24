@@ -156,7 +156,7 @@
               <div>
                 <nav aria-label="...">
                   <ul class="pager">
-                    <li><a id="prev-page-btn" class="isDisabled !important" onclick="getPrevPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                    <li><a id="prev-page-btn" class="" onclick="getPrevPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
                     <li><a id="next-page-btn" onclick="getNextPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
                   </ul>
                 </nav>
@@ -1803,6 +1803,17 @@ function loadVehData(index) {
               </div>`
     )
             }
+            if (res.length < 12) { // if we have reached the end of the data, then gray out the 'next' button
+              $('#next-page-btn').addClass("isDisabled")
+              // page = page - 1
+              $('#next-page-btn').attr("onclick", "").unbind("click");
+            } else {
+            $('#next-page-btn').attr("onclick", "getNextPage()").bind("click");
+            }
+            $('#prev-page-btn').removeClass("isDisabled")
+            $('#prev-page-btn').attr("onclick", "getPrevPage()").bind("click");
+
+
     })
   }
 
@@ -1810,6 +1821,8 @@ function loadVehData(index) {
     page = page - 1
     if (page < 1) {
       page = 0
+      $('#prev-page-btn').addClass("isDisabled")
+      $('#prev-page-btn').attr("onclick", "").unbind("click");
     }
     console.log("page: ", page)
     var socket=io();
@@ -1835,6 +1848,8 @@ function loadVehData(index) {
               </div>`
     )
             }
+            $('#next-page-btn').removeClass("isDisabled")
+            $('#next-page-btn').attr("onclick", "getNextPage()").bind("click");
     })
   }
 
