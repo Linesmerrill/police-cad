@@ -329,7 +329,7 @@ module.exports = function (app, passport, server) {
         } else {
           axios
             .get(
-              `${policeCadApiUrl}/api/v1/vehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
+              `${policeCadApiUrl}/api/v1/vehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}&limit=12`,
               config
             )
             .then(function (dbVehicles) {
@@ -339,7 +339,7 @@ module.exports = function (app, passport, server) {
               } else {
                 axios
                   .get(
-                    `${policeCadApiUrl}/api/v1/firearms/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
+                    `${policeCadApiUrl}/api/v1/firearms/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}&limit=12`,
                     config
                   )
                   .then(function (dbFirearms) {
@@ -5471,6 +5471,46 @@ module.exports = function (app, passport, server) {
         .catch((err) => {
           console.error(err);
           return socket.emit("load_page_result", undefined);
+        });
+    });
+
+    socket.on("update_veh_page", (req) => {
+      console.debug("get update_veh_page socket: ", req);
+      axios
+        .get(
+          `${policeCadApiUrl}/api/v1/vehicles/user/${req.dbUser._id}?active_community_id=${req.dbUser.activeCommunityID}&limit=12&page=${req.page}`,
+          config
+        )
+        .then(function (dbVehicles) {
+          if (!exists(dbVehicles.data)) {
+            return socket.emit("load_veh_page_result", undefined);
+          } else {
+            return socket.emit("load_veh_page_result", dbVehicles.data);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          return socket.emit("load_veh_page_result", undefined);
+        });
+    });
+
+    socket.on("update_gun_page", (req) => {
+      console.debug("get update_gun_page socket: ", req);
+      axios
+        .get(
+          `${policeCadApiUrl}/api/v1/firearms/user/${req.dbUser._id}?active_community_id=${req.dbUser.activeCommunityID}&limit=12&page=${req.page}`,
+          config
+        )
+        .then(function (dbFirearms) {
+          if (!exists(dbFirearms.data)) {
+            return socket.emit("load_gun_page_result", undefined);
+          } else {
+            return socket.emit("load_gun_page_result", dbFirearms.data);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          return socket.emit("load_gun_page_result", undefined);
         });
     });
 

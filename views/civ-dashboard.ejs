@@ -189,6 +189,15 @@
           <% } %>
         <% } %>
       </div>
+      <!-- Paginated navigation list -->
+      <div>
+        <nav aria-label="...">
+          <ul class="pager">
+            <li><a id="prev-veh-page-btn" class="" onclick="getPrevVehPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+            <li><a id="next-veh-page-btn" onclick="getNextVehPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+          </ul>
+        </nav>
+      </div>
     </div>
     <hr class="margin-top-1" style="width: 88%;max-width: 100rem;">
     <!--Table for Firearms  -->
@@ -217,6 +226,15 @@
           </div>
           <% } %>
         <% } %>
+      </div>
+      <!-- Paginated navigation list -->
+      <div>
+        <nav aria-label="...">
+          <ul class="pager">
+            <li><a id="prev-gun-page-btn" class="" onclick="getPrevGunPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+            <li><a id="next-gun-page-btn" onclick="getNextGunPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+          </ul>
+        </nav>
       </div>
     </div>
 
@@ -1522,6 +1540,8 @@
   var dbVehicles= <%- JSON.stringify(vehicles) %>;
   var dbFirearms = <%- JSON.stringify(firearms) %>;
   var page = 0
+  var pageVeh = 0
+  var pageGun = 0
 
 
   $(document).ready(function(){
@@ -1850,6 +1870,160 @@ function loadVehData(index) {
             }
             $('#next-civ-page-btn').removeClass("isDisabled")
             $('#next-civ-page-btn').attr("onclick", "getNextCivPage()").bind("click");
+    })
+  }
+
+  function getNextVehPage() {
+    pageVeh = pageVeh + 1
+    console.log("pageVeh: ", pageVeh)
+    var socket=io();
+    var myObj = {
+      dbUser: dbUser,
+      page: pageVeh
+    }
+    socket.emit('update_veh_page', myObj)
+    socket.on('load_veh_page_result', (res) => {
+      console.log("res: ", res)
+      // load content on page
+      $('#vehicles-thumbnail').empty()
+      for (i=0; i < res.length; i++) {
+        $('#vehicles-thumbnail').append(
+      `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+        <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+          <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
+          <div class="caption">
+            <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
+            <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+          </div>
+        </div>
+      </div>`
+    )
+            }
+            if (res.length < 12) { // if we have reached the end of the data, then gray out the 'next' button
+              $('#next-veh-page-btn').addClass("isDisabled")
+              // page = page - 1
+              $('#next-veh-page-btn').attr("onclick", "").unbind("click");
+            } else {
+            $('#next-veh-page-btn').attr("onclick", "getNextVehPage()").bind("click");
+            }
+            $('#prev-veh-page-btn').removeClass("isDisabled")
+            $('#prev-veh-page-btn').attr("onclick", "getPrevVehPage()").bind("click");
+
+
+    })
+  }
+
+  function getPrevVehPage() {
+    pageVeh = pageVeh - 1
+    if (pageVeh < 1) {
+      pageVeh = 0
+      $('#prev-veh-page-btn').addClass("isDisabled")
+      $('#prev-veh-page-btn').attr("onclick", "").unbind("click");
+    }
+    console.log("pageVeh: ", pageVeh)
+    var socket=io();
+    var myObj = {
+      dbUser: dbUser,
+      page: pageVeh
+    }
+    socket.emit('update_veh_page', myObj)
+    socket.on('load_veh_page_result', (res) => {
+      console.log("res: ", res)
+      // load content on page
+      $('#vehicles-thumbnail').empty()
+      for (i=0; i < res.length; i++) {
+        $('#vehicles-thumbnail').append(
+      `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+        <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+          <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
+          <div class="caption">
+            <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
+            <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+          </div>
+        </div>
+      </div>`
+    )
+            }
+            $('#next-veh-page-btn').removeClass("isDisabled")
+            $('#next-veh-page-btn').attr("onclick", "getNextVehPage()").bind("click");
+    })
+  }
+
+  function getNextGunPage() {
+    pageGun = pageGun + 1
+    console.log("pageGun: ", pageGun)
+    var socket=io();
+    var myObj = {
+      dbUser: dbUser,
+      page: pageGun
+    }
+    socket.emit('update_gun_page', myObj)
+    socket.on('load_gun_page_result', (res) => {
+      console.log("res: ", res)
+      // load content on page
+      $('#firearms-thumbnail').empty()
+      for (i=0; i < res.length; i++) {
+        $('#firearms-thumbnail').append(
+      `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
+      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+        <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
+        <div class="caption text-capitalize">
+          <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
+          <h5 class="color-white">${res[i].firearm.weaponType}</h5>
+          <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
+        </div>
+      </div>
+    </div>`
+    )
+            }
+            if (res.length < 12) { // if we have reached the end of the data, then gray out the 'next' button
+              $('#next-gun-page-btn').addClass("isDisabled")
+              // page = page - 1
+              $('#next-gun-page-btn').attr("onclick", "").unbind("click");
+            } else {
+            $('#next-gun-page-btn').attr("onclick", "getNextGunPage()").bind("click");
+            }
+            $('#prev-gun-page-btn').removeClass("isDisabled")
+            $('#prev-gun-page-btn').attr("onclick", "getPrevGunPage()").bind("click");
+
+
+    })
+  }
+
+  function getPrevGunPage() {
+    pageGun = pageGun - 1
+    if (pageGun < 1) {
+      pageGun = 0
+      $('#prev-gun-page-btn').addClass("isDisabled")
+      $('#prev-gun-page-btn').attr("onclick", "").unbind("click");
+    }
+    console.log("pageGun: ", pageGun)
+    var socket=io();
+    var myObj = {
+      dbUser: dbUser,
+      page: pageGun
+    }
+    socket.emit('update_gun_page', myObj)
+    socket.on('load_gun_page_result', (res) => {
+      console.log("res: ", res)
+      // load content on page
+      $('#firearms-thumbnail').empty()
+      for (i=0; i < res.length; i++) {
+        $('#firearms-thumbnail').append(
+      `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
+      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+        <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
+        <div class="caption text-capitalize">
+          <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
+          <h5 class="color-white">${res[i].firearm.weaponType}</h5>
+          <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
+        </div>
+      </div>
+    </div>`
+    )
+            }
+            $('#next-gun-page-btn').removeClass("isDisabled")
+            $('#next-gun-page-btn').attr("onclick", "getNextGunPage()").bind("click");
     })
   }
 

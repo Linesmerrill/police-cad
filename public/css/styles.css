@@ -2754,6 +2754,54 @@ a[data-toggle="collapse"].collapsed .rotate {
     cursor: pointer;
 }
 
+#next-veh-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#next-veh-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
+#prev-veh-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#prev-veh-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
+#next-gun-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#next-gun-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
+#prev-gun-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#prev-gun-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
 .isDisabled {
     cursor: not-allowed !important;
     opacity: 0.5 !important;
