@@ -375,8 +375,9 @@
               <label class="col-md-4 control-label" for="submitNewCiv"></label>
               <div class="col-md-4 text-align-center">
                 <input type="hidden" name="route" value="civ-dashboard">
+                <input id="ageAmount" type="hidden" name="ageView" value="">
                 <input id="newCivUserID" type="hidden" name="userID" value="<%= user._id %>">
-                <input type="hidden" id="new-civ-activeCommunityID-new-civ" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <input id="new-civ-activeCommunityID-new-civ" type="hidden" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                 <button id="submitNewCiv" type="submit" name="submitNewCivForm" value="submit" class="btn btn-info">Create</button>
               </div>
             </div>
@@ -825,7 +826,7 @@
                     <input id="delBirthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
                   </div>
 
-                  <div class="form-group col-xs-1 col-md-1 margin-left-neg-15 required">
+                  <div class="form-group col-xs-1 col-md-1 margin-left-neg-15">
                     <label class="control-label" for="ageView">Age:</label>
                     <input id="ageView" name="age" type="text" class="form-control input-md disabled-color" required readonly="readonly">
                   </div>
@@ -1557,6 +1558,14 @@
       dob = new Date(value),
       age = new Date(today - dob).getFullYear() - 1970;
       $('#ageView').val(age);
+    });
+
+    $("#birthday").focusout(function(){
+      var value = $("#birthday").val()
+      var today = new Date(),
+      dob = new Date(value),
+      age = new Date(today - dob).getFullYear() - 1970;
+      $('#ageAmount').val(age);
     });
 
     //used to filter the persona cards

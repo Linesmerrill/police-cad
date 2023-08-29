@@ -723,6 +723,12 @@ function populateVehSocketDetails(res) {
 $("#create-civ-form").submit(function (e) {
   e.preventDefault(); //prevents page from reloading
   var socket = io();
+  var age = "";
+  if ($("#ageView").val() == "") {
+    age = $("#ageAmount").val();
+  } else {
+    age = $("#ageView").val();
+  }
   var myReq = {
     body: {
       civFirstName: $("#civ-first-name").val(),
@@ -739,7 +745,7 @@ $("#create-civ-form").submit(function (e) {
       gender: $("#gender").val(),
       height: $("#heightView").val(),
       weight: $("#weightView").val(),
-      age: $("#ageView").val(),
+      age: age,
       eyeColor: $("#eyeColor").val(),
       hairColor: $("#hairColor").val(),
       organDonor: $("#organDonor").is(":checked"),
