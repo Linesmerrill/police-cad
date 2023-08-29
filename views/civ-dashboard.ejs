@@ -1595,7 +1595,7 @@
     page: page
   }
   socket.emit("fetch_civ_cards", myObj);
-  socket.on("load_page_result", (res) => {
+  socket.on("load_civ_cards_result", (res) => {
     if (res === undefined || res === null) {
       $('#issue-loading-personnel-alert').show();
     } else {

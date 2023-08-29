@@ -5407,14 +5407,14 @@ module.exports = function (app, passport, server) {
         )
         .then(function (dbPersonas) {
           if (!exists(dbPersonas.data)) {
-            return socket.emit("load_page_result", undefined);
+            return socket.emit("load_civ_cards_result", undefined);
           } else {
-            return socket.emit("load_page_result", dbPersonas.data);
+            return socket.emit("load_civ_cards_result", dbPersonas.data);
           }
         })
         .catch((err) => {
           console.error(err);
-          return socket.emit("load_page_result", undefined);
+          return socket.emit("load_civ_cards_result", undefined);
         });
     });
 
@@ -5427,14 +5427,14 @@ module.exports = function (app, passport, server) {
         )
         .then(function (dbVehicles) {
           if (!exists(dbVehicles.data)) {
-            return socket.emit("load_veh_page_result", undefined);
+            return socket.emit("load_veh_cards_result", undefined);
           } else {
-            return socket.emit("load_veh_page_result", dbVehicles.data);
+            return socket.emit("load_veh_cards_result", dbVehicles.data);
           }
         })
         .catch((err) => {
           console.error(err);
-          return socket.emit("load_veh_page_result", undefined);
+          return socket.emit("load_veh_cards_result", undefined);
         });
     });
 
@@ -5447,14 +5447,14 @@ module.exports = function (app, passport, server) {
         )
         .then(function (dbFirearms) {
           if (!exists(dbFirearms.data)) {
-            return socket.emit("load_gun_page_result", undefined);
+            return socket.emit("load_gun_cards_result", undefined);
           } else {
-            return socket.emit("load_gun_page_result", dbFirearms.data);
+            return socket.emit("load_gun_cards_result", dbFirearms.data);
           }
         })
         .catch((err) => {
           console.error(err);
-          return socket.emit("load_gun_page_result", undefined);
+          return socket.emit("load_gun_cards_result", undefined);
         });
     });
 

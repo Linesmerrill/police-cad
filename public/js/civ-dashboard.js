@@ -1261,7 +1261,7 @@ function getNextCivPage() {
     page: page,
   };
   socket.emit("fetch_civ_cards", myObj);
-  socket.on("load_page_result", (res) => {
+  socket.on("load_civ_cards_result", (res) => {
     // load content on page
     $("#personas-thumbnail").empty();
     for (i = 0; i < res.length; i++) {
@@ -1303,7 +1303,7 @@ function getPrevCivPage() {
     page: page,
   };
   socket.emit("fetch_civ_cards", myObj);
-  socket.on("load_page_result", (res) => {
+  socket.on("load_civ_cards_result", (res) => {
     // load content on page
     $("#personas-thumbnail").empty();
     for (i = 0; i < res.length; i++) {
@@ -1333,7 +1333,7 @@ function getVehicles() {
   console.log("myCivObj: ", myCivObj);
   $("#vehicles-thumbnail").empty();
   socket.emit("fetch_veh_cards", myCivObj);
-  socket.on("load_veh_page_result", (res) => {
+  socket.on("load_veh_cards_result", (res) => {
     if (res === undefined || res === null) {
       $("#issue-loading-vehicles-alert").show();
     } else {
@@ -1382,7 +1382,7 @@ function getNextVehPage() {
     page: pageVeh,
   };
   socket.emit("fetch_veh_cards", myObj);
-  socket.on("load_veh_page_result", (res) => {
+  socket.on("load_veh_cards_result", (res) => {
     // load content on page
     $("#vehicles-thumbnail").empty();
     if (res == null || res == undefined) {
@@ -1429,7 +1429,7 @@ function getPrevVehPage() {
     page: pageVeh,
   };
   socket.emit("fetch_veh_cards", myObj);
-  socket.on("load_veh_page_result", (res) => {
+  socket.on("load_veh_cards_result", (res) => {
     // load content on page
     $("#vehicles-thumbnail").empty();
     if (res == null || res == undefined) {
@@ -1469,8 +1469,8 @@ function getFirearms() {
   };
   $("#firearms-thumbnail").empty();
   socket.emit("fetch_gun_cards", myCivObj);
-  socket.on("load_gun_page_result", (res) => {
-    console.log("load_gun_page_result res: ", res);
+  socket.on("load_gun_cards_result", (res) => {
+    console.log("load_gun_cards_result res: ", res);
     if (res === undefined || res === null) {
       $("#issue-loading-firearms-alert").show();
     } else {
@@ -1520,7 +1520,7 @@ function getNextGunPage() {
     page: pageGun,
   };
   socket.emit("fetch_gun_cards", myObj);
-  socket.on("load_gun_page_result", (res) => {
+  socket.on("load_gun_cards_result", (res) => {
     // load content on page
     $("#firearms-thumbnail").empty();
     for (i = 0; i < res.length; i++) {
@@ -1563,7 +1563,7 @@ function getPrevGunPage() {
     page: pageGun,
   };
   socket.emit("fetch_gun_cards", myObj);
-  socket.on("load_gun_page_result", (res) => {
+  socket.on("load_gun_cards_result", (res) => {
     // load content on page
     $("#firearms-thumbnail").empty();
     for (i = 0; i < res.length; i++) {
