@@ -412,19 +412,16 @@ function loadCivSocketData(civID) {
 
 function populateVehicleDetails(res) {
   console.log("populate vehicle details: ", res);
-  //TODO populate vehicle registered owner field
   $("#vehicle-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
-  // $("#registeredOwner-new-veh").append(
-  //   `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
-  // );
+  getVehicles();
 }
 
 function populateFirearmDetails(res) {
   console.log("populate firearm details: ", res);
-  //TODO populate firearm registered owner field
-  $("#registeredOwner-new-firearm").append(
-    `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
-  );
+  $("#firearm-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+  $("#roFirearm").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+  $("#firearmOwnerID").val(`${res._id}`);
+  getFirearms();
 }
 
 function loadVehSocketData(vehID) {
@@ -826,19 +823,6 @@ $("#create-civ-form").submit(function (e) {
 
     //set owner value for updating a vehicle
     $("#roVeh").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
-
-    //append to list for creating a vehicle
-    // $("#registeredOwner-new-veh").append(
-    //   `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
-    // );
-    //append to list for updating a firearm
-    $("#registeredOwner-details").append(
-      `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
-    );
-    //append to list for creating a firearm
-    $("#registeredOwner-new-firearm").append(
-      `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
-    );
   });
   //reset the form after form submit
   $("#create-civ-form").trigger("reset");
@@ -895,19 +879,6 @@ $("#create-auto-civ-form").submit(function (e) {
 
     //set owner for updating a vehicle
     $("#roVeh").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
-
-    //append to list for creating a vehicle
-    // $("#registeredOwner-new-veh").append(
-    //   `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
-    // );
-    //append to list for updating a firearm
-    $("#registeredOwner-details").append(
-      `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
-    );
-    //append to list for creating a firearm
-    $("#registeredOwner-new-firearm").append(
-      `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
-    );
   });
   //reset the form after form submit
   $("#create-auto-civ-form").trigger("reset");
@@ -1119,7 +1090,8 @@ $("#create-firearm-form").submit(function (e) {
     body: {
       serialNumber: $("#serial-number").val(),
       weaponType: $("#weapon-type").val(),
-      registeredOwner: $("#registeredOwner-new-firearm").val(),
+      registeredOwner: $("#firearm-owner").val(),
+      registeredOwnerID: $("#civilianIDView").text(),
       isStolen: $("#is-stolen-update").val(),
       activeCommunityID: $("#new-veh-activeCommunityID-new-firearm").val(),
       userID: $("#new-firearm-userID").val(),
@@ -1277,7 +1249,7 @@ function getNextCivPage() {
             </div>`
       );
     }
-    if (res.length < 12) {
+    if (res.length < 8) {
       // if we have reached the end of the data, then gray out the 'next' button
       $("#next-civ-page-btn").addClass("isDisabled");
       // page = page - 1
@@ -1365,7 +1337,7 @@ function getVehicles() {
         $("#vehicles-loading").hide();
         $("#prev-veh-page-btn").addClass("isDisabled");
         $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
-        if (res.length < 12) {
+        if (res.length < 8) {
           $("#next-veh-page-btn").addClass("isDisabled");
           $("#next-veh-page-btn").attr("onclick", "").unbind("click");
         }
@@ -1400,7 +1372,7 @@ function getNextVehPage() {
     </div>`
         );
       }
-      if (res.length < 12) {
+      if (res.length < 8) {
         // if we have reached the end of the data, then gray out the 'next' button
         $("#next-veh-page-btn").addClass("isDisabled");
         // page = page - 1
@@ -1470,7 +1442,6 @@ function getFirearms() {
   $("#firearms-thumbnail").empty();
   socket.emit("fetch_gun_cards", myCivObj);
   socket.on("load_gun_cards_result", (res) => {
-    console.log("load_gun_cards_result res: ", res);
     if (res === undefined || res === null) {
       $("#issue-loading-firearms-alert").show();
     } else {
@@ -1503,7 +1474,7 @@ function getFirearms() {
         $("#firearms-loading").hide();
         $("#prev-gun-page-btn").addClass("isDisabled");
         $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
-        if (res.length < 12) {
+        if (res.length < 8) {
           $("#next-gun-page-btn").addClass("isDisabled");
           $("#next-gun-page-btn").attr("onclick", "").unbind("click");
         }
@@ -1537,7 +1508,7 @@ function getNextGunPage() {
   </div>`
       );
     }
-    if (res.length < 12) {
+    if (res.length < 8) {
       // if we have reached the end of the data, then gray out the 'next' button
       $("#next-gun-page-btn").addClass("isDisabled");
       // page = page - 1

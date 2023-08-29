@@ -3246,7 +3246,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.post("/updateOrDeleteFirearm", auth, function (req, res) {
-    // console.debug('update or delete firearm body: ', req.body)
+    console.debug("update or delete firearm body: ", req.body);
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
       if (!exists(req.body.firearmID)) {
@@ -3255,30 +3255,19 @@ module.exports = function (app, passport, server) {
         );
         return res.redirect("/civ-dashboard");
       }
-      if (!exists(req.body.registeredOwner)) {
-        req.body.registeredOwner = "N/A";
-      }
-      // hacky af, goal here is to separate the person_id from the person name and dob.
-      // example: 5eeaebb7e23cba396869becb+Rodger Pike | DOB: 2001-01-01
-      // caveat here being that if the name includes a "+" then it will incorrectly split
-      // and probably cause problems. TODO: fix this edge case.
-      if (req.body.registeredOwner.includes("+")) {
-        let idPlusRegisteredOwner = req.body.registeredOwner.split("+");
-        if (idPlusRegisteredOwner.length == 2) {
-          req.body.registeredOwner = idPlusRegisteredOwner[1];
-          req.body.registeredOwnerID = idPlusRegisteredOwner[0];
-        } else {
-          console.error(
-            `invalid split on 'req.body.registeredOwner': ${req.body.registeredOwner}. Does not contain an array of length 2. Split value: ${idPlusRegisteredOwner}`
-          );
-        }
-      } else if (req.body.registeredOwner == "N/A") {
-        // do nothing, this is acceptable
-      } else {
-        console.error(
-          `error on req.body.registeredOwner: ${req.body.registeredOwner}. Does not contain a '+'.`
+      if (!exists(req.body.roFirearm)) {
+        console.warn(
+          "cannot update firearm with empty registered owner, route: /updateOrDeleteFirearm"
         );
+        return res.redirect("/civ-dashboard");
       }
+      if (!exists(req.body.firearmOwnerID)) {
+        console.warn(
+          "cannot update firearm with empty firearmOwnerID, route: /updateOrDeleteFirearm"
+        );
+        return res.redirect("/civ-dashboard");
+      }
+
       var isValid = isValidObjectIdLength(
         req.body.firearmID,
         "cannot lookup invalid length firearmID, route: /updateOrDeleteFirearm"
@@ -3295,8 +3284,8 @@ module.exports = function (app, passport, server) {
           $set: {
             "firearm.serialNumber": req.body.serialNumber,
             "firearm.weaponType": req.body.weaponType,
-            "firearm.registeredOwner": req.body.registeredOwner,
-            "firearm.registeredOwnerID": req.body.registeredOwnerID,
+            "firearm.registeredOwner": req.body.roFirearm,
+            "firearm.registeredOwnerID": req.body.firearmOwnerID,
             "firearm.isStolen": req.body.isStolen,
             "firearm.updatedAt": new Date(),
           },
@@ -5402,7 +5391,7 @@ module.exports = function (app, passport, server) {
       // console.debug("get fetch_civ_cards socket: ", req);
       axios
         .get(
-          `${policeCadApiUrl}/api/v1/civilians/user/${req.dbUser._id}?active_community_id=${req.dbUser.user.activeCommunity}&limit=12&page=${req.page}`,
+          `${policeCadApiUrl}/api/v1/civilians/user/${req.dbUser._id}?active_community_id=${req.dbUser.user.activeCommunity}&limit=8&page=${req.page}`,
           config
         )
         .then(function (dbPersonas) {
@@ -5419,10 +5408,10 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("fetch_veh_cards", (req) => {
-      console.debug("get fetch_veh_cards socket: ", req);
+      // console.debug("get fetch_veh_cards socket: ", req);
       axios
         .get(
-          `${policeCadApiUrl}/api/v1/vehicles/registered-owner/${req.civID}?limit=12&page=${req.page}`,
+          `${policeCadApiUrl}/api/v1/vehicles/registered-owner/${req.civID}?limit=8&page=${req.page}`,
           config
         )
         .then(function (dbVehicles) {
@@ -5442,7 +5431,7 @@ module.exports = function (app, passport, server) {
       // console.debug("get fetch_gun_cards socket: ", req);
       axios
         .get(
-          `${policeCadApiUrl}/api/v1/firearms/registered-owner/${req.civID}?limit=12&page=${req.page}`,
+          `${policeCadApiUrl}/api/v1/firearms/registered-owner/${req.civID}?limit=8&page=${req.page}`,
           config
         )
         .then(function (dbFirearms) {

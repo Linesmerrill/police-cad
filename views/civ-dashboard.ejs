@@ -574,6 +574,14 @@
               </div>
             </div>
 
+            <!-- Search input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="firearm-owner">Owner</label>
+              <div class="col-md-4">
+                <input id="firearm-owner" name="firearmOwner" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
+              </div>
+            </div>
+
             <!-- Select Basic -->
             <div class="form-group required">
               <label class="col-md-4 control-label" for="weapon-type">Weapon Type</label>
@@ -586,17 +594,6 @@
                   <option value="light machine gun">Light Machine Gun</option>
                   <option value="assault rifle">Assault Rifle</option>
                   <option value="sniper rifle">Sniper Rifle</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Search input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
-              <div class="col-md-4">
-                <select id="registeredOwner-new-firearm" name="registeredOwner" class="form-control">
-                  <option value="N/A">N/A</option>
-                  <!-- TODO: Need to make this work -->
                 </select>
               </div>
             </div>
@@ -767,10 +764,10 @@
               <a data-toggle="pill" href="#pills-edit-civ">Edit Civilian</a>
             </li>
             <li>
-              <a data-toggle="pill" href="#pills-vehicles" onclick="getVehicles()">Vehicles</a>
+              <a data-toggle="pill" href="#pills-vehicles">Vehicles</a>
             </li>
             <li>
-              <a data-toggle="pill" href="#pills-firearms" onclick="getFirearms()">Firearms</a>
+              <a data-toggle="pill" href="#pills-firearms">Firearms</a>
             </li>
             <li>
               <a data-toggle="pill" href="#pills-dmv">DMV</a>
@@ -1048,7 +1045,7 @@
                 <div>
                   <nav aria-label="...">
                     <ul class="pager">
-                      <li><a id="prev-gun-page-btn" class="" onclick="getPrevGunPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                      <li><a id="prev-gun-page-btn" onclick="getPrevGunPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
                       <li><a id="next-gun-page-btn" onclick="getNextGunPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
                     </ul>
                   </nav>
@@ -1410,10 +1407,17 @@
             <hr style="width: 88%;max-width: 100rem;">
 
             <!-- Text input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="serial-number">Serial Number</label>
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="serial-number">Serial Number:</label>
               <div class="col-md-6">
                 <input id="serial-number-details" name="serialNumber" type="text" minlength="8" maxlength="8" placeholder="serial number" class="form-control input-md" required="" readonly="readonly">
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="roFirearm">Owner:</label>
+              <div class="col-md-6">
+                <input id="roFirearm" name="roFirearm" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
               </div>
             </div>
 
@@ -1433,17 +1437,6 @@
               </div>
             </div>
 
-            <!-- Search input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
-              <div class="col-md-6">
-                <select id="registeredOwner-details" name="registeredOwner" class="form-control text-capitalize">
-                  <option value="N/A">N/A</option>
-                  <!-- TODO: Need to make this work -->
-                </select>
-              </div>
-            </div>
-
             <!-- Select Basic -->
             <div class="form-group">
               <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
@@ -1457,6 +1450,7 @@
 
             <div class="col-md-12 text-align-center">
                 <input type="hidden" id="firearmID" name="firearmID">
+                <input type="hidden" id="firearmOwnerID" name="firearmOwnerID">
                 <button type="submit" value="update" name="action" class="btn btn-info">Update Firearm</button>
                 <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Firearm</button>
             </div>
@@ -1596,6 +1590,7 @@
   }
   socket.emit("fetch_civ_cards", myObj);
   socket.on("load_civ_cards_result", (res) => {
+    $("#personas-thumbnail").empty();
     if (res === undefined || res === null) {
       $('#issue-loading-personnel-alert').show();
     } else {
@@ -1616,7 +1611,7 @@
       $('#civilians-loading').hide();
       $("#prev-civ-page-btn").addClass("isDisabled");
       $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
-      if (res.length < 12) {
+      if (res.length < 8) {
         $("#next-civ-page-btn").addClass("isDisabled");
         $("#next-civ-page-btn").attr("onclick", "").unbind("click");
       }
@@ -1773,40 +1768,19 @@ $("#lastName").keydown(function(event) {
 
 }); /* End of document.ready */
 
-// function loadVehData(index) {
-//      $('#vehicleID').val(dbVehicles[index]._id)
-//      $('#plateVeh').val(dbVehicles[index].vehicle.plate.toUpperCase())
-
-//      // since only cars after 6/26/2020 will have this info, we need to check for empty values
-//      if (dbVehicles[index].vehicle.vin == "" || dbVehicles[index].vehicle.vin == undefined) {
-//        $('#vinVeh').val("")
-//        $('#no-existing-vin').show()
-//      } else {
-//        $('#vinVeh').val(dbVehicles[index].vehicle.vin.toUpperCase())
-//        $('#no-existing-vin').hide()
-//      }
-
-//      $('#modelVeh').val(dbVehicles[index].vehicle.model)
-//      $('#colorView').val(dbVehicles[index].vehicle.color)
-//      $('#validRegView').val(dbVehicles[index].vehicle.validRegistration)
-//      $('#validInsView').val(dbVehicles[index].vehicle.validInsurance)
-//      $('#roVeh').val(dbVehicles[index].vehicle.registeredOwner)
-//      $('#stolenView').val(dbVehicles[index].vehicle.isStolen)
-//    }
-
-   function loadFirearmData(index) {
-     $('#firearmID').val(dbFirearms[index]._id)
-     $('#serial-number-details').val(dbFirearms[index].firearm.serialNumber)
-     $('#weapon-type-details').val(dbFirearms[index].firearm.weaponType)
-     //Because from the backend we already split the person_id from the person name and dob, we now
-     //need to rejoin those values back together for #registeredOwner-details
-     if (dbFirearms[index].firearm.registeredOwner == 'N/A') {
-       $('#registeredOwner-details').val(`${dbFirearms[index].firearm.registeredOwner}`)
-     } else {
-       $('#registeredOwner-details').val(`${dbFirearms[index].firearm.registeredOwnerID}+${dbFirearms[index].firearm.registeredOwner}`)
-     }
-     $('#is-stolen-details').val(dbFirearms[index].firearm.isStolen)
-   }
+  //  function loadFirearmData(index) {
+  //    $('#firearmID').val(dbFirearms[index]._id)
+  //    $('#serial-number-details').val(dbFirearms[index].firearm.serialNumber)
+  //    $('#weapon-type-details').val(dbFirearms[index].firearm.weaponType)
+  //    //Because from the backend we already split the person_id from the person name and dob, we now
+  //    //need to rejoin those values back together for #registeredOwner-details
+  //    if (dbFirearms[index].firearm.registeredOwner == 'N/A') {
+  //      $('#registeredOwner-details').val(`${dbFirearms[index].firearm.registeredOwner}`)
+  //    } else {
+  //      $('#registeredOwner-details').val(`${dbFirearms[index].firearm.registeredOwnerID}+${dbFirearms[index].firearm.registeredOwner}`)
+  //    }
+  //    $('#is-stolen-details').val(dbFirearms[index].firearm.isStolen)
+  //  }
 
    function fillAccountDetails() {
      $('#accountEmail').val(dbUser.user.email)
