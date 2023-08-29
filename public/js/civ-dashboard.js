@@ -14,9 +14,6 @@ $.delete = function (url, data, callback, type) {
 };
 
 function loadDriversLicense(myVar, index) {
-  // debug log:
-  // console.log('civilian: ', myVar[index].civilian)
-
   //setup pre-reqs on license
   $(".donor-block").removeClass("show").addClass("hide");
   $(".veteran-block").removeClass("show").addClass("hide");
@@ -411,14 +408,12 @@ function loadCivSocketData(civID) {
 }
 
 function populateVehicleDetails(res) {
-  console.log("populate vehicle details: ", res);
   $("#vehicle-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
   pageVeh = 0;
   getVehicles();
 }
 
 function populateFirearmDetails(res) {
-  console.log("populate firearm details: ", res);
   $("#firearm-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
   $("#roFirearm").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
   $("#firearmOwnerID").val(`${res._id}`);
@@ -486,8 +481,6 @@ function populateCivSocketDetails(res) {
   var expDay = createdDate.getDate();
   var expMonth = createdDate.getMonth() + 1;
   var expYear = createdDate.getFullYear() + 10;
-  // debug log:
-  // console.log("load civ data: ", res.civilian)
 
   // pre-reqs to clear form between civilian clicks
   $("#height-imperial-view").prop("checked", false);
@@ -502,7 +495,6 @@ function populateCivSocketDetails(res) {
   $("#hair-color-view").val("");
   $("#deceasedView").text(res.civilian.deceased);
 
-  console.log("civilian details: ", res.civilian);
   // civilian details:
   $("#civilianID").val(res._id);
   $("#civilianIDView").text(res._id);
@@ -558,9 +550,6 @@ After a page reload, this data will be stored in memory so this method
 will not be called at that point in time. Ideally to save on memory inside the app
 we should probably swap to use sockets all the time. */
 function loadDriversLicenseSocket(res) {
-  // debug log:
-  // console.log('civilian: ', res.civilian)
-
   //setup pre-reqs on license
   $(".donor-block").removeClass("show").addClass("hide");
   $(".veteran-block").removeClass("show").addClass("hide");
@@ -814,7 +803,6 @@ $("#create-auto-civ-form").submit(function (e) {
   var myReq = {
     body: reqBody,
   };
-  // console.log(`[DEBUG]: myReq: ${myReq}`, myReq)
   socket.emit("create_new_civ", myReq);
 
   //socket that receives a response after creating a new civilian
@@ -1131,7 +1119,6 @@ $("#update-delete-civ-form button").click(function (e) {
       userID: $("#userID").val(),
     },
   };
-  console.log("[DEBUG] update-delete-civ-button myReq: ", myReq);
   if (submitter_btn === "delete") {
     socket.emit("delete_civilian", myReq);
   } else if (submitter_btn === "update") {
@@ -1249,7 +1236,6 @@ function getVehicles() {
     civID: $("#civilianIDView").text(),
     page: 0,
   };
-  console.log("myCivObj: ", myCivObj);
   $("#vehicles-thumbnail").empty();
   socket.emit("fetch_veh_cards", myCivObj);
   socket.on("load_veh_cards_result", (res) => {
