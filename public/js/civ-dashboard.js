@@ -15,6 +15,7 @@ $.delete = function (url, data, callback, type) {
 
 function loadDriversLicense(myVar, index) {
   //setup pre-reqs on license
+  $("#drivers-license").clear();
   $(".donor-block").removeClass("show").addClass("hide");
   $(".veteran-block").removeClass("show").addClass("hide");
   $(".delete-license-btn").removeClass("show").addClass("hide");
@@ -40,45 +41,9 @@ function loadDriversLicense(myVar, index) {
     myVar[index].civilian.gender == ""
       ? ""
       : myVar[index].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
-  // height needs to be converted to ft in or cm depending on the heightClassification
-  if (
-    myVar[index].civilian.height == undefined ||
-    myVar[index].civilian.height == "" ||
-    myVar[index].civilian.height == "NaN"
-  ) {
-    height = "";
-  } else {
-    switch (myVar[index].civilian.heightClassification) {
-      case "imperial":
-        var feet = Math.floor(myVar[index].civilian.height / 12); // just dividing by 12 to get the feet
-        var inches = ("0" + (myVar[index].civilian.height % 12)).slice(-2); // mod by 12 to get remainder, but also pad with a '0' if less than '10'
-        height = `${feet}'-${inches}"`; // ex: 5'-07"
-        break;
-      case "metric":
-        height = `${myVar[index].civilian.height} cm`;
-        break;
-      default:
-        height = myVar[index].civilian.height;
-    }
-  }
-  // weight just needs the appropriate label based on the weightClassification (lb or kg)
-  if (
-    myVar[index].civilian.weight == undefined ||
-    myVar[index].civilian.weight == ""
-  ) {
-    weight = "";
-  } else {
-    switch (myVar[index].civilian.weightClassification) {
-      case "imperial":
-        weight = `${myVar[index].civilian.weight} lb`;
-        break;
-      case "metric":
-        weight = `${myVar[index].civilian.weight} kg`;
-        break;
-      default:
-        weight = myVar[index].civilian.weight;
-    }
-  }
+
+  height = myVar[index].civilian.height;
+  weight = myVar[index].civilian.weight;
   var eyeColor =
     myVar[index].civilian.eyeColor == undefined ||
     myVar[index].civilian.eyeColor == ""
@@ -493,6 +458,8 @@ function populateCivSocketDetails(res) {
   $("#metric-weight-view").prop("checked", false);
   $("#eye-color-view").val("");
   $("#hair-color-view").val("");
+  $("#weightView").val("");
+  $("#heightView").val("");
   $("#deceasedView").text(res.civilian.deceased);
 
   // civilian details:

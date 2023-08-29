@@ -3246,7 +3246,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.post("/updateOrDeleteFirearm", auth, function (req, res) {
-    console.debug("update or delete firearm body: ", req.body);
+    // console.debug("update or delete firearm body: ", req.body);
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
       if (!exists(req.body.firearmID)) {
@@ -4676,7 +4676,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("clear_panic", (req) => {
-      //console.debug("clear req", req)
+      // console.debug("clear req", req)
       if (req.communityID != null && req.communityID != undefined) {
         var isValid = isValidObjectIdLength(
           req.communityID,
@@ -4978,7 +4978,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("update_alert_volume_slider", (myObj) => {
-      //console.debug('update alert volume slider: ', myObj)
+      // console.debug('update alert volume slider: ', myObj)
       if (exists(myObj)) {
         if (exists(myObj.dbUser)) {
           if (exists(myObj.dbUser._id)) {
@@ -5179,7 +5179,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("update_civilian", (req) => {
-      console.debug("update civilian socket: ", req);
+      // console.debug("update civilian socket: ", req);
       var isValid = isValidObjectIdLength(
         req.body.civID,
         "cannot update civilian with invalid objectID, socket: update_civilian"
