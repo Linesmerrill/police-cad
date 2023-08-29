@@ -2826,8 +2826,6 @@ a[aria-disabled="true"] {
 .modal-dialog-full-screen {
     width: 88%;
     height: 88%;
-    /* margin: 0; */
-    /* padding: 0; */
 }
 
 .modal-content-full-screen {
