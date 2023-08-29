@@ -358,15 +358,6 @@ function showList() {
   document.cookie = "persona_icon=list";
 }
 
-function showApps() {
-  $(".dataTables_filter").hide();
-  $("#personas-table-div").hide();
-  $("#personas-thumbnail").show();
-  $("#app-icon-personas").addClass("active-icon").removeClass("inactive-icon");
-  $("#list-icon-personas").addClass("inactive-icon").removeClass("active-icon");
-  document.cookie = "persona_icon=app";
-}
-
 function showVehicleList() {
   $(".dataTables_filter").hide();
   $("#vehicles-table-div").show();
@@ -376,15 +367,6 @@ function showVehicleList() {
   document.cookie = "vehicle_icon=list";
 }
 
-function showVehicleApps() {
-  $(".dataTables_filter").hide();
-  $("#vehicles-table-div").hide();
-  $("#vehicles-thumbnail").show();
-  $("#app-icon-vehicles").addClass("active-icon").removeClass("inactive-icon");
-  $("#list-icon-vehicles").addClass("inactive-icon").removeClass("active-icon");
-  document.cookie = "vehicle_icon=app";
-}
-
 function showFirearmsList() {
   $(".dataTables_filter").hide();
   $("#firearms-table-div").show();
@@ -392,15 +374,6 @@ function showFirearmsList() {
   $("#app-icon-firearms").addClass("inactive-icon").removeClass("active-icon");
   $("#list-icon-firearms").addClass("active-icon").removeClass("inactive-icon");
   document.cookie = "firearm_icon=list";
-}
-
-function showFirearmsApps() {
-  $(".dataTables_filter").hide();
-  $("#firearms-table-div").hide();
-  $("#firearms-thumbnail").show();
-  $("#app-icon-firearms").addClass("active-icon").removeClass("inactive-icon");
-  $("#list-icon-firearms").addClass("inactive-icon").removeClass("active-icon");
-  document.cookie = "firearm_icon=app";
 }
 
 function hideLicenseNotice() {
@@ -432,7 +405,26 @@ function loadCivSocketData(civID) {
   socket.on("load_civ_by_id_result", (res) => {
     //load civ data into UI
     populateCivSocketDetails(res);
+    populateVehicleDetails(res);
+    populateFirearmDetails(res);
   });
+}
+
+function populateVehicleDetails(res) {
+  console.log("populate vehicle details: ", res);
+  //TODO populate vehicle registered owner field
+  $("#vehicle-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+  // $("#registeredOwner-new-veh").append(
+  //   `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
+  // );
+}
+
+function populateFirearmDetails(res) {
+  console.log("populate firearm details: ", res);
+  //TODO populate firearm registered owner field
+  $("#registeredOwner-new-firearm").append(
+    `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
+  );
 }
 
 function loadVehSocketData(vehID) {
@@ -832,14 +824,13 @@ $("#create-civ-form").submit(function (e) {
         $(this).add();
       });
 
-    //append to list for updating a vehicle
-    $("#roVeh").append(
-      `<option value="${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
-    );
+    //set owner value for updating a vehicle
+    $("#roVeh").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+
     //append to list for creating a vehicle
-    $("#registeredOwner-new-veh").append(
-      `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
-    );
+    // $("#registeredOwner-new-veh").append(
+    //   `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
+    // );
     //append to list for updating a firearm
     $("#registeredOwner-details").append(
       `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
@@ -902,14 +893,13 @@ $("#create-auto-civ-form").submit(function (e) {
         $(this).add();
       });
 
-    //append to list for updating a vehicle
-    $("#roVeh").append(
-      `<option value="${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
-    );
+    //set owner for updating a vehicle
+    $("#roVeh").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+
     //append to list for creating a vehicle
-    $("#registeredOwner-new-veh").append(
-      `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
-    );
+    // $("#registeredOwner-new-veh").append(
+    //   `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
+    // );
     //append to list for updating a firearm
     $("#registeredOwner-details").append(
       `<option value="${res._id}+${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}">${res.civilian.firstName} ${res.civilian.lastName} | DOB: ${res.civilian.birthday}</option>`
@@ -1067,7 +1057,8 @@ $("#create-vehicle-form").submit(function (e) {
       color: $("#color").val(),
       validRegistration: $("#valid-registration").val(),
       validInsurance: $("#valid-insurance").val(),
-      registeredOwner: $("#registeredOwner-new-veh").val(),
+      registeredOwner: $("#vehicle-owner").val(),
+      registeredOwnerID: $("#civilianIDView").text(),
       isStolen: $("#is-stolen-new").val(),
       activeCommunityID: $("#new-veh-activeCommunityID-new-veh").val(),
       userID: $("#create-vehicle-user-id").val(),
@@ -1221,6 +1212,7 @@ $("#update-delete-civ-form button").click(function (e) {
       userID: $("#userID").val(),
     },
   };
+  console.log("[DEBUG] update-delete-civ-button myReq: ", myReq);
   if (submitter_btn === "delete") {
     socket.emit("delete_civilian", myReq);
   } else if (submitter_btn === "update") {
@@ -1332,20 +1324,72 @@ function getPrevCivPage() {
   });
 }
 
+function getVehicles() {
+  var socket = io();
+  var myCivObj = {
+    civID: $("#civilianIDView").text(),
+    page: 0,
+  };
+  console.log("myCivObj: ", myCivObj);
+  $("#vehicles-thumbnail").empty();
+  socket.emit("update_veh_page", myCivObj);
+  socket.on("load_veh_page_result", (res) => {
+    if (res === undefined || res === null) {
+      $("#issue-loading-vehicles-alert").show();
+    } else {
+      if (res.length < 1) {
+        // if we have 0 results back
+        $("#vehicles-loading").hide();
+        $("#no-vehicles-message").show();
+        $("#next-veh-page-btn").addClass("isDisabled");
+        $("#next-veh-page-btn").attr("onclick", "").unbind("click");
+        $("#prev-veh-page-btn").addClass("isDisabled");
+        $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
+      } else {
+        $("#no-vehicles-message").hide();
+        $("#vehicles-thumbnail").empty();
+        for (i = 0; i < res.length; i++) {
+          $("#issue-loading-vehicles-alert").hide();
+          $("#vehicles-thumbnail").append(
+            `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+        <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+          <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
+          <div class="caption">
+            <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
+            <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+          </div>
+        </div>
+      </div>`
+          );
+        }
+        $("#vehicles-loading").hide();
+        $("#prev-veh-page-btn").addClass("isDisabled");
+        $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
+        if (res.length < 12) {
+          $("#next-veh-page-btn").addClass("isDisabled");
+          $("#next-veh-page-btn").attr("onclick", "").unbind("click");
+        }
+      }
+    }
+  });
+}
+
 function getNextVehPage() {
   pageVeh = pageVeh + 1;
   var socket = io();
   var myObj = {
-    dbUser: dbUser,
+    civID: $("#civilianIDView").text(),
     page: pageVeh,
   };
   socket.emit("update_veh_page", myObj);
   socket.on("load_veh_page_result", (res) => {
     // load content on page
     $("#vehicles-thumbnail").empty();
-    for (i = 0; i < res.length; i++) {
-      $("#vehicles-thumbnail").append(
-        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+    if (res == null || res == undefined) {
+    } else {
+      for (i = 0; i < res.length; i++) {
+        $("#vehicles-thumbnail").append(
+          `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
       <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
         <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
         <div class="caption">
@@ -1354,18 +1398,21 @@ function getNextVehPage() {
         </div>
       </div>
     </div>`
-      );
+        );
+      }
+      if (res.length < 12) {
+        // if we have reached the end of the data, then gray out the 'next' button
+        $("#next-veh-page-btn").addClass("isDisabled");
+        // page = page - 1
+        $("#next-veh-page-btn").attr("onclick", "").unbind("click");
+      } else {
+        $("#next-veh-page-btn")
+          .attr("onclick", "getNextVehPage()")
+          .bind("click");
+      }
+      $("#prev-veh-page-btn").removeClass("isDisabled");
+      $("#prev-veh-page-btn").attr("onclick", "getPrevVehPage()").bind("click");
     }
-    if (res.length < 12) {
-      // if we have reached the end of the data, then gray out the 'next' button
-      $("#next-veh-page-btn").addClass("isDisabled");
-      // page = page - 1
-      $("#next-veh-page-btn").attr("onclick", "").unbind("click");
-    } else {
-      $("#next-veh-page-btn").attr("onclick", "getNextVehPage()").bind("click");
-    }
-    $("#prev-veh-page-btn").removeClass("isDisabled");
-    $("#prev-veh-page-btn").attr("onclick", "getPrevVehPage()").bind("click");
   });
 }
 
@@ -1378,16 +1425,18 @@ function getPrevVehPage() {
   }
   var socket = io();
   var myObj = {
-    dbUser: dbUser,
+    civID: $("#civilianIDView").text(),
     page: pageVeh,
   };
   socket.emit("update_veh_page", myObj);
   socket.on("load_veh_page_result", (res) => {
     // load content on page
     $("#vehicles-thumbnail").empty();
-    for (i = 0; i < res.length; i++) {
-      $("#vehicles-thumbnail").append(
-        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+    if (res == null || res == undefined) {
+    } else {
+      for (i = 0; i < res.length; i++) {
+        $("#vehicles-thumbnail").append(
+          `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
       <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
         <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
         <div class="caption">
@@ -1396,10 +1445,70 @@ function getPrevVehPage() {
         </div>
       </div>
     </div>`
-      );
+        );
+      }
+      $("#next-veh-page-btn").removeClass("isDisabled");
+      $("#next-veh-page-btn").attr("onclick", "getNextVehPage()").bind("click");
     }
-    $("#next-veh-page-btn").removeClass("isDisabled");
-    $("#next-veh-page-btn").attr("onclick", "getNextVehPage()").bind("click");
+  });
+}
+
+function hideVehicleMessage() {
+  $("#no-vehicles-message").hide();
+}
+
+function hideFirearmMessage() {
+  $("#no-firearms-message").hide();
+}
+
+function getFirearms() {
+  $("#no-firearms-message").hide();
+  var myCivObj = {
+    civID: $("#civilianIDView").text(),
+    page: 0,
+  };
+  $("#firearms-thumbnail").empty();
+  socket.emit("update_gun_page", myCivObj);
+  socket.on("load_gun_page_result", (res) => {
+    console.log("load_gun_page_result res: ", res);
+    if (res === undefined || res === null) {
+      $("#issue-loading-firearms-alert").show();
+    } else {
+      $("#issue-loading-firearms-alert").hide();
+      if (res.length < 1) {
+        // if we have 0 results back
+        $("#firearms-loading").hide();
+        $("#no-firearms-message").show();
+        $("#next-gun-page-btn").addClass("isDisabled");
+        $("#next-gun-page-btn").attr("onclick", "").unbind("click");
+        $("#prev-gun-page-btn").addClass("isDisabled");
+        $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
+      } else {
+        $("#no-firearms-message").hide();
+        $("#firearms-thumbnail").empty();
+        for (i = 0; i < res.length; i++) {
+          $("#firearms-thumbnail").append(
+            `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
+      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+        <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
+        <div class="caption text-capitalize">
+          <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
+          <h5 class="color-white">${res[i].firearm.weaponType}</h5>
+          <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
+        </div>
+      </div>
+    </div>`
+          );
+        }
+        $("#firearms-loading").hide();
+        $("#prev-gun-page-btn").addClass("isDisabled");
+        $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
+        if (res.length < 12) {
+          $("#next-gun-page-btn").addClass("isDisabled");
+          $("#next-gun-page-btn").attr("onclick", "").unbind("click");
+        }
+      }
+    }
   });
 }
 
@@ -1407,7 +1516,7 @@ function getNextGunPage() {
   pageGun = pageGun + 1;
   var socket = io();
   var myObj = {
-    dbUser: dbUser,
+    civID: $("#civilianIDView").text(),
     page: pageGun,
   };
   socket.emit("update_gun_page", myObj);
@@ -1450,7 +1559,7 @@ function getPrevGunPage() {
   }
   var socket = io();
   var myObj = {
-    dbUser: dbUser,
+    civID: $("#civilianIDView").text(),
     page: pageGun,
   };
   socket.emit("update_gun_page", myObj);

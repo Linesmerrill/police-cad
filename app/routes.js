@@ -314,72 +314,17 @@ module.exports = function (app, passport, server) {
   app.get("/civ-dashboard", authCheck, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
-    // TODO future spot of improvement; create a single route in the external api to
-    // fetch all this information. Could leverage concurrency and return all that info
-    // in a single call back to this app.
-    axios
-      .get(
-        `${policeCadApiUrl}/api/v1/civilians/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}&limit=12`,
-        config
-      )
-      .then(function (dbCivilians) {
-        if (!exists(dbCivilians.data)) {
-          res.status(400);
-          res.redirect("back");
-        } else {
-          axios
-            .get(
-              `${policeCadApiUrl}/api/v1/vehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}&limit=12`,
-              config
-            )
-            .then(function (dbVehicles) {
-              if (!exists(dbVehicles.data)) {
-                res.status(400);
-                res.redirect("back");
-              } else {
-                axios
-                  .get(
-                    `${policeCadApiUrl}/api/v1/firearms/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}&limit=12`,
-                    config
-                  )
-                  .then(function (dbFirearms) {
-                    if (!exists(dbFirearms.data)) {
-                      res.status(400);
-                      res.redirect("back");
-                    } else {
-                      res.render("civ-dashboard", {
-                        user: req.user,
-                        personas: dbCivilians.data,
-                        vehicles: dbVehicles.data,
-                        firearms: dbFirearms.data,
-                        context: context,
-                        referer: encodeURIComponent("/civ-dashboard"),
-                        redirect: encodeURIComponent(redirect),
-                      });
-                    }
-                  })
-                  .catch((err) => {
-                    res.status(400);
-                    res.redirect("back");
-                  });
-              }
-            })
-            .catch((err) => {
-              res.status(400);
-              res.redirect("back");
-            });
-        }
-      })
-      .catch((err) => {
-        res.status(400);
-        res.redirect("back");
-      });
+    res.render("civ-dashboard", {
+      user: req.user,
+      context: context,
+      referer: encodeURIComponent("/civ-dashboard"),
+      redirect: encodeURIComponent(redirect),
+    });
   });
 
   app.get("/ems-dashboard", authCheck, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
-
     axios
       .get(
         `${policeCadApiUrl}/api/v1/emsVehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
@@ -5474,10 +5419,10 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("update_veh_page", (req) => {
-      // console.debug("get update_veh_page socket: ", req);
+      console.debug("get update_veh_page socket: ", req);
       axios
         .get(
-          `${policeCadApiUrl}/api/v1/vehicles/user/${req.dbUser._id}?active_community_id=${req.dbUser.user.activeCommunity}&limit=12&page=${req.page}`,
+          `${policeCadApiUrl}/api/v1/vehicles/registered-owner/${req.civID}?limit=12&page=${req.page}`,
           config
         )
         .then(function (dbVehicles) {
@@ -5497,7 +5442,7 @@ module.exports = function (app, passport, server) {
       // console.debug("get update_gun_page socket: ", req);
       axios
         .get(
-          `${policeCadApiUrl}/api/v1/firearms/user/${req.dbUser._id}?active_community_id=${req.dbUser.user.activeCommunity}&limit=12&page=${req.page}`,
+          `${policeCadApiUrl}/api/v1/firearms/registered-owner/${req.civID}?limit=12&page=${req.page}`,
           config
         )
         .then(function (dbFirearms) {
