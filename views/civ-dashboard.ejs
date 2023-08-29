@@ -1594,7 +1594,7 @@
     civID: $("#civilianIDView").text(),
     page: page
   }
-  socket.emit("update_page", myObj);
+  socket.emit("fetch_civ_cards", myObj);
   socket.on("load_page_result", (res) => {
     if (res === undefined || res === null) {
       $('#issue-loading-personnel-alert').show();

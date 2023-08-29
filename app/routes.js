@@ -5398,8 +5398,8 @@ module.exports = function (app, passport, server) {
       }
     });
 
-    socket.on("update_page", (req) => {
-      // console.debug("get update_page socket: ", req);
+    socket.on("fetch_civ_cards", (req) => {
+      // console.debug("get fetch_civ_cards socket: ", req);
       axios
         .get(
           `${policeCadApiUrl}/api/v1/civilians/user/${req.dbUser._id}?active_community_id=${req.dbUser.user.activeCommunity}&limit=12&page=${req.page}`,
@@ -5418,8 +5418,8 @@ module.exports = function (app, passport, server) {
         });
     });
 
-    socket.on("update_veh_page", (req) => {
-      console.debug("get update_veh_page socket: ", req);
+    socket.on("fetch_veh_cards", (req) => {
+      console.debug("get fetch_veh_cards socket: ", req);
       axios
         .get(
           `${policeCadApiUrl}/api/v1/vehicles/registered-owner/${req.civID}?limit=12&page=${req.page}`,
@@ -5438,8 +5438,8 @@ module.exports = function (app, passport, server) {
         });
     });
 
-    socket.on("update_gun_page", (req) => {
-      // console.debug("get update_gun_page socket: ", req);
+    socket.on("fetch_gun_cards", (req) => {
+      // console.debug("get fetch_gun_cards socket: ", req);
       axios
         .get(
           `${policeCadApiUrl}/api/v1/firearms/registered-owner/${req.civID}?limit=12&page=${req.page}`,

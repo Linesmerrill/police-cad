@@ -1260,7 +1260,7 @@ function getNextCivPage() {
     dbUser: dbUser,
     page: page,
   };
-  socket.emit("update_page", myObj);
+  socket.emit("fetch_civ_cards", myObj);
   socket.on("load_page_result", (res) => {
     // load content on page
     $("#personas-thumbnail").empty();
@@ -1302,7 +1302,7 @@ function getPrevCivPage() {
     dbUser: dbUser,
     page: page,
   };
-  socket.emit("update_page", myObj);
+  socket.emit("fetch_civ_cards", myObj);
   socket.on("load_page_result", (res) => {
     // load content on page
     $("#personas-thumbnail").empty();
@@ -1332,7 +1332,7 @@ function getVehicles() {
   };
   console.log("myCivObj: ", myCivObj);
   $("#vehicles-thumbnail").empty();
-  socket.emit("update_veh_page", myCivObj);
+  socket.emit("fetch_veh_cards", myCivObj);
   socket.on("load_veh_page_result", (res) => {
     if (res === undefined || res === null) {
       $("#issue-loading-vehicles-alert").show();
@@ -1381,7 +1381,7 @@ function getNextVehPage() {
     civID: $("#civilianIDView").text(),
     page: pageVeh,
   };
-  socket.emit("update_veh_page", myObj);
+  socket.emit("fetch_veh_cards", myObj);
   socket.on("load_veh_page_result", (res) => {
     // load content on page
     $("#vehicles-thumbnail").empty();
@@ -1428,7 +1428,7 @@ function getPrevVehPage() {
     civID: $("#civilianIDView").text(),
     page: pageVeh,
   };
-  socket.emit("update_veh_page", myObj);
+  socket.emit("fetch_veh_cards", myObj);
   socket.on("load_veh_page_result", (res) => {
     // load content on page
     $("#vehicles-thumbnail").empty();
@@ -1468,7 +1468,7 @@ function getFirearms() {
     page: 0,
   };
   $("#firearms-thumbnail").empty();
-  socket.emit("update_gun_page", myCivObj);
+  socket.emit("fetch_gun_cards", myCivObj);
   socket.on("load_gun_page_result", (res) => {
     console.log("load_gun_page_result res: ", res);
     if (res === undefined || res === null) {
@@ -1519,7 +1519,7 @@ function getNextGunPage() {
     civID: $("#civilianIDView").text(),
     page: pageGun,
   };
-  socket.emit("update_gun_page", myObj);
+  socket.emit("fetch_gun_cards", myObj);
   socket.on("load_gun_page_result", (res) => {
     // load content on page
     $("#firearms-thumbnail").empty();
@@ -1562,7 +1562,7 @@ function getPrevGunPage() {
     civID: $("#civilianIDView").text(),
     page: pageGun,
   };
-  socket.emit("update_gun_page", myObj);
+  socket.emit("fetch_gun_cards", myObj);
   socket.on("load_gun_page_result", (res) => {
     // load content on page
     $("#firearms-thumbnail").empty();
