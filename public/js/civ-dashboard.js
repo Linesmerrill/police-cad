@@ -521,46 +521,6 @@ function populateCivSocketDetails(res) {
 
   // advanced civilian details:
   $("#gender-view").val(res.civilian.gender);
-  $("#height-imperial-view").prop(
-    "checked",
-    res.civilian.heightClassification == "imperial"
-  );
-  $("#height-metric-view").prop(
-    "checked",
-    res.civilian.heightClassification == "metric"
-  );
-  // because we accept 'imperial' and 'metric' as height classifications
-  // we need to figure out which we need to display for the height input boxes
-  if (res.civilian.heightClassification === "imperial") {
-    //if we have imperial height, we need to convert inches into feet,inches
-    let foot = parseInt(parseInt(res.civilian.height) / 12);
-    let inches = parseFloat(res.civilian.height) % 12;
-    $("#foot-view").val(foot);
-    $("#inches-view").val(inches);
-  } else if (res.civilian.heightClassification === "metric") {
-    $("#centimeters-view").val(res.civilian.height);
-    $(".height-imperial").removeClass("show").addClass("hide");
-    $(".height-metric").removeClass("hide").addClass("show");
-  } else {
-    $(".height-imperial").removeClass("show").addClass("hide"); //if none are selected, then just hide the input fields
-  }
-  if (res.civilian.weightClassification === "imperial") {
-    $("#imperial-weight-view").prop("checked", true);
-    $("#pounds-view").val(res.civilian.weight);
-    $("#kilos-view").val(""); //clear out kilos value stored in page
-    $(".weight-imperial").removeClass("hide").addClass("show");
-    $(".weight-metric").removeClass("show").addClass("hide");
-  } else if (res.civilian.weightClassification === "metric") {
-    $("#metric-weight-view").prop("checked", true);
-    $("#pounds-view").val(""); //clear out lbs value stored in page
-    $("#kilos-view").val(res.civilian.weight);
-    $(".weight-metric").removeClass("hide").addClass("show");
-    $(".weight-imperial").removeClass("show").addClass("hide");
-  } else {
-    $(".weight-imperial").removeClass("show").addClass("hide"); //if none are selected, then just hide the input fields
-    $(".weight-metric").removeClass("show").addClass("hide");
-  }
-
   $("#eye-color-view").val(res.civilian.eyeColor);
   $("#hair-color-view").val(res.civilian.hairColor);
 
@@ -918,71 +878,47 @@ function autoCivCreator(gender, firearmLicenseMarker) {
         civLastName = faker.name.lastName();
     }
   }
-  // imperial vs metric
-  var heightCentimeters = "";
-  var heightFoot = "";
-  var weightMetric = false;
-  var imperial = false;
-  var weightImperial = false;
-  var metric = false;
-  var heightInches = "";
-  var pounds = "";
+
+  var height = "";
+  var weight = "";
   if (faker.datatype.boolean()) {
-    imperial = true;
-    weightImperial = true;
-    heightInches = faker.datatype.number({
-      min: 0,
-      max: 12,
-    }); //inches
-    heightFoot = faker.datatype.number({
-      min: 4,
-      max: 7,
-    }); //feet
-    pounds = faker.datatype.number({
+    weight = `${faker.datatype.number({
       min: 75,
       max: 700,
-    }); //lbs
-  } else {
-    //metric
-    imperial = false;
-    metric = true;
-    weightMetric = true;
-    heightCentimeters = faker.datatype.number({
-      min: 92,
-      max: 205,
-    }); //cm
-    kilos = faker.datatype.number({
-      min: 45,
-      max: 400,
-    }); //kgs
+    })}lbs`;
+    height = `${faker.datatype.number({
+      min: 4,
+      max: 7,
+    })}ft ${faker.datatype.number({
+      min: 0,
+      max: 12,
+    })}in`;
   }
+
   const now = moment();
+  var birthday = moment(faker.date.past(50, now.subtract(18, "years"))).format(
+    "YYYY-MM-DD"
+  );
+  var age = moment().diff(birthday, "years", false);
   body = {
     civFirstName: civFirstName,
     civLastName: civLastName,
     licenseStatus: "1", //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
-    birthday: moment(faker.date.past(50, now.subtract(18, "years"))).format(
-      "YYYY-MM-DD"
-    ),
+    birthday: birthday,
+    age: age,
     warrants: null,
     address: faker.datatype.boolean()
-      ? `${faker.address.streetAddress(true)}, LS ${faker.address.zipCode(
-          "#####"
-        )}`
+      ? `${faker.address.streetAddress(true)}`
+      : "",
+    addressZip: faker.datatype.boolean()
+      ? `${faker.address.zipCode("#####")}`
       : "",
     occupation: faker.datatype.boolean() ? faker.name.jobType() : "",
     firearmLicense: firearmLicenseMarker,
     activeCommunityID: $("#new-civ-activeCommunityID-new-civ").val(),
     gender: gender,
-    heightFoot: heightFoot,
-    heightInches: heightInches,
-    heightCentimeters: heightCentimeters,
-    weightImperial: weightImperial,
-    imperial: imperial,
-    metric: metric,
-    pounds: pounds,
-    kilos: kilos,
-    weightMetric: weightMetric,
+    height: height,
+    weight: weight,
     eyeColor: faker.datatype.boolean() ? faker.commerce.color() : "",
     hairColor: faker.datatype.boolean() ? faker.commerce.color() : "",
     organDonor: faker.datatype.boolean(),
