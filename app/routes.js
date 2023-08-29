@@ -5179,7 +5179,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("update_civilian", (req) => {
-      // console.debug('update civilian socket: ', req)
+      console.debug("update civilian socket: ", req);
       var isValid = isValidObjectIdLength(
         req.body.civID,
         "cannot update civilian with invalid objectID, socket: update_civilian"
@@ -5428,7 +5428,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("fetch_gun_cards", (req) => {
-      console.debug("get fetch_gun_cards socket: ", req);
+      // console.debug("get fetch_gun_cards socket: ", req);
       axios
         .get(
           `${policeCadApiUrl}/api/v1/firearms/registered-owner/${req.civID}?limit=8&page=${req.page}`,
@@ -5438,7 +5438,7 @@ module.exports = function (app, passport, server) {
           if (!exists(dbFirearms.data)) {
             return socket.emit("load_gun_cards_result", undefined);
           } else {
-            console.debug("load_gun_cards_result response: ", dbFirearms.data);
+            // console.debug("load_gun_cards_result response: ", dbFirearms.data);
             return socket.emit("load_gun_cards_result", dbFirearms.data);
           }
         })

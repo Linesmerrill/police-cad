@@ -466,6 +466,17 @@ function populateFirearmSocketDetails(res) {
   $("#is-stolen-details").val(res.firearm.isStolen);
 }
 
+function getAge(date) {
+  var today = new Date();
+  var yearDiff = today.getFullYear() - date.getFullYear();
+  var monthDiff = today.getMonth() - date.getMonth();
+  var dayDiff = today.getDate() - date.getDate();
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+    yearDiff--;
+  }
+  return yearDiff;
+}
+
 function populateCivSocketDetails(res) {
   loadDriversLicenseSocket(res);
   var firstName = res.civilian.firstName;
@@ -491,6 +502,7 @@ function populateCivSocketDetails(res) {
   $("#hair-color-view").val("");
   $("#deceasedView").text(res.civilian.deceased);
 
+  console.log("civilian details: ", res.civilian);
   // civilian details:
   $("#civilianID").val(res._id);
   $("#civilianIDView").text(res._id);
@@ -501,6 +513,11 @@ function populateCivSocketDetails(res) {
   $("#firearmLicenseView").val(res.civilian.firearmLicense);
   $("#addressView").val(res.civilian.address);
   $("#occupationView").val(res.civilian.occupation);
+  $("#ageView").val(res.civilian.age);
+  $("#weightView").val(res.civilian.weight);
+  $("#heightView").val(res.civilian.height);
+  $("#zipCodeView").val(res.civilian.addressZip);
+  $("#middleInitial").val(res.civilian.middleInitial);
 
   // advanced civilian details:
   $("#gender-view").val(res.civilian.gender);
@@ -761,23 +778,19 @@ $("#create-civ-form").submit(function (e) {
     body: {
       civFirstName: $("#civ-first-name").val(),
       civLastName: $("#civ-last-name").val(),
+      civMiddleInitial: $("#middleInitial").val(),
       licenseStatus: "1", //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
       ticketCount: $("#ticket-count").val(),
       birthday: $("#birthday").val(),
       warrants: $("#warrants").val(),
       address: $("#address").val(),
+      addressZip: $("#zipCode").val(),
       occupation: $("#occupation").val(),
       firearmLicense: $("#firearmLicense").val(),
       gender: $("#gender").val(),
-      imperial: $("#imperial").is(":checked"), //heightClassification
-      metric: $("#metric").is(":checked"), //heightClassification
-      heightFoot: $("#foot").val(),
-      heightInches: $("#inches").val(),
-      heightCentimeters: $("#centimeters").val(),
-      weightImperial: $("#imperial-weight").is(":checked"), //weightClassification
-      weightMetric: $("#metric-weight").is(":checked"), //weightClassification
-      kilos: $("#kilos").val(),
-      pounds: $("#pounds").val(),
+      height: $("#heightView").val(),
+      weight: $("#weightView").val(),
+      age: $("#ageView").val(),
       eyeColor: $("#eyeColor").val(),
       hairColor: $("#hairColor").val(),
       organDonor: $("#organDonor").is(":checked"),
@@ -1163,21 +1176,17 @@ $("#update-delete-civ-form button").click(function (e) {
       civID: $("#civilianIDView").text(),
       civFirstName: $("#firstName").val(),
       civLastName: $("#lastName").val(),
+      civMiddleInitial: $("#middleInitial").val(),
       licenseStatus: "1", //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
       birthday: $("#delBirthday").val(),
       address: $("#addressView").val(),
+      addressZip: $("#zipCodeView").val(),
+      age: $("#ageView").val(),
       occupation: $("#occupationView").val(),
       firearmLicense: $("#firearmLicenseView").val(),
       gender: $("#gender-view").val(),
-      imperial: $("#height-imperial-view").is(":checked"), //heightClassification
-      metric: $("#height-metric-view").is(":checked"), //heightClassification
-      heightFoot: $("#foot-view").val(),
-      heightInches: $("#inches-view").val(),
-      heightCentimeters: $("#centimeters-view").val(),
-      weightImperial: $("#imperial-weight-view").is(":checked"), //weightClassification
-      weightMetric: $("#metric-weight-view").is(":checked"), //weightClassification
-      kilos: $("#kilos-view").val(),
-      pounds: $("#pounds-view").val(),
+      weight: $("#weightView").val(),
+      height: $("#heightView").val(),
       eyeColor: $("#eye-color-view").val(),
       hairColor: $("#hair-color-view").val(),
       organDonor: $("#organ-donor-view").is(":checked"),

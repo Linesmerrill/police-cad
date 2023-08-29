@@ -805,34 +805,34 @@
                     </div>
                   </div>
 
-                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15 required">
                     <label class="control-label" for="firstName">First Name:</label>
                     <input id="firstName" name="firstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
                   </div>
 
-                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15 required">
                     <label class="control-label" for="lastNameView">Last Name:</label>
                     <input id="lastName" name="lastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
                   </div>
 
                   <div class="form-group col-xs-1 col-md-1 margin-left-neg-15">
                     <label class="control-label" for="middleInitialView">MI:</label>
-                    <input id="middleInitial" name="middleInitial" type="text" placeholder="MI" class="form-control input-md" data-trigger="middle-initial-popover" data-content="* Middle initial cannot contain spaces.">
+                    <input id="middleInitial" name="middleInitial" type="text" placeholder="MI" class="form-control input-md uppercase" maxlength="1" data-trigger="middle-initial-popover" data-content="* Middle initial cannot contain spaces.">
                   </div>
 
-                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15 required">
                     <label class="control-label" for="birthdayView">Date of Birth:</label>
                     <input id="delBirthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
                   </div>
 
-                  <div class="form-group col-xs-1 col-md-1 margin-left-neg-15">
+                  <div class="form-group col-xs-1 col-md-1 margin-left-neg-15 required">
                     <label class="control-label" for="ageView">Age:</label>
-                    <input id="ageView" name="age" type="text" class="form-control input-md" disabled>
+                    <input id="ageView" name="age" type="text" class="form-control input-md disabled-color" required readonly="readonly">
                   </div>
 
                   <div class="form-group col-xs-6 col-md-6 margin-left-neg-15">
                     <label class="control-label" for="addressView">Address:</label>
-                    <input id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md uppercase"></input>
+                    <input id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md capitalize"></input>
                   </div>
 
                   <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
@@ -844,21 +844,6 @@
                     <label class="control-label" for="occupationView">Occupation:</label>
                     <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md capitalize">
                   </div>
-
-                  <!-- TODO move out of this section and maybe to top -->
-                <!-- <div class="form-group">
-                  <label class="col-md-4 control-label" for="deceasedView">Deceased:</label>
-                  <div class="col-md-4">
-                    <label id="deceasedView" name="deceased" type="text" placeholder="Deceased" class="form-control"></label>
-                  </div>
-                </div> -->
-
-                <!-- <div class="col-md-12 text-align-center margin-bottom-1">
-                  <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
-                  <input type="hidden" id="userBtnValue" value="">
-                  <button type="submit" value="update" name="action" style="cursor: pointer" class="btn btn-info" onclick="updateUserBtnValue('update')">Update Civilian</button>
-                  <button type="submit" value="delete" name="action" style="cursor: pointer" class="btn btn-danger" onclick="updateUserBtnValue('delete')">Delete Civilian</button>
-                </div> -->
 
                 <hr style="width: 88%;max-width: 100rem;">
                 <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details <span class="color-gray">(Optional)</span></h5>
@@ -874,63 +859,10 @@
                     </select>
                 </div>
 
-                <!-- Radio -->
-                <!-- <div class="form-group col-xs-5 col-md-5 margin-left-neg-15">
-                  <label class="control-label" for="heightClassificationView">Height</label>
-                    <input id="height-imperial-view" value="imperial" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-imperial', 'height-metric')" checked> Imperial <span class="color-gray">ft.in.</span>
-                    <input id="height-metric-view" value="metric" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-metric', 'height-imperial')"> Metric <span class="color-gray">cm.</span>
-                </div> -->
-
-                <!-- Text input-->
-                <!-- <div class="form-group height-imperial">
-                  <label class="col-md-4 control-label" for="heightView">Height</label>
-                  <div class="col-md-2 margin-bottom-1">
-                    <input id="foot-view" name="heightFoot" type="number" min="0" max="15" placeholder="ft." class="form-control input-md">
-                  </div>
-                  <div class="col-md-2">
-                    <input id="inches-view" name="heightInches" type="number" min="0" max="12" placeholder="in." class="form-control input-md">
-                  </div>
-                </div> -->
-
-                <!-- Text input-->
-                <!-- <div class="form-group height-metric hide">
-                  <label class="col-md-4 control-label" for="heightView">Height</label>
-                  <div class="col-md-2">
-                    <input id="centimeters-view" name="heightCentimeters" min="0" max="457" type="number" placeholder="cm." class="form-control input-md">
-                  </div>
-                </div> -->
-
                 <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
                   <label class="control-label" for="heightView">Height:</label>
                   <input id="heightView" name="height" type="text" placeholder="Height" class="form-control input-md">
                 </div>
-
-                <!-- Radio -->
-                <!-- <div class="form-group">
-                  <label class="col-md-4 control-label" for="weight">Weight</label>
-                  <div class="col-md-1">
-                    <input id="imperial-weight-view" value="imperial" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-imperial', 'weight-metric')"> Imperial <span class="color-gray">lbs.</span>
-                  </div>
-                  <div class="col-md-1 col-md-offset-1">
-                    <input id="metric-weight-view" value="metric" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-metric', 'weight-imperial')"> Metric <span class="color-gray">kgs.</span>
-                  </div>
-                </div> -->
-
-                <!-- Text input-->
-                <!-- <div class="form-group weight-imperial">
-                  <label class="col-md-4 control-label" for="weight">Weight</label>
-                  <div class="col-md-2">
-                    <input id="pounds-view" name="weightImperial" min="0" max="1000" type="number" placeholder="lbs." class="form-control input-md">
-                  </div>
-                </div> -->
-
-                <!-- Text input-->
-                <!-- <div class="form-group weight-metric hide">
-                  <label class="col-md-4 control-label" for="weight">Weight</label>
-                  <div class="col-md-2">
-                    <input id="kilos-view" name="weightMetric" min="0" max="453" type="number" placeholder="kgs." class="form-control input-md">
-                  </div>
-                </div> -->
 
                 <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
                   <label class="control-label" for="weightView">Weight:</label>
@@ -960,7 +892,6 @@
                   <label class="control-label" for="veteran">Veteran?</label>
                     <input id="veteran-view" style="width: 2em;" type="checkbox" name="veteran" class="form-control">
                 </div>
-
 
                 <div class="col-md-12 text-align-center margin-bottom-1">
                   <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
@@ -1618,8 +1549,15 @@
     }
   })
 
-
   $(document).ready(function(){
+
+    $("#delBirthday").focusout(function(){
+      var value = $("#delBirthday").val()
+      var today = new Date(),
+      dob = new Date(value),
+      age = new Date(today - dob).getFullYear() - 1970;
+      $('#ageView').val(age);
+    });
 
     //used to filter the persona cards
     var personasDataTable = $('#personas-table').DataTable({
