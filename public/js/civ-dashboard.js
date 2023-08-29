@@ -413,6 +413,7 @@ function loadCivSocketData(civID) {
 function populateVehicleDetails(res) {
   console.log("populate vehicle details: ", res);
   $("#vehicle-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+  pageVeh = 0;
   getVehicles();
 }
 
@@ -421,6 +422,7 @@ function populateFirearmDetails(res) {
   $("#firearm-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
   $("#roFirearm").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
   $("#firearmOwnerID").val(`${res._id}`);
+  pageGun = 0;
   getFirearms();
 }
 
@@ -1340,6 +1342,11 @@ function getVehicles() {
         if (res.length < 8) {
           $("#next-veh-page-btn").addClass("isDisabled");
           $("#next-veh-page-btn").attr("onclick", "").unbind("click");
+        } else {
+          $("#next-veh-page-btn").removeClass("isDisabled");
+          $("#next-veh-page-btn")
+            .attr("onclick", "getNextVehPage()")
+            .bind("click");
         }
       }
     }
@@ -1477,6 +1484,11 @@ function getFirearms() {
         if (res.length < 8) {
           $("#next-gun-page-btn").addClass("isDisabled");
           $("#next-gun-page-btn").attr("onclick", "").unbind("click");
+        } else {
+          $("#next-gun-page-btn").removeClass("isDisabled");
+          $("#next-gun-page-btn")
+            .attr("onclick", "getNextGunPage()")
+            .bind("click");
         }
       }
     }
@@ -1514,6 +1526,7 @@ function getNextGunPage() {
       // page = page - 1
       $("#next-gun-page-btn").attr("onclick", "").unbind("click");
     } else {
+      $("#next-gun-page-btn").removeClass("isDisabled");
       $("#next-gun-page-btn").attr("onclick", "getNextGunPage()").bind("click");
     }
     $("#prev-gun-page-btn").removeClass("isDisabled");

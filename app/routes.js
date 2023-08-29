@@ -5428,7 +5428,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("fetch_gun_cards", (req) => {
-      // console.debug("get fetch_gun_cards socket: ", req);
+      console.debug("get fetch_gun_cards socket: ", req);
       axios
         .get(
           `${policeCadApiUrl}/api/v1/firearms/registered-owner/${req.civID}?limit=8&page=${req.page}`,
@@ -5438,6 +5438,7 @@ module.exports = function (app, passport, server) {
           if (!exists(dbFirearms.data)) {
             return socket.emit("load_gun_cards_result", undefined);
           } else {
+            console.debug("load_gun_cards_result response: ", dbFirearms.data);
             return socket.emit("load_gun_cards_result", dbFirearms.data);
           }
         })
