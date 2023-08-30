@@ -542,42 +542,8 @@ function loadDriversLicenseSocket(res) {
     res.civilian.gender == undefined || res.civilian.gender == ""
       ? ""
       : res.civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
-  // height needs to be converted to ft in or cm depending on the heightClassification
-  if (
-    res.civilian.height == undefined ||
-    res.civilian.height == "" ||
-    res.civilian.height == "NaN"
-  ) {
-    height = "";
-  } else {
-    switch (res.civilian.heightClassification) {
-      case "imperial":
-        var feet = Math.floor(res.civilian.height / 12); // just dividing by 12 to get the feet
-        var inches = ("0" + (res.civilian.height % 12)).slice(-2); // mod by 12 to get remainder, but also pad with a '0' if less than '10'
-        height = `${feet}'-${inches}"`; // ex: 5'-07"
-        break;
-      case "metric":
-        height = `${res.civilian.height} cm`;
-        break;
-      default:
-        height = res.civilian.height;
-    }
-  }
-  // weight just needs the appropriate label based on the weightClassification (lb or kg)
-  if (res.civilian.weight == undefined || res.civilian.weight == "") {
-    weight = "";
-  } else {
-    switch (res.civilian.weightClassification) {
-      case "imperial":
-        weight = `${res.civilian.weight} lb`;
-        break;
-      case "metric":
-        weight = `${res.civilian.weight} kg`;
-        break;
-      default:
-        weight = res.civilian.weight;
-    }
-  }
+  height = res.civilian.height;
+  weight = res.civilian.weight;
   var eyeColor =
     res.civilian.eyeColor == undefined || res.civilian.eyeColor == ""
       ? ""
