@@ -5440,7 +5440,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("create_new_license", (req) => {
-      console.debug("create new license socket: ", req);
+      // console.debug("create new license socket: ", req);
       var myNewLicense = new License();
       myNewLicense.socketCreateLicense(req);
       myNewLicense.save(function (err, dbLicenses) {
@@ -5563,7 +5563,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("fetch_license_cards", (req) => {
-      console.debug("get fetch_license_cards socket: ", req);
+      // console.debug("get fetch_license_cards socket: ", req);
       axios
         .get(
           `${policeCadApiUrl}/api/v1/licenses/owner/${req.civID}?limit=8&page=${req.page}`,
