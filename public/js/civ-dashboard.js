@@ -406,7 +406,7 @@ function populateFirearmDetails(res) {
 
 function populateLicenseDetails(res) {
   $("#license-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
-  pageVeh = 0;
+  pageLicense = 0;
   getLicenses();
 }
 
@@ -1632,5 +1632,85 @@ function getLicenses() {
         }
       }
     }
+  });
+}
+
+function getNextLicensePage() {
+  pageLicense = pageLicense + 1;
+  var socket = io();
+  var myObj = {
+    civID: $("#civilianIDView").text(),
+    page: pageLicense,
+  };
+  socket.emit("fetch_license_cards", myObj);
+  socket.on("load_license_cards_result", (res) => {
+    // load content on page
+    $("#licenses-thumbnail").empty();
+    for (i = 0; i < res.length; i++) {
+      $("#licenses-thumbnail").append(
+        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
+  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+    <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
+    <div class="caption text-capitalize">
+      <h4 class="color-white">${res[i].license.licenseType}</h4>
+      <h5 class="color-white">Status: ${res[i].license.status}</h5>
+      <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
+    </div>
+  </div>
+</div>`
+      );
+    }
+    if (res.length < 8) {
+      // if we have reached the end of the data, then gray out the 'next' button
+      $("#next-license-page-btn").addClass("isDisabled");
+      // page = page - 1
+      $("#next-license-page-btn").attr("onclick", "").unbind("click");
+    } else {
+      $("#next-license-page-btn").removeClass("isDisabled");
+      $("#next-license-page-btn")
+        .attr("onclick", "getNextLicensePage()")
+        .bind("click");
+    }
+    $("#prev-license-page-btn").removeClass("isDisabled");
+    $("#prev-license-page-btn")
+      .attr("onclick", "getPrevLicensePage()")
+      .bind("click");
+  });
+}
+
+function getPrevLicensePage() {
+  pageLicense = pageLicense - 1;
+  if (pageLicense < 1) {
+    pageLicense = 0;
+    $("#prev-license-page-btn").addClass("isDisabled");
+    $("#prev-license-page-btn").attr("onclick", "").unbind("click");
+  }
+  var socket = io();
+  var myObj = {
+    civID: $("#civilianIDView").text(),
+    page: pageLicense,
+  };
+  socket.emit("fetch_license_cards", myObj);
+  socket.on("load_license_cards_result", (res) => {
+    // load content on page
+    $("#licenses-thumbnail").empty();
+    for (i = 0; i < res.length; i++) {
+      $("#licenses-thumbnail").append(
+        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
+  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+    <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
+    <div class="caption text-capitalize">
+      <h4 class="color-white">${res[i].license.licenseType}</h4>
+      <h5 class="color-white">Status: ${res[i].license.status}</h5>
+      <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
+    </div>
+  </div>
+</div>`
+      );
+    }
+    $("#next-license-page-btn").removeClass("isDisabled");
+    $("#next-license-page-btn")
+      .attr("onclick", "getNextLicensePage()")
+      .bind("click");
   });
 }

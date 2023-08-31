@@ -2802,6 +2802,30 @@ a[data-toggle="collapse"].collapsed .rotate {
     cursor: pointer;
 }
 
+#next-license-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#next-license-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
+#prev-license-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#prev-license-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
 .isDisabled {
     cursor: not-allowed !important;
     opacity: 0.5 !important;
