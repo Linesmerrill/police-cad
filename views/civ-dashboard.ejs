@@ -626,6 +626,83 @@
     </div>
   </div>
 
+  <div id="newLicenseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="create-license-form" class="form-horizontal" action="#" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Add a New License</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <div class="form-group required">
+              <label class="col-md-3 control-label" for="license-type">License Type:</label>
+              <div class="col-md-5">
+                <select id="license-type" name="licenseType" class="form-control">
+                  <option value="driver license">Driver License</option>
+                  <option value="weapon license">Weapon License</option>
+                  <option value="hunting license">Hunting License</option>
+                  <option value="pilot license">Pilot License</option>
+                  <option value="fishing license">Fishing License</option>
+                  <option value="medical license">Medical License</option>
+                  <option value="attorney license">Attorney License</option>
+                  <option value="pastors license">Pastors License</option>
+                  <option value="driving license instructor">Driving License Instructor</option>
+                  <option value="pilots license instructor">Pilots License Instructor</option>
+                  <option value="liquor sales license">Liquor Sales License</option>
+                  <option value="food selling license">Food Selling License</option>
+                  <option value="legal business license">Legal Business License</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label class="col-md-3 control-label" for="license-status">License Status:</label>
+              <div class="col-md-5">
+                <select id="license-status" name="licenseStatus" class="form-control">
+                  <option value="pending">Pending</option>
+                  <option value="valid">Valid</option>
+                  <option value="expired">Expired</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label class="col-md-3 control-label" for="expirationDate">Expiration Date:</label>
+              <div class="col-md-5">
+              <input id="expirationDate" name="expirationDate" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-3 control-label" for="additionalNotes">Additional Notes:</label>
+              <div class="col-md-8">
+                <input id="additionalNotes" name="additionalNotes" type="text" placeholder="additional notes" class="form-control input-md">
+              </div>
+            </div>
+            
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="create-firearm"></label>
+              <div class="col-md-4">
+                <input type="hidden" id="license-owner" name="licenseOwner" value="">
+                <input type="hidden" id="new-license-userID" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-license-activeCommunityID" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
+                <button id="create-firearm" onclick="hideFirearmMessage()" class="btn btn-primary">Create</button>
+              </div>
+            </div>
+            </fieldset>
+            </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="addMedicationModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -985,159 +1062,47 @@
                 
               </div>
             </div>
+
+            <!-- dmv tab (showing all of the users licenses)-->
             <div class="tab-pane fade" id="pills-dmv">
-                <h5><ion-icon name="browsers-outline"></ion-icon> Drivers License</h5>
-                <form id="update-delete-civ-form" action="#" method="POST">
-                  <fieldset>
-                  <!-- Drivers License -->
-                  <div id="drivers-license" class="row">
-                    <div class="col-md-12">
-                  <div class="container col-sm-offset-2 col-md-offset-2" style="position: relative; margin-bottom: -130px;">
-                    <img src="/static/images/id-license.png" style="width: 301px; height: 186px; border-radius: 4%;">
-
-                    <!-- drivers license # -->
-                    <div>
-                        <label id="civilianIDViewLic" class="drivers-license-number" class="form-label"></label>
-                    </div>
-
-                    <!-- expiration date -->
-                    <div>
-                        <span class="expiration-title">EXP </span>
-                        <span id="license-expiration" class="expiration"></span>
-                    </div>
-
-                    <!-- last name -->
-                    <div>
-                        <span class="last-name-title">LN </span>
-                        <span id="lastNameLic" class="last-name" style="bottom: 144px;"></span>
-                    </div>
-
-                    <!-- first name -->
-                    <div>
-                        <span class="first-name-title">FN </span>
-                        <span id="firstNameLic" class="first-name" style="bottom: 123px;"></span>
-                    </div>
-
-                    <!-- address -->
-                    <div>
-                        <span id="addressViewLic" class="address"></span>
-                    </div>
-
-                    <!-- dob -->
-                    <div>
-                        <span class="dob-title">DOB </span>
-                        <span id="birthdayViewLic" class="dob"></span>
-                    </div>
-
-                    <!-- license status -->
-                    <div>
-                        <span class="status-title">STA </span>
-                        <span id="licenseStatusViewLic" class="status"></span>
-                    </div>
-
-                    <!-- issued date -->
-                    <div>
-                        <span class="issued-title">ISS </span>
-                        <span id="license-issued" class="issued"></span>
-                    </div>
-
-                    <!-- sex -->
-                    <div>
-                        <span class="sex-title">SEX </span>
-                        <span id="sexLic" class="sex"></span>
-                    </div>
-
-                    <!-- height -->
-                    <div>
-                        <span class="height-title">HGT </span>
-                        <span id="heightLic" class="height"></span>
-                    </div>
-
-                    <!-- weight -->
-                    <div>
-                        <span class="weight-title">WGT </span>
-                        <span id="weightLic" class="weight"></span>
-                    </div>
-
-                    <!-- eye color -->
-                    <div>
-                        <span class="eye-title">EYES </span>
-                        <span id="eyeLic" class="eye"></span>
-                    </div>
-
-                    <!-- hair color -->
-                    <div>
-                        <span class="hair-title">HAIR </span>
-                        <span id="hairLic" class="hair"></span>
-                    </div>
-
-                    <!-- donor -->
-                    <div class="donor-block hide">
-                        <span class="donor-title">DONOR ❤️</span>
-                    </div>
-
-                    <!-- veteran -->
-                    <div class="veteran-block hide">
-                        <span class="veteran">VETERAN ⭐️</span>
-                    </div>
-
-                  </div>
+              <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+                <div class="margin-bottom-1">
+                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Licenses:</span> <button data-toggle="modal" href="#newLicenseModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="">Add License</button>
                 </div>
-                </div>
+                <!-- <div>
+                  <label>Search:
+                    <input id="license-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+                  </label>
+                </div> -->
 
-                <!-- Create Drivers License Button -->
-                <div class="form-group create-license-btn hide">
-                  <label class="col-md-4 control-label" for="click-to-create-lic"></label>
-                  <div class="col-md-4">
-                    <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
-                    <input type="hidden" id="userBtnValue" value="">
-                    <button id="click-to-create-lic" type="submit" value="createLicense" name="action" style="cursor: pointer" class="btn btn-success" onclick="updateUserBtnValue('createLicense')">Create Driver's License</button>
+                <!-- List of licenses -->
+                <div id="licenses-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                  <div id="licenses-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
                   </div>
                 </div>
 
-                <!-- Delete Drivers License Button -->
-                <div class="form-group delete-license-btn hide">
-                  <label class="col-md-4 control-label" for="click-to-delete-lic"></label>
-                  <div class="col-md-4">
-                    <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
-                    <input type="hidden" id="userBtnValue" value="">
-                    <button id="click-to-delete-lic" type="submit" value="deleteLicense" name="action" style="cursor: pointer" class="btn btn-danger" onclick="updateUserBtnValue('deleteLicense')">Delete Driver's License</button>
-                  </div>
+                <!-- Loading error -->
+                <div id="issue-loading-licenses-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading licenses, try refreshing the page...</p>
                 </div>
 
-                <hr style="width: 88%;max-width: 100rem;">
-
-                <!-- Firearm License -->
-                <h5><ion-icon name="browsers-outline"></ion-icon> Firearm License</h5>
-
-                <div class="col-md-offset-2">
-                  <ion-icon name="browsers" style="font-size: 14em; color: gray;"></ion-icon>
-                  <p style="position: absolute;
-                  top: 25em;
-                  left: 12.5em;">Firearm License</p>
-                  <span class="iconify font-size-4-vmax" style="position: absolute;
-                  left: 4.5em;
-                  top: 8.5em;
-                  font-size: 4em;
-                  color: black;" data-icon="mdi:pistol" data-inline="false"></span>
+                <!-- No licenses registered message -->
+                <div id="no-licenses-message" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered licenses, try adding one...</p>
                 </div>
 
-                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
-                    <label class="control-label" for="firearmLicenseView">Status:</label>
-                      <select id="firearmLicenseView" name="firearmLicense" class="form-control" selected="selected">
-                        <option value="1">None</option>
-                        <option value="2">Valid</option>
-                        <option value="3">Revoked</option>
-                      </select>
-                  </div>
-
-                  <div class="col-md-12 text-align-center margin-bottom-1">
-                    <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
-                    <input type="hidden" id="userBtnValue" value="">
-                    <button type="submit" value="update" name="action" style="cursor: pointer" class="btn btn-info" onclick="updateUserBtnValue('update')">Update</button>
-                  </div>
-                </fieldset>
-              </form>
+                <!-- Paginated navigation list -->
+                <div>
+                  <nav aria-label="...">
+                    <ul class="pager">
+                      <li><a id="prev-license-page-btn" onclick="getPrevLicensePage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                      <li><a id="next-license-page-btn" onclick="getNextLicensePage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                    </ul>
+                  </nav>
+                </div>
+                
+              </div>
             </div>
             <div class="tab-pane fade" id="pills-records">
               <h4>Criminal History</h4>
@@ -1385,6 +1350,78 @@
                 <input type="hidden" id="firearmOwnerID" name="firearmOwnerID">
                 <button type="submit" value="update" name="action" class="btn btn-info">Update Firearm</button>
                 <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Firearm</button>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewLicense" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+            <form class="form-horizontal" action="/updateOrDeleteLicense" method="post">
+              <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>License Details</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <div class="form-group required">
+              <label class="col-md-3 control-label" for="license-type">License Type:</label>
+              <div class="col-md-5">
+                <select id="license-type-details" name="licenseType" class="form-control">
+                  <option value="driver license">Driver License</option>
+                  <option value="weapon license">Weapon License</option>
+                  <option value="hunting license">Hunting License</option>
+                  <option value="pilot license">Pilot License</option>
+                  <option value="fishing license">Fishing License</option>
+                  <option value="medical license">Medical License</option>
+                  <option value="attorney license">Attorney License</option>
+                  <option value="pastors license">Pastors License</option>
+                  <option value="driving license instructor">Driving License Instructor</option>
+                  <option value="pilots license instructor">Pilots License Instructor</option>
+                  <option value="liquor sales license">Liquor Sales License</option>
+                  <option value="food selling license">Food Selling License</option>
+                  <option value="legal business license">Legal Business License</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label class="col-md-3 control-label" for="license-status">License Status:</label>
+              <div class="col-md-5">
+                <select id="license-status-details" name="licenseStatus" class="form-control">
+                  <option value="pending">Pending</option>
+                  <option value="valid">Valid</option>
+                  <option value="expired">Expired</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label class="col-md-3 control-label" for="expirationDate">Expiration Date:</label>
+              <div class="col-md-5">
+              <input id="expirationDate-details" name="expirationDate" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-3 control-label" for="additionalNotes">Additional Notes:</label>
+              <div class="col-md-8">
+                <input id="additionalNotes-details" name="additionalNotes" type="text" placeholder="additional notes" class="form-control input-md">
+              </div>
+            </div>
+
+            <div class="col-md-12 text-align-center margin-bottom-2">
+                <input type="hidden" id="licenseID" name="licenseID">
+                <input type="hidden" id="licenseOwnerID" name="licenseOwnerID">
+                <button type="submit" value="update" name="action" class="btn btn-info">Update License</button>
+                <button type="submit" value="delete" name="action" class="btn btn-danger">Delete License</button>
             </div>
             </fieldset>
           </form>

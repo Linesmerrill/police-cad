@@ -2845,3 +2845,154 @@ a[aria-disabled="true"] {
 .margin-left-neg-15 {
     margin-left: -15px
 }
+
+/* Shoutout to Maite Rosalie for the gold svg gradient which can be seen here below. */
+
+/* https://codepen.io/maiterosalie/pen/ppRRLV?q=gold+gradient&limit=all&type=type-pens */
+
+
+/* html {
+    background: #252526;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 400;
+  } */
+
+.Wrap-card {
+    display: flex;
+    /* justify-content: center; */
+    /* align-items: center; */
+}
+
+.Base-card {
+    background: #ccc;
+    height: 209px;
+    width: 310px;
+    border-radius: 15px;
+}
+
+.Inner-wrap-card {
+    background-color: #0c0014;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 1600 800'%3E%3Cg %3E%3Cpolygon fill='%230d1838' points='1600%2C160 0%2C460 0%2C350 1600%2C50'/%3E%3Cpolygon fill='%230e315d' points='1600%2C260 0%2C560 0%2C450 1600%2C150'/%3E%3Cpolygon fill='%230f4981' points='1600%2C360 0%2C660 0%2C550 1600%2C250'/%3E%3Cpolygon fill='%231062a6' points='1600%2C460 0%2C760 0%2C650 1600%2C350'/%3E%3Cpolygon fill='%23117aca' points='1600%2C800 0%2C800 0%2C750 1600%2C450'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: auto 147%;
+    background-position: center;
+    position: relative;
+    height: 100%;
+    width: 100%;
+    border-radius: 13px;
+    padding: 20px 40px;
+    box-sizing: border-box;
+    color: #fff;
+}
+
+/* p {
+    margin: 0;
+    font-size: 2em;
+} */
+
+/* Controls top right logo */
+
+.Logo-card {
+    position: absolute;
+    height: 80px;
+    width: 80px;
+    right: 0;
+    top: 0;
+    padding: inherit;
+    fill: #117aca;
+}
+
+/* Controls chip icon */
+
+.Chip-card {
+    height: 80px;
+    margin: 40px 0 25px 0;
+}
+
+.gold-card path {
+    fill: url(#gold-gradient);
+}
+
+/* svg {
+    display: block;
+} */
+
+/* Controls name size */
+
+.Logo-name-card {
+    transform: scale(.5);
+    margin-left: -75px;
+}
+
+.Card-number-card p {
+    text-align: center;
+}
+
+.Card-number-card {
+    margin-top: -25px;
+    display: flex;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ul {
+    padding: 0;
+} */
+
+/* ul li {
+    list-style: none;
+    float: left;
+    margin: 0px 10px;
+    font-size: 2.2em;
+} */
+
+#first-li-card {
+    margin-left: 0;
+}
+
+#last-li-card {
+    margin-right: 0;
+}
+
+.Expire-card {
+    font-size: .75em;
+    text-align: center;
+}
+
+.Expire-card h4 {
+    font-weight: 400;
+    color: #aaa;
+    margin: 0;
+    /*   word-spacing: 9999999px; */
+    text-transform: uppercase;
+}
+
+.Expire-card p {
+    font-size: 1.55em;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.Name-card h3 {
+    position: absolute;
+    bottom: 0;
+    left: 18%;
+    text-transform: uppercase;
+    font-weight: 400;
+    font-size: 1.35em;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.Visa-card {
+    width: 115px;
+    position: absolute;
+    bottom: -145px;
+    right: 0;
+    padding: inherit;
+}
+
+.license-header-text {
+    position: absolute;
+    top: 18px;
+    font-size: 23px;
+    font-weight: bold;
+    left: 32px;
+}

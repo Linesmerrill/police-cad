@@ -2,6 +2,7 @@ var User = require("../app/models/user");
 var Civilian = require("../app/models/civilian");
 var Vehicle = require("../app/models/vehicle");
 var Firearm = require("../app/models/firearm");
+var License = require("../app/models/license");
 var EmsVehicle = require("../app/models/emsVehicle");
 var Ticket = require("../app/models/ticket");
 var Ems = require("../app/models/ems");
@@ -5335,6 +5336,16 @@ module.exports = function (app, passport, server) {
       });
     });
 
+    socket.on("create_new_license", (req) => {
+      console.debug("create new license socket: ", req);
+      var myNewLicense = new License();
+      myNewLicense.socketCreateLicense(req);
+      myNewLicense.save(function (err, dbLicenses) {
+        if (err) return console.error(err);
+        return socket.emit("created_new_license", dbLicenses); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
+      });
+    });
+
     socket.on("search_citation", (req) => {
       // console.debug('search citation socket: ', req)
       if (exists(req.civID)) {
@@ -5445,6 +5456,27 @@ module.exports = function (app, passport, server) {
         .catch((err) => {
           console.error(err);
           return socket.emit("load_gun_cards_result", undefined);
+        });
+    });
+
+    socket.on("fetch_license_cards", (req) => {
+      console.debug("get fetch_license_cards socket: ", req);
+      axios
+        .get(
+          `${policeCadApiUrl}/api/v1/licenses/owner/${req.civID}?limit=8&page=${req.page}`,
+          config
+        )
+        .then(function (dbLicenses) {
+          if (!exists(dbLicenses.data)) {
+            return socket.emit("load_license_cards_result", undefined);
+          } else {
+            // console.debug("load_license_cards_result response: ", dbLicenses.data);
+            return socket.emit("load_license_cards_result", dbLicenses.data);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          return socket.emit("load_license_cards_result", undefined);
         });
     });
 

@@ -116,7 +116,24 @@ function loadDriversLicense(myVar, index) {
     $("#birthdayViewLic").text(birthday);
   }
   $("#warrantsView").val(myVar[index].civilian.warrants);
-  $("#firearmLicenseView").val(myVar[index].civilian.firearmLicense);
+  // set firearm license id status
+  var firearmStatus = "";
+  switch (myVar[index].civilian.firearmLicense.trim()) {
+    case "1":
+      firearmStatus = "None";
+      break;
+    case "2":
+      firearmStatus = "Valid";
+      break;
+    case "3":
+      firearmStatus = "Revoked";
+      break;
+    default:
+      firearmStatus = "N/A";
+      break;
+  }
+  $("#firearm-id-status").text(firearmStatus);
+  $("#firearm-id-name").text(`${firstName} ${lastName}`);
   $("#addressViewLic").text(myVar[index].civilian.address);
   $("#license-expiration").text(
     expMonth.toString().padStart(2, "0") +
@@ -369,6 +386,7 @@ function loadCivSocketData(civID) {
     populateCivSocketDetails(res);
     populateVehicleDetails(res);
     populateFirearmDetails(res);
+    populateLicenseDetails(res);
   });
 }
 
@@ -384,6 +402,12 @@ function populateFirearmDetails(res) {
   $("#firearmOwnerID").val(`${res._id}`);
   pageGun = 0;
   getFirearms();
+}
+
+function populateLicenseDetails(res) {
+  $("#license-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+  pageVeh = 0;
+  getLicenses();
 }
 
 function loadVehSocketData(vehID) {
@@ -469,7 +493,24 @@ function populateCivSocketDetails(res) {
   $("#lastNameView").text(lastName);
   $("#birthdayView").text(birthday);
   $("#warrantsView").val(res.civilian.warrants);
-  $("#firearmLicenseView").val(res.civilian.firearmLicense);
+  // set firearm license id status
+  var firearmStatus = "";
+  switch (res.civilian.firearmLicense.trim()) {
+    case "1":
+      firearmStatus = "None";
+      break;
+    case "2":
+      firearmStatus = "Valid";
+      break;
+    case "3":
+      firearmStatus = "Revoked";
+      break;
+    default:
+      firearmStatus = "N/A";
+      break;
+  }
+  $("#firearm-id-status").text(firearmStatus);
+  $("#firearm-id-name").text(`${firstName} ${lastName}`);
   $("#addressView").val(res.civilian.address);
   $("#occupationView").val(res.civilian.occupation);
   $("#ageView").val(res.civilian.age);
@@ -612,7 +653,24 @@ function loadDriversLicenseSocket(res) {
     $("#birthdayViewLic").text(birthday);
   }
   $("#warrantsView").val(res.civilian.warrants);
-  $("#firearmLicenseView").val(res.civilian.firearmLicense);
+  // set firearm license id status
+  var firearmStatus = "";
+  switch (res.civilian.firearmLicense.trim()) {
+    case "1":
+      firearmStatus = "None";
+      break;
+    case "2":
+      firearmStatus = "Valid";
+      break;
+    case "3":
+      firearmStatus = "Revoked";
+      break;
+    default:
+      firearmStatus = "N/A";
+      break;
+  }
+  $("#firearm-id-status").text(firearmStatus);
+  $("#firearm-id-name").text(`${firstName} ${lastName}`);
   $("#addressViewLic").text(res.civilian.address);
   $("#license-expiration").text(
     expMonth.toString().padStart(2, "0") +
@@ -1020,6 +1078,68 @@ $("#create-firearm-form").submit(function (e) {
   return true;
 });
 
+/* function to send socket when new license is created.
+This is to move away from reloading the page on license creation */
+$("#create-license-form").submit(function (e) {
+  e.preventDefault(); //prevents page from reloading
+  var socket = io();
+  var myReq = {
+    body: {
+      licenseType: $("#license-type").val(),
+      status: $("#license-status").val(),
+      expirationDate: $("#expirationDate").val(),
+      additionalNotes: $("#additionalNotes").val(),
+      ownerName: $("#license-owner").val(),
+      ownerID: $("#civilianIDView").text(),
+      activeCommunityID: $("#new-license-activeCommunityID").val(),
+      userID: $("#new-license-userID").val(),
+    },
+  };
+  socket.emit("create_new_license", myReq);
+
+  //socket that receives a response after creating a new license
+  socket.on("created_new_license", (res) => {
+    //populate license cards on the dashboard
+    $("#licenses-thumbnail").append(
+      `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
+      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res._id}')">
+        <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
+        <div class="caption text-capitalize">
+          <h4 class="color-white">${res.license.licenseType}</h4>
+          <h5 class="color-white">Status: ${res.license.status}</h5>
+          <p class="color-white" style="font-size: 12px;">${res.license.ownerName}</p>
+        </div>
+      </div>
+    </div>`
+    );
+
+    //populate the license table
+    var containsEmptyRow = $("#license-table tr>td").hasClass(
+      "dataTables_empty"
+    );
+    if (containsEmptyRow) {
+      $("#license-table tbody>tr:first").fadeOut(1, function () {
+        $(this).remove();
+      });
+    }
+    $("#license-table tr:last")
+      .after(
+        `<tr class="gray-hover" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res._id}')">
+      <td>${res.license.serialNumber}</td>
+      <td style="text-transform: capitalize;"> ${res.license.weaponType}</td>
+      <td> ${res.license.registeredOwner}</td>
+    </tr>`
+      )
+      .fadeTo(1, function () {
+        $(this).add();
+      });
+  });
+  //reset the form after form submit
+  $("#create-license-form").trigger("reset");
+  hideModal("newLicenseModal");
+  return true;
+});
+
 function updateUserBtnValue(value) {
   $("#userBtnValue").val(value);
 }
@@ -1046,7 +1166,7 @@ $("#update-delete-civ-form button").click(function (e) {
       addressZip: $("#zipCodeView").val(),
       age: $("#ageView").val(),
       occupation: $("#occupationView").val(),
-      firearmLicense: $("#firearmLicenseView").val(),
+      firearmLicense: $("#firearm-id-status").text(),
       gender: $("#gender-view").val(),
       weight: $("#weightView").val(),
       height: $("#heightView").val(),
@@ -1436,5 +1556,60 @@ function getPrevGunPage() {
     }
     $("#next-gun-page-btn").removeClass("isDisabled");
     $("#next-gun-page-btn").attr("onclick", "getNextGunPage()").bind("click");
+  });
+}
+
+function getLicenses() {
+  $("#no-licenses-message").hide();
+  var myCivObj = {
+    civID: $("#civilianIDView").text(),
+    page: 0,
+  };
+  $("#licenses-thumbnail").empty();
+  socket.emit("fetch_license_cards", myCivObj);
+  socket.on("load_license_cards_result", (res) => {
+    if (res === undefined || res === null) {
+      $("#issue-loading-license-alert").show();
+    } else {
+      $("#issue-loading-license-alert").hide();
+      if (res.length < 1) {
+        // if we have 0 results back
+        $("#license-loading").hide();
+        $("#no-licenses-message").show();
+        $("#next-license-page-btn").addClass("isDisabled");
+        $("#next-license-page-btn").attr("onclick", "").unbind("click");
+        $("#prev-license-page-btn").addClass("isDisabled");
+        $("#prev-license-page-btn").attr("onclick", "").unbind("click");
+      } else {
+        $("#no-licenses-message").hide();
+        $("#licenses-thumbnail").empty();
+        for (i = 0; i < res.length; i++) {
+          $("#licenses-thumbnail").append(
+            `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
+      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+        <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
+        <div class="caption text-capitalize">
+          <h4 class="color-white">${res[i].license.licenseType}</h4>
+          <h5 class="color-white">Status: ${res[i].license.status}</h5>
+          <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
+        </div>
+      </div>
+    </div>`
+          );
+        }
+        $("#license-loading").hide();
+        $("#prev-license-page-btn").addClass("isDisabled");
+        $("#prev-license-page-btn").attr("onclick", "").unbind("click");
+        if (res.length < 8) {
+          $("#next-license-page-btn").addClass("isDisabled");
+          $("#next-license-page-btn").attr("onclick", "").unbind("click");
+        } else {
+          $("#next-license-page-btn").removeClass("isDisabled");
+          $("#next-license-page-btn")
+            .attr("onclick", "getNextLicensePage()")
+            .bind("click");
+        }
+      }
+    }
   });
 }
