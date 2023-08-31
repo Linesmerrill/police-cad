@@ -450,6 +450,27 @@ function populateFirearmSocketDetails(res) {
   $("#is-stolen-details").val(res.firearm.isStolen);
 }
 
+function loadLicenseSocketData(licenseID) {
+  var socket = io();
+  var myReq = {
+    licenseID: licenseID,
+  };
+  socket.emit("lookup_license_by_id", myReq);
+  socket.on("load_license_by_id_result", (res) => {
+    //load license data into UI
+    populateLicenseSocketDetails(res);
+  });
+}
+
+function populateLicenseSocketDetails(res) {
+  $("#licenseID").val(res._id);
+  $("#licenseOwnerID").val(res.license.ownerID);
+  $("#license-type-details").val(res.license.licenseType);
+  $("#license-status-details").val(res.license.status);
+  $("#expirationDate-details").val(res.license.expirationDate);
+  $("#additionalNotes-details").val(res.license.additionalNotes);
+}
+
 function getAge(date) {
   var today = new Date();
   var yearDiff = today.getFullYear() - date.getFullYear();

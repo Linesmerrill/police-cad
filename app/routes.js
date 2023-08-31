@@ -3323,6 +3323,94 @@ module.exports = function (app, passport, server) {
     }
   });
 
+  app.post("/updateOrDeleteLicense", auth, function (req, res) {
+    // console.debug("update or delete license body: ", req.body);
+    req.app.locals.specialContext = null;
+    if (req.body.action === "update") {
+      if (!exists(req.body.licenseID)) {
+        console.warn(
+          "cannot update license with empty licenseID, route: /updateOrDeleteLicense"
+        );
+        return res.redirect("/civ-dashboard");
+      }
+      if (!exists(req.body.licenseOwnerID)) {
+        console.warn(
+          "cannot update license with empty registered owner, route: /updateOrDeleteLicense"
+        );
+        return res.redirect("/civ-dashboard");
+      }
+      if (!exists(req.body.licenseType)) {
+        console.warn(
+          "cannot update license with empty licenseType, route: /updateOrDeleteLicense"
+        );
+        return res.redirect("/civ-dashboard");
+      }
+      if (!exists(req.body.licenseStatus)) {
+        console.warn(
+          "cannot update license with empty licenseStatus, route: /updateOrDeleteLicense"
+        );
+        return res.redirect("/civ-dashboard");
+      }
+      if (!exists(req.body.expirationDate)) {
+        console.warn(
+          "cannot update license with empty expirationDate, route: /updateOrDeleteLicense"
+        );
+        return res.redirect("/civ-dashboard");
+      }
+
+      var isValid = isValidObjectIdLength(
+        req.body.licenseID,
+        "cannot lookup invalid length licenseID, route: /updateOrDeleteLicense"
+      );
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect("/civ-dashboard");
+      }
+      License.findOneAndUpdate(
+        {
+          _id: ObjectId(req.body.licenseID),
+        },
+        {
+          $set: {
+            "license.licenseType": req.body.licenseType,
+            "license.status": req.body.licenseStatus,
+            "license.expirationDate": req.body.expirationDate,
+            "license.additionalNotes": req.body.additionalNotes,
+            "license.updatedAt": new Date(),
+          },
+        },
+        function (err) {
+          if (err) return console.error(err);
+          return res.redirect("/civ-dashboard");
+        }
+      );
+    } else {
+      if (!exists(req.body.licenseID)) {
+        console.warn(
+          "cannot delete license with empty licenseID, route: /updateOrDeleteLicense"
+        );
+        return res.redirect("/civ-dashboard");
+      }
+      var isValid = isValidObjectIdLength(
+        req.body.licenseID,
+        "cannot lookup invalid length licenseID, route: /updateOrDeleteLicense"
+      );
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect("/civ-dashboard");
+      }
+      License.deleteOne(
+        {
+          _id: ObjectId(req.body.licenseID),
+        },
+        function (err) {
+          if (err) return console.error(err);
+          return res.redirect("/civ-dashboard");
+        }
+      );
+    }
+  });
+
   app.post("/updateUserDispatchStatus", auth, function (req, res) {
     // console.debug(req.body)
     req.app.locals.specialContext = null;
@@ -5311,6 +5399,21 @@ module.exports = function (app, passport, server) {
           function (err, dbFirearm) {
             if (err) return console.error(err);
             return socket.emit("load_firearm_by_id_result", dbFirearm); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
+          }
+        );
+      }
+    });
+
+    socket.on("lookup_license_by_id", (req) => {
+      // console.debug('lookup license socket: ', req)
+      if (exists(req.licenseID)) {
+        License.findById(
+          {
+            _id: ObjectId(req.licenseID),
+          },
+          function (err, dbLicense) {
+            if (err) return console.error(err);
+            return socket.emit("load_license_by_id_result", dbLicense); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
           }
         );
       }
