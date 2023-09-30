@@ -1071,7 +1071,7 @@
     </div>
   </div>
 
-  <div id="viewFirearm" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div id="viewFirearm" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
@@ -1080,18 +1080,18 @@
 
             <!-- Form Name -->
             <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-            <h4>Firearm Details</h4>
+            <h4>Firearm Details:</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
             <!-- Text input-->
-            <div class="form-group required">
+            <div class="form-group">
               <label class="col-md-4 control-label" for="serial-number">Serial Number:</label>
               <div class="col-md-6">
-                <input id="serial-number-details" name="serialNumber" type="text" minlength="8" maxlength="8" placeholder="serial number" class="form-control input-md" required="" readonly="readonly">
+                <input id="serial-number-details" name="serialNumber" type="text" minlength="8" maxlength="8" placeholder="serial number" class="form-control input-md disabled-color" required="" readonly="readonly">
               </div>
             </div>
 
-            <div class="form-group required">
+            <div class="form-group">
               <label class="col-md-4 control-label" for="roFirearm">Owner:</label>
               <div class="col-md-6">
                 <input id="roFirearm" name="roFirearm" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
@@ -1099,10 +1099,10 @@
             </div>
 
             <!-- Select Basic -->
-            <div class="form-group required">
+            <div class="form-group">
               <label class="col-md-4 control-label" for="weapon-type">Weapon Type</label>
               <div class="col-md-6">
-                <select id="weapon-type-details" name="weaponType" class="form-control">
+                <select id="weapon-type-details" name="weaponType" class="form-control disabled-color" disabled>
                   <option value="pistol">Pistol</option>
                   <option value="revolver">Revolver</option>
                   <option value="shotgun">Shotgun</option>
@@ -1118,7 +1118,7 @@
             <div class="form-group">
               <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
               <div class="col-md-6">
-                <select id="is-stolen-details" name="isStolen" class="form-control">
+                <select id="is-stolen-details" name="isStolen" class="form-control disabled-color" disabled>
                   <option value="false">No</option>
                   <option value="true">Yes</option>
                 </select>
@@ -1128,8 +1128,8 @@
             <div class="col-md-12 text-align-center">
                 <input type="hidden" id="firearmID" name="firearmID">
                 <input type="hidden" id="firearmOwnerID" name="firearmOwnerID">
-                <button type="submit" value="update" name="action" class="btn btn-info">Update Firearm</button>
-                <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Firearm</button>
+                <!-- <button type="submit" value="update" name="action" class="btn btn-info">Update Firearm</button> -->
+                <!-- <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Firearm</button> -->
             </div>
             </fieldset>
           </form>
@@ -1138,7 +1138,7 @@
     </div>
   </div>
 
-  <div id="viewLicense" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div id="viewLicense" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
@@ -1147,13 +1147,13 @@
 
             <!-- Form Name -->
             <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-            <h4>License Details</h4>
+            <h4>License Details:</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
-            <div class="form-group required">
+            <div class="form-group">
               <label class="col-md-3 control-label" for="license-type">License Type:</label>
               <div class="col-md-5">
-                <select id="license-type-details" name="licenseType" class="form-control">
+                <select id="license-type-details" name="licenseType" class="form-control disabled-color" disabled>
                   <option value="driver license">Driver License</option>
                   <option value="weapon license">Weapon License</option>
                   <option value="hunting license">Hunting License</option>
@@ -1171,10 +1171,10 @@
               </div>
             </div>
 
-            <div class="form-group required">
+            <div class="form-group">
               <label class="col-md-3 control-label" for="license-status">License Status:</label>
               <div class="col-md-5">
-                <select id="license-status-details" name="licenseStatus" class="form-control">
+                <select id="license-status-details" name="licenseStatus" class="form-control disabled-color" disabled>
                   <option value="pending">Pending</option>
                   <option value="valid">Valid</option>
                   <option value="expired">Expired</option>
@@ -1183,25 +1183,25 @@
               </div>
             </div>
 
-            <div class="form-group required">
+            <div class="form-group">
               <label class="col-md-3 control-label" for="expirationDate">Expiration Date:</label>
               <div class="col-md-5">
-              <input id="expirationDate-details" name="expirationDate" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              <input id="expirationDate-details" name="expirationDate" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md disabled-color" disabled>
               </div>
             </div>
 
             <div class="form-group">
               <label class="col-md-3 control-label" for="additionalNotes">Additional Notes:</label>
               <div class="col-md-8">
-                <input id="additionalNotes-details" name="additionalNotes" type="text" placeholder="additional notes" class="form-control input-md">
+                <input id="additionalNotes-details" name="additionalNotes" type="text" placeholder="additional notes" class="form-control input-md disabled-color" disabled>
               </div>
             </div>
 
             <div class="col-md-12 text-align-center margin-bottom-2">
                 <input type="hidden" id="licenseID" name="licenseID">
                 <input type="hidden" id="licenseOwnerID" name="licenseOwnerID">
-                <button type="submit" value="update" name="action" class="btn btn-info">Update License</button>
-                <button type="submit" value="delete" name="action" class="btn btn-danger">Delete License</button>
+                <!-- <button type="submit" value="update" name="action" class="btn btn-info">Update License</button> -->
+                <!-- <button type="submit" value="delete" name="action" class="btn btn-danger">Delete License</button> -->
             </div>
             </fieldset>
           </form>
@@ -2206,9 +2206,10 @@
             <div class="tab-pane fade" id="pills-vehicles">
               <!--Table for Vehicles  -->
               <div class="col-md-12 col-md-offset-0.75 margin-top-2">
-                <!-- <div class="margin-bottom-1">
-                  <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button data-toggle="modal" href="#newVehicleModal" data-dismiss="modal" aria-hidden="true" class="btn btn-primary btn-md pull-right">Add New Vehicle</button>
-                </div> -->
+                <div class="margin-bottom-1">
+                  <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> 
+                  <!-- <button data-toggle="modal" href="#newVehicleModal" data-dismiss="modal" aria-hidden="true" class="btn btn-primary btn-md pull-right">Add New Vehicle</button> -->
+                </div>
                 <div>
                   <label>Search:
                     <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
@@ -2248,7 +2249,8 @@
               <!--Table for Firearms  -->
               <div class="col-md-12 col-md-offset-0.75 margin-top-2">
                 <div class="margin-bottom-1">
-                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Firearms:</span> <button data-toggle="modal" href="#newFirearmModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button>
+                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Firearms:</span> 
+                  <!-- <button data-toggle="modal" href="#newFirearmModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button> -->
                 </div>
                 <div>
                   <label>Search:
@@ -2290,13 +2292,14 @@
             <div class="tab-pane fade" id="pills-dmv">
               <div class="col-md-12 col-md-offset-0.75 margin-top-2">
                 <div class="margin-bottom-1">
-                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Licenses:</span> <button data-toggle="modal" href="#newLicenseModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="">Add License</button>
+                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Licenses:</span> 
+                  <!-- <button data-toggle="modal" href="#newLicenseModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="">Add License</button> -->
                 </div>
-                <!-- <div>
+                <div>
                   <label>Search:
                     <input id="license-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
                   </label>
-                </div> -->
+                </div>
 
                 <!-- List of licenses -->
                 <div id="licenses-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
@@ -2340,6 +2343,10 @@
                         <a class="nav-link" id="pills-arrests-tab" data-toggle="pill" href="#pills-arrests" role="tab" aria-controls="pills-arrests" aria-selected="false">Arrests</a>
                       </li>
                     </ul>
+                    <button data-toggle="modal" href="#ticketModal" class="btn btn-info btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenCitation();setDateAndTime('#date', '#time');">Issue Citation</button>
+                  <button data-toggle="modal" href="#warningModal" class="btn btn-warning btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenWarning(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
+                  <button data-toggle="modal" href="#arrestModal" class="btn btn-danger btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenArrest(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
+                  <button data-toggle="modal" href="#createWarrantModal" class="btn btn-success btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenCreateWarrant(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');">Create Warrant</button>
                     <div class="tab-content" id="pills-tabContent">
                       <div class="tab-pane fade" id="pills-citations" role="tabpanel" aria-labelledby="pills-citations-tab">
                           <table id="citationTable" class="table table-hover" border="1" frame="box">

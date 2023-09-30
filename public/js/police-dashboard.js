@@ -1084,3 +1084,274 @@ function getPrevVehPage() {
 function hideVehicleMessage() {
   $("#no-vehicles-message").hide();
 }
+
+function hideFirearmMessage() {
+  $("#no-firearms-message").hide();
+}
+
+function getFirearms() {
+  var socket = io();
+  $("#no-firearms-message").hide();
+  var myCivObj = {
+    civID: $("#civilianIDView").text(),
+    page: 0,
+  };
+  console.log("myCivObj: ", myCivObj);
+  $("#firearms-thumbnail").empty();
+  socket.emit("fetch_gun_cards", myCivObj);
+  socket.on("load_gun_cards_result", (res) => {
+    if (res === undefined || res === null) {
+      $("#issue-loading-firearms-alert").show();
+    } else {
+      $("#issue-loading-firearms-alert").hide();
+      if (res.length < 1) {
+        // if we have 0 results back
+        $("#firearms-loading").hide();
+        $("#no-firearms-message").show();
+        $("#next-gun-page-btn").addClass("isDisabled");
+        $("#next-gun-page-btn").attr("onclick", "").unbind("click");
+        $("#prev-gun-page-btn").addClass("isDisabled");
+        $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
+      } else {
+        $("#no-firearms-message").hide();
+        $("#firearms-thumbnail").empty();
+        for (i = 0; i < res.length; i++) {
+          $("#firearms-thumbnail").append(
+            `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
+      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+        <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
+        <div class="caption text-capitalize">
+          <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
+          <h5 class="color-white">${res[i].firearm.weaponType}</h5>
+          <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
+        </div>
+      </div>
+    </div>`
+          );
+        }
+        $("#firearms-loading").hide();
+        $("#prev-gun-page-btn").addClass("isDisabled");
+        $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
+        if (res.length < 8) {
+          $("#next-gun-page-btn").addClass("isDisabled");
+          $("#next-gun-page-btn").attr("onclick", "").unbind("click");
+        } else {
+          $("#next-gun-page-btn").removeClass("isDisabled");
+          $("#next-gun-page-btn")
+            .attr("onclick", "getNextGunPage()")
+            .bind("click");
+        }
+      }
+    }
+  });
+}
+
+function getNextGunPage() {
+  pageGun = pageGun + 1;
+  var socket = io();
+  var myObj = {
+    civID: $("#civilianIDView").text(),
+    page: pageGun,
+  };
+  socket.emit("fetch_gun_cards", myObj);
+  socket.on("load_gun_cards_result", (res) => {
+    // load content on page
+    $("#firearms-thumbnail").empty();
+    for (i = 0; i < res.length; i++) {
+      $("#firearms-thumbnail").append(
+        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
+    <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+      <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
+      <div class="caption text-capitalize">
+        <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
+        <h5 class="color-white">${res[i].firearm.weaponType}</h5>
+        <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
+      </div>
+    </div>
+  </div>`
+      );
+    }
+    if (res.length < 8) {
+      // if we have reached the end of the data, then gray out the 'next' button
+      $("#next-gun-page-btn").addClass("isDisabled");
+      // page = page - 1
+      $("#next-gun-page-btn").attr("onclick", "").unbind("click");
+    } else {
+      $("#next-gun-page-btn").removeClass("isDisabled");
+      $("#next-gun-page-btn").attr("onclick", "getNextGunPage()").bind("click");
+    }
+    $("#prev-gun-page-btn").removeClass("isDisabled");
+    $("#prev-gun-page-btn").attr("onclick", "getPrevGunPage()").bind("click");
+  });
+}
+
+function getPrevGunPage() {
+  pageGun = pageGun - 1;
+  if (pageGun < 1) {
+    pageGun = 0;
+    $("#prev-gun-page-btn").addClass("isDisabled");
+    $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
+  }
+  var socket = io();
+  var myObj = {
+    civID: $("#civilianIDView").text(),
+    page: pageGun,
+  };
+  socket.emit("fetch_gun_cards", myObj);
+  socket.on("load_gun_cards_result", (res) => {
+    // load content on page
+    $("#firearms-thumbnail").empty();
+    for (i = 0; i < res.length; i++) {
+      $("#firearms-thumbnail").append(
+        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
+    <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+      <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
+      <div class="caption text-capitalize">
+        <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
+        <h5 class="color-white">${res[i].firearm.weaponType}</h5>
+        <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
+      </div>
+    </div>
+  </div>`
+      );
+    }
+    $("#next-gun-page-btn").removeClass("isDisabled");
+    $("#next-gun-page-btn").attr("onclick", "getNextGunPage()").bind("click");
+  });
+}
+
+function getLicenses() {
+  var socket = io();
+  $("#no-licenses-message").hide();
+  var myCivObj = {
+    civID: $("#civilianIDView").text(),
+    page: 0,
+  };
+  $("#licenses-thumbnail").empty();
+  socket.emit("fetch_license_cards", myCivObj);
+  socket.on("load_license_cards_result", (res) => {
+    if (res === undefined || res === null) {
+      $("#issue-loading-license-alert").show();
+    } else {
+      $("#issue-loading-license-alert").hide();
+      if (res.length < 1) {
+        // if we have 0 results back
+        $("#license-loading").hide();
+        $("#no-licenses-message").show();
+        $("#next-license-page-btn").addClass("isDisabled");
+        $("#next-license-page-btn").attr("onclick", "").unbind("click");
+        $("#prev-license-page-btn").addClass("isDisabled");
+        $("#prev-license-page-btn").attr("onclick", "").unbind("click");
+      } else {
+        $("#no-licenses-message").hide();
+        $("#licenses-thumbnail").empty();
+        for (i = 0; i < res.length; i++) {
+          $("#licenses-thumbnail").append(
+            `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
+      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+        <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
+        <div class="caption text-capitalize">
+          <h4 class="color-white">${res[i].license.licenseType}</h4>
+          <h5 class="color-white">Status: ${res[i].license.status}</h5>
+          <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
+        </div>
+      </div>
+    </div>`
+          );
+        }
+        $("#license-loading").hide();
+        $("#prev-license-page-btn").addClass("isDisabled");
+        $("#prev-license-page-btn").attr("onclick", "").unbind("click");
+        if (res.length < 8) {
+          $("#next-license-page-btn").addClass("isDisabled");
+          $("#next-license-page-btn").attr("onclick", "").unbind("click");
+        } else {
+          $("#next-license-page-btn").removeClass("isDisabled");
+          $("#next-license-page-btn")
+            .attr("onclick", "getNextLicensePage()")
+            .bind("click");
+        }
+      }
+    }
+  });
+}
+
+function getNextLicensePage() {
+  pageLicense = pageLicense + 1;
+  var socket = io();
+  var myObj = {
+    civID: $("#civilianIDView").text(),
+    page: pageLicense,
+  };
+  socket.emit("fetch_license_cards", myObj);
+  socket.on("load_license_cards_result", (res) => {
+    // load content on page
+    $("#licenses-thumbnail").empty();
+    for (i = 0; i < res.length; i++) {
+      $("#licenses-thumbnail").append(
+        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
+  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+    <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
+    <div class="caption text-capitalize">
+      <h4 class="color-white">${res[i].license.licenseType}</h4>
+      <h5 class="color-white">Status: ${res[i].license.status}</h5>
+      <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
+    </div>
+  </div>
+</div>`
+      );
+    }
+    if (res.length < 8) {
+      // if we have reached the end of the data, then gray out the 'next' button
+      $("#next-license-page-btn").addClass("isDisabled");
+      // page = page - 1
+      $("#next-license-page-btn").attr("onclick", "").unbind("click");
+    } else {
+      $("#next-license-page-btn").removeClass("isDisabled");
+      $("#next-license-page-btn")
+        .attr("onclick", "getNextLicensePage()")
+        .bind("click");
+    }
+    $("#prev-license-page-btn").removeClass("isDisabled");
+    $("#prev-license-page-btn")
+      .attr("onclick", "getPrevLicensePage()")
+      .bind("click");
+  });
+}
+
+function getPrevLicensePage() {
+  pageLicense = pageLicense - 1;
+  if (pageLicense < 1) {
+    pageLicense = 0;
+    $("#prev-license-page-btn").addClass("isDisabled");
+    $("#prev-license-page-btn").attr("onclick", "").unbind("click");
+  }
+  var socket = io();
+  var myObj = {
+    civID: $("#civilianIDView").text(),
+    page: pageLicense,
+  };
+  socket.emit("fetch_license_cards", myObj);
+  socket.on("load_license_cards_result", (res) => {
+    // load content on page
+    $("#licenses-thumbnail").empty();
+    for (i = 0; i < res.length; i++) {
+      $("#licenses-thumbnail").append(
+        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
+  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+    <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
+    <div class="caption text-capitalize">
+      <h4 class="color-white">${res[i].license.licenseType}</h4>
+      <h5 class="color-white">Status: ${res[i].license.status}</h5>
+      <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
+    </div>
+  </div>
+</div>`
+      );
+    }
+    $("#next-license-page-btn").removeClass("isDisabled");
+    $("#next-license-page-btn")
+      .attr("onclick", "getNextLicensePage()")
+      .bind("click");
+  });
+}

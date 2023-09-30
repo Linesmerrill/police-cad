@@ -1452,6 +1452,7 @@ function hideFirearmMessage() {
 }
 
 function getFirearms() {
+  var socket = io();
   $("#no-firearms-message").hide();
   var myCivObj = {
     civID: $("#civilianIDView").text(),
@@ -1581,6 +1582,7 @@ function getPrevGunPage() {
 }
 
 function getLicenses() {
+  var socket = io();
   $("#no-licenses-message").hide();
   var myCivObj = {
     civID: $("#civilianIDView").text(),
