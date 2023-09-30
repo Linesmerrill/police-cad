@@ -978,7 +978,7 @@
     </div>
   </div>
 
-  <div id="viewVeh" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div id="viewVeh" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
@@ -987,11 +987,11 @@
 
             <!-- Form Name -->
             <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-            <h4>Details about your Vehicle</h4>
+            <h4>Vehicle Details:</h4>
             <hr style="width: 88%;max-width: 100rem;">
 
             <!-- Text input-->
-            <div class="form-group required">
+            <div class="form-group">
               <label class="col-md-4 control-label" for="vinVeh">Vin #</label>
               <div class="col-md-4">
                 <input id="vinVeh" name="vinVeh" type="text" minlength="17" maxlength="17" class="form-control input-md disabled-color" required readonly="readonly">
@@ -1001,38 +1001,38 @@
               </div>
             </div>
 
-            <div class="form-group required">
+            <div class="form-group">
               <label class="col-md-4 control-label" for="roVeh">Owner:</label>
               <div class="col-md-4">
                 <input id="roVeh" name="roVeh" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
               </div>
             </div>
 
-            <div class="form-group required">
+            <div class="form-group">
                 <label class="col-md-4 control-label" for="plate">Plate:</label>
                 <div class="col-md-4">
-                  <input id="plateVeh" name="plateVeh" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
+                  <input id="plateVeh" name="plateVeh" type="text" maxlength="8" placeholder="Plate" class="form-control input-md disabled-color" disabled>
                 </div>
               </div>
 
-            <div class="form-group required">
+            <div class="form-group">
                 <label class="col-md-4 control-label" for="model">Model:</label>
                 <div class="col-md-4">
-                  <input id="modelVeh" name="modelVeh" type="search" placeholder="Model" class="form-control input-md" required="">
+                  <input id="modelVeh" name="modelVeh" type="search" placeholder="Model" class="form-control input-md disabled-color" disabled>
                 </div>
               </div>
 
-            <div class="form-group required">
+            <div class="form-group">
                 <label class="col-md-4 control-label" for="colorView">Color:</label>
                 <div class="col-md-4">
-                  <input id="colorView" name="colorView" type="text" placeholder="Color" class="form-control input-md" required="">
+                  <input id="colorView" name="colorView" type="text" placeholder="Color" class="form-control input-md disabled-color">
                 </div>
               </div>
 
             <div class="form-group">
                 <label class="col-md-4 control-label" for="valid-registration">Valid Registration?</label>
                 <div class="col-md-4">
-                  <select id="validRegView" name="validRegView" class="form-control" selected="selected">
+                  <select id="validRegView" name="validRegView" class="form-control disabled-color" selected="selected" disabled>
                     <option value="1">Yes</option>
                     <option value="2">No</option>
                   </select>
@@ -1042,7 +1042,7 @@
             <div class="form-group">
                 <label class="col-md-4 control-label" for="validInsView">Valid Insurance?</label>
                 <div class="col-md-4">
-                  <select id="validInsView" name="validInsView" class="form-control" selected="selected">
+                  <select id="validInsView" name="validInsView" class="form-control disabled-color" selected="selected" disabled>
                     <option value="1">Yes</option>
                     <option value="2">No</option>
                   </select>
@@ -1052,7 +1052,7 @@
             <div class="form-group">
                 <label class="col-md-4 control-label" for="stolenView">Marked Stolen?</label>
                 <div class="col-md-4">
-                  <select id="stolenView" name="stolenView" class="form-control" selected="selected">
+                  <select id="stolenView" name="stolenView" class="form-control disabled-color" selected="selected" disabled>
                     <option value="1">No</option>
                     <option value="2">Yes</option>
                   </select>
@@ -1061,8 +1061,8 @@
 
             <div class="col-md-12 text-align-center">
                 <input type="hidden" id="vehicleID" name="vehicleID">
-                <button type="submit" value="update" name="action" class="btn btn-info">Update Vehicle</button>
-                <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Vehicle</button>
+                <!-- <button type="submit" value="update" name="action" class="btn btn-info">Update Vehicle</button> -->
+                <!-- <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Vehicle</button> -->
             </div>
             </fieldset>
           </form>
@@ -2060,13 +2060,16 @@
               <a data-toggle="pill" href="#pills-edit-civ">View Civilian</a>
             </li>
             <li>
-              <a data-toggle="pill" href="#pills-vehicles">Vehicles</a>
+              <a data-toggle="pill" href="#pills-ncic" onclick="getActiveWarrants()">NCIC</a>
             </li>
             <li>
-              <a data-toggle="pill" href="#pills-firearms">Firearms</a>
+              <a data-toggle="pill" href="#pills-vehicles" onclick="getRegisteredCars()">Vehicles</a>
             </li>
             <li>
-              <a data-toggle="pill" href="#pills-dmv">DMV</a>
+              <a data-toggle="pill" href="#pills-firearms" onclick="getRegisteredFirearms()">Firearms</a>
+            </li>
+            <li>
+              <a data-toggle="pill" href="#pills-dmv" onclick="getLicenses()">DMV</a>
             </li>
             <li>
               <a data-toggle="pill" href="#pills-records">Records</a>
@@ -2079,7 +2082,7 @@
               <form id="update-delete-civ-form" action="#" method="post">
                 <fieldset>
 
-                  <h4>Civilian Details</h4>
+                  <h4>Civilian Details:</h4>
                   
                   <!-- Image of civilian -->
                   <hr style="width: 88%;max-width: 100rem;">
@@ -3175,142 +3178,8 @@
     });
   }
 
-  function getRegisteredCars(registeredOwner, index, registeredOwnerID) {
-    //remove any existing panel body on button click
-    $('.reg-car').remove();
-    $(`#registered-cars`).show()
-    $('#registered-cars-loading').show()
-    $('#issue-loading-registered-cars-alert').hide()
-    var socket=io();
-
-    myReq={
-      regOwner: registeredOwner,
-      regOwnerID: registeredOwnerID, //new ID established 1/30/2021 so will only work on vehicles after this date
-      communityID: dbUser.user.activeCommunity
-    }
-    socket.emit('get_reg_veh', myReq)
-    socket.on('load_reg_veh_result', res => {
-      if (res != null && res != undefined) {
-        if (res.length==0) {
-          $('#registered-cars').append(
-            `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`+
-            `<h5 style="text-align: center;">No Registered Vehicles</h5>`+
-            `</div>`
-          )
-          $('#registered-cars-loading').hide();
-          return
-        }
-        $('#registered-cars').append(
-          `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`
-        )
-        for (i=0; i<res.length; i++) {
-
-          if (i!=0) { //if we are not on the first loop, add a divider between each record
-            $('#registered-cars-panel-body-'+index).append(
-              `<hr>`
-            )
-          }
-          //check if vehicle is stolen and append result
-          if (res[i].vehicle.isStolen==2) {
-            $('#registered-cars-panel-body-'+index).append(
-              `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
-              `<strong>Danger!</strong> Vehicle reported as stolen.`+
-              `</div>`
-            )
-          }
-          $('#registered-cars-panel-body-'+index).append(
-            `Vin #: ${res[i].vehicle.vin}<br/>`+
-            `License Plate #: ${res[i].vehicle.plate}<br/>`+
-            `Color: ${res[i].vehicle.color}<br/>`+
-            `Model: ${res[i].vehicle.model}<br/>`
-          )
-          //check for valid/invalid insurance and append result
-          if (res[i].vehicle.validInsurance==1) {
-            $('#registered-cars-panel-body-'+index).append(
-              `<p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i></p>`
-            )
-          } else {
-            $('#registered-cars-panel-body-'+index).append(
-              `<p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>`
-            )
-          }
-          //check for valid/invalid registration and append result
-          if (res[i].vehicle.validRegistration==1) {
-            $('#registered-cars-panel-body-'+index).append(
-              `<p class="plate-body-text">Registration: Valid <i class="ion-checkmark-circled color-green"></i></p>`
-            )
-          } else {
-            $('#registered-cars-panel-body-'+index).append(
-              `<p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>`
-            )
-          }
-        }
-      } else {
-        $('#issue-loading-registered-cars-alert').show()
-      }
-      $('#registered-cars-loading').hide();
-    })
-  }
-
-  function getActiveWarrants(index, accusedID) {
-    //remove any existing panel body on button click
-    $('.active-reg').remove();
-    $(`#active-warrants`).show()
-    $('#active-warrants-loading').show()
-    $('#issue-loading-active-warrants-alert').hide()
-
-    var socket=io();
-
-    myReq={
-      accusedID: accusedID,
-    }
-    socket.emit('get_active_warrants', myReq)
-    socket.on('load_active_warrants_result', res => {
-      if (res != undefined && res != null) {
-        $('#active-warrants').append(
-          `<div id="active-warrants-panel-body-${index}" class="panel-body active-reg">`
-        )
-        let counter = 0
-        for (i=0; i<res.length; i++) {
-          //check if warrant is active and append result
-          if (res[i].warrant.status) {
-            if (i!=0) { //if we are not on the first loop, add a divider between each record
-            $('#active-warrants-panel-body-'+index).append(
-              `<hr>`
-            )
-          }
-            $('#active-warrants-panel-body-'+index).append(
-              `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
-              `<strong>Danger!</strong> Active Warrant.`+
-              `</div>`
-            )
-            $('#active-warrants-panel-body-'+index).append(
-            `Date Created: ${res[i].warrant.date}<br/>`+
-            `Time Created: ${res[i].warrant.time}<br/>`+
-            `Reporting Officer: ${res[i].warrant.reportingOfficer}<br/>`+
-            `Reason(s): ${res[i].warrant.reasons}<br/>`
-          )
-
-          $('#active-warrants-panel-body-'+index).append(
-            `<button type="button" class="btn btn-info margin-bottom-05" id="confirmWarrantModal" data-toggle="modal" href="#confirmClearWarrantModal" onclick="clearWarrantWithValues('${res[i]._id}', '${res[i].warrant.reasons}')">Clear</button>`
-          )
-          counter++
-          }
-        }
-        if (counter === 0) {
-          $('#active-warrants').append(
-            `<div id="active-warrants-panel-body-${index}" class="panel-body active-reg">`+
-            `<h5 style="text-align: center;">No Active Warrants</h5>`+
-            `</div>`
-          )
-        }
-      } else {
-        $('#issue-loading-active-warrants-alert').show()
-      }
-      $('#active-warrants-loading').hide();
-    })
-  }
-
+  
+  
   function searchPlate() {
     let x=document.getElementById('plateDetails');
     if (x.style.display==='none') {

@@ -420,15 +420,6 @@ function showList() {
   document.cookie = "persona_icon=list";
 }
 
-// function showVehicleList() {
-//   $(".dataTables_filter").hide();
-//   $("#vehicles-table-div").show();
-//   $("#vehicles-thumbnail").hide();
-//   $("#app-icon-vehicles").addClass("inactive-icon").removeClass("active-icon");
-//   $("#list-icon-vehicles").addClass("active-icon").removeClass("inactive-icon");
-//   document.cookie = "vehicle_icon=list";
-// }
-
 function showFirearmsList() {
   $(".dataTables_filter").hide();
   $("#firearms-table-div").show();
@@ -819,4 +810,277 @@ function OpenCitation() {
   $("#civID").val($("#active-community-id").val());
   $("#ticket-civ-dob").val($("#birthday").val());
   $("#searchTicketDiv").hide(); //TODO
+}
+
+//TODO need to add in civ ID to myReq, also remove index
+function getActiveWarrants() {
+  //remove any existing panel body on button click
+  $(".active-reg").remove();
+  $(`#active-warrants`).show();
+  $("#active-warrants-loading").show();
+  $("#issue-loading-active-warrants-alert").hide();
+
+  var socket = io();
+
+  myReq = {
+    accusedID: accusedID,
+  };
+  socket.emit("get_active_warrants", myReq);
+  socket.on("load_active_warrants_result", (res) => {
+    if (res != undefined && res != null) {
+      $("#active-warrants").append(
+        `<div id="active-warrants-panel-body-${index}" class="panel-body active-reg">`
+      );
+      let counter = 0;
+      for (i = 0; i < res.length; i++) {
+        //check if warrant is active and append result
+        if (res[i].warrant.status) {
+          if (i != 0) {
+            //if we are not on the first loop, add a divider between each record
+            $("#active-warrants-panel-body-" + index).append(`<hr>`);
+          }
+          $("#active-warrants-panel-body-" + index).append(
+            `<div id="stolenMessage" class="alert alert-danger" style="display:block">` +
+              `<strong>Danger!</strong> Active Warrant.` +
+              `</div>`
+          );
+          $("#active-warrants-panel-body-" + index).append(
+            `Date Created: ${res[i].warrant.date}<br/>` +
+              `Time Created: ${res[i].warrant.time}<br/>` +
+              `Reporting Officer: ${res[i].warrant.reportingOfficer}<br/>` +
+              `Reason(s): ${res[i].warrant.reasons}<br/>`
+          );
+
+          $("#active-warrants-panel-body-" + index).append(
+            `<button type="button" class="btn btn-info margin-bottom-05" id="confirmWarrantModal" data-toggle="modal" href="#confirmClearWarrantModal" onclick="clearWarrantWithValues('${res[i]._id}', '${res[i].warrant.reasons}')">Clear</button>`
+          );
+          counter++;
+        }
+      }
+      if (counter === 0) {
+        $("#active-warrants").append(
+          `<div id="active-warrants-panel-body-${index}" class="panel-body active-reg">` +
+            `<h5 style="text-align: center;">No Active Warrants</h5>` +
+            `</div>`
+        );
+      }
+    } else {
+      $("#issue-loading-active-warrants-alert").show();
+    }
+    $("#active-warrants-loading").hide();
+  });
+}
+
+//TODO need to add in registeredOwnerID, remove index
+// function getRegisteredCars() {
+//   //remove any existing panel body on button click
+//   $(".reg-car").remove();
+//   $(`#registered-cars`).show();
+//   $("#registered-cars-loading").show();
+//   $("#issue-loading-registered-cars-alert").hide();
+//   var registeredOwnerID = $("#"); //TODO need to find value that stores this
+//   var socket = io();
+
+//   myReq = {
+//     // regOwner: registeredOwner,
+//     regOwnerID: registeredOwnerID, //new ID established 1/30/2021 so will only work on vehicles after this date
+//     communityID: dbUser.user.activeCommunity,
+//   };
+//   socket.emit("get_reg_veh", myReq);
+//   socket.on("load_reg_veh_result", (res) => {
+//     if (res != null && res != undefined) {
+//       if (res.length == 0) {
+//         $("#registered-cars").append(
+//           `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">` +
+//             `<h5 style="text-align: center;">No Registered Vehicles</h5>` +
+//             `</div>`
+//         );
+//         $("#registered-cars-loading").hide();
+//         return;
+//       }
+//       $("#registered-cars").append(
+//         `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`
+//       );
+//       for (i = 0; i < res.length; i++) {
+//         if (i != 0) {
+//           //if we are not on the first loop, add a divider between each record
+//           $("#registered-cars-panel-body-" + index).append(`<hr>`);
+//         }
+//         //check if vehicle is stolen and append result
+//         if (res[i].vehicle.isStolen == 2) {
+//           $("#registered-cars-panel-body-" + index).append(
+//             `<div id="stolenMessage" class="alert alert-danger" style="display:block">` +
+//               `<strong>Danger!</strong> Vehicle reported as stolen.` +
+//               `</div>`
+//           );
+//         }
+//         $("#registered-cars-panel-body-" + index).append(
+//           `Vin #: ${res[i].vehicle.vin}<br/>` +
+//             `License Plate #: ${res[i].vehicle.plate}<br/>` +
+//             `Color: ${res[i].vehicle.color}<br/>` +
+//             `Model: ${res[i].vehicle.model}<br/>`
+//         );
+//         //check for valid/invalid insurance and append result
+//         if (res[i].vehicle.validInsurance == 1) {
+//           $("#registered-cars-panel-body-" + index).append(
+//             `<p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i></p>`
+//           );
+//         } else {
+//           $("#registered-cars-panel-body-" + index).append(
+//             `<p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>`
+//           );
+//         }
+//         //check for valid/invalid registration and append result
+//         if (res[i].vehicle.validRegistration == 1) {
+//           $("#registered-cars-panel-body-" + index).append(
+//             `<p class="plate-body-text">Registration: Valid <i class="ion-checkmark-circled color-green"></i></p>`
+//           );
+//         } else {
+//           $("#registered-cars-panel-body-" + index).append(
+//             `<p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>`
+//           );
+//         }
+//       }
+//     } else {
+//       $("#issue-loading-registered-cars-alert").show();
+//     }
+//     $("#registered-cars-loading").hide();
+//   });
+// }
+
+function getVehicles() {
+  var socket = io();
+  var myCivObj = {
+    civID: $("#civilianIDView").text(),
+    page: 0,
+  };
+  $("#vehicles-thumbnail").empty();
+  socket.emit("fetch_veh_cards", myCivObj);
+  socket.on("load_veh_cards_result", (res) => {
+    if (res === undefined || res === null) {
+      $("#issue-loading-vehicles-alert").show();
+    } else {
+      if (res.length < 1) {
+        // if we have 0 results back
+        $("#vehicles-loading").hide();
+        $("#no-vehicles-message").show();
+        $("#next-veh-page-btn").addClass("isDisabled");
+        $("#next-veh-page-btn").attr("onclick", "").unbind("click");
+        $("#prev-veh-page-btn").addClass("isDisabled");
+        $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
+      } else {
+        $("#no-vehicles-message").hide();
+        $("#vehicles-thumbnail").empty();
+        for (i = 0; i < res.length; i++) {
+          $("#issue-loading-vehicles-alert").hide();
+          $("#vehicles-thumbnail").append(
+            `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+        <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+          <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
+          <div class="caption">
+            <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
+            <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+          </div>
+        </div>
+      </div>`
+          );
+        }
+        $("#vehicles-loading").hide();
+        $("#prev-veh-page-btn").addClass("isDisabled");
+        $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
+        if (res.length < 8) {
+          $("#next-veh-page-btn").addClass("isDisabled");
+          $("#next-veh-page-btn").attr("onclick", "").unbind("click");
+        } else {
+          $("#next-veh-page-btn").removeClass("isDisabled");
+          $("#next-veh-page-btn")
+            .attr("onclick", "getNextVehPage()")
+            .bind("click");
+        }
+      }
+    }
+  });
+}
+
+function getNextVehPage() {
+  pageVeh = pageVeh + 1;
+  var socket = io();
+  var myObj = {
+    civID: $("#civilianIDView").text(),
+    page: pageVeh,
+  };
+  socket.emit("fetch_veh_cards", myObj);
+  socket.on("load_veh_cards_result", (res) => {
+    // load content on page
+    $("#vehicles-thumbnail").empty();
+    if (res == null || res == undefined) {
+    } else {
+      for (i = 0; i < res.length; i++) {
+        $("#vehicles-thumbnail").append(
+          `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+        <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
+        <div class="caption">
+          <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
+          <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+        </div>
+      </div>
+    </div>`
+        );
+      }
+      if (res.length < 8) {
+        // if we have reached the end of the data, then gray out the 'next' button
+        $("#next-veh-page-btn").addClass("isDisabled");
+        // page = page - 1
+        $("#next-veh-page-btn").attr("onclick", "").unbind("click");
+      } else {
+        $("#next-veh-page-btn")
+          .attr("onclick", "getNextVehPage()")
+          .bind("click");
+      }
+      $("#prev-veh-page-btn").removeClass("isDisabled");
+      $("#prev-veh-page-btn").attr("onclick", "getPrevVehPage()").bind("click");
+    }
+  });
+}
+
+function getPrevVehPage() {
+  pageVeh = pageVeh - 1;
+  if (pageVeh < 1) {
+    pageVeh = 0;
+    $("#prev-veh-page-btn").addClass("isDisabled");
+    $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
+  }
+  var socket = io();
+  var myObj = {
+    civID: $("#civilianIDView").text(),
+    page: pageVeh,
+  };
+  socket.emit("fetch_veh_cards", myObj);
+  socket.on("load_veh_cards_result", (res) => {
+    // load content on page
+    $("#vehicles-thumbnail").empty();
+    if (res == null || res == undefined) {
+    } else {
+      for (i = 0; i < res.length; i++) {
+        $("#vehicles-thumbnail").append(
+          `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+        <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
+        <div class="caption">
+          <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
+          <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+        </div>
+      </div>
+    </div>`
+        );
+      }
+      $("#next-veh-page-btn").removeClass("isDisabled");
+      $("#next-veh-page-btn").attr("onclick", "getNextVehPage()").bind("click");
+    }
+  });
+}
+
+function hideVehicleMessage() {
+  $("#no-vehicles-message").hide();
 }
