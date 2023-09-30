@@ -337,14 +337,14 @@ function showList() {
   document.cookie = "persona_icon=list";
 }
 
-function showVehicleList() {
-  $(".dataTables_filter").hide();
-  $("#vehicles-table-div").show();
-  $("#vehicles-thumbnail").hide();
-  $("#app-icon-vehicles").addClass("inactive-icon").removeClass("active-icon");
-  $("#list-icon-vehicles").addClass("active-icon").removeClass("inactive-icon");
-  document.cookie = "vehicle_icon=list";
-}
+// function showVehicleList() {
+//   $(".dataTables_filter").hide();
+//   $("#vehicles-table-div").show();
+//   $("#vehicles-thumbnail").hide();
+//   $("#app-icon-vehicles").addClass("inactive-icon").removeClass("active-icon");
+//   $("#list-icon-vehicles").addClass("active-icon").removeClass("inactive-icon");
+//   document.cookie = "vehicle_icon=list";
+// }
 
 function showFirearmsList() {
   $(".dataTables_filter").hide();
