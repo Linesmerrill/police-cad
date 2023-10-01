@@ -1246,7 +1246,7 @@
                 </div>
               </div>
 
-              <div class="form-group">
+              <div class="form-group" style="display:none">
                 <label class="col-md-4 control-label" for="view-civIDWarrant">Selected ID:</label>
                 <div class="col-md-4">
                   <input id="view-civIDWarrant" name="accusedID" type="text" placeholder="Autofill from searching"
@@ -1303,52 +1303,51 @@
 
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
                 aria-hidden="true">X</button>
-              <h4>San Andreas Traffic Ticket</h4>
+              <h4>Issue Citation</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
               <div class="form-group required">
                 <label class="col-md-4 control-label" for="plate">Date of Violation</label>
                 <div class="col-md-4">
                   <input id="date" name="date" type="date" min="1900-01-01" max="2999-12-31"
-                    class="form-control input-md" required="">
+                    class="form-control input-md disabled-color" required="">
                 </div>
               </div>
 
               <div class="form-group required">
                 <label class="col-md-4 control-label" for="time">Time</label>
                 <div class="col-md-4">
-                  <input id="time" name="time" type="time" placeholder="hh:mm" class="form-control input-md"
-                    required="">
+                  <input id="time" name="time" type="time" placeholder="hh:mm" class="form-control input-md disabled-color" required="">
                 </div>
               </div>
 
-              <div class="form-group required">
+              <div class="form-group">
                 <label class="col-md-4 control-label" for="ticket-civ-first-name">First Name</label>
                 <div class="col-md-4">
                   <input id="ticket-civ-first-name" name="civFirstName" type="text" placeholder="First Name"
-                    class="form-control input-md" data-trigger="first-name-popover"
-                    data-content="* Please select from dropdown." style="text-transform:capitalize;" required="">
+                    class="form-control input-md disabled-color" data-trigger="first-name-popover"
+                    data-content="* Please select from dropdown." style="text-transform:capitalize;" readonly="readonly">
                 </div>
               </div>
 
-              <div class="form-group required">
+              <div class="form-group">
                 <label class="col-md-4 control-label" for="ticket-civ-last-name">Last Name</label>
                 <div class="col-md-4">
                   <input id="ticket-civ-last-name" name="civLastName" type="text" placeholder="Last Name"
-                    class="form-control input-md" data-trigger="last-name-popover"
-                    data-content="* Last name cannot contain spaces." style="text-transform:capitalize;" required="">
+                    class="form-control input-md disabled-color" data-trigger="last-name-popover"
+                    data-content="* Last name cannot contain spaces." style="text-transform:capitalize;" readonly="readonly">
                 </div>
               </div>
 
-              <div class="form-group required">
+              <div class="form-group">
                 <label class="col-md-4 control-label" for="ticket-civ-dob">DOB</label>
                 <div class="col-md-4">
                   <input id="ticket-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy"
-                    class="form-control input-md" required="">
+                    class="form-control input-md disabled-color" readonly="readonly">
                 </div>
               </div>
 
-              <div class="form-group required">
+              <div class="form-group" style="display:none">
                 <label class="col-md-4 control-label" for="civID">Selected ID</label>
                 <div class="col-md-4">
                   <input id="civID" name="civID" type="text" placeholder="Autofill from searching"
@@ -1438,7 +1437,7 @@
 
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
                 aria-hidden="true">X</button>
-              <h4>San Andreas Traffic Warning</h4>
+              <h4>Issue Warning</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
               <div class="form-group required">
@@ -1457,31 +1456,31 @@
                 </div>
               </div>
 
-              <div class="form-group required">
+              <div class="form-group">
                 <label class="col-md-4 control-label" for="warning-civ-first-name">First Name</label>
                 <div class="col-md-4">
                   <input id="warning-civ-first-name" name="civFirstName" type="text" placeholder="First Name"
-                    class="form-control input-md" style="text-transform:capitalize;" required="">
+                    class="form-control input-md disabled-color" style="text-transform:capitalize;" readonly="readonly">
                 </div>
               </div>
 
-              <div class="form-group required">
+              <div class="form-group">
                 <label class="col-md-4 control-label" for="warning-civ-last-name">Last Name</label>
                 <div class="col-md-4">
                   <input id="warning-civ-last-name" name="civLastName" type="text" placeholder="Last Name"
-                    class="form-control input-md" style="text-transform:capitalize;" required="">
+                    class="form-control input-md disabled-color" style="text-transform:capitalize;" readonly="readonly">
                 </div>
               </div>
 
-              <div class="form-group required">
+              <div class="form-group">
                 <label class="col-md-4 control-label" for="warning-civ-dob">DOB</label>
                 <div class="col-md-4">
                   <input id="warning-civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy"
-                    class="form-control input-md" required="">
+                    class="form-control input-md disabled-color" readonly="readonly">
                 </div>
               </div>
 
-              <div class="form-group required">
+              <div class="form-group" style="display:none">
                 <label class="col-md-4 control-label" for="civIDWarning">Selected ID</label>
                 <div class="col-md-4">
                   <input id="civIDWarning" name="civID" type="text" placeholder="Autofill from searching"
@@ -1623,7 +1622,7 @@
                 </div>
               </div>
 
-              <div class="form-group required">
+              <div class="form-group" style="display:none">
                 <label class="col-md-4 control-label" for="civIDArrest">Selected ID</label>
                 <div class="col-md-4">
                   <input id="civIDArrest" name="accusedID" type="text" placeholder="Autofill from searching"
@@ -1722,7 +1721,7 @@
                 </div>
               </div>
 
-              <div class="form-group required">
+              <div class="form-group" style="display:none">
                 <label class="col-md-4 control-label" for="civIDWarrant">Selected ID</label>
                 <div class="col-md-4">
                   <input id="civIDWarrant" name="accusedID" type="text" placeholder="Autofill from searching"
@@ -2168,6 +2167,15 @@
 
                   <h4>Civilian Details:</h4>
                   
+                  <div class="col-md-12 text-align-center margin-bottom-1">
+                    <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
+                    <input type="hidden" id="userBtnValue" value="">
+                    <button data-toggle="modal" href="#ticketModal" class="btn btn-info btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenCitation();setDateAndTime('#date', '#time');">Issue Citation</button>
+                    <button data-toggle="modal" href="#warningModal" class="btn btn-warning btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenWarning(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
+                    <button data-toggle="modal" href="#arrestModal" class="btn btn-danger btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenArrest(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
+                    <button data-toggle="modal" href="#createWarrantModal" class="btn btn-success btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false;">Create Warrant</button>
+                  </div>
+
                   <!-- Image of civilian -->
                   <hr style="width: 88%;max-width: 100rem;">
                   <h5><ion-icon name="camera-outline"></ion-icon> <span>Image</span></h5>
@@ -2276,14 +2284,7 @@
                     <input id="veteran-view" style="width: 2em;" type="checkbox" name="veteran" class="form-control disabled-color" disabled>
                 </div>
 
-                <div class="col-md-12 text-align-center margin-bottom-1">
-                  <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
-                  <input type="hidden" id="userBtnValue" value="">
-                  <button data-toggle="modal" href="#ticketModal" class="btn btn-info btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenCitation();setDateAndTime('#date', '#time');">Issue Citation</button>
-                  <button data-toggle="modal" href="#warningModal" class="btn btn-warning btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenWarning(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
-                  <button data-toggle="modal" href="#arrestModal" class="btn btn-danger btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenArrest(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
-                  <button data-toggle="modal" href="#createWarrantModal" class="btn btn-success btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false;">Create Warrant</button>
-                </div>
+                
                   </fieldset>
                 </form>
             </div>
@@ -3368,13 +3369,7 @@
     $('#searchTicketDiv').show()
   }
 
-  function setDateAndTime(dateElement, timeElement) {
-    $(dateElement)[0].valueAsDate=new Date();
-    $(timeElement)[0].value=new Date().toLocaleTimeString('en-GB', {
-      hour: "2-digit",
-      minute: "2-digit"
-    })
-  }
+  
 
   function generateCaseNo(elementName) {
     $(elementName).val(Math.round(Math.random()*10000000000))

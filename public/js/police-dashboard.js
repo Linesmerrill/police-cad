@@ -465,6 +465,9 @@ function loadCivSocketData(civID) {
 
     //load data into create modals (issue citation, issue warning, arrest and create warrant)
     populateCreateWarrantDetails(res);
+    populateIssueCitationDetails(res);
+    populateIssueWarningDetails(res);
+    populateArrestDetails(res);
   });
 }
 
@@ -856,81 +859,7 @@ function OpenCitation() {
 function getActiveWarrants() {}
 
 //TODO need to add in registeredOwnerID, remove index
-// function getRegisteredCars() {
-//   //remove any existing panel body on button click
-//   $(".reg-car").remove();
-//   $(`#registered-cars`).show();
-//   $("#registered-cars-loading").show();
-//   $("#issue-loading-registered-cars-alert").hide();
-//   var registeredOwnerID = $("#"); //TODO need to find value that stores this
-//   var socket = io();
-
-//   myReq = {
-//     // regOwner: registeredOwner,
-//     regOwnerID: registeredOwnerID, //new ID established 1/30/2021 so will only work on vehicles after this date
-//     communityID: dbUser.user.activeCommunity,
-//   };
-//   socket.emit("get_reg_veh", myReq);
-//   socket.on("load_reg_veh_result", (res) => {
-//     if (res != null && res != undefined) {
-//       if (res.length == 0) {
-//         $("#registered-cars").append(
-//           `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">` +
-//             `<h5 style="text-align: center;">No Registered Vehicles</h5>` +
-//             `</div>`
-//         );
-//         $("#registered-cars-loading").hide();
-//         return;
-//       }
-//       $("#registered-cars").append(
-//         `<div id="registered-cars-panel-body-${index}" class="panel-body reg-car">`
-//       );
-//       for (i = 0; i < res.length; i++) {
-//         if (i != 0) {
-//           //if we are not on the first loop, add a divider between each record
-//           $("#registered-cars-panel-body-" + index).append(`<hr>`);
-//         }
-//         //check if vehicle is stolen and append result
-//         if (res[i].vehicle.isStolen == 2) {
-//           $("#registered-cars-panel-body-" + index).append(
-//             `<div id="stolenMessage" class="alert alert-danger" style="display:block">` +
-//               `<strong>Danger!</strong> Vehicle reported as stolen.` +
-//               `</div>`
-//           );
-//         }
-//         $("#registered-cars-panel-body-" + index).append(
-//           `Vin #: ${res[i].vehicle.vin}<br/>` +
-//             `License Plate #: ${res[i].vehicle.plate}<br/>` +
-//             `Color: ${res[i].vehicle.color}<br/>` +
-//             `Model: ${res[i].vehicle.model}<br/>`
-//         );
-//         //check for valid/invalid insurance and append result
-//         if (res[i].vehicle.validInsurance == 1) {
-//           $("#registered-cars-panel-body-" + index).append(
-//             `<p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i></p>`
-//           );
-//         } else {
-//           $("#registered-cars-panel-body-" + index).append(
-//             `<p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>`
-//           );
-//         }
-//         //check for valid/invalid registration and append result
-//         if (res[i].vehicle.validRegistration == 1) {
-//           $("#registered-cars-panel-body-" + index).append(
-//             `<p class="plate-body-text">Registration: Valid <i class="ion-checkmark-circled color-green"></i></p>`
-//           );
-//         } else {
-//           $("#registered-cars-panel-body-" + index).append(
-//             `<p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>`
-//           );
-//         }
-//       }
-//     } else {
-//       $("#issue-loading-registered-cars-alert").show();
-//     }
-//     $("#registered-cars-loading").hide();
-//   });
-// }
+function getRegisteredCars() {}
 
 function getVehicles() {
   var socket = io();
@@ -1475,21 +1404,30 @@ function getPrevWarrantPage() {
   });
 }
 
-// function clearWarrantWithValues(warrantID, warrantReason) {
-//   $("#warrant-ID").val($("#"));
-//   $("#warrant-reason").text(warrantReason);
-//   //Super gross date calculation, thx javascript
-//   let date = new Date();
-//   let yyyy = date.getFullYear().toString();
-//   let mm = (date.getMonth() + 1).toString(); // getMonth() is zero-based
-//   let dd = date.getDate().toString();
-//   $("#warrant-clear-date").val(
-//     yyyy + "-" + (mm[1] ? mm : "0" + mm[0]) + "-" + (dd[1] ? dd : "0" + dd[0])
-//   );
-//   $("#warrant-clear-time").val(
-//     new Date().toLocaleTimeString("en-GB", {
-//       hour: "2-digit",
-//       minute: "2-digit",
-//     })
-//   );
-// }
+function populateIssueCitationDetails(res) {
+  // console.log("populateIssueCitationDetails res: ", res);
+  setDateAndTime("#date", "#time");
+  $("#ticket-civ-first-name").val(res.civilian.firstName);
+  $("#ticket-civ-last-name").val(res.civilian.lastName);
+  $("#ticket-civ-dob").val(res.civilian.birthday);
+  $("#civID").val(res._id);
+}
+
+function populateIssueWarningDetails(res) {
+  console.log("populateIssueWarningDetails res: ", res);
+  setDateAndTime("#warning-date", "#warning-time");
+  $("#warning-civ-first-name").val(res.civilian.firstName);
+  $("#warning-civ-last-name").val(res.civilian.lastName);
+  $("#warning-civ-dob").val(res.civilian.birthday);
+  $("#civIDWarning").val(res._id);
+}
+
+function populateArrestDetails(res) {}
+
+function setDateAndTime(dateElement, timeElement) {
+  $(dateElement)[0].valueAsDate = new Date();
+  $(timeElement)[0].value = new Date().toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
