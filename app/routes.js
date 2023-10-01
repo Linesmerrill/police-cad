@@ -2365,6 +2365,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.post("/clear-warrant", auth, function (req, res) {
+    console.debug("/clear-warrant req: ", req.body);
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(
       req.body.warrantID,
@@ -2380,9 +2381,8 @@ module.exports = function (app, passport, server) {
       },
       {
         $set: {
-          "warrant.updatedDate": req.body.updatedDate,
-          "warrant.updatedTime": req.body.updatedTime,
-          "warrant.clearingOfficer": req.body.clearingOfficer,
+          "warrant.updatedAt": new Date(),
+          "warrant.clearingOfficerID": req.body.clearingOfficerID,
           "warrant.status": false,
         },
       },

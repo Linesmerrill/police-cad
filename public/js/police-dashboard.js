@@ -836,11 +836,12 @@ function populateVehSocketDetails(res) {
 //TODO need to update to correct fields matching the UI
 function populateWarrantSocketDetails(res) {
   console.log("res: ", res);
-  $("#view-warrant-civ-first-name").val(`${res.warrant.accusedFirstName}`);
-  $("#view-warrant-civ-last-name").val(`${res.warrant.accusedLastName}`);
+  $("#view-warrant-civ-first-name").val(res.warrant.accusedFirstName);
+  $("#view-warrant-civ-last-name").val(res.warrant.accusedLastName);
   $("#view-warrant-civ-dob").val($("#delBirthday").val());
-  $("#view-civIDWarrant").val(`${res.warrant.accusedID}`);
-  $("#view-warrant-select").val(`${res.warrant.reasons}`);
+  $("#view-civIDWarrant").val(res.warrant.accusedID);
+  $("#view-warrant-select").val(res.warrant.reasons);
+  $("#warrant-ID").val(res._id);
 }
 
 function OpenCitation() {
@@ -1474,21 +1475,21 @@ function getPrevWarrantPage() {
   });
 }
 
-function clearWarrantWithValues(warrantID, warrantReason) {
-  $("#warrant-ID").val($("#"));
-  $("#warrant-reason").text(warrantReason);
-  //Super gross date calculation, thx javascript
-  let date = new Date();
-  let yyyy = date.getFullYear().toString();
-  let mm = (date.getMonth() + 1).toString(); // getMonth() is zero-based
-  let dd = date.getDate().toString();
-  $("#warrant-clear-date").val(
-    yyyy + "-" + (mm[1] ? mm : "0" + mm[0]) + "-" + (dd[1] ? dd : "0" + dd[0])
-  );
-  $("#warrant-clear-time").val(
-    new Date().toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  );
-}
+// function clearWarrantWithValues(warrantID, warrantReason) {
+//   $("#warrant-ID").val($("#"));
+//   $("#warrant-reason").text(warrantReason);
+//   //Super gross date calculation, thx javascript
+//   let date = new Date();
+//   let yyyy = date.getFullYear().toString();
+//   let mm = (date.getMonth() + 1).toString(); // getMonth() is zero-based
+//   let dd = date.getDate().toString();
+//   $("#warrant-clear-date").val(
+//     yyyy + "-" + (mm[1] ? mm : "0" + mm[0]) + "-" + (dd[1] ? dd : "0" + dd[0])
+//   );
+//   $("#warrant-clear-time").val(
+//     new Date().toLocaleTimeString("en-GB", {
+//       hour: "2-digit",
+//       minute: "2-digit",
+//     })
+//   );
+// }
