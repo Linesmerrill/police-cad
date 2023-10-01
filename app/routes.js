@@ -5419,6 +5419,21 @@ module.exports = function (app, passport, server) {
       }
     });
 
+    socket.on("lookup_warrant_by_id", (req) => {
+      // console.debug('lookup license socket: ', req)
+      if (exists(req.warrantID)) {
+        Warrant.findById(
+          {
+            _id: ObjectId(req.warrantID),
+          },
+          function (err, dbWarrant) {
+            if (err) return console.error(err);
+            return socket.emit("load_warrant_by_id_result", dbWarrant); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
+          }
+        );
+      }
+    });
+
     socket.on("create_new_veh", (req) => {
       // console.debug('create new veh socket: ', req)
       var myNewVeh = new Vehicle();
@@ -5580,6 +5595,27 @@ module.exports = function (app, passport, server) {
         .catch((err) => {
           console.error(err);
           return socket.emit("load_license_cards_result", undefined);
+        });
+    });
+
+    socket.on("fetch_warrant_cards", (req) => {
+      // console.debug("get fetch_warrant_cards socket: ", req);
+      axios
+        .get(
+          `${policeCadApiUrl}/api/v1/warrants/user/${req.civID}?limit=8&page=${req.page}`,
+          config
+        )
+        .then(function (dbLicenses) {
+          if (!exists(dbLicenses.data)) {
+            return socket.emit("load_warrant_cards_result", undefined);
+          } else {
+            // console.debug("load_warrant_cards_result response: ", dbLicenses.data);
+            return socket.emit("load_warrant_cards_result", dbLicenses.data);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          return socket.emit("load_warrant_cards_result", undefined);
         });
     });
 

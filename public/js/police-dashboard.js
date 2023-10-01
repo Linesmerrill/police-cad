@@ -458,11 +458,21 @@ function loadCivSocketData(civID) {
   socket.on("load_civ_by_id_result", (res) => {
     //load civ data into UI
     populateCivSocketDetails(res);
-    populateWarrantSocketDetails(res);
+    populateWarrantDetails(res);
     populateVehicleDetails(res);
     populateFirearmDetails(res);
     populateLicenseDetails(res);
+
+    //load data into create modals (issue citation, issue warning, arrest and create warrant)
+    populateCreateWarrantDetails(res);
   });
+}
+
+function populateCreateWarrantDetails(res) {
+  $("#warrant-civ-first-name").val(`${res.civilian.firstName}`);
+  $("#warrant-civ-last-name").val(`${res.civilian.lastName}`);
+  $("#warrant-civ-dob").val(`${res.civilian.birthday}`);
+  $("#civIDWarrant").val(`${res._id}`);
 }
 
 function populateVehicleDetails(res) {
@@ -825,22 +835,12 @@ function populateVehSocketDetails(res) {
 
 //TODO need to update to correct fields matching the UI
 function populateWarrantSocketDetails(res) {
-  // $("#vehicleID").val(res._id);
-  // $("#plateVeh").val(res.vehicle.plate.toUpperCase());
-  // // since only cars after 6/26/2020 will have this info, we need to check for empty values
-  // if (res.vehicle.vin == "" || res.vehicle.vin == undefined) {
-  //   $("#vinVeh").val("");
-  //   $("#no-existing-vin").show();
-  // } else {
-  //   $("#vinVeh").val(res.vehicle.vin.toUpperCase());
-  //   $("#no-existing-vin").hide();
-  // }
-  // $("#modelVeh").val(res.vehicle.model);
-  // $("#colorView").val(res.vehicle.color);
-  // $("#validRegView").val(res.vehicle.validRegistration);
-  // $("#validInsView").val(res.vehicle.validInsurance);
-  // $("#roVeh").val(res.vehicle.registeredOwner);
-  // $("#stolenView").val(res.vehicle.isStolen);
+  console.log("res: ", res);
+  $("#view-warrant-civ-first-name").val(`${res.warrant.accusedFirstName}`);
+  $("#view-warrant-civ-last-name").val(`${res.warrant.accusedLastName}`);
+  $("#view-warrant-civ-dob").val($("#delBirthday").val());
+  $("#view-civIDWarrant").val(`${res.warrant.accusedID}`);
+  $("#view-warrant-select").val(`${res.warrant.reasons}`);
 }
 
 function OpenCitation() {
@@ -852,63 +852,7 @@ function OpenCitation() {
 }
 
 //TODO need to add in civ ID to myReq, also remove index
-function getActiveWarrants() {
-  //remove any existing panel body on button click
-  $(".active-reg").remove();
-  $(`#active-warrants`).show();
-  $("#active-warrants-loading").show();
-  $("#issue-loading-active-warrants-alert").hide();
-
-  var socket = io();
-
-  myReq = {
-    accusedID: accusedID,
-  };
-  socket.emit("get_active_warrants", myReq);
-  socket.on("load_active_warrants_result", (res) => {
-    if (res != undefined && res != null) {
-      $("#active-warrants").append(
-        `<div id="active-warrants-panel-body-${index}" class="panel-body active-reg">`
-      );
-      let counter = 0;
-      for (i = 0; i < res.length; i++) {
-        //check if warrant is active and append result
-        if (res[i].warrant.status) {
-          if (i != 0) {
-            //if we are not on the first loop, add a divider between each record
-            $("#active-warrants-panel-body-" + index).append(`<hr>`);
-          }
-          $("#active-warrants-panel-body-" + index).append(
-            `<div id="stolenMessage" class="alert alert-danger" style="display:block">` +
-              `<strong>Danger!</strong> Active Warrant.` +
-              `</div>`
-          );
-          $("#active-warrants-panel-body-" + index).append(
-            `Date Created: ${res[i].warrant.date}<br/>` +
-              `Time Created: ${res[i].warrant.time}<br/>` +
-              `Reporting Officer: ${res[i].warrant.reportingOfficer}<br/>` +
-              `Reason(s): ${res[i].warrant.reasons}<br/>`
-          );
-
-          $("#active-warrants-panel-body-" + index).append(
-            `<button type="button" class="btn btn-info margin-bottom-05" id="confirmWarrantModal" data-toggle="modal" href="#confirmClearWarrantModal" onclick="clearWarrantWithValues('${res[i]._id}', '${res[i].warrant.reasons}')">Clear</button>`
-          );
-          counter++;
-        }
-      }
-      if (counter === 0) {
-        $("#active-warrants").append(
-          `<div id="active-warrants-panel-body-${index}" class="panel-body active-reg">` +
-            `<h5 style="text-align: center;">No Active Warrants</h5>` +
-            `</div>`
-        );
-      }
-    } else {
-      $("#issue-loading-active-warrants-alert").show();
-    }
-    $("#active-warrants-loading").hide();
-  });
-}
+function getActiveWarrants() {}
 
 //TODO need to add in registeredOwnerID, remove index
 // function getRegisteredCars() {
@@ -1393,4 +1337,158 @@ function getPrevLicensePage() {
       .attr("onclick", "getNextLicensePage()")
       .bind("click");
   });
+}
+
+function getWarrants() {
+  var socket = io();
+  $("#no-warrants-message").hide();
+  var myCivObj = {
+    civID: $("#civilianIDView").text(),
+    page: 0,
+  };
+  $("#warrants-thumbnail").empty();
+  socket.emit("fetch_warrant_cards", myCivObj);
+  socket.on("load_warrant_cards_result", (res) => {
+    if (res === undefined || res === null) {
+      $("#issue-loading-warrants-alert").show();
+    } else {
+      $("#issue-loading-warrants-alert").hide();
+      if (res.length < 1) {
+        // if we have 0 results back
+        $("#warrants-loading").hide();
+        $("#no-warrants-message").show();
+        $("#next-warrants-page-btn").addClass("isDisabled");
+        $("#next-warrants-page-btn").attr("onclick", "").unbind("click");
+        $("#prev-warrants-page-btn").addClass("isDisabled");
+        $("#prev-warrants-page-btn").attr("onclick", "").unbind("click");
+      } else {
+        $("#no-warrants-message").hide();
+        $("#warrants-thumbnail").empty();
+        for (i = 0; i < res.length; i++) {
+          $("#warrants-thumbnail").append(
+            `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center warrants-thumbnails flex-li-wrapper">
+      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
+        <span class="iconify font-size-4-vmax" style="color:indianred" data-icon="mdi:alert-octagon" data-inline="false"></span>
+        <div class="caption text-capitalize">
+          <h4 class="color-white">${res[i].warrant.reasons}</h4>
+          <p class="color-white" style="font-size: 12px;">${res[i].warrant.accusedFirstName} ${res[i].warrant.accusedLastName}</p>
+        </div>
+      </div>
+    </div>`
+          );
+        }
+        $("#warrants-loading").hide();
+        $("#prev-warrants-page-btn").addClass("isDisabled");
+        $("#prev-warrants-page-btn").attr("onclick", "").unbind("click");
+        if (res.length < 8) {
+          $("#next-warrants-page-btn").addClass("isDisabled");
+          $("#next-warrants-page-btn").attr("onclick", "").unbind("click");
+        } else {
+          $("#next-warrants-page-btn").removeClass("isDisabled");
+          $("#next-warrants-page-btn")
+            .attr("onclick", "getNextWarrantPage()")
+            .bind("click");
+        }
+      }
+    }
+  });
+}
+
+function getNextWarrantPage() {
+  pageWarrant = pageWarrant + 1;
+  var socket = io();
+  var myObj = {
+    civID: $("#civilianIDView").text(),
+    page: pageWarrant,
+  };
+  socket.emit("fetch_warrant_cards", myObj);
+  socket.on("load_warrant_cards_result", (res) => {
+    // load content on page
+    $("#warrants-thumbnail").empty();
+    for (i = 0; i < res.length; i++) {
+      $("#warrants-thumbnail").append(
+        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center warrants-thumbnails flex-li-wrapper">
+  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
+    <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
+    <div class="caption text-capitalize">
+      <h4 class="color-white">${res[i].warrants.warrantsType}</h4>
+      <h5 class="color-white">Status: ${res[i].warrants.status}</h5>
+      <p class="color-white" style="font-size: 12px;">${res[i].warrants.ownerName}</p>
+    </div>
+  </div>
+</div>`
+      );
+    }
+    if (res.length < 8) {
+      // if we have reached the end of the data, then gray out the 'next' button
+      $("#next-warrants-page-btn").addClass("isDisabled");
+      // page = page - 1
+      $("#next-warrants-page-btn").attr("onclick", "").unbind("click");
+    } else {
+      $("#next-warrants-page-btn").removeClass("isDisabled");
+      $("#next-warrants-page-btn")
+        .attr("onclick", "getNextWarrantPage()")
+        .bind("click");
+    }
+    $("#prev-warrants-page-btn").removeClass("isDisabled");
+    $("#prev-warrants-page-btn")
+      .attr("onclick", "getPrevWarrantPage()")
+      .bind("click");
+  });
+}
+
+function getPrevWarrantPage() {
+  pageWarrant = pageWarrant - 1;
+  if (pageWarrant < 1) {
+    pageWarrant = 0;
+    $("#prev-warrants-page-btn").addClass("isDisabled");
+    $("#prev-warrants-page-btn").attr("onclick", "").unbind("click");
+  }
+  var socket = io();
+  var myObj = {
+    civID: $("#civilianIDView").text(),
+    page: pageWarrant,
+  };
+  socket.emit("fetch_warrant_cards", myObj);
+  socket.on("load_warrant_cards_result", (res) => {
+    // load content on page
+    $("#warrants-thumbnail").empty();
+    for (i = 0; i < res.length; i++) {
+      $("#warrants-thumbnail").append(
+        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center warrants-thumbnails flex-li-wrapper">
+  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
+    <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
+    <div class="caption text-capitalize">
+      <h4 class="color-white">${res[i].warrants.warrantsType}</h4>
+      <h5 class="color-white">Status: ${res[i].warrants.status}</h5>
+      <p class="color-white" style="font-size: 12px;">${res[i].warrants.ownerName}</p>
+    </div>
+  </div>
+</div>`
+      );
+    }
+    $("#next-warrants-page-btn").removeClass("isDisabled");
+    $("#next-warrants-page-btn")
+      .attr("onclick", "getNextWarrantPage()")
+      .bind("click");
+  });
+}
+
+function clearWarrantWithValues(warrantID, warrantReason) {
+  $("#warrant-ID").val($("#"));
+  $("#warrant-reason").text(warrantReason);
+  //Super gross date calculation, thx javascript
+  let date = new Date();
+  let yyyy = date.getFullYear().toString();
+  let mm = (date.getMonth() + 1).toString(); // getMonth() is zero-based
+  let dd = date.getDate().toString();
+  $("#warrant-clear-date").val(
+    yyyy + "-" + (mm[1] ? mm : "0" + mm[0]) + "-" + (dd[1] ? dd : "0" + dd[0])
+  );
+  $("#warrant-clear-time").val(
+    new Date().toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  );
 }
