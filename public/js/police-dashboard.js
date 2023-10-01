@@ -458,6 +458,7 @@ function loadCivSocketData(civID) {
   socket.on("load_civ_by_id_result", (res) => {
     //load civ data into UI
     populateCivSocketDetails(res);
+    populateWarrantSocketDetails(res);
     populateVehicleDetails(res);
     populateFirearmDetails(res);
     populateLicenseDetails(res);
@@ -484,6 +485,12 @@ function populateLicenseDetails(res) {
   getLicenses();
 }
 
+function populateWarrantDetails(res) {
+  $("#warrant-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+  pageWarrant = 0;
+  getWarrants();
+}
+
 function loadVehSocketData(vehID) {
   var socket = io();
   var myReq = {
@@ -505,6 +512,18 @@ function loadFirearmSocketData(firearmID) {
   socket.on("load_firearm_by_id_result", (res) => {
     //load firearm data into UI
     populateFirearmSocketDetails(res);
+  });
+}
+
+function loadWarrantSocketData(warrantID) {
+  var socket = io();
+  var myReq = {
+    warrantID: warrantID,
+  };
+  socket.emit("lookup_warrant_by_id", myReq);
+  socket.on("load_warrant_by_id_result", (res) => {
+    //load vehicle data into UI
+    populateWarrantSocketDetails(res);
   });
 }
 
@@ -802,6 +821,26 @@ function populateVehSocketDetails(res) {
   $("#validInsView").val(res.vehicle.validInsurance);
   $("#roVeh").val(res.vehicle.registeredOwner);
   $("#stolenView").val(res.vehicle.isStolen);
+}
+
+//TODO need to update to correct fields matching the UI
+function populateWarrantSocketDetails(res) {
+  // $("#vehicleID").val(res._id);
+  // $("#plateVeh").val(res.vehicle.plate.toUpperCase());
+  // // since only cars after 6/26/2020 will have this info, we need to check for empty values
+  // if (res.vehicle.vin == "" || res.vehicle.vin == undefined) {
+  //   $("#vinVeh").val("");
+  //   $("#no-existing-vin").show();
+  // } else {
+  //   $("#vinVeh").val(res.vehicle.vin.toUpperCase());
+  //   $("#no-existing-vin").hide();
+  // }
+  // $("#modelVeh").val(res.vehicle.model);
+  // $("#colorView").val(res.vehicle.color);
+  // $("#validRegView").val(res.vehicle.validRegistration);
+  // $("#validInsView").val(res.vehicle.validInsurance);
+  // $("#roVeh").val(res.vehicle.registeredOwner);
+  // $("#stolenView").val(res.vehicle.isStolen);
 }
 
 function OpenCitation() {

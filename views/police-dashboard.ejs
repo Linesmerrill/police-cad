@@ -392,7 +392,7 @@
               </div>
 
               <!-- List of Civilians -->
-              <div id="civDetails" style="display:none">
+              <!-- <div id="civDetails" style="display:none">
                 <div class="panel-group" id="accordion">
                   <script>
                     // Global script
@@ -461,14 +461,8 @@
                                         </div>
                                       </span>
                                     <% } %>
-                                    <!-- <h5>
-                                      <ion-icon name="person-outline"></ion-icon> Details
-                                    </h5> -->
-                                    <!-- <hr style="width: 88%;max-width: 100rem;"> -->
-                                    <!-- <h4>Details about your Civilian</h4> -->
+                                    
                   
-                  <!-- Image of civilian -->
-                  <!-- <hr style="width: 88%;max-width: 100rem;"> -->
                   <h5><ion-icon name="camera-outline"></ion-icon> <span>Image</span></h5>
                   <div class="col-md-12 text-align-center">
                     <a  href="#">
@@ -476,7 +470,6 @@
                     </a>
                   </div>
 
-                  <!-- Details about civilian -->
                   <hr style="width: 88%;max-width: 100rem;">
                   <h5><ion-icon name="person-outline"></ion-icon> Details</h5>
 
@@ -530,7 +523,6 @@
                 <hr style="width: 88%;max-width: 100rem;">
                 <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details <span class="color-gray">(Optional)</span></h5>
 
-                <!-- Select Basic -->
                 <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
                   <label class="control-label" for="genderView">Gender</label>
                     <select id="gender-view" name="gender" class="form-control disabled-color" disabled value="<%= civilians[i].civilian.gender%>">
@@ -551,25 +543,21 @@
                   <input id="weightView" name="weight" type="text" placeholder="Weight" class="form-control input-md disabled-color" disabled value="<%= civilians[i].civilian.weight%>">
                 </div>
 
-                <!-- Text input-->
                 <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
                   <label class="control-label" for="eyeColor">Eye Color:</label>
                   <input id="eye-color-view" name="eyeColor" type="text" placeholder="Eye Color" class="form-control input-md disabled-color" disabled value="<%= civilians[i].civilian.eyeColor%>">
                 </div>
 
-                <!-- Text input-->
                 <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
                   <label class="control-label" for="hairColor">Hair Color</label>
                   <input id="hair-color-view" name="hairColor" type="text" placeholder="Hair Color (optional)" class="form-control input-md disabled-color" disabled value="<%= civilians[i].civilian.hairColor%>">
                 </div>
 
-                <!-- Checkbox -->
                 <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
                   <label class="control-label" for="organDonor">Organ Donor?</label>
                     <input id="organ-donor-view" style="width: 2em;" type="checkbox" name="organDonor" class="form-control disabled-color" disabled value="<%= civilians[i].civilian.organDonor%>">
                 </div>
 
-                <!-- Checkbox -->
                 <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
                   <label class="control-label" for="veteran">Veteran?</label>
                     <input id="veteran-view" style="width: 2em;" type="checkbox" name="veteran" class="form-control disabled-color" disabled value="<%= civilians[i].civilian.veteran%>">
@@ -578,10 +566,6 @@
                                     <h5>
                                       <ion-icon name="browsers-outline"></ion-icon> Licenses
                                     </h5>
-
-                                    
-                                    <!-- Button to fetch license's -->
-
                                     <div class="text-center">
                                       <% if (user.user.activeCommunity !='' &&
                                         user.user.activeCommunity !=null) {%>
@@ -599,28 +583,6 @@
                                           </button>
                                           <% } %>
                                     </div>
-                                    
-                                    
-
-                                    <!-- Reinstate Drivers License Button -->
-                                    <!-- <div id="click-to-reinstate-lic-<%=i%>"
-                                      class="form-group col-md-12 text-align-center margin-top-1 hide">
-                                      <button type="button" value="reinstateLicense" name="action"
-                                        class="btn btn-info"
-                                        onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','1')">Reinstate
-                                        Driver's License</button>
-                                    </div> -->
-
-                                    <!-- Delete Drivers License Button -->
-                                    <!-- <div id="click-to-revoke-lic-<%=i%>"
-                                      class="form-group col-md-13 text-align-center hide"
-                                      style="margin-top: -5em">
-                                      <button type="button" value="deleteLicense" name="action"
-                                        class="btn btn-danger"
-                                        onclick="updateDriversLicenseStatus('<%= i%>','<%= civilians[i]._id%>','2')">Revoke
-                                        Driver's License</button>
-                                    </div> -->
-
                                     <hr style="width: 88%;max-width: 100rem;">
                                     <h5>
                                       <ion-icon name="alert-circle-outline"></ion-icon> NCIC Warrant Check
@@ -664,29 +626,6 @@
                                           </button>
                                           <% } %>
                                     </div>
-                                    <!-- <hr style="width: 88%;max-width: 100rem;">
-                                    <h5>
-                                      <ion-icon name="browsers-outline"></ion-icon> Firearm
-                                      License
-                                    </h5>
-
-                                    <div class="form-group">
-                                      <label class="col-md-4 control-label"
-                                        for="firearmLicenseView"></label>
-                                      <div class="col-md-4">
-                                        <% if (civilians[i].civilian.firearmLicense==2) {%>
-                                          <p class="plate-body-text">Valid <i
-                                              class="ion-checkmark-circled color-green"></i></p>
-                                          <% } else if (civilians[i].civilian.firearmLicense==3) {%>
-                                            <p class="plate-body-text">Revoked <i
-                                                class="ion-alert-circled color-red"></i></p>
-                                            <% } else {%>
-                                              <p class="plate-body-text">None <i
-                                                  class="ion-alert-circled color-yellow"></i>
-                                              </p>
-                                              <% } %>
-                                      </div>
-                                    </div> -->
                                     <hr style="width: 88%;max-width: 100rem;">
 
                                     <h5>
@@ -712,10 +651,6 @@
                                               </button>
                                               <% } %>
                                         </div>
-                                      <!-- <hr style="width: 88%;max-width: 100rem;">
-
-                                    Occupation: <%= civilians[i].civilian.occupation%><br /> -->
-
                                       <hr style="width: 88%;max-width: 100rem;">
                                       <h4>Criminal History</h4>
                                       <ul class="nav nav-pills mb-3 margin-bottom-1"
@@ -753,7 +688,6 @@
                                               </tr>
                                             </thead>
                                             <tbody id="ticket-body-<%=civilians[i]._id%>">
-                                              <!-- populated by socket -->
                                             </tbody>
                                           </table>
                                         </div>
@@ -769,7 +703,6 @@
                                               </tr>
                                             </thead>
                                             <tbody id="warning-body-<%=civilians[i]._id%>">
-                                              <!-- populated by socket -->
                                             </tbody>
                                           </table>
                                         </div>
@@ -786,7 +719,6 @@
                                               </tr>
                                             </thead>
                                             <tbody id="arrest-body-<%=civilians[i]._id%>">
-                                              <!-- populated by socket -->
                                             </tbody>
                                           </table>
                                         </div>
@@ -800,7 +732,7 @@
 
                             <% } %>
                       </div>
-                </div>
+              </div> -->
               </div>
             </fieldset>
           </form>
@@ -2202,6 +2134,48 @@
                 </div>
                   </fieldset>
                 </form>
+            </div>
+            <div class="tab-pane fade" id="pills-ncic">
+              <!--Table for NCIC Warrants  -->
+              <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+                <div class="margin-bottom-1">
+                  <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">NCIC Warrant Check:</span> 
+                  <button data-toggle="modal" href="#createWarrantModal" data-dismiss="modal" aria-hidden="true" class="btn btn-primary btn-md pull-right">Create Warrant</button>
+                </div>
+                <div>
+                  <label>Search:
+                    <input id="ncic-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+                  </label>
+                </div>
+
+                <!-- List of warrants -->
+                <div id="warrants-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                  <div id="warrants-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                </div>
+
+                <!-- Loading error -->
+                <div id="issue-loading-warrants-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading warrants, try refreshing the page...</p>
+                </div>
+
+                <!-- No warrants registered message -->
+                <div id="no-warrants-message" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">No active warrants</p>
+                </div>
+
+                <!-- Paginated navigation list -->
+                <div>
+                  <nav aria-label="...">
+                    <ul class="pager">
+                      <li><a id="prev-veh-page-btn" class="" onclick="getPrevWarrantPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                      <li><a id="next-veh-page-btn" onclick="getNextWarrantPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                    </ul>
+                  </nav>
+                </div>
+
+              </div>
             </div>
             <div class="tab-pane fade" id="pills-vehicles">
               <!--Table for Vehicles  -->
