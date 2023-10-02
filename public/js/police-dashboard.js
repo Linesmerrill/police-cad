@@ -309,6 +309,7 @@ function loadArrests(index) {
     civID: index,
   };
   $.get("/arrests", parameters, function (data) {
+    console.log("arrests data", data);
     data.forEach(function (e) {
       var newRowContent =
         "<tr><td>" +
@@ -1414,7 +1415,7 @@ function populateIssueCitationDetails(res) {
 }
 
 function populateIssueWarningDetails(res) {
-  console.log("populateIssueWarningDetails res: ", res);
+  // console.log("populateIssueWarningDetails res: ", res);
   setDateAndTime("#warning-date", "#warning-time");
   $("#warning-civ-first-name").val(res.civilian.firstName);
   $("#warning-civ-last-name").val(res.civilian.lastName);
@@ -1422,7 +1423,15 @@ function populateIssueWarningDetails(res) {
   $("#civIDWarning").val(res._id);
 }
 
-function populateArrestDetails(res) {}
+function populateArrestDetails(res) {
+  console.log("populateArrestDetails res: ", res);
+  $("#arrest-report-case-no").val(Math.round(Math.random() * 10000000000));
+  setDateAndTime("#arrest-report-date", "#arrest-report-time");
+  $("#arrest-civ-first-name").val(res.civilian.firstName);
+  $("#arrest-civ-last-name").val(res.civilian.lastName);
+  $("#arrest-civ-dob").val(res.civilian.birthday);
+  $("#civIDArrest").val(res._id);
+}
 
 function setDateAndTime(dateElement, timeElement) {
   $(dateElement)[0].valueAsDate = new Date();

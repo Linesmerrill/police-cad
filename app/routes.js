@@ -1605,6 +1605,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/arrests", auth, function (req, res) {
+    console.debug("/arrests", req.body);
     ArrestReport.find(
       {
         "arrestReport.accusedID": req.query.civID,
