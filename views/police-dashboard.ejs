@@ -184,7 +184,21 @@
                                   <span aria-hidden="true">&times;</span>
                                 </button>
                               </div>
-                              <%}%>
+                              <%} else if (context=="updateSuccess" ) {%>
+                                <div class="alert alert-success alert-dismissible show" role="alert">
+                                  <strong>Success!</strong> Updated successfully
+                                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                </div>
+                                <%} else if (context=="deleteSuccess" ) {%>
+                                  <div class="alert alert-success alert-dismissible show" role="alert">
+                                    <strong>Success!</strong> Deleted successfully
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                      <span aria-hidden="true">&times;</span>
+                                    </button>
+                                  </div>
+                                  <%}%>
 
                                 <!-- imports the community specific alerts -->
                                 <% include community-alerts %>
@@ -1011,28 +1025,28 @@
             <div class="form-group">
                 <label class="col-md-4 control-label" for="plate">Plate:</label>
                 <div class="col-md-4">
-                  <input id="plateVeh" name="plateVeh" type="text" maxlength="8" placeholder="Plate" class="form-control input-md disabled-color" disabled>
+                  <input id="plateVeh" name="plateVeh" type="text" maxlength="8" placeholder="Plate" class="form-control input-md disabled-color" required readonly="readonly">
                 </div>
               </div>
 
             <div class="form-group">
                 <label class="col-md-4 control-label" for="model">Model:</label>
                 <div class="col-md-4">
-                  <input id="modelVeh" name="modelVeh" type="search" placeholder="Model" class="form-control input-md disabled-color" disabled>
+                  <input id="modelVeh" name="modelVeh" type="search" placeholder="Model" class="form-control input-md disabled-color" required readonly="readonly">
                 </div>
               </div>
 
             <div class="form-group">
                 <label class="col-md-4 control-label" for="colorView">Color:</label>
                 <div class="col-md-4">
-                  <input id="colorView" name="colorView" type="text" placeholder="Color" class="form-control input-md disabled-color">
+                  <input id="colorView" name="colorView" type="text" placeholder="Color" class="form-control input-md disabled-color" required readonly="readonly">
                 </div>
               </div>
 
             <div class="form-group">
-                <label class="col-md-4 control-label" for="valid-registration">Valid Registration?</label>
+                <label class="col-md-4 control-label" for="valid-registration"><span id="invalidRegistrationAlert">⚠️</span> Valid Registration?</label>
                 <div class="col-md-4">
-                  <select id="validRegView" name="validRegView" class="form-control disabled-color" selected="selected" disabled>
+                  <select id="validRegView" name="validRegView" class="form-control disabled-color" selected="selected" required readonly="readonly">
                     <option value="1">Yes</option>
                     <option value="2">No</option>
                   </select>
@@ -1040,9 +1054,9 @@
               </div>
 
             <div class="form-group">
-                <label class="col-md-4 control-label" for="validInsView">Valid Insurance?</label>
+                <label class="col-md-4 control-label" for="validInsView"><span id="invalidInsuranceAlert">⚠️</span> Valid Insurance?</label>
                 <div class="col-md-4">
-                  <select id="validInsView" name="validInsView" class="form-control disabled-color" selected="selected" disabled>
+                  <select id="validInsView" name="validInsView" class="form-control disabled-color" selected="selected" required readonly="readonly">
                     <option value="1">Yes</option>
                     <option value="2">No</option>
                   </select>
@@ -1050,9 +1064,9 @@
               </div>
 
             <div class="form-group">
-                <label class="col-md-4 control-label" for="stolenView">Marked Stolen?</label>
+                <label class="col-md-4 control-label" for="stolenView"><span id="isStolenAlert">⚠️</span> Marked Stolen?</label>
                 <div class="col-md-4">
-                  <select id="stolenView" name="stolenView" class="form-control disabled-color" selected="selected" disabled>
+                  <select id="stolenView" name="stolenView" class="form-control disabled-color" selected="selected" required readonly="readonly">
                     <option value="1">No</option>
                     <option value="2">Yes</option>
                   </select>
@@ -1061,7 +1075,8 @@
 
             <div class="col-md-12 text-align-center">
                 <input type="hidden" id="vehicleID" name="vehicleID">
-                <!-- <button type="submit" value="update" name="action" class="btn btn-info">Update Vehicle</button> -->
+                <input type="hidden" name="backLocation" value="/police-dashboard">
+                <button id="markStolenBtn" type="submit" value="update" name="action" class="btn btn-danger" onclick="updateToIsStolen()">Mark Stolen</button>
                 <!-- <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Vehicle</button> -->
             </div>
             </fieldset>

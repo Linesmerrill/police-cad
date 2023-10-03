@@ -821,13 +821,37 @@ function populateVehSocketDetails(res) {
     $("#vinVeh").val(res.vehicle.vin.toUpperCase());
     $("#no-existing-vin").hide();
   }
-
   $("#modelVeh").val(res.vehicle.model);
   $("#colorView").val(res.vehicle.color);
   $("#validRegView").val(res.vehicle.validRegistration);
+  if (res.vehicle.validRegistration == "2") {
+    //if the vehicle is not registered, show the is invalid alert
+    $("#invalidRegistrationAlert").show();
+  } else {
+    $("#invalidRegistrationAlert").hide();
+  }
   $("#validInsView").val(res.vehicle.validInsurance);
+  if (res.vehicle.validInsurance == "2") {
+    //if the vehicle is not insured, show the is invalid alert
+    $("#invalidInsuranceAlert").show();
+  } else {
+    $("#invalidInsuranceAlert").hide();
+  }
   $("#roVeh").val(res.vehicle.registeredOwner);
   $("#stolenView").val(res.vehicle.isStolen);
+  if (res.vehicle.isStolen == "2") {
+    //if the vehicle is stolen, hide the mark stolen button
+    //and show the is stolen alert
+    $("#markStolenBtn").hide();
+    $("#isStolenAlert").show();
+  } else {
+    $("#markStolenBtn").show();
+    $("#isStolenAlert").hide();
+  }
+}
+
+function updateToIsStolen() {
+  $("#stolenView").val("2");
 }
 
 //TODO need to update to correct fields matching the UI

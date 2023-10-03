@@ -1605,7 +1605,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/arrests", auth, function (req, res) {
-    console.debug("/arrests", req.body);
+    // console.debug("/arrests", req.body);
     ArrestReport.find(
       {
         "arrestReport.accusedID": req.query.civID,
@@ -2366,7 +2366,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.post("/clear-warrant", auth, function (req, res) {
-    console.debug("/clear-warrant req: ", req.body);
+    // console.debug("/clear-warrant req: ", req.body);
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(
       req.body.warrantID,
@@ -3184,6 +3184,8 @@ module.exports = function (app, passport, server) {
   });
 
   app.post("/updateOrDeleteVeh", auth, function (req, res) {
+    // console.debug("update or delete vehicle body: ", req.body);
+    var backLocation = req.body.backLocation;
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
       if (!exists(req.body.roVeh)) {
@@ -3195,7 +3197,7 @@ module.exports = function (app, passport, server) {
       );
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect("/civ-dashboard");
+        return res.redirect(backLocation);
       }
       if (!exists(req.body.vinVeh)) {
         req.body.vinVeh = "";
@@ -3223,7 +3225,8 @@ module.exports = function (app, passport, server) {
         },
         function (err) {
           if (err) return console.error(err);
-          return res.redirect("/civ-dashboard");
+          req.app.locals.specialContext = "updateSuccess";
+          return res.redirect(backLocation);
         }
       );
     } else {
@@ -3233,7 +3236,7 @@ module.exports = function (app, passport, server) {
       );
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect("/civ-dashboard");
+        return res.redirect(backLocation);
       }
       Vehicle.findByIdAndDelete(
         {
@@ -3241,7 +3244,8 @@ module.exports = function (app, passport, server) {
         },
         function (err) {
           if (err) return console.error(err);
-          return res.redirect("/civ-dashboard");
+          req.app.locals.specialContext = "deleteSuccess";
+          return res.redirect(backLocation);
         }
       );
     }
