@@ -348,20 +348,11 @@ function loadReports(index) {
   };
   $.get("/medical-reports", parameters, function (data) {
     data.forEach(function (e) {
-      var newRowContent =
-        `<tr id="` +
-        e._id +
-        `"><td>` +
-        e.report.date +
-        `</td><td style='text-transform: capitalize;'>` +
-        e.report.hospitalized +
-        `</td><td style='text-transform: capitalize;'>` +
-        e.report.details +
-        `</td><td class="text-align-center"><a class='clickable' onclick="deleteReport('` +
-        e._id +
-        `', '` +
-        e.report.civilianID +
-        `')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>`;
+      var newRowContent = `<tr id="${e._id}">
+        <td>${e.report.date}</td>
+        <td style='text-transform: capitalize;'>${e.report.hospitalized}</td>
+        <td style='text-transform: capitalize;'>${e.report.details}</td>
+        </tr>`;
       $("#reportsTable tbody").append(newRowContent);
     });
   });
@@ -375,20 +366,12 @@ function loadMedications(index) {
   };
   $.get("/medications", parameters, function (data) {
     data.forEach(function (e) {
-      var newRowContent =
-        '<tr id="' +
-        e._id +
-        '"><td>' +
-        e.medication.startDate +
-        "</td><td style='text-transform: capitalize;'>" +
-        e.medication.name +
-        "</td><td>" +
-        e.medication.dosage +
-        "</td><td>" +
-        e.medication.frequency +
-        "</td><td class=\"text-align-center\"><a class='clickable' onclick=\"deleteMedication('" +
-        e._id +
-        '\')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>';
+      var newRowContent = `<tr id="${e._id}">
+        <td>${e.medication.startDate}</td>
+        <td style='text-transform: capitalize;'>${e.medication.name}</td>
+        <td>${e.medication.dosage}</td>
+        <td>${e.medication.frequency}</td>
+        </tr>`;
       $("#medicationsTable tbody").append(newRowContent);
     });
   });
@@ -402,18 +385,11 @@ function loadConditions(index) {
   };
   $.get("/conditions", parameters, function (data) {
     data.forEach(function (e) {
-      var newRowContent =
-        '<tr id="' +
-        e._id +
-        '"><td>' +
-        e.condition.dateOccurred +
-        "</td><td style='text-transform: capitalize;'>" +
-        e.condition.name +
-        "</td><td>" +
-        e.condition.details +
-        "</td><td class=\"text-align-center\"><a class='clickable' onclick=\"deleteCondition('" +
-        e._id +
-        '\')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td></tr>';
+      var newRowContent = `<tr id="${e._id}">
+        <td>${e.condition.dateOccurred}</td>
+        <td style='text-transform: capitalize;'>${e.condition.name}</td>
+        <td>${e.condition.details}</td>
+        </tr>`;
       $("#conditionsTable tbody").append(newRowContent);
     });
   });
