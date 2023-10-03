@@ -1200,6 +1200,8 @@
             <div class="col-md-12 text-align-center margin-bottom-2">
                 <input type="hidden" id="licenseID" name="licenseID">
                 <input type="hidden" id="licenseOwnerID" name="licenseOwnerID">
+                <button type="button" value="reinstateLicense" name="action" class="btn btn-info" onclick="if (!window.__cfRLUnblockHandlers) return false; updateDriversLicenseStatus('0','5f13206bbde1480004b7fd7b','1')">Reinstate License</button>
+                <button type="button" value="deleteLicense" name="action" class="btn btn-danger" onclick="if (!window.__cfRLUnblockHandlers) return false; updateDriversLicenseStatus('0','5f13206bbde1480004b7fd7b','2')">Revoke License</button>
                 <!-- <button type="submit" value="update" name="action" class="btn btn-info">Update License</button> -->
                 <!-- <button type="submit" value="delete" name="action" class="btn btn-danger">Delete License</button> -->
             </div>
