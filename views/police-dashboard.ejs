@@ -2478,7 +2478,7 @@
                       <div class="tab-pane fade" id="pills-citations" role="tabpanel" aria-labelledby="pills-citations-tab">
                           <table id="citationTable" class="table table-hover" border="1" frame="box">
                             <thead>
-                              <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Violation</td><td>Amount</td></tr>
+                              <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Violation</td><td>Amount</td><td>Delete</td></tr>
                             </thead>
                               <tbody>
                               </tbody>
@@ -2487,7 +2487,7 @@
                       <div class="tab-pane fade" id="pills-warnings" role="tabpanel" aria-labelledby="pills-warnings-tab">
                         <table id="warningTable" class="table table-hover" border="1" frame="box">
                           <thead>
-                            <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Warning</td></tr>
+                            <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Warning</td><td>Delete</td></tr>
                           </thead>
                             <tbody>
                             </tbody>
@@ -2496,7 +2496,7 @@
                       <div class="tab-pane fade" id="pills-arrests" role="tabpanel" aria-labelledby="pills-arrests-tab">
                         <table id="arrestTable" class="table table-hover" border="1" frame="box">
                           <thead>
-                            <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Arrest Charges</td><td>Summary</td></tr>
+                            <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Arrest Charges</td><td>Summary</td><td>Delete</td></tr>
                           </thead>
                             <tbody>
                             </tbody>
@@ -2527,8 +2527,8 @@
                         </table>
                       </div>
                       <div class="tab-pane fade" id="pills-medications" role="tabpanel" aria-labelledby="pills-medications-tab">
-                        <button data-toggle="modal" href="#addMedicationModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Medication</button>
-                        <br/><br/>
+                        <!-- <button data-toggle="modal" href="#addMedicationModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Medication</button> -->
+                        <!-- <br/><br/> -->
                         <table id="medicationsTable" class="table" border="1" frame="box">
                           <thead>
                             <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Dosage</td><td>Frequency</td><td>Delete</td></tr>
@@ -2537,8 +2537,8 @@
                         </table>
                       </div>
                       <div class="tab-pane fade" id="pills-pre-existing-conditions" role="tabpanel" aria-labelledby="pills-pre-existing-conditions-tab">
-                        <button data-toggle="modal" href="#addConditionModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Condition</button>
-                        <br/><br/>
+                        <!-- <button data-toggle="modal" href="#addConditionModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Condition</button> -->
+                        <!-- <br/><br/> -->
                         <table id="conditionsTable" class="table" border="1" frame="box">
                           <thead>
                             <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td><td>Delete</td></tr>
@@ -3979,39 +3979,6 @@
     })
   }
 
-  function loadArrests(civID) {
-    $(`#arrest-body-${civID}`).empty();
-    var data = {
-      civID: civID
-    }
-    var socket=io();
-    socket.emit('search_arrests', data)
-    socket.on('load_arrests_result', (res) => {
-      res.forEach(arrest => {
-      $(`#arrest-body-${civID}`).append(
-        `
-          <tr id="${arrest._id}">
-              <td>
-                ${arrest.arrestReport.date}
-              </td>
-              <td>
-                ${arrest.arrestReport.charges}
-              </td>
-              <td>
-                ${arrest.arrestReport.summary}
-              </td>
-              <td class="text-align-center">
-                <a class='clickable' onclick="deleteArrest('${arrest._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
-              </td>
-          </tr>
-        `
-        ).fadeTo(1, function () {
-            $(this).add();
-          })
-      });
-    })
-  }
-
   function openNameDatabase(registeredOwner, activeCommunityID) {
     var activeCommID = ""
     if (activeCommunityID != null && activeCommunityID != undefined) {
@@ -4061,26 +4028,7 @@
     $('#notification-count').text('');
   }
 
-  function deleteCitation(citationID, civilianID) {
-    var parameters={ citationID: citationID };
-    $.delete('/citation/'+citationID, parameters, function (data) {
-      $(`table#ticket-table-${civilianID} tr#${citationID}`).remove()
-    })
-  }
-
-  function deleteWarning(warningID, civilianID) {
-    var parameters={ citationID: warningID };
-    $.delete('/warning/'+warningID, parameters, function (data) {
-      $(`table#warning-table-${civilianID} tr#warning-${warningID}`).remove()
-    })
-  }
-
-  function deleteArrest(arrestID, civilianID) {
-    var parameters={ arrestID: arrestID };
-    $.delete('/arrestReport/'+arrestID, parameters, function (data) {
-      $(`table#arrest-table-${civilianID} tr#${arrestID}`).remove()
-    })
-  }
+  
 </script>
 
 <!--  added for google translate -->

@@ -272,6 +272,7 @@ function loadDriversLicense(myVar, index) {
 }
 
 function loadTicketsAndWarnings(index) {
+  console.log("loadTicketsAndWarnings called", index);
   $("#warningTable tbody").empty();
   $("#citationTable tbody").empty();
   var parameters = {
@@ -280,23 +281,19 @@ function loadTicketsAndWarnings(index) {
   $.get("/tickets", parameters, function (data) {
     data.forEach(function (e) {
       if (e.ticket.isWarning) {
-        var newRowContent =
-          "<tr><td>" +
-          e.ticket.date +
-          "</td><td>" +
-          e.ticket.violation +
-          "</td></tr>";
+        var newRowContent = `<tr id="${e._id}">
+        <td>${e.ticket.date}</td>
+        <td>${e.ticket.violation}</td>
+        <td class="text-align-center"><a class='clickable' onclick="deleteWarning('${e._id}', '${e.ticket.civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>
+        </tr>`;
         $("#warningTable tbody").append(newRowContent);
       } else {
-        var newRowContent =
-          "<tr><td>" +
-          e.ticket.date +
-          "</td><td>" +
-          e.ticket.violation +
-          "</td><td>" +
-          "$" +
-          e.ticket.amount +
-          "</td></tr>";
+        var newRowContent = `<tr id="${e._id}">
+          <td>${e.ticket.date}</td>
+          <td>${e.ticket.violation}</td>
+          <td>${e.ticket.amount}</td>
+          <td class="text-align-center"><a class='clickable' onclick="deleteCitation('${e._id}', '${e.ticket.civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>
+          </tr>`;
         $("#citationTable tbody").append(newRowContent);
       }
     });
@@ -304,6 +301,7 @@ function loadTicketsAndWarnings(index) {
 }
 
 function loadArrests(index) {
+  console.log("loadArrests called", index);
   $("#arrestTable tbody").empty();
   var parameters = {
     civID: index,
@@ -311,16 +309,35 @@ function loadArrests(index) {
   $.get("/arrests", parameters, function (data) {
     console.log("arrests data", data);
     data.forEach(function (e) {
-      var newRowContent =
-        "<tr><td>" +
-        e.arrestReport.date +
-        "</td><td>" +
-        e.arrestReport.charges +
-        "</td><td>" +
-        e.arrestReport.summary +
-        "</td></tr>";
+      var newRowContent = `<tr id="${e._id}">
+        <td>${e.arrestReport.date}</td>
+        <td>${e.arrestReport.charges}</td>
+        <td>${e.arrestReport.summary}</td>
+        <td class="text-align-center"><a class='clickable' onclick="deleteArrest('${e._id}', '${e.arrestReport.accusedID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a></td>
+        </tr>`;
       $("#arrestTable tbody").append(newRowContent);
     });
+  });
+}
+
+function deleteCitation(citationID, civilianID) {
+  var parameters = { citationID: citationID };
+  $.delete("/citation/" + citationID, parameters, function (data) {
+    $(`table#citationTable tr#${citationID}`).remove();
+  });
+}
+
+function deleteWarning(warningID, civilianID) {
+  var parameters = { citationID: warningID };
+  $.delete("/warning/" + warningID, parameters, function (data) {
+    $(`table#warningTable tr#${warningID}`).remove();
+  });
+}
+
+function deleteArrest(arrestID, civilianID) {
+  var parameters = { arrestID: arrestID };
+  $.delete("/arrestReport/" + arrestID, parameters, function (data) {
+    $(`table#arrestTable tr#${arrestID}`).remove();
   });
 }
 
