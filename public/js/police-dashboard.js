@@ -21,7 +21,7 @@ function nameSearchPoliceForm() {
     for (i = 0; i < res.length; i++) {
       $("#search-results-personas-thumbnail").append(
         `<div id="search-results-personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-              <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
+              <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
                 <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                 <div class="caption capitalize">
                   <h4 id="search-results-personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
@@ -75,7 +75,7 @@ function getPrevCivPage() {
     for (i = 0; i < res.length; i++) {
       $("#search-results-personas-thumbnail").append(
         `<div id="search-results-personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-              <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
+              <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
                 <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                 <div class="caption capitalize">
                   <h4 id="search-results-personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
@@ -110,7 +110,7 @@ function getNextCivPage() {
     for (i = 0; i < res.length; i++) {
       $("#search-results-personas-thumbnail").append(
         `<div id="search-results-personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-              <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
+              <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
                 <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                 <div class="caption capitalize">
                   <h4 id="search-results-personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
@@ -902,7 +902,7 @@ function getVehicles() {
           $("#issue-loading-vehicles-alert").hide();
           $("#vehicles-thumbnail").append(
             `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
-        <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+        <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
           <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
           <div class="caption">
             <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
@@ -945,7 +945,7 @@ function getNextVehPage() {
       for (i = 0; i < res.length; i++) {
         $("#vehicles-thumbnail").append(
           `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
         <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
         <div class="caption">
           <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
@@ -992,7 +992,7 @@ function getPrevVehPage() {
       for (i = 0; i < res.length; i++) {
         $("#vehicles-thumbnail").append(
           `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
         <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
         <div class="caption">
           <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
@@ -1044,7 +1044,7 @@ function getFirearms() {
         for (i = 0; i < res.length; i++) {
           $("#firearms-thumbnail").append(
             `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
         <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
         <div class="caption text-capitalize">
           <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
@@ -1086,7 +1086,7 @@ function getNextGunPage() {
     for (i = 0; i < res.length; i++) {
       $("#firearms-thumbnail").append(
         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
-    <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+    <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
       <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
       <div class="caption text-capitalize">
         <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
@@ -1130,7 +1130,7 @@ function getPrevGunPage() {
     for (i = 0; i < res.length; i++) {
       $("#firearms-thumbnail").append(
         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
-    <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+    <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
       <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
       <div class="caption text-capitalize">
         <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
@@ -1174,7 +1174,7 @@ function getLicenses() {
         for (i = 0; i < res.length; i++) {
           $("#licenses-thumbnail").append(
             `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
         <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
         <div class="caption text-capitalize">
           <h4 class="color-white">${res[i].license.licenseType}</h4>
@@ -1216,7 +1216,7 @@ function getNextLicensePage() {
     for (i = 0; i < res.length; i++) {
       $("#licenses-thumbnail").append(
         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
-  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+  <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
     <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
     <div class="caption text-capitalize">
       <h4 class="color-white">${res[i].license.licenseType}</h4>
@@ -1264,7 +1264,7 @@ function getPrevLicensePage() {
     for (i = 0; i < res.length; i++) {
       $("#licenses-thumbnail").append(
         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
-  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+  <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
     <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
     <div class="caption text-capitalize">
       <h4 class="color-white">${res[i].license.licenseType}</h4>
@@ -1310,7 +1310,7 @@ function getWarrants() {
         for (i = 0; i < res.length; i++) {
           $("#warrants-thumbnail").append(
             `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center warrants-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
+      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
         <span class="iconify font-size-4-vmax" style="color:indianred" data-icon="mdi:alert-octagon" data-inline="false"></span>
         <div class="caption text-capitalize">
           <h4 class="color-white">${res[i].warrant.reasons}</h4>
@@ -1351,7 +1351,7 @@ function getNextWarrantPage() {
     for (i = 0; i < res.length; i++) {
       $("#warrants-thumbnail").append(
         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center warrants-thumbnails flex-li-wrapper">
-  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
+  <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
     <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
     <div class="caption text-capitalize">
       <h4 class="color-white">${res[i].warrants.warrantsType}</h4>
@@ -1399,7 +1399,7 @@ function getPrevWarrantPage() {
     for (i = 0; i < res.length; i++) {
       $("#warrants-thumbnail").append(
         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center warrants-thumbnails flex-li-wrapper">
-  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
+  <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewWarrant" onclick="loadWarrantSocketData('${res[i]._id}')">
     <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
     <div class="caption text-capitalize">
       <h4 class="color-white">${res[i].warrants.warrantsType}</h4>

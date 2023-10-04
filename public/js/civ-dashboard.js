@@ -773,7 +773,7 @@ $("#create-civ-form").submit(function (e) {
     //populate civilian cards on the dashboard
     $("#personas-thumbnail").append(
       `<div id="personas-thumbnail-${res._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-                <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
+                <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
                   <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                   <div class="caption capitalize">
                     <h4 id="personas-thumbnail-name-${res._id}" class="color-white capitalize">${res.civilian.firstName} ${res.civilian.lastName}</h4>
@@ -828,7 +828,7 @@ $("#create-auto-civ-form").submit(function (e) {
     //populate civilian cards on the dashboard
     $("#personas-thumbnail").append(
       `<div id="personas-thumbnail-${res._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-                <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
+                <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
                   <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                   <div class="caption capitalize">
                     <h4 id="personas-thumbnail-name-${res._id}" class="color-white capitalize">${res.civilian.firstName} ${res.civilian.lastName}</h4>
@@ -1000,7 +1000,7 @@ $("#create-vehicle-form").submit(function (e) {
     //note: at the end of the vehicle plate we add a ')' to correctly display the plate on the page
     $("#vehicles-thumbnail").append(
       `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
-        <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res._id}')">
+        <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res._id}')">
           <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
           <div class="caption">
             <h4 class="color-white license-plate">#${res.vehicle.plate})</h4>
@@ -1061,7 +1061,7 @@ $("#create-firearm-form").submit(function (e) {
     //populate firearm cards on the dashboard
     $("#firearms-thumbnail").append(
       `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res._id}')">
+      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res._id}')">
         <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
         <div class="caption text-capitalize">
           <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res.firearm.serialNumber}</h4>
@@ -1123,7 +1123,7 @@ $("#create-license-form").submit(function (e) {
     //populate license cards on the dashboard
     $("#licenses-thumbnail").append(
       `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res._id}')">
+      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res._id}')">
         <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
         <div class="caption text-capitalize">
           <h4 class="color-white">${res.license.licenseType}</h4>
@@ -1253,7 +1253,7 @@ function getNextCivPage() {
     for (i = 0; i < res.length; i++) {
       $("#personas-thumbnail").append(
         `<div id="personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-              <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
+              <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
                 <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                 <div class="caption capitalize">
                   <h4 id="personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
@@ -1295,7 +1295,7 @@ function getPrevCivPage() {
     for (i = 0; i < res.length; i++) {
       $("#personas-thumbnail").append(
         `<div id="personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-              <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
+              <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
                 <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                 <div class="caption capitalize">
                   <h4 id="personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
@@ -1337,7 +1337,7 @@ function getVehicles() {
           $("#issue-loading-vehicles-alert").hide();
           $("#vehicles-thumbnail").append(
             `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
-        <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+        <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
           <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
           <div class="caption">
             <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
@@ -1380,7 +1380,7 @@ function getNextVehPage() {
       for (i = 0; i < res.length; i++) {
         $("#vehicles-thumbnail").append(
           `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
         <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
         <div class="caption">
           <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
@@ -1427,7 +1427,7 @@ function getPrevVehPage() {
       for (i = 0; i < res.length; i++) {
         $("#vehicles-thumbnail").append(
           `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
         <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
         <div class="caption">
           <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
@@ -1479,7 +1479,7 @@ function getFirearms() {
         for (i = 0; i < res.length; i++) {
           $("#firearms-thumbnail").append(
             `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
         <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
         <div class="caption text-capitalize">
           <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
@@ -1521,7 +1521,7 @@ function getNextGunPage() {
     for (i = 0; i < res.length; i++) {
       $("#firearms-thumbnail").append(
         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
-    <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+    <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
       <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
       <div class="caption text-capitalize">
         <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
@@ -1565,7 +1565,7 @@ function getPrevGunPage() {
     for (i = 0; i < res.length; i++) {
       $("#firearms-thumbnail").append(
         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
-    <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+    <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
       <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
       <div class="caption text-capitalize">
         <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
@@ -1609,7 +1609,7 @@ function getLicenses() {
         for (i = 0; i < res.length; i++) {
           $("#licenses-thumbnail").append(
             `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
         <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
         <div class="caption text-capitalize">
           <h4 class="color-white">${res[i].license.licenseType}</h4>
@@ -1651,7 +1651,7 @@ function getNextLicensePage() {
     for (i = 0; i < res.length; i++) {
       $("#licenses-thumbnail").append(
         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
-  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+  <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
     <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
     <div class="caption text-capitalize">
       <h4 class="color-white">${res[i].license.licenseType}</h4>
@@ -1699,7 +1699,7 @@ function getPrevLicensePage() {
     for (i = 0; i < res.length; i++) {
       $("#licenses-thumbnail").append(
         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
-  <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+  <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
     <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
     <div class="caption text-capitalize">
       <h4 class="color-white">${res[i].license.licenseType}</h4>

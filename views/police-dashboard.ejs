@@ -3071,47 +3071,6 @@
   var pageGun = 0;
   var pageLicense = 0;
 
-  // var socket = io();
-  // var myReq = {
-  //   body: {
-  //     communityID: $("#active-community-id").val(),
-  //     civFirstName: $("#civ-first-name").val(),
-  //     civLastName: $("#civ-last-name").val(),
-  //     birthday: $("#birthday").val(),
-  //     page: page,
-  //   },
-  // };
-
-  // socket.emit("name_search_police", myReq);
-  // socket.on("name_search_police_result", (res) => {
-  //   $("#search-results-personas-thumbnail").empty();
-  //   if (res === undefined || res === null) {
-  //     $('#issue-loading-personnel-alert').show();
-  //   } else {
-  //     $('#issue-loading-personnel-alert').hide();
-  //     for (i = 0; i < res.length; i++) {
-  //       $("#search-results-personas-thumbnail").append(
-  //         `<div id="search-results-personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-  //               <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
-  //                 <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
-  //                 <div class="caption capitalize">
-  //                   <h4 id="search-results-personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
-  //                   <h5 id="search-results-personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
-  //                 </div>
-  //               </div> 
-  //             </div>`
-  //       );
-  //     }
-  //     $('#civilians-loading').hide();
-  //     $("#prev-civ-page-btn").addClass("isDisabled");
-  //     $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
-  //     if (res.length < 8) {
-  //       $("#next-civ-page-btn").addClass("isDisabled");
-  //       $("#next-civ-page-btn").attr("onclick", "").unbind("click");
-  //     }
-  //   }
-  // })
-
   $(document).ready(function () {
     // displays the Update Username and Cancel buttons for updating the username
     $('#accountUsername').on('keyup', function (e) {
