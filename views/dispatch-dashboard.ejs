@@ -2432,7 +2432,6 @@
     });
 
     socket.on('updated_status', res => {
-      // console.log("res: ", res)
       if (res.onDuty&&res.updateDuty) {
         //socket coming in that a user is going on-duty
         $('#'+res.userID+"-duty").removeClass('hide')
@@ -2594,7 +2593,6 @@
     })
 
     socket.on('created_call', res => {
-      // console.log("returned created call socket: ", res.call)
       if (res.call.communityID==dbUser.user.activeCommunity) {
         var containsEmptyRow=$('#callTable tr>td').hasClass('dataTables_empty');
         if (containsEmptyRow) {

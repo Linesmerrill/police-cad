@@ -2778,6 +2778,30 @@ a[data-toggle="collapse"].collapsed .rotate {
     cursor: pointer;
 }
 
+#next-warrants-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#next-warrants-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
+#prev-warrants-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#prev-warrants-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
 #next-gun-page-btn {
     color: white;
     background: transparent;

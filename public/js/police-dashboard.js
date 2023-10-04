@@ -272,7 +272,6 @@ function loadDriversLicense(myVar, index) {
 }
 
 function loadTicketsAndWarnings(index) {
-  console.log("loadTicketsAndWarnings called", index);
   $("#warningTable tbody").empty();
   $("#citationTable tbody").empty();
   var parameters = {
@@ -301,13 +300,11 @@ function loadTicketsAndWarnings(index) {
 }
 
 function loadArrests(index) {
-  console.log("loadArrests called", index);
   $("#arrestTable tbody").empty();
   var parameters = {
     civID: index,
   };
   $.get("/arrests", parameters, function (data) {
-    console.log("arrests data", data);
     data.forEach(function (e) {
       var newRowContent = `<tr id="${e._id}">
         <td>${e.arrestReport.date}</td>
@@ -856,7 +853,6 @@ function updateToIsStolen() {
 
 //TODO need to update to correct fields matching the UI
 function populateWarrantSocketDetails(res) {
-  console.log("res: ", res);
   $("#view-warrant-civ-first-name").val(res.warrant.accusedFirstName);
   $("#view-warrant-civ-last-name").val(res.warrant.accusedLastName);
   $("#view-warrant-civ-dob").val($("#delBirthday").val());
@@ -1027,7 +1023,6 @@ function getFirearms() {
     civID: $("#civilianIDView").text(),
     page: 0,
   };
-  console.log("myCivObj: ", myCivObj);
   $("#firearms-thumbnail").empty();
   socket.emit("fetch_gun_cards", myCivObj);
   socket.on("load_gun_cards_result", (res) => {
@@ -1423,7 +1418,6 @@ function getPrevWarrantPage() {
 }
 
 function populateIssueCitationDetails(res) {
-  // console.log("populateIssueCitationDetails res: ", res);
   setDateAndTime("#date", "#time");
   $("#ticket-civ-first-name").val(res.civilian.firstName);
   $("#ticket-civ-last-name").val(res.civilian.lastName);
@@ -1432,7 +1426,6 @@ function populateIssueCitationDetails(res) {
 }
 
 function populateIssueWarningDetails(res) {
-  // console.log("populateIssueWarningDetails res: ", res);
   setDateAndTime("#warning-date", "#warning-time");
   $("#warning-civ-first-name").val(res.civilian.firstName);
   $("#warning-civ-last-name").val(res.civilian.lastName);
@@ -1441,7 +1434,6 @@ function populateIssueWarningDetails(res) {
 }
 
 function populateArrestDetails(res) {
-  console.log("populateArrestDetails res: ", res);
   $("#arrest-report-case-no").val(Math.round(Math.random() * 10000000000));
   setDateAndTime("#arrest-report-date", "#arrest-report-time");
   $("#arrest-civ-first-name").val(res.civilian.firstName);
