@@ -10,7 +10,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="Codeply">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-  <script src="https://kit.fontawesome.com/e048807041.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.1/css/fontawesome.min.css" integrity="sha384-QYIZto+st3yW+o8+5OHfT6S482Zsvz2WfOzpFSXMF9zqeLcFV0/wlZpMtyFcZALm" crossorigin="anonymous">
+  <!-- <script src="https://kit.fontawesome.com/e048807041.js" crossorigin="anonymous"></script> -->
   <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap.min.css" />
@@ -53,7 +54,7 @@
         </li>
         <li class="background-color-222">
           <a type="button" data-toggle="collapse" data-target="#toggleSearch" aria-expanded="true"
-            aria-controls="toggleSearch" onclick="toggleCaret()"> Search <i class="fas fa-caret-right pull-right rotate"
+            aria-controls="toggleSearch" onclick="toggleCaret()"> Search <i class="fa fa-caret-right pull-right rotate"
               style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleSearch">
@@ -71,19 +72,19 @@
         <li class="background-color-222">
           <a type="button" data-toggle="collapse" data-target="#toggleUtilities" aria-expanded="false"
             aria-controls="toggleUtilities" onclick="toggleCaret()"> Utilities <i
-              class="fas fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
+              class="fa fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleUtilities">
           <li>
-            <a data-toggle="modal" href="#10codesModal"><span class="fas fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
+            <a data-toggle="modal" href="#10codesModal"><span class="fa fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
           </li>
           <li>
           <li>
-            <a data-toggle="modal" href="#notepadModal"><span class="fas fa-clipboard ml-3 mr-3"></span> Notepad</a>
+            <a data-toggle="modal" href="#notepadModal"><span class="fa fa-clipboard ml-3 mr-3"></span> Notepad</a>
           </li>
           <li>
             <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
-                class="fas fa-external-link-alt"></i></a>
+                class="fa fa-external-link-alt"></i></a>
           </li>
         </div>
         <% include departments-sidebar %>
@@ -102,7 +103,7 @@
             </button>
           </div>
           <div class="navbar-header" style="position: absolute; left: 85px;">
-            <h1 class="cursive"><a href="/ems-dashboard"><i class="fas fa-star"></i> Fire/EMS Operations</a></h1>
+            <h1 class="cursive"><a href="/ems-dashboard"><i class="fa fa-star"></i> Fire/EMS Operations</a></h1>
           </div>
         </div>
       </nav>
@@ -1317,7 +1318,7 @@
             collapsed=""
           }
           let deceasedState
-          e.civilian.deceased? deceasedState = 'Yes <i class="fas fa-skull-crossbones color-alert-red"></i>': deceasedState = 'No <i class="fas fa-user color-green"></i>'
+          e.civilian.deceased? deceasedState = 'Yes <i class="fa fa-skull-crossbones color-alert-red"></i>': deceasedState = 'No <i class="fa fa-user color-green"></i>'
           var newRowContent
           newRowContent=`
             <!-- List of Civilians -->

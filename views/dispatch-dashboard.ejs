@@ -9,8 +9,9 @@
     content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="Codeply">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-  <script src="https://kit.fontawesome.com/e048807041.js" crossorigin="anonymous"></script>
+  <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"> -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.1/css/fontawesome.min.css" integrity="sha384-QYIZto+st3yW+o8+5OHfT6S482Zsvz2WfOzpFSXMF9zqeLcFV0/wlZpMtyFcZALm" crossorigin="anonymous">
+  <!-- <script src="https://kit.fontawesome.com/e048807041.js" crossorigin="anonymous"></script> -->
   <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap.min.css" />
@@ -56,7 +57,7 @@
         </li>
         <li class="background-color-222">
           <a type="button" data-toggle="collapse" data-target="#toggleSearch" aria-expanded="true"
-            aria-controls="toggleSearch" onclick="toggleCaret()"> Search <i class="fas fa-caret-right pull-right rotate"
+            aria-controls="toggleSearch" onclick="toggleCaret()"> Search <i class="fa fa-caret-right pull-right rotate"
               style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleSearch">
@@ -76,40 +77,40 @@
         <li class="background-color-222">
           <a type="button" data-toggle="collapse" data-target="#toggleUtilities" aria-expanded="false"
             aria-controls="toggleUtilities" onclick="toggleCaret()"> Utilities <i
-              class="fas fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
+              class="fa fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleUtilities">
           <li>
             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
               <a data-toggle="modal" href="#boloModal" onclick="clearBoloForm()"><span
-                  class="fas fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
+                  class="fa fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
               <% } else {%>
                 <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span
-                    class="fas fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
+                    class="fa fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
                 <% } %>
           </li>
           <li>
             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
               <a data-toggle="modal" href="#callModal" onclick="fillOfficerList();fillClassifierList();fillFireEmsList();clearCallForm()"><span
-                  class="fas fa-plus-square ml-3 mr-3"></span> Create Call</a>
+                  class="fa fa-plus-square ml-3 mr-3"></span> Create Call</a>
               <% } else {%>
                 <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span
-                    class="fas fa-plus-square ml-3 mr-3"></span> Create Call</a>
+                    class="fa fa-plus-square ml-3 mr-3"></span> Create Call</a>
                 <% } %>
           </li>
           <li>
-            <a data-toggle="modal" href="#10codesModal"><span class="fas fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
+            <a data-toggle="modal" href="#10codesModal"><span class="fa fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
           </li>
           <li>
-            <a href="/penal-code"><span class="fas fa-laptop ml-3 mr-3"></span>Penal Codes <i
-                class="fas fa-external-link-alt"></i></a>
+            <a href="/penal-code"><span class="fa fa-laptop ml-3 mr-3"></span>Penal Codes <i
+                class="fa fa-external-link-alt"></i></a>
           </li>
           <li>
-            <a data-toggle="modal" href="#notepadModal"><span class="fas fa-clipboard ml-3 mr-3"></span> Notepad</a>
+            <a data-toggle="modal" href="#notepadModal"><span class="fa fa-clipboard ml-3 mr-3"></span> Notepad</a>
           </li>
           <li>
             <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
-                class="fas fa-external-link-alt"></i></a>
+                class="fa fa-external-link-alt"></i></a>
           </li>
         </div>
         <% include departments-sidebar %>
@@ -130,7 +131,7 @@
             </button>
           </div>
           <div class="navbar-header" style="position: absolute; left: 85px;">
-            <h1 class="cursive"><a href="/dispatch-dashboard"><i class="fas fa-headset"></i> Dispatch Operations</a>
+            <h1 class="cursive"><a href="/dispatch-dashboard"><i class="fa-solid fa-headset"></i> Dispatch Operations</a>
             </h1>
           </div>
         </div>
@@ -140,7 +141,7 @@
               <span class="panel-title">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
               <button type="button" class="close" aria-label="Close"
                 style="position: absolute; margin-top: 5px; margin-left: 1em;">
-                <i class="fas fa-times"></i> Clear
+                <i class="fa fa-times"></i> Clear
               </button>
             </div>
           </div>
@@ -151,7 +152,7 @@
               <span class="panel-title">⚠️⚠️⚠️ 10-3 Active: hold all radio traffic! ⚠️⚠️⚠️</span>
               <button type="button" class="close" aria-label="Close"
                 style="position: absolute; margin-top: 5px; margin-left: 1em;">
-                <i class="fas fa-times"></i> Clear
+                <i class="fa fa-times"></i> Clear
               </button>
             </div>
           </div>
@@ -205,20 +206,20 @@
                           <div class="col-md-10 col-md-offset-1 text-center">
                             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
                               <button type="button" class="btn btn-danger btn-lg margin-top-2 margin-bottom-1"
-                                onclick="signal100()"><i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+                                onclick="signal100()"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>
                                 Signal 100</button>
                                 <button type="button" class="btn btn-warning btn-lg margin-top-2 margin-bottom-1"
-                                onclick="holdTraffic()"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                                onclick="holdTraffic()"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
                                 10-3</button>
                               <% } else {%>
                                 <button type="button" data-toggle="modal" href="#nonCommunityBoloModal"
                                   class="btn btn-danger btn-lg margin-top-2 mock-disabled margin-bottom-1"><i
-                                    class="fas fa-exclamation-circle" aria-hidden="true"></i> Signal 100</button>
+                                    class="fa fa-exclamation-circle" aria-hidden="true"></i> Signal 100</button>
                                 <% } %>
                           </div>
                           <% if (user.user.activeCommunity =='' || user.user.activeCommunity ==null) {%>
                             <div class="col-md-10 col-md-offset-1 text-center">
-                              <h3><i class="fas fa-arrow-left"></i> Click on any of the search buttons to get started
+                              <h3><i class="fa fa-arrow-left"></i> Click on any of the search buttons to get started
                               </h3>
                               <hr style="width: 88%;max-width: 100rem;">
                               <h4>Looks like you are not in a community, click here to get started!</h4>
@@ -227,7 +228,7 @@
                             <%} else {%>
                               <hr style="width: 88%;max-width: 100rem;">
                               <!-- officer list -->
-                              <h4 id="officer-list">Officer List: <a data-toggle="modal" href="#officerHelpModal"><i class="far fa-question-circle"></i></a></h4>
+                              <h4 id="officer-list">Officer List: <a data-toggle="modal" href="#officerHelpModal"><i class="fa fa-question-circle"></i></a></h4>
                               <table id="officerListTable" class="table table-hover table-bordered">
                                 <thead>
                                   <tr>
@@ -268,7 +269,7 @@
           <% if (user.user.activeCommunity !='' && user.user.activeCommunity != null) {%>
           <div class="col-md-12 col-md-offset-0.75 margin-top-2 margin-bottom-2">
             <!-- Fire/Ems list -->
-            <h4 id="fireEms-list">Fire/EMS List: <a data-toggle="modal" href="#fireEMSHelpModal"><i class="far fa-question-circle"></i></a> </h4>
+            <h4 id="fireEms-list">Fire/EMS List: <a data-toggle="modal" href="#fireEMSHelpModal"><i class="fa fa-question-circle"></i></a> </h4>
             <table id="fireEmsListTable" class="table table-hover table-bordered">
               <thead>
                 <tr>
@@ -1844,7 +1845,7 @@
 
               <!-- Multiple Checkboxes (inline) -->
               <div class="form-group">
-                <label class="col-md-4 control-label" for="fireEms-select-details">Assigned Fire/EMS: <a data-toggle="modal" href="#assignedFireEmsHelpModal"><i class="fas fa-exclamation-circle"></i></a></label>
+                <label class="col-md-4 control-label" for="fireEms-select-details">Assigned Fire/EMS: <a data-toggle="modal" href="#assignedFireEmsHelpModal"><i class="fa fa-exclamation-circle"></i></a></label>
                 <div class="col-md-4">
                   <select id="fireEms-select-details" name="assignedFireEms" class="select-manipulatable" multiple>
                   </select>

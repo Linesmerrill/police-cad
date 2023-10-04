@@ -13,7 +13,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-  <script src="https://kit.fontawesome.com/e048807041.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.1/css/fontawesome.min.css" integrity="sha384-QYIZto+st3yW+o8+5OHfT6S482Zsvz2WfOzpFSXMF9zqeLcFV0/wlZpMtyFcZALm" crossorigin="anonymous">
+  <!-- <script src="https://kit.fontawesome.com/e048807041.js" crossorigin="anonymous"></script> -->
   <!-- import stylesheet libraries -->
   <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
@@ -56,7 +57,7 @@
         </li>
         <li class="background-color-222">
           <a type="button" data-toggle="collapse" data-target="#toggleSearch" aria-expanded="true"
-            aria-controls="toggleSearch" onclick="toggleCaret()"> Operations <i class="fas fa-caret-right pull-right rotate"
+            aria-controls="toggleSearch" onclick="toggleCaret()"> Operations <i class="fa fa-caret-right pull-right rotate"
               style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleSearch">
@@ -67,21 +68,21 @@
         <li class="background-color-222">
           <a type="button" data-toggle="collapse" data-target="#toggleUtilities" aria-expanded="false"
             aria-controls="toggleUtilities" onclick="toggleCaret()"> Utilities <i
-              class="fas fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
+              class="fa fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleUtilities">
           <li>
             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
               <a data-toggle="modal" href="#call911Modal"><span
-                  class="fas fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
+                  class="fa fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
               <% } else {%>
                 <a data-toggle="modal" href="#nonCommunityModal" class="mock-disabled"><span
-                    class="fas fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
+                    class="fa fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
                 <% } %>
           </li>
           <li>
             <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
-                class="fas fa-external-link-alt"></i></a>
+                class="fa fa-external-link-alt"></i></a>
           </li>
         </div>
         <% include departments-sidebar %>
@@ -102,7 +103,7 @@
             </button>
           </div>
           <div class="navbar-header" style="position: absolute; left: 85px;">
-            <h1 class="cursive"><a href="/civ-dashboard"><i class="fas fa-user"></i> Civilian Dashboard</a>
+            <h1 class="cursive"><a href="/civ-dashboard"><i class="fa fa-user"></i> Civilian Dashboard</a>
             </h1>
           </div>
         </div>
@@ -180,12 +181,12 @@
           <h4>New Civilian Choice</h4>
             <hr style="width: 88%;max-width: 100rem;">
             <div class="text-align-center margin-bottom-1">
-              <button data-toggle="modal" href="#newAutoCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fas fa-magic"></i> Auto</button>
-              <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fas fa-hammer"></i> Manual</button>
+              <button data-toggle="modal" href="#newAutoCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fa fa-magic"></i> Auto</button>
+              <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fa fa-hammer"></i> Manual</button>
             </div>
             <div>
-              <span> <i class="fas fa-magic"></i></span> <strong>Auto:</strong> We will generate a new civilian for you <br/>
-              <span> <i class="fas fa-hammer"></i></span> <strong>Manual:</strong> You specify the details for your new civilian
+              <span> <i class="fa fa-magic"></i></span> <strong>Auto:</strong> We will generate a new civilian for you <br/>
+              <span> <i class="fa fa-hammer"></i></span> <strong>Manual:</strong> You specify the details for your new civilian
             </div>
         </div>
       </div>
