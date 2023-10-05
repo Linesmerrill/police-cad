@@ -210,10 +210,10 @@ function loadDriversLicense(myVar, index) {
       $(".delete-license-btn").removeClass("hide").addClass("show");
       $(".create-license-btn").removeClass("show").addClass("hide");
       break; //javascript standard to put this here
-    case "2": //revoked license
+    case "2": //suspended license
       $("#drivers-license").removeClass("hide").addClass("show");
       $("#licenseStatusViewLic")
-        .text("Revoked")
+        .text("Suspended")
         .removeClass("color-black")
         .addClass("color-red");
       $(".delete-license-btn").removeClass("hide").addClass("show");
@@ -246,7 +246,7 @@ function loadDriversLicense(myVar, index) {
       firearmStatus = "Valid";
       break;
     case "3":
-      firearmStatus = "Revoked";
+      firearmStatus = "Suspended";
       break;
     default:
       firearmStatus = "N/A";
@@ -566,6 +566,23 @@ function populateLicenseSocketDetails(res) {
   $("#license-status-details").val(res.license.status);
   $("#expirationDate-details").val(res.license.expirationDate);
   $("#additionalNotes-details").val(res.license.additionalNotes);
+  if (res.license.status === "suspended") {
+    $("#suspendLicenseBtn").hide();
+    $("#reinstateLicenseBtn").show();
+    $("#isSuspendedAlert").show();
+  } else {
+    $("#suspendLicenseBtn").show();
+    $("#reinstateLicenseBtn").hide();
+    $("#isSuspendedAlert").hide();
+  }
+}
+
+function updateToSuspended() {
+  $("#license-status-details").val("suspended");
+}
+
+function updateToReinstated() {
+  $("#license-status-details").val("valid");
 }
 
 function getAge(date) {
@@ -621,7 +638,7 @@ function populateCivSocketDetails(res) {
       firearmStatus = "Valid";
       break;
     case "3":
-      firearmStatus = "Revoked";
+      firearmStatus = "Suspended";
       break;
     default:
       firearmStatus = "N/A";
@@ -672,9 +689,12 @@ function populateCivSocketDetails(res) {
 }
 
 /* loadDriversLicenseSocket will execute whenever a socket civilian is clicked on.
-After a page reload, this data will be stored in memory so this method
-will not be called at that point in time. Ideally to save on memory inside the app
-we should probably swap to use sockets all the time. */
+ * It will load the civilian's drivers license information into the UI.
+ * If the civilian does not have a license, it will display a message saying so.
+ * If the civilian has a license, it will display the license information.
+ * If the civilian has a suspended license, it will display the license information
+ * and display a message saying the license is suspended.
+ */
 function loadDriversLicenseSocket(res) {
   //setup pre-reqs on license
   $(".donor-block").removeClass("show").addClass("hide");
@@ -745,10 +765,10 @@ function loadDriversLicenseSocket(res) {
       $(".delete-license-btn").removeClass("hide").addClass("show");
       $(".create-license-btn").removeClass("show").addClass("hide");
       break; //javascript standard to put this here
-    case "2": //revoked license
+    case "2": //suspend license
       $("#drivers-license").removeClass("hide").addClass("show");
       $("#licenseStatusViewLic")
-        .text("Revoked")
+        .text("Suspended")
         .removeClass("color-black")
         .addClass("color-red");
       $(".delete-license-btn").removeClass("hide").addClass("show");
@@ -781,7 +801,7 @@ function loadDriversLicenseSocket(res) {
       firearmStatus = "Valid";
       break;
     case "3":
-      firearmStatus = "Revoked";
+      firearmStatus = "Suspended";
       break;
     default:
       firearmStatus = "N/A";
@@ -797,6 +817,7 @@ function loadDriversLicenseSocket(res) {
       "/" +
       expYear
   ); //Janky AF
+
   $("#license-issued").text(
     createdDate.toLocaleDateString("en-US", {
       day: "2-digit",
@@ -851,7 +872,6 @@ function updateToIsStolen() {
   $("#stolenView").val("2");
 }
 
-//TODO need to update to correct fields matching the UI
 function populateWarrantSocketDetails(res) {
   $("#view-warrant-civ-first-name").val(res.warrant.accusedFirstName);
   $("#view-warrant-civ-last-name").val(res.warrant.accusedLastName);

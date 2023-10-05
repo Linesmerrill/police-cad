@@ -454,7 +454,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/police-dashboard", authCheck, function (req, res) {
-    // console.debug("req: ", req.user)
+    // console.debug("req: ", req.user);
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     Community.find(
@@ -3330,37 +3330,38 @@ module.exports = function (app, passport, server) {
 
   app.post("/updateOrDeleteLicense", auth, function (req, res) {
     // console.debug("update or delete license body: ", req.body);
+    var backLocation = req.body.backLocation;
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
       if (!exists(req.body.licenseID)) {
         console.warn(
           "cannot update license with empty licenseID, route: /updateOrDeleteLicense"
         );
-        return res.redirect("/civ-dashboard");
+        return res.redirect(backLocation);
       }
       if (!exists(req.body.licenseOwnerID)) {
         console.warn(
           "cannot update license with empty registered owner, route: /updateOrDeleteLicense"
         );
-        return res.redirect("/civ-dashboard");
+        return res.redirect(backLocation);
       }
       if (!exists(req.body.licenseType)) {
         console.warn(
           "cannot update license with empty licenseType, route: /updateOrDeleteLicense"
         );
-        return res.redirect("/civ-dashboard");
+        return res.redirect(backLocation);
       }
       if (!exists(req.body.licenseStatus)) {
         console.warn(
           "cannot update license with empty licenseStatus, route: /updateOrDeleteLicense"
         );
-        return res.redirect("/civ-dashboard");
+        return res.redirect(backLocation);
       }
       if (!exists(req.body.expirationDate)) {
         console.warn(
           "cannot update license with empty expirationDate, route: /updateOrDeleteLicense"
         );
-        return res.redirect("/civ-dashboard");
+        return res.redirect(backLocation);
       }
 
       var isValid = isValidObjectIdLength(
@@ -3369,7 +3370,7 @@ module.exports = function (app, passport, server) {
       );
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect("/civ-dashboard");
+        return res.redirect(backLocation);
       }
       License.findOneAndUpdate(
         {
@@ -3386,7 +3387,8 @@ module.exports = function (app, passport, server) {
         },
         function (err) {
           if (err) return console.error(err);
-          return res.redirect("/civ-dashboard");
+          req.app.locals.specialContext = "updateSuccess";
+          return res.redirect(backLocation);
         }
       );
     } else {
@@ -3394,7 +3396,7 @@ module.exports = function (app, passport, server) {
         console.warn(
           "cannot delete license with empty licenseID, route: /updateOrDeleteLicense"
         );
-        return res.redirect("/civ-dashboard");
+        return res.redirect(backLocation);
       }
       var isValid = isValidObjectIdLength(
         req.body.licenseID,
@@ -3402,7 +3404,7 @@ module.exports = function (app, passport, server) {
       );
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect("/civ-dashboard");
+        return res.redirect(backLocation);
       }
       License.deleteOne(
         {
@@ -3410,7 +3412,7 @@ module.exports = function (app, passport, server) {
         },
         function (err) {
           if (err) return console.error(err);
-          return res.redirect("/civ-dashboard");
+          return res.redirect(backLocation);
         }
       );
     }
