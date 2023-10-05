@@ -3044,3 +3044,7 @@ a[aria-disabled="true"] {
     font-weight: bold;
     left: 32px;
 }
+
+.color-yellow {
+    color: yellow
+}
