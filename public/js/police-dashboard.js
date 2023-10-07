@@ -85,6 +85,7 @@ function vehicleSearchPoliceForm() {
       page: pageVeh,
     },
   };
+  $("#search-results-vehicles-thumbnail").empty();
   socket.emit("vehicle_search_police", myReq);
 
   //socket that receives a response after searching for plate
@@ -102,8 +103,10 @@ function vehicleSearchPoliceForm() {
         $("#prev-search-veh-page-btn").attr("onclick", "").unbind("click");
       } else {
         // load content on page
+        $("#no-search-vehicles-message").hide();
         $("#search-results-vehicles-thumbnail").empty();
         for (i = 0; i < res.length; i++) {
+          $("#issue-loading-search-vehicles-alert").hide();
           $("#search-results-vehicles-thumbnail").append(
             `<div id="search-results-vehicles-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
               <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
@@ -118,11 +121,14 @@ function vehicleSearchPoliceForm() {
           );
         }
         $("#search-results-vehicles-loading").hide();
+        $("#prev-search-veh-page-btn").addClass("isDisabled");
+        $("#prev-search-veh-page-btn").attr("onclick", "").unbind("click");
         if (res.length < 8) {
           // if we have reached the end of the data, then gray out the 'next' button
           $("#next-search-veh-page-btn").addClass("isDisabled");
           $("#next-search-veh-page-btn").attr("onclick", "").unbind("click");
         } else {
+          $("#next-search-veh-page-btn").removeClass("isDisabled");
           $("#next-search-veh-page-btn")
             .attr("onclick", "getNextSearchVehPage()")
             .bind("click");
