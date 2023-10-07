@@ -1,24 +1,42 @@
 function nameSearchPoliceForm() {
   var socket = io();
   var page = 0;
+  var firstName = $("#civ-first-name").val();
+  var lastName = $("#civ-last-name").val();
+  $("#civFirstNameStored").val(firstName);
+  $("#civLastNameStored").val(lastName);
   var myReq = {
     body: {
       communityID: $("#active-community-id").val(),
-      civFirstName: $("#civ-first-name").val(),
-      civLastName: $("#civ-last-name").val(),
-      birthday: $("#birthday").val(),
+      civFirstName: firstName,
+      civLastName: lastName,
+      birthday: $("#birthday").val(), //TODO if we are going to use this
       page: page,
     },
   };
+  $("#search-results-personas-thumbnail").empty();
   socket.emit("name_search_police", myReq);
 
   //socket that receives a response after searching for name
   socket.on("name_search_police_result", (res) => {
-    // load content on page
-    $("#search-results-personas-thumbnail").empty();
-    for (i = 0; i < res.length; i++) {
-      $("#search-results-personas-thumbnail").append(
-        `<div id="search-results-personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+    if (res === undefined || res === null) {
+      $("#issue-loading-civilians-alert").show();
+    } else {
+      if (res.length < 1) {
+        // if we have 0 results back
+        $("#search-results-civilians-loading").hide();
+        $("#no-civilians-message").show();
+        $("#next-civ-page-btn").addClass("isDisabled");
+        $("#next-civ-page-btn").attr("onclick", "").unbind("click");
+        $("#prev-civ-page-btn").addClass("isDisabled");
+        $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
+      } else {
+        // load content on page
+        $("#no-civilians-message").hide();
+        $("#search-results-personas-thumbnail").empty();
+        for (i = 0; i < res.length; i++) {
+          $("#search-results-personas-thumbnail").append(
+            `<div id="search-results-personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
               <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
                 <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
                 <div class="caption capitalize">
@@ -27,22 +45,31 @@ function nameSearchPoliceForm() {
                 </div>
               </div> 
             </div>`
-      );
-    }
-    if (res.length < 8) {
-      // if we have reached the end of the data, then gray out the 'next' button
-      $("#next-civ-page-btn").addClass("isDisabled");
-      // page = page - 1
-      $("#next-civ-page-btn").attr("onclick", "").unbind("click");
-    } else {
-      $("#next-civ-page-btn").attr("onclick", "getNextCivPage()").bind("click");
-    }
-    if (page == 0) {
-      $("#prev-civ-page-btn").addClass("isDisabled");
-      $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
-    } else {
-      $("#prev-civ-page-btn").removeClass("isDisabled");
-      $("#prev-civ-page-btn").attr("onclick", "getPrevCivPage()").bind("click");
+          );
+        }
+        $("#search-results-civilians-loading").hide();
+        $("#prev-civ-page-btn").addClass("isDisabled");
+        $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
+        if (res.length < 8) {
+          // if we have reached the end of the data, then gray out the 'next' button
+          $("#next-civ-page-btn").addClass("isDisabled");
+          $("#next-civ-page-btn").attr("onclick", "").unbind("click");
+        } else {
+          $("#next-civ-page-btn").removeClass("isDisabled");
+          $("#next-civ-page-btn")
+            .attr("onclick", "getNextCivPage()")
+            .bind("click");
+        }
+        if (page == 0) {
+          $("#prev-civ-page-btn").addClass("isDisabled");
+          $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
+        } else {
+          $("#prev-civ-page-btn").removeClass("isDisabled");
+          $("#prev-civ-page-btn")
+            .attr("onclick", "getPrevCivPage()")
+            .bind("click");
+        }
+      }
     }
   });
   $("#name-search-police-form")[0].reset();
@@ -155,8 +182,8 @@ function getPrevCivPage() {
   var myReq = {
     body: {
       communityID: $("#active-community-id").val(),
-      civFirstName: $("#civ-first-name").val(),
-      civLastName: $("#civ-last-name").val(),
+      civFirstName: $("#civFirstNameStored").val(),
+      civLastName: $("#civLastNameStored").val(),
       birthday: $("#birthday").val(),
       page: page,
     },
@@ -190,8 +217,8 @@ function getNextCivPage() {
   var myReq = {
     body: {
       communityID: $("#active-community-id").val(),
-      civFirstName: $("#civ-first-name").val(),
-      civLastName: $("#civ-last-name").val(),
+      civFirstName: $("#civFirstNameStored").val(),
+      civLastName: $("#civLastNameStored").val(),
       birthday: $("#birthday").val(),
       page: page,
     },

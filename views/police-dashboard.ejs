@@ -1635,12 +1635,14 @@
               <!-- <div class="margin-bottom-2"> -->
                 <!-- <span id="active-bolos margin-right-1" style="font-size: 18px;">Found Civilians:</span> -->
               <!-- </div> -->
-                <div>
+                <!-- <div>
                   <label>Filter:
                     <input id="civilian-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
                   </label>
-                </div>
-  
+                </div> -->
+                
+                <input id="civFirstNameStored" hidden value="">
+                <input id="civLastNameStored" hidden value="">
                 <!-- List of civilians -->
                 <div id="search-results-personas-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
                   <div id="search-results-civilians-loading" class="text-align-center" style="width: 100%;">
@@ -1649,8 +1651,13 @@
                 </div>
                 
                 <!-- Loading error -->
-                <div id="issue-loading-personnel-alert" style="display:none">
+                <div id="issue-loading-civilians-alert" style="display:none">
                   <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading results, try refreshing the page...</p>
+                </div>
+
+                <!-- No Civilians registered message -->
+                <div id="no-civilians-message" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered Civilians found</p>
                 </div>
   
                 <!-- Paginated navigation list -->
@@ -1901,7 +1908,7 @@
 
                 <!-- No Vehicles registered message -->
                 <div id="no-vehicles-message" style="display:none">
-                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered Vehicles</p>
+                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered Vehicles found</p>
                 </div>
 
                 <!-- Paginated navigation list -->
