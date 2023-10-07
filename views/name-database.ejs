@@ -1,0 +1,663 @@
+<div id="nameDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div id="civilianNotFound" class="alert alert-warning" style="display:none">
+        <strong>Not Found!</strong> Person not found in police database.
+      </div>
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="name-search-police-form" class="form-horizontal" name="findCivilian" action="#" method="get">
+            <fieldset>
+
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
+              <h4>Person Database</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Text input-->
+              <div class="form-group">
+                <div class="col-md-12">
+                  <div class="col-md-4">
+                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-first-name">First Name</label>
+                    <input id="civ-first-name" name="firstName" type="text" placeholder="First Name"
+                      class="form-control input-md col-md-offset-1" data-trigger="first-name-popover"
+                      data-content="* First name cannot contain spaces." required="">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-last-name">Last Name</label>
+                    <input id="civ-last-name" name="lastName" type="text" placeholder="Last Name"
+                      class="form-control input-md col-md-offset-1" data-trigger="last-name-popover"
+                      data-content="* Last name cannot contain spaces." required="">
+                  </div>
+                  <% if (user.user.activeCommunity=='' || user.user.activeCommunity==null) { %>
+                    <div class="col-md-4">
+                      <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-dob">Date of Birth</label>
+                      <input id="civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy"
+                        class="form-control input-md col-md-offset-1" required="">
+                    </div>
+                    <% } %>
+                      <div class="col-md-4">
+                        <br>
+                        <input type="hidden" id="activeCommunityID" name="activeCommunityID" ,
+                          value="<%=user.user.activeCommunity%>">
+                        <button data-toggle="modal" href="#nameSearchResults" data-dismiss="modal" aria-hidden="true"  class="btn btn-info btn-md" onclick="nameSearchPoliceForm()">Search</button>
+                      </div>
+                </div>
+              </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+  </div>
+
+  
+
+  <div id="viewFirearm" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+            <form class="form-horizontal" action="/updateOrDeleteFirearm" method="post">
+              <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Firearm Details:</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="serial-number">Serial Number:</label>
+              <div class="col-md-6">
+                <input id="serial-number-details" name="serialNumber" type="text" minlength="8" maxlength="8" placeholder="serial number" class="form-control input-md disabled-color" required="" readonly="readonly">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="roFirearm">Owner:</label>
+              <div class="col-md-6">
+                <input id="roFirearm" name="roFirearm" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="weapon-type">Weapon Type</label>
+              <div class="col-md-6">
+                <select id="weapon-type-details" name="weaponType" class="form-control disabled-color" disabled>
+                  <option value="pistol">Pistol</option>
+                  <option value="revolver">Revolver</option>
+                  <option value="shotgun">Shotgun</option>
+                  <option value="submachine gun">Submachine Gun</option>
+                  <option value="light machine gun">Light Machine Gun</option>
+                  <option value="assault rifle">Assault Rifle</option>
+                  <option value="sniper rifle">Sniper Rifle</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Select Basic -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
+              <div class="col-md-6">
+                <select id="is-stolen-details" name="isStolen" class="form-control disabled-color" disabled>
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col-md-12 text-align-center">
+                <input type="hidden" id="firearmID" name="firearmID">
+                <input type="hidden" id="firearmOwnerID" name="firearmOwnerID">
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="callDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="update-call-form" class="form-horizontal" action="/" method="get">
+            <fieldset>
+
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
+              <h4>Call Details</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Created At:</label>
+                <div class="col-md-4">
+                  <h5 id="createdAtCallDetail"></h5>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
+                <div class="col-md-4">
+                  <h5 id="updatedAtCallDetail"></h5>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Classifier:</label>
+                <div class="col-md-4">
+                  <h5 id="classifier"></h5>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Fire/EMS:</label>
+                <div class="col-md-4">
+                  <h5 id="engines"></h5>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="description">Description:</label>
+                <div class="col-md-4">
+                  <h5 id="descriptionCallDetail" style="text-transform:capitalize"></h5>
+                </div>
+              </div>
+
+              <!-- Text Area input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="callNotes">Call Notes:</label>
+                <div class="col-md-8 col-md-offset-2">
+                  <textarea id="callNotesDetail" name="callNotes" type="text" rows="4" maxlength="500"
+                    placeholder="call notes" class="form-control input-md" disabled></textarea>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="nameSearchResults" class="modal fade" style="z-index: 6000" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-full-screen">
+      <div class="modal-content modal-content-full-screen">
+        <div class="modal-body">
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+              <h2 class="">Civilian Results:</h2>
+          <div class="container">
+            <!--Table for Personas  -->
+            <div class="col-md-12 col-md-offset-0.75 margin-top-5">
+                
+                <input id="civFirstNameStored" hidden value="">
+                <input id="civLastNameStored" hidden value="">
+                <!-- List of civilians -->
+                <div id="search-results-personas-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                  <div id="search-results-civilians-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                </div>
+                
+                <!-- Loading error -->
+                <div id="issue-loading-civilians-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading results, try refreshing the page...</p>
+                </div>
+
+                <!-- No Civilians registered message -->
+                <div id="no-civilians-message" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered Civilians found</p>
+                </div>
+  
+                <!-- Paginated navigation list -->
+                <div>
+                  <nav aria-label="...">
+                    <ul class="pager">
+                      <li><a id="prev-civ-page-btn" class="" onclick="getPrevCivPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                      <li><a id="next-civ-page-btn" onclick="getNextCivPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                    </ul>
+                  </nav>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewCiv" class="modal fade" style="z-index: 8000" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-full-screen">
+      <div class="modal-content modal-content-full-screen">
+        <div class="modal-body">
+          <!-- Modal Name -->
+          <div id="successfully-updated-alert" class="alert alert-success alert-dismissible hide" role="alert">
+            Successfully updated!
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+                      
+          <ul class="nav nav-pills margin-bottom-1">
+            <li role="presentation" class="active">
+              <a data-toggle="pill" href="#pills-edit-civ">View Civilian</a>
+            </li>
+            <li>
+              <a data-toggle="pill" href="#pills-ncic">NCIC</a>
+            </li>
+            <li>
+              <a data-toggle="pill" href="#pills-vehicles">Vehicles</a>
+            </li>
+            <li>
+              <a data-toggle="pill" href="#pills-firearms">Firearms</a>
+            </li>
+            <li>
+              <a data-toggle="pill" href="#pills-dmv">DMV</a>
+            </li>
+            <li>
+              <a data-toggle="pill" href="#pills-records">Records</a>
+            </li>
+          </ul>
+
+          <hr style="width: 88%;max-width: 100rem;">
+          <div class="tab-content">
+            <div class="tab-pane fade in active" id="pills-edit-civ">
+              <form id="update-delete-civ-form" action="#" method="post">
+                <fieldset>
+
+                  <h4>Civilian Details:</h4>
+                  
+                  <div class="col-md-12 text-align-center margin-bottom-1">
+                    <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
+                    <input type="hidden" id="userBtnValue" value="">
+                    <button data-toggle="modal" href="#ticketModal" class="btn btn-info btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenCitation();setDateAndTime('#date', '#time');">Issue Citation</button>
+                    <button data-toggle="modal" href="#warningModal" class="btn btn-warning btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenWarning(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
+                    <button data-toggle="modal" href="#arrestModal" class="btn btn-danger btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenArrest(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
+                    <button data-toggle="modal" href="#createWarrantModal" class="btn btn-success btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false;">Create Warrant</button>
+                  </div>
+
+                  <!-- Image of civilian -->
+                  <hr style="width: 88%;max-width: 100rem;">
+                  <h5><ion-icon name="camera-outline"></ion-icon> <span>Image</span></h5>
+                  <div class="col-md-12 text-align-center">
+                    <a  href="#">
+                      <ion-icon id="civilian-image" name="person" class=""></ion-icon>
+                    </a>
+                  </div>
+
+                  <!-- Details about civilian -->
+                  <hr style="width: 88%;max-width: 100rem;">
+                  <h5><ion-icon name="person-outline"></ion-icon> Details</h5>
+
+                  <div class="form-group" hidden>
+                    <label class="col-md-4 control-label" for="civilianIDView">ID #:</label>
+                    <div class="col-md-4">
+                      <label id="civilianIDView" class="form-label uppercase"></label>
+                    </div>
+                  </div>
+
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                    <label class="control-label" for="firstName">First Name:</label>
+                    <input id="firstName" name="firstName" type="text" placeholder="First Name" class="form-control input-md disabled-color" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." disabled>
+                  </div>
+
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                    <label class="control-label" for="lastNameView">Last Name:</label>
+                    <input id="lastName" name="lastName" type="text" placeholder="Last Name" class="form-control input-md disabled-color" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." disabled>
+                  </div>
+
+                  <div class="form-group col-xs-1 col-md-1 margin-left-neg-15">
+                    <label class="control-label" for="middleInitialView">MI:</label>
+                    <input id="middleInitial" name="middleInitial" type="text" placeholder="MI" class="form-control input-md uppercase disabled-color" maxlength="1" data-trigger="middle-initial-popover" data-content="* Middle initial cannot contain spaces." disabled>
+                  </div>
+
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                    <label class="control-label" for="birthdayView">Date of Birth:</label>
+                    <input id="delBirthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md disabled-color" disabled>
+                  </div>
+
+                  <div class="form-group col-xs-1 col-md-1 margin-left-neg-15">
+                    <label class="control-label" for="ageView">Age:</label>
+                    <input id="ageView" name="age" type="text" class="form-control input-md disabled-color" readonly="readonly">
+                  </div>
+
+                  <div class="form-group col-xs-6 col-md-6 margin-left-neg-15">
+                    <label class="control-label" for="addressView">Address:</label>
+                    <input id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md capitalize disabled-color" disabled></input>
+                  </div>
+
+                  <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                    <label class="control-label" for="zipCodeView">Zip Code:</label>
+                    <input id="zipCodeView" name="zipCode" type="number" placeholder="Zip Code" class="form-control input-md disabled-color" disabled></input>
+                  </div>
+
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                    <label class="control-label" for="occupationView">Occupation:</label>
+                    <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md capitalize disabled-color" disabled>
+                  </div>
+
+                <hr style="width: 88%;max-width: 100rem;">
+                <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details</h5>
+
+                <!-- Select Basic -->
+                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <label class="control-label" for="genderView">Gender</label>
+                    <select id="gender-view" name="gender" class="form-control disabled-color" disabled>
+                      <option value="unspecified">Unspecified</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="non-binary">Non-Binary</option>
+                    </select>
+                </div>
+
+                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                  <label class="control-label" for="heightView">Height:</label>
+                  <input id="heightView" name="height" type="text" placeholder="Height" class="form-control input-md disabled-color" disabled>
+                </div>
+
+                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                  <label class="control-label" for="weightView">Weight:</label>
+                  <input id="weightView" name="weight" type="text" placeholder="Weight" class="form-control input-md disabled-color" disabled>
+                </div>
+
+                <!-- Text input-->
+                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                  <label class="control-label" for="eyeColor">Eye Color:</label>
+                  <input id="eye-color-view" name="eyeColor" type="text" placeholder="Eye Color" class="form-control input-md capitalize disabled-color" disabled>
+                </div>
+
+                <!-- Text input-->
+                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                  <label class="control-label" for="hairColor">Hair Color</label>
+                  <input id="hair-color-view" name="hairColor" type="text" placeholder="Hair Color (optional)" class="form-control input-md capitalize disabled-color" disabled>
+                </div>
+
+                <!-- Checkbox -->
+                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <label class="control-label" for="organDonor">Organ Donor?</label>
+                    <input id="organ-donor-view" style="width: 2em;" type="checkbox" name="organDonor" class="form-control disabled-color" disabled>
+                </div>
+
+                <!-- Checkbox -->
+                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <label class="control-label" for="veteran">Veteran?</label>
+                    <input id="veteran-view" style="width: 2em;" type="checkbox" name="veteran" class="form-control disabled-color" disabled>
+                </div>
+
+                
+                  </fieldset>
+                </form>
+            </div>
+            <div class="tab-pane fade" id="pills-ncic">
+              <!--Table for NCIC Warrants  -->
+              <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+                <div class="margin-bottom-1">
+                  <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">NCIC Warrant Check:</span> 
+                  <button data-toggle="modal" href="#createWarrantModal" data-dismiss="modal" aria-hidden="true" class="btn btn-primary btn-md pull-right" onclick="if (!window.__cfRLUnblockHandlers) return false;">Create Warrant</button>
+                </div>
+                <!-- <div>
+                  <label>Search:
+                    <input id="ncic-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+                  </label>
+                </div> -->
+
+                <!-- List of warrants -->
+                <div id="warrants-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                  <div id="warrants-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                </div>
+
+                <!-- Loading error -->
+                <div id="issue-loading-warrants-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading warrants, try refreshing the page...</p>
+                </div>
+
+                <!-- No warrants registered message -->
+                <div id="no-warrants-message" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">✅ No active warrants</p>
+                </div>
+
+                <!-- Paginated navigation list -->
+                <div>
+                  <nav aria-label="...">
+                    <ul class="pager">
+                      <li><a id="prev-warrants-page-btn" class="" onclick="getPrevWarrantPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                      <li><a id="next-warrants-page-btn" onclick="getNextWarrantPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="pills-vehicles">
+              <!--Table for Vehicles  -->
+              <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+                <div class="margin-bottom-1">
+                  <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> 
+                  <!-- <button data-toggle="modal" href="#newVehicleModal" data-dismiss="modal" aria-hidden="true" class="btn btn-primary btn-md pull-right">Add New Vehicle</button> -->
+                </div>
+                <!-- <div>
+                  <label>Search:
+                    <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+                  </label>
+                </div> -->
+
+                <!-- List of vehicles -->
+                <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                  <div id="vehicles-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                </div>
+
+                <!-- Loading error -->
+                <div id="issue-loading-vehicles-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading vehicles, try refreshing the page...</p>
+                </div>
+
+                <!-- No Vehicles registered message -->
+                <div id="no-vehicles-message" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered Vehicles</p>
+                </div>
+
+                <!-- Paginated navigation list -->
+                <div>
+                  <nav aria-label="...">
+                    <ul class="pager">
+                      <li><a id="prev-veh-page-btn" class="" onclick="getPrevVehPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                      <li><a id="next-veh-page-btn" onclick="getNextVehPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                    </ul>
+                  </nav>
+                </div>
+
+              </div>
+            </div>
+            <div class="tab-pane fade" id="pills-firearms">
+              <!--Table for Firearms  -->
+              <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+                <div class="margin-bottom-1">
+                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Firearms:</span> 
+                  <!-- <button data-toggle="modal" href="#newFirearmModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button> -->
+                </div>
+                <!-- <div>
+                  <label>Search:
+                    <input id="firearm-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+                  </label>
+                </div> -->
+
+                <!-- List of firearms -->
+                <div id="firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                  <div id="firearms-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                </div>
+
+                <!-- Loading error -->
+                <div id="issue-loading-firearms-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading firearms, try refreshing the page...</p>
+                </div>
+
+                <!-- No Firearms registered message -->
+                <div id="no-firearms-message" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered Firearms</p>
+                </div>
+
+                <!-- Paginated navigation list -->
+                <div>
+                  <nav aria-label="...">
+                    <ul class="pager">
+                      <li><a id="prev-gun-page-btn" onclick="getPrevGunPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                      <li><a id="next-gun-page-btn" onclick="getNextGunPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                    </ul>
+                  </nav>
+                </div>
+                
+              </div>
+            </div>
+
+            <!-- dmv tab (showing all of the users licenses)-->
+            <div class="tab-pane fade" id="pills-dmv">
+              <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+                <div class="margin-bottom-1">
+                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Licenses:</span> 
+                  <!-- <button data-toggle="modal" href="#newLicenseModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="">Add License</button> -->
+                </div>
+                <!-- <div>
+                  <label>Search:
+                    <input id="license-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+                  </label>
+                </div> -->
+
+                <!-- List of licenses -->
+                <div id="licenses-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                  <div id="licenses-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                </div>
+
+                <!-- Loading error -->
+                <div id="issue-loading-licenses-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading Licenses, try refreshing the page...</p>
+                </div>
+
+                <!-- No licenses registered message -->
+                <div id="no-licenses-message" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered Licenses</p>
+                </div>
+
+                <!-- Paginated navigation list -->
+                <div>
+                  <nav aria-label="...">
+                    <ul class="pager">
+                      <li><a id="prev-license-page-btn" onclick="getPrevLicensePage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                      <li><a id="next-license-page-btn" onclick="getNextLicensePage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                    </ul>
+                  </nav>
+                </div>
+                
+              </div>
+            </div>
+            <div class="tab-pane fade" id="pills-records">
+              <h4>Criminal History</h4>
+                    <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-citations-tab" data-toggle="pill" href="#pills-citations" role="tab" aria-controls="pills-citations" aria-selected="true">Citations</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-warnings-tab" data-toggle="pill" href="#pills-warnings" role="tab" aria-controls="pills-warnings" aria-selected="false">Warnings</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-arrests-tab" data-toggle="pill" href="#pills-arrests" role="tab" aria-controls="pills-arrests" aria-selected="false">Arrests</a>
+                      </li>
+                    </ul>
+                    <button data-toggle="modal" href="#ticketModal" class="btn btn-info btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenCitation();setDateAndTime('#date', '#time');">Issue Citation</button>
+                  <button data-toggle="modal" href="#warningModal" class="btn btn-warning btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenWarning(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
+                  <button data-toggle="modal" href="#arrestModal" class="btn btn-danger btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenArrest(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
+                  <button data-toggle="modal" href="#createWarrantModal" class="btn btn-success btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false;">Create Warrant</button>
+                    <div class="tab-content" id="pills-tabContent">
+                      <div class="tab-pane fade" id="pills-citations" role="tabpanel" aria-labelledby="pills-citations-tab">
+                          <table id="citationTable" class="table table-hover" border="1" frame="box">
+                            <thead>
+                              <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Violation</td><td>Amount</td><td>Delete</td></tr>
+                            </thead>
+                              <tbody>
+                              </tbody>
+                          </table>
+                      </div>
+                      <div class="tab-pane fade" id="pills-warnings" role="tabpanel" aria-labelledby="pills-warnings-tab">
+                        <table id="warningTable" class="table table-hover" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Warning</td><td>Delete</td></tr>
+                          </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                      </div>
+                      <div class="tab-pane fade" id="pills-arrests" role="tabpanel" aria-labelledby="pills-arrests-tab">
+                        <table id="arrestTable" class="table table-hover" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Arrest Charges</td><td>Summary</td><td>Delete</td></tr>
+                          </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <hr style="width: 88%;max-width: 100rem;">
+                    <h4>Medical History</h4>
+                    <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-reports-tab" data-toggle="pill" href="#pills-reports" role="tab" aria-controls="pills-reports" aria-selected="true">Reports</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-medications-tab" data-toggle="pill" href="#pills-medications" role="tab" aria-controls="pills-medications" aria-selected="false">Medications</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-pre-existing-conditions-tab" data-toggle="pill" href="#pills-pre-existing-conditions" role="tab" aria-controls="pills-pre-existing-conditions" aria-selected="false">Pre-Existing Conditions</a>
+                      </li>
+                    </ul>
+                    <div class="tab-content" id="pills-tabContent">
+                      <div class="tab-pane fade" id="pills-reports" role="tabpanel" aria-labelledby="pills-reports-tab">
+                        <table id="reportsTable" class="table" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td></tr>
+                          </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                      </div>
+                      <div class="tab-pane fade" id="pills-medications" role="tabpanel" aria-labelledby="pills-medications-tab">
+                        <!-- <button data-toggle="modal" href="#addMedicationModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Medication</button> -->
+                        <!-- <br/><br/> -->
+                        <table id="medicationsTable" class="table" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Dosage</td><td>Frequency</td></tr>
+                          </thead>
+                            <tbody></tbody>
+                        </table>
+                      </div>
+                      <div class="tab-pane fade" id="pills-pre-existing-conditions" role="tabpanel" aria-labelledby="pills-pre-existing-conditions-tab">
+                        <!-- <button data-toggle="modal" href="#addConditionModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Condition</button> -->
+                        <!-- <br/><br/> -->
+                        <table id="conditionsTable" class="table" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td></tr>
+                          </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

@@ -25,7 +25,7 @@ var arrestReportSchema = mongoose.Schema({
 });
 
 arrestReportSchema.methods.updateArrestReport = function (req, res) {
-  console.debug("arrest report req body: ", req.body);
+  // console.debug("arrest report req body: ", req.body);
 
   if (exists(req.body.accusedFirstName) && exists(req.body.accusedLastName)) {
     if (

@@ -1,0 +1,78 @@
+<div id="plateDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+
+      <div id="vehicleNotFound" class="alert alert-warning" style="display:none">
+        <strong>Not Found!</strong> Vehicle not found in police database.
+      </div>
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="plate-search-police-form" class="form-horizontal" name="findVehicle" action="#" method="get">
+            <fieldset>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
+              <h4>Vehicle Database</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <div class="form-group">
+                <label class="col-md-4" for="plateNumber">Plate Number</label>
+                <div class="col-md-4 margin-bottom-1">
+                  <input id="plateNumber" name="plateNumber" type="text" maxlength="8" placeholder="License Plate #"
+                    class="form-control input-md" list="plates" style="text-transform: uppercase;" required>
+                </div>
+                <div class="col-md-4">
+                  <!-- <input type="hidden" id="this-active-community-id" name="activeCommunityID" value="<%=user.user.activeCommunity%>"> -->
+                  <!-- <button type="submit" onclick="searchPlate()" class="btn btn-info">Search</button> -->
+                  <button data-toggle="modal" href="#vehicleSearchResults" data-dismiss="modal" aria-hidden="true" class="btn btn-info btn-md" onclick="vehicleSearchPoliceForm()">Search</button>
+                </div>
+              </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+  </div>
+
+  <div id="vehicleSearchResults" class="modal fade" style="z-index: 5000" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-full-screen">
+      <div class="modal-content modal-content-full-screen">
+        <div class="modal-body">
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+              <h2 class="">Vehicle Results:</h2>
+          <div class="container">
+            <!--Table for Vehicles  -->
+            <div class="col-md-12 col-md-offset-0.75 margin-top-5">
+              
+                <input id="plateNumberStored" hidden value="">
+                <!-- List of vehicles -->
+                <div id="search-results-vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                  <div id="search-results-vehicles-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                </div>
+                
+                <!-- Loading error -->
+                <div id="issue-loading-search-vehicle-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading results, try refreshing the page...</p>
+                </div>
+
+                <!-- No Vehicles registered message -->
+                <div id="no-search-vehicles-message" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered Vehicles found</p>
+                </div>
+  
+                <!-- Paginated navigation list -->
+                <div>
+                  <nav aria-label="...">
+                    <ul class="pager">
+                      <li><a id="prev-search-veh-page-btn" class="" onclick="getPrevSearchVehPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                      <li><a id="next-search-veh-page-btn" onclick="getNextSearchVehPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                    </ul>
+                  </nav>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
