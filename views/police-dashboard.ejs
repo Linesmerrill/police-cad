@@ -2110,11 +2110,11 @@
             <!--Table for Vehicles  -->
             <div class="col-md-12 col-md-offset-0.75 margin-top-5">
               
-                <div>
+                <!-- <div>
                   <label>Filter:
                     <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
                   </label>
-                </div>
+                </div> -->
   
                 <input id="plateNumberStored" hidden value="">
                 <!-- List of vehicles -->
@@ -2125,8 +2125,13 @@
                 </div>
                 
                 <!-- Loading error -->
-                <div id="issue-loading-vehicle-alert" style="display:none">
+                <div id="issue-loading-search-vehicle-alert" style="display:none">
                   <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading results, try refreshing the page...</p>
+                </div>
+
+                <!-- No Vehicles registered message -->
+                <div id="no-search-vehicles-message" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered Vehicles</p>
                 </div>
   
                 <!-- Paginated navigation list -->

@@ -89,11 +89,23 @@ function vehicleSearchPoliceForm() {
 
   //socket that receives a response after searching for plate
   socket.on("vehicle_search_police_result", (res) => {
-    // load content on page
-    $("#search-results-vehicles-thumbnail").empty();
-    for (i = 0; i < res.length; i++) {
-      $("#search-results-vehicles-thumbnail").append(
-        `<div id="search-results-vehicles-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+    if (res === undefined || res === null) {
+      $("#issue-loading-search-vehicles-alert").show();
+    } else {
+      if (res.length < 1) {
+        // if we have 0 results back
+        $("#search-results-vehicles-loading").hide();
+        $("#no-search-vehicles-message").show();
+        $("#next-search-veh-page-btn").addClass("isDisabled");
+        $("#next-search-veh-page-btn").attr("onclick", "").unbind("click");
+        $("#prev-search-veh-page-btn").addClass("isDisabled");
+        $("#prev-search-veh-page-btn").attr("onclick", "").unbind("click");
+      } else {
+        // load content on page
+        $("#search-results-vehicles-thumbnail").empty();
+        for (i = 0; i < res.length; i++) {
+          $("#search-results-vehicles-thumbnail").append(
+            `<div id="search-results-vehicles-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
               <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
                 <ion-icon class="font-size-4-vmax md hydrated" name="car-sport-outline" role="img" aria-label="car sport outline"></ion-icon>
                 <div class="caption">
@@ -103,25 +115,28 @@ function vehicleSearchPoliceForm() {
                 </div>
               </div> 
             </div>`
-      );
-    }
-    if (res.length < 8) {
-      // if we have reached the end of the data, then gray out the 'next' button
-      $("#next-search-veh-page-btn").addClass("isDisabled");
-      $("#next-search-veh-page-btn").attr("onclick", "").unbind("click");
-    } else {
-      $("#next-search-veh-page-btn")
-        .attr("onclick", "getNextSearchVehPage()")
-        .bind("click");
-    }
-    if (pageVeh == 0) {
-      $("#prev-search-veh-page-btn").addClass("isDisabled");
-      $("#prev-search-veh-page-btn").attr("onclick", "").unbind("click");
-    } else {
-      $("#prev-search-veh-page-btn").removeClass("isDisabled");
-      $("#prev-search-veh-page-btn")
-        .attr("onclick", "getPrevSearchVehPage()")
-        .bind("click");
+          );
+        }
+        $("#search-results-vehicles-loading").hide();
+        if (res.length < 8) {
+          // if we have reached the end of the data, then gray out the 'next' button
+          $("#next-search-veh-page-btn").addClass("isDisabled");
+          $("#next-search-veh-page-btn").attr("onclick", "").unbind("click");
+        } else {
+          $("#next-search-veh-page-btn")
+            .attr("onclick", "getNextSearchVehPage()")
+            .bind("click");
+        }
+        if (pageVeh == 0) {
+          $("#prev-search-veh-page-btn").addClass("isDisabled");
+          $("#prev-search-veh-page-btn").attr("onclick", "").unbind("click");
+        } else {
+          $("#prev-search-veh-page-btn").removeClass("isDisabled");
+          $("#prev-search-veh-page-btn")
+            .attr("onclick", "getPrevSearchVehPage()")
+            .bind("click");
+        }
+      }
     }
   });
   // $("#plate-search-police-form")[0].reset();
