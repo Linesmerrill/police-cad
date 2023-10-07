@@ -1010,9 +1010,6 @@ function OpenCitation() {
   $("#searchTicketDiv").hide(); //TODO
 }
 
-//TODO need to add in civ ID to myReq, also remove index
-function getActiveWarrants() {}
-
 //TODO need to add in registeredOwnerID, remove index
 function getRegisteredCars() {}
 

@@ -342,6 +342,7 @@
       <% include footer %>
     </div>
   </div>
+
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
@@ -356,6 +357,7 @@
       </div>
     </div>
   </div>
+
   <div id="nameDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div id="civilianNotFound" class="alert alert-warning" style="display:none">
@@ -407,7 +409,6 @@
           </form>
         </div>
       </div>
-    </div>
   </div>
 
   <div id="plateDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
@@ -442,7 +443,6 @@
           </form>
         </div>
       </div>
-    </div>
   </div>
 
   <div id="firearmDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
@@ -672,8 +672,6 @@
             <div class="col-md-12 text-align-center">
                 <input type="hidden" id="firearmID" name="firearmID">
                 <input type="hidden" id="firearmOwnerID" name="firearmOwnerID">
-                <!-- <button type="submit" value="update" name="action" class="btn btn-info">Update Firearm</button> -->
-                <!-- <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Firearm</button> -->
             </div>
             </fieldset>
           </form>
@@ -1573,55 +1571,6 @@
     </div>
   </div>
 
-  <div id="registeredFirearms" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <div class="modal-body">
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-              aria-hidden="true">X</button>
-            <h2 class="text-center">Registered Firearms</h2>
-            <div class="form-group">
-              <div id="registered-firearms">
-                <div id="registered-firearms-loading" class="text-align-center">
-                  <div class="lds-facebook"><div></div><div></div><div></div></div>
-                </div>
-                <div id="issue-loading-registered-firearms-alert" style="display:none">
-                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading firearms, try refreshing the page...</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="activeWarrants" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <div class="modal-body">
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-              aria-hidden="true">X</button>
-            <h2 class="text-center">Active Warrants</h2>
-            <div class="form-group">
-              <div id="active-warrants">
-                <div id="active-warrants-loading" class="text-align-center">
-                  <div class="lds-facebook"><div></div><div></div><div></div></div>
-                </div>
-                <div id="issue-loading-active-warrants-alert" style="display:none">
-                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading warrants, try refreshing the page...</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- New search results added 9/28/2023 -->
   <div id="nameSearchResults" class="modal fade" style="z-index: 6000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-full-screen">
       <div class="modal-content modal-content-full-screen">
@@ -1632,14 +1581,6 @@
           <div class="container">
             <!--Table for Personas  -->
             <div class="col-md-12 col-md-offset-0.75 margin-top-5">
-              <!-- <div class="margin-bottom-2"> -->
-                <!-- <span id="active-bolos margin-right-1" style="font-size: 18px;">Found Civilians:</span> -->
-              <!-- </div> -->
-                <!-- <div>
-                  <label>Filter:
-                    <input id="civilian-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
-                  </label>
-                </div> -->
                 
                 <input id="civFirstNameStored" hidden value="">
                 <input id="civLastNameStored" hidden value="">
@@ -1695,16 +1636,16 @@
               <a data-toggle="pill" href="#pills-edit-civ">View Civilian</a>
             </li>
             <li>
-              <a data-toggle="pill" href="#pills-ncic" onclick="getActiveWarrants()">NCIC</a>
+              <a data-toggle="pill" href="#pills-ncic">NCIC</a>
             </li>
             <li>
-              <a data-toggle="pill" href="#pills-vehicles" onclick="getRegisteredCars()">Vehicles</a>
+              <a data-toggle="pill" href="#pills-vehicles">Vehicles</a>
             </li>
             <li>
-              <a data-toggle="pill" href="#pills-firearms" onclick="getRegisteredFirearms()">Firearms</a>
+              <a data-toggle="pill" href="#pills-firearms">Firearms</a>
             </li>
             <li>
-              <a data-toggle="pill" href="#pills-dmv" onclick="getLicenses()">DMV</a>
+              <a data-toggle="pill" href="#pills-dmv">DMV</a>
             </li>
             <li>
               <a data-toggle="pill" href="#pills-records">Records</a>
@@ -2117,12 +2058,6 @@
             <!--Table for Vehicles  -->
             <div class="col-md-12 col-md-offset-0.75 margin-top-5">
               
-                <!-- <div>
-                  <label>Filter:
-                    <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
-                  </label>
-                </div> -->
-  
                 <input id="plateNumberStored" hidden value="">
                 <!-- List of vehicles -->
                 <div id="search-results-vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
@@ -2150,30 +2085,6 @@
                     </ul>
                   </nav>
                 </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="registeredVehicles" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <div class="modal-body">
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-              aria-hidden="true">X</button>
-            <h2 class="text-center">Registered Vehicles</h2>
-            <div class="form-group">
-              <div id="registered-cars">
-                <div id="registered-cars-loading" class="text-align-center">
-                  <div class="lds-facebook"><div></div><div></div><div></div></div>
-                </div>
-                <div id="issue-loading-registered-cars-alert" style="display:none">
-                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading registered vehicles, try refreshing the page...</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -2377,38 +2288,38 @@
 
   <% include account-management %>
 
-    <div id="panicDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-body">
-            <form id="clear-panic-form" class="form-horizontal" action="" method="post">
-              <fieldset>
+  <div id="panicDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="clear-panic-form" class="form-horizontal" action="" method="post">
+            <fieldset>
 
-                <!-- Form Name -->
-                <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                  aria-hidden="true">X</button>
-                <h4>Clear Panic</h4>
-                <hr style="width: 88%;max-width: 100rem;">
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
+              <h4>Clear Panic</h4>
+              <hr style="width: 88%;max-width: 100rem;">
 
-                <!-- Button -->
-                <div class="form-group">
-                  <label class="col-md-4 control-label" for="deleteAccount"></label>
-                  <div class="col-md-4 text-align-center">
-                    <input id="panic-id" type="hidden" name="panic-id" value="">
-                    <button id="clearPanic" class="btn btn-danger"
-                      onclick="hideModal('panicDetailModal')">Clear</button>
-                  </div>
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="deleteAccount"></label>
+                <div class="col-md-4 text-align-center">
+                  <input id="panic-id" type="hidden" name="panic-id" value="">
+                  <button id="clearPanic" class="btn btn-danger"
+                    onclick="hideModal('panicDetailModal')">Clear</button>
                 </div>
-              </fieldset>
-            </form>
-          </div>
+              </div>
+            </fieldset>
+          </form>
         </div>
       </div>
     </div>
+  </div>
 
-    <% include notification-modal %>
-    <% include 10-codes %>
-    <% include notepad %>
+  <% include notification-modal %>
+  <% include 10-codes %>
+  <% include notepad %>
 </body>
 </div>
 </div>
@@ -2820,59 +2731,59 @@
     socket.emit('load_panic_statuses', myReq)
   }
 
-  function getRegisteredFirearms(registeredOwnerID, index) {
-    //remove any existing panel body on button click
-    $('.reg-arm').remove();
-    $(`#registered-firearms`).show()
-    $('#registered-firearms-loading').show()
-    $('#issue-loading-registered-firearms-alert').hide()
+  // function getRegisteredFirearms(registeredOwnerID, index) {
+  //   //remove any existing panel body on button click
+  //   $('.reg-arm').remove();
+  //   $(`#registered-firearms`).show()
+  //   $('#registered-firearms-loading').show()
+  //   $('#issue-loading-registered-firearms-alert').hide()
 
-    var socket=io();
+  //   var socket=io();
 
-    myReq={
-      regOwnerID: registeredOwnerID,
-      communityID: dbUser.user.activeCommunity
-    }
-    socket.emit('get_reg_arm', myReq)
-    socket.on('load_reg_arm_result', res => {
-      if (res != undefined && res != null) {
-        if (res.length==0) {
-          $('#registered-firearms').append(
-            `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`+
-            `<h5 style="text-align: center;">No Registered Firearms</h5>`+
-            `</div>`
-          )
-          $('#registered-firearms-loading').hide();
-          return
-        }
-        $('#registered-firearms').append(
-          `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`
-        )
-        for (i=0; i<res.length; i++) {
-          if (i!=0) { //if we are not on the first loop, add a divider between each record
-            $('#registered-firearms-panel-body-'+index).append(
-              '<hr>'
-            )
-          }
-          // Check if firearm is stolen and append result
-          if (res[i].firearm.isStolen=="true") {
-            $('#registered-firearms-panel-body-'+index).append(
-              `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
-              `<strong>Danger!</strong> #${res[i].firearm.serialNumber} reported as stolen.`+
-              `</div>`
-            )
-          }
-          $('#registered-firearms-panel-body-'+index).append(
-            `Serial #: ${res[i].firearm.serialNumber}<br/>`+
-            `Weapon Type: ${res[i].firearm.weaponType}<br/>`
-          )
-        }
-      } else {
-        $('#issue-loading-registered-firearms-alert').show()
-      }
-      $('#registered-firearms-loading').hide();
-    });
-  }
+  //   myReq={
+  //     regOwnerID: registeredOwnerID,
+  //     communityID: dbUser.user.activeCommunity
+  //   }
+  //   socket.emit('get_reg_arm', myReq)
+  //   socket.on('load_reg_arm_result', res => {
+  //     if (res != undefined && res != null) {
+  //       if (res.length==0) {
+  //         $('#registered-firearms').append(
+  //           `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`+
+  //           `<h5 style="text-align: center;">No Registered Firearms</h5>`+
+  //           `</div>`
+  //         )
+  //         $('#registered-firearms-loading').hide();
+  //         return
+  //       }
+  //       $('#registered-firearms').append(
+  //         `<div id="registered-firearms-panel-body-${index}" class="panel-body reg-arm">`
+  //       )
+  //       for (i=0; i<res.length; i++) {
+  //         if (i!=0) { //if we are not on the first loop, add a divider between each record
+  //           $('#registered-firearms-panel-body-'+index).append(
+  //             '<hr>'
+  //           )
+  //         }
+  //         // Check if firearm is stolen and append result
+  //         if (res[i].firearm.isStolen=="true") {
+  //           $('#registered-firearms-panel-body-'+index).append(
+  //             `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
+  //             `<strong>Danger!</strong> #${res[i].firearm.serialNumber} reported as stolen.`+
+  //             `</div>`
+  //           )
+  //         }
+  //         $('#registered-firearms-panel-body-'+index).append(
+  //           `Serial #: ${res[i].firearm.serialNumber}<br/>`+
+  //           `Weapon Type: ${res[i].firearm.weaponType}<br/>`
+  //         )
+  //       }
+  //     } else {
+  //       $('#issue-loading-registered-firearms-alert').show()
+  //     }
+  //     $('#registered-firearms-loading').hide();
+  //   });
+  // }
 
   
   
