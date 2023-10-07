@@ -5627,7 +5627,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("name_search_police", (req) => {
-      // console.debug("get name_search_police socket: ", req);
+      console.debug("get name_search_police socket: ", req);
       axios
         .get(
           `${policeCadApiUrl}/api/v1/civilians/search?active_community_id=${req.body.communityID}&first_name=${req.body.civFirstName}&last_name=${req.body.civLastName}&date_of_birth=${req.body.birthday}&limit=8&page=${req.body.page}`,

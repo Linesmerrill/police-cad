@@ -545,6 +545,7 @@
 
             <div class="form-group">
               <label class="col-md-4 control-label" for="roVeh">Owner:</label>
+              <button id="lookupButton" data-toggle="modal" href="#nameSearchResults" data-dismiss="modal" aria-hidden="true" class="btn btn-info btn-md" style="margin-left: 1em; margin-bottom: 1em;"><i class="fa-solid fa-magnifying-glass"></i> Lookup</button>
               <div class="col-md-4">
                 <input id="roVeh" name="roVeh" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
               </div>
@@ -1621,7 +1622,7 @@
   </div>
 
   <!-- New search results added 9/28/2023 -->
-  <div id="nameSearchResults" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div id="nameSearchResults" class="modal fade" style="z-index: 6000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-full-screen">
       <div class="modal-content modal-content-full-screen">
         <div class="modal-body">
@@ -1668,7 +1669,7 @@
     </div>
   </div>
 
-  <div id="viewCiv" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div id="viewCiv" class="modal fade" style="z-index: 8000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-full-screen">
       <div class="modal-content modal-content-full-screen">
         <div class="modal-body">
@@ -1680,7 +1681,7 @@
             </button>
           </div>
 
-          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="clearHelpText();updateUserBtnValue('')">X</button>
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="updateUserBtnValue('')">X</button>
                       
           <ul class="nav nav-pills margin-bottom-1">
             <li role="presentation" class="active">
@@ -2098,7 +2099,7 @@
     </div>
   </div>
 
-  <div id="vehicleSearchResults" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div id="vehicleSearchResults" class="modal fade" style="z-index: 5000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-dialog-full-screen">
       <div class="modal-content modal-content-full-screen">
         <div class="modal-body">
