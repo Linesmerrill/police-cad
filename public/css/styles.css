@@ -2754,6 +2754,30 @@ a[data-toggle="collapse"].collapsed .rotate {
     cursor: pointer;
 }
 
+#prev-search-veh-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#prev-search-veh-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
+#next-search-veh-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#next-search-veh-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
 #next-veh-page-btn {
     color: white;
     background: transparent;

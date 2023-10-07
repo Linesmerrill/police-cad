@@ -5637,13 +5637,32 @@ module.exports = function (app, passport, server) {
           if (!exists(dbCivilians.data)) {
             return socket.emit("name_search_police_result", undefined);
           } else {
-            // console.debug("name_search_police_result response: ",dbCivilians.data);
             return socket.emit("name_search_police_result", dbCivilians.data);
           }
         })
         .catch((err) => {
           console.error(err);
           return socket.emit("load_license_cards_result", undefined);
+        });
+    });
+
+    socket.on("vehicle_search_police", (req) => {
+      console.debug("get vehicle_search_police socket: ", req);
+      axios
+        .get(
+          `${policeCadApiUrl}/api/v1/vehicles/search?active_community_id=${req.body.communityID}&plate=${req.body.plate}&limit=8&page=${req.body.page}`,
+          config
+        )
+        .then(function (dbVehicles) {
+          if (!exists(dbVehicles.data)) {
+            return socket.emit("vehicle_search_police_result", undefined);
+          } else {
+            return socket.emit("vehicle_search_police_result", dbVehicles.data);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          // return socket.emit("load_license_cards_result", undefined);
         });
     });
 

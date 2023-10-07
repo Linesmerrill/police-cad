@@ -398,373 +398,10 @@
                         <br>
                         <input type="hidden" id="activeCommunityID" name="activeCommunityID" ,
                           value="<%=user.user.activeCommunity%>">
-                        <!-- <button type="submit" class="btn btn-info" onclick="searchNames()">Search</button> -->
                         <button data-toggle="modal" href="#nameSearchResults" data-dismiss="modal" aria-hidden="true"  class="btn btn-info btn-md" onclick="nameSearchPoliceForm()">Search</button>
                       </div>
                 </div>
               </div>
-
-              <!-- List of Civilians -->
-              <!-- <div id="civDetails" style="display:none">
-                <div class="panel-group" id="accordion">
-                  <script>
-                    // Global script
-                    // This function need to go here otherwise we get an undefined error
-                    function makeid(length) {
-                      let result='';
-                      let characters='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-                      let charactersLength=characters.length;
-                      for (var i=0; i<length; i++) {
-                        result+=characters.charAt(Math.floor(Math.random()*charactersLength));
-                      }
-                      return result;
-                    }
-
-                  </script>
-                  <% if (civilians !=null && civilians != undefined) {%>
-                    <% for(var i=0; i<civilians.length; i++) {%>
-                      <div class="panel panel-default background-transparent">
-                        <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
-                          href="#collapse<%=i%>" <h4 class="panel-title">
-                              <a class="blue-hover capitalize">
-                                <%= civilians[i].civilian.firstName %>
-                                  <%= civilians[i].civilian.lastName %> | DOB:
-                                  <%= civilians[i].civilian.birthday%>
-                              </a>
-                            </h4>
-                        </div>
-                        <% if (i===0) {%>
-                          <div id="collapse<%=i%>" class="panel-collapse collapse in">
-                            <% } else {%>
-                              <div id="collapse<%=i%>" class="panel-collapse collapse">
-                                <% } %>
-                                  <div class="panel-body">
-                                    <div class="text-align-center">
-                                      <button data-toggle="modal" href="#ticketModal"
-                                        class="btn btn-primary btn-md margin-bottom-05"
-                                        onclick="OpenCitation(`<%= civilians[i].civilian.firstName%>`, `<%=civilians[i].civilian.lastName %>`, '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#date', '#time');">Issue
-                                        Citation</button>
-                                      <button data-toggle="modal" href="#warningModal"
-                                        class="btn btn-primary btn-md margin-bottom-05"
-                                        onclick="OpenWarning(`<%= civilians[i].civilian.firstName%>`, `<%=civilians[i].civilian.lastName %>`, '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#warning-date', '#warning-time');">Issue
-                                        Warning</button>
-                                      <button data-toggle="modal" href="#arrestModal"
-                                        class="btn btn-primary btn-md margin-bottom-05"
-                                        onclick="OpenArrest(`<%= civilians[i].civilian.firstName%>`, `<%=civilians[i].civilian.lastName %>`, '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
-                                        <% if (user.user.activeCommunity !='' &&
-                                        user.user.activeCommunity !=null) {%>
-                                          <button data-toggle="modal" href="#createWarrantModal"
-                                          class="btn btn-primary btn-md margin-bottom-05"
-                                          onclick="OpenCreateWarrant(`<%= civilians[i].civilian.firstName%>`, `<%=civilians[i].civilian.lastName %>`, '<%=civilians[i]._id%>', '<%=civilians[i].civilian.birthday%>');">Create
-                                          Warrant</button>
-                                      <% } else {%>
-                                          <button type="button" data-toggle="modal"
-                                            href="#nonCommunityBoloModal"
-                                            class="btn btn-primary btn-md margin-bottom-05 mock-disabled"
-                                            style="cursor: not-allowed;"> Create Warrant
-                                          </button>
-                                      <% } %>
-                                    </div>
-                                    <hr />
-                                    <% if (civilians[i].civilian.deceased==true) { %>
-                                      <span>
-                                        <div class="alert alert-danger alert-dismissible"
-                                          style="display:block">
-                                          <strong>Deceased!</strong>
-                                        </div>
-                                      </span>
-                                    <% } %>
-                                    <!-- <h5>
-                                      <ion-icon name="person-outline"></ion-icon> Details
-                                    </h5> -->
-                                    <!-- <hr style="width: 88%;max-width: 100rem;"> -->
-                                    <!-- <h4>Details about your Civilian</h4> -->
-                  
-                  <!-- Image of civilian -->
-                  <!-- <hr style="width: 88%;max-width: 100rem;"> -->
-                  <h5><ion-icon name="camera-outline"></ion-icon> <span>Image</span></h5>
-                  <div class="col-md-12 text-align-center">
-                    <a  href="#">
-                      <ion-icon id="civilian-image" name="person" class=""></ion-icon>
-                    </a>
-                  </div>
-
-                  <!-- Details about civilian -->
-                  <hr style="width: 88%;max-width: 100rem;">
-                  <h5><ion-icon name="person-outline"></ion-icon> Details</h5>
-
-                  <div class="form-group" hidden>
-                    <label class="col-md-4 control-label" for="civilianIDView">ID #:</label>
-                    <div class="col-md-4">
-                      <label id="civilianIDView" class="form-label uppercase"></label>
-                    </div>
-                  </div>
-
-                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
-                    <label class="control-label" for="firstName">First Name:</label>
-                    <input id="firstName" name="firstName" type="text" placeholder="First Name" class="form-control input-md disabled-color" disabled data-trigger="first-name-popover" data-content="* First name cannot contain spaces." value="<%= civilians[i].civilian.firstName%>">
-                  </div>
-
-                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
-                    <label class="control-label" for="lastNameView">Last Name:</label>
-                    <input id="lastName" name="lastName" type="text" placeholder="Last Name" class="form-control input-md disabled-color" disabled data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." value="<%= civilians[i].civilian.lastName%>">
-                  </div>
-
-                  <div class="form-group col-xs-1 col-md-1 margin-left-neg-15">
-                    <label class="control-label" for="middleInitialView">MI:</label>
-                    <input id="middleInitial" name="middleInitial" type="text" placeholder="MI" class="form-control input-md uppercase disabled-color" disabled maxlength="1" data-trigger="middle-initial-popover" data-content="* Middle initial cannot contain spaces." value="<%= civilians[i].civilian.middleInitial%>">
-                  </div>
-
-                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
-                    <label class="control-label" for="birthdayView">Date of Birth:</label>
-                    <input id="delBirthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md disabled-color" disabled value="<%= civilians[i].civilian.birthday%>">
-                  </div>
-
-                  <div class="form-group col-xs-1 col-md-1 margin-left-neg-15">
-                    <label class="control-label" for="ageView">Age:</label>
-                    <input id="ageView" name="age" type="text" class="form-control input-md disabled-color" readonly="readonly">
-                  </div>
-
-                  <div class="form-group col-xs-6 col-md-6 margin-left-neg-15">
-                    <label class="control-label" for="addressView">Address:</label>
-                    <input id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md capitalize disabled-color" disabled value="<%= civilians[i].civilian.address%>"></input>
-                  </div>
-
-                  <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
-                    <label class="control-label" for="zipCodeView">Zip Code:</label>
-                    <input id="zipCodeView" name="zipCode" type="number" placeholder="Zip Code" class="form-control input-md disabled-color" disabled value="<%= civilians[i].civilian.addressZip%>"></input>
-                  </div>
-
-                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
-                    <label class="control-label" for="occupationView">Occupation:</label>
-                    <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md capitalize disabled-color" disabled value="<%= civilians[i].civilian.occupation%>">
-                  </div>
-
-                <hr style="width: 88%;max-width: 100rem;">
-                <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details <span class="color-gray">(Optional)</span></h5>
-
-                <!-- Select Basic -->
-                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
-                  <label class="control-label" for="genderView">Gender</label>
-                    <select id="gender-view" name="gender" class="form-control disabled-color" disabled value="<%= civilians[i].civilian.gender%>">
-                      <option value="unspecified">Unspecified</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="non-binary">Non-Binary</option>
-                    </select>
-                </div>
-
-                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
-                  <label class="control-label" for="heightView">Height:</label>
-                  <input id="heightView" name="height" type="text" placeholder="Height" class="form-control input-md disabled-color" disabled value="<%= civilians[i].civilian.height%>">
-                </div>
-
-                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
-                  <label class="control-label" for="weightView">Weight:</label>
-                  <input id="weightView" name="weight" type="text" placeholder="Weight" class="form-control input-md disabled-color" disabled value="<%= civilians[i].civilian.weight%>">
-                </div>
-
-                <!-- Text input-->
-                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
-                  <label class="control-label" for="eyeColor">Eye Color:</label>
-                  <input id="eye-color-view" name="eyeColor" type="text" placeholder="Eye Color" class="form-control input-md disabled-color" disabled value="<%= civilians[i].civilian.eyeColor%>">
-                </div>
-
-                <!-- Text input-->
-                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
-                  <label class="control-label" for="hairColor">Hair Color</label>
-                  <input id="hair-color-view" name="hairColor" type="text" placeholder="Hair Color (optional)" class="form-control input-md disabled-color" disabled value="<%= civilians[i].civilian.hairColor%>">
-                </div>
-
-                <!-- Checkbox -->
-                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
-                  <label class="control-label" for="organDonor">Organ Donor?</label>
-                    <input id="organ-donor-view" style="width: 2em;" type="checkbox" name="organDonor" class="form-control disabled-color" disabled value="<%= civilians[i].civilian.organDonor%>">
-                </div>
-
-                <!-- Checkbox -->
-                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
-                  <label class="control-label" for="veteran">Veteran?</label>
-                    <input id="veteran-view" style="width: 2em;" type="checkbox" name="veteran" class="form-control disabled-color" disabled value="<%= civilians[i].civilian.veteran%>">
-                </div>
-                <hr style="width: 88%;max-width: 100rem;">
-                                    <h5>
-                                      <ion-icon name="browsers-outline"></ion-icon> Licenses
-                                    </h5>
-
-                                    
-                                    <!-- Button to fetch license's -->
-
-                                    <div class="text-center">
-                                      <% if (user.user.activeCommunity !='' &&
-                                        user.user.activeCommunity !=null) {%>
-                                        <button type="button" class="btn btn-info margin-bottom-05"
-                                          data-toggle="modal" href="#activeWarrants"
-                                          id="activeWarrantsButton-<%=i%>"
-                                          onclick="getActiveWarrants('<%=i%>', '<%=civilians[i]._id%>')">
-                                          Search Licenses
-                                        </button>
-                                        <% } else {%>
-                                          <button type="button" data-toggle="modal"
-                                            href="#nonCommunityBoloModal"
-                                            class="btn btn-info margin-bottom-05 mock-disabled"
-                                            style="cursor: not-allowed;"> Search Licenses
-                                          </button>
-                                          <% } %>
-                                    </div>
-                                    <hr style="width: 88%;max-width: 100rem;">
-                                    <h5>
-                                      <ion-icon name="alert-circle-outline"></ion-icon> NCIC Warrant Check
-                                    </h5>
-                                    <div class="text-center">
-                                      <% if (user.user.activeCommunity !='' &&
-                                        user.user.activeCommunity !=null) {%>
-                                        <button type="button" class="btn btn-info margin-bottom-05"
-                                          data-toggle="modal" href="#activeWarrants"
-                                          id="activeWarrantsButton-<%=i%>"
-                                          onclick="getActiveWarrants('<%=i%>', '<%=civilians[i]._id%>')">
-                                          Search Active Warrants
-                                        </button>
-                                        <% } else {%>
-                                          <button type="button" data-toggle="modal"
-                                            href="#nonCommunityBoloModal"
-                                            class="btn btn-info margin-bottom-05 mock-disabled"
-                                            style="cursor: not-allowed;"> Search Active Warrants
-                                          </button>
-                                          <% } %>
-                                    </div>
-
-                                    <hr style="width: 88%;max-width: 100rem;">
-                                    <h5>
-                                      <ion-icon name="car-sport-outline"></ion-icon> Registered Vehicles
-                                    </h5>
-                                    <div class="text-center">
-                                      <% if (user.user.activeCommunity !='' &&
-                                        user.user.activeCommunity !=null) {%>
-                                        <button type="button" class="btn btn-info margin-bottom-05"
-                                          data-toggle="modal" href="#registeredVehicles"
-                                          id="registeredCarButton-<%=i%>"
-                                          onclick="getRegisteredCars(`<%=civilians[i].civilian.firstName%> <%=civilians[i].civilian.lastName%> | DOB: <%=civilians[i].civilian.birthday%>`, '<%=i%>', '<%=civilians[i]._id%>')">
-                                          Search Registered Vehicles
-                                        </button>
-                                        <% } else {%>
-                                          <button type="button" data-toggle="modal"
-                                            href="#nonCommunityBoloModal"
-                                            class="btn btn-info margin-bottom-05 mock-disabled"
-                                            style="cursor: not-allowed;"> Search Registered Vehicles
-                                          </button>
-                                          <% } %>
-                                    </div>
-                                    <hr style="width: 88%;max-width: 100rem;">
-
-                                    <h5>
-                                          <ion-icon name="browsers-outline"></ion-icon> Registered
-                                          Firearms
-                                        </h5>
-                                        <div class="text-center">
-                                          <% if (user.user.activeCommunity !='' &&
-                                            user.user.activeCommunity !=null) {%>
-                                            <button type="button"
-                                              class="btn btn-info margin-bottom-05"
-                                              data-toggle="modal" href="#registeredFirearms"
-                                              id="registeredFirearmButton-<%=i%>"
-                                              onclick="getRegisteredFirearms('<%=civilians[i]._id%>', '<%=i%>')">
-                                              Search Registered Firearms
-                                            </button>
-                                            <% } else {%>
-                                              <button type="button" data-toggle="modal"
-                                                href="#nonCommunityBoloModal"
-                                                class="btn btn-info margin-bottom-05 mock-disabled"
-                                                style="cursor: not-allowed;"> Search Registered
-                                                Firearms
-                                              </button>
-                                              <% } %>
-                                        </div>
-                                      <hr style="width: 88%;max-width: 100rem;">
-                                      <h4>Criminal History</h4>
-                                      <ul class="nav nav-pills mb-3 margin-bottom-1"
-                                        role="tablist">
-                                        <li class="nav-item">
-                                          <a class="nav-link" id="pills-citations-tab-<%=civilians[i]._id%>"
-                                            data-toggle="pill" href="#pills-citations-<%=civilians[i]._id%>" role="tab"
-                                            aria-controls="pills-citations-<%=i%>"
-                                            aria-selected="true" onclick="loadCitations('<%=civilians[i]._id%>')">Citations</a>
-                                        </li>
-                                        <li class="nav-item">
-                                          <a class="nav-link" id="pills-warnings-tab-<%=civilians[i]._id%>"
-                                            data-toggle="pill" href="#pills-warnings-<%=civilians[i]._id%>" role="tab"
-                                            aria-controls="pills-warnings-<%=i%>"
-                                            aria-selected="false" onclick="loadWarnings('<%=civilians[i]._id%>')">Warnings</a>
-                                        </li>
-                                        <li class="nav-item">
-                                          <a class="nav-link" id="pills-arrests-tab-<%=civilians[i]._id%>"
-                                            data-toggle="pill" href="#pills-arrests-<%=civilians[i]._id%>" role="tab"
-                                            aria-controls="pills-arrests-<%=i%>"
-                                            aria-selected="false" onclick="loadArrests('<%=civilians[i]._id%>')">Arrests</a>
-                                        </li>
-                                      </ul>
-                                      <div class="tab-content" id="pills-tabContent-<%=civilians[i]._id%>">
-                                        <div class="tab-pane fade" id="pills-citations-<%=civilians[i]._id%>"
-                                          role="tabpanel" aria-labelledby="pills-citations-tab-<%=civilians[i]._id%>">
-                                          <table id="ticket-table-<%=civilians[i]._id%>" class="table table-hover"
-                                            border="1" frame="box">
-                                            <thead>
-                                              <tr style="background-color: #2d2d2d;">
-                                                <td>Date<br><i><small>YYYY-M-D</small></i></td>
-                                                <td>Violation</td>
-                                                <td>Amount</td>
-                                                <td>Delete</td>
-                                              </tr>
-                                            </thead>
-                                            <tbody id="ticket-body-<%=civilians[i]._id%>">
-                                              <!-- populated by socket -->
-                                            </tbody>
-                                          </table>
-                                        </div>
-                                        <div class="tab-pane fade" id="pills-warnings-<%=civilians[i]._id%>" role="tabpanel"
-                                          aria-labelledby="pills-warnings-tab-<%=civilians[i]._id%>">
-                                          <table id="warning-table-<%=civilians[i]._id%>" class="table table-hover"
-                                            border="1" frame="box">
-                                            <thead>
-                                              <tr style="background-color: #2d2d2d;">
-                                                <td>Date<br><i><small>YYYY-M-D</small></i></td>
-                                                <td>Warning</td>
-                                                <td>Delete</td>
-                                              </tr>
-                                            </thead>
-                                            <tbody id="warning-body-<%=civilians[i]._id%>">
-                                              <!-- populated by socket -->
-                                            </tbody>
-                                          </table>
-                                        </div>
-                                        <div class="tab-pane fade" id="pills-arrests-<%=civilians[i]._id%>" role="tabpanel"
-                                          aria-labelledby="pills-arrests-tab-<%=civilians[i]._id%>">
-                                          <table id="arrest-table-<%=civilians[i]._id%>" class="table table-hover"
-                                            border="1" frame="box">
-                                            <thead>
-                                              <tr style="background-color: #2d2d2d;">
-                                                <td>Date<br><i><small>YYYY-M-D</small></i></td>
-                                                <td>Charges</td>
-                                                <td>Summary</td>
-                                                <td>Delete</td>
-                                              </tr>
-                                            </thead>
-                                            <tbody id="arrest-body-<%=civilians[i]._id%>">
-                                              <!-- populated by socket -->
-                                            </tbody>
-                                          </table>
-                                        </div>
-                                      </div>
-                                  </div>
-                              </div>
-
-                          </div>
-
-                          <% } %>
-
-                            <% } %>
-                      </div>
-              </div> -->
               </div>
             </fieldset>
           </form>
@@ -781,16 +418,13 @@
       </div>
       <div class="modal-content">
         <div class="modal-body">
-          <form class="form-horizontal" name="findVehicle" action="/plate-search" method="get">
+          <form id="plate-search-police-form" class="form-horizontal" name="findVehicle" action="#" method="get">
             <fieldset>
-
-              <!-- Form Name -->
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
                 aria-hidden="true">X</button>
               <h4>Vehicle Database</h4>
               <hr style="width: 88%;max-width: 100rem;">
 
-              <!-- Text input-->
               <div class="form-group">
                 <label class="col-md-4" for="plateNumber">Plate Number</label>
                 <div class="col-md-4 margin-bottom-1">
@@ -798,67 +432,11 @@
                     class="form-control input-md" list="plates" style="text-transform: uppercase;" required>
                 </div>
                 <div class="col-md-4">
-                  <input type="hidden" id="this-active-community-id" name="activeCommunityID" ,
-                    value="<%=user.user.activeCommunity%>">
-                  <button type="submit" onclick="searchPlate()" class="btn btn-info">Search</button>
+                  <!-- <input type="hidden" id="this-active-community-id" name="activeCommunityID" value="<%=user.user.activeCommunity%>"> -->
+                  <!-- <button type="submit" onclick="searchPlate()" class="btn btn-info">Search</button> -->
+                  <button data-toggle="modal" href="#vehicleSearchResults" data-dismiss="modal" aria-hidden="true" class="btn btn-info btn-md" onclick="vehicleSearchPoliceForm()">Search</button>
                 </div>
               </div>
-
-              <!-- List of Plates -->
-              <div id="plateDetails" style="display:none">
-                <div class="panel-group" id="accordion">
-                  <% if (vehicles !=null && vehicles != undefined) {%>
-                    <% for(var i=0; i<vehicles.length; i++) {%>
-                      <div class="panel panel-default background-transparent">
-                        <div class="panel-heading" data-toggle="collapse" data-id=<%=i%> data-parent="#accordion"
-                          href="#collapse<%=i%>" <h4 class="panel-title">
-                              <a class="blue-hover capitalize">
-                                <%= vehicles[i].vehicle.plate%> | <%= vehicles[i].vehicle.registeredOwner%>
-                              </a>
-                            </h4>
-                        </div>
-                        <% if (i===0) {%>
-                          <div id="collapse<%=i%>" class="panel-collapse collapse in">
-                            <% } else {%>
-                              <div id="collapse<%=i%>" class="panel-collapse collapse">
-                                <% } %>
-                                  <div class="panel-body">
-                                    <% if (vehicles[i].vehicle.isStolen==2) {%>
-                                      <div id="stolenMessage" class="alert alert-danger" style="display:block">
-                                        <strong>Danger!</strong> Vehicle reported as stolen.
-                                      </div>
-                                      <% } %>
-                                        Vin #: <%= vehicles[i].vehicle.vin%><br />
-                                          License Plate #: <%= vehicles[i].vehicle.plate%><br />
-                                            Registered Owner: <button type="submit" class="btn btn-info"
-                                              onclick="openNameDatabase('<%= vehicles[i].vehicle.registeredOwner%>','<%= vehicles[i].vehicle.activeCommunityID %>')">
-                                              <%= vehicles[i].vehicle.registeredOwner%>
-                                            </button><br />
-                                            Color: <%= vehicles[i].vehicle.color%><br />
-                                              Model: <%= vehicles[i].vehicle.model%><br />
-                                                <% if (vehicles[i].vehicle.validInsurance==1) {%>
-                                                  <p class="plate-body-text">Insurance: Valid <i
-                                                      class="ion-checkmark-circled color-green"></i>
-                                                  </p>
-                                                  <% } else {%>
-                                                    <p class="plate-body-text">Insurance: Invalid <i
-                                                        class="ion-alert-circled color-red"></i></p>
-                                                    <% } %>
-                                                      <% if (vehicles[i].vehicle.validRegistration==1) {%>
-                                                        <p class="plate-body-text">Registration: Valid <i
-                                                            class="ion-checkmark-circled color-green"></i></p>
-                                                        <% } else {%>
-                                                          <p class="plate-body-text">Registration: Invalid <i
-                                                              class="ion-alert-circled color-red"></i>
-                                                          </p>
-                                                          <% } %>
-                                  </div>
-                              </div>
-                          </div>
-                          <% } %>
-                            <% } %>
-                      </div>
-                </div>
               </div>
             </fieldset>
           </form>
@@ -2520,6 +2098,52 @@
     </div>
   </div>
 
+  <div id="vehicleSearchResults" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-full-screen">
+      <div class="modal-content modal-content-full-screen">
+        <div class="modal-body">
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+              aria-hidden="true">X</button>
+              <h2 class="">Vehicle Results:</h2>
+          <div class="container">
+            <!--Table for Vehicles  -->
+            <div class="col-md-12 col-md-offset-0.75 margin-top-5">
+              
+                <div>
+                  <label>Filter:
+                    <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+                  </label>
+                </div>
+  
+                <input id="plateNumberStored" hidden value="">
+                <!-- List of vehicles -->
+                <div id="search-results-vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                  <div id="search-results-vehicles-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                </div>
+                
+                <!-- Loading error -->
+                <div id="issue-loading-vehicle-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading results, try refreshing the page...</p>
+                </div>
+  
+                <!-- Paginated navigation list -->
+                <div>
+                  <nav aria-label="...">
+                    <ul class="pager">
+                      <li><a id="prev-search-veh-page-btn" class="" onclick="getPrevSearchVehPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                      <li><a id="next-search-veh-page-btn" onclick="getNextSearchVehPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                    </ul>
+                  </nav>
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="registeredVehicles" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -3018,6 +2642,8 @@
   var pageVeh = 0;
   var pageGun = 0;
   var pageLicense = 0;
+  var civFirstName = "";
+  var civLastName = "";
 
   $(document).ready(function () {
     // displays the Update Username and Cancel buttons for updating the username

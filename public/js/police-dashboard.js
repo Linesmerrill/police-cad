@@ -1,5 +1,3 @@
-// $("#name-search-police-form").submit(function (e) {});
-
 function nameSearchPoliceForm() {
   var socket = io();
   var page = 0;
@@ -48,6 +46,60 @@ function nameSearchPoliceForm() {
     }
   });
   $("#name-search-police-form")[0].reset();
+}
+
+function vehicleSearchPoliceForm() {
+  var socket = io();
+  var pageVeh = 0;
+  var plate = $("#plateNumber").val();
+  $("#plateNumberStored").val(plate);
+  var myReq = {
+    body: {
+      communityID: $("#active-community-id").val(),
+      plate: plate,
+      page: pageVeh,
+    },
+  };
+  socket.emit("vehicle_search_police", myReq);
+
+  //socket that receives a response after searching for plate
+  socket.on("vehicle_search_police_result", (res) => {
+    // load content on page
+    $("#search-results-vehicles-thumbnail").empty();
+    for (i = 0; i < res.length; i++) {
+      $("#search-results-vehicles-thumbnail").append(
+        `<div id="search-results-vehicles-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+              <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+                <ion-icon class="font-size-4-vmax md hydrated" name="car-sport-outline" role="img" aria-label="car sport outline"></ion-icon>
+                <div class="caption">
+                  <h4 id="search-results-vehicles-thumbnail-plate-${res[i]._id}" class="color-white license-plate">#${res[i].vehicle.plate})</h4>
+                  <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+                  <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${res[i].vehicle.registeredOwner}</h5>
+                </div>
+              </div> 
+            </div>`
+      );
+    }
+    if (res.length < 8) {
+      // if we have reached the end of the data, then gray out the 'next' button
+      $("#next-search-veh-page-btn").addClass("isDisabled");
+      $("#next-search-veh-page-btn").attr("onclick", "").unbind("click");
+    } else {
+      $("#next-search-veh-page-btn")
+        .attr("onclick", "getNextSearchVehPage()")
+        .bind("click");
+    }
+    if (pageVeh == 0) {
+      $("#prev-search-veh-page-btn").addClass("isDisabled");
+      $("#prev-search-veh-page-btn").attr("onclick", "").unbind("click");
+    } else {
+      $("#prev-search-veh-page-btn").removeClass("isDisabled");
+      $("#prev-search-veh-page-btn")
+        .attr("onclick", "getPrevSearchVehPage()")
+        .bind("click");
+    }
+  });
+  // $("#plate-search-police-form")[0].reset();
 }
 
 function getPrevCivPage() {
@@ -1024,6 +1076,100 @@ function getPrevVehPage() {
       }
       $("#next-veh-page-btn").removeClass("isDisabled");
       $("#next-veh-page-btn").attr("onclick", "getNextVehPage()").bind("click");
+    }
+  });
+}
+
+function getNextSearchVehPage() {
+  pageVeh = pageVeh + 1;
+  var socket = io();
+  var myObj = {
+    body: {
+      communityID: $("#active-community-id").val(),
+      plate: $("#plateNumberStored").val(),
+      page: pageVeh,
+    },
+  };
+  socket.emit("vehicle_search_police", myObj);
+
+  //socket that receives the results of the search
+  socket.on("vehicle_search_police_result", (res) => {
+    // load content on page
+    $("#search-results-vehicles-thumbnail").empty();
+    if (res == null || res == undefined) {
+    } else {
+      for (i = 0; i < res.length; i++) {
+        $("#search-results-vehicles-thumbnail").append(
+          `<div id="search-results-vehicles-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+                <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+                  <ion-icon class="font-size-4-vmax md hydrated" name="car-sport-outline" role="img" aria-label="car sport outline"></ion-icon>
+                  <div class="caption">
+                    <h4 id="search-results-vehicles-thumbnail-plate-${res[i]._id}" class="color-white license-plate">#${res[i].vehicle.plate})</h4>
+                    <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+                    <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${res[i].vehicle.registeredOwner}</h5>
+                  </div>
+                </div> 
+              </div>`
+        );
+      }
+      if (res.length < 8) {
+        // if we have reached the end of the data, then gray out the 'next' button
+        $("#next-search-veh-page-btn").addClass("isDisabled");
+        $("#next-search-veh-page-btn").attr("onclick", "").unbind("click");
+      } else {
+        $("#next-search-veh-page-btn")
+          .attr("onclick", "getNextSearchVehPage()")
+          .bind("click");
+      }
+      $("#prev-search-veh-page-btn").removeClass("isDisabled");
+      $("#prev-search-veh-page-btn")
+        .attr("onclick", "getPrevSearchVehPage()")
+        .bind("click");
+    }
+  });
+}
+
+function getPrevSearchVehPage() {
+  pageVeh = pageVeh - 1;
+  if (pageVeh < 1) {
+    pageVeh = 0;
+    $("#prev-search-veh-page-btn").addClass("isDisabled");
+    $("#prev-search-veh-page-btn").attr("onclick", "").unbind("click");
+  }
+  var socket = io();
+  var myObj = {
+    body: {
+      communityID: $("#active-community-id").val(),
+      plate: $("#plateNumberStored").val(),
+      page: pageVeh,
+    },
+  };
+  socket.emit("vehicle_search_police", myObj);
+
+  //socket that receives the results of the search
+  socket.on("vehicle_search_police_result", (res) => {
+    // load content on page
+    $("#search-results-vehicles-thumbnail").empty();
+    if (res == null || res == undefined) {
+    } else {
+      for (i = 0; i < res.length; i++) {
+        $("#search-results-vehicles-thumbnail").append(
+          `<div id="search-results-vehicles-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+                <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+                  <ion-icon class="font-size-4-vmax md hydrated" name="car-sport-outline" role="img" aria-label="car sport outline"></ion-icon>
+                  <div class="caption">
+                    <h4 id="search-results-vehicles-thumbnail-plate-${res[i]._id}" class="color-white license-plate">#${res[i].vehicle.plate})</h4>
+                    <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+                    <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${res[i].vehicle.registeredOwner}</h5>
+                  </div>
+                </div> 
+              </div>`
+        );
+      }
+      $("#next-search-veh-page-btn").removeClass("isDisabled");
+      $("#next-search-veh-page-btn")
+        .attr("onclick", "getNextSearchVehPage()")
+        .bind("click");
     }
   });
 }
