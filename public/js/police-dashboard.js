@@ -14,7 +14,6 @@ function nameSearchPoliceForm() {
 
   //socket that receives a response after searching for name
   socket.on("name_search_police_result", (res) => {
-    console.log(res);
     // load content on page
     $("#search-results-personas-thumbnail").empty();
     for (i = 0; i < res.length; i++) {
@@ -54,11 +53,8 @@ var lookupNameButton = document.getElementById("lookupButton");
 lookupNameButton.addEventListener("click", lookupName);
 
 function lookupName() {
-  console.log("lookupName");
   lookupName = $("#roVeh").val();
-  console.log(lookupName);
   firstLast = lookupName.split(" ");
-  console.log("split:", lookupName);
   if (firstLast.length > 1) {
     var firstName = firstLast[0];
     var lastName = firstLast[1];
