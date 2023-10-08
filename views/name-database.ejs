@@ -29,19 +29,12 @@
                       class="form-control input-md col-md-offset-1" data-trigger="last-name-popover"
                       data-content="* Last name cannot contain spaces." required="">
                   </div>
-                  <% if (user.user.activeCommunity=='' || user.user.activeCommunity==null) { %>
-                    <div class="col-md-4">
-                      <label class="col-md-12 col-md-offset-1 padding-left-0" for="civ-dob">Date of Birth</label>
-                      <input id="civ-dob" name="dateOfBirth" type="date" placeholder="mm/dd/yyyy"
-                        class="form-control input-md col-md-offset-1" required="">
-                    </div>
-                    <% } %>
-                      <div class="col-md-4">
-                        <br>
-                        <input type="hidden" id="activeCommunityID" name="activeCommunityID" ,
-                          value="<%=user.user.activeCommunity%>">
-                        <button data-toggle="modal" href="#nameSearchResults" data-dismiss="modal" aria-hidden="true"  class="btn btn-info btn-md" onclick="nameSearchPoliceForm()">Search</button>
-                      </div>
+                  <div class="col-md-4">
+                    <br>
+                    <input type="hidden" id="activeCommunityID" name="activeCommunityID" ,
+                      value="<%=user.user.activeCommunity%>">
+                    <button data-toggle="modal" href="#nameSearchResults" data-dismiss="modal" aria-hidden="true"  class="btn btn-info btn-md" onclick="nameSearchPoliceForm()">Search</button>
+                  </div>
                 </div>
               </div>
               </div>
