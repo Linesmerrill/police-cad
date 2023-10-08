@@ -817,10 +817,10 @@ function populateWarrantSocketDetails(res) {
 }
 
 function OpenCitation() {
-  $("#ticket-civ-first-name").val($("#civ-first-name").val());
-  $("#ticket-civ-last-name").val($("#civ-last-name").val());
+  $("#ticket-civ-first-name").val($("#firstName").val());
+  $("#ticket-civ-last-name").val($("#lastName").val());
   $("#civID").val($("#active-community-id").val());
-  $("#ticket-civ-dob").val($("#birthday").val());
+  $("#ticket-civ-dob").val($("#delBirthday").val());
   $("#searchTicketDiv").hide(); //TODO
 }
 

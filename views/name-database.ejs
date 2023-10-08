@@ -394,7 +394,7 @@
               <div class="col-md-12 col-md-offset-0.75 margin-top-2">
                 <div class="margin-bottom-1">
                   <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">NCIC Warrant Check:</span> 
-                  <button data-toggle="modal" href="#createWarrantModal" data-dismiss="modal" aria-hidden="true" class="btn btn-primary btn-md pull-right" onclick="if (!window.__cfRLUnblockHandlers) return false;">Create Warrant</button>
+                  <button data-toggle="modal" type="button" href="#createWarrantModal" data-dismiss="modal" aria-hidden="true" class="btn btn-primary btn-md pull-right" onclick="if (!window.__cfRLUnblockHandlers) return false;">Create Warrant</button>
                 </div>
                 <!-- <div>
                   <label>Search:
@@ -570,10 +570,10 @@
                         <a class="nav-link" id="pills-arrests-tab" data-toggle="pill" href="#pills-arrests" role="tab" aria-controls="pills-arrests" aria-selected="false">Arrests</a>
                       </li>
                     </ul>
-                    <button data-toggle="modal" href="#ticketModal" class="btn btn-info btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenCitation();setDateAndTime('#date', '#time');">Issue Citation</button>
-                  <button data-toggle="modal" href="#warningModal" class="btn btn-warning btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenWarning(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
-                  <button data-toggle="modal" href="#arrestModal" class="btn btn-danger btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenArrest(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
-                  <button data-toggle="modal" href="#createWarrantModal" class="btn btn-success btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false;">Create Warrant</button>
+                    <button data-toggle="modal" type="button" href="#ticketModal" class="btn btn-info btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenCitation();setDateAndTime('#date', '#time');">Issue Citation</button>
+                  <button data-toggle="modal" type="button" href="#warningModal" class="btn btn-warning btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenWarning(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#warning-date', '#warning-time');">Issue Warning</button>
+                  <button data-toggle="modal" type="button" href="#arrestModal" class="btn btn-danger btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false; OpenArrest(`Hulk`, `Hogan`, '5f13206bbde1480004b7fd7b', '2001-01-01');setDateAndTime('#arrest-report-date', '#arrest-report-time');generateCaseNo('#arrest-report-case-no');">Arrest</button>
+                  <button data-toggle="modal" type="button" href="#createWarrantModal" class="btn btn-success btn-md margin-bottom-05" onclick="if (!window.__cfRLUnblockHandlers) return false;">Create Warrant</button>
                     <div class="tab-content" id="pills-tabContent">
                       <div class="tab-pane fade" id="pills-citations" role="tabpanel" aria-labelledby="pills-citations-tab">
                           <table id="citationTable" class="table table-hover" border="1" frame="box">
