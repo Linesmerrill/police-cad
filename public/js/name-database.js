@@ -819,7 +819,7 @@ function populateWarrantSocketDetails(res) {
 function OpenCitation() {
   $("#ticket-civ-first-name").val($("#firstName").val());
   $("#ticket-civ-last-name").val($("#lastName").val());
-  $("#civID").val($("#active-community-id").val());
+  // $("#civID").val(res._id);
   $("#ticket-civ-dob").val($("#delBirthday").val());
   $("#searchTicketDiv").hide(); //TODO
 }
