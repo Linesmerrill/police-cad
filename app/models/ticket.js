@@ -29,35 +29,21 @@ var ticketSchema = mongoose.Schema({
 });
 
 ticketSchema.methods.updateTicket = function (req, res) {
-  // console.debug("ticket req body: ", req.body);
+  console.debug("ticket req body: ", req.body);
 
-  rawNameAndDOB = req.body.civFirstName; //deprecated 6/27/2020
-
-  //deprecated 6/27/2020
-  if (exists(req.body.civFirstName) && exists(req.body.civLastName)) {
-    if (
-      req.body.civFirstName.trim().length > 1 &&
-      req.body.civLastName.length > 1
-    ) {
-      this.ticket.civFirstName =
-        req.body.civFirstName.trim().charAt(0).toUpperCase() +
-        req.body.civFirstName.trim().slice(1);
-      this.ticket.civLastName =
-        req.body.civLastName.trim().charAt(0).toUpperCase() +
-        req.body.civLastName.trim().slice(1);
-    } else {
-      console.error(
-        "cannot process empty values for civFirstName and civLastName"
-      );
-      res.redirect("/police-dashboard");
-      return;
-    }
-  } else {
-    console.error(
-      "cannot process null values for civFirstName and civLastName"
-    );
+  if (!exists(req.body.civFirstName) || req.body.civFirstName.length < 1) {
+    console.error("cannot process empty values for civFirstName");
     res.redirect("/police-dashboard");
     return;
+  } else {
+    this.ticket.civFirstName = req.body.civFirstName.trim();
+  }
+  if (!exists(req.body.civLastName) || req.body.civLastName.length < 1) {
+    console.error("cannot process empty values for civLastName");
+    res.redirect("/police-dashboard");
+    return;
+  } else {
+    this.ticket.civLastName = req.body.civLastName.trim();
   }
 
   this.ticket.officerID = req.body.officerID;
