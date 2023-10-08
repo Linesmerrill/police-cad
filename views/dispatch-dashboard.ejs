@@ -3982,38 +3982,38 @@
     })
   }
 
-  function loadArrests(civID) {
-    $(`#arrest-body-${civID}`).empty();
-    var data = {
-      civID: civID
-    }
-    var socket=io();
-    socket.emit('search_arrests', data)
-    socket.on('load_arrests_result', (res) => {
-      res.forEach(arrest => {
-      $(`#arrest-body-${civID}`).append(
-        `
-          <tr id="${arrest._id}">
-              <td>
-                ${arrest.arrestReport.date}
-              </td>
-              <td>
-                ${arrest.arrestReport.charges}
-              </td>
-              <td>
-                ${arrest.arrestReport.summary}
-              </td>
-              <td class="text-align-center">
-                <a class='clickable' onclick="deleteArrest('${arrest._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
-              </td>
-          </tr>
-        `
-        ).fadeTo(1, function () {
-            $(this).add();
-          })
-      });
-    })
-  }
+  // function loadArrests(civID) {
+  //   $(`#arrest-body-${civID}`).empty();
+  //   var data = {
+  //     civID: civID
+  //   }
+  //   var socket=io();
+  //   socket.emit('search_arrests', data)
+  //   socket.on('load_arrests_result', (res) => {
+  //     res.forEach(arrest => {
+  //     $(`#arrest-body-${civID}`).append(
+  //       `
+  //         <tr id="${arrest._id}">
+  //             <td>
+  //               ${arrest.arrestReport.date}
+  //             </td>
+  //             <td>
+  //               ${arrest.arrestReport.charges}
+  //             </td>
+  //             <td>
+  //               ${arrest.arrestReport.summary}
+  //             </td>
+  //             <td class="text-align-center">
+  //               <a class='clickable' onclick="deleteArrest('${arrest._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
+  //             </td>
+  //         </tr>
+  //       `
+  //       ).fadeTo(1, function () {
+  //           $(this).add();
+  //         })
+  //     });
+  //   })
+  // }
 
 
   function openNameDatabase(registeredOwner, activeCommunityID) {
