@@ -1234,6 +1234,7 @@ function getPrevWarrantPage() {
 }
 
 function populateIssueCitationDetails(res) {
+  console.log("populateIssueCitationDetails", res);
   setDateAndTime("#date", "#time");
   $("#ticket-civ-first-name").val(res.civilian.firstName);
   $("#ticket-civ-last-name").val(res.civilian.lastName);
