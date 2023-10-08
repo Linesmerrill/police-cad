@@ -185,8 +185,6 @@ function populateCallDetails(callID) {
   var socket = io();
   socket.emit("get_call_by_id", callID);
   socket.on("load_call_by_id_result", (res) => {
-    //debug log
-    // console.log(res)
     var createdDate = new Date(res.call.createdAt);
     if (
       res.call.updatedAt === "" ||

@@ -79,7 +79,6 @@
 <script type="text/javascript">
 window.onload = function () {
     var loadTime = window.performance.timing.domContentLoadedEventEnd-window.performance.timing.navigationStart; 
-    // console.log('Page load time is '+ loadTime);
     $('#websiteStatus').text("Website Status: " + "✅")
     $('#databaseStatus').text("Database Status: " + "✅")
     $('#responseTime').text(loadTime/1000 + " seconds")
