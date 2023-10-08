@@ -816,13 +816,13 @@ function populateWarrantSocketDetails(res) {
   $("#warrant-ID").val(res._id);
 }
 
-function OpenCitation() {
-  $("#ticket-civ-first-name").val($("#firstName").val());
-  $("#ticket-civ-last-name").val($("#lastName").val());
-  // $("#civID").val(res._id);
-  $("#ticket-civ-dob").val($("#delBirthday").val());
-  $("#searchTicketDiv").hide(); //TODO
-}
+// function OpenCitation() {
+//   $("#ticket-civ-first-name").val($("#firstName").val());
+//   $("#ticket-civ-last-name").val($("#lastName").val());
+//   // $("#civID").val(res._id);
+//   $("#ticket-civ-dob").val($("#delBirthday").val());
+//   $("#searchTicketDiv").hide(); //TODO
+// }
 
 function hideVehicleMessage() {
   $("#no-vehicles-message").hide();
