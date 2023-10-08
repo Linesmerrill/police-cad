@@ -124,22 +124,6 @@ function hideWarrantClearPopover() {
   $("#confirmWarrantModal").hide();
 }
 
-function OpenWarning(firstName, lastName, id, dob) {
-  $("#warning-civ-first-name").val(firstName);
-  $("#warning-civ-last-name").val(lastName);
-  $("#civIDWarning").val(id);
-  $("#warning-civ-dob").val(dob);
-  $("#searchWarningDiv").hide();
-}
-
-function OpenArrest(firstName, lastName, id, dob) {
-  $("#arrest-civ-first-name").val(firstName);
-  $("#arrest-civ-last-name").val(lastName);
-  $("#civIDArrest").val(id);
-  $("#arrest-civ-dob").val(dob);
-  $("#searchArrestDiv").hide();
-}
-
 function OpenClearWarrant(firstName, lastName, id, dob) {
   $("#warrant-clear-civ-first-name").val(firstName);
   $("#warrant-clear-civ-last-name").val(lastName);
