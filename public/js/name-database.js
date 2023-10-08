@@ -346,6 +346,7 @@ function loadTicketsAndWarnings(index) {
 }
 
 function loadArrests(index) {
+  console.log("loadArrests");
   $("#arrestTable tbody").empty();
   var parameters = {
     civID: index,

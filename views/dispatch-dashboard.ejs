@@ -2856,9 +2856,9 @@
     })
   }
 
-  // function generateCaseNo(elementName) {
-  //   $(elementName).val(Math.round(Math.random()*10000000000))
-  // }
+  function generateCaseNo(elementName) {
+    $(elementName).val(Math.round(Math.random()*10000000000))
+  }
 
   function hideTicketCivPopover() {
     if ($('#civID').val().length<1) {
@@ -2898,30 +2898,6 @@
   function hideWarrantClearPopover() {
     $('#confirmWarrantModal').hide()
   }
-
-  // function OpenCitation(firstName, lastName, id, dob) {
-  //   $('#ticket-civ-first-name').val(firstName)
-  //   $('#ticket-civ-last-name').val(lastName)
-  //   $('#civID').val(id)
-  //   $('#ticket-civ-dob').val(dob)
-  //   $('#searchTicketDiv').hide()
-  // }
-
-  // function OpenWarning(firstName, lastName, id, dob) {
-  //   $('#warning-civ-first-name').val(firstName)
-  //   $('#warning-civ-last-name').val(lastName)
-  //   $('#civIDWarning').val(id)
-  //   $('#warning-civ-dob').val(dob)
-  //   $('#searchWarningDiv').hide()
-  // }
-
-  // function OpenArrest(firstName, lastName, id, dob) {
-  //   $('#arrest-civ-first-name').val(firstName)
-  //   $('#arrest-civ-last-name').val(lastName)
-  //   $('#civIDArrest').val(id)
-  //   $('#arrest-civ-dob').val(dob)
-  //   $('#searchArrestDiv').hide()
-  // }
 
   function OpenClearWarrant(firstName, lastName, id, dob) {
     $('#warrant-clear-civ-first-name').val(firstName)
@@ -3718,10 +3694,6 @@
 
   $('#warningModal').on('hidden.bs.modal', function () {
     $('#civIDWarning').popover('hide')
-  })
-
-  $('#arrestModal').on('hidden.bs.modal', function () {
-    $('#civIDArrest').popover('hide')
   })
 
   $('#createWarrantModal').on('hidden.bs.modal', function () {
