@@ -860,7 +860,10 @@
                 <fieldset>
 
                   <h4>Details about your Civilian</h4>
-                  
+                  <div id="civilian-details-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                  <div id="civilian-details" style="display:none">
                   <!-- Image of civilian -->
                   <hr style="width: 88%;max-width: 100rem;">
                   <h5><ion-icon name="camera-outline"></ion-icon> <span>Image</span></h5>
@@ -975,6 +978,7 @@
                   <button type="submit" value="update" name="action" style="cursor: pointer" class="btn btn-info" onclick="updateUserBtnValue('update')">Update Civilian</button>
                   <button type="submit" value="delete" name="action" style="cursor: pointer" class="btn btn-danger" onclick="updateUserBtnValue('delete')">Delete Civilian</button>
                 </div>
+              </div>
                   </fieldset>
                 </form>
             </div>

@@ -376,6 +376,8 @@ function hideModal(modalID) {
 }
 
 function loadCivSocketData(civID) {
+  $("#civilian-details-loading").removeClass("hide").addClass("show");
+  $("#civilian-details").removeClass("show").addClass("hide");
   var socket = io();
   var myReq = {
     civID: civID,
@@ -388,6 +390,8 @@ function loadCivSocketData(civID) {
     populateFirearmDetails(res);
     populateLicenseDetails(res);
   });
+  $("#civilian-details-loading").removeClass("show").addClass("hide");
+  $("#civilian-details").removeClass("hide").addClass("show");
 }
 
 function populateVehicleDetails(res) {
@@ -483,6 +487,8 @@ function getAge(date) {
 }
 
 function populateCivSocketDetails(res) {
+  $("#civilian-details-loading").removeClass("hide").addClass("show");
+  $("#civilian-details").removeClass("show").addClass("hide");
   loadDriversLicenseSocket(res);
   var firstName = res.civilian.firstName;
   var lastName = res.civilian.lastName;
@@ -572,6 +578,9 @@ function populateCivSocketDetails(res) {
   $("#firstName").val(firstName);
   $("#lastName").val(lastName);
   $("#delBirthday").val(birthday);
+
+  $("#civilian-details-loading").removeClass("show").addClass("hide");
+  $("#civilian-details").removeClass("hide").addClass("show");
 }
 
 /* loadDriversLicenseSocket will execute whenever a socket civilian is clicked on.

@@ -1,4 +1,5 @@
 function nameSearchPoliceForm() {
+  $("#search-results-civilians-loading").show();
   var socket = io();
   var page = 0;
   var firstName = $("#civ-first-name").val();
