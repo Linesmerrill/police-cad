@@ -741,6 +741,7 @@ $("#create-civ-form").submit(function (e) {
   } else {
     age = $("#ageView").val();
   }
+
   var myReq = {
     body: {
       civFirstName: $("#civ-first-name").val(),
@@ -755,8 +756,8 @@ $("#create-civ-form").submit(function (e) {
       occupation: $("#occupation").val(),
       firearmLicense: $("#firearmLicense").val(),
       gender: $("#gender").val(),
-      height: $("#heightView").val(),
-      weight: $("#weightView").val(),
+      height: getHeight(),
+      weight: getWeight(),
       age: age,
       eyeColor: $("#eyeColor").val(),
       hairColor: $("#hairColor").val(),
@@ -766,6 +767,7 @@ $("#create-civ-form").submit(function (e) {
       userID: $("#newCivUserID").val(),
     },
   };
+  console.log(myReq);
   socket.emit("create_new_civ", myReq);
 
   //socket that receives a response after creating a new civilian
@@ -811,6 +813,26 @@ $("#create-civ-form").submit(function (e) {
   hideModal("newCivModal");
   return true;
 });
+
+function getHeight() {
+  if ($("#imperial").is(":checked")) {
+    return $("#foot").val() + "'" + $("#inches").val() + '"';
+  } else if ($("#metric").is(":checked")) {
+    return $("#centimeters").val() + "cm";
+  } else {
+    return "";
+  }
+}
+
+function getWeight() {
+  if ($("#imperial-weight").is(":checked")) {
+    return $("#pounds").val() + "lbs";
+  } else if ($("#metric-weight").is(":checked")) {
+    return $("#kilos").val() + "kg";
+  } else {
+    return "";
+  }
+}
 
 $("#create-auto-civ-form").submit(function (e) {
   e.preventDefault(); //prevents page from reloading
