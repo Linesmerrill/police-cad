@@ -1337,30 +1337,6 @@
     </div>
   </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   <div id="callModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -2058,9 +2034,10 @@
 <script src="/static/js/wow.js"></script>
 <script src="/static/js/popper.js"></script>
 <script src="/static/js/main.js"></script>
-<script src="/static/js/dispatch-dashboard.js"></script>
+
 <script src="/static/js/name-database.js"></script>
 <script src="/static/js/plate-database.js"></script>
+<script src="/static/js/dispatch-dashboard.js"></script>
 <script src="/static/js/scripts.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
 <script>if (window.module) module = window.module;</script>
@@ -3357,6 +3334,7 @@
   }
 
   function fillClassifierList() {
+    console.log("filling classifier list")
     var classifierList=tail.select('#classifier', {
       search: false,
       classNames: "default white",
