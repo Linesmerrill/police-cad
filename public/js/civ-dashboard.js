@@ -767,7 +767,6 @@ $("#create-civ-form").submit(function (e) {
       userID: $("#newCivUserID").val(),
     },
   };
-  console.log(myReq);
   socket.emit("create_new_civ", myReq);
 
   //socket that receives a response after creating a new civilian
