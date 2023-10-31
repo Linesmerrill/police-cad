@@ -29,7 +29,7 @@ var ticketSchema = mongoose.Schema({
 });
 
 ticketSchema.methods.updateTicket = function (req, res) {
-  console.debug("ticket req body: ", req.body);
+  // console.debug("ticket req body: ", req.body);
 
   if (!exists(req.body.civFirstName) || req.body.civFirstName.length < 1) {
     console.error("cannot process empty values for civFirstName");
