@@ -1,4 +1,4 @@
-var mongoose = require('mongoose');
+var mongoose = require("mongoose");
 
 var arrestReportSchema = mongoose.Schema({
   arrestReport: {
@@ -11,43 +11,58 @@ var arrestReportSchema = mongoose.Schema({
     accusedFirstName: String,
     accusedLastName: String,
     accusedID: String,
-    charges: [{
-      type: String
-    }],
+    charges: [
+      {
+        type: String,
+      },
+    ],
     detailOfEvent: String,
     actionsTaken: String,
     summary: String,
     createdAt: Date,
-    updatedAt: Date
-  }
+    updatedAt: Date,
+  },
 });
 
 arrestReportSchema.methods.updateArrestReport = function (req, res) {
-  // console.debug("arrest report req body: ", req.body)
+  // console.debug("arrest report req body: ", req.body);
 
   if (exists(req.body.accusedFirstName) && exists(req.body.accusedLastName)) {
-    if (req.body.accusedFirstName.trim().length > 1 && req.body.accusedLastName.length > 1) {
-      this.arrestReport.accusedFirstName = req.body.accusedFirstName.trim().charAt(0).toUpperCase() + req.body.accusedFirstName.trim().slice(1);
-      this.arrestReport.accusedLastName = req.body.accusedLastName.trim().charAt(0).toUpperCase() + req.body.accusedLastName.trim().slice(1);
+    if (
+      req.body.accusedFirstName.trim().length > 1 &&
+      req.body.accusedLastName.length > 1
+    ) {
+      this.arrestReport.accusedFirstName =
+        req.body.accusedFirstName.trim().charAt(0).toUpperCase() +
+        req.body.accusedFirstName.trim().slice(1);
+      this.arrestReport.accusedLastName =
+        req.body.accusedLastName.trim().charAt(0).toUpperCase() +
+        req.body.accusedLastName.trim().slice(1);
     } else {
-      console.error("cannot process empty values for accusedFirstName and accusedLastName");
-      res.redirect('/' + req.body.route);
-      return
+      console.error(
+        "cannot process empty values for accusedFirstName and accusedLastName"
+      );
+      res.redirect("/" + req.body.route);
+      return;
     }
   } else {
-    console.error("cannot process null values for accusedFirstName and accusedLastName");
-    res.redirect('/' + req.body.route);
-    return
+    console.error(
+      "cannot process null values for accusedFirstName and accusedLastName"
+    );
+    res.redirect("/" + req.body.route);
+    return;
   }
 
   this.arrestReport.caseNumber = req.body.caseNumber;
   this.arrestReport.date = req.body.date;
   this.arrestReport.time = req.body.time;
   if (exists(req.body.reportingOfficer)) {
-    this.arrestReport.reportingOfficer = req.body.reportingOfficer.toLowerCase();
+    this.arrestReport.reportingOfficer =
+      req.body.reportingOfficer.toLowerCase();
   }
   if (exists(req.body.reportingOfficerID)) {
-    this.arrestReport.reportingOfficerID = req.body.reportingOfficerID.toLowerCase();
+    this.arrestReport.reportingOfficerID =
+      req.body.reportingOfficerID.toLowerCase();
   }
 
   this.arrestReport.accusedID = req.body.accusedID;
@@ -64,16 +79,16 @@ arrestReportSchema.methods.updateArrestReport = function (req, res) {
     this.arrestReport.summary = req.body.summary.trim();
   }
   this.arrestReport.createdAt = new Date();
-  req.app.locals.specialContext = "createArrestSuccess"
-  res.redirect('/' + req.body.route);
+  req.app.locals.specialContext = "createArrestSuccess";
+  res.redirect("/" + req.body.route);
 };
 
-module.exports = mongoose.model('ArrestReport', arrestReportSchema);
+module.exports = mongoose.model("ArrestReport", arrestReportSchema);
 
 function exists(v) {
   if (v !== undefined) {
-    return true
+    return true;
   } else {
-    return false
+    return false;
   }
 }

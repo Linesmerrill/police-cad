@@ -12,8 +12,7 @@
   <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-  <script src="https://kit.fontawesome.com/e048807041.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <!-- import stylesheet libraries -->
   <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
@@ -56,38 +55,32 @@
         </li>
         <li class="background-color-222">
           <a type="button" data-toggle="collapse" data-target="#toggleSearch" aria-expanded="true"
-            aria-controls="toggleSearch" onclick="toggleCaret()"> Operations <i class="fas fa-caret-right pull-right rotate"
+            aria-controls="toggleSearch" onclick="toggleCaret()"> Operations <i class="fa fa-caret-right pull-right rotate"
               style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleSearch">
           <li>
             <a data-toggle="modal" href="#newCivChoiceModal"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Civilian</a>
           </li>
-          <li>
-            <a data-toggle="modal" href="#newVehicleModal" onclick="generateSerialNumber(17, 'vin')"><span class="fa fa-car ml-3 mr-3"></span> Add New Vehicle</a>
-          </li>
-          <li>
-            <a data-toggle="modal" href="#newFirearmModal" onclick="generateSerialNumber(8, 'serial-number')"><span class="fa fa-database ml-3 mr-3"></span> Register Firearm</a>
-          </li>
         </div>
         <li class="background-color-222">
           <a type="button" data-toggle="collapse" data-target="#toggleUtilities" aria-expanded="false"
             aria-controls="toggleUtilities" onclick="toggleCaret()"> Utilities <i
-              class="fas fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
+              class="fa fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleUtilities">
           <li>
             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
               <a data-toggle="modal" href="#call911Modal"><span
-                  class="fas fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
+                  class="fa fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
               <% } else {%>
                 <a data-toggle="modal" href="#nonCommunityModal" class="mock-disabled"><span
-                    class="fas fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
+                    class="fa fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
                 <% } %>
           </li>
           <li>
             <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
-                class="fas fa-external-link-alt"></i></a>
+                class="fa fa-external-link-alt"></i></a>
           </li>
         </div>
         <% include departments-sidebar %>
@@ -108,7 +101,7 @@
             </button>
           </div>
           <div class="navbar-header" style="position: absolute; left: 85px;">
-            <h1 class="cursive"><a href="/civ-dashboard"><i class="fas fa-user"></i> Civilian Dashboard</a>
+            <h1 class="cursive"><a href="/civ-dashboard"><i class="fa fa-user"></i> Civilian Dashboard</a>
             </h1>
           </div>
         </div>
@@ -133,83 +126,30 @@
                 <label>Search:
                   <input id="civilian-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
                 </label>
-                 <ion-icon id="app-icon-personas" name="apps-outline" class="color-white table-icon" onclick="showApps()"></ion-icon>
-                 <!-- <ion-icon id="list-icon-personas" name="list-outline" class="color-white table-icon" onclick="showList()"></ion-icon> -->
               </div>
-              <div id="personas-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
-                <% if(personas != undefined && personas != null) {%>
-                  <% for(var i=0; i<personas.length; i++) {%>
-                  <div id="personas-thumbnail-<%=personas[i]._id%>" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-                    <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id="<%=i%>" data-target="#viewCiv" onclick="loadCivSocketData('<%= personas[i]._id%>');loadTicketsAndWarnings('<%=personas[i]._id%>');loadArrests('<%=personas[i]._id%>');loadReports('<%=personas[i]._id%>');loadMedications('<%=personas[i]._id%>');loadConditions('<%=personas[i]._id%>')">
-                      <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
-                      <div class="caption">
-                        <h4 id="personas-thumbnail-name-<%=personas[i]._id%>" class="color-white capitalize"><%= personas[i].civilian.firstName%> <%= personas[i].civilian.lastName%></h4>
-                        <h5 id="personas-thumbnail-dob-<%=personas[i]._id%>" class="color-white"><%= personas[i].civilian.birthday%></h5>
-                      </div>
-                    </div>
-                  </div>
-                  <% } %>
-                <% } %>
-              </div>
-        </div>
-        <hr class="margin-top-1" style="width: 88%;max-width: 100rem;">
-    <!--Table for Vehicles  -->
-    <div class="col-md-12 col-md-offset-0.75 margin-top-2">
-      <div class="margin-bottom-1">
-        <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button data-toggle="modal" href="#newVehicleModal"  class="btn btn-primary btn-md pull-right">Add New Vehicle</button>
-      </div>
-      <div>
-        <label>Search:
-          <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
-        </label>
-        <ion-icon id="app-icon-vehicles" name="apps-outline" class="color-white table-icon" onclick="showVehicleApps()"></ion-icon>
-      </div>
-      <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
-        <% if(vehicles != undefined && vehicles != null) {%>
-          <% for(var i=0; i<vehicles.length; i++) {%>
-          <div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
-            <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id='<%=i%>' data-target="#viewVeh" onclick="loadVehData('<%=i%>')">
-              <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
-              <div class="caption">
-                <h4 class="color-white license-plate">#<%= vehicles[i].vehicle.plate%>)</h4>
-                <h5 class="color-white"><%= vehicles[i].vehicle.color%></td> <%= vehicles[i].vehicle.model%></h5>
-              </div>
-            </div>
-          </div>
-          <% } %>
-        <% } %>
-      </div>
-    </div>
-    <hr class="margin-top-1" style="width: 88%;max-width: 100rem;">
-    <!--Table for Firearms  -->
-    <div class="col-md-12 col-md-offset-0.75 margin-top-2">
-      <div class="margin-bottom-1">
-        <span id="active-bolos margin-right-1" style="font-size: 18px;">Firearms:</span> <button data-toggle="modal" href="#newFirearmModal"  class="btn btn-primary btn-md pull-right" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button>
-      </div>
-      <div>
-        <label>Search:
-          <input id="firearm-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
-        </label>
-        <ion-icon id="app-icon-firearms" name="apps-outline" class="color-white table-icon" onclick="showFirearmsApps()"></ion-icon>
-      </div>
-      <div id="firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
-        <% if(firearms != undefined && firearms != null) {%>
-          <% for(var i=0; i<firearms.length; i++) {%>
-          <div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
-            <div class="thumbnail thumbnail-box flex-wrapper" data-toggle="modal" data-id='<%=i%>' data-target="#viewFirearm" onclick="loadFirearmData('<%=i%>')">
-              <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
-              <div class="caption text-capitalize">
-                <h4 class="color-white" style="font-family: dealerplatecalifornia;"><%= firearms[i].firearm.serialNumber%></h4>
-                <h5 class="color-white"><%= firearms[i].firearm.weaponType%></h5>
-                <p class="color-white" style="font-size: 12px;"><%= firearms[i].firearm.registeredOwner%></p>
-              </div>
-            </div>
-          </div>
-          <% } %>
-        <% } %>
-      </div>
-    </div>
 
+              <!-- List of civilians -->
+              <div id="personas-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                <div id="civilians-loading" class="text-align-center" style="width: 100%;">
+                  <div class="lds-facebook"><div></div><div></div><div></div></div>
+                </div>
+              </div> 
+              
+              <!-- Loading error -->
+              <div id="issue-loading-personnel-alert" style="display:none">
+                <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading civilians, try refreshing the page...</p>
+              </div>
+
+              <!-- Paginated navigation list -->
+              <div>
+                <nav aria-label="...">
+                  <ul class="pager">
+                    <li><a id="prev-civ-page-btn" class="" onclick="getPrevCivPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                    <li><a id="next-civ-page-btn" onclick="getNextCivPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                  </ul>
+                </nav>
+              </div>
+          </div>
         </div>
       </section>
       <div class="google-ad"></div>
@@ -239,12 +179,12 @@
           <h4>New Civilian Choice</h4>
             <hr style="width: 88%;max-width: 100rem;">
             <div class="text-align-center margin-bottom-1">
-              <button data-toggle="modal" href="#newAutoCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fas fa-magic"></i> Auto</button>
-              <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fas fa-hammer"></i> Manual</button>
+              <button data-toggle="modal" href="#newAutoCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fa fa-magic"></i> Auto</button>
+              <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg" data-dismiss="modal" aria-hidden="true"><i class="fa fa-hammer"></i> Manual</button>
             </div>
             <div>
-              <span> <i class="fas fa-magic"></i></span> <strong>Auto:</strong> We will generate a new civilian for you <br/>
-              <span> <i class="fas fa-hammer"></i></span> <strong>Manual:</strong> You specify the details for your new civilian
+              <span> <i class="fa fa-magic"></i></span> <strong>Auto:</strong> We will generate a new civilian for you <br/>
+              <span> <i class="fa fa-hammer"></i></span> <strong>Manual:</strong> You specify the details for your new civilian
             </div>
         </div>
       </div>
@@ -432,8 +372,9 @@
               <label class="col-md-4 control-label" for="submitNewCiv"></label>
               <div class="col-md-4 text-align-center">
                 <input type="hidden" name="route" value="civ-dashboard">
+                <input id="ageAmount" type="hidden" name="ageView" value="">
                 <input id="newCivUserID" type="hidden" name="userID" value="<%= user._id %>">
-                <input type="hidden" id="new-civ-activeCommunityID-new-civ" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
+                <input id="new-civ-activeCommunityID-new-civ" type="hidden" name="activeCommunityID", value="<%=user.user.activeCommunity%>">
                 <button id="submitNewCiv" type="submit" name="submitNewCivForm" value="submit" class="btn btn-info">Create</button>
               </div>
             </div>
@@ -527,6 +468,14 @@
               </div>
             </div>
 
+            <!-- Search input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="vehicle-owner">Owner</label>
+              <div class="col-md-4">
+                <input id="vehicle-owner" name="vehicleOwner" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
+              </div>
+            </div>
+
             <!-- Text input-->
             <div class="form-group required">
               <label class="col-md-4 control-label" for="plate">Plate</label>
@@ -564,26 +513,11 @@
 
             <!-- Select Basic -->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="valid-insurance">Valid Insurance</label>
+              <label class="col-md-4 control-label" for="valid-insurance">Valid Insurance?</label>
               <div class="col-md-4">
                 <select id="valid-insurance" name="validInsurance" class="form-control">
                   <option value="1">Yes</option>
                   <option value="2">No</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Search input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
-              <div class="col-md-4">
-                <select id="registeredOwner-new-veh" name="registeredOwner" class="form-control capitalize">
-                  <option value="N/A">N/A</option>
-                  <% if(personas != undefined && personas != null) {%>
-                    <% for(var i=0; i<personas.length; i++) {%>
-                      <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
-                    <% } %>
-                   <% } %>
                 </select>
               </div>
             </div>
@@ -605,7 +539,7 @@
               <div class="col-md-4">
                 <input id="create-vehicle-user-id" type="hidden" name="userID" value="<%= user._id %>">
                 <input id="new-veh-activeCommunityID-new-veh" type="hidden" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
-                <button id="create-vehicle" class="btn btn-primary">Create</button>
+                <button id="create-vehicle" onclick="hideVehicleMessage()" class="btn btn-primary">Create</button>
               </div>
             </div>
             </fieldset>
@@ -638,6 +572,14 @@
               </div>
             </div>
 
+            <!-- Search input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="firearm-owner">Owner</label>
+              <div class="col-md-4">
+                <input id="firearm-owner" name="firearmOwner" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
+              </div>
+            </div>
+
             <!-- Select Basic -->
             <div class="form-group required">
               <label class="col-md-4 control-label" for="weapon-type">Weapon Type</label>
@@ -650,21 +592,6 @@
                   <option value="light machine gun">Light Machine Gun</option>
                   <option value="assault rifle">Assault Rifle</option>
                   <option value="sniper rifle">Sniper Rifle</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Search input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
-              <div class="col-md-4">
-                <select id="registeredOwner-new-firearm" name="registeredOwner" class="form-control">
-                  <option value="N/A">N/A</option>
-                  <% if(personas != undefined && personas != null) {%>
-                    <% for(var i=0; i<personas.length; i++) {%>
-                      <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
-                    <% } %>
-                   <% } %>
                 </select>
               </div>
             </div>
@@ -686,7 +613,85 @@
               <div class="col-md-4">
                 <input type="hidden" id="new-firearm-userID" name="userID" value="<%= user._id %>">
                 <input type="hidden" id="new-veh-activeCommunityID-new-firearm" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
-                <button id="create-firearm" class="btn btn-primary">Create</button>
+                <button id="create-firearm" onclick="hideFirearmMessage()" class="btn btn-primary">Create</button>
+              </div>
+            </div>
+            </fieldset>
+            </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newLicenseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="create-license-form" class="form-horizontal" action="#" method="post">
+            <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Add a New License</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <div class="form-group required">
+              <label class="col-md-3 control-label" for="license-type">License Type:</label>
+              <div class="col-md-5">
+                <select id="license-type" name="licenseType" class="form-control">
+                  <option value="driver license">Driver License</option>
+                  <option value="weapon license">Weapon License</option>
+                  <option value="commercial driver license">Commercial Driver License</option>
+                  <option value="hunting license">Hunting License</option>
+                  <option value="pilot license">Pilot License</option>
+                  <option value="fishing license">Fishing License</option>
+                  <option value="medical license">Medical License</option>
+                  <option value="attorney license">Attorney License</option>
+                  <option value="pastors license">Pastors License</option>
+                  <option value="driving license instructor">Driving License Instructor</option>
+                  <option value="pilots license instructor">Pilots License Instructor</option>
+                  <option value="liquor sales license">Liquor Sales License</option>
+                  <option value="food selling license">Food Selling License</option>
+                  <option value="legal business license">Legal Business License</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label class="col-md-3 control-label" for="license-status">License Status:</label>
+              <div class="col-md-5">
+                <select id="license-status" name="licenseStatus" class="form-control">
+                  <option value="pending">Pending</option>
+                  <option value="valid">Valid</option>
+                  <option value="expired">Expired</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label class="col-md-3 control-label" for="expirationDate">Expiration Date:</label>
+              <div class="col-md-5">
+              <input id="expirationDate" name="expirationDate" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-3 control-label" for="additionalNotes">Additional Notes:</label>
+              <div class="col-md-8">
+                <input id="additionalNotes" name="additionalNotes" type="text" placeholder="additional notes" class="form-control input-md">
+              </div>
+            </div>
+            
+
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="create-firearm"></label>
+              <div class="col-md-4">
+                <input type="hidden" id="license-owner" name="licenseOwner" value="">
+                <input type="hidden" id="new-license-userID" name="userID" value="<%= user._id %>">
+                <input type="hidden" id="new-license-activeCommunityID" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
+                <button id="create-firearm" onclick="hideFirearmMessage()" class="btn btn-primary">Create</button>
               </div>
             </div>
             </fieldset>
@@ -817,404 +822,378 @@
   </div>
 
   <div id="viewCiv" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
+    <div class="modal-dialog modal-dialog-full-screen">
+      <div class="modal-content modal-content-full-screen">
         <div class="modal-body">
-          <form id="update-delete-civ-form" class="form-horizontal" action="#" method="POST">
-          <fieldset>
-
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="clearHelpText();updateUserBtnValue('')">X</button>
-            <h4>Details about your Civilian</h4>
-            <hr style="width: 88%;max-width: 100rem;">
-
-            <h5><ion-icon name="person-outline"></ion-icon> Civilian</h5>
-
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="civilianIDView">ID #:</label>
-              <div class="col-md-4">
-                <label id="civilianIDView" class="form-label uppercase"></label>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="firstName">First Name:</label>
-              <div class="col-md-4">
-                <input id="firstName" name="firstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
-              </div>
+          <!-- Modal Name -->
+          <div id="successfully-updated-alert" class="alert alert-success alert-dismissible hide" role="alert">
+            Successfully updated!
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
           </div>
 
-          <div class="form-group">
-            <label class="col-md-4 control-label" for="lastNameView">Last Name:</label>
-            <div class="col-md-4">
-              <input id="lastName" name="lastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="col-md-4 control-label" for="birthdayView">Date of Birth</label>
-            <div class="col-md-4">
-              <input id="delBirthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="col-md-4 control-label" for="addressView">Address:</label>
-            <div class="col-md-4">
-              <textarea id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md uppercase"></textarea>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="col-md-4 control-label" for="occupationView">Occupation:</label>
-            <div class="col-md-4">
-              <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md capitalize">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="col-md-4 control-label" for="deceasedView">Deceased:</label>
-            <div class="col-md-4">
-              <label id="deceasedView" name="deceased" type="text" placeholder="Deceased" class="form-control"></label>
-            </div>
-          </div>
-
-          <div class="col-md-12 text-align-center margin-bottom-1">
-            <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
-            <input type="hidden" id="userBtnValue" value="">
-            <button type="submit" value="update" name="action" style="cursor: pointer" class="btn btn-info" onclick="updateUserBtnValue('update')">Update Civilian</button>
-            <button type="submit" value="delete" name="action" style="cursor: pointer" class="btn btn-danger" onclick="updateUserBtnValue('delete')">Delete Civilian</button>
-          </div>
-
-          <hr style="width: 88%;max-width: 100rem;">
-          <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details <span class="color-gray">(Optional)</span></h5>
-
-          <!-- Select Basic -->
-          <div class="form-group">
-            <label class="col-md-4 control-label" for="genderView">Gender</label>
-            <div class="col-md-4">
-              <select id="gender-view" name="gender" class="form-control">
-                <option value="unspecified">Unspecified</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="non-binary">Non-Binary</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Radio -->
-          <div class="form-group">
-            <label class="col-md-4 control-label" for="heightClassificationView">Height</label>
-            <div class="col-md-1">
-              <input id="height-imperial-view" value="imperial" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-imperial', 'height-metric')" checked> Imperial <span class="color-gray">ft.in.</span>
-            </div>
-            <div class="col-md-1 col-md-offset-1">
-              <input id="height-metric-view" value="metric" type="radio" name="heightClassification"  class="form-control" onclick="toggleInput('height-metric', 'height-imperial')"> Metric <span class="color-gray">cm.</span>
-            </div>
-          </div>
-
-          <!-- Text input-->
-          <div class="form-group height-imperial">
-            <label class="col-md-4 control-label" for="heightView">Height</label>
-            <div class="col-md-2 margin-bottom-1">
-              <input id="foot-view" name="heightFoot" type="number" min="0" max="15" placeholder="ft." class="form-control input-md">
-            </div>
-            <div class="col-md-2">
-              <input id="inches-view" name="heightInches" type="number" min="0" max="12" placeholder="in." class="form-control input-md">
-            </div>
-          </div>
-
-          <!-- Text input-->
-          <div class="form-group height-metric hide">
-            <label class="col-md-4 control-label" for="heightView">Height</label>
-            <div class="col-md-2">
-              <input id="centimeters-view" name="heightCentimeters" min="0" max="457" type="number" placeholder="cm." class="form-control input-md">
-            </div>
-          </div>
-
-          <!-- Radio -->
-          <div class="form-group">
-            <label class="col-md-4 control-label" for="weight">Weight</label>
-            <div class="col-md-1">
-              <input id="imperial-weight-view" value="imperial" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-imperial', 'weight-metric')"> Imperial <span class="color-gray">lbs.</span>
-            </div>
-            <div class="col-md-1 col-md-offset-1">
-              <input id="metric-weight-view" value="metric" type="radio" name="weightClassification"  class="form-control" onclick="toggleInput('weight-metric', 'weight-imperial')"> Metric <span class="color-gray">kgs.</span>
-            </div>
-          </div>
-
-          <!-- Text input-->
-          <div class="form-group weight-imperial">
-            <label class="col-md-4 control-label" for="weight">Weight</label>
-            <div class="col-md-2">
-              <input id="pounds-view" name="weightImperial" min="0" max="1000" type="number" placeholder="lbs." class="form-control input-md">
-            </div>
-          </div>
-
-          <!-- Text input-->
-          <div class="form-group weight-metric hide">
-            <label class="col-md-4 control-label" for="weight">Weight</label>
-            <div class="col-md-2">
-              <input id="kilos-view" name="weightMetric" min="0" max="453" type="number" placeholder="kgs." class="form-control input-md">
-            </div>
-          </div>
-
-          <!-- Text input-->
-          <div class="form-group">
-            <label class="col-md-4 control-label" for="eyeColor">Eye Color</label>
-            <div class="col-md-4">
-              <input id="eye-color-view" name="eyeColor" type="text" placeholder="Eye Color (optional)" class="form-control input-md">
-            </div>
-          </div>
-
-          <!-- Text input-->
-          <div class="form-group">
-            <label class="col-md-4 control-label" for="hairColor">Hair Color</label>
-            <div class="col-md-4">
-              <input id="hair-color-view" name="hairColor" type="text" placeholder="Hair Color (optional)" class="form-control input-md">
-            </div>
-          </div>
-
-          <!-- Checkbox -->
-          <div class="form-group">
-            <label class="col-md-4 control-label" for="organDonor">Organ Donor?</label>
-            <div class="col-md-1">
-              <input id="organ-donor-view" type="checkbox" name="organDonor" class="form-control">
-            </div>
-          </div>
-
-          <!-- Checkbox -->
-          <div class="form-group">
-            <label class="col-md-4 control-label" for="veteran">Veteran?</label>
-            <div class="col-md-1">
-              <input id="veteran-view" type="checkbox" name="veteran" class="form-control">
-            </div>
-          </div>
-
-
-          <div class="col-md-12 text-align-center margin-bottom-1">
-            <button type="submit" value="update" name="action" style="cursor: pointer" class="btn btn-info" onclick="updateUserBtnValue('update')">Update Civilian</button>
-            <button type="submit" value="delete" name="action" style="cursor: pointer" class="btn btn-danger" onclick="updateUserBtnValue('delete')">Delete Civilian</button>
-          </div>
-
-          <hr style="width: 88%;max-width: 100rem;">
-          <h5><ion-icon name="browsers-outline"></ion-icon> Drivers License</h5>
-
-            <!-- Drivers License -->
-            <div id="drivers-license" class="row">
-              <div class="col-md-12">
-            <div class="container col-sm-offset-2 col-md-offset-2" style="position: relative; margin-bottom: -130px;">
-              <img src="/static/images/id-license.png" style="width: 301px; height: 186px; border-radius: 4%;">
-
-              <!-- drivers license # -->
-              <div>
-                  <label id="civilianIDViewLic" class="drivers-license-number" class="form-label"></label>
-              </div>
-
-              <!-- expiration date -->
-              <div>
-                  <span class="expiration-title">EXP </span>
-                  <span id="license-expiration" class="expiration"></span>
-              </div>
-
-              <!-- last name -->
-              <div>
-                  <span class="last-name-title">LN </span>
-                  <span id="lastNameLic" class="last-name" style="bottom: 144px;"></span>
-              </div>
-
-              <!-- first name -->
-              <div>
-                  <span class="first-name-title">FN </span>
-                  <span id="firstNameLic" class="first-name" style="bottom: 123px;"></span>
-              </div>
-
-              <!-- address -->
-              <div>
-                  <span id="addressViewLic" class="address"></span>
-              </div>
-
-              <!-- dob -->
-              <div>
-                  <span class="dob-title">DOB </span>
-                  <span id="birthdayViewLic" class="dob"></span>
-              </div>
-
-              <!-- license status -->
-              <div>
-                  <span class="status-title">STA </span>
-                  <span id="licenseStatusViewLic" class="status"></span>
-              </div>
-
-              <!-- issued date -->
-              <div>
-                  <span class="issued-title">ISS </span>
-                  <span id="license-issued" class="issued"></span>
-              </div>
-
-              <!-- sex -->
-              <div>
-                  <span class="sex-title">SEX </span>
-                  <span id="sexLic" class="sex"></span>
-              </div>
-
-              <!-- height -->
-              <div>
-                  <span class="height-title">HGT </span>
-                  <span id="heightLic" class="height"></span>
-              </div>
-
-              <!-- weight -->
-              <div>
-                  <span class="weight-title">WGT </span>
-                  <span id="weightLic" class="weight"></span>
-              </div>
-
-              <!-- eye color -->
-              <div>
-                  <span class="eye-title">EYES </span>
-                  <span id="eyeLic" class="eye"></span>
-              </div>
-
-              <!-- hair color -->
-              <div>
-                  <span class="hair-title">HAIR </span>
-                  <span id="hairLic" class="hair"></span>
-              </div>
-
-              <!-- donor -->
-              <div class="donor-block hide">
-                  <span class="donor-title">DONOR ❤️</span>
-              </div>
-
-              <!-- veteran -->
-              <div class="veteran-block hide">
-                  <span class="veteran">VETERAN ⭐️</span>
-              </div>
-
-            </div>
-          </div>
-          </div>
-
-          <!-- Create Drivers License Button -->
-          <div class="form-group create-license-btn hide">
-            <label class="col-md-4 control-label" for="click-to-create-lic"></label>
-            <div class="col-md-4">
-              <button id="click-to-create-lic" type="submit" value="createLicense" name="action" style="cursor: pointer" class="btn btn-success" onclick="updateUserBtnValue('createLicense')">Create Driver's License</button>
-            </div>
-          </div>
-
-          <!-- Delete Drivers License Button -->
-          <div class="form-group delete-license-btn hide">
-            <label class="col-md-4 control-label" for="click-to-delete-lic"></label>
-            <div class="col-md-4">
-              <button id="click-to-delete-lic" type="submit" value="deleteLicense" name="action" style="cursor: pointer" class="btn btn-danger" onclick="updateUserBtnValue('deleteLicense')">Delete Driver's License</button>
-            </div>
-          </div>
-
-
-          <hr style="width: 88%;max-width: 100rem;">
-          <h5><ion-icon name="browsers-outline"></ion-icon> Firearm License</h5>
-
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="firearmLicenseView">Firearm License:</label>
-              <div class="col-md-4">
-                <select id="firearmLicenseView" name="firearmLicense" class="form-control" selected="selected">
-                  <option value="1">None</option>
-                  <option value="2">Valid</option>
-                  <option value="3">Revoked</option>
-                </select>
-              </div>
-            </div>
-
-
-            </fieldset>
-          </form>
-          <hr style="width: 88%;max-width: 100rem;">
-          <h4>Criminal History</h4>
-          <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
-            <li class="nav-item">
-              <a class="nav-link" id="pills-citations-tab" data-toggle="pill" href="#pills-citations" role="tab" aria-controls="pills-citations" aria-selected="true">Citations</a>
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true" onclick="clearHelpText();updateUserBtnValue('')">X</button>
+                      
+          <ul class="nav nav-pills margin-bottom-1">
+            <li role="presentation" class="active">
+              <a data-toggle="pill" href="#pills-edit-civ">Edit Civilian</a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" id="pills-warnings-tab" data-toggle="pill" href="#pills-warnings" role="tab" aria-controls="pills-warnings" aria-selected="false">Warnings</a>
+            <li>
+              <a data-toggle="pill" href="#pills-vehicles">Vehicles</a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" id="pills-arrests-tab" data-toggle="pill" href="#pills-arrests" role="tab" aria-controls="pills-arrests" aria-selected="false">Arrests</a>
+            <li>
+              <a data-toggle="pill" href="#pills-firearms">Firearms</a>
+            </li>
+            <li>
+              <a data-toggle="pill" href="#pills-dmv">DMV</a>
+            </li>
+            <li>
+              <a data-toggle="pill" href="#pills-records">Records</a>
             </li>
           </ul>
-          <div class="tab-content" id="pills-tabContent">
-            <div class="tab-pane fade" id="pills-citations" role="tabpanel" aria-labelledby="pills-citations-tab">
-                <table id="citationTable" class="table table-hover" border="1" frame="box">
-                  <thead>
-                    <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Violation</td><td>Amount</td></tr>
-                  </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-            <div class="tab-pane fade" id="pills-warnings" role="tabpanel" aria-labelledby="pills-warnings-tab">
-              <table id="warningTable" class="table table-hover" border="1" frame="box">
-                <thead>
-                  <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Warning</td></tr>
-                </thead>
-                  <tbody>
-                  </tbody>
-              </table>
-            </div>
-            <div class="tab-pane fade" id="pills-arrests" role="tabpanel" aria-labelledby="pills-arrests-tab">
-              <table id="arrestTable" class="table table-hover" border="1" frame="box">
-                <thead>
-                  <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Arrest Charges</td><td>Summary</td></tr>
-                </thead>
-                  <tbody>
-                  </tbody>
-              </table>
-            </div>
-          </div>
+
           <hr style="width: 88%;max-width: 100rem;">
-          <h4>Medical History</h4>
-          <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
-            <li class="nav-item">
-              <a class="nav-link" id="pills-reports-tab" data-toggle="pill" href="#pills-reports" role="tab" aria-controls="pills-reports" aria-selected="true">Reports</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" id="pills-medications-tab" data-toggle="pill" href="#pills-medications" role="tab" aria-controls="pills-medications" aria-selected="false">Medications</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" id="pills-pre-existing-conditions-tab" data-toggle="pill" href="#pills-pre-existing-conditions" role="tab" aria-controls="pills-pre-existing-conditions" aria-selected="false">Pre-Existing Conditions</a>
-            </li>
-          </ul>
-          <div class="tab-content" id="pills-tabContent">
-            <div class="tab-pane fade" id="pills-reports" role="tabpanel" aria-labelledby="pills-reports-tab">
-              <table id="reportsTable" class="table" border="1" frame="box">
-                <thead>
-                  <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td><td>Delete</td></tr>
-                </thead>
-                  <tbody>
-                  </tbody>
-              </table>
+          <div class="tab-content">
+            <div class="tab-pane fade in active" id="pills-edit-civ">
+              <form id="update-delete-civ-form" action="#" method="post">
+                <fieldset>
+
+                  <h4>Details about your Civilian</h4>
+                  <div id="civilian-details-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                  <div id="civilian-details" style="display:none">
+                  <!-- Image of civilian -->
+                  <hr style="width: 88%;max-width: 100rem;">
+                  <h5><ion-icon name="camera-outline"></ion-icon> <span>Image</span></h5>
+                  <div class="col-md-12 text-align-center">
+                    <a  href="#">
+                      <ion-icon id="civilian-image" name="person" class=""></ion-icon>
+                    </a>
+                  </div>
+
+                  <!-- Details about civilian -->
+                  <hr style="width: 88%;max-width: 100rem;">
+                  <h5><ion-icon name="person-outline"></ion-icon> Details</h5>
+
+                  <div class="form-group" hidden>
+                    <label class="col-md-4 control-label" for="civilianIDView">ID #:</label>
+                    <div class="col-md-4">
+                      <label id="civilianIDView" class="form-label uppercase"></label>
+                    </div>
+                  </div>
+
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15 required">
+                    <label class="control-label" for="firstName">First Name:</label>
+                    <input id="firstName" name="firstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
+                  </div>
+
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15 required">
+                    <label class="control-label" for="lastNameView">Last Name:</label>
+                    <input id="lastName" name="lastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
+                  </div>
+
+                  <div class="form-group col-xs-1 col-md-1 margin-left-neg-15">
+                    <label class="control-label" for="middleInitialView">MI:</label>
+                    <input id="middleInitial" name="middleInitial" type="text" placeholder="MI" class="form-control input-md uppercase" maxlength="1" data-trigger="middle-initial-popover" data-content="* Middle initial cannot contain spaces.">
+                  </div>
+
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15 required">
+                    <label class="control-label" for="birthdayView">Date of Birth:</label>
+                    <input id="delBirthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+                  </div>
+
+                  <div class="form-group col-xs-1 col-md-1 margin-left-neg-15">
+                    <label class="control-label" for="ageView">Age:</label>
+                    <input id="ageView" name="age" type="text" class="form-control input-md disabled-color" required readonly="readonly">
+                  </div>
+
+                  <div class="form-group col-xs-6 col-md-6 margin-left-neg-15">
+                    <label class="control-label" for="addressView">Address:</label>
+                    <input id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md capitalize"></input>
+                  </div>
+
+                  <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                    <label class="control-label" for="zipCodeView">Zip Code:</label>
+                    <input id="zipCodeView" name="zipCode" type="number" placeholder="Zip Code" class="form-control input-md"></input>
+                  </div>
+
+                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                    <label class="control-label" for="occupationView">Occupation:</label>
+                    <input id="occupationView" name="occupation" type="text" placeholder="Occupation" class="form-control input-md capitalize">
+                  </div>
+
+                <hr style="width: 88%;max-width: 100rem;">
+                <h5><ion-icon name="brush-outline"></ion-icon> Advanced Details <span class="color-gray">(Optional)</span></h5>
+
+                <!-- Select Basic -->
+                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <label class="control-label" for="genderView">Gender</label>
+                    <select id="gender-view" name="gender" class="form-control">
+                      <option value="unspecified">Unspecified</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="non-binary">Non-Binary</option>
+                    </select>
+                </div>
+
+                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                  <label class="control-label" for="heightView">Height:</label>
+                  <input id="heightView" name="height" type="text" placeholder="Height" class="form-control input-md">
+                </div>
+
+                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                  <label class="control-label" for="weightView">Weight:</label>
+                  <input id="weightView" name="weight" type="text" placeholder="Weight" class="form-control input-md">
+                </div>
+
+                <!-- Text input-->
+                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                  <label class="control-label" for="eyeColor">Eye Color:</label>
+                  <input id="eye-color-view" name="eyeColor" type="text" placeholder="Eye Color" class="form-control input-md">
+                </div>
+
+                <!-- Text input-->
+                <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
+                  <label class="control-label" for="hairColor">Hair Color</label>
+                  <input id="hair-color-view" name="hairColor" type="text" placeholder="Hair Color (optional)" class="form-control input-md">
+                </div>
+
+                <!-- Checkbox -->
+                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <label class="control-label" for="organDonor">Organ Donor?</label>
+                    <input id="organ-donor-view" style="width: 2em;" type="checkbox" name="organDonor" class="form-control">
+                </div>
+
+                <!-- Checkbox -->
+                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <label class="control-label" for="veteran">Veteran?</label>
+                    <input id="veteran-view" style="width: 2em;" type="checkbox" name="veteran" class="form-control">
+                </div>
+
+                <div class="col-md-12 text-align-center margin-bottom-1">
+                  <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
+                  <input type="hidden" id="userBtnValue" value="">
+                  <button type="submit" value="update" name="action" style="cursor: pointer" class="btn btn-info" onclick="updateUserBtnValue('update')">Update Civilian</button>
+                  <button type="submit" value="delete" name="action" style="cursor: pointer" class="btn btn-danger" onclick="updateUserBtnValue('delete')">Delete Civilian</button>
+                </div>
+              </div>
+                  </fieldset>
+                </form>
             </div>
-            <div class="tab-pane fade" id="pills-medications" role="tabpanel" aria-labelledby="pills-medications-tab">
-              <button data-toggle="modal" href="#addMedicationModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Medication</button>
-              <br/><br/>
-              <table id="medicationsTable" class="table" border="1" frame="box">
-                <thead>
-                  <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Dosage</td><td>Frequency</td><td>Delete</td></tr>
-                </thead>
-                  <tbody></tbody>
-              </table>
+            <div class="tab-pane fade" id="pills-vehicles">
+              <!--Table for Vehicles  -->
+              <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+                <div class="margin-bottom-1">
+                  <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button data-toggle="modal" href="#newVehicleModal" data-dismiss="modal" aria-hidden="true" class="btn btn-primary btn-md pull-right">Add New Vehicle</button>
+                </div>
+                <div>
+                  <label>Search:
+                    <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+                  </label>
+                </div>
+
+                <!-- List of vehicles -->
+                <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                  <div id="vehicles-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                </div>
+
+                <!-- Loading error -->
+                <div id="issue-loading-vehicles-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading vehicles, try refreshing the page...</p>
+                </div>
+
+                <!-- No Vehicles registered message -->
+                <div id="no-vehicles-message" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered Vehicles, try registering one...</p>
+                </div>
+
+                <!-- Paginated navigation list -->
+                <div>
+                  <nav aria-label="...">
+                    <ul class="pager">
+                      <li><a id="prev-veh-page-btn" class="" onclick="getPrevVehPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                      <li><a id="next-veh-page-btn" onclick="getNextVehPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                    </ul>
+                  </nav>
+                </div>
+
+              </div>
             </div>
-            <div class="tab-pane fade" id="pills-pre-existing-conditions" role="tabpanel" aria-labelledby="pills-pre-existing-conditions-tab">
-              <button data-toggle="modal" href="#addConditionModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Condition</button>
-              <br/><br/>
-              <table id="conditionsTable" class="table" border="1" frame="box">
-                <thead>
-                  <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td><td>Delete</td></tr>
-                </thead>
-                  <tbody>
-                  </tbody>
-              </table>
-          </div>
+            <div class="tab-pane fade" id="pills-firearms">
+              <!--Table for Firearms  -->
+              <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+                <div class="margin-bottom-1">
+                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Firearms:</span> <button data-toggle="modal" href="#newFirearmModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button>
+                </div>
+                <div>
+                  <label>Search:
+                    <input id="firearm-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+                  </label>
+                </div>
+
+                <!-- List of firearms -->
+                <div id="firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                  <div id="firearms-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                </div>
+
+                <!-- Loading error -->
+                <div id="issue-loading-firearms-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading firearms, try refreshing the page...</p>
+                </div>
+
+                <!-- No Firearms registered message -->
+                <div id="no-firearms-message" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered Firearms, try registering one...</p>
+                </div>
+
+                <!-- Paginated navigation list -->
+                <div>
+                  <nav aria-label="...">
+                    <ul class="pager">
+                      <li><a id="prev-gun-page-btn" onclick="getPrevGunPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                      <li><a id="next-gun-page-btn" onclick="getNextGunPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                    </ul>
+                  </nav>
+                </div>
+                
+              </div>
+            </div>
+
+            <!-- dmv tab (showing all of the users licenses)-->
+            <div class="tab-pane fade" id="pills-dmv">
+              <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+                <div class="margin-bottom-1">
+                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Licenses:</span> <button data-toggle="modal" href="#newLicenseModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="">Add License</button>
+                </div>
+                <!-- <div>
+                  <label>Search:
+                    <input id="license-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+                  </label>
+                </div> -->
+
+                <!-- List of licenses -->
+                <div id="licenses-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                  <div id="licenses-loading" class="text-align-center" style="width: 100%;">
+                    <div class="lds-facebook"><div></div><div></div><div></div></div>
+                  </div>
+                </div>
+
+                <!-- Loading error -->
+                <div id="issue-loading-licenses-alert" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading licenses, try refreshing the page...</p>
+                </div>
+
+                <!-- No licenses registered message -->
+                <div id="no-licenses-message" style="display:none">
+                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered licenses, try adding one...</p>
+                </div>
+
+                <!-- Paginated navigation list -->
+                <div>
+                  <nav aria-label="...">
+                    <ul class="pager">
+                      <li><a id="prev-license-page-btn" onclick="getPrevLicensePage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                      <li><a id="next-license-page-btn" onclick="getNextLicensePage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                    </ul>
+                  </nav>
+                </div>
+                
+              </div>
+            </div>
+            <div class="tab-pane fade" id="pills-records">
+              <h4>Criminal History</h4>
+                    <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-citations-tab" data-toggle="pill" href="#pills-citations" role="tab" aria-controls="pills-citations" aria-selected="true">Citations</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-warnings-tab" data-toggle="pill" href="#pills-warnings" role="tab" aria-controls="pills-warnings" aria-selected="false">Warnings</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-arrests-tab" data-toggle="pill" href="#pills-arrests" role="tab" aria-controls="pills-arrests" aria-selected="false">Arrests</a>
+                      </li>
+                    </ul>
+                    <div class="tab-content" id="pills-tabContent">
+                      <div class="tab-pane fade" id="pills-citations" role="tabpanel" aria-labelledby="pills-citations-tab">
+                          <table id="citationTable" class="table table-hover" border="1" frame="box">
+                            <thead>
+                              <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Violation</td><td>Amount</td></tr>
+                            </thead>
+                              <tbody>
+                              </tbody>
+                          </table>
+                      </div>
+                      <div class="tab-pane fade" id="pills-warnings" role="tabpanel" aria-labelledby="pills-warnings-tab">
+                        <table id="warningTable" class="table table-hover" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Warning</td></tr>
+                          </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                      </div>
+                      <div class="tab-pane fade" id="pills-arrests" role="tabpanel" aria-labelledby="pills-arrests-tab">
+                        <table id="arrestTable" class="table table-hover" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Arrest Charges</td><td>Summary</td></tr>
+                          </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <hr style="width: 88%;max-width: 100rem;">
+                    <h4>Medical History</h4>
+                    <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-reports-tab" data-toggle="pill" href="#pills-reports" role="tab" aria-controls="pills-reports" aria-selected="true">Reports</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-medications-tab" data-toggle="pill" href="#pills-medications" role="tab" aria-controls="pills-medications" aria-selected="false">Medications</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" id="pills-pre-existing-conditions-tab" data-toggle="pill" href="#pills-pre-existing-conditions" role="tab" aria-controls="pills-pre-existing-conditions" aria-selected="false">Pre-Existing Conditions</a>
+                      </li>
+                    </ul>
+                    <div class="tab-content" id="pills-tabContent">
+                      <div class="tab-pane fade" id="pills-reports" role="tabpanel" aria-labelledby="pills-reports-tab">
+                        <table id="reportsTable" class="table" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Date<br><i><small>YYYY-M-D</small></i></td><td>Hospitalized<br><i><small>Y/N</small></i></td><td>Summary</td><td>Delete</td></tr>
+                          </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                      </div>
+                      <div class="tab-pane fade" id="pills-medications" role="tabpanel" aria-labelledby="pills-medications-tab">
+                        <button data-toggle="modal" href="#addMedicationModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Medication</button>
+                        <br/><br/>
+                        <table id="medicationsTable" class="table" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Start Date<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Dosage</td><td>Frequency</td><td>Delete</td></tr>
+                          </thead>
+                            <tbody></tbody>
+                        </table>
+                      </div>
+                      <div class="tab-pane fade" id="pills-pre-existing-conditions" role="tabpanel" aria-labelledby="pills-pre-existing-conditions-tab">
+                        <button data-toggle="modal" href="#addConditionModal" class="btn btn-info"><span><i class="glyphicon glyphicon-plus"></i></span> Add Condition</button>
+                        <br/><br/>
+                        <table id="conditionsTable" class="table" border="1" frame="box">
+                          <thead>
+                            <tr style="background-color: #2d2d2d;"><td>Date Occurred<br><i><small>YYYY-M-D</small></i></td><td>Name</td><td>Details</td><td>Delete</td></tr>
+                          </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
+                    </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1241,6 +1220,13 @@
               </div>
               <div id="no-existing-vin" class="col-md-4">
                 <button type="button" class="btn btn-info btn-md" onclick="generateSerialNumber(17, 'vinVeh')">Generate</button>
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="roVeh">Owner:</label>
+              <div class="col-md-4">
+                <input id="roVeh" name="roVeh" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
               </div>
             </div>
 
@@ -1286,20 +1272,6 @@
               </div>
 
             <div class="form-group">
-                <label class="col-md-4 control-label" for="roVeh">Registered Owner:</label>
-                <div class="col-md-4">
-                  <select id="roVeh" name="roVeh" class="form-control capitalize" selected="selected">
-                    <option value="N/A">N/A</option>
-                    <% if(personas != undefined && personas != null) {%>
-                      <% for(var i=0; i<personas.length; i++) {%>
-                        <option value="<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
-                      <% } %>
-                     <% } %>
-                  </select>
-                </div>
-              </div>
-
-            <div class="form-group">
                 <label class="col-md-4 control-label" for="stolenView">Marked Stolen?</label>
                 <div class="col-md-4">
                   <select id="stolenView" name="stolenView" class="form-control" selected="selected">
@@ -1311,6 +1283,7 @@
 
             <div class="col-md-12 text-align-center">
                 <input type="hidden" id="vehicleID" name="vehicleID">
+                <input type="hidden" name="backLocation" value="/civ-dashboard">
                 <button type="submit" value="update" name="action" class="btn btn-info">Update Vehicle</button>
                 <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Vehicle</button>
             </div>
@@ -1334,10 +1307,17 @@
             <hr style="width: 88%;max-width: 100rem;">
 
             <!-- Text input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="serial-number">Serial Number</label>
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="serial-number">Serial Number:</label>
               <div class="col-md-6">
                 <input id="serial-number-details" name="serialNumber" type="text" minlength="8" maxlength="8" placeholder="serial number" class="form-control input-md" required="" readonly="readonly">
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="roFirearm">Owner:</label>
+              <div class="col-md-6">
+                <input id="roFirearm" name="roFirearm" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
               </div>
             </div>
 
@@ -1357,21 +1337,6 @@
               </div>
             </div>
 
-            <!-- Search input-->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="registeredOwner">Registered Owner</label>
-              <div class="col-md-6">
-                <select id="registeredOwner-details" name="registeredOwner" class="form-control text-capitalize">
-                  <option value="N/A">N/A</option>
-                  <% if(personas != undefined && personas != null) {%>
-                    <% for(var i=0; i<personas.length; i++) {%>
-                      <option value="<%= personas[i]._id %>+<%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%>"><%= personas[i].civilian.firstName %> <%= personas[i].civilian.lastName%> | DOB: <%=personas[i].civilian.birthday%></option>
-                    <% } %>
-                   <% } %>
-                </select>
-              </div>
-            </div>
-
             <!-- Select Basic -->
             <div class="form-group">
               <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
@@ -1385,8 +1350,83 @@
 
             <div class="col-md-12 text-align-center">
                 <input type="hidden" id="firearmID" name="firearmID">
+                <input type="hidden" id="firearmOwnerID" name="firearmOwnerID">
                 <button type="submit" value="update" name="action" class="btn btn-info">Update Firearm</button>
                 <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Firearm</button>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewLicense" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+            <form class="form-horizontal" action="/updateOrDeleteLicense" method="post">
+              <fieldset>
+
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>License Details</h4>
+            <hr style="width: 88%;max-width: 100rem;">
+
+            <div class="form-group required">
+              <label class="col-md-3 control-label" for="license-type">License Type:</label>
+              <div class="col-md-5">
+                <select id="license-type-details" name="licenseType" class="form-control">
+                  <option value="driver license">Driver License</option>
+                  <option value="weapon license">Weapon License</option>
+                  <option value="commercial driver license">Commercial Driver License</option>
+                  <option value="hunting license">Hunting License</option>
+                  <option value="pilot license">Pilot License</option>
+                  <option value="fishing license">Fishing License</option>
+                  <option value="medical license">Medical License</option>
+                  <option value="attorney license">Attorney License</option>
+                  <option value="pastors license">Pastors License</option>
+                  <option value="driving license instructor">Driving License Instructor</option>
+                  <option value="pilots license instructor">Pilots License Instructor</option>
+                  <option value="liquor sales license">Liquor Sales License</option>
+                  <option value="food selling license">Food Selling License</option>
+                  <option value="legal business license">Legal Business License</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label class="col-md-3 control-label" for="license-status">License Status:</label>
+              <div class="col-md-5">
+                <select id="license-status-details" name="licenseStatus" class="form-control">
+                  <option value="pending">Pending</option>
+                  <option value="valid">Valid</option>
+                  <option value="expired">Expired</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group required">
+              <label class="col-md-3 control-label" for="expirationDate">Expiration Date:</label>
+              <div class="col-md-5">
+              <input id="expirationDate-details" name="expirationDate" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="col-md-3 control-label" for="additionalNotes">Additional Notes:</label>
+              <div class="col-md-8">
+                <input id="additionalNotes-details" name="additionalNotes" type="text" placeholder="additional notes" class="form-control input-md">
+              </div>
+            </div>
+
+            <div class="col-md-12 text-align-center margin-bottom-2">
+                <input type="hidden" id="licenseID" name="licenseID">
+                <input type="hidden" id="licenseOwnerID" name="licenseOwnerID">
+                <input type="hidden" name="backLocation" value="/civ-dashboard">
+                <button type="submit" value="update" name="action" class="btn btn-info">Update License</button>
+                <button type="submit" value="delete" name="action" class="btn btn-danger">Delete License</button>
             </div>
             </fieldset>
           </form>
@@ -1509,22 +1549,69 @@
 <script type="text/javascript">
   // all global router vars declared here to reduce duplication
   var dbUser = <%- JSON.stringify(user) %>;
-  var dbVehicles= <%- JSON.stringify(vehicles) %>;
-  var dbFirearms = <%- JSON.stringify(firearms) %>;
+  var page = 0;
+  var pageVeh = 0;
+  var pageGun = 0;
+  var pageLicense = 0;
 
+  var socket = io();
+  var myObj = {
+    dbUser: dbUser,
+    page: page,
+  };
+  var myCivObj = {
+    civID: $("#civilianIDView").text(),
+    page: page
+  }
+  socket.emit("fetch_civ_cards", myObj);
+  socket.on("load_civ_cards_result", (res) => {
+    $("#personas-thumbnail").empty();
+    if (res === undefined || res === null) {
+      $('#issue-loading-personnel-alert').show();
+    } else {
+      $('#issue-loading-personnel-alert').hide();
+      for (i = 0; i < res.length; i++) {
+        $("#personas-thumbnail").append(
+          `<div id="personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+                <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
+                  <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+                  <div class="caption capitalize">
+                    <h4 id="personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
+                    <h5 id="personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
+                  </div>
+                </div> 
+              </div>`
+        );
+      }
+      $('#civilians-loading').hide();
+      $("#prev-civ-page-btn").addClass("isDisabled");
+      $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
+      if (res.length < 8) {
+        $("#next-civ-page-btn").addClass("isDisabled");
+        $("#next-civ-page-btn").attr("onclick", "").unbind("click");
+      }
+    }
+  })
 
   $(document).ready(function(){
 
-    // personas cards using data-tables to filter and sort
-    if (document.cookie.split(';').some((item) => item.includes('persona_icon=list'))) {
-      showList()
-    } else if (document.cookie.split(';').some((item) => item.includes('persona_icon=app'))) {
-      showApps()
-    } else {
-      $('.dataTables_filter').hide();
-      $('#app-icon-personas').toggleClass('active-icon')
-    }
-    //used to filter the personas cards
+    $("#delBirthday").focusout(function(){
+      var value = $("#delBirthday").val()
+      var today = new Date(),
+      dob = new Date(value),
+      age = new Date(today - dob).getFullYear() - 1970;
+      $('#ageView').val(age);
+    });
+
+    $("#birthday").focusout(function(){
+      var value = $("#birthday").val()
+      var today = new Date(),
+      dob = new Date(value),
+      age = new Date(today - dob).getFullYear() - 1970;
+      $('#ageAmount').val(age);
+    });
+
+    //used to filter the persona cards
     var personasDataTable = $('#personas-table').DataTable({
     "bLengthChange": false,
     })
@@ -1536,16 +1623,7 @@
       });
     })
 
-    // vehicles table
-    if (document.cookie.split(';').some((item) => item.includes('vehicle_icon=list'))) {
-      showVehicleList()
-    } else if (document.cookie.split(';').some((item) => item.includes('vehicle_icon=app'))) {
-      showVehicleApps()
-    } else {
-      $('.dataTables_filter').hide();
-      $('#vehicles-table-div').hide()
-      $('#app-icon-vehicles').toggleClass('active-icon')
-    }
+    // used to filter the vehicle cards
     var vehicleDataTable = $('#vehicle-table').DataTable({
       "bLengthChange": false,
     })
@@ -1557,16 +1635,7 @@
       });
     })
 
-  // firearms table
-  if (document.cookie.split(';').some((item) => item.includes('firearm_icon=list'))) {
-      showFirearmsList()
-    } else if (document.cookie.split(';').some((item) => item.includes('firearm_icon=app'))) {
-      showFirearmsApps()
-    } else {
-      $('.dataTables_filter').hide();
-      $('#firearms-table-div').hide()
-      $('#app-icon-firearms').toggleClass('active-icon')
-    }
+  // used to filter the firearm cards
   var firearmDataTable = $('#firearm-table').DataTable({
     "bLengthChange": false,
   })
@@ -1643,7 +1712,7 @@ $("#lastName").keydown(function(event) {
 
 //CURRENT_VERSION
     //the current version in production
-    let CURRENT_VERSION = "v2.39.0"
+    let CURRENT_VERSION = "v3.1.0"
     let MINOR_VERSION = CURRENT_VERSION.split(".")[1]
 
     //check for notification cookie
@@ -1675,7 +1744,7 @@ $("#lastName").keydown(function(event) {
       let specificVersionSplit = cookieVersion.split(".")
       if (specificVersionSplit != undefined && specificVersionSplit != null) {
         if (specificVersionSplit.length == 3) {
-          let versionDifference = parseInt(MINOR_VERSION) - parseInt(specificVersionSplit[1])
+          let versionDifference = Math.abs(parseInt(MINOR_VERSION) - parseInt(specificVersionSplit[1]))
           $('#notification-count').text(versionDifference)
         }
       }
@@ -1689,40 +1758,19 @@ $("#lastName").keydown(function(event) {
 
 }); /* End of document.ready */
 
-function loadVehData(index) {
-     $('#vehicleID').val(dbVehicles[index]._id)
-     $('#plateVeh').val(dbVehicles[index].vehicle.plate.toUpperCase())
-
-     // since only cars after 6/26/2020 will have this info, we need to check for empty values
-     if (dbVehicles[index].vehicle.vin == "" || dbVehicles[index].vehicle.vin == undefined) {
-       $('#vinVeh').val("")
-       $('#no-existing-vin').show()
-     } else {
-       $('#vinVeh').val(dbVehicles[index].vehicle.vin.toUpperCase())
-       $('#no-existing-vin').hide()
-     }
-
-     $('#modelVeh').val(dbVehicles[index].vehicle.model)
-     $('#colorView').val(dbVehicles[index].vehicle.color)
-     $('#validRegView').val(dbVehicles[index].vehicle.validRegistration)
-     $('#validInsView').val(dbVehicles[index].vehicle.validInsurance)
-     $('#roVeh').val(dbVehicles[index].vehicle.registeredOwner)
-     $('#stolenView').val(dbVehicles[index].vehicle.isStolen)
-   }
-
-   function loadFirearmData(index) {
-     $('#firearmID').val(dbFirearms[index]._id)
-     $('#serial-number-details').val(dbFirearms[index].firearm.serialNumber)
-     $('#weapon-type-details').val(dbFirearms[index].firearm.weaponType)
-     //Because from the backend we already split the person_id from the person name and dob, we now
-     //need to rejoin those values back together for #registeredOwner-details
-     if (dbFirearms[index].firearm.registeredOwner == 'N/A') {
-       $('#registeredOwner-details').val(`${dbFirearms[index].firearm.registeredOwner}`)
-     } else {
-       $('#registeredOwner-details').val(`${dbFirearms[index].firearm.registeredOwnerID}+${dbFirearms[index].firearm.registeredOwner}`)
-     }
-     $('#is-stolen-details').val(dbFirearms[index].firearm.isStolen)
-   }
+  //  function loadFirearmData(index) {
+  //    $('#firearmID').val(dbFirearms[index]._id)
+  //    $('#serial-number-details').val(dbFirearms[index].firearm.serialNumber)
+  //    $('#weapon-type-details').val(dbFirearms[index].firearm.weaponType)
+  //    //Because from the backend we already split the person_id from the person name and dob, we now
+  //    //need to rejoin those values back together for #registeredOwner-details
+  //    if (dbFirearms[index].firearm.registeredOwner == 'N/A') {
+  //      $('#registeredOwner-details').val(`${dbFirearms[index].firearm.registeredOwner}`)
+  //    } else {
+  //      $('#registeredOwner-details').val(`${dbFirearms[index].firearm.registeredOwnerID}+${dbFirearms[index].firearm.registeredOwner}`)
+  //    }
+  //    $('#is-stolen-details').val(dbFirearms[index].firearm.isStolen)
+  //  }
 
    function fillAccountDetails() {
      $('#accountEmail').val(dbUser.user.email)
@@ -1765,8 +1813,6 @@ function loadVehData(index) {
       });
     })
   }
-
-
 
 </script>
 

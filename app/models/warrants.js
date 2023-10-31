@@ -1,25 +1,27 @@
-var mongoose = require('mongoose');
+var mongoose = require("mongoose");
 
 var warrantSchema = mongoose.Schema({
   warrant: {
-    date: String,
-    time: String,
-    updatedDate: String,
-    updatedTime: String,
-    reportingOfficer: String,
-    reportingOfficerEmail: String,
-    clearingOfficer: String,
-    clearingOfficerEmail: String,
+    // date: String,
+    // time: String,
+    // updatedDate: String,
+    // updatedTime: String,
+    status: Boolean,
+    accusedID: String,
     accusedFirstName: String,
     accusedLastName: String,
-    accusedID: String,
-    reasons: [{
-      type: String
-    }],
-    status: Boolean,
+    reasons: [
+      {
+        type: String,
+      },
+    ],
+    reportingOfficerID: String,
+    // reportingOfficerEmail: String,
+    clearingOfficerID: String,
+    // clearingOfficerEmail: String,
     createdAt: Date,
-    updatedAt: Date
-  }
+    updatedAt: Date,
+  },
 });
 
 warrantSchema.methods.createWarrant = function (req, res) {
@@ -46,24 +48,28 @@ warrantSchema.methods.createWarrant = function (req, res) {
   }
   if (exists(req.body.reasons)) {
     //We check to see if they selected 'Other' and if so we need to grab the input value
-    if ((exists(req.body.other)) && (req.body.reasons == 'Other') && (req.body.other != "")) {
-      req.body.reasons = "Other - " + req.body.other.trim()
+    if (
+      exists(req.body.other) &&
+      req.body.reasons == "Other" &&
+      req.body.other != ""
+    ) {
+      req.body.reasons = "Other - " + req.body.other.trim();
     }
     this.warrant.reasons = req.body.reasons;
   }
   this.warrant.status = true;
   this.warrant.createdAt = new Date();
 
-  req.app.locals.specialContext = "createWarrantSuccess"
-  res.redirect('/' + req.body.route);
+  req.app.locals.specialContext = "createWarrantSuccess";
+  res.redirect("/" + req.body.route);
 };
 
-module.exports = mongoose.model('Warrant', warrantSchema);
+module.exports = mongoose.model("Warrant", warrantSchema);
 
 function exists(v) {
   if (v !== undefined) {
-    return true
+    return true;
   } else {
-    return false
+    return false;
   }
 }

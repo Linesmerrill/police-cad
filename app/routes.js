@@ -2,6 +2,7 @@ var User = require("../app/models/user");
 var Civilian = require("../app/models/civilian");
 var Vehicle = require("../app/models/vehicle");
 var Firearm = require("../app/models/firearm");
+var License = require("../app/models/license");
 var EmsVehicle = require("../app/models/emsVehicle");
 var Ticket = require("../app/models/ticket");
 var Ems = require("../app/models/ems");
@@ -314,72 +315,17 @@ module.exports = function (app, passport, server) {
   app.get("/civ-dashboard", authCheck, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
-    // TODO future spot of improvement; create a single route in the external api to
-    // fetch all this information. Could leverage concurrency and return all that info
-    // in a single call back to this app.
-    axios
-      .get(
-        `${policeCadApiUrl}/api/v1/civilians/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
-        config
-      )
-      .then(function (dbCivilians) {
-        if (!exists(dbCivilians.data)) {
-          res.status(400);
-          res.redirect("back");
-        } else {
-          axios
-            .get(
-              `${policeCadApiUrl}/api/v1/vehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
-              config
-            )
-            .then(function (dbVehicles) {
-              if (!exists(dbVehicles.data)) {
-                res.status(400);
-                res.redirect("back");
-              } else {
-                axios
-                  .get(
-                    `${policeCadApiUrl}/api/v1/firearms/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
-                    config
-                  )
-                  .then(function (dbFirearms) {
-                    if (!exists(dbFirearms.data)) {
-                      res.status(400);
-                      res.redirect("back");
-                    } else {
-                      res.render("civ-dashboard", {
-                        user: req.user,
-                        personas: dbCivilians.data,
-                        vehicles: dbVehicles.data,
-                        firearms: dbFirearms.data,
-                        context: context,
-                        referer: encodeURIComponent("/civ-dashboard"),
-                        redirect: encodeURIComponent(redirect),
-                      });
-                    }
-                  })
-                  .catch((err) => {
-                    res.status(400);
-                    res.redirect("back");
-                  });
-              }
-            })
-            .catch((err) => {
-              res.status(400);
-              res.redirect("back");
-            });
-        }
-      })
-      .catch((err) => {
-        res.status(400);
-        res.redirect("back");
-      });
+    res.render("civ-dashboard", {
+      user: req.user,
+      context: context,
+      referer: encodeURIComponent("/civ-dashboard"),
+      redirect: encodeURIComponent(redirect),
+    });
   });
 
   app.get("/ems-dashboard", authCheck, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
-
     axios
       .get(
         `${policeCadApiUrl}/api/v1/emsVehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
@@ -508,7 +454,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/police-dashboard", authCheck, function (req, res) {
-    // console.debug("req: ", req.user)
+    // console.debug("req: ", req.user);
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     Community.find(
@@ -653,637 +599,637 @@ module.exports = function (app, passport, server) {
   });
 
   //This is gross and I know it :yolo:
-  app.get("/name-search", auth, function (req, res) {
-    // console.debug("req: ", req.query)
-    if (req.query.route == "dispatch-dashboard") {
-      if (req.query.firstName == undefined || req.query.lastName == undefined) {
-        res.status(400);
-        return res.redirect("/dispatch-dashboard");
-      }
-      let firstName = sanitize(req.query.firstName.trim().toLowerCase());
-      let lastName = sanitize(req.query.lastName.trim().toLowerCase());
-      if (
-        req.query.activeCommunityID == "" ||
-        req.query.activeCommunityID == null
-      ) {
-        if (req.query.dateOfBirth == undefined) {
-          res.status(400);
-          return res.redirect("/dispatch-dashboard");
-        }
-        Civilian.find(
-          {
-            "civilian.firstName": firstName,
-            "civilian.lastName": lastName,
-            "civilian.birthday": req.query.dateOfBirth,
-            $or: [
-              {
-                // some are stored as empty strings and others as null so we need to check for both
-                "civilian.activeCommunityID": "",
-              },
-              {
-                "civilian.activeCommunityID": null,
-              },
-            ],
-          },
-          function (err, dbCivilians) {
-            if (err) return console.error(err);
-            return res.render("dispatch-dashboard", {
-              user: req.user,
-              vehicles: null,
-              civilians: dbCivilians,
-              firearms: null,
-              warrants: null,
-              dbEmsEngines: null,
-              communities: null,
-              commUsers: null,
-              bolos: null,
-              calls: null,
-              context: null,
-              referer: encodeURIComponent("/dispatch-dashboard"),
-              redirect: encodeURIComponent(redirect),
-            });
-          }
-        );
-      } else {
-        Civilian.find(
-          {
-            $text: {
-              $search: `"${firstName}" "${lastName}"`,
-            },
-            "civilian.activeCommunityID": req.query.activeCommunityID,
-          },
-          function (err, dbCivilians) {
-            if (err) return console.error(err);
-            Warrant.find(
-              {
-                "warrant.accusedFirstName": firstName.capitalize(),
-                "warrant.accusedLastName": lastName.capitalize(),
-                "warrant.status": true,
-              },
-              function (err, dbWarrants) {
-                if (err) return console.error(err);
-                Community.find(
-                  {
-                    $or: [
-                      {
-                        "community.ownerID": req.user._id,
-                      },
-                      {
-                        _id: req.user.user.activeCommunity,
-                      },
-                    ],
-                  },
-                  function (err, dbCommunities) {
-                    if (err) return console.error(err);
-                    Bolo.find(
-                      {
-                        "bolo.communityID": req.user.user.activeCommunity,
-                      },
-                      function (err, dbBolos) {
-                        if (err) return console.error(err);
-                        Call.find(
-                          {
-                            "call.communityID": req.user.user.activeCommunity,
-                          },
-                          function (err, dbCalls) {
-                            if (err) return console.error(err);
-                            EmsVehicle.find(
-                              {
-                                "emsVehicle.activeCommunityID":
-                                  req.user.user.activeCommunity,
-                              },
-                              function (err, dbEmsEngines) {
-                                if (err) return console.error(err);
-                                User.find(
-                                  {
-                                    "user.activeCommunity":
-                                      req.user.user.activeCommunity,
-                                  },
-                                  function (err, dbCommUsers) {
-                                    if (err) return console.error(err);
-                                    if (
-                                      req.user.user.activeCommunity == "" ||
-                                      req.user.user.activeCommunity == null
-                                    ) {
-                                      return res.render("dispatch-dashboard", {
-                                        user: req.user,
-                                        vehicles: null,
-                                        civilians: dbCivilians,
-                                        firearms: null,
-                                        warrants: dbWarrants,
-                                        dbEmsEngines: dbEmsEngines,
-                                        communities: dbCommunities,
-                                        commUsers: dbCommUsers,
-                                        bolos: dbBolos,
-                                        calls: dbCalls,
-                                        context: null,
-                                        referer: encodeURIComponent(
-                                          "/dispatch-dashboard"
-                                        ),
-                                        redirect: encodeURIComponent(redirect),
-                                      });
-                                    } else {
-                                      User.find(
-                                        {
-                                          "user.activeCommunity":
-                                            req.user.user.activeCommunity,
-                                        },
-                                        function (err, dbCommUsers) {
-                                          if (err) return console.error(err);
-                                          return res.render(
-                                            "dispatch-dashboard",
-                                            {
-                                              user: req.user,
-                                              vehicles: null,
-                                              civilians: dbCivilians,
-                                              firearms: null,
-                                              warrants: dbWarrants,
-                                              dbEmsEngines: dbEmsEngines,
-                                              communities: dbCommunities,
-                                              commUsers: dbCommUsers,
-                                              bolos: dbBolos,
-                                              calls: dbCalls,
-                                              context: null,
-                                              referer: encodeURIComponent(
-                                                "/dispatch-dashboard"
-                                              ),
-                                              redirect:
-                                                encodeURIComponent(redirect),
-                                            }
-                                          );
-                                        }
-                                      );
-                                    }
-                                  }
-                                );
-                              }
-                            );
-                          }
-                        );
-                      }
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
-      }
-    } else {
-      if (req.query.firstName == undefined || req.query.lastName == undefined) {
-        res.status(400);
-        return res.redirect("/police-dashboard");
-      }
-      let firstName = sanitize(req.query.firstName.trim().toLowerCase());
-      let lastName = sanitize(req.query.lastName.trim().toLowerCase());
-      if (
-        req.query.activeCommunityID == "" ||
-        req.query.activeCommunityID == null
-      ) {
-        if (req.query.dateOfBirth == undefined) {
-          res.status(400);
-          return res.redirect("/police-dashboard");
-        }
-        Civilian.find(
-          {
-            "civilian.firstName": firstName,
-            "civilian.lastName": lastName,
-            "civilian.birthday": req.query.dateOfBirth,
-            $or: [
-              {
-                // some are stored as empty strings and others as null so we need to check for both
-                "civilian.activeCommunityID": "",
-              },
-              {
-                "civilian.activeCommunityID": null,
-              },
-            ],
-          },
-          function (err, dbCivilians) {
-            if (err) return console.error(err);
-            return res.render("police-dashboard", {
-              user: req.user,
-              vehicles: null,
-              civilians: dbCivilians,
-              firearms: null,
-              communities: null,
-              bolos: null,
-              calls: null,
-              context: null,
-              referer: encodeURIComponent("/police-dashboard"),
-              redirect: encodeURIComponent(redirect),
-            });
-          }
-        );
-      } else {
-        Civilian.find(
-          {
-            $text: {
-              $search: `"${firstName}" "${lastName}"`,
-            },
-            "civilian.activeCommunityID": req.query.activeCommunityID,
-          },
-          function (err, dbCivilians) {
-            if (err) return console.error(err);
-            Community.find(
-              {
-                $or: [
-                  {
-                    "community.ownerID": req.user._id,
-                  },
-                  {
-                    _id: req.user.user.activeCommunity,
-                  },
-                ],
-              },
-              function (err, dbCommunities) {
-                if (err) return console.error(err);
-                Bolo.find(
-                  {
-                    "bolo.communityID": req.user.user.activeCommunity,
-                  },
-                  function (err, dbBolos) {
-                    if (err) return console.error(err);
-                    Call.find(
-                      {
-                        "call.communityID": req.user.user.activeCommunity,
-                      },
-                      function (err, dbCalls) {
-                        if (err) return console.error(err);
-                        return res.render("police-dashboard", {
-                          user: req.user,
-                          vehicles: null,
-                          civilians: dbCivilians,
-                          firearms: null,
-                          communities: dbCommunities,
-                          bolos: dbBolos,
-                          calls: dbCalls,
-                          context: null,
-                          referer: encodeURIComponent("/police-dashboard"),
-                          redirect: encodeURIComponent(redirect),
-                        });
-                      }
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
-      }
-    }
-  });
+  // app.get("/name-search", auth, function (req, res) {
+  //   // console.debug("req: ", req.query)
+  //   if (req.query.route == "dispatch-dashboard") {
+  //     if (req.query.firstName == undefined || req.query.lastName == undefined) {
+  //       res.status(400);
+  //       return res.redirect("/dispatch-dashboard");
+  //     }
+  //     let firstName = sanitize(req.query.firstName.trim().toLowerCase());
+  //     let lastName = sanitize(req.query.lastName.trim().toLowerCase());
+  //     if (
+  //       req.query.activeCommunityID == "" ||
+  //       req.query.activeCommunityID == null
+  //     ) {
+  //       if (req.query.dateOfBirth == undefined) {
+  //         res.status(400);
+  //         return res.redirect("/dispatch-dashboard");
+  //       }
+  //       Civilian.find(
+  //         {
+  //           "civilian.firstName": firstName,
+  //           "civilian.lastName": lastName,
+  //           "civilian.birthday": req.query.dateOfBirth,
+  //           $or: [
+  //             {
+  //               // some are stored as empty strings and others as null so we need to check for both
+  //               "civilian.activeCommunityID": "",
+  //             },
+  //             {
+  //               "civilian.activeCommunityID": null,
+  //             },
+  //           ],
+  //         },
+  //         function (err, dbCivilians) {
+  //           if (err) return console.error(err);
+  //           return res.render("dispatch-dashboard", {
+  //             user: req.user,
+  //             vehicles: null,
+  //             civilians: dbCivilians,
+  //             firearms: null,
+  //             warrants: null,
+  //             dbEmsEngines: null,
+  //             communities: null,
+  //             commUsers: null,
+  //             bolos: null,
+  //             calls: null,
+  //             context: null,
+  //             referer: encodeURIComponent("/dispatch-dashboard"),
+  //             redirect: encodeURIComponent(redirect),
+  //           });
+  //         }
+  //       );
+  //     } else {
+  //       Civilian.find(
+  //         {
+  //           $text: {
+  //             $search: `"${firstName}" "${lastName}"`,
+  //           },
+  //           "civilian.activeCommunityID": req.query.activeCommunityID,
+  //         },
+  //         function (err, dbCivilians) {
+  //           if (err) return console.error(err);
+  //           Warrant.find(
+  //             {
+  //               "warrant.accusedFirstName": firstName.capitalize(),
+  //               "warrant.accusedLastName": lastName.capitalize(),
+  //               "warrant.status": true,
+  //             },
+  //             function (err, dbWarrants) {
+  //               if (err) return console.error(err);
+  //               Community.find(
+  //                 {
+  //                   $or: [
+  //                     {
+  //                       "community.ownerID": req.user._id,
+  //                     },
+  //                     {
+  //                       _id: req.user.user.activeCommunity,
+  //                     },
+  //                   ],
+  //                 },
+  //                 function (err, dbCommunities) {
+  //                   if (err) return console.error(err);
+  //                   Bolo.find(
+  //                     {
+  //                       "bolo.communityID": req.user.user.activeCommunity,
+  //                     },
+  //                     function (err, dbBolos) {
+  //                       if (err) return console.error(err);
+  //                       Call.find(
+  //                         {
+  //                           "call.communityID": req.user.user.activeCommunity,
+  //                         },
+  //                         function (err, dbCalls) {
+  //                           if (err) return console.error(err);
+  //                           EmsVehicle.find(
+  //                             {
+  //                               "emsVehicle.activeCommunityID":
+  //                                 req.user.user.activeCommunity,
+  //                             },
+  //                             function (err, dbEmsEngines) {
+  //                               if (err) return console.error(err);
+  //                               User.find(
+  //                                 {
+  //                                   "user.activeCommunity":
+  //                                     req.user.user.activeCommunity,
+  //                                 },
+  //                                 function (err, dbCommUsers) {
+  //                                   if (err) return console.error(err);
+  //                                   if (
+  //                                     req.user.user.activeCommunity == "" ||
+  //                                     req.user.user.activeCommunity == null
+  //                                   ) {
+  //                                     return res.render("dispatch-dashboard", {
+  //                                       user: req.user,
+  //                                       vehicles: null,
+  //                                       civilians: dbCivilians,
+  //                                       firearms: null,
+  //                                       warrants: dbWarrants,
+  //                                       dbEmsEngines: dbEmsEngines,
+  //                                       communities: dbCommunities,
+  //                                       commUsers: dbCommUsers,
+  //                                       bolos: dbBolos,
+  //                                       calls: dbCalls,
+  //                                       context: null,
+  //                                       referer: encodeURIComponent(
+  //                                         "/dispatch-dashboard"
+  //                                       ),
+  //                                       redirect: encodeURIComponent(redirect),
+  //                                     });
+  //                                   } else {
+  //                                     User.find(
+  //                                       {
+  //                                         "user.activeCommunity":
+  //                                           req.user.user.activeCommunity,
+  //                                       },
+  //                                       function (err, dbCommUsers) {
+  //                                         if (err) return console.error(err);
+  //                                         return res.render(
+  //                                           "dispatch-dashboard",
+  //                                           {
+  //                                             user: req.user,
+  //                                             vehicles: null,
+  //                                             civilians: dbCivilians,
+  //                                             firearms: null,
+  //                                             warrants: dbWarrants,
+  //                                             dbEmsEngines: dbEmsEngines,
+  //                                             communities: dbCommunities,
+  //                                             commUsers: dbCommUsers,
+  //                                             bolos: dbBolos,
+  //                                             calls: dbCalls,
+  //                                             context: null,
+  //                                             referer: encodeURIComponent(
+  //                                               "/dispatch-dashboard"
+  //                                             ),
+  //                                             redirect:
+  //                                               encodeURIComponent(redirect),
+  //                                           }
+  //                                         );
+  //                                       }
+  //                                     );
+  //                                   }
+  //                                 }
+  //                               );
+  //                             }
+  //                           );
+  //                         }
+  //                       );
+  //                     }
+  //                   );
+  //                 }
+  //               );
+  //             }
+  //           );
+  //         }
+  //       );
+  //     }
+  //   } else {
+  //     if (req.query.firstName == undefined || req.query.lastName == undefined) {
+  //       res.status(400);
+  //       return res.redirect("/police-dashboard");
+  //     }
+  //     let firstName = sanitize(req.query.firstName.trim().toLowerCase());
+  //     let lastName = sanitize(req.query.lastName.trim().toLowerCase());
+  //     if (
+  //       req.query.activeCommunityID == "" ||
+  //       req.query.activeCommunityID == null
+  //     ) {
+  //       if (req.query.dateOfBirth == undefined) {
+  //         res.status(400);
+  //         return res.redirect("/police-dashboard");
+  //       }
+  //       Civilian.find(
+  //         {
+  //           "civilian.firstName": firstName,
+  //           "civilian.lastName": lastName,
+  //           "civilian.birthday": req.query.dateOfBirth,
+  //           $or: [
+  //             {
+  //               // some are stored as empty strings and others as null so we need to check for both
+  //               "civilian.activeCommunityID": "",
+  //             },
+  //             {
+  //               "civilian.activeCommunityID": null,
+  //             },
+  //           ],
+  //         },
+  //         function (err, dbCivilians) {
+  //           if (err) return console.error(err);
+  //           return res.render("police-dashboard", {
+  //             user: req.user,
+  //             vehicles: null,
+  //             civilians: dbCivilians,
+  //             firearms: null,
+  //             communities: null,
+  //             bolos: null,
+  //             calls: null,
+  //             context: null,
+  //             referer: encodeURIComponent("/police-dashboard"),
+  //             redirect: encodeURIComponent(redirect),
+  //           });
+  //         }
+  //       );
+  //     } else {
+  //       Civilian.find(
+  //         {
+  //           $text: {
+  //             $search: `"${firstName}" "${lastName}"`,
+  //           },
+  //           "civilian.activeCommunityID": req.query.activeCommunityID,
+  //         },
+  //         function (err, dbCivilians) {
+  //           if (err) return console.error(err);
+  //           Community.find(
+  //             {
+  //               $or: [
+  //                 {
+  //                   "community.ownerID": req.user._id,
+  //                 },
+  //                 {
+  //                   _id: req.user.user.activeCommunity,
+  //                 },
+  //               ],
+  //             },
+  //             function (err, dbCommunities) {
+  //               if (err) return console.error(err);
+  //               Bolo.find(
+  //                 {
+  //                   "bolo.communityID": req.user.user.activeCommunity,
+  //                 },
+  //                 function (err, dbBolos) {
+  //                   if (err) return console.error(err);
+  //                   Call.find(
+  //                     {
+  //                       "call.communityID": req.user.user.activeCommunity,
+  //                     },
+  //                     function (err, dbCalls) {
+  //                       if (err) return console.error(err);
+  //                       return res.render("police-dashboard", {
+  //                         user: req.user,
+  //                         vehicles: null,
+  //                         civilians: dbCivilians,
+  //                         firearms: null,
+  //                         communities: dbCommunities,
+  //                         bolos: dbBolos,
+  //                         calls: dbCalls,
+  //                         context: null,
+  //                         referer: encodeURIComponent("/police-dashboard"),
+  //                         redirect: encodeURIComponent(redirect),
+  //                       });
+  //                     }
+  //                   );
+  //                 }
+  //               );
+  //             }
+  //           );
+  //         }
+  //       );
+  //     }
+  //   }
+  // });
 
-  app.get("/plate-search", auth, function (req, res) {
-    if (req.query.route == "dispatch-dashboard") {
-      if (req.query.plateNumber == undefined) {
-        res.status(400);
-        return res.redirect("/dispatch-dashboard");
-      }
-      if (
-        req.query.activeCommunityID == "" ||
-        req.query.activeCommunityID == null
-      ) {
-        Vehicle.find(
-          {
-            "vehicle.plate": req.query.plateNumber.trim().toUpperCase(),
-            $or: [
-              {
-                // some are stored as empty strings and others as null so we need to check for both
-                "vehicle.activeCommunityID": "",
-              },
-              {
-                "vehicle.activeCommunityID": null,
-              },
-            ],
-          },
-          function (err, dbVehicles) {
-            if (err) return console.error(err);
-            Community.find(
-              {
-                $or: [
-                  {
-                    "community.ownerID": req.user._id,
-                  },
-                  {
-                    _id: req.user.user.activeCommunity,
-                  },
-                ],
-              },
-              function (err, dbCommunities) {
-                if (err) return console.error(err);
-                Bolo.find(
-                  {
-                    "bolo.communityID": req.user.user.activeCommunity,
-                  },
-                  function (err, dbBolos) {
-                    if (err) return console.error(err);
-                    Call.find(
-                      {
-                        "call.communityID": req.user.user.activeCommunity,
-                      },
-                      function (err, dbCalls) {
-                        if (err) return console.error(err);
-                        if (
-                          req.user.user.activeCommunity == "" ||
-                          req.user.user.activeCommunity == null
-                        ) {
-                          return res.render("dispatch-dashboard", {
-                            user: req.user,
-                            vehicles: dbVehicles,
-                            civilians: null,
-                            firearms: null,
-                            tickets: null,
-                            arrestReports: null,
-                            warrants: null,
-                            dbEmsEngines: null,
-                            communities: dbCommunities,
-                            commUsers: null,
-                            bolos: dbBolos,
-                            calls: dbCalls,
-                            context: null,
-                            referer: encodeURIComponent("/dispatch-dashboard"),
-                            redirect: encodeURIComponent(redirect),
-                          });
-                        } else {
-                          User.find(
-                            {
-                              "user.activeCommunity":
-                                req.user.user.activeCommunity,
-                            },
-                            function (err, dbCommUsers) {
-                              if (err) return console.error(err);
-                              return res.render("dispatch-dashboard", {
-                                user: req.user,
-                                vehicles: dbVehicles,
-                                civilians: null,
-                                firearms: null,
-                                tickets: null,
-                                arrestReports: null,
-                                warrants: null,
-                                dbEmsEngines: null,
-                                communities: dbCommunities,
-                                commUsers: dbCommUsers,
-                                bolos: dbBolos,
-                                calls: dbCalls,
-                                context: null,
-                                referer: encodeURIComponent(
-                                  "/dispatch-dashboard"
-                                ),
-                                redirect: encodeURIComponent(redirect),
-                              });
-                            }
-                          );
-                        }
-                      }
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
-      } else {
-        Vehicle.find(
-          {
-            "vehicle.plate": req.query.plateNumber.trim().toUpperCase(),
-            "vehicle.activeCommunityID": req.query.activeCommunityID,
-          },
-          function (err, dbVehicles) {
-            if (err) return console.error(err);
-            Community.find(
-              {
-                $or: [
-                  {
-                    "community.ownerID": req.user._id,
-                  },
-                  {
-                    _id: req.user.user.activeCommunity,
-                  },
-                ],
-              },
-              function (err, dbCommunities) {
-                if (err) return console.error(err);
-                Bolo.find(
-                  {
-                    "bolo.communityID": req.user.user.activeCommunity,
-                  },
-                  function (err, dbBolos) {
-                    if (err) return console.error(err);
-                    Call.find(
-                      {
-                        "call.communityID": req.user.user.activeCommunity,
-                      },
-                      function (err, dbCalls) {
-                        if (err) return console.error(err);
-                        if (
-                          req.user.user.activeCommunity == "" ||
-                          req.user.user.activeCommunity == null
-                        ) {
-                          return res.render("dispatch-dashboard", {
-                            user: req.user,
-                            vehicles: dbVehicles,
-                            civilians: null,
-                            firearms: null,
-                            tickets: null,
-                            arrestReports: null,
-                            warrants: null,
-                            dbEmsEngines: null,
-                            communities: dbCommunities,
-                            commUsers: null,
-                            bolos: dbBolos,
-                            calls: dbCalls,
-                            context: null,
-                            referer: encodeURIComponent("/dispatch-dashboard"),
-                            redirect: encodeURIComponent(redirect),
-                          });
-                        } else {
-                          User.find(
-                            {
-                              "user.activeCommunity":
-                                req.user.user.activeCommunity,
-                            },
-                            function (err, dbCommUsers) {
-                              EmsVehicle.find(
-                                {
-                                  "emsVehicle.activeCommunityID":
-                                    req.user.user.activeCommunity,
-                                },
-                                function (err, dbEmsEngines) {
-                                  if (err) return console.error(err);
-                                  if (err) return console.error(err);
-                                  return res.render("dispatch-dashboard", {
-                                    user: req.user,
-                                    vehicles: dbVehicles,
-                                    civilians: null,
-                                    firearms: null,
-                                    tickets: null,
-                                    arrestReports: null,
-                                    warrants: null,
-                                    dbEmsEngines: dbEmsEngines,
-                                    communities: dbCommunities,
-                                    commUsers: dbCommUsers,
-                                    bolos: dbBolos,
-                                    calls: dbCalls,
-                                    context: null,
-                                    referer: encodeURIComponent(
-                                      "/dispatch-dashboard"
-                                    ),
-                                    redirect: encodeURIComponent(redirect),
-                                  });
-                                }
-                              );
-                            }
-                          );
-                        }
-                      }
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
-      }
-    } else {
-      if (req.query.plateNumber == undefined) {
-        res.status(400);
-        return res.redirect("/police-dashboard");
-      }
-      if (
-        req.query.activeCommunityID == "" ||
-        req.query.activeCommunityID == null
-      ) {
-        Vehicle.find(
-          {
-            "vehicle.plate": req.query.plateNumber.trim().toUpperCase(),
-            $or: [
-              {
-                // some are stored as empty strings and others as null so we need to check for both
-                "vehicle.activeCommunityID": "",
-              },
-              {
-                "vehicle.activeCommunityID": null,
-              },
-            ],
-          },
-          function (err, dbVehicles) {
-            if (err) return console.error(err);
-            Community.find(
-              {
-                $or: [
-                  {
-                    "community.ownerID": req.user._id,
-                  },
-                  {
-                    _id: ObjectId(req.user.user.activeCommunity),
-                  },
-                ],
-              },
-              function (err, dbCommunities) {
-                if (err) return console.error(err);
-                Bolo.find(
-                  {
-                    "bolo.communityID": req.user.user.activeCommunity,
-                  },
-                  function (err, dbBolos) {
-                    if (err) return console.error(err);
-                    Call.find(
-                      {
-                        "call.communityID": req.user.user.activeCommunity,
-                      },
-                      function (err, dbCalls) {
-                        if (err) return console.error(err);
-                        return res.render("police-dashboard", {
-                          user: req.user,
-                          civilians: null,
-                          vehicles: dbVehicles,
-                          firearms: null,
-                          tickets: null,
-                          arrestReports: null,
-                          warrants: null,
-                          communities: dbCommunities,
-                          bolos: dbBolos,
-                          calls: dbCalls,
-                          context: null,
-                          referer: encodeURIComponent("/police-dashboard"),
-                          redirect: encodeURIComponent(redirect),
-                        });
-                      }
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
-      } else {
-        Vehicle.find(
-          {
-            "vehicle.plate": req.query.plateNumber.trim().toUpperCase(),
-            "vehicle.activeCommunityID": req.query.activeCommunityID,
-          },
-          function (err, dbVehicles) {
-            if (err) return console.error(err);
-            var isValid = isValidObjectIdLength(
-              req.user.user.activeCommunity,
-              "cannot lookup invalid length activeCommunityID, route: /plate-search"
-            );
-            if (!isValid) {
-              req.app.locals.specialContext = "invalidRequest";
-              return res.redirect("/police-dashboard");
-            }
-            Community.find(
-              {
-                $or: [
-                  {
-                    "community.ownerID": req.user._id,
-                  },
-                  {
-                    _id: ObjectId(req.user.user.activeCommunity),
-                  },
-                ],
-              },
-              function (err, dbCommunities) {
-                if (err) return console.error(err);
-                Bolo.find(
-                  {
-                    "bolo.communityID": req.user.user.activeCommunity,
-                  },
-                  function (err, dbBolos) {
-                    if (err) return console.error(err);
-                    Call.find(
-                      {
-                        "call.communityID": req.user.user.activeCommunity,
-                      },
-                      function (err, dbCalls) {
-                        if (err) return console.error(err);
-                        return res.render("police-dashboard", {
-                          user: req.user,
-                          civilians: null,
-                          vehicles: dbVehicles,
-                          firearms: null,
-                          tickets: null,
-                          arrestReports: null,
-                          warrants: null,
-                          communities: dbCommunities,
-                          bolos: dbBolos,
-                          calls: dbCalls,
-                          context: null,
-                          referer: encodeURIComponent("/police-dashboard"),
-                          redirect: encodeURIComponent(redirect),
-                        });
-                      }
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
-      }
-    }
-  });
+  // app.get("/plate-search", auth, function (req, res) {
+  //   if (req.query.route == "dispatch-dashboard") {
+  //     if (req.query.plateNumber == undefined) {
+  //       res.status(400);
+  //       return res.redirect("/dispatch-dashboard");
+  //     }
+  //     if (
+  //       req.query.activeCommunityID == "" ||
+  //       req.query.activeCommunityID == null
+  //     ) {
+  //       Vehicle.find(
+  //         {
+  //           "vehicle.plate": req.query.plateNumber.trim().toUpperCase(),
+  //           $or: [
+  //             {
+  //               // some are stored as empty strings and others as null so we need to check for both
+  //               "vehicle.activeCommunityID": "",
+  //             },
+  //             {
+  //               "vehicle.activeCommunityID": null,
+  //             },
+  //           ],
+  //         },
+  //         function (err, dbVehicles) {
+  //           if (err) return console.error(err);
+  //           Community.find(
+  //             {
+  //               $or: [
+  //                 {
+  //                   "community.ownerID": req.user._id,
+  //                 },
+  //                 {
+  //                   _id: req.user.user.activeCommunity,
+  //                 },
+  //               ],
+  //             },
+  //             function (err, dbCommunities) {
+  //               if (err) return console.error(err);
+  //               Bolo.find(
+  //                 {
+  //                   "bolo.communityID": req.user.user.activeCommunity,
+  //                 },
+  //                 function (err, dbBolos) {
+  //                   if (err) return console.error(err);
+  //                   Call.find(
+  //                     {
+  //                       "call.communityID": req.user.user.activeCommunity,
+  //                     },
+  //                     function (err, dbCalls) {
+  //                       if (err) return console.error(err);
+  //                       if (
+  //                         req.user.user.activeCommunity == "" ||
+  //                         req.user.user.activeCommunity == null
+  //                       ) {
+  //                         return res.render("dispatch-dashboard", {
+  //                           user: req.user,
+  //                           vehicles: dbVehicles,
+  //                           civilians: null,
+  //                           firearms: null,
+  //                           tickets: null,
+  //                           arrestReports: null,
+  //                           warrants: null,
+  //                           dbEmsEngines: null,
+  //                           communities: dbCommunities,
+  //                           commUsers: null,
+  //                           bolos: dbBolos,
+  //                           calls: dbCalls,
+  //                           context: null,
+  //                           referer: encodeURIComponent("/dispatch-dashboard"),
+  //                           redirect: encodeURIComponent(redirect),
+  //                         });
+  //                       } else {
+  //                         User.find(
+  //                           {
+  //                             "user.activeCommunity":
+  //                               req.user.user.activeCommunity,
+  //                           },
+  //                           function (err, dbCommUsers) {
+  //                             if (err) return console.error(err);
+  //                             return res.render("dispatch-dashboard", {
+  //                               user: req.user,
+  //                               vehicles: dbVehicles,
+  //                               civilians: null,
+  //                               firearms: null,
+  //                               tickets: null,
+  //                               arrestReports: null,
+  //                               warrants: null,
+  //                               dbEmsEngines: null,
+  //                               communities: dbCommunities,
+  //                               commUsers: dbCommUsers,
+  //                               bolos: dbBolos,
+  //                               calls: dbCalls,
+  //                               context: null,
+  //                               referer: encodeURIComponent(
+  //                                 "/dispatch-dashboard"
+  //                               ),
+  //                               redirect: encodeURIComponent(redirect),
+  //                             });
+  //                           }
+  //                         );
+  //                       }
+  //                     }
+  //                   );
+  //                 }
+  //               );
+  //             }
+  //           );
+  //         }
+  //       );
+  //     } else {
+  //       Vehicle.find(
+  //         {
+  //           "vehicle.plate": req.query.plateNumber.trim().toUpperCase(),
+  //           "vehicle.activeCommunityID": req.query.activeCommunityID,
+  //         },
+  //         function (err, dbVehicles) {
+  //           if (err) return console.error(err);
+  //           Community.find(
+  //             {
+  //               $or: [
+  //                 {
+  //                   "community.ownerID": req.user._id,
+  //                 },
+  //                 {
+  //                   _id: req.user.user.activeCommunity,
+  //                 },
+  //               ],
+  //             },
+  //             function (err, dbCommunities) {
+  //               if (err) return console.error(err);
+  //               Bolo.find(
+  //                 {
+  //                   "bolo.communityID": req.user.user.activeCommunity,
+  //                 },
+  //                 function (err, dbBolos) {
+  //                   if (err) return console.error(err);
+  //                   Call.find(
+  //                     {
+  //                       "call.communityID": req.user.user.activeCommunity,
+  //                     },
+  //                     function (err, dbCalls) {
+  //                       if (err) return console.error(err);
+  //                       if (
+  //                         req.user.user.activeCommunity == "" ||
+  //                         req.user.user.activeCommunity == null
+  //                       ) {
+  //                         return res.render("dispatch-dashboard", {
+  //                           user: req.user,
+  //                           vehicles: dbVehicles,
+  //                           civilians: null,
+  //                           firearms: null,
+  //                           tickets: null,
+  //                           arrestReports: null,
+  //                           warrants: null,
+  //                           dbEmsEngines: null,
+  //                           communities: dbCommunities,
+  //                           commUsers: null,
+  //                           bolos: dbBolos,
+  //                           calls: dbCalls,
+  //                           context: null,
+  //                           referer: encodeURIComponent("/dispatch-dashboard"),
+  //                           redirect: encodeURIComponent(redirect),
+  //                         });
+  //                       } else {
+  //                         User.find(
+  //                           {
+  //                             "user.activeCommunity":
+  //                               req.user.user.activeCommunity,
+  //                           },
+  //                           function (err, dbCommUsers) {
+  //                             EmsVehicle.find(
+  //                               {
+  //                                 "emsVehicle.activeCommunityID":
+  //                                   req.user.user.activeCommunity,
+  //                               },
+  //                               function (err, dbEmsEngines) {
+  //                                 if (err) return console.error(err);
+  //                                 if (err) return console.error(err);
+  //                                 return res.render("dispatch-dashboard", {
+  //                                   user: req.user,
+  //                                   vehicles: dbVehicles,
+  //                                   civilians: null,
+  //                                   firearms: null,
+  //                                   tickets: null,
+  //                                   arrestReports: null,
+  //                                   warrants: null,
+  //                                   dbEmsEngines: dbEmsEngines,
+  //                                   communities: dbCommunities,
+  //                                   commUsers: dbCommUsers,
+  //                                   bolos: dbBolos,
+  //                                   calls: dbCalls,
+  //                                   context: null,
+  //                                   referer: encodeURIComponent(
+  //                                     "/dispatch-dashboard"
+  //                                   ),
+  //                                   redirect: encodeURIComponent(redirect),
+  //                                 });
+  //                               }
+  //                             );
+  //                           }
+  //                         );
+  //                       }
+  //                     }
+  //                   );
+  //                 }
+  //               );
+  //             }
+  //           );
+  //         }
+  //       );
+  //     }
+  //   } else {
+  //     if (req.query.plateNumber == undefined) {
+  //       res.status(400);
+  //       return res.redirect("/police-dashboard");
+  //     }
+  //     if (
+  //       req.query.activeCommunityID == "" ||
+  //       req.query.activeCommunityID == null
+  //     ) {
+  //       Vehicle.find(
+  //         {
+  //           "vehicle.plate": req.query.plateNumber.trim().toUpperCase(),
+  //           $or: [
+  //             {
+  //               // some are stored as empty strings and others as null so we need to check for both
+  //               "vehicle.activeCommunityID": "",
+  //             },
+  //             {
+  //               "vehicle.activeCommunityID": null,
+  //             },
+  //           ],
+  //         },
+  //         function (err, dbVehicles) {
+  //           if (err) return console.error(err);
+  //           Community.find(
+  //             {
+  //               $or: [
+  //                 {
+  //                   "community.ownerID": req.user._id,
+  //                 },
+  //                 {
+  //                   _id: ObjectId(req.user.user.activeCommunity),
+  //                 },
+  //               ],
+  //             },
+  //             function (err, dbCommunities) {
+  //               if (err) return console.error(err);
+  //               Bolo.find(
+  //                 {
+  //                   "bolo.communityID": req.user.user.activeCommunity,
+  //                 },
+  //                 function (err, dbBolos) {
+  //                   if (err) return console.error(err);
+  //                   Call.find(
+  //                     {
+  //                       "call.communityID": req.user.user.activeCommunity,
+  //                     },
+  //                     function (err, dbCalls) {
+  //                       if (err) return console.error(err);
+  //                       return res.render("police-dashboard", {
+  //                         user: req.user,
+  //                         civilians: null,
+  //                         vehicles: dbVehicles,
+  //                         firearms: null,
+  //                         tickets: null,
+  //                         arrestReports: null,
+  //                         warrants: null,
+  //                         communities: dbCommunities,
+  //                         bolos: dbBolos,
+  //                         calls: dbCalls,
+  //                         context: null,
+  //                         referer: encodeURIComponent("/police-dashboard"),
+  //                         redirect: encodeURIComponent(redirect),
+  //                       });
+  //                     }
+  //                   );
+  //                 }
+  //               );
+  //             }
+  //           );
+  //         }
+  //       );
+  //     } else {
+  //       Vehicle.find(
+  //         {
+  //           "vehicle.plate": req.query.plateNumber.trim().toUpperCase(),
+  //           "vehicle.activeCommunityID": req.query.activeCommunityID,
+  //         },
+  //         function (err, dbVehicles) {
+  //           if (err) return console.error(err);
+  //           var isValid = isValidObjectIdLength(
+  //             req.user.user.activeCommunity,
+  //             "cannot lookup invalid length activeCommunityID, route: /plate-search"
+  //           );
+  //           if (!isValid) {
+  //             req.app.locals.specialContext = "invalidRequest";
+  //             return res.redirect("/police-dashboard");
+  //           }
+  //           Community.find(
+  //             {
+  //               $or: [
+  //                 {
+  //                   "community.ownerID": req.user._id,
+  //                 },
+  //                 {
+  //                   _id: ObjectId(req.user.user.activeCommunity),
+  //                 },
+  //               ],
+  //             },
+  //             function (err, dbCommunities) {
+  //               if (err) return console.error(err);
+  //               Bolo.find(
+  //                 {
+  //                   "bolo.communityID": req.user.user.activeCommunity,
+  //                 },
+  //                 function (err, dbBolos) {
+  //                   if (err) return console.error(err);
+  //                   Call.find(
+  //                     {
+  //                       "call.communityID": req.user.user.activeCommunity,
+  //                     },
+  //                     function (err, dbCalls) {
+  //                       if (err) return console.error(err);
+  //                       return res.render("police-dashboard", {
+  //                         user: req.user,
+  //                         civilians: null,
+  //                         vehicles: dbVehicles,
+  //                         firearms: null,
+  //                         tickets: null,
+  //                         arrestReports: null,
+  //                         warrants: null,
+  //                         communities: dbCommunities,
+  //                         bolos: dbBolos,
+  //                         calls: dbCalls,
+  //                         context: null,
+  //                         referer: encodeURIComponent("/police-dashboard"),
+  //                         redirect: encodeURIComponent(redirect),
+  //                       });
+  //                     }
+  //                   );
+  //                 }
+  //               );
+  //             }
+  //           );
+  //         }
+  //       );
+  //     }
+  //   }
+  // });
 
   app.get("/firearm-search", auth, function (req, res) {
     // console.debug(req.query)
@@ -1659,6 +1605,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/arrests", auth, function (req, res) {
+    // console.debug("/arrests", req.body);
     ArrestReport.find(
       {
         "arrestReport.accusedID": req.query.civID,
@@ -2419,6 +2366,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.post("/clear-warrant", auth, function (req, res) {
+    // console.debug("/clear-warrant req: ", req.body);
     req.app.locals.specialContext = null;
     var isValid = isValidObjectIdLength(
       req.body.warrantID,
@@ -2434,9 +2382,8 @@ module.exports = function (app, passport, server) {
       },
       {
         $set: {
-          "warrant.updatedDate": req.body.updatedDate,
-          "warrant.updatedTime": req.body.updatedTime,
-          "warrant.clearingOfficer": req.body.clearingOfficer,
+          "warrant.updatedAt": new Date(),
+          "warrant.clearingOfficerID": req.body.clearingOfficerID,
           "warrant.status": false,
         },
       },
@@ -3237,6 +3184,8 @@ module.exports = function (app, passport, server) {
   });
 
   app.post("/updateOrDeleteVeh", auth, function (req, res) {
+    // console.debug("update or delete vehicle body: ", req.body);
+    var backLocation = req.body.backLocation;
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
       if (!exists(req.body.roVeh)) {
@@ -3248,7 +3197,7 @@ module.exports = function (app, passport, server) {
       );
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect("/civ-dashboard");
+        return res.redirect(backLocation);
       }
       if (!exists(req.body.vinVeh)) {
         req.body.vinVeh = "";
@@ -3276,7 +3225,8 @@ module.exports = function (app, passport, server) {
         },
         function (err) {
           if (err) return console.error(err);
-          return res.redirect("/civ-dashboard");
+          req.app.locals.specialContext = "updateSuccess";
+          return res.redirect(backLocation);
         }
       );
     } else {
@@ -3286,7 +3236,7 @@ module.exports = function (app, passport, server) {
       );
       if (!isValid) {
         req.app.locals.specialContext = "invalidRequest";
-        return res.redirect("/civ-dashboard");
+        return res.redirect(backLocation);
       }
       Vehicle.findByIdAndDelete(
         {
@@ -3294,14 +3244,15 @@ module.exports = function (app, passport, server) {
         },
         function (err) {
           if (err) return console.error(err);
-          return res.redirect("/civ-dashboard");
+          req.app.locals.specialContext = "deleteSuccess";
+          return res.redirect(backLocation);
         }
       );
     }
   });
 
   app.post("/updateOrDeleteFirearm", auth, function (req, res) {
-    // console.debug('update or delete firearm body: ', req.body)
+    // console.debug("update or delete firearm body: ", req.body);
     req.app.locals.specialContext = null;
     if (req.body.action === "update") {
       if (!exists(req.body.firearmID)) {
@@ -3310,30 +3261,19 @@ module.exports = function (app, passport, server) {
         );
         return res.redirect("/civ-dashboard");
       }
-      if (!exists(req.body.registeredOwner)) {
-        req.body.registeredOwner = "N/A";
-      }
-      // hacky af, goal here is to separate the person_id from the person name and dob.
-      // example: 5eeaebb7e23cba396869becb+Rodger Pike | DOB: 2001-01-01
-      // caveat here being that if the name includes a "+" then it will incorrectly split
-      // and probably cause problems. TODO: fix this edge case.
-      if (req.body.registeredOwner.includes("+")) {
-        let idPlusRegisteredOwner = req.body.registeredOwner.split("+");
-        if (idPlusRegisteredOwner.length == 2) {
-          req.body.registeredOwner = idPlusRegisteredOwner[1];
-          req.body.registeredOwnerID = idPlusRegisteredOwner[0];
-        } else {
-          console.error(
-            `invalid split on 'req.body.registeredOwner': ${req.body.registeredOwner}. Does not contain an array of length 2. Split value: ${idPlusRegisteredOwner}`
-          );
-        }
-      } else if (req.body.registeredOwner == "N/A") {
-        // do nothing, this is acceptable
-      } else {
-        console.error(
-          `error on req.body.registeredOwner: ${req.body.registeredOwner}. Does not contain a '+'.`
+      if (!exists(req.body.roFirearm)) {
+        console.warn(
+          "cannot update firearm with empty registered owner, route: /updateOrDeleteFirearm"
         );
+        return res.redirect("/civ-dashboard");
       }
+      if (!exists(req.body.firearmOwnerID)) {
+        console.warn(
+          "cannot update firearm with empty firearmOwnerID, route: /updateOrDeleteFirearm"
+        );
+        return res.redirect("/civ-dashboard");
+      }
+
       var isValid = isValidObjectIdLength(
         req.body.firearmID,
         "cannot lookup invalid length firearmID, route: /updateOrDeleteFirearm"
@@ -3350,8 +3290,8 @@ module.exports = function (app, passport, server) {
           $set: {
             "firearm.serialNumber": req.body.serialNumber,
             "firearm.weaponType": req.body.weaponType,
-            "firearm.registeredOwner": req.body.registeredOwner,
-            "firearm.registeredOwnerID": req.body.registeredOwnerID,
+            "firearm.registeredOwner": req.body.roFirearm,
+            "firearm.registeredOwnerID": req.body.firearmOwnerID,
             "firearm.isStolen": req.body.isStolen,
             "firearm.updatedAt": new Date(),
           },
@@ -3383,6 +3323,96 @@ module.exports = function (app, passport, server) {
         function (err) {
           if (err) return console.error(err);
           return res.redirect("/civ-dashboard");
+        }
+      );
+    }
+  });
+
+  app.post("/updateOrDeleteLicense", auth, function (req, res) {
+    // console.debug("update or delete license body: ", req.body);
+    var backLocation = req.body.backLocation;
+    req.app.locals.specialContext = null;
+    if (req.body.action === "update") {
+      if (!exists(req.body.licenseID)) {
+        console.warn(
+          "cannot update license with empty licenseID, route: /updateOrDeleteLicense"
+        );
+        return res.redirect(backLocation);
+      }
+      if (!exists(req.body.licenseOwnerID)) {
+        console.warn(
+          "cannot update license with empty registered owner, route: /updateOrDeleteLicense"
+        );
+        return res.redirect(backLocation);
+      }
+      if (!exists(req.body.licenseType)) {
+        console.warn(
+          "cannot update license with empty licenseType, route: /updateOrDeleteLicense"
+        );
+        return res.redirect(backLocation);
+      }
+      if (!exists(req.body.licenseStatus)) {
+        console.warn(
+          "cannot update license with empty licenseStatus, route: /updateOrDeleteLicense"
+        );
+        return res.redirect(backLocation);
+      }
+      if (!exists(req.body.expirationDate)) {
+        console.warn(
+          "cannot update license with empty expirationDate, route: /updateOrDeleteLicense"
+        );
+        return res.redirect(backLocation);
+      }
+
+      var isValid = isValidObjectIdLength(
+        req.body.licenseID,
+        "cannot lookup invalid length licenseID, route: /updateOrDeleteLicense"
+      );
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect(backLocation);
+      }
+      License.findOneAndUpdate(
+        {
+          _id: ObjectId(req.body.licenseID),
+        },
+        {
+          $set: {
+            "license.licenseType": req.body.licenseType,
+            "license.status": req.body.licenseStatus,
+            "license.expirationDate": req.body.expirationDate,
+            "license.additionalNotes": req.body.additionalNotes,
+            "license.updatedAt": new Date(),
+          },
+        },
+        function (err) {
+          if (err) return console.error(err);
+          req.app.locals.specialContext = "updateSuccess";
+          return res.redirect(backLocation);
+        }
+      );
+    } else {
+      if (!exists(req.body.licenseID)) {
+        console.warn(
+          "cannot delete license with empty licenseID, route: /updateOrDeleteLicense"
+        );
+        return res.redirect(backLocation);
+      }
+      var isValid = isValidObjectIdLength(
+        req.body.licenseID,
+        "cannot lookup invalid length licenseID, route: /updateOrDeleteLicense"
+      );
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect(backLocation);
+      }
+      License.deleteOne(
+        {
+          _id: ObjectId(req.body.licenseID),
+        },
+        function (err) {
+          if (err) return console.error(err);
+          return res.redirect(backLocation);
         }
       );
     }
@@ -4742,7 +4772,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("clear_panic", (req) => {
-      //console.debug("clear req", req)
+      // console.debug("clear req", req)
       if (req.communityID != null && req.communityID != undefined) {
         var isValid = isValidObjectIdLength(
           req.communityID,
@@ -5044,7 +5074,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("update_alert_volume_slider", (myObj) => {
-      //console.debug('update alert volume slider: ', myObj)
+      // console.debug('update alert volume slider: ', myObj)
       if (exists(myObj)) {
         if (exists(myObj.dbUser)) {
           if (exists(myObj.dbUser._id)) {
@@ -5245,7 +5275,7 @@ module.exports = function (app, passport, server) {
     });
 
     socket.on("update_civilian", (req) => {
-      // console.debug('update civilian socket: ', req)
+      // console.debug("update civilian socket: ", req);
       var isValid = isValidObjectIdLength(
         req.body.civID,
         "cannot update civilian with invalid objectID, socket: update_civilian"
@@ -5381,6 +5411,36 @@ module.exports = function (app, passport, server) {
       }
     });
 
+    socket.on("lookup_license_by_id", (req) => {
+      // console.debug('lookup license socket: ', req)
+      if (exists(req.licenseID)) {
+        License.findById(
+          {
+            _id: ObjectId(req.licenseID),
+          },
+          function (err, dbLicense) {
+            if (err) return console.error(err);
+            return socket.emit("load_license_by_id_result", dbLicense); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
+          }
+        );
+      }
+    });
+
+    socket.on("lookup_warrant_by_id", (req) => {
+      // console.debug('lookup license socket: ', req)
+      if (exists(req.warrantID)) {
+        Warrant.findById(
+          {
+            _id: ObjectId(req.warrantID),
+          },
+          function (err, dbWarrant) {
+            if (err) return console.error(err);
+            return socket.emit("load_warrant_by_id_result", dbWarrant); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
+          }
+        );
+      }
+    });
+
     socket.on("create_new_veh", (req) => {
       // console.debug('create new veh socket: ', req)
       var myNewVeh = new Vehicle();
@@ -5398,6 +5458,16 @@ module.exports = function (app, passport, server) {
       myNewFirearm.save(function (err, dbFirearms) {
         if (err) return console.error(err);
         return socket.emit("created_new_firearm", dbFirearms); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
+      });
+    });
+
+    socket.on("create_new_license", (req) => {
+      // console.debug("create new license socket: ", req);
+      var myNewLicense = new License();
+      myNewLicense.socketCreateLicense(req);
+      myNewLicense.save(function (err, dbLicenses) {
+        if (err) return console.error(err);
+        return socket.emit("created_new_license", dbLicenses); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
       });
     });
 
@@ -5451,6 +5521,149 @@ module.exports = function (app, passport, server) {
           }
         );
       }
+    });
+
+    socket.on("fetch_civ_cards", (req) => {
+      // console.debug("get fetch_civ_cards socket: ", req);
+      axios
+        .get(
+          `${policeCadApiUrl}/api/v1/civilians/user/${req.dbUser._id}?active_community_id=${req.dbUser.user.activeCommunity}&limit=8&page=${req.page}`,
+          config
+        )
+        .then(function (dbPersonas) {
+          if (!exists(dbPersonas.data)) {
+            return socket.emit("load_civ_cards_result", undefined);
+          } else {
+            return socket.emit("load_civ_cards_result", dbPersonas.data);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          return socket.emit("load_civ_cards_result", undefined);
+        });
+    });
+
+    socket.on("fetch_veh_cards", (req) => {
+      // console.debug("get fetch_veh_cards socket: ", req);
+      axios
+        .get(
+          `${policeCadApiUrl}/api/v1/vehicles/registered-owner/${req.civID}?limit=8&page=${req.page}`,
+          config
+        )
+        .then(function (dbVehicles) {
+          if (!exists(dbVehicles.data)) {
+            return socket.emit("load_veh_cards_result", undefined);
+          } else {
+            return socket.emit("load_veh_cards_result", dbVehicles.data);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          return socket.emit("load_veh_cards_result", undefined);
+        });
+    });
+
+    socket.on("fetch_gun_cards", (req) => {
+      // console.debug("get fetch_gun_cards socket: ", req);
+      axios
+        .get(
+          `${policeCadApiUrl}/api/v1/firearms/registered-owner/${req.civID}?limit=8&page=${req.page}`,
+          config
+        )
+        .then(function (dbFirearms) {
+          if (!exists(dbFirearms.data)) {
+            return socket.emit("load_gun_cards_result", undefined);
+          } else {
+            // console.debug("load_gun_cards_result response: ", dbFirearms.data);
+            return socket.emit("load_gun_cards_result", dbFirearms.data);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          return socket.emit("load_gun_cards_result", undefined);
+        });
+    });
+
+    socket.on("fetch_license_cards", (req) => {
+      // console.debug("get fetch_license_cards socket: ", req);
+      axios
+        .get(
+          `${policeCadApiUrl}/api/v1/licenses/owner/${req.civID}?limit=8&page=${req.page}`,
+          config
+        )
+        .then(function (dbLicenses) {
+          if (!exists(dbLicenses.data)) {
+            return socket.emit("load_license_cards_result", undefined);
+          } else {
+            // console.debug("load_license_cards_result response: ", dbLicenses.data);
+            return socket.emit("load_license_cards_result", dbLicenses.data);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          return socket.emit("load_license_cards_result", undefined);
+        });
+    });
+
+    socket.on("fetch_warrant_cards", (req) => {
+      // console.debug("get fetch_warrant_cards socket: ", req);
+      axios
+        .get(
+          `${policeCadApiUrl}/api/v1/warrants/user/${req.civID}?limit=8&page=${req.page}`,
+          config
+        )
+        .then(function (dbLicenses) {
+          if (!exists(dbLicenses.data)) {
+            return socket.emit("load_warrant_cards_result", undefined);
+          } else {
+            // console.debug("load_warrant_cards_result response: ", dbLicenses.data);
+            return socket.emit("load_warrant_cards_result", dbLicenses.data);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          return socket.emit("load_warrant_cards_result", undefined);
+        });
+    });
+
+    socket.on("name_search_police", (req) => {
+      // console.debug("get name_search_police socket: ", req);
+      axios
+        .get(
+          `${policeCadApiUrl}/api/v1/civilians/search?active_community_id=${req.body.communityID}&first_name=${req.body.civFirstName}&last_name=${req.body.civLastName}&date_of_birth=${req.body.birthday}&limit=8&page=${req.body.page}`,
+          config
+        )
+        .then(function (dbCivilians) {
+          if (!exists(dbCivilians.data)) {
+            return socket.emit("name_search_police_result", undefined);
+          } else {
+            return socket.emit("name_search_police_result", dbCivilians.data);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          return socket.emit("load_license_cards_result", undefined);
+        });
+    });
+
+    socket.on("vehicle_search_police", (req) => {
+      // console.debug("get vehicle_search_police socket: ", req);
+      axios
+        .get(
+          `${policeCadApiUrl}/api/v1/vehicles/search?active_community_id=${req.body.communityID}&plate=${req.body.plate}&limit=8&page=${req.body.page}`,
+          config
+        )
+        .then(function (dbVehicles) {
+          if (!exists(dbVehicles.data)) {
+            return socket.emit("vehicle_search_police_result", undefined);
+          } else {
+            return socket.emit("vehicle_search_police_result", dbVehicles.data);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          // return socket.emit("load_license_cards_result", undefined);
+        });
     });
 
     socket.on("get_personas", (req) => {

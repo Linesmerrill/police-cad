@@ -38,7 +38,7 @@
                 <div class="form-group">
                   <label class="col-md-4 control-label" for="profileImage">Profile Image:</label>
                   <div class="col-md-6" style="margin-top: 7px;">
-                    <a href="https://en.gravatar.com/support/activating-your-account/" target="_blank">Update <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
+                    <a href="https://en.gravatar.com/support/activating-your-account/" target="_blank">Update <i class="fa fa-external-link-alt" aria-hidden="true"></i></a>
                   </div>
                 </div>
 
@@ -105,12 +105,12 @@
                     <img alt="discord" class="margin-bottom-2" style="width: 40px;" src="./static/images/discord-icon.svg">
                     </br>
                     <% if (user.user.discordConnected) { %>
-                    <h5 class="margin-bottom-1"><i style="color: #57C567" class="fas fa-check"></i> Discord account connected</h5>
+                    <h5 class="margin-bottom-1"><i style="color: #57C567" class="fa fa-check"></i> Discord account connected</h5>
                     <button name="action" value="disconnectDiscord" class="btn btn-danger" type="submit">Disconnect your Discord account</button>
                     <% } else { %>
-                    <h5 class="margin-bottom-1"><i style="color: #F8564E" class="fas fa-times"></i> Discord account not connected</h5>
+                    <h5 class="margin-bottom-1"><i style="color: #F8564E" class="fa fa-times"></i> Discord account not connected</h5>
                     <a class="btn btn-primary" href="https://discord.com/api/oauth2/authorize?client_id=1005557484271976569&redirect_uri=<%=redirect%>&response_type=code&scope=identify&state=<%=referer%>">
-                      Connect your Discord account <i class="fas fa-external-link-alt" aria-hidden="true"></i></a>
+                      Connect your Discord account <i class="fa fa-external-link-alt" aria-hidden="true"></i></a>
                     <% } %>
                   </div>
                 </div>
@@ -157,7 +157,7 @@
                   </div>
                 </div>
 
-                <h5>Alert Volume <a data-toggle="modal" href="#alertVolumeHelpModal"><i class="fas fa-exclamation-circle"></i></a></h5>
+                <h5>Alert Volume <a data-toggle="modal" href="#alertVolumeHelpModal"><i class="fa fa-exclamation-circle"></i></a></h5>
 
                 <div class="form-group">
                   <label class="col-md-4 control-label" for="alertVolume">Adjust Sound Level:</label>
