@@ -891,7 +891,7 @@
                     <input id="delBirthday" name="birthday" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
                   </div>
 
-                  <div class="form-group col-xs-1 col-md-1 margin-left-neg-15">
+                  <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
                     <label class="control-label" for="ageView">Age:</label>
                     <input id="ageView" name="age" type="text" class="form-control input-md disabled-color" required readonly="readonly">
                   </div>
@@ -959,11 +959,15 @@
                     <input id="veteran-view" style="width: 2em;" type="checkbox" name="veteran" class="form-control">
                 </div>
 
-                <div class="col-md-12 text-align-center margin-bottom-1">
-                  <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
-                  <input type="hidden" id="userBtnValue" value="">
-                  <button type="submit" value="update" name="action" style="cursor: pointer" class="btn btn-info" onclick="updateUserBtnValue('update')">Update Civilian</button>
-                  <button type="submit" value="delete" name="action" style="cursor: pointer" class="btn btn-danger" onclick="updateUserBtnValue('delete')">Delete Civilian</button>
+                <hr style="width: 88%;max-width: 100rem;">
+
+                <div class="row col-xs-3 col-md-12 margin-left-neg-15">
+                  <div class="col-md-12 text-align-center margin-bottom-1">
+                    <input type="hidden" id="userID" name="userID" value="<%= user._id %>">
+                    <input type="hidden" id="userBtnValue" value="">
+                    <button type="submit" value="update" name="action" style="cursor: pointer" class="btn btn-info" onclick="updateUserBtnValue('update')">Update Civilian</button>
+                    <button type="submit" value="delete" name="action" style="cursor: pointer" class="btn btn-danger" onclick="updateUserBtnValue('delete')">Delete Civilian</button>
+                  </div>
                 </div>
               </div>
                   </fieldset>
@@ -1394,13 +1398,14 @@
                 <input id="additionalNotes-details" name="additionalNotes" type="text" placeholder="additional notes" class="form-control input-md">
               </div>
             </div>
-
-            <div class="col-md-12 text-align-center margin-bottom-2">
-                <input type="hidden" id="licenseID" name="licenseID">
-                <input type="hidden" id="licenseOwnerID" name="licenseOwnerID">
-                <input type="hidden" name="backLocation" value="/civ-dashboard">
-                <button type="submit" value="update" name="action" class="btn btn-info">Update License</button>
-                <button type="submit" value="delete" name="action" class="btn btn-danger">Delete License</button>
+            <div class="form-group">
+              <div class="col-md-12 text-align-center margin-bottom-2">
+                  <input type="hidden" id="licenseID" name="licenseID">
+                  <input type="hidden" id="licenseOwnerID" name="licenseOwnerID">
+                  <input type="hidden" name="backLocation" value="/civ-dashboard">
+                  <button type="submit" value="update" name="action" class="btn btn-info">Update License</button>
+                  <button type="submit" value="delete" name="action" class="btn btn-danger">Delete License</button>
+              </div>
             </div>
             </fieldset>
           </form>
