@@ -14582,7 +14582,7 @@
                             columnNumber: 15,
                           },
                         },
-                        "This page informs you of our policies regarding the collection, use, and disclosure of personal data when you use our Service and the choices you have associated with that data. This Privacy Policy for Lines Police Server is powered by FreePrivacyPolicy.com."
+                        "This page informs you of our policies regarding the collection, use, and disclosure of personal data when you use our Service and the choices you have associated with that data. This Privacy Policy for Lines Police CAD is powered by FreePrivacyPolicy.com."
                       ),
                       /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                         "p",
@@ -17675,7 +17675,7 @@
       /*!***********************************************!*\
     !*** ./src/TermsAndConditions/data.source.js ***!
     \***********************************************/
-      /*! exports provided: Nav00DataSource, Content130DataSource, Content132DataSource, Content133DataSource */
+      /*! exports provided: Nav00DataSource, Content130DataSource, Content133DataSource */
       /***/ function (module, __webpack_exports__, __webpack_require__) {
         "use strict";
         __webpack_require__.r(__webpack_exports__);
@@ -17693,13 +17693,7 @@
             return Content130DataSource;
           }
         );
-        /* harmony export (binding) */ __webpack_require__.d(
-          __webpack_exports__,
-          "Content132DataSource",
-          function () {
-            return Content132DataSource;
-          }
-        );
+
         /* harmony export (binding) */ __webpack_require__.d(
           __webpack_exports__,
           "Content133DataSource",
@@ -17991,18 +17985,7 @@
                             columnNumber: 15,
                           },
                         },
-                        "Terms and Conditions",
-                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                          "br",
-                          {
-                            __self: undefined,
-                            __source: {
-                              fileName: _jsxFileName,
-                              lineNumber: 133,
-                              columnNumber: 17,
-                            },
-                          }
-                        )
+                        "Terms and Conditions"
                       )
                     )
                   ),
@@ -18011,207 +17994,7 @@
             ],
           },
         };
-        const Content132DataSource = {
-          OverPack: {
-            className:
-              "home-page-wrapper content13-wrapper lj39jud6ngt-editor_css",
-            playScale: 0.3,
-          },
-          titleWrapper: {
-            className: "title-wrapper",
-            children: [
-              {
-                name: "image",
-                children:
-                  "https://gw.alipayobjects.com/zos/rmsportal/PiqyziYmvbgAudYfhuBr.svg",
-                className: "title-image",
-              },
-              {
-                name: "title",
-                children:
-                  /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                    "span",
-                    {
-                      __self: undefined,
-                      __source: {
-                        fileName: _jsxFileName,
-                        lineNumber: 160,
-                        columnNumber: 11,
-                      },
-                    },
-                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
-                      {
-                        __self: undefined,
-                        __source: {
-                          fileName: _jsxFileName,
-                          lineNumber: 161,
-                          columnNumber: 13,
-                        },
-                      },
-                      "Important Notice"
-                    )
-                  ),
-                className: "title-h1",
-              },
-              {
-                name: "content",
-                children:
-                  /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                    "span",
-                    {
-                      __self: undefined,
-                      __source: {
-                        fileName: _jsxFileName,
-                        lineNumber: 169,
-                        columnNumber: 11,
-                      },
-                    },
-                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
-                      {
-                        __self: undefined,
-                        __source: {
-                          fileName: _jsxFileName,
-                          lineNumber: 170,
-                          columnNumber: 13,
-                        },
-                      },
-                      "It has come to our attention that there are some dishonest people out there that are trying to ruin this service by charging people to simply use this website. This is not permitted and goes against everything we have worked so hard to create with this website."
-                    ),
-                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
-                      {
-                        __self: undefined,
-                        __source: {
-                          fileName: _jsxFileName,
-                          lineNumber: 176,
-                          columnNumber: 13,
-                        },
-                      },
-                      "This website is 100% free to use and we work hard everyday to keep it that way. That is not changing."
-                    ),
-                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
-                      {
-                        __self: undefined,
-                        __source: {
-                          fileName: _jsxFileName,
-                          lineNumber: 180,
-                          columnNumber: 13,
-                        },
-                      },
-                      "You may see us run advertisements on the website from time to time. This is simply to cover the costs of running our servers, staff and other business related operations. Everything we do, we do with the community in mind."
-                    ),
-                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
-                      {
-                        __self: undefined,
-                        __source: {
-                          fileName: _jsxFileName,
-                          lineNumber: 186,
-                          columnNumber: 13,
-                        },
-                      },
-                      "Please:"
-                    ),
-                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
-                      {
-                        __self: undefined,
-                        __source: {
-                          fileName: _jsxFileName,
-                          lineNumber: 187,
-                          columnNumber: 13,
-                        },
-                      },
-                      "- Continue to have fun using this site"
-                    ),
-                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
-                      {
-                        __self: undefined,
-                        __source: {
-                          fileName: _jsxFileName,
-                          lineNumber: 188,
-                          columnNumber: 13,
-                        },
-                      },
-                      "- Continue to share it with your friends and communities"
-                    ),
-                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
-                      {
-                        __self: undefined,
-                        __source: {
-                          fileName: _jsxFileName,
-                          lineNumber: 189,
-                          columnNumber: 13,
-                        },
-                      },
-                      "- Let us know all the cool ideas you think we should add to continually make it better for everyone"
-                    ),
-                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
-                      {
-                        __self: undefined,
-                        __source: {
-                          fileName: _jsxFileName,
-                          lineNumber: 193,
-                          columnNumber: 13,
-                        },
-                      },
-                      "- Let us know if you see someone breaking these simple rules. We will track them down and stop them"
-                    )
-                  ),
-                className: "title-content lj39j5xv1or-editor_css",
-              },
-              {
-                name: "content2",
-                children:
-                  /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                    "span",
-                    {
-                      __self: undefined,
-                      __source: {
-                        fileName: _jsxFileName,
-                        lineNumber: 204,
-                        columnNumber: 11,
-                      },
-                    },
-                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
-                      {
-                        __self: undefined,
-                        __source: {
-                          fileName: _jsxFileName,
-                          lineNumber: 205,
-                          columnNumber: 13,
-                        },
-                      },
-                      "From all of us at Lines Police CAD, Thank you!",
-                      " ",
-                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                        "span",
-                        {
-                          role: "img",
-                          "aria-label": "heart emoji",
-                          __self: undefined,
-                          __source: {
-                            fileName: _jsxFileName,
-                            lineNumber: 207,
-                            columnNumber: 15,
-                          },
-                        },
-                        "\u2764\uFE0F"
-                      )
-                    )
-                  ),
-                className: "title-content",
-              },
-            ],
-          },
-        };
+
         const Content133DataSource = {
           OverPack: {
             className:
@@ -18232,28 +18015,67 @@
                 className: "",
                 children:
                   /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                    "p",
+                    {
+                      __self: undefined,
+                      __source: {
+                        fileName: _jsxFileName,
+                        lineNumber: 237,
+                        columnNumber: 13,
+                      },
+                    },
+                    "Welcome to Lines Police CAD!"
+                  ),
+              },
+              {
+                name: "content2",
+                children:
+                  /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                     "span",
                     {
                       __self: undefined,
                       __source: {
                         fileName: _jsxFileName,
-                        lineNumber: 236,
+                        lineNumber: 244,
                         columnNumber: 11,
                       },
                     },
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "b",
                       {
                         __self: undefined,
                         __source: {
                           fileName: _jsxFileName,
-                          lineNumber: 237,
+                          lineNumber: 245,
                           columnNumber: 13,
                         },
                       },
-                      "Welcome to Lines Police CAD!"
+                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                        "span",
+                        {
+                          __self: undefined,
+                          __source: {
+                            fileName: _jsxFileName,
+                            lineNumber: 246,
+                            columnNumber: 15,
+                          },
+                        },
+                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                          "p",
+                          {
+                            __self: undefined,
+                            __source: {
+                              fileName: _jsxFileName,
+                              lineNumber: 247,
+                              columnNumber: 17,
+                            },
+                          },
+                          "Last updated: April 26, 2025"
+                        )
+                      )
                     )
                   ),
+                className: "title-content lj3a3dnbrpn-editor_css",
               },
               {
                 name: "content2",
@@ -18328,7 +18150,7 @@
                           columnNumber: 13,
                         },
                       },
-                      "By accessing this website we assume you accept these terms and conditions. Do not continue to use Lines Police Server if you do not agree to take all of the terms and conditions stated on this page. Our Terms and Conditions were created with the help of the Terms And Conditions Generator."
+                      "By accessing this website we assume you accept these terms and conditions. Do not continue to use Lines Police CAD if you do not agree to take all of the terms and conditions stated on this page. Our Terms and Conditions were created with the help of the Terms And Conditions Generator."
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                       "p",
@@ -18343,7 +18165,7 @@
                       'The following terminology applies to these Terms and Conditions, Privacy Statement and Disclaimer Notice and all Agreements: "Client", "You" and "Your" refers to you, the person log on this website and compliant to the Company\u2019s terms and conditions. "The Company", "Ourselves", "We", "Our" and "Us", refers to our Company. "Party", "Parties", or "Us", refers to both the Client and ourselves. All terms refer to the offer, acceptance and consideration of payment necessary to undertake the process of our assistance to the Client in the most appropriate manner for the express purpose of meeting the Client\u2019s needs in respect of provision of the Company\u2019s stated services, in accordance with and subject to, prevailing law of Netherlands. Any use of the above terminology or other words in the singular, plural, capitalization and/or he/she or they, are taken as interchangeable and therefore as referring to same.'
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "h2",
                       {
                         __self: undefined,
                         __source: {
@@ -18379,7 +18201,7 @@
                       "Most interactive websites use cookies to let us retrieve the user\u2019s details for each visit. Cookies are used by our website to enable the functionality of certain areas to make it easier for people visiting our website. Some of our affiliate/advertising partners may also use cookies."
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "h2",
                       {
                         __self: undefined,
                         __source: {
@@ -18415,7 +18237,7 @@
                       "You must not:"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18427,7 +18249,7 @@
                       " Republish material from Lines Police CAD"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18439,7 +18261,7 @@
                       " Sell, rent or sub-license material from Lines Police CAD"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18451,7 +18273,7 @@
                       " Reproduce, duplicate or copy material from Lines Police CAD"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18484,7 +18306,7 @@
                           columnNumber: 13,
                         },
                       },
-                      "Parts of this website offer an opportunity for users to post and exchange opinions and information in certain areas of the website. Lines Police CAD does not filter, edit, publish or review Comments prior to their presence on the website. Comments do not reflect the views and opinions of Lines Police Server,its agents and/or affiliates. Comments reflect the views and opinions of the person who post their views and opinions. To the extent permitted by applicable laws, Lines Police CAD shall not be liable for the Comments or for any liability, damages or expenses caused and/or suffered as a result of any use of and/or posting of and/or appearance of the Comments on this website."
+                      "Parts of this website offer an opportunity for users to post and exchange opinions and information in certain areas of the website. Lines Police CAD does not filter, edit, publish or review Comments prior to their presence on the website. Comments do not reflect the views and opinions of Lines Police CAD, its agents and/or affiliates. Comments reflect the views and opinions of the person who post their views and opinions. To the extent permitted by applicable laws, Lines Police CAD shall not be liable for the Comments or for any liability, damages or expenses caused and/or suffered as a result of any use of and/or posting of and/or appearance of the Comments on this website."
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                       "p",
@@ -18511,7 +18333,7 @@
                       "You warrant and represent that:"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18524,7 +18346,7 @@
                       "You are entitled to post the Comments on our website and have all necessary licenses and consents to do so;"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18537,7 +18359,7 @@
                       "The Comments do not invade any intellectual property right, including without limitation copyright, patent or trademark of any third party;"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18550,7 +18372,7 @@
                       "The Comments do not contain any defamatory, libelous, offensive, indecent or otherwise unlawful material which is an invasion of privacy"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18575,7 +18397,536 @@
                       "You hereby grant Lines Police CAD a non-exclusive license to use, reproduce, edit and authorize others to use, reproduce and edit any of your Comments in any and all forms, formats or media."
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "h2",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 359,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Subscriptions"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                       "p",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Lines Police CAD offers subscription plans to enhance your experience on our platform. We provide two types of subscriptions: User Subscription Plans for individual users and Community Promotion Tiers for advertising communities. By subscribing to any plan, you agree to the following terms:"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "h3",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "User Subscription Plans"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "p",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "These plans enhance your personal experience on the platform:"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "h4",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Plans and Features:"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Base Plan ($3/month or $2.67/month annually): Allows you to create up to 5 communities, access default departments, and experience the app with full ads."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Premium Plan ($8/month or $7.08/month annually): Includes a verified checkmark on your profile, the ability to create up to 10 communities, access to default departments, and a reduced ad experience with up to 50% fewer ads."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Premium + Plan ($19.99/month or $17.49/month annually): Provides a verified checkmark, unlimited community creation, custom departments, and an ad-free experience."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "h4",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Billing and Payment:"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "User Subscription Plans are available on a monthly or annual basis. Annual plans offer a discounted rate, saving you 12% compared to the monthly billing option."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "You will be charged the full amount for the selected billing period (monthly or annual) at the time of subscription."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Subscriptions auto-renew at the end of each billing period unless cancelled. You must cancel at least 24 hours prior to the next renewal to avoid additional charges."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Payments are processed securely through Stripe. You agree to provide accurate payment information and authorize Lines Police CAD to charge the applicable subscription fees."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "h4",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Cancellation and Management:"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      'You may cancel your User Subscription Plan at any time through the "Manage Subscription" section of the app. Upon cancellation, your subscription benefits will remain active until the end of the current billing period.'
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Terms may vary depending on the platform you subscribed on (e.g., iOS, Android, or web). You are responsible for managing your subscription directly with the platform provider if applicable."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "h4",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "User Obligations:"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "You agree not to share your User Subscription Plan benefits with other users or attempt to bypass subscription limits (e.g., creating additional accounts to exceed community creation limits)."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Lines Police CAD reserves the right to suspend or terminate your subscription if we detect misuse or violation of these terms."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "h3",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Community Promotion Tiers"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "p",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "These tiers allow you to advertise your community on the platform:"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "h4",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Tiers and Features:"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Basic Tier ($5/month): Includes promotional text in search results to help your community stand out."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Standard Tier ($10/month): Includes promotional text in search results and a verified community badge to build trust with potential members."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Premium Tier ($20/month): Includes promotional text in search results, a verified community badge, and a boost on the Discover Communities page for increased visibility."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Elite Tier ($50/month): Includes promotional text in search results (up to 200 characters), a verified community badge, a boost on the Discover Communities page, and a featured spot on the Home Page for maximum exposure."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "h4",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Billing and Payment:"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Community Promotion Tiers are available on a monthly basis only."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "You will be charged the full monthly amount at the time of subscription."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Community Promotion Tiers auto-renew at the end of each billing period unless cancelled. You must cancel at least 24 hours prior to the next renewal to avoid additional charges."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Payments are processed securely through Stripe. You agree to provide accurate payment information and authorize Lines Police CAD to charge the applicable subscription fees."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "h4",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Cancellation and Management:"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      'You may cancel your Community Promotion Tier at any time through the "Manage Subscription" section of the app. Upon cancellation, your promotion benefits will remain active until the end of the current billing period.'
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Terms may vary depending on the platform you subscribed on (e.g., iOS, Android, or web). You are responsible for managing your subscription directly with the platform provider if applicable."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "h4",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "User Obligations:"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Promotional text must comply with our content guidelines and must not contain inappropriate, offensive, or misleading information. Lines Police CAD reserves the right to reject or remove promotional text that violates these guidelines."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "The verified community badge and featured placements (e.g., on the Discover Communities page or Home Page) are subject to availability and may be adjusted at Lines Police CAD's discretion."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "You agree not to misuse promotion features, such as using multiple accounts to promote the same community beyond the allowed limits."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Lines Police CAD reserves the right to suspend or terminate your Community Promotion Tier if we detect misuse or violation of these terms."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "h3",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Feature Descriptions:"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "p",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 359,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Lines Police CAD provides feature descriptions to help you understand the benefits of each subscription plan and community promotion tier. These descriptions are accessible via an information icon next to each feature in the subscription selection screen. By interacting with these icons, you acknowledge the following:"
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Feature descriptions are provided for informational purposes only and do not constitute a guarantee of specific functionality or performance."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Lines Police CAD reserves the right to modify or discontinue features at any time, with or without notice. Any such changes will be reflected in the subscription selection screen and updated feature descriptions."
+                    ),
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "li",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 360,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Accessing feature descriptions does not affect your subscription status or billing."
+                    ),
+
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "h2",
                       {
                         __self: undefined,
                         __source: {
@@ -18599,7 +18950,7 @@
                       "The following organizations may link to our Website without prior written approval:"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18611,7 +18962,7 @@
                       " Government agencies;"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18623,7 +18974,7 @@
                       " Search engines;"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18635,7 +18986,7 @@
                       " News organizations;"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18648,7 +18999,7 @@
                       "Online directory distributors may link to our Website in the same manner as they hyperlink to the Websites of other listed businesses; and"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18685,7 +19036,7 @@
                       "We may consider and approve other link requests from the following types of organizations:"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18694,10 +19045,10 @@
                           columnNumber: 13,
                         },
                       },
-                      " commonly-known consumer and/or business information sources;"
+                      "Commonly-known consumer and/or business information sources;"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18706,10 +19057,10 @@
                           columnNumber: 13,
                         },
                       },
-                      " dot.com community sites;"
+                      "Dot.com community sites;"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18718,10 +19069,10 @@
                           columnNumber: 13,
                         },
                       },
-                      " associations or other groups representing charities;"
+                      "Associations or other groups representing charities;"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18730,10 +19081,10 @@
                           columnNumber: 13,
                         },
                       },
-                      " online directory distributors;"
+                      "Online directory distributors;"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18742,10 +19093,10 @@
                           columnNumber: 13,
                         },
                       },
-                      " internet portals;"
+                      "Internet portals;"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18754,10 +19105,10 @@
                           columnNumber: 13,
                         },
                       },
-                      " accounting, law and consulting firms; and"
+                      "Accounting, law and consulting firms; and"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18766,7 +19117,7 @@
                           columnNumber: 13,
                         },
                       },
-                      " educational institutions and trade associations."
+                      "Educational institutions and trade associations."
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                       "p",
@@ -18817,7 +19168,7 @@
                       "Approved organizations may hyperlink to our Website as follows:"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18826,10 +19177,10 @@
                           columnNumber: 13,
                         },
                       },
-                      " By use of our corporate name; or"
+                      "By use of our corporate name; or"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18838,10 +19189,10 @@
                           columnNumber: 13,
                         },
                       },
-                      " By use of the uniform resource locator being linked to; or"
+                      "By use of the uniform resource locator being linked to; or"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -18866,7 +19217,7 @@
                       "No use of Lines Police CAD's logo or other artwork will be allowed for linking absent a trademark license agreement."
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "h2",
                       {
                         __self: undefined,
                         __source: {
@@ -18890,7 +19241,7 @@
                       "Without prior approval and written permission, you may not create frames around our Webpages that alter in any way the visual presentation or appearance of our Website."
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "h2",
                       {
                         __self: undefined,
                         __source: {
@@ -18914,7 +19265,7 @@
                       "We shall not be hold responsible for any content that appears on your Website. You agree to protect and defend us against all claims that is rising on your Website. No link(s) should appear on any Website that may be interpreted as libelous, obscene or criminal, or which infringes, otherwise violates, or advocates the infringement or other violation of, any third party rights."
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "h2",
                       {
                         __self: undefined,
                         __source: {
@@ -18935,10 +19286,10 @@
                           columnNumber: 13,
                         },
                       },
-                      "Please read Privacy Policy"
+                      "Please read our Privacy Policy"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "h2",
                       {
                         __self: undefined,
                         __source: {
@@ -18959,10 +19310,10 @@
                           columnNumber: 13,
                         },
                       },
-                      "We reserve the right to request that you remove all links or any particular link to our Website. You approve to immediately remove all links to our Website upon request. We also reserve the right to amen these terms and conditions and it\u2019s linking policy at any time. By continuously linking to our Website, you agree to be bound to and follow these linking terms and conditions."
+                      "We reserve the right to request that you remove all links or any particular link to our Website. You approve to immediately remove all links to our Website upon request. We also reserve the right to amend these terms and conditions and it\u2019s linking policy at any time. By continuously linking to our Website, you agree to be bound to and follow these linking terms and conditions."
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "h2",
                       {
                         __self: undefined,
                         __source: {
@@ -18998,7 +19349,7 @@
                       "We do not ensure that the information on this website is correct, we do not warrant its completeness or accuracy; nor do we promise to ensure that the website remains available or that the material on the website is kept up to date."
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "h2",
                       {
                         __self: undefined,
                         __source: {
@@ -19022,7 +19373,7 @@
                       "To the maximum extent permitted by applicable law, we exclude all representations, warranties and conditions relating to our website and the use of this website. Nothing in this disclaimer will:"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -19032,10 +19383,10 @@
                         },
                       },
                       " ",
-                      "limit or exclude our or your liability for death or personal injury;"
+                      "Limit or exclude our or your liability for death or personal injury;"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -19045,10 +19396,10 @@
                         },
                       },
                       " ",
-                      "limit or exclude our or your liability for fraud or fraudulent misrepresentation;"
+                      "Limit or exclude our or your liability for fraud or fraudulent misrepresentation;"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -19058,10 +19409,10 @@
                         },
                       },
                       " ",
-                      "limit any of our or your liabilities in any way that is not permitted under applicable law; or"
+                      "Limit any of our or your liabilities in any way that is not permitted under applicable law; or"
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                      "p",
+                      "li",
                       {
                         __self: undefined,
                         __source: {
@@ -19071,7 +19422,7 @@
                         },
                       },
                       " ",
-                      "exclude any of our or your liabilities that may not be excluded under applicable law."
+                      "Exclude any of our or your liabilities that may not be excluded under applicable law."
                     ),
                     /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                       "p",
@@ -19238,24 +19589,7 @@
                   },
                 }
               ),
-              /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                _Content13__WEBPACK_IMPORTED_MODULE_3__["default"],
-                {
-                  id: "Content13_2",
-                  key: "Content13_2",
-                  dataSource:
-                    _data_source__WEBPACK_IMPORTED_MODULE_4__[
-                      "Content132DataSource"
-                    ],
-                  isMobile: this.state.isMobile,
-                  __self: this,
-                  __source: {
-                    fileName: _jsxFileName,
-                    lineNumber: 65,
-                    columnNumber: 7,
-                  },
-                }
-              ),
+
               /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                 _Content13__WEBPACK_IMPORTED_MODULE_3__["default"],
                 {
