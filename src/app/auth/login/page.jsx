@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { loginUser } from "@/services/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,20 +13,22 @@ export default function LoginPage() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
+    setError("");
     try {
       // Replace this with your real API call
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!res.ok) {
+      const result = await loginUser(email, password);
+      console.log(result);
+      if (!result.success) {
         throw new Error("Login failed");
       }
 
-      const data = await res.json();
+      //   const result = await checkEmailExists(email);
+      //   if (!result.success || result.data?.user) {
+      //     throw new Error("Email already in use.");
+      //   }
+
+      //   const data = await result.json();
+      //   console.log(`data`, data);
       // Store token or context auth update here
       router.push("/dashboard");
     } catch (err) {

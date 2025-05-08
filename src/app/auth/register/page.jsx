@@ -73,6 +73,20 @@ export default function RegisterPage() {
     }
   };
 
+  const handleAutoCodeSubmit = async (enteredCode) => {
+    setError("");
+    setLoading(true);
+    try {
+      const result = await verifyCode(enteredCode, email);
+      if (!result.success) throw new Error(result.message);
+      setStep(3);
+    } catch (err) {
+      setError(err.message || "Invalid code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <Header />
@@ -121,9 +135,19 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   maxLength={6}
                   value={code}
-                  onChange={(e) => setCode(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, ""); // strip non-digits
+                    setCode(val);
+
+                    // Auto-submit if 6 digits entered
+                    if (val.length === 6) {
+                      handleAutoCodeSubmit(val);
+                    }
+                  }}
                   className="w-full px-4 py-2 border rounded-md text-black focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />

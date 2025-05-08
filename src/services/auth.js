@@ -1,4 +1,53 @@
-const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+import base64 from "react-native-base64";
+
+const API_URL = process.env.POLICE_CAD_APP_API_URL || "http://localhost:8082";
+
+export const loginUser = async (username, password) => {
+  const payload = {
+    username,
+    password,
+  };
+
+  var encoded = base64.encode(`${username}:${password}`);
+
+  try {
+    const response = await fetch(`${API_URL}/api/v1/auth/token`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${encoded}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      //   await SecureStore.setItemAsync("token", data.token);
+      //   await SecureStore.setItemAsync("userId", data._id);
+      //   storeCredentials(username, password);
+      //   updateOnlineStatus(data._id, true);
+      return { success: true, message: "" };
+    } else {
+      // Extract the specific error message if available, stopping at the first comma
+      const errorMessageMatch = data.message.match(/\[(.*?),/);
+      let errorMessage = errorMessageMatch
+        ? errorMessageMatch[1]
+        : data.message || "Login failed";
+
+      // If the error message contains 'email', show a generic error message
+      if (
+        errorMessage.toLowerCase().includes("email") ||
+        errorMessage.toLowerCase().includes("password")
+      ) {
+        errorMessage = "Invalid login credentials.\nPlease try again.";
+      }
+
+      return { success: false, message: errorMessage };
+    }
+  } catch (error) {
+    console.error("Error logging in:", error);
+    return { success: false, message: "An error occurred. Please try again." };
+  }
+};
 
 export const createAccount = async (emailAddress, password, username) => {
   try {
@@ -47,11 +96,10 @@ export async function checkEmailExists(emailAddress) {
       }),
     });
 
-    const data = await response.json();
-    if (response.code === 201) {
-      return { success: true, data: data };
+    if (response.status === 200) {
+      return { success: true, data: null };
     } else {
-      return { success: false, message: data.Response.Message };
+      return { success: false, message: response.message };
     }
   } catch (error) {
     console.error("Error checking email:", error);
