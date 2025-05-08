@@ -135,6 +135,17 @@ module.exports = function (app, passport, server) {
     );
   });
 
+  app.get("/app-ads.txt", (req, res) => {
+    res.set("Content-Type", "text");
+    let message = "google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0";
+    return res.send(
+      new Buffer.alloc(
+        message.length,
+        "google.com, pub-3842696805773142, DIRECT, f08c47fec0942fa0"
+      )
+    );
+  });
+
   app.get("/login", function (req, res) {
     return res.redirect("/");
   });
@@ -406,9 +417,6 @@ module.exports = function (app, passport, server) {
           $or: [
             {
               "community.ownerID": req.user._id,
-            },
-            {
-              _id: req.user.user.activeCommunity,
             },
           ],
         },

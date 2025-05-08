@@ -172,31 +172,16 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-body">
-            <form class="form-horizontal" action="/joinCommunity" method="post">
-              <fieldset>
-  
-              <!-- Form Name -->
+            <fieldset>
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-              <h4>Join an Existing Community</h4>
+              <h4>Join a Community</h4>
               <hr style="width: 88%;max-width: 100rem;">
-  
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="communityCode">Community Code:</label>
-                <div class="col-md-4">
-                <input id="communityCode" name="communityCode" style="text-transform: uppercase;" type="text" placeholder="Example: YRFGHHP" class="form-control input-md" minlength="7" maxlength="7" required>
-                </div>
+              <p>To join a community, please download our mobile app.</p>
+              <div class="text-center">
+                <a href="https://apps.apple.com" target="_blank" class="btn btn-primary">App Store</a>
+                <a href="https://play.google.com" target="_blank" class="btn btn-primary">Google Play</a>
               </div>
-  
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="joinCommunity"></label>
-                <div class="col-md-4 text-align-center">
-                  <button id="joinCommunity" value="<%= user._id %>" name="userID"  class="btn btn-primary">Join</button>
-                </div>
-              </div>
-              </fieldset>
-            </form>
+            </fieldset>
           </div>
         </div>
       </div>
@@ -237,31 +222,16 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-body">
-            <form class="form-horizontal" action="/createCommunity" method="post">
-              <fieldset>
-  
-              <!-- Form Name -->
+            <fieldset>
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
               <h4>Create a New Community</h4>
               <hr style="width: 88%;max-width: 100rem;">
-  
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="communityName">Community Name:</label>
-                <div class="col-md-4">
-                <input id="communityName" name="communityName" style="text-transform: capitalize;" type="text" placeholder="Community Name" class="form-control input-md" maxlength="25" required>
-                </div>
+              <p>To create a new community, please download our mobile app.</p>
+              <div class="text-center">
+                <a href="https://apps.apple.com" target="_blank" class="btn btn-primary">App Store</a>
+                <a href="https://play.google.com" target="_blank" class="btn btn-primary">Google Play</a>
               </div>
-  
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createCommunity"></label>
-                <div class="col-md-4 text-align-center">
-                  <button id="createCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary">Create</button>
-                </div>
-              </div>
-              </fieldset>
-            </form>
+            </fieldset>
           </div>
         </div>
       </div>
