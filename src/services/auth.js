@@ -1,6 +1,6 @@
 import base64 from "react-native-base64";
 
-const API_URL = process.env.POLICE_CAD_APP_API_URL || "http://localhost:8082";
+const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
 
 export const loginUser = async (username, password) => {
   const payload = {
