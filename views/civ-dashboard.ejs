@@ -1600,9 +1600,13 @@ function createNewCiv() {
     height: $('#imperial').is(':checked') ? 
       `${$('#foot').val() || 0}ft ${$('#inches').val() || 0}in` : 
       `${$('#centimeters').val() || 0}cm`,
+    heightClassification: $('#imperial').is(':checked') ? 
+      "Imperial": "Metric",
     weight: $('#imperial-weight').is(':checked') ? 
       `${$('#pounds').val() || 0}lbs` : 
       `${$('#kilos').val() || 0}kg`,
+    weightClassification: $('#imperial-weight').is(':checked') ? 
+      "lbs": "kg",
     eyeColor: $('#eyeColor').val().trim() || undefined,
     hairColor: $('#hairColor').val().trim() || undefined,
     organDonor: $('#organDonor').is(':checked'),
@@ -1614,18 +1618,18 @@ function createNewCiv() {
   };
 
   $.ajax({
-    url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilians',
+    url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilian',
     method: 'POST',
     contentType: 'application/json',
     data: JSON.stringify(data),
     success: function(civ) {
       $('#personas-thumbnail').prepend(`
-        <div id="personas-thumbnail-${civ._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-          <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${civ._id}');loadTicketsAndWarnings('${civ._id}');loadArrests('${civ._id}');loadReports('${civ._id}');loadMedications('${civ._id}');loadConditions('${civ._id}')">
+        <div id="personas-thumbnail-${civ.id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+          <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${civ.id}');loadTicketsAndWarnings('${civ.id}');loadArrests('${civ.id}');loadReports('${civ.id}');loadMedications('${civ.id}');loadConditions('${civ.id}')">
             <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
             <div class="caption capitalize">
-              <h4 id="personas-thumbnail-name-${civ._id}" class="color-white capitalize">${civ.civilian.name}</h4>
-              <h5 id="personas-thumbnail-dob-${civ._id}" class="color-white">${civ.civilian.birthday}</h5>
+              <h4 id="personas-thumbnail-name-${civ.id}" class="color-white capitalize">${data.name}</h4>
+              <h5 id="personas-thumbnail-dob-${civ.id}" class="color-white">${data.birthday}</h5>
             </div>
           </div>
         </div>
