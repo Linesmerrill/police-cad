@@ -323,11 +323,30 @@ module.exports = function (app, passport, server) {
     }
   });
 
-  app.get("/civ-dashboard", authCheck, function (req, res) {
+  // Middleware to decode base64 query param
+  const decodeDataParam = (req, res, next) => {
+    const { data } = req.query;
+    if (!data) {
+      return res.redirect("/"); // Redirect if no data
+    }
+    try {
+      const decoded = JSON.parse(Buffer.from(data, "base64").toString());
+      req.decodedData = decoded; // Store decoded userId and communityId
+      next();
+    } catch (error) {
+      console.error("Error decoding data param:", error);
+      res.status(400).send("Invalid data parameter");
+    }
+  };
+
+  app.get("/civ-dashboard", authCheck, decodeDataParam, function (req, res) {
+    const { userId, communityId } = req.decodedData;
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     res.render("civ-dashboard", {
       user: req.user,
+      userId,
+      communityId,
       context: context,
       referer: encodeURIComponent("/civ-dashboard"),
       redirect: encodeURIComponent(redirect),

@@ -48,7 +48,7 @@
                     <li><a href="/police-dashboard">Police</a></li>
                     <li><a href="/ems-dashboard">Fire/EMS</a></li>
                     <li><a href="/dispatch-dashboard">Dispatch</a></li> -->
-                    <li><a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"><ion-icon class="nav-user-icon" name="person-circle-outline"></ion-icon></a>
+                    <li><a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"><ion-icon class="nav-user-icon" name="person-circle-outline"></ion-icon></a></li>
                 </ul>
             </div>
         </div>
@@ -90,7 +90,7 @@
                         <thead>
                             <tr style="background-color: #2d2d2d;">
                                 <th>Name</th>
-                                <th>Description</th>
+                                <th>Template</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -118,12 +118,12 @@
                 <div class="modal-body">
                     <p>You can now be part of <strong>multiple communities</strong> and view them all here!</p>
                     <ol>
-                        <li><strong>Select a Community</strong>: Click "Set as Active" on a community card to make it your active community, displayed at the top.</li>
+                        <li><strong>Select a Community</strong>: Click "Set as Active" on a community card to make it your active community, displayed at the top. If a community is already active, the button will be disabled.</li>
                         <li><strong>View Departments</strong>: Scroll down to see the departments in your active community.</li>
-                        <li><strong>Go to Department</strong>: Click a department in the table to visit its page.</li>
+                        <li><strong>Go to Department</strong>: Click a department in the table to visit its dashboard (e.g., Civilian, Police, Fire/EMS, Dispatch).</li>
                     </ol>
                     <p><strong>Note</strong>: Legacy communities (marked with "Legacy") must be reconciled in the mobile app before they can be set as active.</p>
-                    <p>Use the Previous/Next buttons to browse all your communities, four at a time.</p>
+                    <p>Use the Previous/Next buttons to browse all your communities, three at a time.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="dismissTutorial()">Got It</button>
@@ -153,6 +153,7 @@
   var currentPage = 1;
   var communitiesPerPage = 3;
   var allCommunities = [];
+  var activeCommunityId = dbUser?.user?.lastAccessedCommunity?.communityID || null;
 
 $(document).ready(function () {
     $('#departments-table').DataTable({
@@ -163,16 +164,36 @@ $(document).ready(function () {
         ordering: true,
         info: true,
         createdRow: function(row, data, dataIndex) {
-            $(row).addClass('department-row');
-            $(row).click(function() {
-                const deptId = allCommunities.find(c => c._id === dbUser?.user?.lastAccessedCommunity?.communityID)?.departments[dataIndex]?._id;
-                if (deptId) {
-                    window.location.href = `/department/${deptId}`;
-                } else {
-                    console.error('Department ID not found');
-                }
-            });
+    $(row).addClass('department-row');
+    $(row).click(function() {
+        const dept = allCommunities.find(c => c._id === activeCommunityId)?.community?.departments[dataIndex];
+        if (dept && dept?.template?.name) {
+            const deptName = dept?.template?.name?.toLowerCase();
+            let dashboardUrl = '';
+            // Encode userId and communityId as base64
+            const dataObj = { userId: dbUser._id, communityId: activeCommunityId };
+            const encodedData = btoa(JSON.stringify(dataObj));
+            if (deptName.includes('civilian')) {
+                dashboardUrl = `/civ-dashboard?data=${encodedData}`;
+            } else if (deptName.includes('police')) {
+                dashboardUrl = `/police-dashboard?data=${encodedData}`;
+            } else if (deptName.includes('fire') || deptName.includes('ems')) {
+                dashboardUrl = `/ems-dashboard?data=${encodedData}`;
+            } else if (deptName.includes('dispatch')) {
+                dashboardUrl = `/dispatch-dashboard?data=${encodedData}`;
+            }
+            if (dashboardUrl) {
+                window.location.href = dashboardUrl;
+            } else {
+                console.error('No matching dashboard for department:', dept.name);
+                $('#successCopyMessage').html('<strong>Error!</strong> Unknown department type: ' + dept.name).show().delay(2000).fadeOut();
+            }
+        } else {
+            console.error('Department not found at index:', dataIndex);
+            $('#successCopyMessage').html('<strong>Error!</strong> Department data missing.').show().delay(2000).fadeOut();
         }
+    });
+}
     });
 
     if (!getCookie('lpc_tutorial_dismissed')) {
@@ -223,19 +244,15 @@ function dismissTutorial() {
 }
 
 function fetchCommunityData(newActiveCommunityId = null) {
-    // Fetch new system communities
     $.ajax({
         url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/user/${dbUser._id}/communities?filter=status%3Aapproved`,
         method: 'GET',
         success: function(newData) {
-            // Fetch legacy communities
             $.ajax({
                 url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/communities/${dbUser._id}`,
                 method: 'GET',
                 success: function(legacyData) {
-                    // Filter legacy communities with non-empty code
                     const filteredLegacyData = legacyData.filter(community => community?.community?.code !== "");
-                    // Combine new and legacy communities
                     const communityIds = [
                         ...newData.map(item => ({ id: item.communityId, isLegacy: false })),
                         ...filteredLegacyData.map(item => ({ id: item._id, isLegacy: true }))
@@ -244,7 +261,6 @@ function fetchCommunityData(newActiveCommunityId = null) {
                 },
                 error: function(err) {
                     console.error('Error fetching legacy community data:', err);
-                    // Proceed with new communities only
                     const communityIds = newData.map(item => ({ id: item.communityId, isLegacy: false }));
                     fetchCommunityDetails(communityIds, newData, newActiveCommunityId);
                 }
@@ -263,14 +279,14 @@ function fetchCommunityDetails(communityIds, newData, newActiveCommunityId) {
         $.ajax({
             url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${id}`,
             method: 'GET'
-        }).then(result => ({ ...result, isLegacy })) // Add isLegacy flag
+        }).then(result => ({ ...result, isLegacy }))
     );
 
     Promise.all(promises)
         .then(results => {
             allCommunities = results;
-            const activeCommunityId = newActiveCommunityId || dbUser?.user?.lastAccessedCommunity?.communityID;
-            const activeCommunity = allCommunities.find(c => c._id === activeCommunityId) || null;
+            const currentActiveCommunityId = newActiveCommunityId || activeCommunityId;
+            const activeCommunity = allCommunities.find(c => c._id === currentActiveCommunityId) || null;
             renderActiveCommunity(activeCommunity);
             renderCommunityCards(allCommunities);
             if (activeCommunity && activeCommunity?.community?.departments && !activeCommunity.isLegacy) {
@@ -309,6 +325,7 @@ function renderCommunityCards(communities) {
 
         paginatedCommunities.forEach(community => {
             const isLegacy = community.isLegacy;
+            const isActive = !isLegacy && community._id === activeCommunityId;
             cardsContainer.append(`
                 <div class="col-md-3 community-card">
                     <img src="${community?.community?.imageLink || 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1746915829/temp-community-image_ebspfe.jpg'}" alt="${community?.community?.name}" style="max-width: 100%; width: 5em; height: 5em" />
@@ -320,7 +337,7 @@ function renderCommunityCards(communities) {
                             <a href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp" target="_blank" class="btn btn-primary btn-sm">Google Play</a>
                         </div>
                     ` : `
-                        <button class="btn btn-primary" onclick="setActiveCommunity('${community._id}')">Set as Active</button>
+                        <button class="btn btn-primary" onclick="setActiveCommunity('${community._id}')" ${isActive ? 'disabled' : ''}>${isActive ? 'Already Active' : 'Set as Active'}</button>
                     `}
                 </div>
             `);
@@ -344,7 +361,7 @@ function renderDepartments(departments) {
         departments.forEach(dept => {
             table.row.add([
                 dept.name || 'N/A',
-                dept.description || 'N/A'
+                dept?.template?.name || 'N/A'
             ]);
         });
     }
@@ -370,6 +387,7 @@ function setActiveCommunity(communityId) {
         contentType: 'application/json',
         data: JSON.stringify(payload),
         success: function(data) {
+            activeCommunityId = communityId;
             fetchCommunityData(communityId);
             currentPage = 1;
             $('#successCopyMessage').html('<strong>Success!</strong> Active community updated.').show().delay(2000).fadeOut();
