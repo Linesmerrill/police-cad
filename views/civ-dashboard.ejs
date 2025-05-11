@@ -169,38 +169,38 @@
 
           <!-- Vehicles Section -->
           <div class="col-md-12 col-md-offset-0.75 margin-top-5">
-            <div class="margin-bottom-2">
-              <span id="active-vehicles" class="margin-right-1" style="font-size: 18px;">Vehicles:</span>
-              <button data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-md pull-right">Add New Vehicle</button>
-            </div>
-            <div>
-              <label>Search:
-                <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
-              </label>
-            </div>
-            <!-- List of vehicles -->
-            <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em; width: 90rem;">
-              <div id="vehicles-loading" class="text-align-center" style="width: 100%;">
-                <div class="lds-facebook"><div></div><div></div><div></div></div>
-              </div>
-            </div>
-            <!-- Loading error -->
-            <div id="issue-loading-vehicles-alert" style="display:none">
-              <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading vehicles, try refreshing the page...</p>
-            </div>
-            <div id="no-vehicles-found-alert" style="display:none">
-              <p class="text-center" style="font-style: italic; font-size: 14px">No vehicles found, try adding one...</p>
-            </div>
-            <!-- Paginated navigation list -->
-            <div>
-              <nav aria-label="...">
-                <ul class="pager">
-                  <li><a id="prev-veh-page-btn" class="" onclick="getPrevVehPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
-                  <li><a id="next-veh-page-btn" onclick="getNextVehPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
-                </ul>
-              </nav>
-            </div>
-          </div>
+  <div class="margin-bottom-2">
+    <span id="active-vehicles" class="margin-right-1" style="font-size: 18px;">Vehicles:</span>
+    <button data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-md pull-right">Add New Vehicle</button>
+  </div>
+  <div>
+    <label>Search:
+      <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+    </label>
+  </div>
+  <!-- List of vehicles -->
+  <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em; width: 90rem;">
+    <div id="vehicles-loading" class="text-align-center" style="width: 100%;">
+      <div class="lds-facebook"><div></div><div></div><div></div></div>
+    </div>
+  </div>
+  <!-- Loading error -->
+  <div id="issue-loading-vehicles-alert" style="display:none">
+    <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading vehicles, try refreshing the page...</p>
+  </div>
+  <div id="no-vehicles-found-alert" style="display:none">
+    <p class="text-center" style="font-style: italic; font-size: 14px">No vehicles found, try adding one...</p>
+  </div>
+  <!-- Paginated navigation list -->
+  <div>
+    <nav aria-label="...">
+      <ul class="pager">
+        <li><a id="prev-veh-page-btn" class="" onclick="getPrevVehPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+        <li><a id="next-veh-page-btn" onclick="getNextVehPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+      </ul>
+    </nav>
+  </div>
+</div>
 
           <!-- Firearms Section -->
           <div class="col-md-12 col-md-offset-0.75 margin-top-5">
@@ -1279,98 +1279,105 @@
   </div>
 
   <div id="viewVeh" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-            <form class="form-horizontal" action="/updateOrDeleteVeh" method="post">
-              <fieldset>
-
-            <!-- Form Name -->
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <form class="form-horizontal" id="view-vehicle-form">
+          <fieldset>
+            
             <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Details about your Vehicle</h4>
             <hr style="width: 88%;max-width: 100rem;">
-
-            <!-- Text input-->
+            
             <div class="form-group required">
               <label class="col-md-4 control-label" for="vinVeh">Vin #</label>
               <div class="col-md-4">
-                <input id="vinVeh" name="vinVeh" type="text" minlength="17" maxlength="17" class="form-control input-md disabled-color" required readonly="readonly">
+                <input id="vinVeh" name="vinVeh" type="text" minlength="17" maxlength="17" class="form-control input-md" required>
               </div>
               <div id="no-existing-vin" class="col-md-4">
                 <button type="button" class="btn btn-info btn-md" onclick="generateSerialNumber(17, 'vinVeh')">Generate</button>
               </div>
             </div>
-
             <div class="form-group required">
-              <label class="col-md-4 control-label" for="roVeh">Owner:</label>
+              <label class="col-md-4 control-label" for="typeVeh">Type:</label>
               <div class="col-md-4">
-                <input id="roVeh" name="roVeh" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
+                <input id="typeVeh" name="typeVeh" type="text" class="form-control input-md capitalize" required >
               </div>
             </div>
-
             <div class="form-group required">
-                <label class="col-md-4 control-label" for="plate">Plate:</label>
-                <div class="col-md-4">
-                  <input id="plateVeh" name="plateVeh" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
-                </div>
+              <label class="col-md-4 control-label" for="plateVeh">Plate:</label>
+              <div class="col-md-4">
+                <input id="plateVeh" name="plateVeh" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
               </div>
-
-            <div class="form-group required">
-                <label class="col-md-4 control-label" for="model">Model:</label>
-                <div class="col-md-4">
-                  <input id="modelVeh" name="modelVeh" type="search" placeholder="Model" class="form-control input-md" required="">
-                </div>
-              </div>
-
-            <div class="form-group required">
-                <label class="col-md-4 control-label" for="colorView">Color:</label>
-                <div class="col-md-4">
-                  <input id="colorView" name="colorView" type="text" placeholder="Color" class="form-control input-md" required="">
-                </div>
-              </div>
-
+            </div>
             <div class="form-group">
-                <label class="col-md-4 control-label" for="valid-registration">Valid Registration?</label>
-                <div class="col-md-4">
-                  <select id="validRegView" name="validRegView" class="form-control" selected="selected">
-                    <option value="1">Yes</option>
-                    <option value="2">No</option>
-                  </select>
-                </div>
+              <label class="col-md-4 control-label" for="makeVeh">Make:</label>
+              <div class="col-md-4">
+                <input id="makeVeh" name="makeVeh" type="search" placeholder="Make" class="form-control input-md">
               </div>
-
+            </div>
             <div class="form-group">
-                <label class="col-md-4 control-label" for="validInsView">Valid Insurance?</label>
-                <div class="col-md-4">
-                  <select id="validInsView" name="validInsView" class="form-control" selected="selected">
-                    <option value="1">Yes</option>
-                    <option value="2">No</option>
-                  </select>
-                </div>
+              <label class="col-md-4 control-label" for="modelVeh">Model:</label>
+              <div class="col-md-4">
+                <input id="modelVeh" name="modelVeh" type="search" placeholder="Model" class="form-control input-md">
               </div>
-
+            </div>
             <div class="form-group">
-                <label class="col-md-4 control-label" for="stolenView">Marked Stolen?</label>
-                <div class="col-md-4">
-                  <select id="stolenView" name="stolenView" class="form-control" selected="selected">
-                    <option value="1">No</option>
-                    <option value="2">Yes</option>
-                  </select>
-                </div>
+              <label class="col-md-4 control-label" for="yearVeh">Year:</label>
+              <div class="col-md-4">
+                <input id="yearVeh" name="yearVeh" type="text" placeholder="Year" class="form-control input-md">
               </div>
-
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="plateStateVeh">License Plate State:</label>
+              <div class="col-md-4">
+                <input id="plateStateVeh" name="plateStateVeh" type="text" placeholder="License Plate State" class="form-control input-md">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="colorView">Color:</label>
+              <div class="col-md-4">
+                <input id="colorView" name="colorView" type="text" placeholder="Color" class="form-control input-md">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="validRegView">Valid Registration?</label>
+              <div class="col-md-4">
+                <select id="validRegView" name="validRegView" class="form-control" selected="selected">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="validInsView">Valid Insurance?</label>
+              <div class="col-md-4">
+                <select id="validInsView" name="validInsView" class="form-control" selected="selected">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="stolenView">Marked Stolen?</label>
+              <div class="col-md-4">
+                <select id="stolenView" name="stolenView" class="form-control" selected="selected">
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
+                </select>
+              </div>
+            </div>
             <div class="col-md-12 text-align-center">
-                <input type="hidden" id="vehicleID" name="vehicleID">
-                <input type="hidden" name="backLocation" value="/civ-dashboard">
-                <button type="submit" value="update" name="action" class="btn btn-info">Update Vehicle</button>
-                <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Vehicle</button>
+              <input type="hidden" id="vehicleID" name="vehicleID">
+              <button type="button" onclick="updateVehicle()" class="btn btn-info">Update Vehicle</button>
+              <button type="button" onclick="deleteVehicle()" class="btn btn-danger">Delete Vehicle</button>
             </div>
-            </fieldset>
-          </form>
-        </div>
+          </fieldset>
+        </form>
       </div>
     </div>
   </div>
+</div>
 
   <div id="viewFirearm" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -1985,28 +1992,27 @@ function renderVehicles(vehicles) {
   $thumbnail.empty();
   
   vehicles.forEach(vehicle => {
-    const vehicleHtml = `
-      <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 veh-thumbnails">
-        <div class="thumbnail thumbnail-box text-align-center pointer shadow" data-toggle="modal" data-target="#viewCiv" onclick="viewVehicle('${vehicle._id}')">
-          <ion-icon name="car-outline"></ion-icon>
-          <div class="caption">
-            <h4>${vehicle?.vehicle?.make} ${vehicle?.vehicle?.model}</h4>
-            <h5>Plate: ${vehicle?.vehicle?.plate}</h5>
+    $thumbnail.append(`
+      <div id="vehicles-thumbnail-${vehicle._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+        <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="viewVehicle('${vehicle._id}')">
+          <ion-icon class="font-size-4-vmax" name="car-outline"></ion-icon>
+          <div class="caption capitalize">
+            <h4 id="vehicles-thumbnail-name-${vehicle._id}" class="color-white capitalize">${vehicle?.vehicle?.make} ${vehicle?.vehicle?.model}</h4>
+            <h5 id="vehicles-thumbnail-plate-${vehicle._id}" class="color-white">${vehicle?.vehicle?.plate}</h5>
           </div>
         </div>
       </div>
-    `;
-    $thumbnail.append(vehicleHtml);
+    `);
   });
 }
 
 function updateVehiclePagination(totalPages, currentPage) {
-  $('#prev-veh-page-btn').toggleClass('disabled', currentPage === 1);
+  $('#prev-veh-page-btn').toggleClass('disabled', currentPage === 0);
   $('#next-veh-page-btn').toggleClass('disabled', currentPage >= totalPages);
 }
 
 function getPrevVehPage() {
-  if (vehiclePage > 1) {
+  if (vehiclePage > 0) {
     vehiclePage--;
     getVehicles(vehiclePage);
   }
@@ -2027,6 +2033,94 @@ $('#vehicle-search').on('input', function() {
   );
   renderVehicles(filteredVehicles);
 });
+
+// View Vehicle Details
+function viewVehicle(vehicleId) {
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle/${vehicleId}`,
+    method: 'GET',
+    success: function(vehicle) {
+      console.log("Vehicle details:", vehicle);
+      // Populate modal fields
+      $('#vehicleID').val(vehicle._id);
+      $('#vinVeh').val(vehicle?.vehicle?.vin);
+      // $('#roVeh').val(vehicle.ownerName); // Assuming ownerName is a field like civilian firstName + lastName
+      $('#typeVeh').val(vehicle?.vehicle?.type);
+      $('#makeVeh').val(vehicle?.vehicle?.make);
+      $('#modelVeh').val(vehicle?.vehicle?.model);
+      $('#yearVeh').val(vehicle?.vehicle?.year);
+      $('#plateVeh').val(vehicle?.vehicle?.plate);
+      $('#plateStateVeh').val(vehicle?.vehicle?.licensePlateState);
+      $('#colorView').val(vehicle?.vehicle?.color);
+      $('#validRegView').val(vehicle?.vehicle?.validRegistration ? 'true' : 'false');
+      $('#validInsView').val(vehicle?.vehicle?.validInsurance ? 'true' : 'false');
+      $('#stolenView').val(vehicle?.vehicle?.isStolen ? 'true' : 'false');
+      
+      // Show the modal
+      $('#viewVeh').modal('show');
+    },
+    error: function() {
+      alert('Error loading vehicle details. Please try again.');
+    }
+  });
+}
+
+// Update Vehicle
+function updateVehicle() {
+  const vehicleId = $('#vehicleID').val();
+  const vehicleData = {
+    vin: $('#vinVeh').val().trim(),
+    // ownerName: $('#roVeh').val(),
+    type : $('#typeVeh').val().trim(),
+    plate: $('#plateVeh').val().trim(),
+    make: $('#makeVeh').val().trim(),
+    model: $('#modelVeh').val().trim(),
+    year: $('#yearVeh').val().trim(),
+    licensePlateState: $('#plateStateVeh').val().trim(),
+    color: $('#colorView').val().trim(),
+    validRegistration: $('#validRegView').val(),
+    validInsurance: $('#validInsView').val(),
+    markedStolen: $('#stolenView').val(),
+    // communityID: '<%= user.user.activeCommunity %>',
+    activeCommunityID: communityId,
+    userID: userId
+  };
+
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle/${vehicleId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify(vehicleData),
+    success: function(response) {
+      alert('Vehicle updated successfully!');
+      $('#viewVeh').modal('hide');
+      getVehicles(vehiclePage); // Refresh vehicle list
+    },
+    error: function() {
+      alert('Error updating vehicle. Please try again.');
+    }
+  });
+}
+
+// Delete Vehicle
+function deleteVehicle() {
+  if (!confirm('Are you sure you want to delete this vehicle?')) return;
+
+  const vehicleId = $('#vehicleID').val();
+  
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle/${vehicleId}`,
+    method: 'DELETE',
+    success: function(response) {
+      alert('Vehicle deleted successfully!');
+      $('#viewVeh').modal('hide');
+      getVehicles(vehiclePage); // Refresh vehicle list
+    },
+    error: function() {
+      alert('Error deleting vehicle. Please try again.');
+    }
+  });
+}
 
 // Firearms Section
 let firearmPage = 1;
@@ -2110,12 +2204,6 @@ $('#firearm-search').on('input', function() {
   renderFirearms(filteredFirearms);
 });
 
-// Placeholder view functions (to be implemented based on your modal logic)
-function viewVehicle(vehicleId) {
-  // Fetch vehicle details and populate #viewCiv modal
-  console.log('View vehicle:', vehicleId);
-}
-
 function viewFirearm(firearmId) {
   // Fetch firearm details and populate #viewCiv modal
   console.log('View firearm:', firearmId);
@@ -2136,7 +2224,10 @@ function viewFirearm(firearmId) {
     fetchCivilians(page);
     fetchAndRenderDepartments();
     getVehicles(vehiclePage);
-  getFirearms(firearmPage);
+    getFirearms(firearmPage);
+
+    //on page load, lets disable to previous buttons
+    $('#prev-veh-page-btn').toggleClass('disabled', true);
 
     $('#create-civ-form').on('submit', function(e) {
     e.preventDefault();
