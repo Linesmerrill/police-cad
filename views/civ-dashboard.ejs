@@ -80,7 +80,22 @@
                 class="fa fa-external-link-alt"></i></a>
           </li>
         </div>
-        <% include departments-sidebar %>
+        <li class="background-color-222">
+  <a
+    type="button"
+    data-toggle="collapse"
+    data-target="#toggleDepartment"
+    aria-expanded="false"
+    aria-controls="toggleDepartment"
+    onclick="toggleCaret()"
+  >
+    Departments
+    <i class="fa fa-caret-right pull-right rotate" style="margin-top: 0.3em"></i>
+  </a>
+</li>
+<div class="collapse in" id="toggleDepartment">
+  <!-- Dynamic departments will be injected here -->
+</div>
         <% include other-sidebar %>
       </ul>
 
@@ -1782,6 +1797,84 @@ function submit911Call() {
     });
 }
 
+// Fetch and render departments for sidebar
+function fetchAndRenderDepartments() {
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/departments`,
+    method: 'GET',
+    headers: {
+      
+    },
+    success: function(data) {
+      const departments = data.departments || [];
+      let html = '';
+      
+      departments.forEach(dept => {
+        console.log("department:", dept);
+        const template = dept?.template?.name;
+        const name = dept?.name;
+        let icon = 'fa-building';
+        let href = '#'; // Default to no link for unknown departments
+
+        // Map icons and routes
+        switch (template.toLowerCase()) {
+          case 'civilian':
+            icon = 'fa-user';
+            href = '/civ-dashboard';
+            break;
+          case 'police':
+            icon = 'fa-shield';
+            href = '/police-dashboard';
+            break;
+          case 'dispatch':
+            icon = 'fa-headset';
+            href = '/dispatch-dashboard';
+            break;
+          case 'fire':
+            icon = 'fa-fire-extinguisher';
+            href = '/ems-dashboard';
+            break;
+          case 'ems':
+            icon = 'fa-medkit';
+            href = '/ems-dashboard';
+            break;
+        }
+
+        html += `
+          <li>
+            <a href="${href}">
+              <span class="fa ${icon} ml-3 mr-3"></span> ${name} (${template})
+            </a>
+          </li>
+        `;
+      });
+
+      // Append Communities link
+      html += `
+        <li>
+          <a href="/community-dashboard">
+            <span class="fa fa-users ml-3 mr-3"></span> Communities
+          </a>
+        </li>
+      `;
+
+      $('#toggleDepartment').html(html);
+    },
+    error: function(xhr) {
+      console.error('Error fetching departments:', xhr.responseText);
+      // Fallback: show only Communities link
+      $('#toggleDepartment').html(`
+        <li>
+          <a href="/community-dashboard">
+            <span class="fa fa-users ml-3 mr-3"></span> Communities
+          </a>
+        </li>
+      `);
+      alert('Failed to load departments: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
   var socket = io();
   var myObj = {
     dbUser: dbUser,
@@ -1794,8 +1887,8 @@ function submit911Call() {
  
 
   $(document).ready(function(){
-
     fetchCivilians(page);
+    fetchAndRenderDepartments();
 
     $('#create-civ-form').on('submit', function(e) {
     e.preventDefault();

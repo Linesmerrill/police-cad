@@ -528,6 +528,17 @@ fieldset[disabled] .btn-default.active {
     opacity: 0.7;
 }
 
+#toggleDepartment {
+    max-height: 300px;
+    /* Adjust based on your layout */
+    overflow-y: auto;
+}
+
+#toggleDepartment li a {
+    display: block;
+    padding: 10px 15px;
+}
+
 .btn-default .badge {
     color: #fff;
     background-color: #222;
