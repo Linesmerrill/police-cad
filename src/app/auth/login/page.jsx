@@ -1,115 +1,88 @@
 "use client";
+
+// pages/login.js
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { loginUser } from "@/services/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+
     try {
-      // Replace this with your real API call
-      const result = await loginUser(email, password);
-      console.log(result);
-      if (!result.success) {
-        throw new Error("Login failed");
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        console.log(res.body._id); // Log the token for debugging
+        console.warn(res.body);
+        console.warn(data);
+        localStorage.setItem("userId", data.userId); // Store user ID in local storage
+        localStorage.setItem("authToken", data.authToken); // Store token in local storage
+        router.push("/dashboard"); // Redirect after successful login
+      } else {
+        setError(data.message || "Invalid login credentials.");
       }
-
-      //   const result = await checkEmailExists(email);
-      //   if (!result.success || result.data?.user) {
-      //     throw new Error("Email already in use.");
-      //   }
-
-      //   const data = await result.json();
-      //   console.log(`data`, data);
-      // Store token or context auth update here
-      router.push("/dashboard");
     } catch (err) {
-      setError("Invalid email or password");
+      console.error(err);
+      setError("Something went wrong. Please try again.");
     }
   };
 
   return (
-    <>
-      <Header />
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-        <div className="max-w-md w-full bg-white shadow-md rounded-lg p-8">
-          <h2 className="text-2xl font-bold text-center text-blue-600 mb-6">
-            Login to Lines Police CAD
-          </h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h1 className="text-2xl font-bold text-white mb-6 text-center">
+          Login
+        </h1>
 
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+        {error && (
+          <div className="bg-red-500 text-white p-2 mb-4 rounded">{error}</div>
+        )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                required
-              />
-            </div>
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-gray-300 mb-1">Username</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full px-4 py-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
+            />
+          </div>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                required
-              />
-            </div>
+          <div>
+            <label className="block text-gray-300 mb-1">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              required
+            />
+          </div>
 
-            <div>
-              <div className="text-right mt-2">
-                <a
-                  href="/auth/forgot-password"
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  Forgot password?
-                </a>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 rounded-md font-semibold hover:bg-blue-700 transition"
-            >
-              Log In
-            </button>
-          </form>
-
-          <p className="mt-4 text-sm text-center text-gray-600">
-            Don’t have an account?{" "}
-            <a href="/auth/register" className="text-blue-600 hover:underline">
-              Sign up
-            </a>
-          </p>
-        </div>
+          <button
+            type="submit"
+            className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded"
+          >
+            Log In
+          </button>
+        </form>
       </div>
-      <Footer />
-    </>
+    </div>
   );
 }

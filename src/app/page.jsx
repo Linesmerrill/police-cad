@@ -1,130 +1,199 @@
+"use client";
+
+import React, { use, useState } from "react";
 import Footer from "@/components/Footer";
-import React from "react";
 
 export default function Home() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
-    <>
-      <main className="min-h-screen bg-gray-100 text-gray-900">
-        <header className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-blue-600">
-              Lines Police CAD
-            </h1>
-            <nav>
-              <a
-                href="/auth/login"
-                className="text-sm text-blue-600 hover:underline mr-4"
-              >
+    <div className="bg-gray-900 text-white min-h-screen">
+      {/* Hamburger Menu for Mobile */}
+      <div className="md:hidden p-4 bg-gray-800 flex justify-between items-center">
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="text-white focus:outline-none"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M4 6h16M4 12h16m-7 6h7"
+            />
+          </svg>
+        </button>
+        <h2 className="text-xl font-bold text-blue-400">Lines Police CAD</h2>
+      </div>
+
+      {/* Sidebar or Dropdown Menu */}
+      <div
+        className={`${
+          isMenuOpen ? "block" : "hidden"
+        } md:block md:w-64 md:p-6 md:bg-gray-800 md:h-screen md:fixed md:top-0 md:left-0`}
+      >
+        <div className="md:hidden bg-gray-800 p-4">
+          <button
+            onClick={() => setIsMenuOpen(false)}
+            className="text-white mb-4 focus:outline-none"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+          <h2 className="text-2xl font-bold mb-6 text-blue-400">
+            Lines Police CAD
+          </h2>
+        </div>
+        <nav className="md:mt-0">
+          <ul className="space-y-4">
+            <li>
+              <a href="/auth/login" className="text-blue-400 hover:underline">
                 Login
               </a>
+            </li>
+            <li>
               <a
                 href="/auth/register"
-                className="text-sm text-white bg-blue-600 px-4 py-2 rounded hover:bg-blue-700"
+                className="text-blue-400 hover:underline"
               >
                 Sign Up
               </a>
-            </nav>
-          </div>
-        </header>
+            </li>
+            <li>
+              <a href="/dashboard" className="text-blue-400 hover:underline">
+                Communities
+              </a>
+            </li>
+            <li>
+              <a href="/features" className="text-blue-400 hover:underline">
+                Features
+              </a>
+            </li>
+            <li>
+              <a href="/about" className="text-blue-400 hover:underline">
+                About
+              </a>
+            </li>
+            <li>
+              <a href="/support" className="text-blue-400 hover:underline">
+                Support
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
 
-        <section className="py-20 bg-gradient-to-br from-blue-50 to-blue-100">
-          <div className="max-w-5xl mx-auto px-6 text-center">
-            <h2 className="text-4xl font-bold mb-4">
+      {/* Main Content */}
+      <main className="p-6 md:ml-64">
+        {/* Hero Section */}
+        <section className="relative mb-12">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold mb-4">
               Welcome to Lines Police CAD
-            </h2>
-            <p className="text-lg text-gray-700 mb-6">
+            </h1>
+            <p className="text-lg mb-6">
               The ultimate free platform to create, discover, and manage
-              roleplay communities. Whether you're a civilian or an officer,
-              start building connections today.
+              roleplay communities.
             </p>
             <a
-              href="/auth/register"
+              href="/dashboard"
               className="inline-block bg-blue-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-700"
             >
               Get Started Free
             </a>
           </div>
-        </section>
-
-        <section className="relative py-16 bg-white overflow-hidden">
-          {/* Background shape/image */}
-          <div className="absolute inset-0 -z-10">
+          {/* Carousel */}
+          <div className="flex overflow-x-auto scroll-smooth gap-2.5 p-2.5 mt-6">
             <img
-              src="/abstract1.png"
-              alt="abstract background"
-              className="w-full h-full object-cover opacity-20 blur-sm"
+              src="https://via.placeholder.com/300x200?text=Community+1"
+              alt="Community 1"
+              className="w-[300px] h-[200px] object-cover flex-shrink-0"
+            />
+            <img
+              src="https://via.placeholder.com/300x200?text=Community+2"
+              alt="Community 2"
+              className="w-[300px] h-[200px] object-cover flex-shrink-0"
+            />
+            <img
+              src="https://via.placeholder.com/300x200?text=Community+3"
+              alt="Community 3"
+              className="w-[300px] h-[200px] object-cover flex-shrink-0"
             />
           </div>
+        </section>
 
-          <div className="relative max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12">
+        {/* Features Section */}
+        <section className="mb-12">
+          <h2 className="text-3xl font-bold mb-6">Key Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-2xl font-bold mb-4">Key Features</h3>
-              <ul className="space-y-4 text-gray-700 list-disc pl-5">
-                <li>
-                  <strong>Create and Join Communities:</strong> Free and
-                  subscription-based tiers.
-                </li>
-                <li>
-                  <strong>Promotion Tiers:</strong> Boost your community’s
-                  visibility with Home Page placements.
-                </li>
-                <li>
-                  <strong>Personalized Experience:</strong> Verified badges,
-                  custom departments, and more.
-                </li>
-                <li>
-                  <strong>Discover and Connect:</strong> Browse active
-                  communities and find your people.
-                </li>
-                <li>
-                  <strong>Flexible Subscriptions:</strong> Monthly or annual
-                  billing — cancel anytime.
-                </li>
-              </ul>
+              <h3 className="text-xl font-semibold mb-2">
+                Create and Join Communities
+              </h3>
+              <p>Free and subscription-based tiers to suit your needs.</p>
             </div>
-
             <div>
-              <h3 className="text-2xl font-bold mb-4">Why Choose Us?</h3>
-              <p className="text-gray-700 mb-4">
-                Lines Police CAD is more than just a CAD system — it’s a
-                community builder.
-              </p>
-              <ul className="space-y-4 text-gray-700 list-disc pl-5">
-                <li>Safe, organized space for roleplay.</li>
-                <li>Tailored plans for users and community admins.</li>
-                <li>Tools to grow, connect, and thrive.</li>
-              </ul>
+              <h3 className="text-xl font-semibold mb-2">Promotion Tiers</h3>
+              <p>Boost visibility with Home Page placements.</p>
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold mb-2">
+                Personalized Experience
+              </h3>
+              <p>Verified badges, custom departments, and more.</p>
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold mb-2">
+                Discover and Connect
+              </h3>
+              <p>Browse active communities and find your people.</p>
             </div>
           </div>
         </section>
 
-        <section className="py-16 bg-blue-600 text-white text-center">
-          <div className="max-w-4xl mx-auto px-6">
-            <h3 className="text-3xl font-bold mb-4">
-              Download Lines Police CAD Today
-            </h3>
-            <p className="mb-6">
-              Start building your community empire — connect, promote, and
-              thrive!
-            </p>
-            <div className="flex justify-center space-x-4">
-              <a
-                href="#"
-                className="bg-white text-blue-600 px-6 py-2 rounded hover:bg-gray-200"
-              >
-                iOS App
-              </a>
-              <a
-                href="#"
-                className="bg-white text-blue-600 px-6 py-2 rounded hover:bg-gray-200"
-              >
-                Android App
-              </a>
-            </div>
+        {/* Call to Action */}
+        <section className="text-center bg-blue-600 p-6 rounded-lg">
+          <h2 className="text-3xl font-bold mb-4">
+            Download Lines Police CAD Today
+          </h2>
+          <p className="mb-6">
+            Start building your community empire — connect, promote, and thrive!
+          </p>
+          <div className="flex justify-center space-x-4">
+            <a
+              href="#"
+              className="bg-white text-blue-600 px-6 py-2 rounded hover:bg-gray-200"
+            >
+              iOS App
+            </a>
+            <a
+              href="#"
+              className="bg-white text-blue-600 px-6 py-2 rounded hover:bg-gray-200"
+            >
+              Android App
+            </a>
           </div>
         </section>
       </main>
       <Footer />
-    </>
+    </div>
   );
 }
