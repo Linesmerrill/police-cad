@@ -11785,7 +11785,7 @@
                           columnNumber: 13,
                         },
                       },
-                      "Choose your department",
+                      "Welcome back to Lines Police CAD!",
                       /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                         "br",
                         {
@@ -11793,6 +11793,70 @@
                           __source: {
                             fileName: _jsxFileName,
                             lineNumber: 137,
+                            columnNumber: 15,
+                          },
+                        }
+                      )
+                    )
+                  ),
+              },
+              {
+                name: "content~lja705c52d",
+                className: "lja706c8vys-editor_css",
+                children:
+                  /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                    "span",
+                    {
+                      __self: undefined,
+                      __source: {
+                        fileName: _jsxFileName,
+                        lineNumber: 151,
+                        columnNumber: 11,
+                      },
+                    },
+                    /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                      "p",
+                      {
+                        __self: undefined,
+                        __source: {
+                          fileName: _jsxFileName,
+                          lineNumber: 152,
+                          columnNumber: 13,
+                        },
+                      },
+                      "Don't have an account?",
+                      " ",
+                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                        "b",
+                        {
+                          __self: undefined,
+                          __source: {
+                            fileName: _jsxFileName,
+                            lineNumber: 154,
+                            columnNumber: 15,
+                          },
+                        },
+                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                          "a",
+                          {
+                            href: "/signup",
+                            __self: undefined,
+                            __source: {
+                              fileName: _jsxFileName,
+                              lineNumber: 155,
+                              columnNumber: 17,
+                            },
+                          },
+                          "Create one here"
+                        )
+                      ),
+                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+                        "br",
+                        {
+                          __self: undefined,
+                          __source: {
+                            fileName: _jsxFileName,
+                            lineNumber: 157,
                             columnNumber: 15,
                           },
                         }
@@ -11843,233 +11907,233 @@
                               columnNumber: 17,
                             },
                           },
-                          "Civilian"
+                          "Login with Existing Account"
                         )
                       ),
                     className: "lja787k3ld7-editor_css",
                   },
                 },
               },
-              {
-                name: "block1",
-                className: "block",
-                md: 6,
-                xs: 24,
-                children: {
-                  wrapper: {
-                    className: "content5-block-content lja78c03dqk-editor_css",
-                    href: "/login-police",
-                  },
-                  img: {
-                    children:
-                      "https://www.linespolice-cad.com/static/images/police-login-logo-512.png",
-                    className: "lja7iwizeuq-editor_css",
-                  },
-                  content: {
-                    children:
-                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                        "span",
-                        {
-                          __self: undefined,
-                          __source: {
-                            fileName: _jsxFileName,
-                            lineNumber: 190,
-                            columnNumber: 15,
-                          },
-                        },
-                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                          "p",
-                          {
-                            __self: undefined,
-                            __source: {
-                              fileName: _jsxFileName,
-                              lineNumber: 191,
-                              columnNumber: 17,
-                            },
-                          },
-                          "Police"
-                        )
-                      ),
-                    className: "lja78krpxml-editor_css",
-                  },
-                },
-              },
-              {
-                name: "block2",
-                className: "block",
-                md: 6,
-                xs: 24,
-                children: {
-                  wrapper: {
-                    className: "content5-block-content lja78sleycj-editor_css",
-                    href: "/login-dispatch",
-                  },
-                  img: {
-                    children:
-                      "https://www.linespolice-cad.com/static/images/dispatch-login-logo-512.png",
-                    className: "lja7izocmgf-editor_css",
-                  },
-                  content: {
-                    children:
-                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                        "span",
-                        {
-                          __self: undefined,
-                          __source: {
-                            fileName: _jsxFileName,
-                            lineNumber: 215,
-                            columnNumber: 15,
-                          },
-                        },
-                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                          "p",
-                          {
-                            __self: undefined,
-                            __source: {
-                              fileName: _jsxFileName,
-                              lineNumber: 216,
-                              columnNumber: 17,
-                            },
-                          },
-                          "Dispatch"
-                        )
-                      ),
-                    className: "lja78p49zx-editor_css",
-                  },
-                },
-              },
-              {
-                name: "block3",
-                className: "block",
-                md: 6,
-                xs: 24,
-                children: {
-                  wrapper: {
-                    className: "content5-block-content lja790verco-editor_css",
-                    href: "/login-community",
-                  },
-                  img: {
-                    children:
-                      "https://www.linespolice-cad.com/static/images/community-login-logo-512.png",
-                    className: "lja7j2ivdgq-editor_css",
-                  },
-                  content: {
-                    children:
-                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                        "span",
-                        {
-                          __self: undefined,
-                          __source: {
-                            fileName: _jsxFileName,
-                            lineNumber: 240,
-                            columnNumber: 15,
-                          },
-                        },
-                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                          "p",
-                          {
-                            __self: undefined,
-                            __source: {
-                              fileName: _jsxFileName,
-                              lineNumber: 241,
-                              columnNumber: 17,
-                            },
-                          },
-                          "Community"
-                        )
-                      ),
-                    className: "lja78xkehr-editor_css",
-                  },
-                },
-              },
-              {
-                name: "block4",
-                className: "block",
-                md: 6,
-                xs: 24,
-                children: {
-                  wrapper: {
-                    className: "content5-block-content lja799kmegi-editor_css",
-                    href: "/login-ems",
-                  },
-                  img: {
-                    children:
-                      "https://www.linespolice-cad.com/static/images/fire-login-logo-512.png",
-                    className: "lja7j61e72-editor_css",
-                  },
-                  content: {
-                    children:
-                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                        "span",
-                        {
-                          __self: undefined,
-                          __source: {
-                            fileName: _jsxFileName,
-                            lineNumber: 265,
-                            columnNumber: 15,
-                          },
-                        },
-                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                          "p",
-                          {
-                            __self: undefined,
-                            __source: {
-                              fileName: _jsxFileName,
-                              lineNumber: 266,
-                              columnNumber: 17,
-                            },
-                          },
-                          "Fire"
-                        )
-                      ),
-                    className: "lja79677l68-editor_css",
-                  },
-                },
-              },
-              {
-                name: "block5",
-                className: "block lja7fuhkkt-editor_css",
-                md: 6,
-                xs: 24,
-                children: {
-                  wrapper: {
-                    className: "content5-block-content lja79icitt-editor_css",
-                    href: "/login-ems",
-                  },
-                  img: {
-                    children:
-                      "https://www.linespolice-cad.com/static/images/ems-login-logo-512.png",
-                    className: "lja7j8ssy7-editor_css",
-                  },
-                  content: {
-                    children:
-                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                        "span",
-                        {
-                          __self: undefined,
-                          __source: {
-                            fileName: _jsxFileName,
-                            lineNumber: 290,
-                            columnNumber: 15,
-                          },
-                        },
-                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                          "p",
-                          {
-                            __self: undefined,
-                            __source: {
-                              fileName: _jsxFileName,
-                              lineNumber: 291,
-                              columnNumber: 17,
-                            },
-                          },
-                          "EMS"
-                        )
-                      ),
-                    className: "lja79e9m1m8-editor_css",
-                  },
-                },
-              },
+              // {
+              //   name: "block1",
+              //   className: "block",
+              //   md: 6,
+              //   xs: 24,
+              //   children: {
+              //     wrapper: {
+              //       className: "content5-block-content lja78c03dqk-editor_css",
+              //       href: "/login-police",
+              //     },
+              //     img: {
+              //       children:
+              //         "https://www.linespolice-cad.com/static/images/police-login-logo-512.png",
+              //       className: "lja7iwizeuq-editor_css",
+              //     },
+              //     content: {
+              //       children:
+              //         /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //           "span",
+              //           {
+              //             __self: undefined,
+              //             __source: {
+              //               fileName: _jsxFileName,
+              //               lineNumber: 190,
+              //               columnNumber: 15,
+              //             },
+              //           },
+              //           /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //             "p",
+              //             {
+              //               __self: undefined,
+              //               __source: {
+              //                 fileName: _jsxFileName,
+              //                 lineNumber: 191,
+              //                 columnNumber: 17,
+              //               },
+              //             },
+              //             "Police"
+              //           )
+              //         ),
+              //       className: "lja78krpxml-editor_css",
+              //     },
+              //   },
+              // },
+              // {
+              //   name: "block2",
+              //   className: "block",
+              //   md: 6,
+              //   xs: 24,
+              //   children: {
+              //     wrapper: {
+              //       className: "content5-block-content lja78sleycj-editor_css",
+              //       href: "/login-dispatch",
+              //     },
+              //     img: {
+              //       children:
+              //         "https://www.linespolice-cad.com/static/images/dispatch-login-logo-512.png",
+              //       className: "lja7izocmgf-editor_css",
+              //     },
+              //     content: {
+              //       children:
+              //         /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //           "span",
+              //           {
+              //             __self: undefined,
+              //             __source: {
+              //               fileName: _jsxFileName,
+              //               lineNumber: 215,
+              //               columnNumber: 15,
+              //             },
+              //           },
+              //           /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //             "p",
+              //             {
+              //               __self: undefined,
+              //               __source: {
+              //                 fileName: _jsxFileName,
+              //                 lineNumber: 216,
+              //                 columnNumber: 17,
+              //               },
+              //             },
+              //             "Dispatch"
+              //           )
+              //         ),
+              //       className: "lja78p49zx-editor_css",
+              //     },
+              //   },
+              // },
+              // {
+              //   name: "block3",
+              //   className: "block",
+              //   md: 6,
+              //   xs: 24,
+              //   children: {
+              //     wrapper: {
+              //       className: "content5-block-content lja790verco-editor_css",
+              //       href: "/login-community",
+              //     },
+              //     img: {
+              //       children:
+              //         "https://www.linespolice-cad.com/static/images/community-login-logo-512.png",
+              //       className: "lja7j2ivdgq-editor_css",
+              //     },
+              //     content: {
+              //       children:
+              //         /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //           "span",
+              //           {
+              //             __self: undefined,
+              //             __source: {
+              //               fileName: _jsxFileName,
+              //               lineNumber: 240,
+              //               columnNumber: 15,
+              //             },
+              //           },
+              //           /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //             "p",
+              //             {
+              //               __self: undefined,
+              //               __source: {
+              //                 fileName: _jsxFileName,
+              //                 lineNumber: 241,
+              //                 columnNumber: 17,
+              //               },
+              //             },
+              //             "Community"
+              //           )
+              //         ),
+              //       className: "lja78xkehr-editor_css",
+              //     },
+              //   },
+              // },
+              // {
+              //   name: "block4",
+              //   className: "block",
+              //   md: 6,
+              //   xs: 24,
+              //   children: {
+              //     wrapper: {
+              //       className: "content5-block-content lja799kmegi-editor_css",
+              //       href: "/login-ems",
+              //     },
+              //     img: {
+              //       children:
+              //         "https://www.linespolice-cad.com/static/images/fire-login-logo-512.png",
+              //       className: "lja7j61e72-editor_css",
+              //     },
+              //     content: {
+              //       children:
+              //         /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //           "span",
+              //           {
+              //             __self: undefined,
+              //             __source: {
+              //               fileName: _jsxFileName,
+              //               lineNumber: 265,
+              //               columnNumber: 15,
+              //             },
+              //           },
+              //           /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //             "p",
+              //             {
+              //               __self: undefined,
+              //               __source: {
+              //                 fileName: _jsxFileName,
+              //                 lineNumber: 266,
+              //                 columnNumber: 17,
+              //               },
+              //             },
+              //             "Fire"
+              //           )
+              //         ),
+              //       className: "lja79677l68-editor_css",
+              //     },
+              //   },
+              // },
+              // {
+              //   name: "block5",
+              //   className: "block lja7fuhkkt-editor_css",
+              //   md: 6,
+              //   xs: 24,
+              //   children: {
+              //     wrapper: {
+              //       className: "content5-block-content lja79icitt-editor_css",
+              //       href: "/login-ems",
+              //     },
+              //     img: {
+              //       children:
+              //         "https://www.linespolice-cad.com/static/images/ems-login-logo-512.png",
+              //       className: "lja7j8ssy7-editor_css",
+              //     },
+              //     content: {
+              //       children:
+              //         /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //           "span",
+              //           {
+              //             __self: undefined,
+              //             __source: {
+              //               fileName: _jsxFileName,
+              //               lineNumber: 290,
+              //               columnNumber: 15,
+              //             },
+              //           },
+              //           /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //             "p",
+              //             {
+              //               __self: undefined,
+              //               __source: {
+              //                 fileName: _jsxFileName,
+              //                 lineNumber: 291,
+              //                 columnNumber: 17,
+              //               },
+              //             },
+              //             "EMS"
+              //           )
+              //         ),
+              //       className: "lja79e9m1m8-editor_css",
+              //     },
+              //   },
+              // },
             ],
           },
         };
@@ -16589,7 +16653,7 @@
                               columnNumber: 17,
                             },
                           },
-                          "Choose your department to register for (no pressure, you can always switch later)",
+                          "Create a free account to get started with Lines Police CAD.",
                           /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                             "br",
                             {
@@ -16713,233 +16777,233 @@
                               columnNumber: 17,
                             },
                           },
-                          "Civilian"
+                          "Create a Free Account"
                         )
                       ),
                     className: "lja787k3ld7-editor_css",
                   },
                 },
               },
-              {
-                name: "block1",
-                className: "block",
-                md: 6,
-                xs: 24,
-                children: {
-                  wrapper: {
-                    className: "content5-block-content lja78c03dqk-editor_css",
-                    href: "/signup-police",
-                  },
-                  img: {
-                    children:
-                      "https://www.linespolice-cad.com/static/images/police-login-logo-512.png",
-                    className: "lja7iwizeuq-editor_css",
-                  },
-                  content: {
-                    children:
-                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                        "span",
-                        {
-                          __self: undefined,
-                          __source: {
-                            fileName: _jsxFileName,
-                            lineNumber: 210,
-                            columnNumber: 15,
-                          },
-                        },
-                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                          "p",
-                          {
-                            __self: undefined,
-                            __source: {
-                              fileName: _jsxFileName,
-                              lineNumber: 211,
-                              columnNumber: 17,
-                            },
-                          },
-                          "Police"
-                        )
-                      ),
-                    className: "lja78krpxml-editor_css",
-                  },
-                },
-              },
-              {
-                name: "block2",
-                className: "block",
-                md: 6,
-                xs: 24,
-                children: {
-                  wrapper: {
-                    className: "content5-block-content lja78sleycj-editor_css",
-                    href: "/signup-dispatch",
-                  },
-                  img: {
-                    children:
-                      "https://www.linespolice-cad.com/static/images/dispatch-login-logo-512.png",
-                    className: "lja7izocmgf-editor_css",
-                  },
-                  content: {
-                    children:
-                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                        "span",
-                        {
-                          __self: undefined,
-                          __source: {
-                            fileName: _jsxFileName,
-                            lineNumber: 235,
-                            columnNumber: 15,
-                          },
-                        },
-                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                          "p",
-                          {
-                            __self: undefined,
-                            __source: {
-                              fileName: _jsxFileName,
-                              lineNumber: 236,
-                              columnNumber: 17,
-                            },
-                          },
-                          "Dispatch"
-                        )
-                      ),
-                    className: "lja78p49zx-editor_css",
-                  },
-                },
-              },
-              {
-                name: "block3",
-                className: "block",
-                md: 6,
-                xs: 24,
-                children: {
-                  wrapper: {
-                    className: "content5-block-content lja790verco-editor_css",
-                    href: "/signup-community",
-                  },
-                  img: {
-                    children:
-                      "https://www.linespolice-cad.com/static/images/community-login-logo-512.png",
-                    className: "lja7j2ivdgq-editor_css",
-                  },
-                  content: {
-                    children:
-                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                        "span",
-                        {
-                          __self: undefined,
-                          __source: {
-                            fileName: _jsxFileName,
-                            lineNumber: 260,
-                            columnNumber: 15,
-                          },
-                        },
-                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                          "p",
-                          {
-                            __self: undefined,
-                            __source: {
-                              fileName: _jsxFileName,
-                              lineNumber: 261,
-                              columnNumber: 17,
-                            },
-                          },
-                          "Community"
-                        )
-                      ),
-                    className: "lja78xkehr-editor_css",
-                  },
-                },
-              },
-              {
-                name: "block4",
-                className: "block",
-                md: 6,
-                xs: 24,
-                children: {
-                  wrapper: {
-                    className: "content5-block-content lja799kmegi-editor_css",
-                    href: "/signup-ems",
-                  },
-                  img: {
-                    children:
-                      "https://www.linespolice-cad.com/static/images/fire-login-logo-512.png",
-                    className: "lja7j61e72-editor_css",
-                  },
-                  content: {
-                    children:
-                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                        "span",
-                        {
-                          __self: undefined,
-                          __source: {
-                            fileName: _jsxFileName,
-                            lineNumber: 285,
-                            columnNumber: 15,
-                          },
-                        },
-                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                          "p",
-                          {
-                            __self: undefined,
-                            __source: {
-                              fileName: _jsxFileName,
-                              lineNumber: 286,
-                              columnNumber: 17,
-                            },
-                          },
-                          "Fire"
-                        )
-                      ),
-                    className: "lja79677l68-editor_css",
-                  },
-                },
-              },
-              {
-                name: "block5",
-                className: "block lja7fuhkkt-editor_css",
-                md: 6,
-                xs: 24,
-                children: {
-                  wrapper: {
-                    className: "content5-block-content lja79icitt-editor_css",
-                    href: "/signup-ems",
-                  },
-                  img: {
-                    children:
-                      "https://www.linespolice-cad.com/static/images/ems-login-logo-512.png",
-                    className: "lja7j8ssy7-editor_css",
-                  },
-                  content: {
-                    children:
-                      /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                        "span",
-                        {
-                          __self: undefined,
-                          __source: {
-                            fileName: _jsxFileName,
-                            lineNumber: 310,
-                            columnNumber: 15,
-                          },
-                        },
-                        /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
-                          "p",
-                          {
-                            __self: undefined,
-                            __source: {
-                              fileName: _jsxFileName,
-                              lineNumber: 311,
-                              columnNumber: 17,
-                            },
-                          },
-                          "EMS"
-                        )
-                      ),
-                    className: "lja79e9m1m8-editor_css",
-                  },
-                },
-              },
+              // {
+              //   name: "block1",
+              //   className: "block",
+              //   md: 6,
+              //   xs: 24,
+              //   children: {
+              //     wrapper: {
+              //       className: "content5-block-content lja78c03dqk-editor_css",
+              //       href: "/signup-police",
+              //     },
+              //     img: {
+              //       children:
+              //         "https://www.linespolice-cad.com/static/images/police-login-logo-512.png",
+              //       className: "lja7iwizeuq-editor_css",
+              //     },
+              //     content: {
+              //       children:
+              //         /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //           "span",
+              //           {
+              //             __self: undefined,
+              //             __source: {
+              //               fileName: _jsxFileName,
+              //               lineNumber: 210,
+              //               columnNumber: 15,
+              //             },
+              //           },
+              //           /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //             "p",
+              //             {
+              //               __self: undefined,
+              //               __source: {
+              //                 fileName: _jsxFileName,
+              //                 lineNumber: 211,
+              //                 columnNumber: 17,
+              //               },
+              //             },
+              //             "Police"
+              //           )
+              //         ),
+              //       className: "lja78krpxml-editor_css",
+              //     },
+              //   },
+              // },
+              // {
+              //   name: "block2",
+              //   className: "block",
+              //   md: 6,
+              //   xs: 24,
+              //   children: {
+              //     wrapper: {
+              //       className: "content5-block-content lja78sleycj-editor_css",
+              //       href: "/signup-dispatch",
+              //     },
+              //     img: {
+              //       children:
+              //         "https://www.linespolice-cad.com/static/images/dispatch-login-logo-512.png",
+              //       className: "lja7izocmgf-editor_css",
+              //     },
+              //     content: {
+              //       children:
+              //         /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //           "span",
+              //           {
+              //             __self: undefined,
+              //             __source: {
+              //               fileName: _jsxFileName,
+              //               lineNumber: 235,
+              //               columnNumber: 15,
+              //             },
+              //           },
+              //           /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //             "p",
+              //             {
+              //               __self: undefined,
+              //               __source: {
+              //                 fileName: _jsxFileName,
+              //                 lineNumber: 236,
+              //                 columnNumber: 17,
+              //               },
+              //             },
+              //             "Dispatch"
+              //           )
+              //         ),
+              //       className: "lja78p49zx-editor_css",
+              //     },
+              //   },
+              // },
+              // {
+              //   name: "block3",
+              //   className: "block",
+              //   md: 6,
+              //   xs: 24,
+              //   children: {
+              //     wrapper: {
+              //       className: "content5-block-content lja790verco-editor_css",
+              //       href: "/signup-community",
+              //     },
+              //     img: {
+              //       children:
+              //         "https://www.linespolice-cad.com/static/images/community-login-logo-512.png",
+              //       className: "lja7j2ivdgq-editor_css",
+              //     },
+              //     content: {
+              //       children:
+              //         /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //           "span",
+              //           {
+              //             __self: undefined,
+              //             __source: {
+              //               fileName: _jsxFileName,
+              //               lineNumber: 260,
+              //               columnNumber: 15,
+              //             },
+              //           },
+              //           /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //             "p",
+              //             {
+              //               __self: undefined,
+              //               __source: {
+              //                 fileName: _jsxFileName,
+              //                 lineNumber: 261,
+              //                 columnNumber: 17,
+              //               },
+              //             },
+              //             "Community"
+              //           )
+              //         ),
+              //       className: "lja78xkehr-editor_css",
+              //     },
+              //   },
+              // },
+              // {
+              //   name: "block4",
+              //   className: "block",
+              //   md: 6,
+              //   xs: 24,
+              //   children: {
+              //     wrapper: {
+              //       className: "content5-block-content lja799kmegi-editor_css",
+              //       href: "/signup-ems",
+              //     },
+              //     img: {
+              //       children:
+              //         "https://www.linespolice-cad.com/static/images/fire-login-logo-512.png",
+              //       className: "lja7j61e72-editor_css",
+              //     },
+              //     content: {
+              //       children:
+              //         /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //           "span",
+              //           {
+              //             __self: undefined,
+              //             __source: {
+              //               fileName: _jsxFileName,
+              //               lineNumber: 285,
+              //               columnNumber: 15,
+              //             },
+              //           },
+              //           /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //             "p",
+              //             {
+              //               __self: undefined,
+              //               __source: {
+              //                 fileName: _jsxFileName,
+              //                 lineNumber: 286,
+              //                 columnNumber: 17,
+              //               },
+              //             },
+              //             "Fire"
+              //           )
+              //         ),
+              //       className: "lja79677l68-editor_css",
+              //     },
+              //   },
+              // },
+              // {
+              //   name: "block5",
+              //   className: "block lja7fuhkkt-editor_css",
+              //   md: 6,
+              //   xs: 24,
+              //   children: {
+              //     wrapper: {
+              //       className: "content5-block-content lja79icitt-editor_css",
+              //       href: "/signup-ems",
+              //     },
+              //     img: {
+              //       children:
+              //         "https://www.linespolice-cad.com/static/images/ems-login-logo-512.png",
+              //       className: "lja7j8ssy7-editor_css",
+              //     },
+              //     content: {
+              //       children:
+              //         /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //           "span",
+              //           {
+              //             __self: undefined,
+              //             __source: {
+              //               fileName: _jsxFileName,
+              //               lineNumber: 310,
+              //               columnNumber: 15,
+              //             },
+              //           },
+              //           /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
+              //             "p",
+              //             {
+              //               __self: undefined,
+              //               __source: {
+              //                 fileName: _jsxFileName,
+              //                 lineNumber: 311,
+              //                 columnNumber: 17,
+              //               },
+              //             },
+              //             "EMS"
+              //           )
+              //         ),
+              //       className: "lja79e9m1m8-editor_css",
+              //     },
+              //   },
+              // },
             ],
           },
         };

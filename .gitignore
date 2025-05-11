@@ -1,5 +1,6 @@
 # Dependencies.
 node_modules/*
+.next/
 
 # Enviroment variables
 .envrc
