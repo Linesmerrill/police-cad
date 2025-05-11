@@ -151,7 +151,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/login-civ", authCheck, function (req, res) {
-    return res.redirect("civ-dashboard");
+    return res.redirect("/community-dashboard");
   });
 
   app.get("/login-police", authCheck, function (req, res) {
@@ -171,7 +171,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/signup-civ", authCheck, function (req, res) {
-    return res.redirect("/civ-dashboard");
+    return res.redirect("/community-dashboard");
   });
 
   app.get("/signup-police", authCheck, function (req, res) {
@@ -406,59 +406,68 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/community-dashboard", authCheck, function (req, res) {
-    var context = req.app.locals.specialContext;
-    req.app.locals.specialContext = null;
-    if (
-      req.user.user.activeCommunity == "" ||
-      req.user.user.activeCommunity == null
-    ) {
-      Community.find(
-        {
-          $or: [
-            {
-              "community.ownerID": req.user._id,
-            },
-          ],
-        },
-        function (err, dbCommunities) {
-          if (err) return console.error(err);
-          return res.render("community-dashboard", {
-            user: req.user,
-            personas: null,
-            vehicles: null,
-            communities: dbCommunities,
-            context: context,
-            referer: encodeURIComponent("/community-dashboard"),
-            redirect: encodeURIComponent(redirect),
-          });
-        }
-      );
-    } else {
-      Community.find(
-        {
-          $or: [
-            {
-              "community.ownerID": req.user._id,
-            },
-            {
-              _id: req.user.user.activeCommunity,
-            },
-          ],
-        },
-        function (err, dbCommunities) {
-          if (err) return console.error(err);
-          return res.render("community-dashboard", {
-            user: req.user,
-            personas: null,
-            vehicles: null,
-            communities: dbCommunities,
-            context: context,
-            referer: encodeURIComponent("/community-dashboard"),
-            redirect: encodeURIComponent(redirect),
-          });
-        }
-      );
-    }
+    return res.render("community-dashboard", {
+      user: req.user,
+      personas: null,
+      vehicles: null,
+      communities: [],
+      context: null,
+      referer: encodeURIComponent("/community-dashboard"),
+      redirect: encodeURIComponent(redirect),
+    });
+    // var context = req.app.locals.specialContext;
+    // req.app.locals.specialContext = null;
+    // if (
+    //   req.user.user.activeCommunity == "" ||
+    //   req.user.user.activeCommunity == null
+    // ) {
+    //   Community.find(
+    //     {
+    //       $or: [
+    //         {
+    //           "community.ownerID": req.user._id,
+    //         },
+    //       ],
+    //     },
+    //     function (err, dbCommunities) {
+    //       if (err) return console.error(err);
+    //       return res.render("community-dashboard", {
+    //         user: req.user,
+    //         personas: null,
+    //         vehicles: null,
+    //         communities: dbCommunities,
+    //         context: context,
+    //         referer: encodeURIComponent("/community-dashboard"),
+    //         redirect: encodeURIComponent(redirect),
+    //       });
+    //     }
+    //   );
+    // } else {
+    //   Community.find(
+    //     {
+    //       $or: [
+    //         {
+    //           "community.ownerID": req.user._id,
+    //         },
+    //         {
+    //           _id: req.user.user.activeCommunity,
+    //         },
+    //       ],
+    //     },
+    //     function (err, dbCommunities) {
+    //       if (err) return console.error(err);
+    //       return res.render("community-dashboard", {
+    //         user: req.user,
+    //         personas: null,
+    //         vehicles: null,
+    //         communities: dbCommunities,
+    //         context: context,
+    //         referer: encodeURIComponent("/community-dashboard"),
+    //         redirect: encodeURIComponent(redirect),
+    //       });
+    //     }
+    //   );
+    // }
   });
 
   app.get("/police-dashboard", authCheck, function (req, res) {
@@ -1265,7 +1274,7 @@ module.exports = function (app, passport, server) {
   app.post(
     "/login-civ",
     passport.authenticate("login", {
-      successRedirect: "/civ-dashboard",
+      successRedirect: "/community-dashboard",
       failureRedirect: "/login-civ",
       failureFlash: true,
     })

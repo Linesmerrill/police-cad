@@ -16,9 +16,17 @@
     <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
     <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule="" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>
-    <!-- To hide google translate header bar on each page -->
     <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
     <style type='text/css'> body {position: static !important; top:0px !important;}</style>
+    <style>
+      .community-card { border: 1px solid #ddd; padding: 10px; margin: 10px; text-align: center; }
+      .community-card img { max-width: 100%; height: auto; }
+      .active-community { text-align: center; margin-bottom: 20px; }
+      .pagination-controls { text-align: center; margin-top: 20px; }
+      .department-row:hover { cursor: pointer; background-color: #f5f5f5; }
+      .legacy-label { color: #ff9800; font-weight: bold; }
+      .legacy-note { font-size: 0.9em; color: #666; }
+    </style>
 </head>
 
 <body>
@@ -35,23 +43,12 @@
                   <img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD</a>
             </div>
             <div class="navbar-collapse collapse" id="bs-navbar">
-
                 <ul class="nav navbar-nav navbar-right">
-                    <li>
-                        <a href="/civ-dashboard">Civilian</a>
-                    </li>
-                    <li>
-                        <a href="/police-dashboard">Police</a>
-                    </li>
-                    <li>
-                        <a href="/ems-dashboard">Fire/EMS</a>
-                    </li>
-                    <li>
-                        <a href="/dispatch-dashboard">Dispatch</a>
-                    </li>
-                    <li>
-                        <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"><ion-icon class="nav-user-icon" name="person-circle-outline"></ion-icon></a>
-                    </li>
+                    <!-- <li><a href="/civ-dashboard">Civilian</a></li>
+                    <li><a href="/police-dashboard">Police</a></li>
+                    <li><a href="/ems-dashboard">Fire/EMS</a></li>
+                    <li><a href="/dispatch-dashboard">Dispatch</a></li> -->
+                    <li><a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"><ion-icon class="nav-user-icon" name="person-circle-outline"></ion-icon></a>
                 </ul>
             </div>
         </div>
@@ -59,199 +56,82 @@
 
     <header id="third" style='background-image: url("/static/images/monitors2.jpg"); min-height: 100%;'>
         <div class="inner">
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <!-- imports the community specific alerts -->
-            
+            <br/><br/><br/><br/>
             <div class="col-md-offset-3 col-md-7">
               <div id="successCopyMessage" class="alert alert-success alert-dismissible" role="alert" style="display:none">
-                  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">×</span></button>
                   <strong>Success!</strong> Copied to your clipboard
                 </div>
                 <% include community-alerts %>
                 <h2 class="text-center">Community Dashboard</h2>
-            <!-- <fieldset> -->
-              <!-- Form Name -->
-              
-              <hr style="width: 88%;max-width: 100rem;">
-              <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
-                <li class="nav-item active">
-                  <a class="nav-link active" href="/community-dashboard">Community Dashboard</a>
-              </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/owned-communities">Owned Communities</a>
-                </li>
-              </ul>
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="joinCommunity"></label>
-                <div class="col-md-4 text-align-center">
-                  <button data-toggle="modal" href="#joinCommunityModal" class="btn btn-primary">Join</button>
-                  <button data-toggle="modal" href="#createCommunityModal" class="btn btn-primary">Create</button>
+                <hr style="width: 88%;max-width: 100rem;">
+                <!-- Active Community Display -->
+                <div class="active-community">
+                    <h3>Active Community</h3>
+                    <div id="active-community-display">
+                        <p>No active community selected.</p>
+                    </div>
                 </div>
-              </div>
-              <div class="col-md-8 col-md-offset-2 name-table text-align-center margin-top-2">
-                <table class="table table-hover" border="1" frame="box">
-                  <thead>
-                    <tr>
-                      Active Community
-                    </tr>
-                    <tr style="background-color: #2d2d2d;"><td>Name</td><td>Code</td><td>Action</td></tr>
-                  </thead>
-                    <tbody>
-                      <% if(communities != undefined && communities != null) {%>
-                        <% for(var i=0; i<communities.length; i++) {%>
-                          <p><% user.user.activeCommunity %></p>
-                          <p><% i._id %></p>
-                          <% if (user.user.activeCommunity == communities[i]._id) {%>
-                            <tr class="no-hover">
-                            <td style="text-transform: capitalize;"><%= communities[i].community.name%></td>
-                            <td> <%= communities[i].community.code%></td>
-                            <td><button data-toggle="modal" href="#leaveActiveCommunityModal" class="btn btn-danger">Leave</button></td>
+                <hr style="width: 88%;max-width: 100rem;">
+                <!-- Community Cards -->
+                <h3>Your Communities</h3>
+                <div class="row" id="community-cards"></div>
+                <!-- Pagination Controls -->
+                <div class="pagination-controls">
+                    <button class="btn btn-primary" id="prev-page" disabled>Previous</button>
+                    <span id="page-info">Page 1 of 1</span>
+                    <button class="btn btn-primary" id="next-page" disabled>Next</button>
+                </div>
+                <hr style="width: 88%;max-width: 100rem;">
+                <!-- Departments Table -->
+                <div id="departments-section" style="display: none;">
+                    <h3>Departments in Active Community</h3>
+                    <table id="departments-table" class="table table-hover" border="1" frame="box">
+                        <thead>
+                            <tr style="background-color: #2d2d2d;">
+                                <th>Name</th>
+                                <th>Description</th>
                             </tr>
-                          <% } %>
-                        <% } %>
-                      <% } %>
-                    </tbody>
-                </table>
-              </div>
-          <!-- </fieldset>  -->
-          <form id="actionForm" class="row" action="/communities" method="post">
-            <!-- <fieldset> -->
-              <!-- list of current communities -->
-              <div class="col-md-8 col-md-offset-2 name-table text-align-center margin-top-2">
-                <table class="table table-hover" border="1" frame="box">
-                  <thead>
-                    <tr>
-                      Communities Owned by You
-                    </tr>
-                    <tr style="background-color: #2d2d2d;"><td>Name</td><td>Code</td><td>Manage</td></tr>
-              
-                  </thead>
-                    <tbody>
-                      <% if(communities != undefined && communities != null) {%>
-                        <% for(var i=0; i<communities.length; i++) {%>
-                          <% if (user._id == communities[i].community.ownerID) {%>
-                            <tr class="gray-hover no-hover" data-toggle="modal" data-id=<%=i%>">
-                            <td style="text-transform: capitalize;"><%= communities[i].community.name%></td>
-                            <td> <%= communities[i].community.code%></td>
-                            <td></td>
-                            </tr>
-                          <% } %>
-                        <% } %>
-                      <% } %>
-                    </tbody>
-                </table>
-              </div>
-              <!-- </fieldset> -->
-          </form>
-      <div class="google-ad"></div>
-    </div>
-    </div>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <p class="text-center">Note: Joining and creating communities is currently being reworked. Please use our mobile app to join or create communities.</p>
+                <div class="text-center">
+                    <a href="https://apps.apple.com/us/app/lpc-app/id6503307483" target="_blank" class="btn btn-primary">App Store</a>
+                    <a href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp" target="_blank" class="btn btn-primary">Google Play</a>
+                </div>
+            </div>
+        </div>
     </header>
     <% include account-management %>
     <% include footer %>
-    <div id="alertModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-sm">
+
+    <!-- Tutorial Modal -->
+    <div id="tutorialModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
             <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                    <h4 class="modal-title">Welcome to the Community Dashboard!</h4>
+                </div>
                 <div class="modal-body">
-                    <h2 class="text-center">Coming Soon!</h2>
-                    <p class="text-center">This is still being developed. Please check back later ;)</p>
-                    <br />
-                    <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK
-                        <i class="ion-android-close"></i>
-                    </button>
+                    <p>You can now be part of <strong>multiple communities</strong> and view them all here!</p>
+                    <ol>
+                        <li><strong>Select a Community</strong>: Click "Set as Active" on a community card to make it your active community, displayed at the top.</li>
+                        <li><strong>View Departments</strong>: Scroll down to see the departments in your active community.</li>
+                        <li><strong>Go to Department</strong>: Click a department in the table to visit its page.</li>
+                    </ol>
+                    <p><strong>Note</strong>: Legacy communities (marked with "Legacy") must be reconciled in the mobile app before they can be set as active.</p>
+                    <p>Use the Previous/Next buttons to browse all your communities, four at a time.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="dismissTutorial()">Got It</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="joinCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-body">
-            <fieldset>
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-              <h4>Join a Community</h4>
-              <hr style="width: 88%;max-width: 100rem;">
-              <p>To join a community, please download our mobile app.</p>
-              <div class="text-center">
-                <a href="https://apps.apple.com/us/app/lpc-app/id6503307483" target="_blank" class="btn btn-primary">App Store</a>
-                <a href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp" target="_blank" class="btn btn-primary">Google Play</a>
-              </div>
-            </fieldset>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-    <div id="leaveActiveCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-body">
-            <form class="form-horizontal" action="/leaveActiveCommunity" method="post">
-              <fieldset>
-  
-              <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-              <h4>Leave Active Community</h4>
-              <hr style="width: 88%;max-width: 100rem;">
-  
-              <p>NOTE: All civilians and vehicles that you created in this community will no longer 
-                show up on your dashboard after you leave.
-              </p>
-              <p>Are you sure you want to leave this community?</p>
-  
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="leaveActiveCommunity"></label>
-                <div class="col-md-4 text-align-center">
-                  <button id="leaveActiveCommunity" value="<%= user._id %>" name="userID"  class="btn btn-danger">Leave</button>
-                </div>
-              </div>
-              </fieldset>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-    <div id="createCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-body">
-            <fieldset>
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-              <h4>Create a New Community</h4>
-              <hr style="width: 88%;max-width: 100rem;">
-              <p>To create a new community, please download our mobile app.</p>
-              <div class="text-center">
-                <a href="https://apps.apple.com/us/app/lpc-app/id6503307483" target="_blank" class="btn btn-primary">App Store</a>
-                <a href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp" target="_blank" class="btn btn-primary">Google Play</a>
-              </div>
-            </fieldset>
-          </div>
-        </div>
-      </div>
-    </div>
-  
-    <div id="communitiesInfoModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-body">
-              <fieldset>
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-              <h4>Check out the New Communities Section!</h4>
-              <hr style="width: 88%;max-width: 100rem;">
-              <a data-toggle="modal" href="#communitiesModal" onclick="dismissCommunitiesInfoModal()"><img src="/images/communities-example.png" class="diagonal-arrow float-right" alt="communities example screenshot"></a>
-              <img src="/static/images/diagonal-arrow-white.png" class="diagonal-arrow" alt="diagonal arrow pointing to top right of page">
-              </fieldset>
-          </div>
-        </div>
-      </div>
-    </div>
     <!--scripts loaded here -->
     <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
     <script src="/socket.io/socket.io.js"></script>
@@ -267,102 +147,251 @@
 </body>
 
 </html>
+
 <script type="text/javascript">
-  // all global router vars declared here to reduce duplication
-  var dbCommunities = <%- JSON.stringify(communities) %>;
   var dbUser = <%- JSON.stringify(user) %>;
+  var currentPage = 1;
+  var communitiesPerPage = 3;
+  var allCommunities = [];
 
 $(document).ready(function () {
-    $('#example').DataTable();
-
-    // displays the Update and Cancel buttons for updating the community name
-    $('#communityName').on('keyup', function(e) {
-      if(e.target.value != dbCommunities.community.name && e.target.value != '') {
-        $('#updateCommunityNameBtns').show();
-      } else {
-        $('#updateCommunityNameBtns').hide();
-      }
-    })
-
-    // displays the Update Username and Cancel buttons for updating the username
-    $('#accountUsername').on('keyup', function(e) {
-    if(e.target.value != dbUser.user.username && e.target.value != '') {
-        $('#updateUsernameBtns').show();
-    } else {
-        $('#updateUsernameBtns').hide();
-    }
-    })
-
-    $('#accountCallSign').on('keyup', function(e) {
-        if(e.target.value != dbUser.user.callSign && e.target.value != '') {
-            $('#updateCallSignBtns').show();
-        } else {
-            $('#updateCallSignBtns').hide();
+    $('#departments-table').DataTable({
+        paging: true,
+        pageLength: 5,
+        lengthMenu: [5, 10],
+        searching: true,
+        ordering: true,
+        info: true,
+        createdRow: function(row, data, dataIndex) {
+            $(row).addClass('department-row');
+            $(row).click(function() {
+                const deptId = allCommunities.find(c => c._id === dbUser?.user?.lastAccessedCommunity?.communityID)?.departments[dataIndex]?._id;
+                if (deptId) {
+                    window.location.href = `/department/${deptId}`;
+                } else {
+                    console.error('Department ID not found');
+                }
+            });
         }
-    })
+    });
 
-    $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
-    $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 10)
+    if (!getCookie('lpc_tutorial_dismissed')) {
+        $('#tutorialModal').modal('show');
+    }
+
+    fetchCommunityData();
+
+    $('#prev-page').click(function() {
+        if (currentPage > 1) {
+            currentPage--;
+            renderCommunityCards(allCommunities);
+        }
+    });
+
+    $('#next-page').click(function() {
+        if (currentPage < Math.ceil(allCommunities.length / communitiesPerPage)) {
+            currentPage++;
+            renderCommunityCards(allCommunities);
+        }
+    });
 });
 
-function copyText(element) {
-    $(element).select();
-    document.execCommand("copy");
-    $('#successCopyMessage').show();
-}
-
-function cancelCommunityName() {
-    $('#communityName').val(dbCommunities.community.name)
-    $('#updateCommunityNameBtns').hide();
-  }
-
-  function fillAccountDetails() {
-    $('#accountEmail').val(dbUser.user.email)
-    $('#accountUsername').val(dbUser.user.username)
-    $('#accountCallSign').val(dbUser.user.callSign)
-  }
-  
-  function cancelUsername() {
-    $('#accountUsername').val(dbUser.user.username)
-    $('#updateUsernameBtns').hide();
-  }
-
-  function cancelCallSign() {
-    $('#accountCallSign').val(dbUser.user.callSign)
-    $('#updateCallSignBtns').hide();
-  }
-
-  function togglePanicBtnSound() {
-    var socket = io();
-    socket.emit('update_panic_btn_sound', dbUser)
-    socket.on('load_panic_btn_result', (res) => {
-      $('#panic-button-check-sound').prop("checked", !res.user.panicButtonSound)
-      $('#successfully-updated-alert').removeClass('hide').addClass('show').delay(2000).fadeOut(1000, function () {
-        $(this).addClass('hide').removeClass('show');
-  });
-    })
-  }
-
-  function adjustAlertVolumeSlider() {
-    var socket=io();
-    var volumeAmount = $('#alert-volume-slider').val()
-    var myObj = {
-      dbUser: dbUser,
-      volume: volumeAmount
+// Cookie functions
+function setCookie(name, value, days) {
+    var expires = "";
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
     }
-    socket.emit('update_alert_volume_slider', myObj)
-    socket.on('load_alert_volume_result', (res) => {
-      $('#successfully-updated-alert').removeClass('hide').addClass('show').delay(2000).fadeOut(1000, function () {
-        $(this).addClass('hide').removeClass('show');
-      });
-    })
-  }
-</script>
+    document.cookie = name + "=" + (value || "") + expires + "; path=/";
+}
 
-<!--  added for google translate --> 
-<script type="text/javascript">
+function getCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
+}
+
+function dismissTutorial() {
+    setCookie('lpc_tutorial_dismissed', 'true', 365);
+}
+
+function fetchCommunityData(newActiveCommunityId = null) {
+    // Fetch new system communities
+    $.ajax({
+        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/user/${dbUser._id}/communities?filter=status%3Aapproved`,
+        method: 'GET',
+        success: function(newData) {
+            // Fetch legacy communities
+            $.ajax({
+                url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/communities/${dbUser._id}`,
+                method: 'GET',
+                success: function(legacyData) {
+                    // Filter legacy communities with non-empty code
+                    const filteredLegacyData = legacyData.filter(community => community?.community?.code !== "");
+                    // Combine new and legacy communities
+                    const communityIds = [
+                        ...newData.map(item => ({ id: item.communityId, isLegacy: false })),
+                        ...filteredLegacyData.map(item => ({ id: item._id, isLegacy: true }))
+                    ];
+                    fetchCommunityDetails(communityIds, newData, newActiveCommunityId);
+                },
+                error: function(err) {
+                    console.error('Error fetching legacy community data:', err);
+                    // Proceed with new communities only
+                    const communityIds = newData.map(item => ({ id: item.communityId, isLegacy: false }));
+                    fetchCommunityDetails(communityIds, newData, newActiveCommunityId);
+                }
+            });
+        },
+        error: function(err) {
+            console.error('Error fetching community data:', err);
+            $('#community-cards').html('<p>Error loading communities. Please try again later.</p>');
+            $('.pagination-controls').hide();
+        }
+    });
+}
+
+function fetchCommunityDetails(communityIds, newData, newActiveCommunityId) {
+    const promises = communityIds.map(({ id, isLegacy }) => 
+        $.ajax({
+            url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${id}`,
+            method: 'GET'
+        }).then(result => ({ ...result, isLegacy })) // Add isLegacy flag
+    );
+
+    Promise.all(promises)
+        .then(results => {
+            allCommunities = results;
+            const activeCommunityId = newActiveCommunityId || dbUser?.user?.lastAccessedCommunity?.communityID;
+            const activeCommunity = allCommunities.find(c => c._id === activeCommunityId) || null;
+            renderActiveCommunity(activeCommunity);
+            renderCommunityCards(allCommunities);
+            if (activeCommunity && activeCommunity?.community?.departments && !activeCommunity.isLegacy) {
+                renderDepartments(activeCommunity?.community?.departments);
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching community details:', err);
+            $('#community-cards').html('<p>Error loading community details. Please try again later.</p>');
+            $('.pagination-controls').hide();
+        });
+}
+
+function renderActiveCommunity(activeCommunity) {
+    const display = $('#active-community-display');
+    if (activeCommunity) {
+        display.html(`
+            <h4>${activeCommunity?.community?.name}${activeCommunity.isLegacy ? ' (Legacy)' : ''}</h4>
+            <img src="${activeCommunity?.community?.imageLink || 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1746915829/temp-community-image_ebspfe.jpg'}" alt="${activeCommunity?.community?.name}" style="max-width: 200px; width: 5em; height: 5em" />
+        `);
+        $('#departments-section').show();
+    } else {
+        display.html('<p>No active community selected.</p>');
+        $('#departments-section').hide();
+    }
+}
+
+function renderCommunityCards(communities) {
+    const cardsContainer = $('#community-cards');
+    cardsContainer.empty();
+
+    if (communities && communities.length > 0) {
+        const start = (currentPage - 1) * communitiesPerPage;
+        const end = start + communitiesPerPage;
+        const paginatedCommunities = communities.slice(start, end);
+
+        paginatedCommunities.forEach(community => {
+            const isLegacy = community.isLegacy;
+            cardsContainer.append(`
+                <div class="col-md-3 community-card">
+                    <img src="${community?.community?.imageLink || 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1746915829/temp-community-image_ebspfe.jpg'}" alt="${community?.community?.name}" style="max-width: 100%; width: 5em; height: 5em" />
+                    <h4>${community?.community?.name}${isLegacy ? ' <span class="legacy-label">(Legacy)</span>' : ''}</h4>
+                    ${isLegacy ? `
+                        <p class="legacy-note">Please reconcile this community in the mobile app.</p>
+                        <div>
+                            <a href="https://apps.apple.com/us/app/lpc-app/id6503307483" target="_blank" class="btn btn-primary btn-sm">App Store</a>
+                            <a href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp" target="_blank" class="btn btn-primary btn-sm">Google Play</a>
+                        </div>
+                    ` : `
+                        <button class="btn btn-primary" onclick="setActiveCommunity('${community._id}')">Set as Active</button>
+                    `}
+                </div>
+            `);
+        });
+
+        const totalPages = Math.ceil(communities.length / communitiesPerPage);
+        $('#page-info').text(`Page ${currentPage} of ${totalPages}`);
+        $('#prev-page').prop('disabled', currentPage === 1);
+        $('#next-page').prop('disabled', currentPage === totalPages || totalPages === 0);
+        $('.pagination-controls').show();
+    } else {
+        cardsContainer.html('<p>No communities found.</p>');
+        $('.pagination-controls').hide();
+    }
+}
+
+function renderDepartments(departments) {
+    const table = $('#departments-table').DataTable();
+    table.clear();
+    if (departments && departments.length > 0) {
+        departments.forEach(dept => {
+            table.row.add([
+                dept.name || 'N/A',
+                dept.description || 'N/A'
+            ]);
+        });
+    }
+    table.draw();
+}
+
+function setActiveCommunity(communityId) {
+    if (!dbUser._id || !communityId) {
+        console.error('Invalid input: userId or communityId is missing', { userId: dbUser._id, communityId });
+        $('#successCopyMessage').html('<strong>Error!</strong> Invalid user or community data.').show().delay(2000).fadeOut();
+        return;
+    }
+
+    const payload = {
+        userId: dbUser._id,
+        communityId: communityId,
+        createdAt: new Date().toISOString()
+    };
+
+    $.ajax({
+        url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/user/last-accessed-community',
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function(data) {
+            fetchCommunityData(communityId);
+            currentPage = 1;
+            $('#successCopyMessage').html('<strong>Success!</strong> Active community updated.').show().delay(2000).fadeOut();
+        },
+        error: function(xhr, status, error) {
+            console.error('Error setting active community:', {
+                status: xhr.status,
+                responseText: xhr.responseText,
+                error: error
+            });
+            $('#successCopyMessage').html('<strong>Error!</strong> Failed to update active community: ' + (xhr.responseText || error) + '.').show().delay(2000).fadeOut();
+        }
+    });
+}
+
+function fillAccountDetails() {
+    $('#accountEmail').val(dbUser.user.email);
+    $('#accountUsername').val(dbUser.user.username);
+    $('#accountCallSign').val(dbUser.user.callSign);
+}
+
 function googleTranslateElementInit() {
-  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+    new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
 }
 </script>
-<!-- IE needs 512+ bytes: https://blogs.msdn.microsoft.com/ieinternals/2010/08/18/friendly-http-error-pages/ -->
