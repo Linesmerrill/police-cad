@@ -32,6 +32,33 @@
   <!-- To hide google translate header bar on each page -->
   <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
   <style type='text/css'> body {position: static !important; top:0px !important;}</style>
+  <style>
+  /* Center and set width for search bar */
+  .search-container {
+    width: 75%;
+    margin: 20px auto; /* Add top/bottom margin for spacing */
+    max-width: 900px; /* Adjusted to fit within typical container widths */
+    display: flex;
+    justify-content: center;
+  }
+  /* Ensure input fills container */
+  .search-container input.form-control {
+    width: 100%;
+    max-width: 100%; /* Prevent input from exceeding container */
+  }
+  /* Label styling to align with input */
+  .search-container label {
+    width: 100%;
+    text-align: left;
+    font-size: 16px;
+  }
+  @media (max-width: 768px) {
+    .search-container {
+      width: 90%; /* Wider on smaller screens for usability */
+      margin: 15px auto;
+    }
+  }
+</style>
 </head>
 
 <body>
@@ -129,16 +156,17 @@
 
       <section style='background-image: url("/static/images/blue-clouds.jpg");'>
         <div class="container">
+          <div class="search-container">
+      <label>Search:
+        <input id="civilian-search" type="search" class="form-control input-sm" placeholder="Search Civilians, Vehicles, Firearms" aria-controls="thumbnail" style="padding: 2em; font-size: medium;">
+      </label>
+    </div>
           <!--Table for Personas  -->
           <div class="col-md-12 col-md-offset-0.75 margin-top-5">
             <div class="margin-bottom-2">
               <span id="active-bolos margin-right-1" style="font-size: 18px;">Civilians:</span> <button data-toggle="modal" href="#newCivChoiceModal"  class="btn btn-primary btn-md pull-right">Add New Civilian</button>
             </div>
-              <div>
-                <label>Search:
-                  <input id="civilian-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
-                </label>
-              </div>
+              
 
               <!-- List of civilians -->
               <div id="personas-thumbnail" class="row flex-main" style="margin-top: 0.5em; width: 90rem;">
@@ -173,11 +201,11 @@
     <span id="active-vehicles" class="margin-right-1" style="font-size: 18px;">Vehicles:</span>
     <button data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-md pull-right">Add New Vehicle</button>
   </div>
-  <div>
+  <!-- <div>
     <label>Search:
       <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
     </label>
-  </div>
+  </div> -->
   <!-- List of vehicles -->
   <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em; width: 90rem;">
     <div id="vehicles-loading" class="text-align-center" style="width: 100%;">
