@@ -36,26 +36,46 @@
   /* Center and set width for search bar */
   .search-container {
     width: 75%;
-    margin: 20px auto; /* Add top/bottom margin for spacing */
-    max-width: 900px; /* Adjusted to fit within typical container widths */
+    margin: 20px auto;
+    max-width: 900px; /* Constrain width on large screens */
     display: flex;
-    justify-content: center;
+    flex-direction: column; /* Stack label and input vertically on mobile */
+    align-items: center; /* Center contents */
   }
   /* Ensure input fills container */
   .search-container input.form-control {
     width: 100%;
-    max-width: 100%; /* Prevent input from exceeding container */
+    max-width: 100%; /* Prevent overflow */
+    box-sizing: border-box; /* Include padding/border in width */
   }
-  /* Label styling to align with input */
+  /* Label styling */
   .search-container label {
     width: 100%;
     text-align: left;
     font-size: 16px;
+    margin-bottom: 5px; /* Space between label and input */
   }
+  /* Mobile adjustments */
   @media (max-width: 768px) {
     .search-container {
-      width: 90%; /* Wider on smaller screens for usability */
+      width: 100%; /* Full width on mobile for usability */
+      padding: 60px 15px; /* Match Bootstrap container padding */
       margin: 15px auto;
+    }
+    .search-container label {
+      font-size: 14px; /* Slightly smaller label on mobile */
+    }
+    .search-container input.form-control {
+      font-size: 14px; /* Adjust input text size */
+    }
+  }
+  /* Extra small screens */
+  @media (max-width: 576px) {
+    .search-container {
+      padding: 0 10px;
+    }
+    .search-container input.form-control {
+      padding: 8px; /* Smaller padding for compact look */
     }
   }
 </style>
@@ -129,7 +149,7 @@
     </nav>
 
     <!-- Page Content  -->
-    <div id="content" class="">
+    <div id="content" class="" style="width:auto;">
 
       <nav id="topNav" class="topNav" style="z-index: 8; margin-bottom: 0; position: fixed;">
         <div class="container-fluid" style="height: 70px;">
@@ -156,7 +176,7 @@
 
       <section style='background-image: url("/static/images/blue-clouds.jpg");'>
         <div class="container">
-          <div class="search-container">
+          <div class="search-container" style="padding: 60px 15px;">
       <label>Search:
         <input id="civilian-search" type="search" class="form-control input-sm" placeholder="Search Civilians, Vehicles, Firearms" aria-controls="thumbnail" style="padding: 2em; font-size: medium;">
       </label>
