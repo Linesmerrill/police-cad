@@ -252,43 +252,37 @@
 
           <!-- Firearms Section -->
           <div class="col-md-12 col-md-offset-0.75 margin-top-5">
-            <div class="margin-bottom-2">
-              <span id="active-firearms" class="margin-right-1" style="font-size: 18px;">Firearms:</span>
-              <button data-toggle="modal" href="#newFirearmModal" class="btn btn-primary btn-md pull-right" onclick="generateSerialNumber(8, 'serial-number')">Add New Firearm</button>
-            </div>
-            <div>
-              <label>Search:
-                <input id="firearm-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
-              </label>
-            </div>
-            <!-- List of firearms -->
-            <div id="firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
-              <div id="firearms-loading" class="text-align-center" style="width: 100%;">
-                <div class="lds-facebook"><div></div><div></div><div></div></div>
-              </div>
-            </div>
-            <!-- Loading error -->
-            <div id="issue-loading-firearms-alert" style="display:none">
-              <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading firearms, try refreshing the page...</p>
-            </div>
-            <div id="no-firearms-found-alert" style="display:none">
-              <p class="text-center" style="font-style: italic; font-size: 14px">No firearms found, try adding one...</p>
-            </div>
-            <!-- Paginated navigation list -->
-            <div>
-              <nav aria-label="...">
-                <ul class="pager">
-                  <li><a id="prev-gun-page-btn" class="" onclick="getPrevGunPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
-                  <li><a id="next-gun-page-btn" onclick="getNextGunPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
-                </ul>
-              </nav>
-            </div>
-          </div>
+      <div class="margin-bottom-2">
+        <span id="active-firearms" class="margin-right-1" style="font-size: 18px;">Firearms:</span>
+        <button data-toggle="modal" href="#newFirearmModal" class="btn btn-primary btn-md pull-right">Add New Firearm</button>
+      </div>
+      <div id="firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em; width: 90rem;">
+        <div id="firearms-loading" class="text-align-center" style="width: 100%;">
+          <div class="lds-facebook"><div></div><div></div><div></div></div>
+        </div>
+      </div>
+      <div id="issue-loading-firearms-alert" style="display:none">
+        <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading firearms, try refreshing the page...</p>
+      </div>
+      <div id="no-firearms-found-alert" style="display:none">
+        <p class="text-center" style="font-style: italic; font-size: 14px">No firearms found, try adding one...</p>
+      </div>
+      <div>
+        <nav aria-label="...">
+          <ul class="pager">
+            <li><a id="prev-gun-page-btn" class="" onclick="getPrevGunPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+            <li><a id="next-gun-page-btn" onclick="getNextGunPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
         </div>
       </section>
       <div class="google-ad"></div>
-      <% include footer %>
+      
     </div>
+    <% include footer %>
   </div>
 
   <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
@@ -688,78 +682,60 @@
 </div>
 
   <div id="newFirearmModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form id="create-firearm-form" class="form-horizontal" action="#" method="post">
-            <fieldset>
-
-            <!-- Form Name -->
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <form id="create-firearm-form" class="form-horizontal">
+          <fieldset>
             <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Add a New Firearm</h4>
             <hr style="width: 88%;max-width: 100rem;">
-
-            <!-- Text input-->
             <div class="form-group required">
-              <label class="col-md-4 control-label" for="serial-number">Serial Number</label>
-              <div class="col-md-4">
-                <input id="serial-number" name="serialNumber" type="text" minlength="8" maxlength="8" placeholder="serial number" class="form-control input-md" required="" readonly="readonly">
-              </div>
-              <div class="col-md-4">
-                <button type="button" class="btn btn-info btn-md" onclick="generateSerialNumber(8, 'serial-number')">Regenerate</button>
+              <label class="col-md-4 control-label" for="add-firearm-name">Name</label>
+              <div class="col-md-6">
+                <input id="add-firearm-name" name="add-firearm-name" type="text" placeholder="Enter a firearm name (e.g. Glock 9)" class="form-control input-md" required>
               </div>
             </div>
-
-            <!-- Search input-->
             <div class="form-group required">
-              <label class="col-md-4 control-label" for="firearm-owner">Owner</label>
+              <label class="col-md-4 control-label" for="serial-number-new">Serial Number:</label>
               <div class="col-md-4">
-                <input id="firearm-owner" name="firearmOwner" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
+                <input id="serial-number-new" name="serialNumber" type="text" placeholder="Serial number" class="form-control input-md" required>
+              </div>
+              <div class="col-md-4">
+                <button type="button" class="btn btn-info btn-md" onclick="generateSerialNumber(8, 'serial-number-new')">Regenerate</button>
               </div>
             </div>
-
-            <!-- Select Basic -->
-            <div class="form-group required">
-              <label class="col-md-4 control-label" for="weapon-type">Weapon Type</label>
-              <div class="col-md-4">
-                <select id="weapon-type" name="weaponType" class="form-control">
-                  <option value="pistol">Pistol</option>
-                  <option value="revolver">Revolver</option>
-                  <option value="shotgun">Shotgun</option>
-                  <option value="submachine gun">Submachine Gun</option>
-                  <option value="light machine gun">Light Machine Gun</option>
-                  <option value="assault rifle">Assault Rifle</option>
-                  <option value="sniper rifle">Sniper Rifle</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Select Basic -->
+            
             <div class="form-group">
-              <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
-              <div class="col-md-4">
-                <select id="is-stolen-update" name="isStolen" class="form-control">
+              <label class="col-md-4 control-label" for="add-firearm-caliber">Caliber</label>
+              <div class="col-md-6">
+                <input id="add-firearm-caliber" name="add-firearm-caliber" type="text" placeholder="Enter caliber (e.g. 9mm)" class="form-control input-md">
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="is-stolen-new">Marked Stolen?</label>
+              <div class="col-md-6">
+                <select id="is-stolen-new" name="isStolen" class="form-control">
                   <option value="false">No</option>
                   <option value="true">Yes</option>
                 </select>
               </div>
             </div>
-
-            <!-- Button -->
             <div class="form-group">
               <label class="col-md-4 control-label" for="create-firearm"></label>
-              <div class="col-md-4">
-                <input type="hidden" id="new-firearm-userID" name="userID" value="<%= user._id %>">
-                <input type="hidden" id="new-veh-activeCommunityID-new-firearm" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
-                <button id="create-firearm" onclick="hideFirearmMessage()" class="btn btn-primary">Create</button>
+              <div class="col-md-6">
+                <input id="create-firearm-user-id" type="hidden" name="userID" value="<%= user._id %>">
+                <input id="create-firearm-community-id" type="hidden" name="communityID" value="<%= user.user.activeCommunity %>">
+                <button type="button" id="create-firearm" onclick="createFirearm()" class="btn btn-primary">Create</button>
               </div>
             </div>
-            </fieldset>
-            </form>
-        </div>
+          </fieldset>
+        </form>
       </div>
     </div>
   </div>
+</div>
 
   <div id="newLicenseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -1436,49 +1412,33 @@
 </div>
 
   <div id="viewFirearm" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-            <form class="form-horizontal" action="/updateOrDeleteFirearm" method="post">
-              <fieldset>
-
-            <!-- Form Name -->
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <form class="form-horizontal" id="view-firearm-form">
+          <fieldset>
             <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Firearm Details</h4>
             <hr style="width: 88%;max-width: 100rem;">
-
-            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="name">Name:</label>
+              <div class="col-md-6">
+                <input id="name-details" name="name" type="text" placeholder="Name" class="form-control input-md" required="">
+              </div>
+            </div>
             <div class="form-group required">
               <label class="col-md-4 control-label" for="serial-number">Serial Number:</label>
               <div class="col-md-6">
-                <input id="serial-number-details" name="serialNumber" type="text" minlength="8" maxlength="8" placeholder="serial number" class="form-control input-md" required="" readonly="readonly">
+                <input id="serial-number-details" name="serialNumber" type="text" placeholder="Serial number" class="form-control input-md" required="">
               </div>
             </div>
-
-            <div class="form-group required">
-              <label class="col-md-4 control-label" for="roFirearm">Owner:</label>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="caliber-details">Caliber:</label>
               <div class="col-md-6">
-                <input id="roFirearm" name="roFirearm" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
+                <input id="caliber-details" name="caliber" placeholder="Caliber" type="text" class="form-control input-md capitalize">
               </div>
             </div>
-
-            <!-- Select Basic -->
-            <div class="form-group required">
-              <label class="col-md-4 control-label" for="weapon-type">Weapon Type</label>
-              <div class="col-md-6">
-                <select id="weapon-type-details" name="weaponType" class="form-control">
-                  <option value="pistol">Pistol</option>
-                  <option value="revolver">Revolver</option>
-                  <option value="shotgun">Shotgun</option>
-                  <option value="submachine gun">Submachine Gun</option>
-                  <option value="light machine gun">Light Machine Gun</option>
-                  <option value="assault rifle">Assault Rifle</option>
-                  <option value="sniper rifle">Sniper Rifle</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Select Basic -->
+            
             <div class="form-group">
               <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
               <div class="col-md-6">
@@ -1488,19 +1448,18 @@
                 </select>
               </div>
             </div>
-
             <div class="col-md-12 text-align-center">
-                <input type="hidden" id="firearmID" name="firearmID">
-                <input type="hidden" id="firearmOwnerID" name="firearmOwnerID">
-                <button type="submit" value="update" name="action" class="btn btn-info">Update Firearm</button>
-                <button type="submit" value="delete" name="action" class="btn btn-danger">Delete Firearm</button>
+              <input type="hidden" id="firearmID" name="firearmID">
+              <input type="hidden" id="firearmOwnerID" name="firearmOwnerID">
+              <button type="button" onclick="updateFirearm()" class="btn btn-info">Update Firearm</button>
+              <button type="button" onclick="deleteFirearm()" class="btn btn-danger">Delete Firearm</button>
             </div>
-            </fieldset>
-          </form>
-        </div>
+          </fieldset>
+        </form>
       </div>
     </div>
   </div>
+</div>
 
   <div id="viewLicense" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -2226,8 +2185,8 @@ function deleteVehicle() {
 }
 
 // Firearms Section
-let firearmPage = 1;
-const firearmsPerPage = 12;
+let firearmPage = 0;
+const firearmsPerPage = 8;
 let allFirearms = [];
 
 function getFirearms(page) {
@@ -2236,15 +2195,12 @@ function getFirearms(page) {
   $('#no-firearms-found-alert').hide();
   
   $.ajax({
-    url: '/api/firearms',
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearms/user/${userId}?active_community_id=${communityId}&limit=${firearmsPerPage}&page=${page}`,
     method: 'GET',
     data: {
-      page: page,
-      limit: firearmsPerPage,
-      communityID: '<%= user.user.activeCommunity %>'
     },
     success: function(response) {
-      allFirearms = response.firearms || [];
+      allFirearms = response || [];
       renderFirearms(allFirearms);
       updateFirearmPagination(response.totalPages, page);
       $('#firearms-loading').hide();
@@ -2264,28 +2220,27 @@ function renderFirearms(firearms) {
   $thumbnail.empty();
   
   firearms.forEach(firearm => {
-    const firearmHtml = `
-      <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 firearm-thumbnails">
-        <div class="thumbnail thumbnail-box text-align-center pointer shadow" data-toggle="modal" data-target="#viewCiv" onclick="viewFirearm('${firearm._id}')">
-          <ion-icon name="pistol-outline"></ion-icon>
-          <div class="caption">
-            <h4>${firearm.make} ${firearm.model}</h4>
-            <h5>Serial: ${firearm.serialNumber}</h5>
+    $thumbnail.append(`
+      <div id="firearms-thumbnail-${firearm._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+        <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="viewFirearm('${firearm._id}')">
+          <ion-icon class="font-size-4-vmax" name="megaphone-outline"></ion-icon>
+          <div class="caption capitalize">
+            <h4 id="firearms-thumbnail-name-${firearm._id}" class="color-white capitalize">${firearm?.firearm?.name}</h4>
+            <h5 id="firearms-thumbnail-serial-${firearm._id}" class="color-white">${firearm?.firearm?.serialNumber}</h5>
           </div>
         </div>
       </div>
-    `;
-    $thumbnail.append(firearmHtml);
+    `);
   });
 }
 
 function updateFirearmPagination(totalPages, currentPage) {
-  $('#prev-gun-page-btn').toggleClass('disabled', currentPage === 1);
+  $('#prev-gun-page-btn').toggleClass('disabled', currentPage === 0);
   $('#next-gun-page-btn').toggleClass('disabled', currentPage >= totalPages);
 }
 
 function getPrevGunPage() {
-  if (firearmPage > 1) {
+  if (firearmPage > 0) {
     firearmPage--;
     getFirearms(firearmPage);
   }
@@ -2308,8 +2263,111 @@ $('#firearm-search').on('input', function() {
 });
 
 function viewFirearm(firearmId) {
-  // Fetch firearm details and populate #viewCiv modal
-  console.log('View firearm:', firearmId);
+  console.log("View firearm ID:", firearmId);
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm/${firearmId}`,
+    method: 'GET',
+    success: function(firearm) {
+      $('#firearmID').val(firearm._id);
+      $('#name-details').val(firearm?.firearm?.name);
+      $('#serial-number-details').val(firearm?.firearm?.serialNumber);
+      $('#caliber-details').val(firearm?.firearm?.caliber);
+      $('#is-stolen-details').val(firearm?.firearm?.isStolen ? 'true' : 'false');
+      $('#viewFirearm').modal('show');
+    },
+    error: function() {
+      alert('Error loading firearm details. Please try again.');
+    }
+  });
+}
+
+function createFirearm() {
+  if ($('#add-firearm-name').val().trim() === '') {
+    alert('Please enter a firearm name.');
+    return;
+  }
+  if ($('#serial-number-new').val().trim() === '') {
+    alert('Please enter a serial number.');
+    return;
+  }
+  const firearmData = {
+    name: $('#add-firearm-name').val().trim(),
+    serialNumber: $('#serial-number-new').val().trim(),
+    caliber: $('#add-firearm-caliber').val().trim(),
+    isStolen: $('#is-stolen-new').val(),
+    userID: userId,
+    activeCommunityID: communityId
+  };
+
+  $.ajax({
+    url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(firearmData),
+    success: function(response) {
+      alert('Firearm created successfully!');
+      $('#newFirearmModal').modal('hide');
+      $('#create-firearm-form')[0].reset();
+      getFirearms(firearmPage);
+    },
+    error: function(xhr) {
+      alert('Error creating firearm: ' + (xhr.responseJSON?.message || 'Please try again.'));
+    }
+  });
+}
+
+function updateFirearm() {
+  const firearmId = $('#firearmID').val();
+  if ($('#name-details').val().trim() === '') {
+    alert('Please enter a firearm name.');
+    return;
+  }
+  if ($('#serial-number-details').val().trim() === '') {
+    alert('Please enter a serial number.');
+    return;
+  }
+  const firearmData = {
+    name: $('#name-details').val().trim(),
+    serialNumber: $('#serial-number-details').val().trim(),
+    caliber: $('#caliber-details').val().trim(),
+    isStolen: $('#is-stolen-details').val(),
+    userID: userId,
+    activeCommunityID: communityId
+  };
+
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm/${firearmId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify(firearmData),
+    success: function(response) {
+      alert('Firearm updated successfully!');
+      $('#viewFirearm').modal('hide');
+      getFirearms(firearmPage);
+    },
+    error: function() {
+      alert('Error updating firearm. Please try again.');
+    }
+  });
+}
+
+function deleteFirearm() {
+  if (!confirm('Are you sure you want to delete this firearm?')) return;
+
+  const firearmId = $('#firearmID').val();
+  
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm/${firearmId}`,
+    method: 'DELETE',
+    success: function(response) {
+      alert('Firearm deleted successfully!');
+      $('#viewFirearm').modal('hide');
+      getFirearms(firearmPage);
+    },
+    error: function() {
+      alert('Error deleting firearm. Please try again.');
+    }
+  });
 }
 
   var socket = io();
@@ -2348,12 +2406,33 @@ function viewFirearm(firearmId) {
   });
 
     // Civilian search filter
-  $('#civilian-search').on('keyup', function() {
-    var value = $(this).val().toLowerCase();
-    $('.civ-thumbnails').filter(function() {
-      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-    });
-  });
+  // Combined Search (for single search bar)
+$('#civilian-search').on('input', function() {
+  const query = $(this).val().toLowerCase();
+  
+  // Filter Civilians
+  const filteredCivilians = allCivilians.filter(civilian => 
+    `${civilian.firstName} ${civilian.lastName}`.toLowerCase().includes(query) ||
+    civilian.birthday.toLowerCase().includes(query)
+  );
+  renderCivilians(filteredCivilians);
+  
+  // Filter Vehicles
+  const filteredVehicles = allVehicles.filter(vehicle => 
+    vehicle.make.toLowerCase().includes(query) ||
+    vehicle.model.toLowerCase().includes(query) ||
+    vehicle.plate.toLowerCase().includes(query)
+  );
+  renderVehicles(filteredVehicles);
+  
+  // Filter Firearms
+  const filteredFirearms = allFirearms.filter(firearm => 
+    firearm.make.toLowerCase().includes(query) ||
+    firearm.model.toLowerCase().includes(query) ||
+    firearm.serialNumber.toLowerCase().includes(query)
+  );
+  renderFirearms(filteredFirearms);
+});
 
     $("#delBirthday").focusout(function(){
       var value = $("#delBirthday").val()

@@ -917,7 +917,7 @@ a.link--inherit {
     cursor: not-allowed;
 }
 
-#serial-number {
+/* #serial-number {
     background-color: #36333d;
 }
 
@@ -931,7 +931,7 @@ a.link--inherit {
 
 #serial-number-details:hover {
     cursor: not-allowed;
-}
+} */
 
 .font-size-3 {
     font-size: 3em;
