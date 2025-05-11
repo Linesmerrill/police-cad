@@ -490,10 +490,13 @@ function populateCivSocketDetails(res) {
   $("#civilian-details-loading").removeClass("hide").addClass("show");
   $("#civilian-details").removeClass("show").addClass("hide");
   loadDriversLicenseSocket(res);
-  var firstName = res.civilian.firstName;
+  console.log(res);
+  var name = res.civilian.name;
   var lastName = res.civilian.lastName;
   var birthday = res.civilian.birthday;
   var createdDate = new Date(res.civilian.createdAt);
+  var onParole = res.civilian.onParole;
+  var onProbation = res.civilian.onProbation;
   var expDay = createdDate.getDate();
   var expMonth = createdDate.getMonth() + 1;
   var expYear = createdDate.getFullYear() + 10;
@@ -516,7 +519,7 @@ function populateCivSocketDetails(res) {
   // civilian details:
   $("#civilianID").val(res._id);
   $("#civilianIDView").text(res._id);
-  $("#firstName").text(firstName);
+  $("#firstName").text(name);
   $("#lastNameView").text(lastName);
   $("#birthdayView").text(birthday);
   $("#warrantsView").val(res.civilian.warrants);
@@ -563,6 +566,19 @@ function populateCivSocketDetails(res) {
   } else {
     $("#veteran-view").prop("checked", res.civilian.veteran);
   }
+  if (res.civilian.onParole == undefined || res.civilian.onParole == null) {
+    $("#onParole-view").prop("checked", false);
+  } else {
+    $("#onParole-view").prop("checked", res.civilian.onParole);
+  }
+  if (
+    res.civilian.onProbation == undefined ||
+    res.civilian.onProbation == null
+  ) {
+    $("#onProbation-view").prop("checked", false);
+  } else {
+    $("#onProbation-view").prop("checked", res.civilian.onProbation);
+  }
 
   // data to be set for condition form
   $("#condition-civ-first-name").val(firstName);
@@ -575,7 +591,7 @@ function populateCivSocketDetails(res) {
   $("#medication-civ-date-of-birth").val(birthday);
 
   // data to be sent to db for civ deletion
-  $("#firstName").val(firstName);
+  $("#firstName").val(name);
   $("#lastName").val(lastName);
   $("#delBirthday").val(birthday);
 
@@ -741,86 +757,86 @@ function populateVehSocketDetails(res) {
 
 /* function to send socket when new civ is created. This is to move away
   from reloading the page on civ creation */
-$("#create-civ-form").submit(function (e) {
-  e.preventDefault(); //prevents page from reloading
-  var socket = io();
-  var age = "";
-  if ($("#ageView").val() == "") {
-    age = $("#ageAmount").val();
-  } else {
-    age = $("#ageView").val();
-  }
+// $("#create-civ-form").submit(function (e) {
+//   e.preventDefault(); //prevents page from reloading
+//   var socket = io();
+//   var age = "";
+//   if ($("#ageView").val() == "") {
+//     age = $("#ageAmount").val();
+//   } else {
+//     age = $("#ageView").val();
+//   }
 
-  var myReq = {
-    body: {
-      civFirstName: $("#civ-first-name").val(),
-      civLastName: $("#civ-last-name").val(),
-      civMiddleInitial: $("#middleInitial").val(),
-      licenseStatus: "1", //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
-      ticketCount: $("#ticket-count").val(),
-      birthday: $("#birthday").val(),
-      warrants: $("#warrants").val(),
-      address: $("#address").val(),
-      addressZip: $("#zipCode").val(),
-      occupation: $("#occupation").val(),
-      firearmLicense: $("#firearmLicense").val(),
-      gender: $("#gender").val(),
-      height: getHeight(),
-      weight: getWeight(),
-      age: age,
-      eyeColor: $("#eyeColor").val(),
-      hairColor: $("#hairColor").val(),
-      organDonor: $("#organDonor").is(":checked"),
-      veteran: $("#veteran").is(":checked"),
-      activeCommunityID: $("#new-civ-activeCommunityID-new-civ").val(),
-      userID: $("#newCivUserID").val(),
-    },
-  };
-  socket.emit("create_new_civ", myReq);
+//   var myReq = {
+//     body: {
+//       civFirstName: $("#civ-first-name").val(),
+//       civLastName: $("#civ-last-name").val(),
+//       civMiddleInitial: $("#middleInitial").val(),
+//       licenseStatus: "1", //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
+//       ticketCount: $("#ticket-count").val(),
+//       birthday: $("#birthday").val(),
+//       warrants: $("#warrants").val(),
+//       address: $("#address").val(),
+//       addressZip: $("#zipCode").val(),
+//       occupation: $("#occupation").val(),
+//       firearmLicense: $("#firearmLicense").val(),
+//       gender: $("#gender").val(),
+//       height: getHeight(),
+//       weight: getWeight(),
+//       age: age,
+//       eyeColor: $("#eyeColor").val(),
+//       hairColor: $("#hairColor").val(),
+//       organDonor: $("#organDonor").is(":checked"),
+//       veteran: $("#veteran").is(":checked"),
+//       activeCommunityID: $("#new-civ-activeCommunityID-new-civ").val(),
+//       userID: $("#newCivUserID").val(),
+//     },
+//   };
+//   socket.emit("create_new_civ", myReq);
 
-  //socket that receives a response after creating a new civilian
-  socket.on("created_new_civ", (res) => {
-    //populate civilian cards on the dashboard
-    $("#personas-thumbnail").append(
-      `<div id="personas-thumbnail-${res._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-                <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
-                  <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
-                  <div class="caption capitalize">
-                    <h4 id="personas-thumbnail-name-${res._id}" class="color-white capitalize">${res.civilian.firstName} ${res.civilian.lastName}</h4>
-                    <h5 id="personas-thumbnail-dob-${res._id}" class="color-white">${res.civilian.birthday}</h5>
-                  </div>
-                </div>
-              </div>`
-    );
+//   //socket that receives a response after creating a new civilian
+//   socket.on("created_new_civ", (res) => {
+//     //populate civilian cards on the dashboard
+//     $("#personas-thumbnail").append(
+//       `<div id="personas-thumbnail-${res._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+//                 <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
+//                   <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+//                   <div class="caption capitalize">
+//                     <h4 id="personas-thumbnail-name-${res._id}" class="color-white capitalize">${res.civilian.firstName} ${res.civilian.lastName}</h4>
+//                     <h5 id="personas-thumbnail-dob-${res._id}" class="color-white">${res.civilian.birthday}</h5>
+//                   </div>
+//                 </div>
+//               </div>`
+//     );
 
-    //populate the civilian person table
-    var containsEmptyRow = $("#personas-table tr>td").hasClass(
-      "dataTables_empty"
-    );
-    if (containsEmptyRow) {
-      $("#personas-table tbody>tr:first").fadeOut(1, function () {
-        $(this).remove();
-      });
-    }
-    $("#personas-table tr:last")
-      .after(
-        `<tr data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
-            <td>${res.civilian.firstName} ${res.civilian.lastName}</td>
-            <td>${res.civilian.birthday}</td>
-          </tr>`
-      )
-      .fadeTo(1, function () {
-        $(this).add();
-      });
+//     //populate the civilian person table
+//     var containsEmptyRow = $("#personas-table tr>td").hasClass(
+//       "dataTables_empty"
+//     );
+//     if (containsEmptyRow) {
+//       $("#personas-table tbody>tr:first").fadeOut(1, function () {
+//         $(this).remove();
+//       });
+//     }
+//     $("#personas-table tr:last")
+//       .after(
+//         `<tr data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
+//             <td>${res.civilian.firstName} ${res.civilian.lastName}</td>
+//             <td>${res.civilian.birthday}</td>
+//           </tr>`
+//       )
+//       .fadeTo(1, function () {
+//         $(this).add();
+//       });
 
-    //set owner value for updating a vehicle
-    $("#roVeh").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
-  });
-  //reset the form after form submit
-  $("#create-civ-form").trigger("reset");
-  hideModal("newCivModal");
-  return true;
-});
+//     //set owner value for updating a vehicle
+//     $("#roVeh").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+//   });
+//   //reset the form after form submit
+//   $("#create-civ-form").trigger("reset");
+//   hideModal("newCivModal");
+//   return true;
+// });
 
 function getHeight() {
   if ($("#imperial").is(":checked")) {
@@ -937,8 +953,8 @@ function autoCivCreator(gender, firearmLicenseMarker) {
   );
   var age = moment().diff(birthday, "years", false);
   body = {
-    civFirstName: civFirstName,
-    civLastName: civLastName,
+    civFirstName: name,
+    // civLastName: civLastName,
     licenseStatus: "1", //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
     birthday: birthday,
     age: age,
@@ -959,6 +975,9 @@ function autoCivCreator(gender, firearmLicenseMarker) {
     hairColor: faker.datatype.boolean() ? faker.commerce.color() : "",
     organDonor: faker.datatype.boolean(),
     veteran: faker.datatype.boolean(),
+    onParole: faker.datatype.boolean(),
+    onProbation: faker.datatype.boolean(),
+
     userID: $("#newCivUserID").val(),
   };
   return body;
@@ -1197,77 +1216,77 @@ function updateUserBtnValue(value) {
 
 /* function to send socket when a civilian is updated/deleted.
 This is to move away from reloading the page on civilian updates/deletions */
-$("#update-delete-civ-form button").click(function (e) {
-  e.preventDefault(); //prevents page from reloading
-  var submitter_btn = $("#userBtnValue").val();
-  if (submitter_btn == "") {
-    // if user hits the 'x' to close the window, just return
-    return;
-  }
-  var socket = io();
-  var myReq = {
-    body: {
-      civID: $("#civilianIDView").text(),
-      civFirstName: $("#firstName").val(),
-      civLastName: $("#lastName").val(),
-      civMiddleInitial: $("#middleInitial").val(),
-      licenseStatus: "1", //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
-      birthday: $("#delBirthday").val(),
-      address: $("#addressView").val(),
-      addressZip: $("#zipCodeView").val(),
-      age: $("#ageView").val(),
-      occupation: $("#occupationView").val(),
-      firearmLicense: $("#firearm-id-status").text(),
-      gender: $("#gender-view").val(),
-      weight: $("#weightView").val(),
-      height: $("#heightView").val(),
-      eyeColor: $("#eye-color-view").val(),
-      hairColor: $("#hair-color-view").val(),
-      organDonor: $("#organ-donor-view").is(":checked"),
-      veteran: $("#veteran-view").is(":checked"),
-      activeCommunityID: $("#new-civ-activeCommunityID-new-civ").val(),
-      userID: $("#userID").val(),
-    },
-  };
-  if (submitter_btn === "delete") {
-    socket.emit("delete_civilian", myReq);
-  } else if (submitter_btn === "update") {
-    socket.emit("update_civilian", myReq);
-  } else if (submitter_btn === "deleteLicense") {
-    myReq.body.licenseStatus = "3";
-    socket.emit("update_civilian", myReq);
-  } else if (submitter_btn === "createLicense") {
-    myReq.body.licenseStatus = "1";
-    socket.emit("update_civilian", myReq);
-  } else {
-    return console.error(
-      `[LPS Error] no matching action found, got: ${submitter_btn}, wanted: ['update', 'delete']`
-    );
-  }
+// $("#update-delete-civ-form button").click(function (e) {
+//   e.preventDefault(); //prevents page from reloading
+//   var submitter_btn = $("#userBtnValue").val();
+//   if (submitter_btn == "") {
+//     // if user hits the 'x' to close the window, just return
+//     return;
+//   }
+//   var socket = io();
+//   var myReq = {
+//     body: {
+//       civID: $("#civilianIDView").text(),
+//       civFirstName: $("#firstName").val(),
+//       civLastName: $("#lastName").val(),
+//       civMiddleInitial: $("#middleInitial").val(),
+//       licenseStatus: "1", //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
+//       birthday: $("#delBirthday").val(),
+//       address: $("#addressView").val(),
+//       addressZip: $("#zipCodeView").val(),
+//       age: $("#ageView").val(),
+//       occupation: $("#occupationView").val(),
+//       firearmLicense: $("#firearm-id-status").text(),
+//       gender: $("#gender-view").val(),
+//       weight: $("#weightView").val(),
+//       height: $("#heightView").val(),
+//       eyeColor: $("#eye-color-view").val(),
+//       hairColor: $("#hair-color-view").val(),
+//       organDonor: $("#organ-donor-view").is(":checked"),
+//       veteran: $("#veteran-view").is(":checked"),
+//       activeCommunityID: $("#new-civ-activeCommunityID-new-civ").val(),
+//       userID: $("#userID").val(),
+//     },
+//   };
+//   if (submitter_btn === "delete") {
+//     socket.emit("delete_civilian", myReq);
+//   } else if (submitter_btn === "update") {
+//     socket.emit("update_civilian", myReq);
+//   } else if (submitter_btn === "deleteLicense") {
+//     myReq.body.licenseStatus = "3";
+//     socket.emit("update_civilian", myReq);
+//   } else if (submitter_btn === "createLicense") {
+//     myReq.body.licenseStatus = "1";
+//     socket.emit("update_civilian", myReq);
+//   } else {
+//     return console.error(
+//       `[LPS Error] no matching action found, got: ${submitter_btn}, wanted: ['update', 'delete']`
+//     );
+//   }
 
-  //socket that receives a response after updating a civilian
-  socket.on("updated_civilian", (res) => {
-    //populate the civ card that has been updated
-    $(`#personas-thumbnail-name-${res._id}`).text(
-      `${res.civilian.firstName} ${res.civilian.lastName}`
-    );
-    $(`#personas-thumbnail-dob-${res._id}`).text(res.civilian.birthday);
-    //populate the civ table
-    $(`#personas-table-name-${res._id}`).text(
-      `${res.civilian.firstName} ${res.civilian.lastName}`
-    );
-    $(`#personas-table-dob-${res._id}`).text(res.civilian.birthday);
-  });
-  //socket that receives a response after deleting a civilian
-  socket.on("deleted_civilian", (res) => {
-    $(`#personas-thumbnail-${res.body.civID}`).remove();
-  });
+//   //socket that receives a response after updating a civilian
+//   socket.on("updated_civilian", (res) => {
+//     //populate the civ card that has been updated
+//     $(`#personas-thumbnail-name-${res._id}`).text(
+//       `${res.civilian.firstName} ${res.civilian.lastName}`
+//     );
+//     $(`#personas-thumbnail-dob-${res._id}`).text(res.civilian.birthday);
+//     //populate the civ table
+//     $(`#personas-table-name-${res._id}`).text(
+//       `${res.civilian.firstName} ${res.civilian.lastName}`
+//     );
+//     $(`#personas-table-dob-${res._id}`).text(res.civilian.birthday);
+//   });
+//   //socket that receives a response after deleting a civilian
+//   socket.on("deleted_civilian", (res) => {
+//     $(`#personas-thumbnail-${res.body.civID}`).remove();
+//   });
 
-  //reset the form after form submit
-  $("#update-delete-civ-form").trigger("reset");
-  hideModal("viewCiv");
-  return true;
-});
+//   //reset the form after form submit
+//   $("#update-delete-civ-form").trigger("reset");
+//   hideModal("viewCiv");
+//   return true;
+// });
 
 function getNextCivPage() {
   page = page + 1;

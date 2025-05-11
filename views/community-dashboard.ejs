@@ -174,13 +174,13 @@ $(document).ready(function () {
             const dataObj = { userId: dbUser._id, communityId: activeCommunityId };
             const encodedData = btoa(JSON.stringify(dataObj));
             if (deptName.includes('civilian')) {
-                dashboardUrl = `/civ-dashboard?data=${encodedData}`;
+                dashboardUrl = `/civ-dashboard`;
             } else if (deptName.includes('police')) {
-                dashboardUrl = `/police-dashboard?data=${encodedData}`;
+                dashboardUrl = `/police-dashboard`;
             } else if (deptName.includes('fire') || deptName.includes('ems')) {
-                dashboardUrl = `/ems-dashboard?data=${encodedData}`;
+                dashboardUrl = `/ems-dashboard`;
             } else if (deptName.includes('dispatch')) {
-                dashboardUrl = `/dispatch-dashboard?data=${encodedData}`;
+                dashboardUrl = `/dispatch-dashboard`;
             }
             if (dashboardUrl) {
                 window.location.href = dashboardUrl;

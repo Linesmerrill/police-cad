@@ -339,14 +339,14 @@ module.exports = function (app, passport, server) {
     }
   };
 
-  app.get("/civ-dashboard", authCheck, decodeDataParam, function (req, res) {
-    const { userId, communityId } = req.decodedData;
+  app.get("/civ-dashboard", authCheck, function (req, res) {
+    // const { userId, communityId } = req.decodedData;
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
     res.render("civ-dashboard", {
       user: req.user,
-      userId,
-      communityId,
+      // userId,
+      // communityId,
       context: context,
       referer: encodeURIComponent("/civ-dashboard"),
       redirect: encodeURIComponent(redirect),

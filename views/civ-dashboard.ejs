@@ -207,17 +207,9 @@
 
             <!-- Text input-->
             <div class="form-group required">
-              <label class="col-md-4 control-label" for="civ-first-name">Civilian First Name</label>
+              <label class="col-md-4 control-label" for="civ-first-name">Civilian Name</label>
               <div class="col-md-4">
-                <input id="civ-first-name" name="civFirstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
-              </div>
-            </div>
-
-            <!-- Text input-->
-            <div class="form-group required">
-              <label class="col-md-4 control-label" for="civ-last-name">Civilian Last Name</label>
-              <div class="col-md-4">
-                <input id="civ-last-name" name="civLastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
+                <input id="civ-first-name" name="civFirstName" type="text" placeholder="Name" class="form-control input-md" data-trigger="first-name-popover" data-content="" required="">
               </div>
             </div>
 
@@ -254,10 +246,10 @@
               <label class="col-md-4 control-label" for="gender">Gender</label>
               <div class="col-md-4">
                 <select id="gender" name="gender" class="form-control">
-                  <option value="unspecified">Unspecified</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="non-binary">Non-Binary</option>
+                  <option value="Other">Other</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Non-Binary">Non-Binary</option>
                 </select>
               </div>
             </div>
@@ -351,21 +343,25 @@
               </div>
             </div>
 
+            <!-- Checkbox -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="onParole">On Parole?</label>
+              <div class="col-md-1">
+                <input id="onParole" type="checkbox" name="onParole" class="form-control">
+              </div>
+            </div>
+
+            <!-- Checkbox -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="onProbation">On Probation?</label>
+              <div class="col-md-1">
+                <input id="onProbation" type="checkbox" name="onProbation" class="form-control">
+              </div>
+            </div>
+
             <hr style="width: 88%;max-width: 100rem;">
 
             <h5><ion-icon name="id-card-outline"></ion-icon> License Details</h5>
-
-            <!-- Select Basic -->
-            <div class="form-group required">
-              <label class="col-md-4 control-label" for="firearmLicense">Firearm License:</label>
-              <div class="col-md-4">
-                <select id="firearmLicense" name="firearmLicense" class="form-control">
-                  <option value="1">None</option>
-                  <option value="2">Valid</option>
-                  <option value="3">Revoked</option>
-                </select>
-              </div>
-            </div>
 
             <!-- Button -->
             <div class="form-group">
@@ -855,9 +851,13 @@
                   <hr style="width: 88%;max-width: 100rem;">
                   <h5><ion-icon name="camera-outline"></ion-icon> <span>Image</span></h5>
                   <div class="col-md-12 text-align-center">
-                    <a  href="#">
-                      <ion-icon id="civilian-image" name="person" class=""></ion-icon>
-                    </a>
+                    <img
+                      id="civilianImageView"
+                      style="width: 10em; height: 10em; border-radius: 50%; background-color: #2d2d2d; border: 4px solid #2d2d2d; margin: 0 auto; margin-bottom: 2em;"
+                      src="https://ui-avatars.com/api/?name=00&background=808080&color=fff&size=256"
+                      
+                    />
+                    
                   </div>
 
                   <!-- Details about civilian -->
@@ -872,19 +872,13 @@
                   </div>
 
                   <div class="form-group col-xs-3 col-md-3 margin-left-neg-15 required">
-                    <label class="control-label" for="firstName">First Name:</label>
-                    <input id="firstName" name="firstName" type="text" placeholder="First Name" class="form-control input-md" data-trigger="first-name-popover" data-content="* First name cannot contain spaces." required="">
+                    <label class="control-label" for="firstName">Name:</label>
+                    <input id="firstName" name="firstName" type="text" placeholder="Name" class="form-control input-md" data-trigger="first-name-popover" data-content="" required="">
                   </div>
 
-                  <div class="form-group col-xs-3 col-md-3 margin-left-neg-15 required">
-                    <label class="control-label" for="lastNameView">Last Name:</label>
-                    <input id="lastName" name="lastName" type="text" placeholder="Last Name" class="form-control input-md" data-trigger="last-name-popover" data-content="* Last name cannot contain spaces." required="">
-                  </div>
+                  
 
-                  <div class="form-group col-xs-1 col-md-1 margin-left-neg-15">
-                    <label class="control-label" for="middleInitialView">MI:</label>
-                    <input id="middleInitial" name="middleInitial" type="text" placeholder="MI" class="form-control input-md uppercase" maxlength="1" data-trigger="middle-initial-popover" data-content="* Middle initial cannot contain spaces.">
-                  </div>
+                  
 
                   <div class="form-group col-xs-3 col-md-3 margin-left-neg-15 required">
                     <label class="control-label" for="birthdayView">Date of Birth:</label>
@@ -901,10 +895,7 @@
                     <input id="addressView" name="address" type="text" placeholder="Address" class="form-control input-md capitalize"></input>
                   </div>
 
-                  <div class="form-group col-xs-2 col-md-2 margin-left-neg-15">
-                    <label class="control-label" for="zipCodeView">Zip Code:</label>
-                    <input id="zipCodeView" name="zipCode" type="number" placeholder="Zip Code" class="form-control input-md"></input>
-                  </div>
+                  
 
                   <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
                     <label class="control-label" for="occupationView">Occupation:</label>
@@ -918,10 +909,10 @@
                 <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
                   <label class="control-label" for="genderView">Gender</label>
                     <select id="gender-view" name="gender" class="form-control">
-                      <option value="unspecified">Unspecified</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="non-binary">Non-Binary</option>
+                      <option value="Other">Other</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Non-Binary">Non-Binary</option>
                     </select>
                 </div>
 
@@ -957,6 +948,16 @@
                 <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
                   <label class="control-label" for="veteran">Veteran?</label>
                     <input id="veteran-view" style="width: 2em;" type="checkbox" name="veteran" class="form-control">
+                </div>
+
+                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <label class="control-label" for="onParole">On Parole?</label>
+                    <input id="onParole-view" style="width: 2em;" type="checkbox" name="onParole" class="form-control">
+                </div>
+
+                <div class="form-group col-xs-3 col-md-3 margin-left-neg-15">
+                  <label class="control-label" for="onProbation">On Probation?</label>
+                    <input id="onProbation-view" style="width: 2em;" type="checkbox" name="onProbation" class="form-control">
                 </div>
 
                 <hr style="width: 88%;max-width: 100rem;">
@@ -1532,6 +1533,172 @@
   var pageVeh = 0;
   var pageGun = 0;
   var pageLicense = 0;
+  var userId = dbUser._id;
+  var communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+
+  // Fetch civilians via API
+function fetchCivilians(page) {
+  $('#civilians-loading').show();
+  $('#issue-loading-personnel-alert').hide();
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilians/user/${userId}?active_community_id=${communityId}&page=${page}`,
+    method: 'GET',
+    success: function(res) {
+      $('#personas-thumbnail').empty();
+      if (!res || res.length === 0) {
+        $('#issue-loading-personnel-alert').show();
+        $('#civilians-loading').hide();
+        return;
+      }
+      res.forEach(civ => {
+        $('#personas-thumbnail').append(`
+          <div id="personas-thumbnail-${civ._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+            <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${civ._id}');loadTicketsAndWarnings('${civ._id}');loadArrests('${civ._id}');loadReports('${civ._id}');loadMedications('${civ._id}');loadConditions('${civ._id}')">
+              <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+              <div class="caption capitalize">
+                <h4 id="personas-thumbnail-name-${civ._id}" class="color-white capitalize">${civ.civilian.name}</h4>
+                <h5 id="personas-thumbnail-dob-${civ._id}" class="color-white">${civ.civilian.birthday}</h5>
+              </div>
+            </div>
+          </div>
+        `);
+      });
+      $('#civilians-loading').hide();
+      $('#prev-civ-page-btn').toggleClass('isDisabled', page === 0).attr('onclick', page === 0 ? '' : 'getPrevCivPage()');
+      $('#next-civ-page-btn').toggleClass('isDisabled', res.length < 8).attr('onclick', res.length < 8 ? '' : 'getNextCivPage()');
+    },
+    error: function(xhr) {
+      console.error('Error fetching civilians:', xhr.responseText);
+      $('#issue-loading-personnel-alert').show();
+      $('#civilians-loading').hide();
+    }
+  });
+}
+
+// Pagination functions
+function getPrevCivPage() {
+  if (page > 0) {
+    page--;
+    fetchCivilians(page);
+  }
+}
+
+function getNextCivPage() {
+  page++;
+  fetchCivilians(page);
+}
+
+// Create new civilian
+function createNewCiv() {
+  const form = $('#create-civ-form');
+  const data = {
+    name: $('#civ-first-name').val().trim(),
+    birthday: $('#birthday').val(),
+    address: $('#address').val().trim() || undefined,
+    occupation: $('#occupation').val().trim() || undefined,
+    gender: $('#gender').val(),
+    height: $('#imperial').is(':checked') ? 
+      `${$('#foot').val() || 0}ft ${$('#inches').val() || 0}in` : 
+      `${$('#centimeters').val() || 0}cm`,
+    weight: $('#imperial-weight').is(':checked') ? 
+      `${$('#pounds').val() || 0}lbs` : 
+      `${$('#kilos').val() || 0}kg`,
+    eyeColor: $('#eyeColor').val().trim() || undefined,
+    hairColor: $('#hairColor').val().trim() || undefined,
+    organDonor: $('#organDonor').is(':checked'),
+    veteran: $('#veteran').is(':checked'),
+    onParole: $('#onParole').is(':checked'),
+    onProbation: $('#onProbation').is(':checked'),
+    userID: userId,
+    activeCommunityID: communityId
+  };
+
+  $.ajax({
+    url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilians',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(data),
+    success: function(civ) {
+      $('#personas-thumbnail').prepend(`
+        <div id="personas-thumbnail-${civ._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+          <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${civ._id}');loadTicketsAndWarnings('${civ._id}');loadArrests('${civ._id}');loadReports('${civ._id}');loadMedications('${civ._id}');loadConditions('${civ._id}')">
+            <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+            <div class="caption capitalize">
+              <h4 id="personas-thumbnail-name-${civ._id}" class="color-white capitalize">${civ.civilian.name}</h4>
+              <h5 id="personas-thumbnail-dob-${civ._id}" class="color-white">${civ.civilian.birthday}</h5>
+            </div>
+          </div>
+        </div>
+      `);
+      $('#newCivModal').modal('hide');
+      form[0].reset();
+      $('#successfully-updated-alert').removeClass('hide').addClass('show').text('Civilian created successfully!').delay(2000).fadeOut(1000, function() {
+        $(this).addClass('hide').removeClass('show');
+      });
+    },
+    error: function(xhr) {
+      console.error('Error creating civilian:', xhr.responseText);
+      alert('Failed to create civilian: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+// Update civilian
+function updateCiv() {
+  const form = $('#update-delete-civ-form');
+  const civId = $('#civilianIDView').text();
+  const action = $('#userBtnValue').val();
+  if (action !== 'update') return;
+
+  const data = {
+    name: $('#firstName').val().trim(),
+    birthday: $('#delBirthday').val(),
+    address: $('#addressView').val().trim() || undefined,
+    occupation: $('#occupationView').val().trim() || undefined,
+    gender: $('#gender-view').val(),
+    height: $('#heightView').val().trim() || undefined,
+    // heightClassification: $('#height-classification-view').val(),
+    weight: $('#weightView').val().trim() || undefined,
+    // weightClassification: $('#weight-classification-view').val(),
+    eyeColor: $('#eye-color-view').val().trim() || undefined,
+    hairColor: $('#hair-color-view').val().trim() || undefined,
+    organDonor: $('#organ-donor-view').is(':checked'),
+    veteran: $('#veteran-view').is(':checked'),
+    onParole: $('#onParole-view').is(':checked'),
+    onProbation: $('#onProbation-view').is(':checked'),
+    userID: dbUser._id,
+    activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID
+  };
+
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilian/${civId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify(data),
+    success: function(civ) {
+      $(`#personas-thumbnail-${civId}`).replaceWith(`
+        <div id="personas-thumbnail-${civId}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+          <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${civId}');loadTicketsAndWarnings('${civId}');loadArrests('${civId}');loadReports('${civId}');loadMedications('${civId}');loadConditions('${civId}')">
+            <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+            <div class="caption capitalize">
+              <h4 id="personas-thumbnail-name-${civId}" class="color-white capitalize">${data.name}</h4>
+              <h5 id="personas-thumbnail-dob-${civId}" class="color-white">${data.birthday}</h5>
+            </div>
+          </div>
+        </div>
+      `);
+      $('#viewCiv').modal('hide');
+      $('#successfully-updated-alert').removeClass('hide').addClass('show').text('Civilian updated successfully!').delay(2000).fadeOut(1000, function() {
+        $(this).addClass('hide').removeClass('show');
+      });
+    },
+    error: function(xhr) {
+      console.error('Error updating civilian:', xhr.responseText);
+      alert('Failed to update civilian: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
 
   var socket = io();
   var myObj = {
@@ -1542,37 +1709,57 @@
     civID: $("#civilianIDView").text(),
     page: page
   }
-  socket.emit("fetch_civ_cards", myObj);
-  socket.on("load_civ_cards_result", (res) => {
-    $("#personas-thumbnail").empty();
-    if (res === undefined || res === null) {
-      $('#issue-loading-personnel-alert').show();
-    } else {
-      $('#issue-loading-personnel-alert').hide();
-      for (i = 0; i < res.length; i++) {
-        $("#personas-thumbnail").append(
-          `<div id="personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-                <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
-                  <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
-                  <div class="caption capitalize">
-                    <h4 id="personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
-                    <h5 id="personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
-                  </div>
-                </div> 
-              </div>`
-        );
-      }
-      $('#civilians-loading').hide();
-      $("#prev-civ-page-btn").addClass("isDisabled");
-      $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
-      if (res.length < 8) {
-        $("#next-civ-page-btn").addClass("isDisabled");
-        $("#next-civ-page-btn").attr("onclick", "").unbind("click");
-      }
-    }
-  })
+  // socket.emit("fetch_civ_cards", myObj);
+  // socket.on("load_civ_cards_result", (res) => {
+  //   $("#personas-thumbnail").empty();
+  //   if (res === undefined || res === null) {
+  //     $('#issue-loading-personnel-alert').show();
+  //   } else {
+  //     $('#issue-loading-personnel-alert').hide();
+  //     for (i = 0; i < res.length; i++) {
+  //       $("#personas-thumbnail").append(
+  //         `<div id="personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+  //               <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
+  //                 <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+  //                 <div class="caption capitalize">
+  //                   <h4 id="personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
+  //                   <h5 id="personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
+  //                 </div>
+  //               </div> 
+  //             </div>`
+  //       );
+  //     }
+  //     $('#civilians-loading').hide();
+  //     $("#prev-civ-page-btn").addClass("isDisabled");
+  //     $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
+  //     if (res.length < 8) {
+  //       $("#next-civ-page-btn").addClass("isDisabled");
+  //       $("#next-civ-page-btn").attr("onclick", "").unbind("click");
+  //     }
+  //   }
+  // })
 
   $(document).ready(function(){
+
+    fetchCivilians(page);
+
+    $('#create-civ-form').on('submit', function(e) {
+    e.preventDefault();
+    createNewCiv();
+  });
+
+  $('#update-delete-civ-form').on('submit', function(e) {
+    e.preventDefault();
+    updateCiv();
+  });
+
+    // Civilian search filter
+  $('#civilian-search').on('keyup', function() {
+    var value = $(this).val().toLowerCase();
+    $('.civ-thumbnails').filter(function() {
+      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+    });
+  });
 
     $("#delBirthday").focusout(function(){
       var value = $("#delBirthday").val()
@@ -1655,39 +1842,7 @@ $('#accountCallSign').on('keyup', function(e) {
 $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound)
 $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 10);
 
-// prevents spaces from user input
-$("#civ-first-name").keydown(function(event) {
-    if (event.keyCode == 32) {
-        event.preventDefault();
-        $('#civ-first-name').popover('show')
-    } else {
-      $('#civ-first-name').popover('hide')
-    }
-});
-$("#firstName").keydown(function(event) {
-    if (event.keyCode == 32) {
-        event.preventDefault();
-        $('#firstName').popover('show')
-    } else {
-      $('#firstName').popover('hide')
-    }
-});
-$("#civ-last-name").keydown(function(event) {
-    if (event.keyCode == 32) {
-        event.preventDefault();
-        $('#civ-last-name').popover('show')
-    } else {
-      $('#civ-last-name').popover('hide')
-    }
-});
-$("#lastName").keydown(function(event) {
-    if (event.keyCode == 32) {
-        event.preventDefault();
-        $('#lastName').popover('show')
-    } else {
-      $('#lastName').popover('hide')
-    }
-});
+
 
 //CURRENT_VERSION
     //the current version in production
@@ -1737,19 +1892,7 @@ $("#lastName").keydown(function(event) {
 
 }); /* End of document.ready */
 
-  //  function loadFirearmData(index) {
-  //    $('#firearmID').val(dbFirearms[index]._id)
-  //    $('#serial-number-details').val(dbFirearms[index].firearm.serialNumber)
-  //    $('#weapon-type-details').val(dbFirearms[index].firearm.weaponType)
-  //    //Because from the backend we already split the person_id from the person name and dob, we now
-  //    //need to rejoin those values back together for #registeredOwner-details
-  //    if (dbFirearms[index].firearm.registeredOwner == 'N/A') {
-  //      $('#registeredOwner-details').val(`${dbFirearms[index].firearm.registeredOwner}`)
-  //    } else {
-  //      $('#registeredOwner-details').val(`${dbFirearms[index].firearm.registeredOwnerID}+${dbFirearms[index].firearm.registeredOwner}`)
-  //    }
-  //    $('#is-stolen-details').val(dbFirearms[index].firearm.isStolen)
-  //  }
+ 
 
    function fillAccountDetails() {
      $('#accountEmail').val(dbUser.user.email)
@@ -1795,9 +1938,4 @@ $("#lastName").keydown(function(event) {
 
 </script>
 
-<!--  added for google translate --> 
-<script type="text/javascript">
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
-}
 </script>
