@@ -984,41 +984,41 @@ function autoCivCreator(gender, firearmLicenseMarker) {
 }
 
 /* call911Form */
-$("#call911Form").submit(function (e) {
-  e.preventDefault(); //prevents page from reloading
-  callCreatedAt = new Date();
-  callCreatedDate = new Date(callCreatedAt);
-  var socket = io();
-  var myReq = {
-    body: {
-      userID: $("#create911Call").val(),
-      username: $("#911CallUsername").val(),
-      activeCommunityID: $("#911CallCommunityID").val(),
-      name: $("#911CallName").val(),
-      location: $("#911CallLocation").val(),
-      peopleDescription: $("#911CallPeopleDescription").val(),
-      callDescription: $("#911CallDescription").val(),
-      createdAt: callCreatedAt,
-      createdAtReadable: callCreatedDate.toLocaleString(),
-    },
-  };
-  socket.emit("create_911_call", myReq);
+// $("#call911Form").submit(function (e) {
+//   e.preventDefault(); //prevents page from reloading
+//   callCreatedAt = new Date();
+//   callCreatedDate = new Date(callCreatedAt);
+//   var socket = io();
+//   var myReq = {
+//     body: {
+//       userID: $("#create911Call").val(),
+//       username: $("#911CallUsername").val(),
+//       activeCommunityID: $("#911CallCommunityID").val(),
+//       name: $("#911CallName").val(),
+//       location: $("#911CallLocation").val(),
+//       peopleDescription: $("#911CallPeopleDescription").val(),
+//       callDescription: $("#911CallDescription").val(),
+//       createdAt: callCreatedAt,
+//       createdAtReadable: callCreatedDate.toLocaleString(),
+//     },
+//   };
+//   socket.emit("create_911_call", myReq);
 
-  //socket that receives a response after creating a new 911 call
-  socket.on("created_911_call", (res) => {
-    $("#911CallCreatedAlert")
-      .removeClass("hide")
-      .addClass("show")
-      .delay(5000)
-      .slideUp(500, function () {
-        $(this).removeClass("show").addClass("hide");
-      });
-  });
-  //reset the form after form submit
-  $("#call911Form").trigger("reset");
-  hideModal("call911Modal");
-  return true;
-});
+//   //socket that receives a response after creating a new 911 call
+//   socket.on("created_911_call", (res) => {
+//     $("#911CallCreatedAlert")
+//       .removeClass("hide")
+//       .addClass("show")
+//       .delay(5000)
+//       .slideUp(500, function () {
+//         $(this).removeClass("show").addClass("hide");
+//       });
+//   });
+//   //reset the form after form submit
+//   $("#call911Form").trigger("reset");
+//   hideModal("call911Modal");
+//   return true;
+// });
 
 /* function to send socket when new vehicle is created. This is to move away
 from reloading the page on vehicle creation */

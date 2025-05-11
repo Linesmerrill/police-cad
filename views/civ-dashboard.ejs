@@ -70,13 +70,10 @@
         </li>
         <div class="collapse in" id="toggleUtilities">
           <li>
-            <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+            
               <a data-toggle="modal" href="#call911Modal"><span
                   class="fa fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
-              <% } else {%>
-                <a data-toggle="modal" href="#nonCommunityModal" class="mock-disabled"><span
-                    class="fa fa-exclamation-triangle ml-3 mr-3"></span>Call 911</a>
-                <% } %>
+            
           </li>
           <li>
             <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
@@ -1711,6 +1708,79 @@ function updateCiv() {
   });
 }
 
+// Fetch dispatch departments
+function fetchDispatchDepartments(communityId) {
+  return $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/departments`,
+    method: 'GET',
+    headers: {
+      
+    }
+  }).then(function(data) {
+    console.log('departments:', data);
+    const dispatchDepartments = data.departments.filter(dept => dept.template.name === 'Dispatch');
+    return dispatchDepartments.map(dept => dept._id);
+  }).catch(function(xhr) {
+    console.error('Error fetching departments:', xhr.responseText);
+    throw new Error('Failed to fetch dispatch departments');
+  });
+}
+
+function submit911Call() {
+  const form = $('#call911Form');
+  const name = $('#911CallName').val().trim();
+  const location = $('#911CallLocation').val().trim();
+  const peopleDescription = $('#911CallPeopleDescription').val().trim();
+  const whatHappening = $('#911CallDescription').val().trim();
+
+  console.log(`name: ${name}, location: ${location}, peopleDescription: ${peopleDescription}, whatHappening: ${whatHappening}`);
+
+  // Validation
+  if (!name || !location || !peopleDescription || !whatHappening) {
+    alert('Please fill in all required fields.');
+    return;
+  }
+
+  // Show loading
+  $('#create911Call').prop('disabled', true).text('Submitting...');
+
+  // Fetch dispatch departments
+  fetchDispatchDepartments(communityId)
+    .then(function(departmentIds) {
+      const callData = {
+        title: `911: ${location}`,
+        details: `911 Caller ${name} at ${location}. ${peopleDescription} ${whatHappening}`,
+        departments: departmentIds,
+        status: true,
+        communityID: communityId
+      };
+
+      // Send call data
+      return $.ajax({
+        url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/calls',
+        method: 'POST',
+        contentType: 'application/json',
+        headers: {
+          
+        },
+        data: JSON.stringify(callData)
+      });
+    })
+    .then(function() {
+      $('#call911Modal').modal('hide');
+      form[0].reset();
+      $('#successfully-updated-alert').removeClass('hide').addClass('show').text('911 call submitted successfully!').delay(2000).fadeOut(1000, function() {
+        $(this).addClass('hide').removeClass('show');
+      });
+    })
+    .catch(function(xhr) {
+      console.error('Error submitting 911 call:', xhr.responseText);
+      alert('Failed to submit 911 call: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    })
+    .always(function() {
+      $('#create911Call').prop('disabled', false).text('Submit');
+    });
+}
 
   var socket = io();
   var myObj = {
@@ -1721,35 +1791,7 @@ function updateCiv() {
     civID: $("#civilianIDView").text(),
     page: page
   }
-  // socket.emit("fetch_civ_cards", myObj);
-  // socket.on("load_civ_cards_result", (res) => {
-  //   $("#personas-thumbnail").empty();
-  //   if (res === undefined || res === null) {
-  //     $('#issue-loading-personnel-alert').show();
-  //   } else {
-  //     $('#issue-loading-personnel-alert').hide();
-  //     for (i = 0; i < res.length; i++) {
-  //       $("#personas-thumbnail").append(
-  //         `<div id="personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-  //               <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
-  //                 <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
-  //                 <div class="caption capitalize">
-  //                   <h4 id="personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
-  //                   <h5 id="personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
-  //                 </div>
-  //               </div> 
-  //             </div>`
-  //       );
-  //     }
-  //     $('#civilians-loading').hide();
-  //     $("#prev-civ-page-btn").addClass("isDisabled");
-  //     $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
-  //     if (res.length < 8) {
-  //       $("#next-civ-page-btn").addClass("isDisabled");
-  //       $("#next-civ-page-btn").attr("onclick", "").unbind("click");
-  //     }
-  //   }
-  // })
+ 
 
   $(document).ready(function(){
 
@@ -1763,6 +1805,11 @@ function updateCiv() {
   $('#update-delete-civ-form').on('submit', function(e) {
     e.preventDefault();
     updateCiv();
+  });
+
+  $('#call911Form').on('submit', function(e) {
+    e.preventDefault();
+    submit911Call();
   });
 
     // Civilian search filter
