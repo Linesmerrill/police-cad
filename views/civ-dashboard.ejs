@@ -528,36 +528,32 @@
   </div>
 
   <div id="newVehicleModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form id="create-vehicle-form" class="form-horizontal" action="#" method="post">
-            <fieldset>
-
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <form id="create-vehicle-form" class="form-horizontal">
+          <fieldset>
             <!-- Form Name -->
             <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
             <h4>Add a New Vehicle</h4>
             <hr style="width: 88%;max-width: 100rem;">
-
             <!-- Text input-->
             <div class="form-group required">
               <label class="col-md-4 control-label" for="vin">Vin #</label>
               <div class="col-md-4">
-                <input id="vin" name="vin" type="text" minlength="17" maxlength="17" class="form-control input-md disabled-color" required readonly="readonly">
+                <input id="vin" name="vin" type="text" minlength="17" maxlength="17" placeholder="Vin" class="form-control input-md" required>
               </div>
               <div class="col-md-4">
                 <button type="button" class="btn btn-info btn-md" onclick="generateSerialNumber(17, 'vin')">Regenerate</button>
               </div>
             </div>
-
             <!-- Search input-->
             <div class="form-group required">
-              <label class="col-md-4 control-label" for="vehicle-owner">Owner</label>
+              <label class="col-md-4 control-label" for="vehicle-type">Type</label>
               <div class="col-md-4">
-                <input id="vehicle-owner" name="vehicleOwner" type="text" class="form-control input-md disabled-color capitalize" required readonly="readonly">
+                <input id="vehicle-type" name="vehicleType" type="text" placeholder="Type" class="form-control input-md capitalize" required>
               </div>
             </div>
-
             <!-- Text input-->
             <div class="form-group required">
               <label class="col-md-4 control-label" for="plate">Plate</label>
@@ -565,71 +561,83 @@
                 <input id="plate" name="plate" type="text" maxlength="8" placeholder="Plate" class="form-control input-md" required="">
               </div>
             </div>
-
             <!-- Search input-->
-            <div class="form-group required">
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="make">Make</label>
+              <div class="col-md-4">
+                <input id="make" name="make" type="search" placeholder="Make" class="form-control input-md">
+              </div>
+            </div>
+            <div class="form-group">
               <label class="col-md-4 control-label" for="model">Model</label>
               <div class="col-md-4">
-                <input id="model" name="model" type="search" placeholder="Model" class="form-control input-md" required="">
+                <input id="model" name="model" type="search" placeholder="Model" class="form-control input-md">
               </div>
             </div>
-
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="year">Year</label>
+              <div class="col-md-4">
+                <input id="year" name="year" type="number" placeholder="Year" class="form-control input-md">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="licensePlateState">License Plate State</label>
+              <div class="col-md-4">
+                <input id="licensePlateState" name="licensePlateState" type="search" placeholder="License Plate State" class="form-control input-md">
+              </div>
+            </div>
             <!-- Text input-->
-            <div class="form-group required">
+            <div class="form-group">
               <label class="col-md-4 control-label" for="color">Color</label>
               <div class="col-md-4">
-              <input id="color" name="color" type="text" placeholder="Color" class="form-control input-md" required="">
+                <input id="color" name="color" type="text" placeholder="Color" class="form-control input-md">
               </div>
             </div>
-
             <!-- Select Basic -->
             <div class="form-group">
               <label class="col-md-4 control-label" for="valid-registration">Valid Registration?</label>
               <div class="col-md-4">
                 <select id="valid-registration" name="validRegistration" class="form-control">
-                  <option value="1">Yes</option>
-                  <option value="2">No</option>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
                 </select>
               </div>
             </div>
-
             <!-- Select Basic -->
             <div class="form-group">
               <label class="col-md-4 control-label" for="valid-insurance">Valid Insurance?</label>
               <div class="col-md-4">
                 <select id="valid-insurance" name="validInsurance" class="form-control">
-                  <option value="1">Yes</option>
-                  <option value="2">No</option>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
                 </select>
               </div>
             </div>
-
             <!-- Select Basic -->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="isStolen">Marked Stolen?</label>
+              <label class="col-md-4 control-label" for="is-stolen-new">Marked Stolen?</label>
               <div class="col-md-4">
                 <select id="is-stolen-new" name="isStolen" class="form-control">
-                  <option value="1">No</option>
-                  <option value="2">Yes</option>
+                  <option value="false">No</option>
+                  <option value="true">Yes</option>
                 </select>
               </div>
             </div>
-
             <!-- Button -->
             <div class="form-group">
               <label class="col-md-4 control-label" for="create-vehicle"></label>
               <div class="col-md-4">
                 <input id="create-vehicle-user-id" type="hidden" name="userID" value="<%= user._id %>">
                 <input id="new-veh-activeCommunityID-new-veh" type="hidden" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
-                <button id="create-vehicle" onclick="hideVehicleMessage()" class="btn btn-primary">Create</button>
+                <button type="button" id="create-vehicle" onclick="createVehicle()" class="btn btn-primary">Create</button>
               </div>
             </div>
-            </fieldset>
-            </form>
-        </div>
+          </fieldset>
+        </form>
       </div>
     </div>
   </div>
+</div>
 
   <div id="newFirearmModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -909,10 +917,10 @@
               <a data-toggle="pill" href="#pills-edit-civ">Edit Civilian</a>
             </li>
             <li>
-              <a data-toggle="pill" href="#pills-vehicles">Vehicles</a>
+              <a data-toggle="pill" href="#pills-vehicles">Linked Vehicles</a>
             </li>
             <li>
-              <a data-toggle="pill" href="#pills-firearms">Firearms</a>
+              <a data-toggle="pill" href="#pills-firearms">Linked Firearms</a>
             </li>
             <li>
               <a data-toggle="pill" href="#pills-dmv">DMV</a>
@@ -1064,7 +1072,7 @@
               <!--Table for Vehicles  -->
               <div class="col-md-12 col-md-offset-0.75 margin-top-2">
                 <div class="margin-bottom-1">
-                  <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button data-toggle="modal" href="#newVehicleModal" data-dismiss="modal" aria-hidden="true" class="btn btn-primary btn-md pull-right">Add New Vehicle</button>
+                  <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Linked Vehicles:</span> <!-- <button data-toggle="modal" href="#linkVehicleModal" data-dismiss="modal" aria-hidden="true" class="btn btn-primary btn-md pull-right">Link Vehicle</button> -->
                 </div>
                 <div>
                   <label>Search:
@@ -1105,7 +1113,7 @@
               <!--Table for Firearms  -->
               <div class="col-md-12 col-md-offset-0.75 margin-top-2">
                 <div class="margin-bottom-1">
-                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Firearms:</span> <button data-toggle="modal" href="#newFirearmModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button>
+                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Firearms:</span> <!-- <button data-toggle="modal" href="#newFirearmModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button> -->
                 </div>
                 <div>
                   <label>Search:
@@ -2033,6 +2041,53 @@ $('#vehicle-search').on('input', function() {
   );
   renderVehicles(filteredVehicles);
 });
+
+// Create Vehicle
+function createVehicle() {
+  if ($('#vin').val().trim() === '') {
+    alert('Please enter a VIN.');
+    return;
+  }
+  if ($('#vehicle-type').val().trim() === '') {
+    alert('Please select a vehicle type.');
+    return;
+  }
+  if ($('#plate').val().trim() === '') {
+    alert('Please enter a license plate.');
+    return;
+  }
+  const vehicleData = {
+    vin: $('#vin').val().trim(),
+    type: $('#vehicle-type').val().trim(),
+    plate: $('#plate').val().trim().toUpperCase(),
+    make: $('#make').val().trim(),
+    model: $('#model').val().trim(),
+    year: $('#year').val().trim(),
+    licensePlateState: $('#licensePlateState').val().trim(),
+    color: $('#color').val().trim(),
+    validRegistration: $('#valid-registration').val(),
+    validInsurance: $('#valid-insurance').val(),
+    isStolen: $('#is-stolen-new').val(),
+    userID: userId,
+    activeCommunityID: communityId
+  };
+
+  $.ajax({
+    url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle',
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(vehicleData),
+    success: function(response) {
+      alert('Vehicle created successfully!');
+      $('#newVehicleModal').modal('hide');
+      $('#create-vehicle-form')[0].reset(); // Clear form
+      getVehicles(vehiclePage); // Refresh vehicle list
+    },
+    error: function(xhr) {
+      alert('Error creating vehicle: ' + (xhr.responseJSON?.message || 'Please try again.'));
+    }
+  });
+}
 
 // View Vehicle Details
 function viewVehicle(vehicleId) {
