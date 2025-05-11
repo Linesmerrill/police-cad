@@ -141,7 +141,7 @@
               </div>
 
               <!-- List of civilians -->
-              <div id="personas-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+              <div id="personas-thumbnail" class="row flex-main" style="margin-top: 0.5em; width: 90rem;">
                 <div id="civilians-loading" class="text-align-center" style="width: 100%;">
                   <div class="lds-facebook"><div></div><div></div><div></div></div>
                 </div>
@@ -165,6 +165,76 @@
                   </ul>
                 </nav>
               </div>
+          </div>
+
+          <!-- Vehicles Section -->
+          <div class="col-md-12 col-md-offset-0.75 margin-top-5">
+            <div class="margin-bottom-2">
+              <span id="active-vehicles" class="margin-right-1" style="font-size: 18px;">Vehicles:</span>
+              <button data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-md pull-right">Add New Vehicle</button>
+            </div>
+            <div>
+              <label>Search:
+                <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+              </label>
+            </div>
+            <!-- List of vehicles -->
+            <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em; width: 90rem;">
+              <div id="vehicles-loading" class="text-align-center" style="width: 100%;">
+                <div class="lds-facebook"><div></div><div></div><div></div></div>
+              </div>
+            </div>
+            <!-- Loading error -->
+            <div id="issue-loading-vehicles-alert" style="display:none">
+              <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading vehicles, try refreshing the page...</p>
+            </div>
+            <div id="no-vehicles-found-alert" style="display:none">
+              <p class="text-center" style="font-style: italic; font-size: 14px">No vehicles found, try adding one...</p>
+            </div>
+            <!-- Paginated navigation list -->
+            <div>
+              <nav aria-label="...">
+                <ul class="pager">
+                  <li><a id="prev-veh-page-btn" class="" onclick="getPrevVehPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                  <li><a id="next-veh-page-btn" onclick="getNextVehPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+
+          <!-- Firearms Section -->
+          <div class="col-md-12 col-md-offset-0.75 margin-top-5">
+            <div class="margin-bottom-2">
+              <span id="active-firearms" class="margin-right-1" style="font-size: 18px;">Firearms:</span>
+              <button data-toggle="modal" href="#newFirearmModal" class="btn btn-primary btn-md pull-right" onclick="generateSerialNumber(8, 'serial-number')">Add New Firearm</button>
+            </div>
+            <div>
+              <label>Search:
+                <input id="firearm-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
+              </label>
+            </div>
+            <!-- List of firearms -->
+            <div id="firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+              <div id="firearms-loading" class="text-align-center" style="width: 100%;">
+                <div class="lds-facebook"><div></div><div></div><div></div></div>
+              </div>
+            </div>
+            <!-- Loading error -->
+            <div id="issue-loading-firearms-alert" style="display:none">
+              <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading firearms, try refreshing the page...</p>
+            </div>
+            <div id="no-firearms-found-alert" style="display:none">
+              <p class="text-center" style="font-style: italic; font-size: 14px">No firearms found, try adding one...</p>
+            </div>
+            <!-- Paginated navigation list -->
+            <div>
+              <nav aria-label="...">
+                <ul class="pager">
+                  <li><a id="prev-gun-page-btn" class="" onclick="getPrevGunPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                  <li><a id="next-gun-page-btn" onclick="getNextGunPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                </ul>
+              </nav>
+            </div>
           </div>
         </div>
       </section>
@@ -1003,11 +1073,11 @@
                 </div>
 
                 <!-- List of vehicles -->
-                <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                <!-- <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
                   <div id="vehicles-loading" class="text-align-center" style="width: 100%;">
                     <div class="lds-facebook"><div></div><div></div><div></div></div>
                   </div>
-                </div>
+                </div> -->
 
                 <!-- Loading error -->
                 <div id="issue-loading-vehicles-alert" style="display:none">
@@ -1875,6 +1945,182 @@ function fetchAndRenderDepartments() {
   });
 }
 
+// Vehicles Section
+let vehiclePage = 0;
+const vehiclesPerPage = 8;
+let allVehicles = [];
+
+function getVehicles(page) {
+  $('#vehicles-loading').show();
+  $('#issue-loading-vehicles-alert').hide();
+  $('#no-vehicles-found-alert').hide();
+  console.log(`Fetching vehicles for user: ${userId}, community: ${communityId}, page: ${page}`);
+  
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicles/user/${userId}?active_community_id=${communityId}&limit=${vehiclesPerPage}&page=${page}`,
+    method: 'GET',
+    data: {
+      
+      
+    },
+    success: function(response) {
+      console.log("Vehicle response:", response);
+      allVehicles = response || [];
+      renderVehicles(allVehicles);
+      updateVehiclePagination(response.totalPages, page);
+      $('#vehicles-loading').hide();
+      if (allVehicles.length === 0) {
+        $('#no-vehicles-found-alert').show();
+      }
+    },
+    error: function() {
+      $('#vehicles-loading').hide();
+      $('#issue-loading-vehicles-alert').show();
+    }
+  });
+}
+
+function renderVehicles(vehicles) {
+  const $thumbnail = $('#vehicles-thumbnail');
+  $thumbnail.empty();
+  
+  vehicles.forEach(vehicle => {
+    const vehicleHtml = `
+      <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 veh-thumbnails">
+        <div class="thumbnail thumbnail-box text-align-center pointer shadow" data-toggle="modal" data-target="#viewCiv" onclick="viewVehicle('${vehicle._id}')">
+          <ion-icon name="car-outline"></ion-icon>
+          <div class="caption">
+            <h4>${vehicle?.vehicle?.make} ${vehicle?.vehicle?.model}</h4>
+            <h5>Plate: ${vehicle?.vehicle?.plate}</h5>
+          </div>
+        </div>
+      </div>
+    `;
+    $thumbnail.append(vehicleHtml);
+  });
+}
+
+function updateVehiclePagination(totalPages, currentPage) {
+  $('#prev-veh-page-btn').toggleClass('disabled', currentPage === 1);
+  $('#next-veh-page-btn').toggleClass('disabled', currentPage >= totalPages);
+}
+
+function getPrevVehPage() {
+  if (vehiclePage > 1) {
+    vehiclePage--;
+    getVehicles(vehiclePage);
+  }
+}
+
+function getNextVehPage() {
+  vehiclePage++;
+  getVehicles(vehiclePage);
+}
+
+// Vehicle Search
+$('#vehicle-search').on('input', function() {
+  const query = $(this).val().toLowerCase();
+  const filteredVehicles = allVehicles.filter(vehicle => 
+    vehicle.make.toLowerCase().includes(query) ||
+    vehicle.model.toLowerCase().includes(query) ||
+    vehicle.plate.toLowerCase().includes(query)
+  );
+  renderVehicles(filteredVehicles);
+});
+
+// Firearms Section
+let firearmPage = 1;
+const firearmsPerPage = 12;
+let allFirearms = [];
+
+function getFirearms(page) {
+  $('#firearms-loading').show();
+  $('#issue-loading-firearms-alert').hide();
+  $('#no-firearms-found-alert').hide();
+  
+  $.ajax({
+    url: '/api/firearms',
+    method: 'GET',
+    data: {
+      page: page,
+      limit: firearmsPerPage,
+      communityID: '<%= user.user.activeCommunity %>'
+    },
+    success: function(response) {
+      allFirearms = response.firearms || [];
+      renderFirearms(allFirearms);
+      updateFirearmPagination(response.totalPages, page);
+      $('#firearms-loading').hide();
+      if (allFirearms.length === 0) {
+        $('#no-firearms-found-alert').show();
+      }
+    },
+    error: function() {
+      $('#firearms-loading').hide();
+      $('#issue-loading-firearms-alert').show();
+    }
+  });
+}
+
+function renderFirearms(firearms) {
+  const $thumbnail = $('#firearms-thumbnail');
+  $thumbnail.empty();
+  
+  firearms.forEach(firearm => {
+    const firearmHtml = `
+      <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 firearm-thumbnails">
+        <div class="thumbnail thumbnail-box text-align-center pointer shadow" data-toggle="modal" data-target="#viewCiv" onclick="viewFirearm('${firearm._id}')">
+          <ion-icon name="pistol-outline"></ion-icon>
+          <div class="caption">
+            <h4>${firearm.make} ${firearm.model}</h4>
+            <h5>Serial: ${firearm.serialNumber}</h5>
+          </div>
+        </div>
+      </div>
+    `;
+    $thumbnail.append(firearmHtml);
+  });
+}
+
+function updateFirearmPagination(totalPages, currentPage) {
+  $('#prev-gun-page-btn').toggleClass('disabled', currentPage === 1);
+  $('#next-gun-page-btn').toggleClass('disabled', currentPage >= totalPages);
+}
+
+function getPrevGunPage() {
+  if (firearmPage > 1) {
+    firearmPage--;
+    getFirearms(firearmPage);
+  }
+}
+
+function getNextGunPage() {
+  firearmPage++;
+  getFirearms(firearmPage);
+}
+
+// Firearm Search
+$('#firearm-search').on('input', function() {
+  const query = $(this).val().toLowerCase();
+  const filteredFirearms = allFirearms.filter(firearm => 
+    firearm.make.toLowerCase().includes(query) ||
+    firearm.model.toLowerCase().includes(query) ||
+    firearm.serialNumber.toLowerCase().includes(query)
+  );
+  renderFirearms(filteredFirearms);
+});
+
+// Placeholder view functions (to be implemented based on your modal logic)
+function viewVehicle(vehicleId) {
+  // Fetch vehicle details and populate #viewCiv modal
+  console.log('View vehicle:', vehicleId);
+}
+
+function viewFirearm(firearmId) {
+  // Fetch firearm details and populate #viewCiv modal
+  console.log('View firearm:', firearmId);
+}
+
   var socket = io();
   var myObj = {
     dbUser: dbUser,
@@ -1889,6 +2135,8 @@ function fetchAndRenderDepartments() {
   $(document).ready(function(){
     fetchCivilians(page);
     fetchAndRenderDepartments();
+    getVehicles(vehiclePage);
+  getFirearms(firearmPage);
 
     $('#create-civ-form').on('submit', function(e) {
     e.preventDefault();
