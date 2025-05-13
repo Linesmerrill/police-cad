@@ -78,6 +78,53 @@
       padding: 8px; /* Smaller padding for compact look */
     }
   }
+
+  .vehicle-card-btn {
+    margin-top: 5px;
+    width: 100%;
+    font-size: 12px;
+  }
+
+  #pills-vehicles .civ-thumbnails,
+  #pills-vehicles .flex-li-wrapper,
+  #pills-vehicles .thumbnail {
+    cursor: default !important;
+    pointer-events: none !important;
+  }
+  #pills-vehicles .thumbnail .vehicle-card-btn {
+    cursor: pointer !important;
+    pointer-events: auto !important;
+  }
+
+  #manage-vehicles-thumbnail .thumbnail-box {
+  background-color: #343a40; /* Match firearm thumbnail */
+  color: white;
+}
+#manage-vehicles-thumbnail .firearm-card-btn {
+  width: 100%;
+  margin-top: 10px;
+}
+
+  #manage-firearms-thumbnail .thumbnail-box {
+  background-color: #343a40; /* Match vehicle thumbnail */
+  color: white;
+}
+#manage-firearms-thumbnail .firearm-card-btn {
+  width: 100%;
+  margin-top: 10px;
+}
+.margin-top-2 {
+  margin-top: 2rem;
+}
+.margin-bottom-1 {
+  margin-bottom: 1rem;
+}
+.margin-right-1 {
+  margin-right: 1rem;
+}
+.text-align-center {
+  text-align: center;
+}
 </style>
 </head>
 
@@ -941,11 +988,11 @@
               <a data-toggle="pill" href="#pills-edit-civ">Edit Civilian</a>
             </li>
             <li>
-              <a data-toggle="pill" href="#pills-vehicles">Linked Vehicles</a>
+              <a class="nav-link" id="pills-vehicles-tab" data-toggle="pill" href="#pills-vehicles" role="tab" aria-controls="pills-vehicles" aria-selected="false" onclick="getLinkedVehicles(0)">Manage Vehicles</a>
             </li>
             <li>
-              <a data-toggle="pill" href="#pills-firearms">Linked Firearms</a>
-            </li>
+    <a class="nav-link" id="pills-firearms-tab" data-toggle="pill" href="#pills-firearms" role="tab" aria-controls="pills-firearms" aria-selected="false" onclick="getLinkedFirearms(0)">Manage Firearms</a>
+  </li>
             <li>
               <a data-toggle="pill" href="#pills-dmv">DMV</a>
             </li>
@@ -1093,93 +1140,73 @@
                 </form>
             </div>
             <div class="tab-pane fade" id="pills-vehicles">
-              <!--Table for Vehicles  -->
-              <div class="col-md-12 col-md-offset-0.75 margin-top-2">
-                <div class="margin-bottom-1">
-                  <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Linked Vehicles:</span> <!-- <button data-toggle="modal" href="#linkVehicleModal" data-dismiss="modal" aria-hidden="true" class="btn btn-primary btn-md pull-right">Link Vehicle</button> -->
-                </div>
-                <div>
-                  <label>Search:
-                    <input id="vehicle-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
-                  </label>
-                </div>
-
-                <!-- List of vehicles -->
-                <!-- <div id="vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
-                  <div id="vehicles-loading" class="text-align-center" style="width: 100%;">
-                    <div class="lds-facebook"><div></div><div></div><div></div></div>
-                  </div>
-                </div> -->
-
-                <!-- Loading error -->
-                <div id="issue-loading-vehicles-alert" style="display:none">
-                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading vehicles, try refreshing the page...</p>
-                </div>
-
-                <!-- No Vehicles registered message -->
-                <div id="no-vehicles-message" style="display:none">
-                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered Vehicles, try registering one...</p>
-                </div>
-
-                <!-- Paginated navigation list -->
-                <div>
-                  <nav aria-label="...">
-                    <ul class="pager">
-                      <li><a id="prev-veh-page-btn" class="" onclick="getPrevVehPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
-                      <li><a id="next-veh-page-btn" onclick="getNextVehPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
-                    </ul>
-                  </nav>
-                </div>
-
-              </div>
-            </div>
+                        <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+                          <div class="margin-bottom-1">
+                            <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Manage Vehicles:</span>
+                          </div>
+                          <div>
+                            <label>Search:
+                              <input id="manage-vehicle-search" type="search" class="form-control input-sm" placeholder="Search Vehicles" aria-controls="thumbnail">
+                            </label>
+                          </div>
+                          <div id="manage-vehicles-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+                            <div id="manage-vehicles-loading" class="text-align-center" style="width: 100%;">
+                              <div class="lds-facebook"><div></div><div></div><div></div></div>
+                            </div>
+                          </div>
+                          <div id="issue-loading-vehicles-alert" style="display:none">
+                            <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading vehicles, try refreshing the page...</p>
+                          </div>
+                          <div id="manage-no-vehicles-message" style="display:none">
+                            <p class="text-center" style="font-style: italic; font-size: 14px">No registered Vehicles, try registering one...</p>
+                          </div>
+                          <div>
+                            <nav aria-label="...">
+                              <ul class="pager">
+                                <li><a id="manage-prev-veh-page-btn" class="" onclick="getPrevVehPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+                                <li><a id="manage-next-veh-page-btn" onclick="getNextVehPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+                              </ul>
+                            </nav>
+                          </div>
+                        </div>
+                      </div>
             <div class="tab-pane fade" id="pills-firearms">
-              <!--Table for Firearms  -->
-              <div class="col-md-12 col-md-offset-0.75 margin-top-2">
-                <div class="margin-bottom-1">
-                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Firearms:</span> <!-- <button data-toggle="modal" href="#newFirearmModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="generateSerialNumber(8, 'serial-number')">Register Firearm</button> -->
-                </div>
-                <div>
-                  <label>Search:
-                    <input id="firearm-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
-                  </label>
-                </div>
-
-                <!-- List of firearms -->
-                <div id="firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
-                  <div id="firearms-loading" class="text-align-center" style="width: 100%;">
-                    <div class="lds-facebook"><div></div><div></div><div></div></div>
-                  </div>
-                </div>
-
-                <!-- Loading error -->
-                <div id="issue-loading-firearms-alert" style="display:none">
-                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading firearms, try refreshing the page...</p>
-                </div>
-
-                <!-- No Firearms registered message -->
-                <div id="no-firearms-message" style="display:none">
-                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered Firearms, try registering one...</p>
-                </div>
-
-                <!-- Paginated navigation list -->
-                <div>
-                  <nav aria-label="...">
-                    <ul class="pager">
-                      <li><a id="prev-gun-page-btn" onclick="getPrevGunPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
-                      <li><a id="next-gun-page-btn" onclick="getNextGunPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
-                    </ul>
-                  </nav>
-                </div>
-                
-              </div>
-            </div>
+    <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+      <div class="margin-bottom-1">
+        <span id="active-firearms" class="margin-right-1" style="font-size: 18px;">Manage Firearms:</span>
+      </div>
+      <div>
+        <label>Search:
+          <input id="manage-firearm-search" type="search" class="form-control input-sm" placeholder="Search Firearms" aria-controls="thumbnail">
+        </label>
+      </div>
+      <div id="manage-firearms-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+        <div id="manage-firearms-loading" class="text-align-center" style="width: 100%;">
+          <div class="lds-facebook"><div></div><div></div><div></div></div>
+        </div>
+      </div>
+      <div id="issue-loading-firearms-alert" style="display:none">
+        <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading firearms, try refreshing the page...</p>
+      </div>
+      <div id="manage-no-firearms-message" style="display:none">
+        <p class="text-center" style="font-style: italic; font-size: 14px">No registered Firearms, try registering one...</p>
+      </div>
+      <div>
+        <nav aria-label="...">
+          <ul class="pager">
+            <li><a id="manage-prev-firearm-page-btn" class="" onclick="getPrevFirearmPage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+            <li><a id="manage-next-firearm-page-btn" onclick="getNextFirearmPage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
 
             <!-- dmv tab (showing all of the users licenses)-->
             <div class="tab-pane fade" id="pills-dmv">
               <div class="col-md-12 col-md-offset-0.75 margin-top-2">
                 <div class="margin-bottom-1">
-                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Licenses:</span> <button data-toggle="modal" href="#newLicenseModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="">Add License</button>
+                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Licenses:</span> <!-- <button data-toggle="modal" href="#newLicenseModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="">Add License</button> -->
                 </div>
                 <!-- <div>
                   <label>Search:
@@ -2184,6 +2211,373 @@ function deleteVehicle() {
   });
 }
 
+// Linked Vehicles (in #pills-vehicles tab)
+let linkedVehiclePage = 0;
+const linkedVehiclesPerPage = 8;
+let allLinkedVehicles = [];
+
+function getLinkedVehicles(page) {
+  // const civilianId = $('#civilianIDView').val();
+  // console.log("Civlian ID from getLinkedVehicles: ", civilianId);
+  
+  $('#manage-vehicles-loading').show();
+  $('#issue-loading-vehicles-alert').hide();
+  $('#no-vehicles-message').hide();
+  
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicles/user/${userId}?active_community_id=${communityId}&limit=${linkedVehiclesPerPage}&page=${page}`,
+    method: 'GET',
+    data: {
+      
+    },
+    success: function(response) {
+      console.log("Linked vehicles response:", response);
+      civId = $('#civilianIDView').text();
+      console.log("CivId from fetchCivName:", civId);
+      allLinkedVehicles = response || [];
+      renderLinkedVehicles(allLinkedVehicles, civId);
+      updateLinkedVehiclePagination(response.totalPages || 1, page);
+      $('#manage-vehicles-loading').hide();
+      if (allLinkedVehicles.length === 0) {
+        $('#no-vehicles-message').show();
+      }
+    },
+    error: function() {
+      $('#manage-vehicles-loading').hide();
+      $('#issue-loading-vehicles-alert').show();
+    }
+  });
+}
+
+function fetchCivName(civId) {
+  return $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilian/${civId}`,
+    method: 'GET',
+  }).then(function(data) {
+    console.log("Civ name response:", data?.civilian?.name);
+    return data?.civilian?.name || 'Unknown';
+  }).catch(function(xhr, status, error) {
+    console.error(`Error fetching civilian name for ID ${civId}:`, xhr.responseText);
+    alert('Error fetching civilian name: ' + (xhr.responseJSON?.message || 'Please try again.'));
+    console.error('Error fetching civilian name:', error);
+    return null;
+  });
+}
+
+function renderLinkedVehicles(vehicles, civilianId) {
+  const $thumbnail = $('#manage-vehicles-thumbnail');
+  $thumbnail.empty();
+
+  // Create an array of promises to fetch civilian names
+  const namePromises = vehicles.map(vehicle => {
+    if (vehicle?.vehicle?.linkedCivilianID && vehicle?.vehicle?.linkedCivilianID !== civilianId && vehicle?.vehicle?.linkedCivilianID !== "") {
+      return fetchCivName(vehicle?.vehicle?.linkedCivilianID).then(name => ({
+        vehicle,
+        linkedCivName: name || 'Unknown'
+      }));
+    }
+    return Promise.resolve({ vehicle, linkedCivName: '' });
+  });
+
+  // Resolve all name promises
+  Promise.all(namePromises).then(results => {
+    results.forEach(({ vehicle, linkedCivName }) => {
+      const isLinkedToCurrent = vehicle?.vehicle?.linkedCivilianID === civilianId;
+      const isLinkedToOther = vehicle?.vehicle?.linkedCivilianID && !isLinkedToCurrent;
+      
+      let buttonHtml = '';
+      let linkedInfo = '';
+      
+      if (isLinkedToCurrent) {
+        buttonHtml = `<button class="btn btn-danger vehicle-card-btn" onclick="delinkVehicle('${vehicle._id}')">Delink</button>`;
+      } else {
+        buttonHtml = `<button class="btn btn-success vehicle-card-btn" onclick="linkVehicle('${vehicle._id}')">Link</button>`;
+        if (isLinkedToOther && vehicle?.vehicle?.linkedCivilianID !== "") {
+          linkedInfo = `<p class="text-muted" style="font-size: 12px; margin: 5px 0 0;">Linked to ${linkedCivName}</p>`;
+        }
+      }
+      
+      $thumbnail.append(`
+        <div id="manage-vehicles-thumbnail-${vehicle._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+          <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center;">
+            <ion-icon class="font-size-4-vmax" name="car-outline"></ion-icon>
+            <div class="caption capitalize">
+              <h4 id="manage-vehicles-thumbnail-name-${vehicle._id}" class="color-white capitalize">${vehicle?.vehicle?.make} ${vehicle?.vehicle?.model}</h4>
+              <h5 id="manage-vehicles-thumbnail-plate-${vehicle._id}" class="color-white">${vehicle?.vehicle?.plate}</h5>
+              ${linkedInfo}
+              ${buttonHtml}
+            </div>
+          </div>
+        </div>
+      `);
+    });
+  }).catch(error => {
+    console.error('Error rendering linked vehicles:', error);
+    alert('Error rendering vehicle data: ' + error.message);
+  });
+}
+
+function updateLinkedVehiclePagination(totalPages, currentPage) {
+  $('#manage-prev-veh-page-btn').toggleClass('disabled', currentPage === 1);
+  $('#manage-next-veh-page-btn').toggleClass('disabled', currentPage >= totalPages);
+}
+
+function getPrevVehPage() {
+  if (linkedVehiclePage > 1) {
+    linkedVehiclePage--;
+    getLinkedVehicles(linkedVehiclePage);
+  }
+}
+
+function getNextVehPage() {
+  linkedVehiclePage++;
+  getLinkedVehicles(linkedVehiclePage);
+}
+
+function linkVehicle(vehicleId) {
+  const civilianId = $('#civilianIDView').text();
+  
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle/${vehicleId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      linkedCivilianID: civilianId,
+      // communityID: '<%= user.user.activeCommunity %>'
+    }),
+    success: function(response) {
+      getLinkedVehicles(linkedVehiclePage);
+    },
+    error: function(xhr) {
+      alert('Error linking vehicle: ' + (xhr.responseJSON?.message || 'Please try again.'));
+    }
+  });
+}
+
+function delinkVehicle(vehicleId) {
+  if (!confirm('Are you sure you want to delink this vehicle?')) return;
+  
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle/${vehicleId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      linkedCivilianID: "",
+      // communityID: '<%= user.user.activeCommunity %>'
+    }),
+    success: function(response) {
+      getLinkedVehicles(linkedVehiclePage);
+    },
+    error: function(xhr) {
+      alert('Error delinking vehicle: ' + (xhr.responseJSON?.message || 'Please try again.'));
+    }
+  });
+}
+
+// Vehicle Search (for #pills-vehicles)
+$('#manage-vehicle-search').on('input', function() {
+  const query = $(this).val().toLowerCase();
+  const civilianId = $('#civilianIDView').text();
+  const filteredVehicles = allLinkedVehicles.filter(vehicle => 
+    vehicle?.vehicle?.make.toLowerCase().includes(query) ||
+    vehicle?.vehicle?.model.toLowerCase().includes(query) ||
+    vehicle?.vehicle?.plate.toLowerCase().includes(query)
+  );
+  renderLinkedVehicles(filteredVehicles, civilianId);
+});
+
+// Global variables for firearms
+let linkedFirearmPage = 0;
+let allLinkedFirearms = [];
+let hasMoreFirearms = false;
+const linkedFirearmsPerPage = 8;
+
+// Fetch firearms for a civilian
+function getLinkedFirearms(page) {
+  const civilianId = $('#civilianIDView').text();
+  $('#manage-firearms-loading').show();
+  $('#manage-firearms-thumbnail').hide();
+  $('#manage-no-firearms-message').hide();
+  $('#issue-loading-firearms-alert').hide();
+  $('#manage-prev-firearm-page-btn').parent().toggleClass('disabled', page === 0);
+
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearms/user/${userId}?active_community_id=${communityId}&limit=${linkedFirearmsPerPage}&page=${page}`,
+    method: 'GET',
+    success: function(data) {
+      linkedFirearmPage = page;
+      if (page === 0) {
+        allLinkedFirearms = data || [];
+      } else {
+        allLinkedFirearms = allLinkedFirearms.concat(data || []);
+      }
+      hasMoreFirearms = true;
+      renderLinkedFirearms(allLinkedFirearms, civilianId);
+      $('#manage-firearms-loading').hide();
+      $('#manage-firearms-thumbnail').show();
+      $('#manage-prev-firearm-page-btn').parent().toggleClass('disabled', page === 0);
+      $('#manage-next-firearm-page-btn').parent().toggleClass('disabled', !hasMoreFirearms);
+      if (allLinkedFirearms.length === 0) {
+        $('#manage-no-firearms-message').show();
+      }
+    },
+    error: function(xhr) {
+      console.error('Error fetching firearms:', xhr.responseText);
+      $('#manage-firearms-loading').hide();
+      $('#manage-firearms-thumbnail').show();
+      $('#issue-loading-firearms-alert').show();
+      $('#manage-no-firearms-message').hide();
+      alert('Failed to load firearms: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+// Pagination functions
+function getPrevFirearmPage() {
+  if (linkedFirearmPage > 0) {
+    getLinkedFirearms(linkedFirearmPage - 1);
+  }
+}
+
+function getNextFirearmPage() {
+  // if (hasMoreFirearms) {
+    getLinkedFirearms(linkedFirearmPage + 1);
+  // }
+}
+
+// Render firearms in the thumbnail grid
+function renderLinkedFirearms(firearms, civilianId) {
+  const $thumbnail = $('#manage-firearms-thumbnail');
+  $thumbnail.empty();
+
+  if (firearms.length === 0) {
+    $('#manage-no-firearms-message').show();
+    $('#manage-firearms-loading').hide();
+    $('#manage-firearms-thumbnail').show();
+    return;
+  }
+
+  // Create an array of promises to fetch civilian names
+  const namePromises = firearms.map(firearm => {
+    if (firearm?.firearm?.linkedCivilianID && firearm?.firearm?.linkedCivilianID !== civilianId && firearm?.firearm?.linkedCivilianID !== "") {
+      return fetchCivName(firearm?.firearm?.linkedCivilianID).then(name => ({
+        firearm,
+        linkedCivName: name || 'Unknown'
+      }));
+    }
+    return Promise.resolve({ firearm, linkedCivName: '' });
+  });
+
+  // Resolve all name promises
+  Promise.all(namePromises).then(results => {
+    results.forEach(({ firearm, linkedCivName }) => {
+      const isLinkedToCurrent = firearm?.firearm?.linkedCivilianID === civilianId;
+      const isLinkedToOther = firearm?.firearm?.linkedCivilianID && !isLinkedToCurrent;
+
+      let buttonHtml = '';
+      let linkedInfo = '';
+
+      if (isLinkedToCurrent) {
+        buttonHtml = `<button class="btn btn-danger firearm-card-btn" onclick="delinkFirearm('${firearm._id}')" aria-label="Delink firearm ${firearm?.firearm?.make} ${firearm?.firearm?.model}">Delink</button>`;
+      } else {
+        buttonHtml = `<button class="btn btn-success firearm-card-btn" onclick="linkFirearm('${firearm._id}')" aria-label="Link firearm ${firearm?.firearm?.make} ${firearm?.firearm?.model}">Link</button>`;
+        if (isLinkedToOther && firearm?.firearm?.linkedCivilianID !== "") {
+          linkedInfo = `<p class="text-muted" style="font-size: 12px; margin: 5px 0 0;">Linked to ${linkedCivName}</p>`;
+        }
+      }
+
+      $thumbnail.append(`
+        <div id="manage-firearms-thumbnail-${firearm._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+          <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center;">
+            <ion-icon class="font-size-4-vmax" name="megaphone-outline"></ion-icon> <!-- Replace with firearm icon -->
+            <div class="caption capitalize">
+              <h4 id="manage-firearms-thumbnail-name-${firearm._id}" class="color-white capitalize">${firearm?.firearm?.name} ${firearm?.firearm?.weaponType}</h4>
+              <h5 id="manage-firearms-thumbnail-serial-${firearm._id}" class="color-white">${firearm?.firearm?.serialNumber}</h5>
+              ${linkedInfo}
+              ${buttonHtml}
+            </div>
+          </div>
+        </div>
+      `);
+    });
+    $('#manage-firearms-loading').hide();
+    $('#manage-firearms-thumbnail').show();
+  }).catch(error => {
+    console.error('Error rendering linked firearms:', error);
+    $('#manage-firearms-loading').hide();
+    $('#manage-firearms-thumbnail').show();
+    $('#issue-loading-firearms-alert').show();
+    alert('Error rendering firearm data: ' + error.message);
+  });
+}
+
+// Link a firearm to the civilian
+function linkFirearm(firearmId) {
+  const civilianId = $('#civilianIDView').text();
+  console.log(`Linking firearm ${firearmId} to civilian ${civilianId}`);
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm/${firearmId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      linkedCivilianID: civilianId,
+    }),
+    success: function() {
+      getLinkedFirearms(linkedFirearmPage); // Refresh current page
+    },
+    error: function(xhr) {
+      console.error('Error linking firearm:', xhr.responseText);
+      alert('Failed to link firearm: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+// Delink a firearm from the civilian
+function delinkFirearm(firearmId) {
+  if (!confirm('Are you sure you want to delink this firearm?')) return;
+  const civilianId = $('#civilianIDView').text();
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm/${firearmId}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify({
+      linkedCivilianID: "",
+    }),
+    success: function() {
+      getLinkedFirearms(linkedFirearmPage); // Refresh current page
+    },
+    error: function(xhr) {
+      console.error('Error delinking firearm:', xhr.responseText);
+      alert('Failed to delink firearm: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+// Search functionality for firearms
+$('#manage-firearm-search').on('input', function() {
+  const query = $(this).val().toLowerCase();
+  const civilianId = $('#civilianIDView').text();
+  const filteredFirearms = allLinkedFirearms.filter(firearm =>
+    firearm?.firearm?.name?.toLowerCase().includes(query) ||
+    firearm?.firearm?.weaponType?.toLowerCase().includes(query) ||
+    firearm?.firearm?.serialNumber?.toLowerCase().includes(query)
+  );
+  renderLinkedFirearms(filteredFirearms, civilianId);
+});
+
+// Reusable debounce function (if not already defined)
+// function debounce(func, wait) {
+//   let timeout;
+//   return function executedFunction(...args) {
+//     const later = () => {
+//       clearTimeout(timeout);
+//       func(...args);
+//     };
+//     clearTimeout(timeout);
+//     timeout = setTimeout(later, wait);
+//   };
+// }
+
 // Firearms Section
 let firearmPage = 0;
 const firearmsPerPage = 8;
@@ -2389,6 +2783,7 @@ function deleteFirearm() {
 
     //on page load, lets disable to previous buttons
     $('#prev-veh-page-btn').toggleClass('disabled', true);
+    $('#manage-prev-veh-page-btn').toggleClass('disabled', true);
 
     $('#create-civ-form').on('submit', function(e) {
     e.preventDefault();

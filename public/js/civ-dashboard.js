@@ -390,6 +390,8 @@ function loadCivSocketData(civID) {
     populateFirearmDetails(res);
     populateLicenseDetails(res);
   });
+  getLinkedVehicles(0);
+  getLinkedFirearms(0);
   $("#civilian-details-loading").removeClass("show").addClass("hide");
   $("#civilian-details").removeClass("hide").addClass("show");
 }
@@ -543,6 +545,14 @@ function populateCivSocketDetails(res) {
   $("#firearm-id-name").text(`${firstName} ${lastName}`);
   $("#addressView").val(res.civilian.address);
   $("#occupationView").val(res.civilian.occupation);
+  const civilianName =
+    res.civilian.name || "--"
+      ? encodeURIComponent(res.civilian.name)
+      : "Unknown";
+  $("#civilianImageView").attr(
+    "src",
+    `https://ui-avatars.com/api/?name=${civilianName}&background=808080&color=fff&size=256`
+  );
   $("#ageView").val(res.civilian.age);
   $("#weightView").val(res.civilian.weight);
   $("#heightView").val(res.civilian.height);
@@ -837,6 +847,58 @@ function populateVehSocketDetails(res) {
 //   hideModal("newCivModal");
 //   return true;
 // });
+
+$("#viewCiv").on("hidden.bs.modal", function () {
+  // Clear civilian details
+  $("#civilianIDView").text("");
+  $("#firstName").val("");
+  $("#delBirthday").val("");
+  $("#ageView").val("");
+  $("#addressView").val("");
+  $("#occupationView").val("");
+  $("#gender-view").val("Other");
+  $("#heightView").val("");
+  $("#weightView").val("");
+  $("#eye-color-view").val("");
+  $("#hair-color-view").val("");
+  $("#organ-donor-view").prop("checked", false);
+  $("#veteran-view").prop("checked", false);
+  $("#onParole-view").prop("checked", false);
+  $("#onProbation-view").prop("checked", false);
+  $("#civilianImageView").attr("src", "");
+
+  // Clear vehicle tab
+  $("#manage-vehicles-thumbnail").empty();
+  $("#manage-vehicles-loading").show();
+  $("#manage-vehicles-thumbnail").show();
+  $("#manage-no-vehicles-message").hide();
+  $("#issue-loading-vehicles-alert").hide();
+  linkedVehiclePage = 0;
+  allLinkedVehicles = [];
+
+  // Clear firearm tab
+  $("#manage-firearms-thumbnail").empty();
+  $("#manage-firearms-loading").show();
+  $("#manage-firearms-thumbnail").show();
+  $("#manage-no-firearms-message").hide();
+  $("#issue-loading-firearms-alert").hide();
+  linkedFirearmPage = 0;
+  allLinkedFirearms = [];
+  hasMoreFirearms = false;
+
+  // Clear other tabs (DMV, Records) if they have dynamic content
+  // Add similar resets for #pills-dmv, #pills-records if needed
+
+  // Reset Bootstrap tab state to "Edit Civilian"
+  $(".nav-pills li").removeClass("active");
+  $('.nav-pills a[href="#pills-edit-civ"]').parent().addClass("active");
+  $(".tab-pane").removeClass("active in");
+  $("#pills-edit-civ").addClass("active in");
+
+  // Ensure civilian details are hidden until new data loads
+  $("#civilian-details-loading").show();
+  $("#civilian-details").hide();
+});
 
 function getHeight() {
   if ($("#imperial").is(":checked")) {
