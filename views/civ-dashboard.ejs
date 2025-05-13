@@ -1851,7 +1851,6 @@ function fetchDispatchDepartments(communityId) {
       
     }
   }).then(function(data) {
-    console.log('departments:', data);
     const dispatchDepartments = data.departments.filter(dept => dept.template.name === 'Dispatch');
     return dispatchDepartments.map(dept => dept._id);
   }).catch(function(xhr) {
@@ -1866,8 +1865,6 @@ function submit911Call() {
   const location = $('#911CallLocation').val().trim();
   const peopleDescription = $('#911CallPeopleDescription').val().trim();
   const whatHappening = $('#911CallDescription').val().trim();
-
-  console.log(`name: ${name}, location: ${location}, peopleDescription: ${peopleDescription}, whatHappening: ${whatHappening}`);
 
   // Validation
   if (!name || !location || !peopleDescription || !whatHappening) {
@@ -1929,7 +1926,6 @@ function fetchAndRenderDepartments() {
       let html = '';
       
       departments.forEach(dept => {
-        console.log("department:", dept);
         const template = dept?.template?.name;
         const name = dept?.name;
         let icon = 'fa-building';
@@ -2003,7 +1999,6 @@ function getVehicles(page) {
   $('#vehicles-loading').show();
   $('#issue-loading-vehicles-alert').hide();
   $('#no-vehicles-found-alert').hide();
-  console.log(`Fetching vehicles for user: ${userId}, community: ${communityId}, page: ${page}`);
   
   $.ajax({
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicles/user/${userId}?active_community_id=${communityId}&limit=${vehiclesPerPage}&page=${page}`,
@@ -2013,7 +2008,6 @@ function getVehicles(page) {
       
     },
     success: function(response) {
-      console.log("Vehicle response:", response);
       allVehicles = response || [];
       renderVehicles(allVehicles);
       updateVehiclePagination(response.totalPages, page);
@@ -2129,7 +2123,6 @@ function viewVehicle(vehicleId) {
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle/${vehicleId}`,
     method: 'GET',
     success: function(vehicle) {
-      console.log("Vehicle details:", vehicle);
       // Populate modal fields
       $('#vehicleID').val(vehicle._id);
       $('#vinVeh').val(vehicle?.vehicle?.vin);
@@ -2217,9 +2210,6 @@ const linkedVehiclesPerPage = 8;
 let allLinkedVehicles = [];
 
 function getLinkedVehicles(page) {
-  // const civilianId = $('#civilianIDView').val();
-  // console.log("Civlian ID from getLinkedVehicles: ", civilianId);
-  
   $('#manage-vehicles-loading').show();
   $('#issue-loading-vehicles-alert').hide();
   $('#no-vehicles-message').hide();
@@ -2231,9 +2221,7 @@ function getLinkedVehicles(page) {
       
     },
     success: function(response) {
-      console.log("Linked vehicles response:", response);
       civId = $('#civilianIDView').text();
-      console.log("CivId from fetchCivName:", civId);
       allLinkedVehicles = response || [];
       renderLinkedVehicles(allLinkedVehicles, civId);
       updateLinkedVehiclePagination(response.totalPages || 1, page);
@@ -2254,7 +2242,6 @@ function fetchCivName(civId) {
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilian/${civId}`,
     method: 'GET',
   }).then(function(data) {
-    console.log("Civ name response:", data?.civilian?.name);
     return data?.civilian?.name || 'Unknown';
   }).catch(function(xhr, status, error) {
     console.error(`Error fetching civilian name for ID ${civId}:`, xhr.responseText);
@@ -2514,7 +2501,6 @@ function renderLinkedFirearms(firearms, civilianId) {
 // Link a firearm to the civilian
 function linkFirearm(firearmId) {
   const civilianId = $('#civilianIDView').text();
-  console.log(`Linking firearm ${firearmId} to civilian ${civilianId}`);
   $.ajax({
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm/${firearmId}`,
     method: 'PUT',
@@ -2657,7 +2643,6 @@ $('#firearm-search').on('input', function() {
 });
 
 function viewFirearm(firearmId) {
-  console.log("View firearm ID:", firearmId);
   $.ajax({
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/firearm/${firearmId}`,
     method: 'GET',
