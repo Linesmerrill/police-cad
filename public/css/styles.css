@@ -2753,6 +2753,54 @@ a[data-toggle="collapse"].collapsed .rotate {
     cursor: pointer;
 }
 
+#manage-prev-veh-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#manage-prev-veh-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
+#manage-next-veh-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#manage-next-veh-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
+#manage-prev-firearm-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#manage-prev-firearm-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
+#manage-next-firearm-page-btn {
+    color: white;
+    background: transparent;
+    cursor: pointer;
+}
+
+#manage-next-firearm-page-btn:hover {
+    color: white;
+    background-color: #00aced;
+    cursor: pointer;
+}
+
 #prev-civ-page-btn {
     color: white;
     background: transparent;

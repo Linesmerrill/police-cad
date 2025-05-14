@@ -13,175 +13,175 @@ $.delete = function (url, data, callback, type) {
   });
 };
 
-function loadDriversLicense(myVar, index) {
-  //setup pre-reqs on license
-  $("#drivers-license").clear();
-  $(".donor-block").removeClass("show").addClass("hide");
-  $(".veteran-block").removeClass("show").addClass("hide");
-  $(".delete-license-btn").removeClass("show").addClass("hide");
-  $(".create-license-btn").removeClass("show").addClass("hide");
-  $("#licenseStatusViewLic")
-    .text("Valid")
-    .removeClass("color-red")
-    .addClass("color-black");
+// function loadDriversLicense(myVar, index) {
+//   //setup pre-reqs on license
+//   $("#drivers-license").clear();
+//   $(".donor-block").removeClass("show").addClass("hide");
+//   $(".veteran-block").removeClass("show").addClass("hide");
+//   $(".delete-license-btn").removeClass("show").addClass("hide");
+//   $(".create-license-btn").removeClass("show").addClass("hide");
+//   $("#licenseStatusViewLic")
+//     .text("Valid")
+//     .removeClass("color-red")
+//     .addClass("color-black");
 
-  var firstName = myVar[index].civilian.firstName;
-  var lastName = myVar[index].civilian.lastName;
-  var birthday = myVar[index].civilian.birthday;
-  var createdDate = new Date(myVar[index].civilian.createdAt);
-  var expDay = createdDate.getDate();
-  var expMonth = createdDate.getMonth() + 1;
-  var expYear = createdDate.getFullYear() + 10;
+//   var firstName = myVar[index].civilian.firstName;
+//   var lastName = myVar[index].civilian.lastName;
+//   var birthday = myVar[index].civilian.birthday;
+//   var createdDate = new Date(myVar[index].civilian.createdAt);
+//   var expDay = createdDate.getDate();
+//   var expMonth = createdDate.getMonth() + 1;
+//   var expYear = createdDate.getFullYear() + 10;
 
-  // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional,
-  // we will do a check to see if its undefined or empty and if so just set it to an
-  // empty string (or false for booleans), otherwise set it to the value from the db.
-  var gender =
-    myVar[index].civilian.gender == undefined ||
-    myVar[index].civilian.gender == ""
-      ? ""
-      : myVar[index].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
+//   // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional,
+//   // we will do a check to see if its undefined or empty and if so just set it to an
+//   // empty string (or false for booleans), otherwise set it to the value from the db.
+//   var gender =
+//     myVar[index].civilian.gender == undefined ||
+//     myVar[index].civilian.gender == ""
+//       ? ""
+//       : myVar[index].civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
 
-  height = myVar[index].civilian.height;
-  weight = myVar[index].civilian.weight;
-  var eyeColor =
-    myVar[index].civilian.eyeColor == undefined ||
-    myVar[index].civilian.eyeColor == ""
-      ? ""
-      : myVar[index].civilian.eyeColor.substring(0, 3); //only grab first 3 characters of string
-  var hairColor =
-    myVar[index].civilian.hairColor == undefined ||
-    myVar[index].civilian.hairColor == ""
-      ? ""
-      : myVar[index].civilian.hairColor.substring(0, 3); //only grab first 3 characters of string
-  var donor =
-    myVar[index].civilian.organDonor == undefined ||
-    myVar[index].civilian.organDonor == ""
-      ? false
-      : myVar[index].civilian.organDonor;
-  var veteran =
-    myVar[index].civilian.veteran == undefined ||
-    myVar[index].civilian.veteran == ""
-      ? false
-      : myVar[index].civilian.veteran;
+//   height = myVar[index].civilian.height;
+//   weight = myVar[index].civilian.weight;
+//   var eyeColor =
+//     myVar[index].civilian.eyeColor == undefined ||
+//     myVar[index].civilian.eyeColor == ""
+//       ? ""
+//       : myVar[index].civilian.eyeColor.substring(0, 3); //only grab first 3 characters of string
+//   var hairColor =
+//     myVar[index].civilian.hairColor == undefined ||
+//     myVar[index].civilian.hairColor == ""
+//       ? ""
+//       : myVar[index].civilian.hairColor.substring(0, 3); //only grab first 3 characters of string
+//   var donor =
+//     myVar[index].civilian.organDonor == undefined ||
+//     myVar[index].civilian.organDonor == ""
+//       ? false
+//       : myVar[index].civilian.organDonor;
+//   var veteran =
+//     myVar[index].civilian.veteran == undefined ||
+//     myVar[index].civilian.veteran == ""
+//       ? false
+//       : myVar[index].civilian.veteran;
 
-  $("#civilianID").val(myVar[index]._id);
-  $("#civilianIDViewLic").text("DL: " + myVar[index]._id);
-  $("#firstNameLic").text(firstName);
-  $("#lastNameLic").text(lastName);
-  $("#sexLic").text(gender);
-  $("#heightLic").text(height);
-  $("#weightLic").text(weight);
-  $("#eyeLic").text(eyeColor);
-  $("#hairLic").text(hairColor);
-  if (donor === true) {
-    $(".donor-block").removeClass("hide").addClass("show");
-  }
-  if (veteran === true) {
-    $(".veteran-block").removeClass("hide").addClass("show");
-  }
-  switch (myVar[index].civilian.licenseStatus) {
-    case "1": //valid license
-      $("#drivers-license").removeClass("hide").addClass("show");
-      $("#licenseStatusViewLic")
-        .text("Valid")
-        .removeClass("color-red")
-        .addClass("color-black");
-      $(".delete-license-btn").removeClass("hide").addClass("show");
-      $(".create-license-btn").removeClass("show").addClass("hide");
-      break; //javascript standard to put this here
-    case "2": //revoked license
-      $("#drivers-license").removeClass("hide").addClass("show");
-      $("#licenseStatusViewLic")
-        .text("Revoked")
-        .removeClass("color-black")
-        .addClass("color-red");
-      $(".delete-license-btn").removeClass("hide").addClass("show");
-      $(".create-license-btn").removeClass("show").addClass("hide");
-      break; //javascript standard to put this here
-    default: // '3' or no license
-      $("#drivers-license").removeClass("show").addClass("hide");
-      $(".create-license-btn").removeClass("hide").addClass("show");
-      $("#licenseStatusViewLic")
-        .text("None")
-        .removeClass("color-black")
-        .addClass("color-red");
-  }
-  var licenseDOB = birthday.split("-");
-  if (licenseDOB.length == 3) {
-    $("#birthdayViewLic").text(
-      licenseDOB[1] + "/" + licenseDOB[2] + "/" + licenseDOB[0]
-    );
-  } else {
-    $("#birthdayViewLic").text(birthday);
-  }
-  $("#warrantsView").val(myVar[index].civilian.warrants);
-  // set firearm license id status
-  var firearmStatus = "";
-  switch (myVar[index].civilian.firearmLicense.trim()) {
-    case "1":
-      firearmStatus = "None";
-      break;
-    case "2":
-      firearmStatus = "Valid";
-      break;
-    case "3":
-      firearmStatus = "Revoked";
-      break;
-    default:
-      firearmStatus = "N/A";
-      break;
-  }
-  $("#firearm-id-status").text(firearmStatus);
-  $("#firearm-id-name").text(`${firstName} ${lastName}`);
-  $("#addressViewLic").text(myVar[index].civilian.address);
-  $("#license-expiration").text(
-    expMonth.toString().padStart(2, "0") +
-      "/" +
-      expDay.toString().padStart(2, "0") +
-      "/" +
-      expYear
-  ); //Janky AF
-  $("#license-issued").text(
-    createdDate.toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    })
-  );
-}
+//   $("#civilianID").val(myVar[index]._id);
+//   $("#civilianIDViewLic").text("DL: " + myVar[index]._id);
+//   $("#firstNameLic").text(firstName);
+//   $("#lastNameLic").text(lastName);
+//   $("#sexLic").text(gender);
+//   $("#heightLic").text(height);
+//   $("#weightLic").text(weight);
+//   $("#eyeLic").text(eyeColor);
+//   $("#hairLic").text(hairColor);
+//   if (donor === true) {
+//     $(".donor-block").removeClass("hide").addClass("show");
+//   }
+//   if (veteran === true) {
+//     $(".veteran-block").removeClass("hide").addClass("show");
+//   }
+//   switch (myVar[index].civilian.licenseStatus) {
+//     case "1": //valid license
+//       $("#drivers-license").removeClass("hide").addClass("show");
+//       $("#licenseStatusViewLic")
+//         .text("Valid")
+//         .removeClass("color-red")
+//         .addClass("color-black");
+//       $(".delete-license-btn").removeClass("hide").addClass("show");
+//       $(".create-license-btn").removeClass("show").addClass("hide");
+//       break; //javascript standard to put this here
+//     case "2": //revoked license
+//       $("#drivers-license").removeClass("hide").addClass("show");
+//       $("#licenseStatusViewLic")
+//         .text("Revoked")
+//         .removeClass("color-black")
+//         .addClass("color-red");
+//       $(".delete-license-btn").removeClass("hide").addClass("show");
+//       $(".create-license-btn").removeClass("show").addClass("hide");
+//       break; //javascript standard to put this here
+//     default: // '3' or no license
+//       $("#drivers-license").removeClass("show").addClass("hide");
+//       $(".create-license-btn").removeClass("hide").addClass("show");
+//       $("#licenseStatusViewLic")
+//         .text("None")
+//         .removeClass("color-black")
+//         .addClass("color-red");
+//   }
+//   var licenseDOB = birthday.split("-");
+//   if (licenseDOB.length == 3) {
+//     $("#birthdayViewLic").text(
+//       licenseDOB[1] + "/" + licenseDOB[2] + "/" + licenseDOB[0]
+//     );
+//   } else {
+//     $("#birthdayViewLic").text(birthday);
+//   }
+//   $("#warrantsView").val(myVar[index].civilian.warrants);
+//   // set firearm license id status
+//   var firearmStatus = "";
+//   switch (myVar[index].civilian.firearmLicense.trim()) {
+//     case "1":
+//       firearmStatus = "None";
+//       break;
+//     case "2":
+//       firearmStatus = "Valid";
+//       break;
+//     case "3":
+//       firearmStatus = "Revoked";
+//       break;
+//     default:
+//       firearmStatus = "N/A";
+//       break;
+//   }
+//   $("#firearm-id-status").text(firearmStatus);
+//   $("#firearm-id-name").text(`${firstName} ${lastName}`);
+//   $("#addressViewLic").text(myVar[index].civilian.address);
+//   $("#license-expiration").text(
+//     expMonth.toString().padStart(2, "0") +
+//       "/" +
+//       expDay.toString().padStart(2, "0") +
+//       "/" +
+//       expYear
+//   ); //Janky AF
+//   $("#license-issued").text(
+//     createdDate.toLocaleDateString("en-US", {
+//       day: "2-digit",
+//       month: "2-digit",
+//       year: "numeric",
+//     })
+//   );
+// }
 
-function loadTicketsAndWarnings(index) {
-  $("#warningTable tbody").empty();
-  $("#citationTable tbody").empty();
-  var parameters = {
-    civID: index,
-  };
-  $.get("/tickets", parameters, function (data) {
-    data.forEach(function (e) {
-      if (e.ticket.isWarning) {
-        var newRowContent =
-          "<tr><td>" +
-          e.ticket.date +
-          "</td><td>" +
-          e.ticket.violation +
-          "</td></tr>";
-        $("#warningTable tbody").append(newRowContent);
-      } else {
-        var newRowContent =
-          "<tr><td>" +
-          e.ticket.date +
-          "</td><td>" +
-          e.ticket.violation +
-          "</td><td>" +
-          "$" +
-          e.ticket.amount +
-          "</td></tr>";
-        $("#citationTable tbody").append(newRowContent);
-      }
-    });
-  });
-}
+// function loadTicketsAndWarnings(index) {
+//   $("#warningTable tbody").empty();
+//   $("#citationTable tbody").empty();
+//   var parameters = {
+//     civID: index,
+//   };
+//   $.get("/tickets", parameters, function (data) {
+//     data.forEach(function (e) {
+//       if (e.ticket.isWarning) {
+//         var newRowContent =
+//           "<tr><td>" +
+//           e.ticket.date +
+//           "</td><td>" +
+//           e.ticket.violation +
+//           "</td></tr>";
+//         $("#warningTable tbody").append(newRowContent);
+//       } else {
+//         var newRowContent =
+//           "<tr><td>" +
+//           e.ticket.date +
+//           "</td><td>" +
+//           e.ticket.violation +
+//           "</td><td>" +
+//           "$" +
+//           e.ticket.amount +
+//           "</td></tr>";
+//         $("#citationTable tbody").append(newRowContent);
+//       }
+//     });
+//   });
+// }
 
 function loadArrests(index) {
   $("#arrestTable tbody").empty();
@@ -386,9 +386,9 @@ function loadCivSocketData(civID) {
   socket.on("load_civ_by_id_result", (res) => {
     //load civ data into UI
     populateCivSocketDetails(res);
-    populateVehicleDetails(res);
-    populateFirearmDetails(res);
-    populateLicenseDetails(res);
+    // populateVehicleDetails(res);
+    // populateFirearmDetails(res);
+    // populateLicenseDetails(res);
   });
   getLinkedVehicles(0);
   getLinkedFirearms(0);
@@ -396,86 +396,86 @@ function loadCivSocketData(civID) {
   $("#civilian-details").removeClass("hide").addClass("show");
 }
 
-function populateVehicleDetails(res) {
-  $("#vehicle-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
-  pageVeh = 0;
-  getVehicles();
-}
+// function populateVehicleDetails(res) {
+//   $("#vehicle-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+//   pageVeh = 0;
+//   getVehicles();
+// }
 
-function populateFirearmDetails(res) {
-  $("#firearm-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
-  $("#roFirearm").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
-  $("#firearmOwnerID").val(`${res._id}`);
-  pageGun = 0;
-  getFirearms();
-}
+// function populateFirearmDetails(res) {
+//   $("#firearm-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+//   $("#roFirearm").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+//   $("#firearmOwnerID").val(`${res._id}`);
+//   pageGun = 0;
+//   getFirearms();
+// }
 
-function populateLicenseDetails(res) {
-  $("#license-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
-  pageLicense = 0;
-  getLicenses();
-}
+// function populateLicenseDetails(res) {
+//   $("#license-owner").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+//   pageLicense = 0;
+//   getLicenses();
+// }
 
-function loadVehSocketData(vehID) {
-  var socket = io();
-  var myReq = {
-    vehID: vehID,
-  };
-  socket.emit("lookup_veh_by_id", myReq);
-  socket.on("load_veh_by_id_result", (res) => {
-    //load vehicle data into UI
-    populateVehSocketDetails(res);
-  });
-}
+// function loadVehSocketData(vehID) {
+//   var socket = io();
+//   var myReq = {
+//     vehID: vehID,
+//   };
+//   socket.emit("lookup_veh_by_id", myReq);
+//   socket.on("load_veh_by_id_result", (res) => {
+//     //load vehicle data into UI
+//     populateVehSocketDetails(res);
+//   });
+// }
 
-function loadFirearmSocketData(firearmID) {
-  var socket = io();
-  var myReq = {
-    firearmID: firearmID,
-  };
-  socket.emit("lookup_firearm_by_id", myReq);
-  socket.on("load_firearm_by_id_result", (res) => {
-    //load firearm data into UI
-    populateFirearmSocketDetails(res);
-  });
-}
+// function loadFirearmSocketData(firearmID) {
+//   var socket = io();
+//   var myReq = {
+//     firearmID: firearmID,
+//   };
+//   socket.emit("lookup_firearm_by_id", myReq);
+//   socket.on("load_firearm_by_id_result", (res) => {
+//     //load firearm data into UI
+//     populateFirearmSocketDetails(res);
+//   });
+// }
 
-function populateFirearmSocketDetails(res) {
-  $("#firearmID").val(res._id);
-  $("#serial-number-details").val(res.firearm.serialNumber);
-  $("#weapon-type-details").val(res.firearm.weaponType);
-  //Because from the backend we already split the person_id from the person name and dob, we now
-  //need to rejoin those values back together for #registeredOwner-details
-  if (res.firearm.registeredOwner == "N/A") {
-    $("#registeredOwner-details").val(`${res.firearm.registeredOwner}`);
-  } else {
-    $("#registeredOwner-details").val(
-      `${res.firearm.registeredOwnerID}+${res.firearm.registeredOwner}`
-    );
-  }
-  $("#is-stolen-details").val(res.firearm.isStolen);
-}
+// function populateFirearmSocketDetails(res) {
+//   $("#firearmID").val(res._id);
+//   $("#serial-number-details").val(res.firearm.serialNumber);
+//   $("#weapon-type-details").val(res.firearm.weaponType);
+//   //Because from the backend we already split the person_id from the person name and dob, we now
+//   //need to rejoin those values back together for #registeredOwner-details
+//   if (res.firearm.registeredOwner == "N/A") {
+//     $("#registeredOwner-details").val(`${res.firearm.registeredOwner}`);
+//   } else {
+//     $("#registeredOwner-details").val(
+//       `${res.firearm.registeredOwnerID}+${res.firearm.registeredOwner}`
+//     );
+//   }
+//   $("#is-stolen-details").val(res.firearm.isStolen);
+// }
 
-function loadLicenseSocketData(licenseID) {
-  var socket = io();
-  var myReq = {
-    licenseID: licenseID,
-  };
-  socket.emit("lookup_license_by_id", myReq);
-  socket.on("load_license_by_id_result", (res) => {
-    //load license data into UI
-    populateLicenseSocketDetails(res);
-  });
-}
+// function loadLicenseSocketData(licenseID) {
+//   var socket = io();
+//   var myReq = {
+//     licenseID: licenseID,
+//   };
+//   socket.emit("lookup_license_by_id", myReq);
+//   socket.on("load_license_by_id_result", (res) => {
+//     //load license data into UI
+//     populateLicenseSocketDetails(res);
+//   });
+// }
 
-function populateLicenseSocketDetails(res) {
-  $("#licenseID").val(res._id);
-  $("#licenseOwnerID").val(res.license.ownerID);
-  $("#license-type-details").val(res.license.licenseType);
-  $("#license-status-details").val(res.license.status);
-  $("#expirationDate-details").val(res.license.expirationDate);
-  $("#additionalNotes-details").val(res.license.additionalNotes);
-}
+// function populateLicenseSocketDetails(res) {
+//   $("#licenseID").val(res._id);
+//   $("#licenseOwnerID").val(res.license.ownerID);
+//   $("#license-type-details").val(res.license.licenseType);
+//   $("#license-status-details").val(res.license.status);
+//   $("#expirationDate-details").val(res.license.expirationDate);
+//   $("#additionalNotes-details").val(res.license.additionalNotes);
+// }
 
 function getAge(date) {
   var today = new Date();
@@ -488,14 +488,51 @@ function getAge(date) {
   return yearDiff;
 }
 
+function convertToYYYYMMDD(dateString) {
+  if (!dateString) return ""; // Handle null or empty input
+
+  // Regular expressions for date formats
+  const yyyymmddRegex = /^\d{4}-\d{2}-\d{2}$/; // Matches YYYY-MM-DD
+  const ddmmyyyyRegex = /^\d{2}\/\d{2}\/\d{4}$/; // Matches DD/MM/YYYY
+
+  // Already in YYYY-MM-DD format
+  if (yyyymmddRegex.test(dateString)) {
+    // Validate date
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+      return dateString; // Valid date, return as-is
+    }
+    console.warn(`Invalid date in YYYY-MM-DD format: ${dateString}`);
+    return "";
+  }
+
+  // Convert DD/MM/YYYY to YYYY-MM-DD
+  if (ddmmyyyyRegex.test(dateString)) {
+    const [day, month, year] = dateString.split("/");
+    const converted = `${year}-${month}-${day}`;
+    // Validate converted date
+    const date = new Date(converted);
+    if (!isNaN(date.getTime())) {
+      return converted; // Valid date, return converted format
+    }
+    console.warn(`Invalid date in DD/MM/YYYY format: ${dateString}`);
+    return "";
+  }
+
+  // Unrecognized format
+  console.warn(`Unrecognized date format: ${dateString}`);
+  return "";
+}
+
 function populateCivSocketDetails(res) {
   $("#civilian-details-loading").removeClass("hide").addClass("show");
   $("#civilian-details").removeClass("show").addClass("hide");
-  loadDriversLicenseSocket(res);
+  // loadDriversLicenseSocket(res);
   console.log(res);
   var name = res.civilian.name;
   var lastName = res.civilian.lastName;
-  var birthday = res.civilian.birthday;
+  const formattedBirthday = convertToYYYYMMDD(res.civilian.birthday);
+  var birthday = formattedBirthday;
   var createdDate = new Date(res.civilian.createdAt);
   var onParole = res.civilian.onParole;
   var onProbation = res.civilian.onProbation;
@@ -613,157 +650,157 @@ function populateCivSocketDetails(res) {
 After a page reload, this data will be stored in memory so this method
 will not be called at that point in time. Ideally to save on memory inside the app
 we should probably swap to use sockets all the time. */
-function loadDriversLicenseSocket(res) {
-  //setup pre-reqs on license
-  $(".donor-block").removeClass("show").addClass("hide");
-  $(".veteran-block").removeClass("show").addClass("hide");
-  $(".delete-license-btn").removeClass("show").addClass("hide");
-  $(".create-license-btn").removeClass("show").addClass("hide");
-  $("#licenseStatusViewLic")
-    .text("Valid")
-    .removeClass("color-red")
-    .addClass("color-black");
+// function loadDriversLicenseSocket(res) {
+//   //setup pre-reqs on license
+//   $(".donor-block").removeClass("show").addClass("hide");
+//   $(".veteran-block").removeClass("show").addClass("hide");
+//   $(".delete-license-btn").removeClass("show").addClass("hide");
+//   $(".create-license-btn").removeClass("show").addClass("hide");
+//   $("#licenseStatusViewLic")
+//     .text("Valid")
+//     .removeClass("color-red")
+//     .addClass("color-black");
 
-  var firstName = res.civilian.firstName;
-  var lastName = res.civilian.lastName;
-  var birthday = res.civilian.birthday;
-  var createdDate = new Date(res.civilian.createdAt);
-  var expDay = createdDate.getDate();
-  var expMonth = createdDate.getMonth() + 1;
-  var expYear = createdDate.getFullYear() + 10;
+//   var firstName = res.civilian.firstName;
+//   var lastName = res.civilian.lastName;
+//   var birthday = res.civilian.birthday;
+//   var createdDate = new Date(res.civilian.createdAt);
+//   var expDay = createdDate.getDate();
+//   var expMonth = createdDate.getMonth() + 1;
+//   var expYear = createdDate.getFullYear() + 10;
 
-  // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional,
-  // we will do a check to see if its undefined or empty and if so just set it to an
-  // empty string (or false for booleans), otherwise set it to the value from the db.
-  var gender =
-    res.civilian.gender == undefined || res.civilian.gender == ""
-      ? ""
-      : res.civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
-  height = res.civilian.height;
-  weight = res.civilian.weight;
-  var eyeColor =
-    res.civilian.eyeColor == undefined || res.civilian.eyeColor == ""
-      ? ""
-      : res.civilian.eyeColor.substring(0, 3); //only grab first 3 characters of string
-  var hairColor =
-    res.civilian.hairColor == undefined || res.civilian.hairColor == ""
-      ? ""
-      : res.civilian.hairColor.substring(0, 3); //only grab first 3 characters of string
-  var donor =
-    res.civilian.organDonor == undefined || res.civilian.organDonor == ""
-      ? false
-      : res.civilian.organDonor;
-  var veteran =
-    res.civilian.veteran == undefined || res.civilian.veteran == ""
-      ? false
-      : res.civilian.veteran;
+//   // since gender, height, weight, eyecolor, haircolor, donor and veteran is optional,
+//   // we will do a check to see if its undefined or empty and if so just set it to an
+//   // empty string (or false for booleans), otherwise set it to the value from the db.
+//   var gender =
+//     res.civilian.gender == undefined || res.civilian.gender == ""
+//       ? ""
+//       : res.civilian.gender.charAt(0); //we only want the first character ('M', 'F', 'N')
+//   height = res.civilian.height;
+//   weight = res.civilian.weight;
+//   var eyeColor =
+//     res.civilian.eyeColor == undefined || res.civilian.eyeColor == ""
+//       ? ""
+//       : res.civilian.eyeColor.substring(0, 3); //only grab first 3 characters of string
+//   var hairColor =
+//     res.civilian.hairColor == undefined || res.civilian.hairColor == ""
+//       ? ""
+//       : res.civilian.hairColor.substring(0, 3); //only grab first 3 characters of string
+//   var donor =
+//     res.civilian.organDonor == undefined || res.civilian.organDonor == ""
+//       ? false
+//       : res.civilian.organDonor;
+//   var veteran =
+//     res.civilian.veteran == undefined || res.civilian.veteran == ""
+//       ? false
+//       : res.civilian.veteran;
 
-  $("#civilianID").val(res._id);
-  $("#civilianIDViewLic").text("DL: " + res._id);
-  $("#firstNameLic").text(firstName);
-  $("#lastNameLic").text(lastName);
-  $("#sexLic").text(gender);
-  $("#heightLic").text(height);
-  $("#weightLic").text(weight);
-  $("#eyeLic").text(eyeColor);
-  $("#hairLic").text(hairColor);
-  if (donor === true) {
-    $(".donor-block").removeClass("hide").addClass("show");
-  }
-  if (veteran === true) {
-    $(".veteran-block").removeClass("hide").addClass("show");
-  }
-  switch (res.civilian.licenseStatus) {
-    case "1": //valid license
-      $("#drivers-license").removeClass("hide").addClass("show");
-      $("#licenseStatusViewLic")
-        .text("Valid")
-        .removeClass("color-red")
-        .addClass("color-black");
-      $(".delete-license-btn").removeClass("hide").addClass("show");
-      $(".create-license-btn").removeClass("show").addClass("hide");
-      break; //javascript standard to put this here
-    case "2": //revoked license
-      $("#drivers-license").removeClass("hide").addClass("show");
-      $("#licenseStatusViewLic")
-        .text("Revoked")
-        .removeClass("color-black")
-        .addClass("color-red");
-      $(".delete-license-btn").removeClass("hide").addClass("show");
-      $(".create-license-btn").removeClass("show").addClass("hide");
-      break; //javascript standard to put this here
-    default: // '3' or no license
-      $("#drivers-license").removeClass("show").addClass("hide");
-      $(".create-license-btn").removeClass("hide").addClass("show");
-      $("#licenseStatusViewLic")
-        .text("None")
-        .removeClass("color-black")
-        .addClass("color-red");
-  }
-  var licenseDOB = birthday.split("-");
-  if (licenseDOB.length == 3) {
-    $("#birthdayViewLic").text(
-      licenseDOB[1] + "/" + licenseDOB[2] + "/" + licenseDOB[0]
-    );
-  } else {
-    $("#birthdayViewLic").text(birthday);
-  }
-  $("#warrantsView").val(res.civilian.warrants);
-  // set firearm license id status
-  var firearmStatus = "";
-  switch (res.civilian.firearmLicense.trim()) {
-    case "1":
-      firearmStatus = "None";
-      break;
-    case "2":
-      firearmStatus = "Valid";
-      break;
-    case "3":
-      firearmStatus = "Revoked";
-      break;
-    default:
-      firearmStatus = "N/A";
-      break;
-  }
-  $("#firearm-id-status").text(firearmStatus);
-  $("#firearm-id-name").text(`${firstName} ${lastName}`);
-  $("#addressViewLic").text(res.civilian.address);
-  $("#license-expiration").text(
-    expMonth.toString().padStart(2, "0") +
-      "/" +
-      expDay.toString().padStart(2, "0") +
-      "/" +
-      expYear
-  ); //Janky AF
-  $("#license-issued").text(
-    createdDate.toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    })
-  );
-}
+//   $("#civilianID").val(res._id);
+//   $("#civilianIDViewLic").text("DL: " + res._id);
+//   $("#firstNameLic").text(firstName);
+//   $("#lastNameLic").text(lastName);
+//   $("#sexLic").text(gender);
+//   $("#heightLic").text(height);
+//   $("#weightLic").text(weight);
+//   $("#eyeLic").text(eyeColor);
+//   $("#hairLic").text(hairColor);
+//   if (donor === true) {
+//     $(".donor-block").removeClass("hide").addClass("show");
+//   }
+//   if (veteran === true) {
+//     $(".veteran-block").removeClass("hide").addClass("show");
+//   }
+//   switch (res.civilian.licenseStatus) {
+//     case "1": //valid license
+//       $("#drivers-license").removeClass("hide").addClass("show");
+//       $("#licenseStatusViewLic")
+//         .text("Valid")
+//         .removeClass("color-red")
+//         .addClass("color-black");
+//       $(".delete-license-btn").removeClass("hide").addClass("show");
+//       $(".create-license-btn").removeClass("show").addClass("hide");
+//       break; //javascript standard to put this here
+//     case "2": //revoked license
+//       $("#drivers-license").removeClass("hide").addClass("show");
+//       $("#licenseStatusViewLic")
+//         .text("Revoked")
+//         .removeClass("color-black")
+//         .addClass("color-red");
+//       $(".delete-license-btn").removeClass("hide").addClass("show");
+//       $(".create-license-btn").removeClass("show").addClass("hide");
+//       break; //javascript standard to put this here
+//     default: // '3' or no license
+//       $("#drivers-license").removeClass("show").addClass("hide");
+//       $(".create-license-btn").removeClass("hide").addClass("show");
+//       $("#licenseStatusViewLic")
+//         .text("None")
+//         .removeClass("color-black")
+//         .addClass("color-red");
+//   }
+//   var licenseDOB = birthday.split("-");
+//   if (licenseDOB.length == 3) {
+//     $("#birthdayViewLic").text(
+//       licenseDOB[1] + "/" + licenseDOB[2] + "/" + licenseDOB[0]
+//     );
+//   } else {
+//     $("#birthdayViewLic").text(birthday);
+//   }
+//   $("#warrantsView").val(res.civilian.warrants);
+//   // set firearm license id status
+//   var firearmStatus = "";
+//   switch (res.civilian.firearmLicense.trim()) {
+//     case "1":
+//       firearmStatus = "None";
+//       break;
+//     case "2":
+//       firearmStatus = "Valid";
+//       break;
+//     case "3":
+//       firearmStatus = "Revoked";
+//       break;
+//     default:
+//       firearmStatus = "N/A";
+//       break;
+//   }
+//   $("#firearm-id-status").text(firearmStatus);
+//   $("#firearm-id-name").text(`${firstName} ${lastName}`);
+//   $("#addressViewLic").text(res.civilian.address);
+//   $("#license-expiration").text(
+//     expMonth.toString().padStart(2, "0") +
+//       "/" +
+//       expDay.toString().padStart(2, "0") +
+//       "/" +
+//       expYear
+//   ); //Janky AF
+//   $("#license-issued").text(
+//     createdDate.toLocaleDateString("en-US", {
+//       day: "2-digit",
+//       month: "2-digit",
+//       year: "numeric",
+//     })
+//   );
+// }
 
-function populateVehSocketDetails(res) {
-  $("#vehicleID").val(res._id);
-  $("#plateVeh").val(res.vehicle.plate.toUpperCase());
+// function populateVehSocketDetails(res) {
+//   $("#vehicleID").val(res._id);
+//   $("#plateVeh").val(res.vehicle.plate.toUpperCase());
 
-  // since only cars after 6/26/2020 will have this info, we need to check for empty values
-  if (res.vehicle.vin == "" || res.vehicle.vin == undefined) {
-    $("#vinVeh").val("");
-    $("#no-existing-vin").show();
-  } else {
-    $("#vinVeh").val(res.vehicle.vin.toUpperCase());
-    $("#no-existing-vin").hide();
-  }
+//   // since only cars after 6/26/2020 will have this info, we need to check for empty values
+//   if (res.vehicle.vin == "" || res.vehicle.vin == undefined) {
+//     $("#vinVeh").val("");
+//     $("#no-existing-vin").show();
+//   } else {
+//     $("#vinVeh").val(res.vehicle.vin.toUpperCase());
+//     $("#no-existing-vin").hide();
+//   }
 
-  $("#modelVeh").val(res.vehicle.model);
-  $("#colorView").val(res.vehicle.color);
-  $("#validRegView").val(res.vehicle.validRegistration);
-  $("#validInsView").val(res.vehicle.validInsurance);
-  $("#roVeh").val(res.vehicle.registeredOwner);
-  $("#stolenView").val(res.vehicle.isStolen);
-}
+//   $("#modelVeh").val(res.vehicle.model);
+//   $("#colorView").val(res.vehicle.color);
+//   $("#validRegView").val(res.vehicle.validRegistration);
+//   $("#validInsView").val(res.vehicle.validInsurance);
+//   $("#roVeh").val(res.vehicle.registeredOwner);
+//   $("#stolenView").val(res.vehicle.isStolen);
+// }
 
 /* function to send socket when new civ is created. This is to move away
   from reloading the page on civ creation */
@@ -920,130 +957,130 @@ function getWeight() {
   }
 }
 
-$("#create-auto-civ-form").submit(function (e) {
-  e.preventDefault(); //prevents page from reloading
-  var socket = io();
-  inputGender = $("#genderAuto").val();
-  inputFirearmLicense = $("#firearmLicenseAuto").val();
-  reqBody = autoCivCreator(inputGender, inputFirearmLicense);
-  var myReq = {
-    body: reqBody,
-  };
-  socket.emit("create_new_civ", myReq);
+// $("#create-auto-civ-form").submit(function (e) {
+//   e.preventDefault(); //prevents page from reloading
+//   var socket = io();
+//   inputGender = $("#genderAuto").val();
+//   inputFirearmLicense = $("#firearmLicenseAuto").val();
+//   reqBody = autoCivCreator(inputGender, inputFirearmLicense);
+//   var myReq = {
+//     body: reqBody,
+//   };
+//   socket.emit("create_new_civ", myReq);
 
-  //socket that receives a response after creating a new civilian
-  socket.on("created_new_civ", (res) => {
-    //populate civilian cards on the dashboard
-    $("#personas-thumbnail").append(
-      `<div id="personas-thumbnail-${res._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-                <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
-                  <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
-                  <div class="caption capitalize">
-                    <h4 id="personas-thumbnail-name-${res._id}" class="color-white capitalize">${res.civilian.firstName} ${res.civilian.lastName}</h4>
-                    <h5 id="personas-thumbnail-dob-${res._id}" class="color-white">${res.civilian.birthday}</h5>
-                  </div>
-                </div>
-              </div>`
-    );
+//   //socket that receives a response after creating a new civilian
+//   socket.on("created_new_civ", (res) => {
+//     //populate civilian cards on the dashboard
+//     $("#personas-thumbnail").append(
+//       `<div id="personas-thumbnail-${res._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+//                 <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
+//                   <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+//                   <div class="caption capitalize">
+//                     <h4 id="personas-thumbnail-name-${res._id}" class="color-white capitalize">${res.civilian.firstName} ${res.civilian.lastName}</h4>
+//                     <h5 id="personas-thumbnail-dob-${res._id}" class="color-white">${res.civilian.birthday}</h5>
+//                   </div>
+//                 </div>
+//               </div>`
+//     );
 
-    //populate the civilian person table
-    var containsEmptyRow = $("#personas-table tr>td").hasClass(
-      "dataTables_empty"
-    );
-    if (containsEmptyRow) {
-      $("#personas-table tbody>tr:first").fadeOut(1, function () {
-        $(this).remove();
-      });
-    }
-    $("#personas-table tr:last")
-      .after(
-        `<tr data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
-            <td>${res.civilian.firstName} ${res.civilian.lastName}</td>
-            <td>${res.civilian.birthday}</td>
-          </tr>`
-      )
-      .fadeTo(1, function () {
-        $(this).add();
-      });
+//     //populate the civilian person table
+//     var containsEmptyRow = $("#personas-table tr>td").hasClass(
+//       "dataTables_empty"
+//     );
+//     if (containsEmptyRow) {
+//       $("#personas-table tbody>tr:first").fadeOut(1, function () {
+//         $(this).remove();
+//       });
+//     }
+//     $("#personas-table tr:last")
+//       .after(
+//         `<tr data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res._id}');loadTicketsAndWarnings('${res._id}');loadArrests('${res._id}');loadReports('${res._id}');loadMedications('${res._id}');loadConditions('${res._id}')">
+//             <td>${res.civilian.firstName} ${res.civilian.lastName}</td>
+//             <td>${res.civilian.birthday}</td>
+//           </tr>`
+//       )
+//       .fadeTo(1, function () {
+//         $(this).add();
+//       });
 
-    //set owner for updating a vehicle
-    $("#roVeh").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
-  });
-  //reset the form after form submit
-  $("#create-auto-civ-form").trigger("reset");
-  hideModal("newAutoCivModal");
-  return true;
-});
+//     //set owner for updating a vehicle
+//     $("#roVeh").val(`${res.civilian.firstName} ${res.civilian.lastName}`);
+//   });
+//   //reset the form after form submit
+//   $("#create-auto-civ-form").trigger("reset");
+//   hideModal("newAutoCivModal");
+//   return true;
+// });
 
-function autoCivCreator(gender, firearmLicenseMarker) {
-  //faker: https://fakerjsdocs.netlify.app/api
-  if (gender != undefined && gender != null) {
-    switch (gender.toLowerCase()) {
-      case "male":
-        civFirstName = faker.name.firstName(0);
-        civLastName = faker.name.lastName(0);
-        break;
-      case "female":
-        civFirstName = faker.name.firstName(1);
-        civLastName = faker.name.lastName(1);
-        break;
-      default:
-        civFirstName = faker.name.firstName();
-        civLastName = faker.name.lastName();
-    }
-  }
+// function autoCivCreator(gender, firearmLicenseMarker) {
+//   //faker: https://fakerjsdocs.netlify.app/api
+//   if (gender != undefined && gender != null) {
+//     switch (gender.toLowerCase()) {
+//       case "male":
+//         civFirstName = faker.name.firstName(0);
+//         civLastName = faker.name.lastName(0);
+//         break;
+//       case "female":
+//         civFirstName = faker.name.firstName(1);
+//         civLastName = faker.name.lastName(1);
+//         break;
+//       default:
+//         civFirstName = faker.name.firstName();
+//         civLastName = faker.name.lastName();
+//     }
+//   }
 
-  var height = "";
-  var weight = "";
-  if (faker.datatype.boolean()) {
-    weight = `${faker.datatype.number({
-      min: 75,
-      max: 700,
-    })}lbs`;
-    height = `${faker.datatype.number({
-      min: 4,
-      max: 7,
-    })}ft ${faker.datatype.number({
-      min: 0,
-      max: 12,
-    })}in`;
-  }
+//   var height = "";
+//   var weight = "";
+//   if (faker.datatype.boolean()) {
+//     weight = `${faker.datatype.number({
+//       min: 75,
+//       max: 700,
+//     })}lbs`;
+//     height = `${faker.datatype.number({
+//       min: 4,
+//       max: 7,
+//     })}ft ${faker.datatype.number({
+//       min: 0,
+//       max: 12,
+//     })}in`;
+//   }
 
-  const now = moment();
-  var birthday = moment(faker.date.past(50, now.subtract(18, "years"))).format(
-    "YYYY-MM-DD"
-  );
-  var age = moment().diff(birthday, "years", false);
-  body = {
-    civFirstName: name,
-    // civLastName: civLastName,
-    licenseStatus: "1", //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
-    birthday: birthday,
-    age: age,
-    warrants: null,
-    address: faker.datatype.boolean()
-      ? `${faker.address.streetAddress(true)}`
-      : "",
-    addressZip: faker.datatype.boolean()
-      ? `${faker.address.zipCode("#####")}`
-      : "",
-    occupation: faker.datatype.boolean() ? faker.name.jobType() : "",
-    firearmLicense: firearmLicenseMarker,
-    activeCommunityID: $("#new-civ-activeCommunityID-new-civ").val(),
-    gender: gender,
-    height: height,
-    weight: weight,
-    eyeColor: faker.datatype.boolean() ? faker.commerce.color() : "",
-    hairColor: faker.datatype.boolean() ? faker.commerce.color() : "",
-    organDonor: faker.datatype.boolean(),
-    veteran: faker.datatype.boolean(),
-    onParole: faker.datatype.boolean(),
-    onProbation: faker.datatype.boolean(),
+//   const now = moment();
+//   var birthday = moment(faker.date.past(50, now.subtract(18, "years"))).format(
+//     "YYYY-MM-DD"
+//   );
+//   var age = moment().diff(birthday, "years", false);
+//   body = {
+//     civFirstName: name,
+//     // civLastName: civLastName,
+//     licenseStatus: "1", //1: valid, modified 05/24/2021 to be hardcoded to valid on civ creation
+//     birthday: birthday,
+//     age: age,
+//     warrants: null,
+//     address: faker.datatype.boolean()
+//       ? `${faker.address.streetAddress(true)}`
+//       : "",
+//     addressZip: faker.datatype.boolean()
+//       ? `${faker.address.zipCode("#####")}`
+//       : "",
+//     occupation: faker.datatype.boolean() ? faker.name.jobType() : "",
+//     firearmLicense: firearmLicenseMarker,
+//     activeCommunityID: $("#new-civ-activeCommunityID-new-civ").val(),
+//     gender: gender,
+//     height: height,
+//     weight: weight,
+//     eyeColor: faker.datatype.boolean() ? faker.commerce.color() : "",
+//     hairColor: faker.datatype.boolean() ? faker.commerce.color() : "",
+//     organDonor: faker.datatype.boolean(),
+//     veteran: faker.datatype.boolean(),
+//     onParole: faker.datatype.boolean(),
+//     onProbation: faker.datatype.boolean(),
 
-    userID: $("#newCivUserID").val(),
-  };
-  return body;
-}
+//     userID: $("#newCivUserID").val(),
+//   };
+//   return body;
+// }
 
 /* call911Form */
 // $("#call911Form").submit(function (e) {
@@ -1350,480 +1387,480 @@ This is to move away from reloading the page on civilian updates/deletions */
 //   return true;
 // });
 
-function getNextCivPage() {
-  page = page + 1;
-  var socket = io();
-  var myObj = {
-    dbUser: dbUser,
-    page: page,
-  };
-  socket.emit("fetch_civ_cards", myObj);
-  socket.on("load_civ_cards_result", (res) => {
-    // load content on page
-    $("#personas-thumbnail").empty();
-    for (i = 0; i < res.length; i++) {
-      $("#personas-thumbnail").append(
-        `<div id="personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-              <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
-                <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
-                <div class="caption capitalize">
-                  <h4 id="personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
-                  <h5 id="personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
-                </div>
-              </div> 
-            </div>`
-      );
-    }
-    if (res.length < 8) {
-      // if we have reached the end of the data, then gray out the 'next' button
-      $("#next-civ-page-btn").addClass("isDisabled");
-      // page = page - 1
-      $("#next-civ-page-btn").attr("onclick", "").unbind("click");
-    } else {
-      $("#next-civ-page-btn").attr("onclick", "getNextCivPage()").bind("click");
-    }
-    $("#prev-civ-page-btn").removeClass("isDisabled");
-    $("#prev-civ-page-btn").attr("onclick", "getPrevCivPage()").bind("click");
-  });
-}
+// function getNextCivPage() {
+//   page = page + 1;
+//   var socket = io();
+//   var myObj = {
+//     dbUser: dbUser,
+//     page: page,
+//   };
+//   socket.emit("fetch_civ_cards", myObj);
+//   socket.on("load_civ_cards_result", (res) => {
+//     // load content on page
+//     $("#personas-thumbnail").empty();
+//     for (i = 0; i < res.length; i++) {
+//       $("#personas-thumbnail").append(
+//         `<div id="personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+//               <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
+//                 <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+//                 <div class="caption capitalize">
+//                   <h4 id="personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
+//                   <h5 id="personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
+//                 </div>
+//               </div>
+//             </div>`
+//       );
+//     }
+//     if (res.length < 8) {
+//       // if we have reached the end of the data, then gray out the 'next' button
+//       $("#next-civ-page-btn").addClass("isDisabled");
+//       // page = page - 1
+//       $("#next-civ-page-btn").attr("onclick", "").unbind("click");
+//     } else {
+//       $("#next-civ-page-btn").attr("onclick", "getNextCivPage()").bind("click");
+//     }
+//     $("#prev-civ-page-btn").removeClass("isDisabled");
+//     $("#prev-civ-page-btn").attr("onclick", "getPrevCivPage()").bind("click");
+//   });
+// }
 
-function getPrevCivPage() {
-  page = page - 1;
-  if (page < 1) {
-    page = 0;
-    $("#prev-civ-page-btn").addClass("isDisabled");
-    $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
-  }
-  var socket = io();
-  var myObj = {
-    dbUser: dbUser,
-    page: page,
-  };
-  socket.emit("fetch_civ_cards", myObj);
-  socket.on("load_civ_cards_result", (res) => {
-    // load content on page
-    $("#personas-thumbnail").empty();
-    for (i = 0; i < res.length; i++) {
-      $("#personas-thumbnail").append(
-        `<div id="personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
-              <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
-                <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
-                <div class="caption capitalize">
-                  <h4 id="personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
-                  <h5 id="personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
-                </div>
-              </div> 
-            </div>`
-      );
-    }
-    $("#next-civ-page-btn").removeClass("isDisabled");
-    $("#next-civ-page-btn").attr("onclick", "getNextCivPage()").bind("click");
-  });
-}
+// function getPrevCivPage() {
+//   page = page - 1;
+//   if (page < 1) {
+//     page = 0;
+//     $("#prev-civ-page-btn").addClass("isDisabled");
+//     $("#prev-civ-page-btn").attr("onclick", "").unbind("click");
+//   }
+//   var socket = io();
+//   var myObj = {
+//     dbUser: dbUser,
+//     page: page,
+//   };
+//   socket.emit("fetch_civ_cards", myObj);
+//   socket.on("load_civ_cards_result", (res) => {
+//     // load content on page
+//     $("#personas-thumbnail").empty();
+//     for (i = 0; i < res.length; i++) {
+//       $("#personas-thumbnail").append(
+//         `<div id="personas-thumbnail-${res[i]._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+//               <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewCiv" onclick="loadCivSocketData('${res[i]._id}');loadTicketsAndWarnings('${res[i]._id}');loadArrests('${res[i]._id}');loadReports('${res[i]._id}');loadMedications('${res[i]._id}');loadConditions('${res[i]._id}')">
+//                 <ion-icon class="font-size-4-vmax" name="person-outline"></ion-icon>
+//                 <div class="caption capitalize">
+//                   <h4 id="personas-thumbnail-name-${res[i]._id}" class="color-white capitalize">${res[i].civilian.firstName} ${res[i].civilian.lastName}</h4>
+//                   <h5 id="personas-thumbnail-dob-${res[i]._id}" class="color-white">${res[i].civilian.birthday}</h5>
+//                 </div>
+//               </div>
+//             </div>`
+//       );
+//     }
+//     $("#next-civ-page-btn").removeClass("isDisabled");
+//     $("#next-civ-page-btn").attr("onclick", "getNextCivPage()").bind("click");
+//   });
+// }
 
-function getVehicles() {
-  var socket = io();
-  var myCivObj = {
-    civID: $("#civilianIDView").text(),
-    page: 0,
-  };
-  $("#vehicles-thumbnail").empty();
-  socket.emit("fetch_veh_cards", myCivObj);
-  socket.on("load_veh_cards_result", (res) => {
-    if (res === undefined || res === null) {
-      $("#issue-loading-vehicles-alert").show();
-    } else {
-      if (res.length < 1) {
-        // if we have 0 results back
-        $("#vehicles-loading").hide();
-        $("#no-vehicles-message").show();
-        $("#next-veh-page-btn").addClass("isDisabled");
-        $("#next-veh-page-btn").attr("onclick", "").unbind("click");
-        $("#prev-veh-page-btn").addClass("isDisabled");
-        $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
-      } else {
-        $("#no-vehicles-message").hide();
-        $("#vehicles-thumbnail").empty();
-        for (i = 0; i < res.length; i++) {
-          $("#issue-loading-vehicles-alert").hide();
-          $("#vehicles-thumbnail").append(
-            `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
-        <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
-          <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
-          <div class="caption">
-            <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
-            <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
-          </div>
-        </div>
-      </div>`
-          );
-        }
-        $("#vehicles-loading").hide();
-        $("#prev-veh-page-btn").addClass("isDisabled");
-        $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
-        if (res.length < 8) {
-          $("#next-veh-page-btn").addClass("isDisabled");
-          $("#next-veh-page-btn").attr("onclick", "").unbind("click");
-        } else {
-          $("#next-veh-page-btn").removeClass("isDisabled");
-          $("#next-veh-page-btn")
-            .attr("onclick", "getNextVehPage()")
-            .bind("click");
-        }
-      }
-    }
-  });
-}
+// function getVehicles() {
+//   var socket = io();
+//   var myCivObj = {
+//     civID: $("#civilianIDView").text(),
+//     page: 0,
+//   };
+//   $("#vehicles-thumbnail").empty();
+//   socket.emit("fetch_veh_cards", myCivObj);
+//   socket.on("load_veh_cards_result", (res) => {
+//     if (res === undefined || res === null) {
+//       $("#issue-loading-vehicles-alert").show();
+//     } else {
+//       if (res.length < 1) {
+//         // if we have 0 results back
+//         $("#vehicles-loading").hide();
+//         $("#no-vehicles-message").show();
+//         $("#next-veh-page-btn").addClass("isDisabled");
+//         $("#next-veh-page-btn").attr("onclick", "").unbind("click");
+//         $("#prev-veh-page-btn").addClass("isDisabled");
+//         $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
+//       } else {
+//         $("#no-vehicles-message").hide();
+//         $("#vehicles-thumbnail").empty();
+//         for (i = 0; i < res.length; i++) {
+//           $("#issue-loading-vehicles-alert").hide();
+//           $("#vehicles-thumbnail").append(
+//             `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+//         <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+//           <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
+//           <div class="caption">
+//             <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
+//             <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+//           </div>
+//         </div>
+//       </div>`
+//           );
+//         }
+//         $("#vehicles-loading").hide();
+//         $("#prev-veh-page-btn").addClass("isDisabled");
+//         $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
+//         if (res.length < 8) {
+//           $("#next-veh-page-btn").addClass("isDisabled");
+//           $("#next-veh-page-btn").attr("onclick", "").unbind("click");
+//         } else {
+//           $("#next-veh-page-btn").removeClass("isDisabled");
+//           $("#next-veh-page-btn")
+//             .attr("onclick", "getNextVehPage()")
+//             .bind("click");
+//         }
+//       }
+//     }
+//   });
+// }
 
-function getNextVehPage() {
-  pageVeh = pageVeh + 1;
-  var socket = io();
-  var myObj = {
-    civID: $("#civilianIDView").text(),
-    page: pageVeh,
-  };
-  socket.emit("fetch_veh_cards", myObj);
-  socket.on("load_veh_cards_result", (res) => {
-    // load content on page
-    $("#vehicles-thumbnail").empty();
-    if (res == null || res == undefined) {
-    } else {
-      for (i = 0; i < res.length; i++) {
-        $("#vehicles-thumbnail").append(
-          `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
-        <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
-        <div class="caption">
-          <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
-          <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
-        </div>
-      </div>
-    </div>`
-        );
-      }
-      if (res.length < 8) {
-        // if we have reached the end of the data, then gray out the 'next' button
-        $("#next-veh-page-btn").addClass("isDisabled");
-        // page = page - 1
-        $("#next-veh-page-btn").attr("onclick", "").unbind("click");
-      } else {
-        $("#next-veh-page-btn")
-          .attr("onclick", "getNextVehPage()")
-          .bind("click");
-      }
-      $("#prev-veh-page-btn").removeClass("isDisabled");
-      $("#prev-veh-page-btn").attr("onclick", "getPrevVehPage()").bind("click");
-    }
-  });
-}
+// function getNextVehPage() {
+//   pageVeh = pageVeh + 1;
+//   var socket = io();
+//   var myObj = {
+//     civID: $("#civilianIDView").text(),
+//     page: pageVeh,
+//   };
+//   socket.emit("fetch_veh_cards", myObj);
+//   socket.on("load_veh_cards_result", (res) => {
+//     // load content on page
+//     $("#vehicles-thumbnail").empty();
+//     if (res == null || res == undefined) {
+//     } else {
+//       for (i = 0; i < res.length; i++) {
+//         $("#vehicles-thumbnail").append(
+//           `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+//       <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+//         <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
+//         <div class="caption">
+//           <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
+//           <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+//         </div>
+//       </div>
+//     </div>`
+//         );
+//       }
+//       if (res.length < 8) {
+//         // if we have reached the end of the data, then gray out the 'next' button
+//         $("#next-veh-page-btn").addClass("isDisabled");
+//         // page = page - 1
+//         $("#next-veh-page-btn").attr("onclick", "").unbind("click");
+//       } else {
+//         $("#next-veh-page-btn")
+//           .attr("onclick", "getNextVehPage()")
+//           .bind("click");
+//       }
+//       $("#prev-veh-page-btn").removeClass("isDisabled");
+//       $("#prev-veh-page-btn").attr("onclick", "getPrevVehPage()").bind("click");
+//     }
+//   });
+// }
 
-function getPrevVehPage() {
-  pageVeh = pageVeh - 1;
-  if (pageVeh < 1) {
-    pageVeh = 0;
-    $("#prev-veh-page-btn").addClass("isDisabled");
-    $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
-  }
-  var socket = io();
-  var myObj = {
-    civID: $("#civilianIDView").text(),
-    page: pageVeh,
-  };
-  socket.emit("fetch_veh_cards", myObj);
-  socket.on("load_veh_cards_result", (res) => {
-    // load content on page
-    $("#vehicles-thumbnail").empty();
-    if (res == null || res == undefined) {
-    } else {
-      for (i = 0; i < res.length; i++) {
-        $("#vehicles-thumbnail").append(
-          `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
-        <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
-        <div class="caption">
-          <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
-          <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
-        </div>
-      </div>
-    </div>`
-        );
-      }
-      $("#next-veh-page-btn").removeClass("isDisabled");
-      $("#next-veh-page-btn").attr("onclick", "getNextVehPage()").bind("click");
-    }
-  });
-}
+// function getPrevVehPage() {
+//   pageVeh = pageVeh - 1;
+//   if (pageVeh < 1) {
+//     pageVeh = 0;
+//     $("#prev-veh-page-btn").addClass("isDisabled");
+//     $("#prev-veh-page-btn").attr("onclick", "").unbind("click");
+//   }
+//   var socket = io();
+//   var myObj = {
+//     civID: $("#civilianIDView").text(),
+//     page: pageVeh,
+//   };
+//   socket.emit("fetch_veh_cards", myObj);
+//   socket.on("load_veh_cards_result", (res) => {
+//     // load content on page
+//     $("#vehicles-thumbnail").empty();
+//     if (res == null || res == undefined) {
+//     } else {
+//       for (i = 0; i < res.length; i++) {
+//         $("#vehicles-thumbnail").append(
+//           `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center veh-thumbnails flex-li-wrapper">
+//       <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewVeh" onclick="loadVehSocketData('${res[i]._id}')">
+//         <ion-icon class="font-size-4-vmax" name="car-sport-outline"></ion-icon>
+//         <div class="caption">
+//           <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
+//           <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+//         </div>
+//       </div>
+//     </div>`
+//         );
+//       }
+//       $("#next-veh-page-btn").removeClass("isDisabled");
+//       $("#next-veh-page-btn").attr("onclick", "getNextVehPage()").bind("click");
+//     }
+//   });
+// }
 
-function hideVehicleMessage() {
-  $("#no-vehicles-message").hide();
-}
+// function hideVehicleMessage() {
+//   $("#no-vehicles-message").hide();
+// }
 
-function hideFirearmMessage() {
-  $("#no-firearms-message").hide();
-}
+// function hideFirearmMessage() {
+//   $("#no-firearms-message").hide();
+// }
 
-function getFirearms() {
-  var socket = io();
-  $("#no-firearms-message").hide();
-  var myCivObj = {
-    civID: $("#civilianIDView").text(),
-    page: 0,
-  };
-  $("#firearms-thumbnail").empty();
-  socket.emit("fetch_gun_cards", myCivObj);
-  socket.on("load_gun_cards_result", (res) => {
-    if (res === undefined || res === null) {
-      $("#issue-loading-firearms-alert").show();
-    } else {
-      $("#issue-loading-firearms-alert").hide();
-      if (res.length < 1) {
-        // if we have 0 results back
-        $("#firearms-loading").hide();
-        $("#no-firearms-message").show();
-        $("#next-gun-page-btn").addClass("isDisabled");
-        $("#next-gun-page-btn").attr("onclick", "").unbind("click");
-        $("#prev-gun-page-btn").addClass("isDisabled");
-        $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
-      } else {
-        $("#no-firearms-message").hide();
-        $("#firearms-thumbnail").empty();
-        for (i = 0; i < res.length; i++) {
-          $("#firearms-thumbnail").append(
-            `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
-        <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
-        <div class="caption text-capitalize">
-          <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
-          <h5 class="color-white">${res[i].firearm.weaponType}</h5>
-          <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
-        </div>
-      </div>
-    </div>`
-          );
-        }
-        $("#firearms-loading").hide();
-        $("#prev-gun-page-btn").addClass("isDisabled");
-        $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
-        if (res.length < 8) {
-          $("#next-gun-page-btn").addClass("isDisabled");
-          $("#next-gun-page-btn").attr("onclick", "").unbind("click");
-        } else {
-          $("#next-gun-page-btn").removeClass("isDisabled");
-          $("#next-gun-page-btn")
-            .attr("onclick", "getNextGunPage()")
-            .bind("click");
-        }
-      }
-    }
-  });
-}
+// function getFirearms() {
+//   var socket = io();
+//   $("#no-firearms-message").hide();
+//   var myCivObj = {
+//     civID: $("#civilianIDView").text(),
+//     page: 0,
+//   };
+//   $("#firearms-thumbnail").empty();
+//   socket.emit("fetch_gun_cards", myCivObj);
+//   socket.on("load_gun_cards_result", (res) => {
+//     if (res === undefined || res === null) {
+//       $("#issue-loading-firearms-alert").show();
+//     } else {
+//       $("#issue-loading-firearms-alert").hide();
+//       if (res.length < 1) {
+//         // if we have 0 results back
+//         $("#firearms-loading").hide();
+//         $("#no-firearms-message").show();
+//         $("#next-gun-page-btn").addClass("isDisabled");
+//         $("#next-gun-page-btn").attr("onclick", "").unbind("click");
+//         $("#prev-gun-page-btn").addClass("isDisabled");
+//         $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
+//       } else {
+//         $("#no-firearms-message").hide();
+//         $("#firearms-thumbnail").empty();
+//         for (i = 0; i < res.length; i++) {
+//           $("#firearms-thumbnail").append(
+//             `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
+//       <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+//         <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
+//         <div class="caption text-capitalize">
+//           <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
+//           <h5 class="color-white">${res[i].firearm.weaponType}</h5>
+//           <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
+//         </div>
+//       </div>
+//     </div>`
+//           );
+//         }
+//         $("#firearms-loading").hide();
+//         $("#prev-gun-page-btn").addClass("isDisabled");
+//         $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
+//         if (res.length < 8) {
+//           $("#next-gun-page-btn").addClass("isDisabled");
+//           $("#next-gun-page-btn").attr("onclick", "").unbind("click");
+//         } else {
+//           $("#next-gun-page-btn").removeClass("isDisabled");
+//           $("#next-gun-page-btn")
+//             .attr("onclick", "getNextGunPage()")
+//             .bind("click");
+//         }
+//       }
+//     }
+//   });
+// }
 
-function getNextGunPage() {
-  pageGun = pageGun + 1;
-  var socket = io();
-  var myObj = {
-    civID: $("#civilianIDView").text(),
-    page: pageGun,
-  };
-  socket.emit("fetch_gun_cards", myObj);
-  socket.on("load_gun_cards_result", (res) => {
-    // load content on page
-    $("#firearms-thumbnail").empty();
-    for (i = 0; i < res.length; i++) {
-      $("#firearms-thumbnail").append(
-        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
-    <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
-      <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
-      <div class="caption text-capitalize">
-        <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
-        <h5 class="color-white">${res[i].firearm.weaponType}</h5>
-        <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
-      </div>
-    </div>
-  </div>`
-      );
-    }
-    if (res.length < 8) {
-      // if we have reached the end of the data, then gray out the 'next' button
-      $("#next-gun-page-btn").addClass("isDisabled");
-      // page = page - 1
-      $("#next-gun-page-btn").attr("onclick", "").unbind("click");
-    } else {
-      $("#next-gun-page-btn").removeClass("isDisabled");
-      $("#next-gun-page-btn").attr("onclick", "getNextGunPage()").bind("click");
-    }
-    $("#prev-gun-page-btn").removeClass("isDisabled");
-    $("#prev-gun-page-btn").attr("onclick", "getPrevGunPage()").bind("click");
-  });
-}
+// function getNextGunPage() {
+//   pageGun = pageGun + 1;
+//   var socket = io();
+//   var myObj = {
+//     civID: $("#civilianIDView").text(),
+//     page: pageGun,
+//   };
+//   socket.emit("fetch_gun_cards", myObj);
+//   socket.on("load_gun_cards_result", (res) => {
+//     // load content on page
+//     $("#firearms-thumbnail").empty();
+//     for (i = 0; i < res.length; i++) {
+//       $("#firearms-thumbnail").append(
+//         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
+//     <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+//       <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
+//       <div class="caption text-capitalize">
+//         <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
+//         <h5 class="color-white">${res[i].firearm.weaponType}</h5>
+//         <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
+//       </div>
+//     </div>
+//   </div>`
+//       );
+//     }
+//     if (res.length < 8) {
+//       // if we have reached the end of the data, then gray out the 'next' button
+//       $("#next-gun-page-btn").addClass("isDisabled");
+//       // page = page - 1
+//       $("#next-gun-page-btn").attr("onclick", "").unbind("click");
+//     } else {
+//       $("#next-gun-page-btn").removeClass("isDisabled");
+//       $("#next-gun-page-btn").attr("onclick", "getNextGunPage()").bind("click");
+//     }
+//     $("#prev-gun-page-btn").removeClass("isDisabled");
+//     $("#prev-gun-page-btn").attr("onclick", "getPrevGunPage()").bind("click");
+//   });
+// }
 
-function getPrevGunPage() {
-  pageGun = pageGun - 1;
-  if (pageGun < 1) {
-    pageGun = 0;
-    $("#prev-gun-page-btn").addClass("isDisabled");
-    $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
-  }
-  var socket = io();
-  var myObj = {
-    civID: $("#civilianIDView").text(),
-    page: pageGun,
-  };
-  socket.emit("fetch_gun_cards", myObj);
-  socket.on("load_gun_cards_result", (res) => {
-    // load content on page
-    $("#firearms-thumbnail").empty();
-    for (i = 0; i < res.length; i++) {
-      $("#firearms-thumbnail").append(
-        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
-    <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
-      <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
-      <div class="caption text-capitalize">
-        <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
-        <h5 class="color-white">${res[i].firearm.weaponType}</h5>
-        <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
-      </div>
-    </div>
-  </div>`
-      );
-    }
-    $("#next-gun-page-btn").removeClass("isDisabled");
-    $("#next-gun-page-btn").attr("onclick", "getNextGunPage()").bind("click");
-  });
-}
+// function getPrevGunPage() {
+//   pageGun = pageGun - 1;
+//   if (pageGun < 1) {
+//     pageGun = 0;
+//     $("#prev-gun-page-btn").addClass("isDisabled");
+//     $("#prev-gun-page-btn").attr("onclick", "").unbind("click");
+//   }
+//   var socket = io();
+//   var myObj = {
+//     civID: $("#civilianIDView").text(),
+//     page: pageGun,
+//   };
+//   socket.emit("fetch_gun_cards", myObj);
+//   socket.on("load_gun_cards_result", (res) => {
+//     // load content on page
+//     $("#firearms-thumbnail").empty();
+//     for (i = 0; i < res.length; i++) {
+//       $("#firearms-thumbnail").append(
+//         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center firearm-thumbnails flex-li-wrapper">
+//     <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewFirearm" onclick="loadFirearmSocketData('${res[i]._id}')">
+//       <span class="iconify font-size-4-vmax" data-icon="mdi:pistol" data-inline="false"></span>
+//       <div class="caption text-capitalize">
+//         <h4 class="color-white" style="font-family: dealerplatecalifornia;">${res[i].firearm.serialNumber}</h4>
+//         <h5 class="color-white">${res[i].firearm.weaponType}</h5>
+//         <p class="color-white" style="font-size: 12px;">${res[i].firearm.registeredOwner}</p>
+//       </div>
+//     </div>
+//   </div>`
+//       );
+//     }
+//     $("#next-gun-page-btn").removeClass("isDisabled");
+//     $("#next-gun-page-btn").attr("onclick", "getNextGunPage()").bind("click");
+//   });
+// }
 
-function getLicenses() {
-  var socket = io();
-  $("#no-licenses-message").hide();
-  var myCivObj = {
-    civID: $("#civilianIDView").text(),
-    page: 0,
-  };
-  $("#licenses-thumbnail").empty();
-  socket.emit("fetch_license_cards", myCivObj);
-  socket.on("load_license_cards_result", (res) => {
-    if (res === undefined || res === null) {
-      $("#issue-loading-license-alert").show();
-    } else {
-      $("#issue-loading-license-alert").hide();
-      if (res.length < 1) {
-        // if we have 0 results back
-        $("#license-loading").hide();
-        $("#no-licenses-message").show();
-        $("#next-license-page-btn").addClass("isDisabled");
-        $("#next-license-page-btn").attr("onclick", "").unbind("click");
-        $("#prev-license-page-btn").addClass("isDisabled");
-        $("#prev-license-page-btn").attr("onclick", "").unbind("click");
-      } else {
-        $("#no-licenses-message").hide();
-        $("#licenses-thumbnail").empty();
-        for (i = 0; i < res.length; i++) {
-          $("#licenses-thumbnail").append(
-            `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
-      <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
-        <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
-        <div class="caption text-capitalize">
-          <h4 class="color-white">${res[i].license.licenseType}</h4>
-          <h5 class="color-white">Status: ${res[i].license.status}</h5>
-          <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
-        </div>
-      </div>
-    </div>`
-          );
-        }
-        $("#license-loading").hide();
-        $("#prev-license-page-btn").addClass("isDisabled");
-        $("#prev-license-page-btn").attr("onclick", "").unbind("click");
-        if (res.length < 8) {
-          $("#next-license-page-btn").addClass("isDisabled");
-          $("#next-license-page-btn").attr("onclick", "").unbind("click");
-        } else {
-          $("#next-license-page-btn").removeClass("isDisabled");
-          $("#next-license-page-btn")
-            .attr("onclick", "getNextLicensePage()")
-            .bind("click");
-        }
-      }
-    }
-  });
-}
+// function getLicenses() {
+//   var socket = io();
+//   $("#no-licenses-message").hide();
+//   var myCivObj = {
+//     civID: $("#civilianIDView").text(),
+//     page: 0,
+//   };
+//   $("#licenses-thumbnail").empty();
+//   socket.emit("fetch_license_cards", myCivObj);
+//   socket.on("load_license_cards_result", (res) => {
+//     if (res === undefined || res === null) {
+//       $("#issue-loading-license-alert").show();
+//     } else {
+//       $("#issue-loading-license-alert").hide();
+//       if (res.length < 1) {
+//         // if we have 0 results back
+//         $("#license-loading").hide();
+//         $("#no-licenses-message").show();
+//         $("#next-license-page-btn").addClass("isDisabled");
+//         $("#next-license-page-btn").attr("onclick", "").unbind("click");
+//         $("#prev-license-page-btn").addClass("isDisabled");
+//         $("#prev-license-page-btn").attr("onclick", "").unbind("click");
+//       } else {
+//         $("#no-licenses-message").hide();
+//         $("#licenses-thumbnail").empty();
+//         for (i = 0; i < res.length; i++) {
+//           $("#licenses-thumbnail").append(
+//             `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
+//       <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+//         <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
+//         <div class="caption text-capitalize">
+//           <h4 class="color-white">${res[i].license.licenseType}</h4>
+//           <h5 class="color-white">Status: ${res[i].license.status}</h5>
+//           <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
+//         </div>
+//       </div>
+//     </div>`
+//           );
+//         }
+//         $("#license-loading").hide();
+//         $("#prev-license-page-btn").addClass("isDisabled");
+//         $("#prev-license-page-btn").attr("onclick", "").unbind("click");
+//         if (res.length < 8) {
+//           $("#next-license-page-btn").addClass("isDisabled");
+//           $("#next-license-page-btn").attr("onclick", "").unbind("click");
+//         } else {
+//           $("#next-license-page-btn").removeClass("isDisabled");
+//           $("#next-license-page-btn")
+//             .attr("onclick", "getNextLicensePage()")
+//             .bind("click");
+//         }
+//       }
+//     }
+//   });
+// }
 
-function getNextLicensePage() {
-  pageLicense = pageLicense + 1;
-  var socket = io();
-  var myObj = {
-    civID: $("#civilianIDView").text(),
-    page: pageLicense,
-  };
-  socket.emit("fetch_license_cards", myObj);
-  socket.on("load_license_cards_result", (res) => {
-    // load content on page
-    $("#licenses-thumbnail").empty();
-    for (i = 0; i < res.length; i++) {
-      $("#licenses-thumbnail").append(
-        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
-  <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
-    <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
-    <div class="caption text-capitalize">
-      <h4 class="color-white">${res[i].license.licenseType}</h4>
-      <h5 class="color-white">Status: ${res[i].license.status}</h5>
-      <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
-    </div>
-  </div>
-</div>`
-      );
-    }
-    if (res.length < 8) {
-      // if we have reached the end of the data, then gray out the 'next' button
-      $("#next-license-page-btn").addClass("isDisabled");
-      // page = page - 1
-      $("#next-license-page-btn").attr("onclick", "").unbind("click");
-    } else {
-      $("#next-license-page-btn").removeClass("isDisabled");
-      $("#next-license-page-btn")
-        .attr("onclick", "getNextLicensePage()")
-        .bind("click");
-    }
-    $("#prev-license-page-btn").removeClass("isDisabled");
-    $("#prev-license-page-btn")
-      .attr("onclick", "getPrevLicensePage()")
-      .bind("click");
-  });
-}
+// function getNextLicensePage() {
+//   pageLicense = pageLicense + 1;
+//   var socket = io();
+//   var myObj = {
+//     civID: $("#civilianIDView").text(),
+//     page: pageLicense,
+//   };
+//   socket.emit("fetch_license_cards", myObj);
+//   socket.on("load_license_cards_result", (res) => {
+//     // load content on page
+//     $("#licenses-thumbnail").empty();
+//     for (i = 0; i < res.length; i++) {
+//       $("#licenses-thumbnail").append(
+//         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
+//   <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+//     <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
+//     <div class="caption text-capitalize">
+//       <h4 class="color-white">${res[i].license.licenseType}</h4>
+//       <h5 class="color-white">Status: ${res[i].license.status}</h5>
+//       <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
+//     </div>
+//   </div>
+// </div>`
+//       );
+//     }
+//     if (res.length < 8) {
+//       // if we have reached the end of the data, then gray out the 'next' button
+//       $("#next-license-page-btn").addClass("isDisabled");
+//       // page = page - 1
+//       $("#next-license-page-btn").attr("onclick", "").unbind("click");
+//     } else {
+//       $("#next-license-page-btn").removeClass("isDisabled");
+//       $("#next-license-page-btn")
+//         .attr("onclick", "getNextLicensePage()")
+//         .bind("click");
+//     }
+//     $("#prev-license-page-btn").removeClass("isDisabled");
+//     $("#prev-license-page-btn")
+//       .attr("onclick", "getPrevLicensePage()")
+//       .bind("click");
+//   });
+// }
 
-function getPrevLicensePage() {
-  pageLicense = pageLicense - 1;
-  if (pageLicense < 1) {
-    pageLicense = 0;
-    $("#prev-license-page-btn").addClass("isDisabled");
-    $("#prev-license-page-btn").attr("onclick", "").unbind("click");
-  }
-  var socket = io();
-  var myObj = {
-    civID: $("#civilianIDView").text(),
-    page: pageLicense,
-  };
-  socket.emit("fetch_license_cards", myObj);
-  socket.on("load_license_cards_result", (res) => {
-    // load content on page
-    $("#licenses-thumbnail").empty();
-    for (i = 0; i < res.length; i++) {
-      $("#licenses-thumbnail").append(
-        `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
-  <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
-    <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
-    <div class="caption text-capitalize">
-      <h4 class="color-white">${res[i].license.licenseType}</h4>
-      <h5 class="color-white">Status: ${res[i].license.status}</h5>
-      <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
-    </div>
-  </div>
-</div>`
-      );
-    }
-    $("#next-license-page-btn").removeClass("isDisabled");
-    $("#next-license-page-btn")
-      .attr("onclick", "getNextLicensePage()")
-      .bind("click");
-  });
-}
+// function getPrevLicensePage() {
+//   pageLicense = pageLicense - 1;
+//   if (pageLicense < 1) {
+//     pageLicense = 0;
+//     $("#prev-license-page-btn").addClass("isDisabled");
+//     $("#prev-license-page-btn").attr("onclick", "").unbind("click");
+//   }
+//   var socket = io();
+//   var myObj = {
+//     civID: $("#civilianIDView").text(),
+//     page: pageLicense,
+//   };
+//   socket.emit("fetch_license_cards", myObj);
+//   socket.on("load_license_cards_result", (res) => {
+//     // load content on page
+//     $("#licenses-thumbnail").empty();
+//     for (i = 0; i < res.length; i++) {
+//       $("#licenses-thumbnail").append(
+//         `<div class="col-xs-6 col-sm-3 col-md-2 text-align-center licenses-thumbnails flex-li-wrapper">
+//   <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center" data-toggle="modal" data-target="#viewLicense" onclick="loadLicenseSocketData('${res[i]._id}')">
+//     <span class="iconify font-size-4-vmax" data-icon="mdi:application" data-inline="false"></span>
+//     <div class="caption text-capitalize">
+//       <h4 class="color-white">${res[i].license.licenseType}</h4>
+//       <h5 class="color-white">Status: ${res[i].license.status}</h5>
+//       <p class="color-white" style="font-size: 12px;">${res[i].license.ownerName}</p>
+//     </div>
+//   </div>
+// </div>`
+//       );
+//     }
+//     $("#next-license-page-btn").removeClass("isDisabled");
+//     $("#next-license-page-btn")
+//       .attr("onclick", "getNextLicensePage()")
+//       .bind("click");
+//   });
+// }
