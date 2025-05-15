@@ -217,15 +217,7 @@
 
                                   <div class="container text-center width-100 margin-top-2">
                                     <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
-                                      <% if (!user.user.dispatchOnDuty) {%>
-                                        <h4><span id="<%=user._id%>-duty" class="red-dot"></span> <span
-                                            id="<%=user._id%>-duty-text"> Off
-                                            Duty</span></h4>
-                                        <%} else if (user.user.dispatchOnDuty) {%>
-                                          <h4><span id="<%=user._id%>-duty" class="green-dot"></span> <span
-                                              id="<%=user._id%>-duty-text"> On
-                                              Duty</span></h4>
-                                          <%}%>
+                                      
                                             <h4 id="currentStatus" class="text-align-center">Your Current Status:
                                               <%=user.user.dispatchStatus%>
                                             </h4>
@@ -233,7 +225,6 @@
                                               <%=user.user.dispatchStatusSetBy%>
                                             </h5>
                                             <div class="modal-body">
-  <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
   <h4>10-Codes</h4>
   <hr style="width: 88%;max-width: 100rem;">
   
@@ -264,17 +255,7 @@
 </div>
                                             <% } %>
 
-                                              <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null)
-                                                {%>
-                                                
-                                                <div class="col-lg-10 col-lg-offset-1 text-center">
-                                                  <button id="panicButton"
-                                                    class="btn btn-danger btn-lg margin-top-2 page-scroll" title="Panic"
-                                                    onclick="updateStatus('Panic');panicButtonPressed()"><i
-                                                      class="fa fa-exclamation-circle"></i>
-                                                    Panic</button>
-                                                </div>
-                                                <% } %>
+                                              
                                                   <% if (user.user.activeCommunity=='' ||
                                                     user.user.activeCommunity==null) {%>
                                                     <div class="col-lg-10 col-lg-offset-1 margin-top-2 text-center">
