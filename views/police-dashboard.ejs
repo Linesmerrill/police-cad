@@ -137,8 +137,10 @@
             </button>
           </div>
           <div class="navbar-header" style="position: absolute; left: 85px;">
-            <h1 class="cursive"><a href="/police-dashboard"><i class="fa fa-star"></i> Police Operations</a></h1>
+            <h1 class="cursive"><a href="/police-dashboard"><i class="fa fa-star"></i> Police Operations</a> • <a href="/community-dashboard"><span id="community-name"></span></a></h1>
+            
           </div>
+          
         </div>
         <a style="z-index: 8;width: 100%; cursor: default;">
           <div id="signal-100-banner" class="panel panel-danger hide">
@@ -1698,7 +1700,7 @@ function selectTenCode(tenCodeID) {
       const communityId = dbUser.user.lastAccessedCommunity.communityID;
       if (!communityId) return;
       $.ajax({
-        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/bolos`,
+        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolos?communityId=${communityId}&departmentId=${departmentId}`,
         method: 'GET',
         success: function(data) {
           const $container = $('#active-bolo-container');
@@ -1774,8 +1776,10 @@ function loadTenCodes() {
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}`,
     method: 'GET',
     success: function(data) {
+      communityData = data;
       tenCodesCache = data?.community?.tenCodes || [];
       console.log('tenCodesCache', tenCodesCache);
+      $('#community-name').text(data?.community?.name)
       // Build tenCodeMap
       tenCodeMap = {};
       tenCodesCache.forEach(tc => {
