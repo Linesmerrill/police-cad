@@ -434,67 +434,37 @@ module.exports = function (app, passport, server) {
       referer: encodeURIComponent("/community-dashboard"),
       redirect: encodeURIComponent(redirect),
     });
-    // var context = req.app.locals.specialContext;
-    // req.app.locals.specialContext = null;
-    // if (
-    //   req.user.user.activeCommunity == "" ||
-    //   req.user.user.activeCommunity == null
-    // ) {
-    //   Community.find(
-    //     {
-    //       $or: [
-    //         {
-    //           "community.ownerID": req.user._id,
-    //         },
-    //       ],
-    //     },
-    //     function (err, dbCommunities) {
-    //       if (err) return console.error(err);
-    //       return res.render("community-dashboard", {
-    //         user: req.user,
-    //         personas: null,
-    //         vehicles: null,
-    //         communities: dbCommunities,
-    //         context: context,
-    //         referer: encodeURIComponent("/community-dashboard"),
-    //         redirect: encodeURIComponent(redirect),
-    //       });
-    //     }
-    //   );
-    // } else {
-    //   Community.find(
-    //     {
-    //       $or: [
-    //         {
-    //           "community.ownerID": req.user._id,
-    //         },
-    //         {
-    //           _id: req.user.user.activeCommunity,
-    //         },
-    //       ],
-    //     },
-    //     function (err, dbCommunities) {
-    //       if (err) return console.error(err);
-    //       return res.render("community-dashboard", {
-    //         user: req.user,
-    //         personas: null,
-    //         vehicles: null,
-    //         communities: dbCommunities,
-    //         context: context,
-    //         referer: encodeURIComponent("/community-dashboard"),
-    //         redirect: encodeURIComponent(redirect),
-    //       });
-    //     }
-    //   );
-    // }
   });
 
   app.get("/police-dashboard", authCheck, function (req, res) {
-    return res.render("police-dashboard");
+    var context = req.app.locals.specialContext;
+    req.app.locals.specialContext = null;
+    const departmentId = req.session.departmentId || null;
+    res.render("police-dashboard", {
+      user: req.user,
+      referer: encodeURIComponent("/police-dashboard"),
+      redirect: encodeURIComponent(redirect),
+      context: null,
+      departmentId,
+    });
   });
 
   app.get("/dispatch-dashboard", authCheck, function (req, res) {
     return res.render("dispatch-dashboard");
+  });
+
+  app.post("/select-department", authCheck, (req, res) => {
+    const { departmentId, redirect } = req.body;
+    if (!departmentId || departmentId === "undefined") {
+      return res
+        .status(400)
+        .json({ message: "Valid department ID is required" });
+    }
+    if (!redirect) {
+      return res.status(400).json({ message: "Redirect URL is required" });
+    }
+    req.session.departmentId = departmentId;
+    res.redirect(redirect);
   });
 
   app.get("/firearm-search", auth, function (req, res) {
