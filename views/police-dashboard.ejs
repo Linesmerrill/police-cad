@@ -281,19 +281,6 @@
         <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
         <div class="container">
           <div id="active-bolo-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
-            
-              <h4>Active BOLOs: </h4>
-              <h5>Click for details</h5>
-            
-                    <a id="bolo_id-row" data-toggle="modal" href="#boloDetailModal"
-                      onclick="populateBoloDetails('bolo_id-row')">
-                      <div class="alert alert-warning alert-dismissible show" role="alert">
-                        <strong>BOLO! </strong> <span id="bolo_id-row-type" style="text-transform:capitalize">
-                        </span> Last Seen: <span id="bolo_id-row-location">
-                        </span> | Description: <span id="bolo_id-row-description">
-                        </span>
-                      </div>
-                    </a>
           </div>
         </div>
         <div class="container">
@@ -509,57 +496,56 @@
               <hr style="width: 88%;max-width: 100rem;">
 
               <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createdBy">Created By:</label>
-                <div class="col-md-4">
-                  <h5 id="createdByDetail"></h5>
-                </div>
-              </div>
-
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createdBy">Created At:</label>
-                <div class="col-md-4">
-                  <h5 id="createdAtDetail"></h5>
-                </div>
-              </div>
-
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
-                <div class="col-md-4">
-                  <h5 id="updatedAtDetail"></h5>
-                </div>
-              </div>
-
               <div class="form-group required">
-                <label class="col-md-4 control-label" for="boloType">Type:</label>
+                <label class="col-md-4 control-label" for="boloTitleDetail">Title:</label>
                 <div class="col-md-4">
-                  <select id="boloTypeDetail" name="boloType" class="form-control" selected="selected" required>
-                    <option value="person">Person</option>
-                    <option value="vehicle">Vehicle</option>
-                    <option value="other">Other</option>
-                  </select>
+                  <input id="boloTitleDetail" name="boloTitleDetail" style="text-transform: capitalize;" type="text"
+                    placeholder="Title" class="form-control input-md" maxlength="50" required>
                 </div>
               </div>
 
               <!-- Text input-->
               <div class="form-group required">
-                <label class="col-md-4 control-label" for="location">Last Seen Around:</label>
+                <label class="col-md-4 control-label" for="locationDetail">Location:</label>
                 <div class="col-md-4">
-                  <input id="locationDetail" name="location" style="text-transform: capitalize;" type="text"
-                    placeholder="location" class="form-control input-md" maxlength="50" required>
+                  <input id="locationDetail" name="locationDetail" style="text-transform: capitalize;" type="text"
+                    placeholder="Location" class="form-control input-md" maxlength="50" required>
                 </div>
               </div>
 
               <!-- Text Area input-->
               <div class="form-group required">
-                <label class="col-md-4 control-label" for="description">Description:</label>
+                <label class="col-md-4 control-label" for="descriptionDetail">Description:</label>
                 <div class="col-md-8 col-md-offset-2">
-                  <textarea id="descriptionDetail" name="description" type="text" rows="4" maxlength="500"
+                  <textarea id="descriptionDetail" name="descriptionDetail" type="text" rows="4" maxlength="500"
                     placeholder="description" class="form-control input-md" required></textarea>
                 </div>
               </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="dateCreatedDetail">Date Created:</label>
+                <div class="col-md-4">
+                  <h5 id="dateCreatedDetail"></h5>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="lastUpdatedDetail">Last Updated:</label>
+                <div class="col-md-4">
+                  <h5 id="lastUpdatedDetail"></h5>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="statusDetail">Status:</label>
+                <div class="col-md-4">
+                  <h5 id="statusDetail"></h5>
+                </div>
+              </div>
+
+              
+
+              
 
               <!-- Button -->
               <div class="form-group">
@@ -1699,19 +1685,22 @@ function selectTenCode(tenCodeID) {
     function loadActiveBOLOs() {
       const communityId = dbUser.user.lastAccessedCommunity.communityID;
       if (!communityId) return;
+      console.log(`communityId: ${communityId}, departmentId: ${departmentId}`);
       $.ajax({
         url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolos?communityId=${communityId}&departmentId=${departmentId}`,
         method: 'GET',
-        success: function(data) {
+        success: function(bolos) {
+          console.log(`data: ${JSON.stringify(bolos)}`);
           const $container = $('#active-bolo-container');
           $container.find('a').remove(); // Clear existing BOLOs
-          $container.append('<h4>Active BOLOs: </h4><h5>Click for details</h5>');
-          data.bolos.forEach(bolo => {
+          $container.find('span').remove(); // Clear existing header
+          $container.append('<span><h4>Active BOLOs: </h4><h5>Click for details</h5></span>');
+          bolos.data.forEach(bolo => {
             $container.append(
               `<a id="${bolo._id}-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('${bolo._id}')">
                 <div class="alert alert-warning alert-dismissible show" role="alert">
-                  <strong>BOLO! </strong> <span id="${bolo._id}-type" style="text-transform:capitalize">${bolo.boloType}</span>
-                  Last Seen: <span id="${bolo._id}-location">${bolo.location}</span> | Description: <span id="${bolo._id}-description">${bolo.description}</span>
+                  <strong>BOLO! </strong> <span id="${bolo._id}-type" style="text-transform:capitalize">${bolo?.bolo?.title}</span>
+                  Last Seen: <span id="${bolo._id}-location">${bolo?.bolo?.location}</span> | Description: <span id="${bolo._id}-description">${bolo?.bolo?.description}</span>
                 </div>
               </a>`
             );
@@ -1949,12 +1938,13 @@ function displayTenCodes(codes) {
         method: 'GET',
         success: function(bolo) {
           $('#boloIDDetail').val(bolo._id);
-          $('#boloTypeDetail').val(bolo.boloType);
-          $('#locationDetail').val(bolo.location);
-          $('#descriptionDetail').val(bolo.description);
-          $('#createdByDetail').text(bolo.createdBy || 'Unknown');
-          $('#createdAtDetail').text(convertToYYYYMMDD(bolo.createdAt) || 'N/A');
-          $('#updatedAtDetail').text(convertToYYYYMMDD(bolo.updatedAt) || 'N/A');
+          $('#boloTitleDetail').val(bolo?.bolo?.title);
+          $('#locationDetail').val(bolo?.bolo?.location);
+          $('#descriptionDetail').val(bolo?.bolo?.description);
+          // $('#dateCreatedDetail').text(bolo.createdBy || 'Unknown');
+          $('#dateCreatedDetail').text(bolo?.bolo?.createdAt?.toLocaleString() || 'N/A');
+          $('#lastUpdatedDetail').text(bolo?.bolo?.updatedAt?.toLocaleString() || 'N/A');
+          $('#statusDetail').text(bolo?.bolo?.status ? 'Active' : 'Inactive');
         },
         error: function(xhr) {
           console.error('Error fetching BOLO details:', xhr.responseText);
