@@ -153,33 +153,33 @@ function cancelCallSign() {
   $("#updateCallSignBtns").hide();
 }
 
-function populateBoloDetails(id) {
-  var socket = io();
-  socket.emit("load_police_bolos", dbUser);
-  socket.on("load_police_bolos_result", (res) => {
-    for (const i in res) {
-      if (res[i]._id != id) {
-        continue;
-      } else if (res[i]._id == id) {
-        $("#boloTypeDetail").val(res[i].bolo.boloType);
-        $("#locationDetail").val(res[i].bolo.location);
-        $("#descriptionDetail").val(res[i].bolo.description);
-        $("#boloIDDetail").val(res[i]._id);
-        $("#createdByDetail").text(res[i].bolo.reportingOfficerUsername);
-        var createdDate = new Date(res[i].bolo.createdAt);
-        $("#createdAtDetail").text(createdDate.toLocaleString());
-        if (res[i].bolo.updatedAt == null || res[i].bolo.updatedAt == "") {
-          $("#updatedAtDetail").text("N/A");
-        } else {
-          var updatedDate = new Date(res[i].bolo.updatedAt);
-          $("#updatedAtDetail").text(updatedDate.toLocaleString());
-        }
-      } else {
-        //IDK we have issues
-      }
-    }
-  });
-}
+// function populateBoloDetails(id) {
+//   var socket = io();
+//   socket.emit("load_police_bolos", dbUser);
+//   socket.on("load_police_bolos_result", (res) => {
+//     for (const i in res) {
+//       if (res[i]._id != id) {
+//         continue;
+//       } else if (res[i]._id == id) {
+//         $("#boloTypeDetail").val(res[i].bolo.boloType);
+//         $("#locationDetail").val(res[i].bolo.location);
+//         $("#descriptionDetail").val(res[i].bolo.description);
+//         $("#boloIDDetail").val(res[i]._id);
+//         $("#createdByDetail").text(res[i].bolo.reportingOfficerUsername);
+//         var createdDate = new Date(res[i].bolo.createdAt);
+//         $("#createdAtDetail").text(createdDate.toLocaleString());
+//         if (res[i].bolo.updatedAt == null || res[i].bolo.updatedAt == "") {
+//           $("#updatedAtDetail").text("N/A");
+//         } else {
+//           var updatedDate = new Date(res[i].bolo.updatedAt);
+//           $("#updatedAtDetail").text(updatedDate.toLocaleString());
+//         }
+//       } else {
+//         //IDK we have issues
+//       }
+//     }
+//   });
+// }
 
 function populateCallDetails(callID) {
   var socket = io();
@@ -306,25 +306,25 @@ function panicButtonPressed() {
   }
 }
 
-$("#updateBolo").one("click", function () {
-  var val = $(this).attr("value");
-  var socket = io();
-  $("#update-bolo-form").submit(function (e) {
-    e.preventDefault(); //prevents page from reloading
+// $("#updateBolo").one("click", function () {
+//   var val = $(this).attr("value");
+//   var socket = io();
+//   $("#update-bolo-form").submit(function (e) {
+//     e.preventDefault(); //prevents page from reloading
 
-    if (val == "update") {
-      var myReq = {
-        action: "update",
-        boloID: $("#boloIDDetail").val(),
-        boloType: $("#boloTypeDetail").val(),
-        location: $("#locationDetail").val(),
-        description: $("#descriptionDetail").val(),
-      };
-      socket.emit("update_bolo_info", myReq);
-    }
-    return true;
-  });
-});
+//     if (val == "update") {
+//       var myReq = {
+//         action: "update",
+//         boloID: $("#boloIDDetail").val(),
+//         boloType: $("#boloTypeDetail").val(),
+//         location: $("#locationDetail").val(),
+//         description: $("#descriptionDetail").val(),
+//       };
+//       socket.emit("update_bolo_info", myReq);
+//     }
+//     return true;
+//   });
+// });
 
 $("#createBolo").one("click", function () {
   var socket = io();
@@ -344,27 +344,27 @@ $("#createBolo").one("click", function () {
   $("#boloModal").modal("hide");
 });
 
-$("#deleteBolo").one("click", function () {
-  var val = $(this).attr("value");
-  var socket = io();
-  $("#delete-bolo-form").submit(function (e) {
-    e.preventDefault(); //prevents page from reloading
+// $("#deleteBolo").one("click", function () {
+//   var val = $(this).attr("value");
+//   var socket = io();
+//   $("#delete-bolo-form").submit(function (e) {
+//     e.preventDefault(); //prevents page from reloading
 
-    if (val == "delete") {
-      var myReq = {
-        action: "delete",
-        boloID: $("#boloIDDetail").val(),
-        boloType: $("#boloTypeDetail").val(),
-        location: $("#locationDetail").val(),
-        description: $("#descriptionDetail").val(),
-      };
-      socket.emit("delete_bolo_info", myReq);
-    }
+//     if (val == "delete") {
+//       var myReq = {
+//         action: "delete",
+//         boloID: $("#boloIDDetail").val(),
+//         boloType: $("#boloTypeDetail").val(),
+//         location: $("#locationDetail").val(),
+//         description: $("#descriptionDetail").val(),
+//       };
+//       socket.emit("delete_bolo_info", myReq);
+//     }
 
-    return true;
-  });
-  $("#boloDetailModal").modal("hide");
-});
+//     return true;
+//   });
+//   $("#boloDetailModal").modal("hide");
+// });
 
 $("#clearPanic").one("click", function () {
   var socket = io();

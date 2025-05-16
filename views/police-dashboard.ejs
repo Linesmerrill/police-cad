@@ -483,99 +483,90 @@
   </div>
 
   <div id="boloDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form id="update-bolo-form" class="form-horizontal" action="/updateOrDeleteBolo" method="post">
-            <fieldset>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <form id="update-bolo-form" class="form-horizontal" onsubmit="event.preventDefault(); handleUpdateBolo();">
+          <fieldset>
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>BOLO Details</h4>
+            <hr style="width: 88%;max-width: 100rem;">
 
-              <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                aria-hidden="true">X</button>
-              <h4>BOLO Details</h4>
-              <hr style="width: 88%;max-width: 100rem;">
-
-              <!-- Text input-->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="boloTitleDetail">Title:</label>
-                <div class="col-md-4">
-                  <input id="boloTitleDetail" name="boloTitleDetail" style="text-transform: capitalize;" type="text"
-                    placeholder="Title" class="form-control input-md" maxlength="50" required>
-                </div>
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="boloTitleDetail">Title:</label>
+              <div class="col-md-4">
+                <input id="boloTitleDetail" name="boloTitle" style="text-transform: capitalize;" type="text"
+                  placeholder="Title" class="form-control input-md" maxlength="50" required>
               </div>
+            </div>
 
-              <!-- Text input-->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="locationDetail">Location:</label>
-                <div class="col-md-4">
-                  <input id="locationDetail" name="locationDetail" style="text-transform: capitalize;" type="text"
-                    placeholder="Location" class="form-control input-md" maxlength="50" required>
-                </div>
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="locationDetail">Location:</label>
+              <div class="col-md-4">
+                <input id="locationDetail" name="location" style="text-transform: capitalize;" type="text"
+                  placeholder="Location" class="form-control input-md" maxlength="50" required>
               </div>
+            </div>
 
-              <!-- Text Area input-->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="descriptionDetail">Description:</label>
-                <div class="col-md-8 col-md-offset-2">
-                  <textarea id="descriptionDetail" name="descriptionDetail" type="text" rows="4" maxlength="500"
-                    placeholder="description" class="form-control input-md" required></textarea>
-                </div>
+            <!-- Text Area input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="descriptionDetail">Description:</label>
+              <div class="col-md-8 col-md-offset-2">
+                <textarea id="descriptionDetail" name="description" rows="4" maxlength="500"
+                  placeholder="Description" class="form-control input-md" required></textarea>
               </div>
+            </div>
 
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="dateCreatedDetail">Date Created:</label>
-                <div class="col-md-4">
-                  <h5 id="dateCreatedDetail"></h5>
-                </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="dateCreatedDetail">Date Created:</label>
+              <div class="col-md-4">
+                <h5 id="dateCreatedDetail"></h5>
               </div>
+            </div>
 
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="lastUpdatedDetail">Last Updated:</label>
-                <div class="col-md-4">
-                  <h5 id="lastUpdatedDetail"></h5>
-                </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="lastUpdatedDetail">Last Updated:</label>
+              <div class="col-md-4">
+                <h5 id="lastUpdatedDetail"></h5>
               </div>
+            </div>
 
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="statusDetail">Status:</label>
-                <div class="col-md-4">
-                  <h5 id="statusDetail"></h5>
-                </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="statusDetail">Status:</label>
+              <div class="col-md-4">
+                <h5 id="statusDetail"></h5>
               </div>
+            </div>
 
-              
+            <!-- Hidden input for boloID -->
+            <input id="boloIDDetail" type="hidden" name="boloID" value="">
 
-              
-
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="updateBolo"></label>
-                <div class="col-md-4 text-align-center">
-                  <input type="hidden" name="route" value="police-dashboard">
-                  <input id="boloIDDetail" type="hidden" name="boloID" value="">
-                  <button id="updateBolo" type="submit" name="action" value="update" class="btn btn-info"
-                    onclick="hideModal('boloDetailModal')">Update</button>
-                </div>
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="updateBolo"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="updateBolo" type="submit" class="btn btn-info">Update</button>
               </div>
-            </fieldset>
-          </form>
-          <form id="delete-bolo-form">
-            <fieldset>
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="deleteBolo"></label>
-                <div class="col-md-4 text-align-center">
-                  <input type="hidden" name="route" value="police-dashboard">
-                  <!-- <input id="boloIDDetail" type="hidden" name="boloID" value=""> -->
-                  <button id="deleteBolo" type="submit" name="action" value="delete" class="btn btn-danger"
-                    onclick="hideModal('boloDetailModal')">Delete</button>
-                </div>
+            </div>
+          </fieldset>
+        </form>
+        <form id="delete-bolo-form" onsubmit="event.preventDefault(); deleteBolo(document.getElementById('boloIDDetail').value);">
+          <fieldset>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="deleteBolo"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="deleteBolo" type="submit" class="btn btn-danger">Delete</button>
               </div>
-            </fieldset>
-          </form>
-        </div>
+            </div>
+          </fieldset>
+        </form>
       </div>
     </div>
   </div>
+</div>
 
   <div id="viewWarrant" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -1697,13 +1688,13 @@ function selectTenCode(tenCodeID) {
           $container.append('<span><h4>Active BOLOs: </h4><h5>Click for details</h5></span>');
           bolos.data.forEach(bolo => {
             $container.append(
-              `<a id="${bolo._id}-row" data-toggle="modal" href="#boloDetailModal" onclick="populateBoloDetails('${bolo._id}')">
-                <div class="alert alert-warning alert-dismissible show" role="alert">
-                  <strong>BOLO! </strong> <span id="${bolo._id}-type" style="text-transform:capitalize">${bolo?.bolo?.title}</span>
-                  Last Seen: <span id="${bolo._id}-location">${bolo?.bolo?.location}</span> | Description: <span id="${bolo._id}-description">${bolo?.bolo?.description}</span>
-                </div>
-              </a>`
-            );
+          `<a id="${bolo._id}-row" href="javascript:void(0)" onclick="event.stopPropagation(); populateBoloDetails('${bolo._id}');">
+            <div class="alert alert-warning alert-dismissible show" role="alert">
+              <strong>BOLO! </strong> <span id="${bolo._id}-type" style="text-transform:capitalize">${bolo?.bolo?.title}</span>
+              Last Seen: <span id="${bolo._id}-location">${bolo?.bolo?.location}</span> | Description: <span id="${bolo._id}-description">${bolo?.bolo?.description}</span>
+            </div>
+          </a>`
+        );
           });
         },
         error: function(xhr) {
@@ -1897,39 +1888,70 @@ function displayTenCodes(codes) {
       
     }
 
-    // Update BOLO details after form submission
-    function updateBolo(boloId, boloType, location, description) {
-      $.ajax({
-        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolo/${boloId}`,
-        method: 'PUT',
-        data: JSON.stringify({ boloType, location, description }),
-        contentType: 'application/json',
-        success: function(res) {
-          $(`#${boloId}-type`).text(res.boloType);
-          $(`#${boloId}-location`).text(res.location);
-          $(`#${boloId}-description`).text(res.description);
-        },
-        error: function(xhr) {
-          console.error('Error updating BOLO:', xhr.responseText);
-          alert('Failed to update BOLO: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
-      });
+    // Update BOLO details via AJAX
+function updateBolo(boloId, boloTitle, location, description) {
+  if (!boloId || !boloTitle || !location || !description) {
+    console.error('Invalid BOLO data:', { boloId, boloTitle, location, description });
+    alert('Please fill all required fields.');
+    return;
+  }
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolo/${boloId}`,
+    method: 'PUT',
+    data: JSON.stringify({ title: boloTitle, location, description }),
+    contentType: 'application/json',
+    success: function(res) {
+      $(`#${boloId}-type`).text(boloTitle);
+      $(`#${boloId}-location`).text(location);
+      $(`#${boloId}-description`).text(description);
+      loadActiveBOLOs(); // Refresh BOLO list
+      hideModal('boloDetailModal');
+      alert('BOLO updated successfully.');
+    },
+    error: function(xhr) {
+      console.error('Error updating BOLO:', xhr.responseText);
+      alert('Failed to update BOLO: ' + (xhr.responseJSON?.message || 'Unknown error'));
+      hideModal('boloDetailModal'); // Ensure modal closes on error
     }
+  });
+}
 
-    // Delete BOLO
-    function deleteBolo(boloId) {
-      $.ajax({
-        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolo/${boloId}`,
-        method: 'DELETE',
-        success: function() {
-          $(`#${boloId}-row`).fadeOut(1, function() { $(this).remove(); });
-        },
-        error: function(xhr) {
-          console.error('Error deleting BOLO:', xhr.responseText);
-          alert('Failed to delete BOLO: ' + (xhr.responseJSON?.message || 'Unknown error'));
-        }
-      });
+// Handle update BOLO form submission
+function handleUpdateBolo() {
+  const boloId = document.getElementById('boloIDDetail').value;
+  const boloTitle = document.getElementById('boloTitleDetail').value.trim();
+  const location = document.getElementById('locationDetail').value.trim();
+  const description = document.getElementById('descriptionDetail').value.trim();
+  if (!boloId || !boloTitle || !location || !description) {
+    alert('Please fill all required fields.');
+    return;
+  }
+  updateBolo(boloId, boloTitle, location, description);
+}
+
+    // Delete BOLO via AJAX
+function deleteBolo(boloId) {
+  if (!boloId) {
+    console.error('Invalid BOLO ID:', boloId);
+    alert('Invalid BOLO ID.');
+    return;
+  }
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolo/${boloId}`,
+    method: 'DELETE',
+    success: function() {
+      $(`#${boloId}-row`).fadeOut(1, function() { $(this).remove(); });
+      loadActiveBOLOs(); // Refresh BOLO list
+      hideModal('boloDetailModal');
+      alert('BOLO deleted successfully.');
+    },
+    error: function(xhr) {
+      console.error('Error deleting BOLO:', xhr.responseText);
+      alert('Failed to delete BOLO: ' + (xhr.responseJSON?.message || 'Unknown error'));
+      hideModal('boloDetailModal');
     }
+  });
+}
 
     // Populate BOLO details in modal
     function populateBoloDetails(boloId) {
@@ -1945,6 +1967,7 @@ function displayTenCodes(codes) {
           $('#dateCreatedDetail').text(bolo?.bolo?.createdAt?.toLocaleString() || 'N/A');
           $('#lastUpdatedDetail').text(bolo?.bolo?.updatedAt?.toLocaleString() || 'N/A');
           $('#statusDetail').text(bolo?.bolo?.status ? 'Active' : 'Inactive');
+          $('#boloDetailModal').modal('show');
         },
         error: function(xhr) {
           console.error('Error fetching BOLO details:', xhr.responseText);
@@ -2000,10 +2023,18 @@ function displayTenCodes(codes) {
       });
     }
 
+    
     // Hide modal utility
-    function hideModal(modalId) {
-      $(`#${modalId}`).modal('hide');
-    }
+function hideModal(modalId) {
+  $(`#${modalId}`).modal('hide');
+  // Ensure body classes are cleaned up
+  $('body').removeClass('modal-open');
+  // Remove backdrop for this modal only
+  const $backdrop = $('.modal-backdrop');
+  if ($backdrop.length) {
+    $backdrop.remove();
+  }
+}
 
     // Load 10-codes when modal is shown
     $('#10codesModal').on('show.bs.modal', function() {
