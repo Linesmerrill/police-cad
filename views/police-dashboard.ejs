@@ -553,7 +553,7 @@
             </div>
           </fieldset>
         </form>
-        <form id="delete-bolo-form" onsubmit="event.preventDefault(); deleteBolo(document.getElementById('boloIDDetail').value);">
+        <form id="delete-bolo-form" onsubmit="event.preventDefault(); handleDeleteBolo();">
           <fieldset>
             <div class="form-group">
               <label class="col-md-4 control-label" for="deleteBolo"></label>
@@ -1927,6 +1927,21 @@ function handleUpdateBolo() {
     return;
   }
   updateBolo(boloId, boloTitle, location, description);
+}
+
+// Handle delete BOLO form submission
+function handleDeleteBolo() {
+  const boloId = document.getElementById('boloIDDetail').value;
+  if (!boloId) {
+    console.error('Invalid BOLO ID:', boloId);
+    alert('Invalid BOLO ID.');
+    return;
+  }
+  if (!window.confirm('Are you sure you want to delete this BOLO? This action cannot be undone.')) {
+    console.log('BOLO deletion canceled by user');
+    return;
+  }
+  deleteBolo(boloId);
 }
 
     // Delete BOLO via AJAX
