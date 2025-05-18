@@ -155,6 +155,7 @@
   var allCommunities = [];
   var activeCommunityId = dbUser?.user?.lastAccessedCommunity?.communityID || null;
 
+// community-dashboard.js
 $(document).ready(function () {
     $('#departments-table').DataTable({
         paging: true,
@@ -164,36 +165,49 @@ $(document).ready(function () {
         ordering: true,
         info: true,
         createdRow: function(row, data, dataIndex) {
-    $(row).addClass('department-row');
-    $(row).click(function() {
-        const dept = allCommunities.find(c => c._id === activeCommunityId)?.community?.departments[dataIndex];
-        if (dept && dept?.template?.name) {
-            const deptName = dept?.template?.name?.toLowerCase();
-            let dashboardUrl = '';
-            // Encode userId and communityId as base64
-            const dataObj = { userId: dbUser._id, communityId: activeCommunityId };
-            const encodedData = btoa(JSON.stringify(dataObj));
-            if (deptName.includes('civilian')) {
-                dashboardUrl = `/civ-dashboard`;
-            } else if (deptName.includes('police')) {
-                dashboardUrl = `/police-dashboard`;
-            } else if (deptName.includes('fire') || deptName.includes('ems')) {
-                dashboardUrl = `/ems-dashboard`;
-            } else if (deptName.includes('dispatch')) {
-                dashboardUrl = `/dispatch-dashboard`;
-            }
-            if (dashboardUrl) {
-                window.location.href = dashboardUrl;
-            } else {
-                console.error('No matching dashboard for department:', dept.name);
-                $('#successCopyMessage').html('<strong>Error!</strong> Unknown department type: ' + dept.name).show().delay(2000).fadeOut();
-            }
-        } else {
-            console.error('Department not found at index:', dataIndex);
-            $('#successCopyMessage').html('<strong>Error!</strong> Department data missing.').show().delay(2000).fadeOut();
+            $(row).addClass('department-row');
+            $(row).click(function() {
+                const dept = allCommunities.find(c => c._id === activeCommunityId)?.community?.departments[dataIndex];
+                if (dept && dept?.template?.name) {
+                    const deptName = dept?.template?.name?.toLowerCase();
+                    let dashboardUrl = '';
+                    if (deptName.includes('civilian')) {
+                        dashboardUrl = `/civ-dashboard`;
+                    } else if (deptName.includes('police')) {
+                        dashboardUrl = `/police-dashboard`;
+                    } else if (deptName.includes('fire') || deptName.includes('ems')) {
+                        dashboardUrl = `/ems-dashboard`;
+                    } else if (deptName.includes('dispatch')) {
+                        dashboardUrl = `/dispatch-dashboard`;
+                    }
+                    if (dashboardUrl) {
+                        // Submit form to /select-department to set departmentId
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '/select-department';
+                        form.style.display = 'none';
+                        const deptInput = document.createElement('input');
+                        deptInput.type = 'hidden';
+                        deptInput.name = 'departmentId';
+                        deptInput.value = dept._id;
+                        const redirectInput = document.createElement('input');
+                        redirectInput.type = 'hidden';
+                        redirectInput.name = 'redirect';
+                        redirectInput.value = dashboardUrl;
+                        form.appendChild(deptInput);
+                        form.appendChild(redirectInput);
+                        document.body.appendChild(form);
+                        form.submit();
+                    } else {
+                        console.error('No matching dashboard for department:', dept.name);
+                        $('#successCopyMessage').html('<strong>Error!</strong> Unknown department type: ' + dept.name).show().delay(2000).fadeOut();
+                    }
+                } else {
+                    console.error('Department not found at index:', dataIndex);
+                    $('#successCopyMessage').html('<strong>Error!</strong> Department data missing.').show().delay(2000).fadeOut();
+                }
+            });
         }
-    });
-}
     });
 
     if (!getCookie('lpc_tutorial_dismissed')) {
