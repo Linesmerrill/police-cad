@@ -24,6 +24,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
   <script type="text/javascript" src="static/js/tail.select.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
   <script src="/static/js/jquery.min.js"></script>
   <script src="/static/js/jquery.easing.min.js"></script>
   <script src="/static/js/wow.js"></script>
@@ -89,19 +90,19 @@
               style="margin-top: 0.3em;"></i></a>
         </li>
         <div class="collapse in" id="toggleSearch">
-          <li>
-            <a data-toggle="modal" href="#" onclick="$('#nameDatabaseModal').modal({'backdrop': 'static'});"><span
-                class="fa fa-id-card ml-3 mr-3"></span> Name Database</a>
-          </li>
-          <li>
-            <a data-toggle="modal" href="#plateDatabaseModal"><span class="fa fa-car ml-3 mr-3"></span> Plate
-              Database</a>
-          </li>
-          <li>
-            <a data-toggle="modal" href="#firearmDatabaseModal"><span class="fa fa-database ml-3 mr-3"></span> Firearm
-              Database</a>
-          </li>
-        </div>
+  <li>
+    <a data-toggle="modal" href="#searchDatabaseModal" data-search-type="Civilian"><span
+        class="fa fa-id-card ml-3 mr-3"></span> Name Database</a>
+  </li>
+  <li>
+    <a data-toggle="modal" href="#searchDatabaseModal" data-search-type="Vehicle"><span
+        class="fa fa-car ml-3 mr-3"></span> Plate Database</a>
+  </li>
+  <li>
+    <a data-toggle="modal" href="#searchDatabaseModal" data-search-type="Firearm"><span
+        class="fa fa-database ml-3 mr-3"></span> Firearm Database</a>
+  </li>
+</div>
         <li class="background-color-222">
           <a type="button" data-toggle="collapse" data-target="#toggleUtilities" aria-expanded="false"
             aria-controls="toggleUtilities" onclick="toggleCaret()"> Utilities <i
@@ -342,9 +343,7 @@
     </div>
   </div>
 
-  <% include name-database %>
-  <% include plate-database %>
-  <% include firearm-database %>
+  <% include search-database %>
 
   <div id="viewLicense" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -1596,8 +1595,9 @@
 <script src="/static/js/popper.js"></script>
 <script src="/static/js/main.js"></script>
 <script src="/static/js/police-dashboard.js"></script>
-<script src="/static/js/name-database.js"></script>
-<script src="/static/js/plate-database.js"></script>
+// <script src="/static/js/name-database.js"></script>
+<!-- <script src="/static/js/plate-database.js"></script> -->
+ <script src="/static/js/search-database.js"></script>
 <script src="/static/js/bootstrap.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
 <script>if (window.module) module = window.module;</script>
