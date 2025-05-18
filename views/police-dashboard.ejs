@@ -110,12 +110,12 @@
         <div class="collapse in" id="toggleUtilities">
           <li>
             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
-              <a data-toggle="modal" href="#boloModal" onclick="clearBoloForm()"><span
-                  class="fa fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
-              <% } else {%>
-                <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span
-                    class="fa fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
-                <% } %>
+  <a href="javascript:void(0)" onclick="showBoloModal()"><span
+      class="fa fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
+<% } else {%>
+  <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span
+      class="fa fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
+<% } %>
           </li>
           <li>
             <a data-toggle="modal" href="#10codesModal"><span class="fa fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
@@ -1260,64 +1260,76 @@
   </div>
 
   <div id="boloModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form id="create-bolo-form" class="form-horizontal" action="/create-bolo" method="post">
-            <fieldset>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <form id="create-bolo-form" class="form-horizontal" onsubmit="event.preventDefault(); handleCreateBolo();">
+          <fieldset>
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Create BOLO Alert</h4>
+            <hr style="width: 88%;max-width: 100rem;">
 
-              <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                aria-hidden="true">X</button>
-              <h4>Create BOLO Alert</h4>
-              <hr style="width: 88%;max-width: 100rem;">
+            <!-- Text input: Title -->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="boloTitle">Title:</label>
+              <div class="col-md-4">
+                <input id="boloTitle" name="title" style="text-transform: capitalize;" type="text"
+                  placeholder="Title" class="form-control input-md" maxlength="50" required>
+              </div>
+            </div>
 
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="type">Type:</label>
-                <div class="col-md-4">
-                  <select id="type" name="boloType" class="form-control" selected="selected" required>
-                    <option value="person">Person</option>
-                    <option value="vehicle">Vehicle</option>
-                    <option value="other">Other</option>
-                  </select>
+            <!-- Text input: Location -->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="boloLocation">Last Seen Around:</label>
+              <div class="col-md-4">
+                <input id="boloLocation" name="location" style="text-transform: capitalize;" type="text"
+                  placeholder="Location" class="form-control input-md" maxlength="50" required>
+              </div>
+            </div>
+
+            <!-- Textarea: Description -->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="boloDescription">Description:</label>
+              <div class="col-md-8 col-md-offset-2">
+                <textarea id="boloDescription" name="description" rows="4" maxlength="500"
+                  placeholder="Description" class="form-control input-md" required></textarea>
+              </div>
+            </div>
+
+            <!-- Scope toggle: Department or Community -->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="boloScope">Scope:</label>
+              <div class="col-md-8">
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="scope" id="scopeCommunity" value="Community" checked required>
+                  <label class="form-check-label" for="scopeCommunity">Community</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="scope" id="scopeDepartment" value="Department">
+                  <label class="form-check-label" for="scopeDepartment">Department</label>
                 </div>
               </div>
+            </div>
 
-              <!-- Text input-->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="location">Last Seen Around:</label>
-                <div class="col-md-4">
-                  <input id="location" name="location" style="text-transform: capitalize;" type="text"
-                    placeholder="location" class="form-control input-md" maxlength="50" required>
-                </div>
-              </div>
+            <!-- Hidden inputs -->
+            <input type="hidden" id="boloCommunityID" name="communityID" value="<%= user.user.activeCommunity %>">
+            <input type="hidden" id="boloDepartmentID" name="departmentID" value="<%= departmentId %>">
+            <input type="hidden" id="boloReportedByID" name="reportedByID" value="<%= user._id %>">
 
-              <!-- Text Area input-->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="description">Description:</label>
-                <div class="col-md-8 col-md-offset-2">
-                  <textarea id="description" name="description" type="text" rows="4" maxlength="500"
-                    placeholder="description" class="form-control input-md" required></textarea>
-                </div>
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createBolo"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="createBolo" type="submit" class="btn btn-primary">Create</button>
               </div>
-
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createBolo"></label>
-                <div class="col-md-4 text-align-center">
-                  <input type="hidden" name="route" value="police-dashboard">
-                  <input type="hidden" name="reportingOfficerUsername" value="<%= user.user.username %>">
-                  <input type="hidden" name="reportingOfficerID" value="<%= user._id %>">
-                  <button id="createBolo" type="submit" name="communityID" value="<%= user.user.activeCommunity %>"
-                    class="btn btn-primary" onclick="hideModal('boloModal')">Create</button>
-                </div>
-              </div>
-            </fieldset>
-          </form>
-        </div>
+            </div>
+          </fieldset>
+        </form>
       </div>
     </div>
   </div>
+</div>
 
 
 
@@ -2209,6 +2221,77 @@ function handleDeleteCall() {
   deleteCall(callId);
 }
 
+// Create BOLO via AJAX
+function createBolo(title, location, description, scope, communityID, departmentID, reportedByID) {
+  if (!title || !location || !description || !scope || !communityID || !departmentID || !reportedByID) {
+    console.error('Invalid BOLO data:', { title, location, description, scope, communityID, departmentID, reportedByID });
+    alert('Please fill all required fields.');
+    return;
+  }
+  const payload = {
+    bolo: {
+      title,
+      location,
+      description,
+      communityID,
+      departmentID,
+      scope,
+      reportedByID,
+      status: true
+    }
+  };
+  console.log(`Data to send: ${JSON.stringify(payload)}`);
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolo`,
+    method: 'POST',
+    data: JSON.stringify(payload),
+    contentType: 'application/json',
+    success: function(res) {
+      loadActiveBOLOs(); // Refresh BOLO list
+      hideModal('boloModal');
+      alert('BOLO created successfully.');
+    },
+    error: function(xhr) {
+      console.error('Error creating BOLO:', xhr.responseText);
+      alert('Failed to create BOLO: ' + (xhr.responseJSON?.message || 'Unknown error'));
+      hideModal('boloModal');
+    }
+  });
+}
+
+// Handle create BOLO form submission
+function handleCreateBolo() {
+  const communityId = dbUser.user.lastAccessedCommunity.communityID;
+      if (!communityId) {
+        alert('Failed to load community, please try refreshing the page and try again.');
+        hideModal('boloModal');
+    return;
+      }
+  const title = document.getElementById('boloTitle').value.trim();
+  const location = document.getElementById('boloLocation').value.trim();
+  const description = document.getElementById('boloDescription').value.trim();
+  const scope = document.querySelector('input[name="scope"]:checked').value;
+  const communityID = document.getElementById('boloCommunityID').value;
+  const departmentID = document.getElementById('boloDepartmentID').value;
+  const reportedByID = document.getElementById('boloReportedByID').value;
+  if (!title || !location || !description || !scope) {
+    alert('Please fill all required fields.');
+    return;
+  }
+  console.log(`Data to send: ${JSON.stringify({ title, location, description, communityID, departmentID, scope, reportedByID })}`);
+  createBolo(title, location, description, scope, communityId, departmentId, dbUser._id);
+}
+
+// Clear BOLO form
+function clearBoloForm() {
+  document.getElementById('boloTitle').value = '';
+  document.getElementById('boloLocation').value = '';
+  document.getElementById('boloDescription').value = '';
+  document.getElementById('scopeCommunity').checked = true;
+  document.getElementById('scopeDepartment').checked = false;
+}
+
+
     // Populate panic details in modal
     function populatePanicDetails(userId) {
       $('#panic-id').val(userId);
@@ -2239,14 +2322,24 @@ function handleDeleteCall() {
     
     // Hide modal utility
 function hideModal(modalId) {
-  $(`#${modalId}`).modal('hide');
+  const $modal = $(`#${modalId}`);
+  $modal.modal('hide');
   // Ensure body classes are cleaned up
   $('body').removeClass('modal-open');
-  // Remove backdrop for this modal only
-  const $backdrop = $('.modal-backdrop');
-  if ($backdrop.length) {
-    $backdrop.remove();
-  }
+  // Remove all backdrops
+  $('.modal-backdrop').remove();
+  // Reset modal state
+  $modal.removeClass('show').css('display', 'none');
+  // Clear any modal-related data attributes
+  $modal.removeData('bs.modal');
+  // Ensure no lingering modal-open classes
+  $('body').css('padding-right', '');
+}
+
+// Show BOLO modal
+function showBoloModal() {
+  clearBoloForm();
+  $('#boloModal').modal('show');
 }
 
     // Load 10-codes when modal is shown
