@@ -46,6 +46,18 @@
 #tenCodesTable tbody tr:hover {
     background-color: #3b82f6;
 }
+#callDepartmentsDetail .badge,
+  #callAssignedToDetail .badge {
+    margin-right: 5px;
+    margin-bottom: 5px;
+  }
+  #callNotesDetail .note-item {
+    border-bottom: 1px solid #ddd;
+    padding: 10px 0;
+  }
+  #callNotesDetail .note-item:last-child {
+    border-bottom: none;
+  }
   </style>
 </head>
 
@@ -285,18 +297,7 @@
         </div>
         <div class="container">
           <div id="assigned-call-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
-            <!-- active calls -->
-            <h4>Assigned Calls: </h4>
-            <h5>Click for details</h5>
-                      <a id="calls_id" data-toggle="modal" href="#callDetailModal"
-                        onclick="populateCallDetails('calls_id')">
-                        <div class="alert alert-success alert-dismissible show" role="alert">
-                          Opened: <span id="calls_id-createdAt" style="text-transform:capitalize"><time>
-                            </time> | Description:
-                            <span id="calls_id-description">
-                            </span>%></span>
-                        </div>
-                      </a>
+            
 
           </div>
         </div>
@@ -1128,72 +1129,100 @@
   </div>
 
   <div id="callDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form id="update-call-form" class="form-horizontal" action="/" method="get">
-            <fieldset>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <form id="update-call-form" class="form-horizontal" onsubmit="event.preventDefault(); handleUpdateCall();">
+          <fieldset>
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>Call Details</h4>
+            <hr style="width: 88%;max-width: 100rem;">
 
-              <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                aria-hidden="true">X</button>
-              <h4>Call Details</h4>
-              <hr style="width: 88%;max-width: 100rem;">
-
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createdBy">Created At:</label>
-                <div class="col-md-4">
-                  <h5 id="createdAtCallDetail"></h5>
-                </div>
+            <!-- Read-only fields -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="createdAtCallDetail">Created At:</label>
+              <div class="col-md-4">
+                <h5 id="createdAtCallDetail"></h5>
               </div>
+            </div>
 
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
-                <div class="col-md-4">
-                  <h5 id="updatedAtCallDetail"></h5>
-                </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="updatedAtCallDetail">Updated At:</label>
+              <div class="col-md-4">
+                <h5 id="updatedAtCallDetail"></h5>
               </div>
+            </div>
 
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createdBy">Classifier:</label>
-                <div class="col-md-4">
-                  <h5 id="classifier"></h5>
-                </div>
+            <!-- Editable fields -->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="callTitleDetail">Title:</label>
+              <div class="col-md-8">
+                <input id="callTitleDetail" name="title" type="text" placeholder="Title"
+                  class="form-control input-md" maxlength="100" required>
               </div>
+            </div>
 
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createdBy">Fire/EMS:</label>
-                <div class="col-md-4">
-                  <h5 id="engines"></h5>
-                </div>
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="callDetailsDetail">Details:</label>
+              <div class="col-md-8">
+                <textarea id="callDetailsDetail" name="details" rows="4" maxlength="500"
+                  placeholder="Details" class="form-control input-md" required></textarea>
               </div>
+            </div>
 
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="description">Description:</label>
-                <div class="col-md-4">
-                  <h5 id="descriptionCallDetail" style="text-transform:capitalize"></h5>
-                </div>
-              </div>
+            <!-- Dynamic department list -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="callDepartmentsDetail">Departments:</label>
+              <div class="col-md-8" id="callDepartmentsDetail"></div>
+            </div>
 
-              <!-- Text Area input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="callNotes">Call Notes:</label>
-                <div class="col-md-8 col-md-offset-2">
-                  <textarea id="callNotesDetail" name="callNotes" type="text" rows="4" maxlength="500"
-                    placeholder="call notes" class="form-control input-md" disabled></textarea>
-                </div>
+            <!-- Dynamic assigned to list -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="callAssignedToDetail">Assigned To:</label>
+              <div class="col-md-8" id="callAssignedToDetail"></div>
+            </div>
+
+            <!-- Call notes display -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="callNotesDetail">Call Notes:</label>
+              <div class="col-md-8 col-md-offset-2" id="callNotesDetail" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+
+            <!-- Hidden input for callId -->
+            <input id="callIdDetail" type="hidden" name="callId" value="">
+
+            <!-- Update Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="updateCall"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="updateCall" type="submit" class="btn btn-info">Update</button>
               </div>
-            </fieldset>
-          </form>
-        </div>
+            </div>
+          </fieldset>
+        </form>
+        <form id="delete-call-form" onsubmit="event.preventDefault(); handleDeleteCall();">
+          <fieldset>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="deleteCall"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="deleteCall" type="submit" class="btn btn-danger">Delete</button>
+              </div>
+            </div>
+          </fieldset>
+        </form>
       </div>
     </div>
   </div>
+</div>
+
+<style>
+  #callDepartmentsDetail .badge,
+  #callAssignedToDetail .badge {
+    margin-right: 5px;
+    margin-bottom: 5px;
+  }
+</style>
 
   <div id="confirmClearWarrantModal" class="modal fade" style="z-index: 9999;" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -1704,34 +1733,38 @@ function selectTenCode(tenCodeID) {
     }
 
     // AJAX function to load assigned calls
-    function loadAssignedCalls() {
-      const communityId = dbUser.user.lastAccessedCommunity.communityID;
-      const userId = dbUser._id;
-      if (!communityId) return;
-      $.ajax({
-        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/calls/assigned/${userId}`,
-        method: 'GET',
-        success: function(data) {
-          const $container = $('#assigned-call-container');
-          $container.find('a').remove(); // Clear existing calls
-          $container.append('<h4>Assigned Calls: </h4><h5>Click for details</h5>');
-          data.calls.forEach(call => {
-            $container.append(
-              `<a id="${call._id}" data-toggle="modal" href="#callDetailModal" onclick="populateCallDetails('${call._id}')">
-                <div class="alert alert-success alert-dismissible show" role="alert">
-                  Opened: <span id="${call._id}-createdAt" style="text-transform:capitalize">
-                    <time>${call.createdAtReadable}</time> | Description: <span id="${call._id}-description">${call.shortDescription}</span>
-                  </span>
-                </div>
-              </a>`
-            );
-          });
-        },
-        error: function(xhr) {
-          console.error('Error loading assigned calls:', xhr.responseText);
-        }
+function loadAssignedCalls() {
+  const communityId = dbUser.user.lastAccessedCommunity.communityID;
+  const userId = dbUser._id;
+  if (!communityId) return;
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/calls/community/${communityId}?status=true`,
+    method: 'GET',
+    success: function(data) {
+      console.log('Assigned calls received:', data);
+      const $container = $('#assigned-call-container');
+      $container.find('a').remove();
+      $container.find('span').remove();
+      $container.append('<span><h4>Open Calls: </h4><h5>Click for details</h5></span>');
+      data.forEach(call => {
+        const is911Call = (call?.call?.title?.startsWith('911:') || call?.call?.details?.startsWith('911:'));
+        const alertClass = is911Call ? 'alert-danger' : 'alert-success';
+        $container.append(
+          `<a id="${call._id}" href="javascript:void(0)" onclick="event.stopPropagation(); populateCallDetails('${call._id}');">
+            <div class="alert ${alertClass} alert-dismissible show" role="alert">
+              Opened: <span id="${call._id}-createdAt" style="text-transform:capitalize">
+                <time>${call?.call?.createdAt}</time> | Description: <span id="${call._id}-description">${call?.call?.title} | ${call?.call?.details}</span>
+              </span>
+            </div>
+          </a>`
+        );
       });
+    },
+    error: function(xhr) {
+      console.error('Error loading assigned calls:', xhr.responseText);
     }
+  });
+}
 
     // AJAX function to fetch 10-codes
 function loadTenCodes() {
@@ -1992,24 +2025,189 @@ function deleteBolo(boloId) {
     }
 
     // Populate call details in modal
-    function populateCallDetails(callId) {
+function populateCallDetails(callId) {
+  console.log('Opening call modal for ID:', callId);
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/call/${callId}`,
+    method: 'GET',
+    success: function(call) {
+      console.log('Call data received:', call);
+      $('#callIdDetail').val(call._id);
+      $('#createdAtCallDetail').text(call?.call?.createdAt?.toLocaleString() || 'N/A');
+      $('#updatedAtCallDetail').text(call?.call?.updatedAt?.toLocaleString() || 'N/A');
+      $('#callTitleDetail').val(call?.call?.title || '');
+      $('#callDetailsDetail').val(call?.call?.details || '');
+
+      // Format call notes
+      const callNotes = call?.call?.callNotes || [];
+      $('#callNotesDetail').empty();
+      if (callNotes.length > 0) {
+        callNotes.forEach(note => {
+          $('#callNotesDetail').append(
+            `<div class="note-item">
+              <p><strong>Note:</strong> ${note.note || 'N/A'}</p>
+              <p><small><strong>Created By:</strong> ${note.createdBy || 'Unknown'} | 
+              <strong>Created At:</strong> ${note.createdAt ? new Date(note.createdAt).toLocaleString() : 'N/A'}</small></p>
+            </div>`
+          );
+        });
+      } else {
+        $('#callNotesDetail').text('No notes available');
+      }
+
+      // Fetch departments
+      const communityId = dbUser.user.lastAccessedCommunity.communityID;
       $.ajax({
-        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/call/${callId}`,
-        method: 'GET',
-        success: function(call) {
-          $('#createdAtCallDetail').text(convertToYYYYMMDD(call.createdAt) || 'N/A');
-          $('#updatedAtCallDetail').text(convertToYYYYMMDD(call.updatedAt) || 'N/A');
-          $('#classifier').text(call.classifier || 'N/A');
-          $('#engines').text(call.engines || 'N/A');
-          $('#descriptionCallDetail').text(call.shortDescription || '');
-          $('#callNotesDetail').val(call.callNotes || '');
-        },
-        error: function(xhr) {
-          console.error('Error fetching call details:', xhr.responseText);
-          alert('Failed to load call details: ' + (xhr.responseJSON?.message || 'Unknown error'));
+        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/departments`,
+        method: 'GET'
+      }).done(function(data) {
+        const departments = data.departments || [];
+        const departmentIds = call?.call?.departments || [];
+        const departmentNames = departmentIds
+          .map(id => {
+            const dept = departments.find(d => d._id === id);
+            return dept ? dept.name : null;
+          })
+          .filter(name => name);
+        $('#callDepartmentsDetail').empty();
+        if (departmentNames.length > 0) {
+          departmentNames.forEach(name => {
+            $('#callDepartmentsDetail').append(
+              `<span class="badge badge-primary">${name}</span>`
+            );
+          });
+        } else {
+          $('#callDepartmentsDetail').text('None');
         }
+      }).fail(function(xhr) {
+        console.error('Error fetching departments:', xhr.responseText);
+        $('#callDepartmentsDetail').text('Error loading departments');
       });
+
+      // Fetch assigned users
+      const userIds = call?.call?.assignedTo || [];
+      if (userIds.length > 0) {
+        const userRequests = userIds.map(userId =>
+          $.ajax({
+            url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/user/${userId}`,
+            method: 'GET'
+          })
+        );
+        $.when.apply($, userRequests).then(function() {
+          const responses = userRequests.length === 1 ? [arguments] : Array.from(arguments);
+          const users = responses.map((response, index) => ({
+            userId: userIds[index],
+            username: response[0]?.user?.username || 'Unknown'
+          }));
+          $('#callAssignedToDetail').empty();
+          const validUsers = users.filter(user => user.username !== 'Unknown');
+          if (validUsers.length > 0) {
+            validUsers.forEach(user => {
+              $('#callAssignedToDetail').append(
+                `<span class="badge badge-primary">${user.username}</span>`
+              );
+            });
+          } else {
+            $('#callAssignedToDetail').text('None');
+          }
+          $('#callDetailModal').modal('show');
+          console.log('Modal shown for call ID:', callId);
+        }, function(xhr) {
+          console.error('Error fetching users:', xhr.responseText);
+          $('#callAssignedToDetail').text('Error loading users');
+          $('#callDetailModal').modal('show');
+          console.log('Modal shown for call ID:', callId);
+        });
+      } else {
+        $('#callAssignedToDetail').text('None');
+        $('#callDetailModal').modal('show');
+        console.log('Modal shown for call ID:', callId);
+      }
+    },
+    error: function(xhr) {
+      console.error('Error fetching call details:', xhr.responseText);
+      alert('Failed to load call details: ' + (xhr.responseJSON?.message || 'Unknown error'));
     }
+  });
+}
+
+// Update call details via AJAX
+function updateCall(callId, title, details) {
+  if (!callId || !title || !details) {
+    console.error('Invalid call data:', { callId, title, details });
+    alert('Please fill all required fields.');
+    return;
+  }
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/call/${callId}`,
+    method: 'PUT',
+    data: JSON.stringify({ title, details }),
+    contentType: 'application/json',
+    success: function(res) {
+      $(`#${callId}-description`).text(res?.call?.title || title);
+      $(`#${callId}-createdAt`).text(res?.call?.createdAtReadable || 'N/A');
+      loadAssignedCalls();
+      hideModal('callDetailModal');
+      alert('Call updated successfully.');
+    },
+    error: function(xhr) {
+      console.error('Error updating call:', xhr.responseText);
+      alert('Failed to update call: ' + (xhr.responseJSON?.message || 'Unknown error'));
+      hideModal('callDetailModal');
+    }
+  });
+}
+
+// Delete call via AJAX
+function deleteCall(callId) {
+  if (!callId) {
+    console.error('Invalid call ID:', callId);
+    alert('Invalid call ID.');
+    return;
+  }
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/call/${callId}`,
+    method: 'DELETE',
+    success: function() {
+      $(`#${callId}`).fadeOut(1, function() { $(this).remove(); });
+      loadAssignedCalls(); // Refresh call list
+      hideModal('callDetailModal');
+      alert('Call deleted successfully.');
+    },
+    error: function(xhr) {
+      console.error('Error deleting call:', xhr.responseText);
+      alert('Failed to delete call: ' + (xhr.responseJSON?.message || 'Unknown error'));
+      hideModal('callDetailModal');
+    }
+  });
+}
+
+// Handle update call form submission
+function handleUpdateCall() {
+  const callId = document.getElementById('callIdDetail').value;
+  const title = document.getElementById('callTitleDetail').value.trim();
+  const details = document.getElementById('callDetailsDetail').value.trim();
+  if (!callId || !title || !details) {
+    alert('Please fill all required fields.');
+    return;
+  }
+  updateCall(callId, title, details);
+}
+
+// Handle delete call form submission
+function handleDeleteCall() {
+  const callId = document.getElementById('callIdDetail').value;
+  if (!callId) {
+    console.error('Invalid call ID:', callId);
+    alert('Invalid call ID.');
+    return;
+  }
+  if (!window.confirm('Are you sure you want to delete this call? This action cannot be undone.')) {
+    console.log('Call deletion canceled by user');
+    return;
+  }
+  deleteCall(callId);
+}
 
     // Populate panic details in modal
     function populatePanicDetails(userId) {
