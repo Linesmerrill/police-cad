@@ -1,0 +1,768 @@
+$(document).ready(function () {
+  const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+  let currentItem = null;
+  let currentType = null;
+  let owner = null;
+  let licenses = [];
+  let vehicles = [];
+  let firearms = [];
+  let isOpeningModal = false;
+  let loadingStatuses = [];
+
+  // Show modal and fetch data
+  function showDetailsModal(item, type) {
+    if (isOpeningModal) {
+      console.log("Modal opening in progress, skipping.");
+      return;
+    }
+    isOpeningModal = true;
+
+    // Hide any open modals and clear state
+    $(".modal").modal("hide").removeData("bs.modal");
+
+    currentItem = item;
+    currentType = type;
+    $("#detailsTitle").text(`${type} Details`);
+    $("#detailsLoading").show();
+    $("#detailsContent").hide();
+
+    // Initialize loading statuses
+    loadingStatuses = [
+      {
+        id: "details",
+        label: `Looking up ${type.toLowerCase()} details`,
+        status: "pending",
+      },
+    ];
+    if (
+      currentType === "Vehicle" ||
+      currentType === "Firearm" ||
+      currentType === "License"
+    ) {
+      loadingStatuses.push({
+        id: "owner",
+        label: "Looking up registered owner",
+        status: "pending",
+      });
+    }
+    if (currentType === "Civilian") {
+      loadingStatuses.push(
+        { id: "licenses", label: "Looking up licenses", status: "pending" },
+        {
+          id: "vehicles",
+          label: "Looking up registered vehicles",
+          status: "pending",
+        },
+        {
+          id: "firearms",
+          label: "Looking up registered firearms",
+          status: "pending",
+        }
+      );
+    }
+    updateLoadingStatuses();
+
+    // Show modal after a delay
+    setTimeout(() => {
+      $("#detailsModal").modal({ backdrop: "static" });
+      fetchDetails();
+      isOpeningModal = false;
+    }, 100);
+  }
+
+  // Handle modal close
+  $("#detailsModal").on("hide.bs.modal", function () {
+    isOpeningModal = false;
+    $(this).removeData("bs.modal");
+    $("#detailsLoading").show();
+    $("#detailsContent").hide();
+    loadingStatuses = [];
+    currentItem = null;
+    currentType = null;
+    owner = null;
+    licenses = [];
+    vehicles = [];
+    firearms = [];
+    console.log("Details modal closed, state reset.");
+  });
+
+  // Update loading statuses in DOM
+  function updateLoadingStatuses() {
+    const $statuses = $("#loadingStatuses");
+    $statuses.empty();
+    loadingStatuses.forEach((status) => {
+      const iconHtml =
+        status.status === "pending"
+          ? '<span class="spinner-border spinner-border-sm"></span>'
+          : status.status === "success"
+          ? '<i class="fa fa-check"></i>'
+          : '<i class="fa fa-times"></i>';
+      $statuses.append(`
+        <div class="loading-item">
+          ${iconHtml}
+          <span>${status.label}</span>
+        </div>
+      `);
+    });
+  }
+
+  // Fetch item details and linked data
+  function fetchDetails() {
+    const itemId = currentItem._id;
+    let detailsUrl = "";
+    if (currentType === "Civilian") {
+      detailsUrl = `${API_URL}/api/v1/civilian/${itemId}`;
+    } else if (currentType === "Vehicle") {
+      detailsUrl = `${API_URL}/api/v1/vehicle/${itemId}`;
+    } else if (currentType === "Firearm") {
+      detailsUrl = `${API_URL}/api/v1/firearm/${itemId}`;
+    } else if (currentType === "License") {
+      detailsUrl = `${API_URL}/api/v1/license/${itemId}`;
+    }
+
+    $.ajax({
+      url: detailsUrl,
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      success: function (response) {
+        currentItem = response;
+        owner = null;
+        licenses = [];
+        vehicles = [];
+        firearms = [];
+        loadingStatuses.find((s) => s.id === "details").status = "success";
+        updateLoadingStatuses();
+
+        // Fetch owner for Vehicle/Firearm/License
+        const linkedCivID =
+          currentType === "Vehicle"
+            ? currentItem.vehicle?.linkedCivilianID
+            : currentType === "Firearm"
+            ? currentItem.firearm?.linkedCivilianID
+            : currentType === "License"
+            ? currentItem.license?.civilianID
+            : null;
+        const requests = [];
+        if (linkedCivID) {
+          requests.push(
+            $.ajax({
+              url: `${API_URL}/api/v1/civilian/${linkedCivID}`,
+              method: "GET",
+              success: function (ownerData) {
+                owner = ownerData;
+                loadingStatuses.find((s) => s.id === "owner").status =
+                  "success";
+                updateLoadingStatuses();
+              },
+              error: function (xhr) {
+                console.error("Error fetching owner:", xhr.responseText);
+                owner = null;
+                loadingStatuses.find((s) => s.id === "owner").status = "error";
+                updateLoadingStatuses();
+              },
+            })
+          );
+        } else if (
+          currentType === "Vehicle" ||
+          currentType === "Firearm" ||
+          currentType === "License"
+        ) {
+          loadingStatuses.find((s) => s.id === "owner").status = "success";
+          updateLoadingStatuses();
+        }
+
+        // Fetch linked items for Civilian
+        if (currentType === "Civilian") {
+          requests.push(
+            $.ajax({
+              url: `${API_URL}/api/v1/licenses/civilian/${itemId}?limit=3&page=1`,
+              method: "GET",
+              success: function (data) {
+                console.log("Licenses data:", data);
+                licenses = data.data || [];
+                loadingStatuses.find((s) => s.id === "licenses").status =
+                  "success";
+                updateLoadingStatuses();
+              },
+              error: function (xhr) {
+                console.error("Error fetching licenses:", xhr.responseText);
+                licenses = [];
+                loadingStatuses.find((s) => s.id === "licenses").status =
+                  "error";
+                updateLoadingStatuses();
+              },
+            }),
+            $.ajax({
+              url: `${API_URL}/api/v1/vehicles/registered-owner/${itemId}?limit=3&page=0`,
+              method: "GET",
+              success: function (data) {
+                console.log("Vehicles data:", data);
+                vehicles = data.vehicles || [];
+                loadingStatuses.find((s) => s.id === "vehicles").status =
+                  "success";
+                updateLoadingStatuses();
+              },
+              error: function (xhr) {
+                console.error("Error fetching vehicles:", xhr.responseText);
+                vehicles = [];
+                loadingStatuses.find((s) => s.id === "vehicles").status =
+                  "error";
+                updateLoadingStatuses();
+              },
+            }),
+            $.ajax({
+              url: `${API_URL}/api/v1/firearms/registered-owner/${itemId}?limit=3&page=0`,
+              method: "GET",
+              success: function (data) {
+                console.log("Firearms data:", data);
+                firearms = data.firearms || [];
+                loadingStatuses.find((s) => s.id === "firearms").status =
+                  "success";
+                updateLoadingStatuses();
+              },
+              error: function (xhr) {
+                console.error("Error fetching firearms:", xhr.responseText);
+                firearms = [];
+                loadingStatuses.find((s) => s.id === "firearms").status =
+                  "error";
+                updateLoadingStatuses();
+              },
+            })
+          );
+        }
+
+        $.when
+          .apply($, requests)
+          .done(function () {
+            renderDetails();
+            $("#detailsLoading").hide();
+            $("#detailsContent").show();
+          })
+          .fail(function () {
+            console.error("One or more detail requests failed");
+            renderDetails();
+            $("#detailsLoading").hide();
+            $("#detailsContent").show();
+          });
+      },
+      error: function (xhr) {
+        console.error("Error fetching details:", xhr.responseText);
+        loadingStatuses.find((s) => s.id === "details").status = "error";
+        updateLoadingStatuses();
+        alert(
+          "Failed to load details: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+        hideModal("detailsModal");
+        isOpeningModal = false;
+      },
+    });
+  }
+
+  // Update loading statuses in DOM
+  function updateLoadingStatuses() {
+    const $statuses = $("#loadingStatuses");
+    $statuses.empty();
+    loadingStatuses.forEach((status) => {
+      const iconHtml =
+        status.status === "pending"
+          ? '<span class="spinner-border spinner-border-sm"></span>'
+          : status.status === "success"
+          ? '<i class="fa fa-check"></i>'
+          : '<i class="fa fa-times"></i>';
+      $statuses.append(`
+        <div class="loading-item">
+          ${iconHtml}
+          <span>${status.label}</span>
+        </div>
+      `);
+    });
+  }
+
+  // Render details
+  function renderDetails() {
+    const data =
+      currentType === "Civilian"
+        ? currentItem.civilian
+        : currentType === "Vehicle"
+        ? currentItem.vehicle
+        : currentType === "Firearm"
+        ? currentItem.firearm
+        : currentItem.license;
+
+    // Image
+    const placeholderName =
+      currentType === "Civilian"
+        ? data.name || `${data.firstName || ""} ${data.lastName || ""}`
+        : currentType === "Vehicle"
+        ? `${data.make || ""} ${data.model || ""}`
+        : currentType === "Firearm"
+        ? `${data.name || ""}`
+        : data.type || "License";
+    $("#detailsImage").attr(
+      "src",
+      data.image ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(
+          placeholderName
+        )}&background=808080&color=fff&size=256`
+    );
+
+    // Details
+    let detailsHtml = "";
+    if (currentType === "Civilian") {
+      detailsHtml = `
+        <div class="mb-2"><span class="text-gray">Name:</span> ${
+          data.name || `${data.firstName || ""} ${data.lastName || ""}`
+        }</div>
+        <div class="mb-2"><span class="text-gray">Date of Birth:</span> ${
+          data.birthday || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Address:</span> ${
+          data.address || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Warrants:</span> ${
+          data.warrants?.length > 0
+            ? '<span class="text-danger">Active Warrant</span>'
+            : "None"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Parole:</span> ${
+          data.onParole ? '<span class="text-warning">On Parole</span>' : "None"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Probation:</span> ${
+          data.onProbation
+            ? '<span class="text-warning">On Probation</span>'
+            : "None"
+        }</div>
+      `;
+    } else if (currentType === "Vehicle") {
+      detailsHtml = `
+        <div class="mb-2"><span class="text-gray">VIN:</span> ${
+          data.vin?.toUpperCase() || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">License Plate:</span> ${
+          data.plate || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Make:</span> ${
+          data.make || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Model:</span> ${
+          data.model || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Year:</span> ${
+          data.year || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Stolen:</span> ${
+          data.isStolen ? '<span class="badge-stolen">Yes</span>' : "No"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Registered Owner:</span> ${
+          owner
+            ? `<a href="#" class="owner-link" data-id="${
+                owner.civilian._id
+              }" data-type="Civilian">${owner.civilian.name || "Unknown"}</a>`
+            : "No Owner"
+        }</div>
+      `;
+    } else if (currentType === "Firearm") {
+      detailsHtml = `
+        <div class="mb-2"><span class="text-gray">Serial Number:</span> ${
+          data.serialNumber || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Name:</span> ${
+          data.name || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Caliber:</span> ${
+          data.caliber || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Stolen:</span> ${
+          data.isStolen ? '<span class="badge-stolen">Yes</span>' : "No"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Registered Owner:</span> ${
+          owner
+            ? `<a href="#" class="owner-link" data-id="${
+                owner.civilian._id
+              }" data-type="Civilian">${owner.civilian.name || "Unknown"}</a>`
+            : "No Owner"
+        }</div>
+      `;
+    } else if (currentType === "License") {
+      detailsHtml = `
+        <div class="mb-2"><span class="text-gray">Type:</span> ${
+          data.type || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Status:</span> ${
+          data.status || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Expiration Date:</span> ${
+          data.expirationDate || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Notes:</span> ${
+          data.notes || "N/A"
+        }</div>
+      `;
+    }
+    $("#detailsInfo").html(detailsHtml);
+
+    // Linked Items (Civilian Only)
+    let linkedHtml = "";
+    if (currentType === "Civilian") {
+      linkedHtml += `
+        <h5 class="text-white mb-2">Licenses (${licenses.length})</h5>
+        ${
+          licenses.length > 0
+            ? licenses
+                .map(
+                  (license) => `
+          <div class="details-item" data-id="${
+            license._id
+          }" data-type="License" data-item='${JSON.stringify({
+                    _id: license._id,
+                    license: license.license,
+                  })}'>
+            <div class="d-flex justify-content-between">
+              <span>${license.license.type || "License"}</span>
+              <span>
+                ${
+                  license.license.status === "Revoked"
+                    ? '<span class="badge-status badge-revoked">Revoked</span>'
+                    : ""
+                }
+                ${
+                  license.license.expirationDate &&
+                  isExpired(license.license.expirationDate)
+                    ? '<span class="badge-status badge-expired">Expired</span>'
+                    : ""
+                }
+              </span>
+            </div>
+            <p class="text-gray mb-0">Status: ${
+              license.license.status || "N/A"
+            } | Exp: ${license.license.expirationDate || "N/A"}</p>
+            <p class="text-gray mb-0">${license.license.notes || ""}</p>
+          </div>
+        `
+                )
+                .join("")
+            : '<p class="text-gray">No licenses found.</p>'
+        }
+        ${
+          licenses.length > 3
+            ? `
+          <button class="btn btn-primary btn-block mt-2" onclick="alert('View All Licenses not implemented')">View All Licenses</button>
+        `
+            : ""
+        }
+
+        <h5 class="text-white mb-2 mt-4">Registered Vehicles</h5>
+        ${
+          vehicles.length > 0
+            ? vehicles
+                .map(
+                  (vehicle) => `
+          <div class="details-item" data-id="${
+            vehicle._id
+          }" data-type="Vehicle" data-item='${JSON.stringify({
+                    _id: vehicle._id,
+                    vehicle: vehicle.vehicle,
+                  })}'>
+            <div class="d-flex justify-content-between">
+              <span>${vehicle.vehicle.make || ""} ${
+                    vehicle.vehicle.model || ""
+                  } ${
+                    vehicle.vehicle.year ? "(" + vehicle.vehicle.year + ")" : ""
+                  }</span>
+              ${
+                vehicle.vehicle.isStolen
+                  ? '<span class="badge-status badge-stolen">Stolen</span>'
+                  : ""
+              }
+            </div>
+            <p class="text-gray mb-0">VIN: ${
+              vehicle.vehicle.vin || "N/A"
+            } | Plate: ${vehicle.vehicle.plate || "N/A"}</p>
+          </div>
+        `
+                )
+                .join("")
+            : '<p class="text-gray">No registered vehicles.</p>'
+        }
+        ${
+          vehicles.length > 3
+            ? `
+          <button class="btn btn-primary btn-block mt-2" onclick="alert('View All Vehicles not implemented')">View All Vehicles</button>
+        `
+            : ""
+        }
+
+        <h5 class="text-white mb-2 mt-4">Registered Firearms</h5>
+        ${
+          firearms.length > 0
+            ? firearms
+                .map(
+                  (firearm) => `
+          <div class="details-item" data-id="${
+            firearm._id
+          }" data-type="Firearm" data-item='${JSON.stringify({
+                    _id: firearm._id,
+                    firearm: firearm.firearm,
+                  })}'>
+            <div class="d-flex justify-content-between">
+              <span>${firearm.firearm.name || ""} ${
+                    firearm.firearm.caliber || ""
+                  }</span>
+              ${
+                firearm.firearm.isStolen
+                  ? '<span class="badge-status badge-stolen">Stolen</span>'
+                  : ""
+              }
+            </div>
+            <p class="text-gray mb-0">Serial: ${
+              firearm.firearm.serialNumber || "N/A"
+            }</p>
+          </div>
+        `
+                )
+                .join("")
+            : '<p class="text-gray">No registered firearms.</p>'
+        }
+        ${
+          firearms.length > 3
+            ? `
+          <button class="btn btn-primary btn-block mt-2" onclick="alert('View All Firearms not implemented')">View All Firearms</button>
+        `
+            : ""
+        }
+      `;
+    }
+    $("#linkedItems").html(linkedHtml);
+
+    // Criminal History and Arrest Reports (Placeholders)
+    $("#criminalHistory").html(
+      '<h5 class="text-white mb-2">Criminal History</h5><p class="text-gray">Not implemented yet.</p>'
+    );
+    $("#arrestReports").html(
+      '<h5 class="text-white mb-2">Arrest Reports</h5><p class="text-gray">Not implemented yet.</p>'
+    );
+
+    // Action Buttons
+    let actionsHtml = "";
+    if (currentType === "Vehicle" || currentType === "Firearm") {
+      actionsHtml += `
+        <button class="btn btn-warning btn-block mb-2 action-button" data-action="Report Stolen" data-stolen="${
+          data.isStolen
+        }">
+          ${data.isStolen ? "Mark as Not Stolen" : "Report Stolen"}
+        </button>
+      `;
+    } else if (currentType === "License") {
+      actionsHtml += `
+        <button class="btn ${
+          data.status === "Revoked" ? "btn-success" : "btn-danger"
+        } btn-block mb-2 action-button" data-action="Update License" data-license-id="${
+        currentItem._id
+      }" data-status="${data.status}">
+          ${data.status === "Revoked" ? "Reinstate License" : "Revoke License"}
+        </button>
+      `;
+    } else if (currentType === "Civilian") {
+      actionsHtml += `
+        <button class="btn btn-primary btn-block mb-2 action-button" data-action="Update On Probation">Update On Probation</button>
+        <button class="btn btn-primary btn-block mb-2 action-button" data-action="Update On Parole">Update On Parole</button>
+        <button class="btn btn-primary btn-block mb-2 action-button" data-action="Clear Warrant">Clear Warrant</button>
+        <button class="btn btn-primary btn-block mb-2 action-button" data-action="Issue Citation">Issue Citation</button>
+        <button class="btn btn-primary btn-block mb-2 action-button" data-action="Issue Warning">Issue Warning</button>
+        <button class="btn btn-danger btn-block mb-2 action-button" data-action="Arrest">Arrest</button>
+      `;
+    }
+    $("#actionButtons").html(actionsHtml);
+  }
+
+  // Check if license is expired
+  function isExpired(expirationDate) {
+    if (!expirationDate) return false;
+    try {
+      const [month, day, year] = expirationDate.split("/").map(Number);
+      const expDate = new Date(year, month - 1, day);
+      return expDate.getTime() <= Date.now();
+    } catch (error) {
+      console.warn("Invalid expiration date format:", expirationDate);
+      return false;
+    }
+  }
+
+  // Handle report stolen
+  function handleReportStolen(itemId, isStolen) {
+    if (
+      !confirm(
+        `Are you sure you want to ${
+          isStolen ? "mark as not stolen" : "report as stolen"
+        }?`
+      )
+    )
+      return;
+    const updateUrl =
+      currentType === "Vehicle"
+        ? `${API_URL}/api/v1/vehicle/${itemId}`
+        : `${API_URL}/api/v1/firearm/${itemId}`;
+    $.ajax({
+      url: updateUrl,
+      method: "PUT",
+      data: JSON.stringify({ isStolen: isStolen ? false : true }),
+      contentType: "application/json",
+      success: function () {
+        alert(
+          `Successfully ${
+            isStolen ? "marked as not stolen" : "reported as stolen"
+          }.`
+        );
+        fetchDetails();
+      },
+      error: function (xhr) {
+        console.error("Error updating stolen status:", xhr.responseText);
+        alert(
+          "Failed to update stolen status: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
+  // Handle update license
+  function handleUpdateLicense(licenseId, currentStatus) {
+    const newStatus = currentStatus === "Revoked" ? "Approved" : "Revoked";
+    if (
+      !confirm(
+        `Are you sure you want to ${newStatus.toLowerCase()} this license?`
+      )
+    )
+      return;
+    $.ajax({
+      url: `${API_URL}/api/v1/license/${licenseId}`,
+      method: "PUT",
+      data: JSON.stringify({ status: newStatus }),
+      contentType: "application/json",
+      success: function () {
+        alert(`License successfully ${newStatus.toLowerCase()}.`);
+        fetchDetails();
+      },
+      error: function (xhr) {
+        console.error("Error updating license:", xhr.responseText);
+        alert(
+          "Failed to update license: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
+  // Update civilian status
+  function updateCivilianStatus(action) {
+    let updateData = {};
+    let confirmMessage = "";
+    const civilianId = currentItem._id;
+
+    if (action === "Update On Probation") {
+      const newStatus = !currentItem.civilian.onProbation;
+      updateData = { onProbation: newStatus };
+      confirmMessage = `Are you sure you want to set this civilian's status to ${
+        newStatus ? "On probation" : "No longer on probation"
+      }?`;
+    } else if (action === "Update On Parole") {
+      const newStatus = !currentItem.civilian.onParole;
+      updateData = { onParole: newStatus };
+      confirmMessage = `Are you sure you want to set this civilian's status to ${
+        newStatus ? "On parole" : "No longer on parole"
+      }?`;
+    } else if (action === "Clear Warrant") {
+      updateData = { warrants: [] };
+      confirmMessage = "Are you sure you want to clear the active warrant?";
+    }
+
+    if (!confirm(confirmMessage)) return;
+
+    $.ajax({
+      url: `${API_URL}/api/v1/civilian/${civilianId}`,
+      method: "PUT",
+      data: JSON.stringify(updateData),
+      contentType: "application/json",
+      success: function (response) {
+        alert("Status updated successfully.");
+        currentItem = response;
+        fetchDetails();
+      },
+      error: function (xhr) {
+        console.error("Error updating civilian status:", xhr.responseText);
+        alert(
+          "Failed to update status: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
+  // Open existing action modals
+  function openActionModal(action) {
+    if (
+      ["Update On Probation", "Update On Parole", "Clear Warrant"].includes(
+        action
+      )
+    ) {
+      updateCivilianStatus(action);
+    } else if (action === "Issue Citation") {
+      $("#ticketModal").modal("show");
+      $("#ticket-civ-first-name").val(currentItem.civilian?.firstName || "");
+      $("#ticket-civ-last-name").val(currentItem.civilian?.lastName || "");
+      $("#ticket-civ-dob").val(currentItem.civilian?.birthday || "");
+      $("#civID").val(currentItem._id);
+    } else if (action === "Issue Warning") {
+      $("#warningModal").modal("show");
+      $("#warning-civ-first-name").val(currentItem.civilian?.firstName || "");
+      $("#warning-civ-last-name").val(currentItem.civilian?.lastName || "");
+      $("#warning-civ-dob").val(currentItem.civilian?.birthday || "");
+      $("#civIDWarning").val(currentItem._id);
+    } else if (action === "Arrest") {
+      $("#arrestModal").modal("show");
+      $("#arrest-civ-first-name").val(currentItem.civilian?.firstName || "");
+      $("#arrest-civ-last-name").val(currentItem.civilian?.lastName || "");
+      $("#arrest-civ-dob").val(currentItem.civilian?.birthday || "");
+      $("#civIDArrest").val(currentItem._id);
+    } else if (action === "Update License") {
+      const licenseId = $(this).data("license-id");
+      const currentStatus = $(this).data("status");
+      handleUpdateLicense(licenseId, currentStatus);
+    } else if (action === "Report Stolen") {
+      const itemId = currentItem._id;
+      const isStolen = $(this).data("stolen");
+      handleReportStolen(itemId, isStolen);
+    }
+  }
+
+  // Add click handler for details items
+  $(document).on("click", ".details-item", function () {
+    const id = $(this).data("id");
+    const type = $(this).data("type");
+    const item = $(this).data("item");
+    if (id && type && item) {
+      showDetailsModal(item, type);
+    }
+  });
+
+  // Add click handler for owner links
+  $(document).on("click", ".owner-link", function (e) {
+    e.preventDefault();
+    const id = $(this).data("id");
+    const type = $(this).data("type");
+    if (id && type) {
+      const item = { _id: id };
+      showDetailsModal(item, type);
+    }
+  });
+
+  // Add click handler for action buttons
+  $(document).on("click", ".action-button", function () {
+    const action = $(this).data("action");
+    openActionModal.call(this, action);
+  });
+
+  // Expose showDetailsModal globally
+  window.showDetailsModal = showDetailsModal;
+});

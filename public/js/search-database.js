@@ -251,15 +251,15 @@ $(document).ready(function () {
     }
 
     return `
-      <div class="search-item" data-id="${id}" onclick="selectSearchItem('${id}', '${recentSearchQuery.replace(/'/g, "\\'")}')">
-        <div class="d-flex justify-content-between align-items-center">
-          <span>${title}</span>
-          ${isStolen ? '<span class="badge-stolen">Stolen</span>' : ""}
-        </div>
-        <p class="text-gray mb-0">${subtitle}</p>
-        ${owner ? `<p class="text-gray mb-0">${owner}</p>` : ""}
+    <div class="search-item" data-id="${id}" data-query="${recentSearchQuery.replace(/'/g, "\\'")}">
+      <div class="d-flex justify-content-between align-items-center">
+        <span>${title}</span>
+        ${isStolen ? '<span class="badge-stolen">Stolen</span>' : ""}
       </div>
-    `;
+      <p class="text-gray mb-0">${subtitle}</p>
+      ${owner ? `<p class="text-gray mb-0">${owner}</p>` : ""}
+    </div>
+  `;
   }
 
   // Handle item selection
@@ -274,18 +274,16 @@ $(document).ready(function () {
     renderResults();
     saveRecentSearch(recentSearchQuery, searchType);
 
-    // Navigate to detail view
-    if (searchType === "Civilian") {
-      populateCivilianDetails(item);
-      $("#24").modal("show");
-    } else if (searchType === "Vehicle") {
-      populateVehicleDetails(item);
-      $("#viewVeh").modal("show");
-    } else if (searchType === "Firearm") {
-      populateFirearmDetails(item);
-      $("#viewFirearm").modal("show");
-    }
+    // Open details modal
+    showDetailsModal(item, searchType);
   }
+
+  // Add click handler for search items
+  $(document).on("click", ".search-item", function () {
+    const id = $(this).data("id");
+    const query = $(this).data("query");
+    selectSearchItem(id, query);
+  });
 
   // Render recent searches
   function renderRecentSearches() {
