@@ -453,18 +453,53 @@ module.exports = function (app, passport, server) {
     return res.render("dispatch-dashboard");
   });
 
+  // app.js
   app.post("/select-department", authCheck, (req, res) => {
     const { departmentId, redirect } = req.body;
+    const communityId = req.user?.user?.lastAccessedCommunity?.communityID;
+
     if (!departmentId || departmentId === "undefined") {
-      return res
-        .status(400)
-        .json({ message: "Valid department ID is required" });
+      req.app.locals.specialContext = "errorNoDepartment";
+      return res.redirect(redirect || "/community-dashboard");
     }
-    if (!redirect) {
-      return res.status(400).json({ message: "Redirect URL is required" });
+    if (!communityId) {
+      req.app.locals.specialContext = "errorNoCommunity";
+      return res.redirect(redirect || "/community-dashboard");
     }
-    req.session.departmentId = departmentId;
-    res.redirect(redirect);
+
+    // Validate department belongs to community
+    require("request")(
+      {
+        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/departments`,
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      },
+      (error, response, body) => {
+        if (error || response.statusCode !== 200) {
+          console.error("Error validating department:", error || body);
+          req.app.locals.specialContext = "errorInvalidDepartment";
+          return res.redirect(redirect || "/community-dashboard");
+        }
+
+        try {
+          const data = JSON.parse(body);
+          const department = data.departments.find(
+            (d) => d._id === departmentId
+          );
+          if (!department) {
+            req.app.locals.specialContext = "errorInvalidDepartment";
+            return res.redirect(redirect || "/community-dashboard");
+          }
+
+          req.session.departmentId = departmentId;
+          res.redirect(redirect);
+        } catch (err) {
+          console.error("Error parsing departments:", err);
+          req.app.locals.specialContext = "errorInvalidDepartment";
+          return res.redirect(redirect || "/community-dashboard");
+        }
+      }
+    );
   });
 
   app.get("/firearm-search", auth, function (req, res) {
