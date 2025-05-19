@@ -8,14 +8,21 @@ $(document).ready(function () {
   let firearms = [];
   let isOpeningModal = false;
   let loadingStatuses = [];
+  let modalHistory = []; // Navigation stack
 
   // Show modal and fetch data
-  function showDetailsModal(item, type) {
+  function showDetailsModal(item, type, isFromLink = false) {
     if (isOpeningModal) {
-      console.log("Modal opening in progress, skipping.");
       return;
     }
     isOpeningModal = true;
+
+    // Clear history if opening from outside (e.g., search)
+    if (!isFromLink) {
+      modalHistory = [];
+    }
+    // Push current item to history
+    modalHistory.push({ item, type });
 
     // Hide any open modals and clear state
     $(".modal").modal("hide").removeData("bs.modal");
@@ -70,10 +77,22 @@ $(document).ready(function () {
     }, 100);
   }
 
+  // Go back to previous item in history
+  function goBack() {
+    if (modalHistory.length > 1) {
+      modalHistory.pop(); // Remove current item
+      const previous = modalHistory[modalHistory.length - 1];
+      showDetailsModal(previous.item, previous.type, true);
+    } else {
+      hideModal("detailsModal");
+    }
+  }
+
   // Handle modal close
   $("#detailsModal").on("hide.bs.modal", function () {
     isOpeningModal = false;
     $(this).removeData("bs.modal");
+    modalHistory = []; // Clear history on full close
     $("#detailsLoading").show();
     $("#detailsContent").hide();
     loadingStatuses = [];
@@ -83,7 +102,6 @@ $(document).ready(function () {
     licenses = [];
     vehicles = [];
     firearms = [];
-    console.log("Details modal closed, state reset.");
   });
 
   // Update loading statuses in DOM
@@ -178,7 +196,6 @@ $(document).ready(function () {
               url: `${API_URL}/api/v1/licenses/civilian/${itemId}?limit=3&page=1`,
               method: "GET",
               success: function (data) {
-                console.log("Licenses data:", data);
                 licenses = data.data || [];
                 loadingStatuses.find((s) => s.id === "licenses").status =
                   "success";
@@ -196,7 +213,6 @@ $(document).ready(function () {
               url: `${API_URL}/api/v1/vehicles/registered-owner/${itemId}?limit=3&page=0`,
               method: "GET",
               success: function (data) {
-                console.log("Vehicles data:", data);
                 vehicles = data.vehicles || [];
                 loadingStatuses.find((s) => s.id === "vehicles").status =
                   "success";
@@ -214,7 +230,6 @@ $(document).ready(function () {
               url: `${API_URL}/api/v1/firearms/registered-owner/${itemId}?limit=3&page=0`,
               method: "GET",
               success: function (data) {
-                console.log("Firearms data:", data);
                 firearms = data.firearms || [];
                 loadingStatuses.find((s) => s.id === "firearms").status =
                   "success";
@@ -742,7 +757,7 @@ $(document).ready(function () {
     const type = $(this).data("type");
     const item = $(this).data("item");
     if (id && type && item) {
-      showDetailsModal(item, type);
+      showDetailsModal(item, type, true);
     }
   });
 
@@ -753,7 +768,7 @@ $(document).ready(function () {
     const type = $(this).data("type");
     if (id && type) {
       const item = { _id: id };
-      showDetailsModal(item, type);
+      showDetailsModal(item, type, true);
     }
   });
 
@@ -763,6 +778,7 @@ $(document).ready(function () {
     openActionModal.call(this, action);
   });
 
-  // Expose showDetailsModal globally
+  // Expose showDetailsModal and goBack globally
   window.showDetailsModal = showDetailsModal;
+  window.goBack = goBack;
 });

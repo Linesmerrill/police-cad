@@ -528,7 +528,6 @@ function populateCivSocketDetails(res) {
   $("#civilian-details-loading").removeClass("hide").addClass("show");
   $("#civilian-details").removeClass("show").addClass("hide");
   // loadDriversLicenseSocket(res);
-  console.log(res);
   var name = res.civilian.name;
   var lastName = res.civilian.lastName;
   const formattedBirthday = convertToYYYYMMDD(res.civilian.birthday);

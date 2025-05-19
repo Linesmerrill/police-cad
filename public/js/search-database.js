@@ -84,7 +84,6 @@ $(document).ready(function () {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       success: function (response) {
-        console.log("Search results received:", response);
         let results = response || [];
         if (searchType === "Civilian") {
           results = response || [];
@@ -117,7 +116,6 @@ $(document).ready(function () {
   // Fetch owner names
   function fetchOwnerNames(items, callback) {
     const newOwnerCache = { ...ownerCache };
-    console.log(`These are the items: ${JSON.stringify(items)}`);
     const ajaxRequests = items
       .map((item) => {
         let linkedCivID =
@@ -405,7 +403,6 @@ $(document).ready(function () {
   // Placeholder detail population functions
   function populateCivilianDetails(item) {
     // Implement based on #viewCiv modal fields
-    console.log("Populate civilian:", item);
     $("#civ-first-name").val(item.civilian?.firstName || "");
     $("#civ-last-name").val(item.civilian?.lastName || "");
     $("#civ-dob").val(item.civilian?.birthday || "");
@@ -414,7 +411,6 @@ $(document).ready(function () {
 
   function populateVehicleDetails(item) {
     // Implement based on #viewVeh modal fields
-    console.log("Populate vehicle:", item);
     $("#vinVeh").val(item.vehicle?.vin || "");
     $("#roVeh").val(ownerCache[item.vehicle?.linkedCivilianID] || "");
     $("#plateVeh").val(item.vehicle?.plate || "");
@@ -428,7 +424,6 @@ $(document).ready(function () {
 
   function populateFirearmDetails(item) {
     // Implement based on #viewFirearm modal fields
-    console.log("Populate firearm:", item);
     // Example: $('#serialNum').val(item.firearm?.serialNumber || '');
   }
 });

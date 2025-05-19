@@ -77,8 +77,8 @@ function nameSearchPoliceForm() {
 }
 
 //add the click event listener to the button so it can be clicked more than once
-var lookupNameButton = document.getElementById("lookupButton");
-lookupNameButton.addEventListener("click", lookupName);
+// var lookupNameButton = document.getElementById("lookupButton");
+// lookupNameButton.addEventListener("click", lookupName);
 
 function lookupName() {
   lookupName = $("#roVeh").val();

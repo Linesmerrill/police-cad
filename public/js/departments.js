@@ -10,10 +10,8 @@ function fetchAndRenderDepartments() {
       let html = "";
 
       // Debug departments data
-      console.log("Departments:", JSON.stringify(departments));
 
       departments.forEach((dept) => {
-        console.log("Fetch departments", dept);
         const template = dept?.template?.name;
         const name = dept?.name;
         const departmentId = dept?._id;
