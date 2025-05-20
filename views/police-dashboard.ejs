@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="static/css/style.css">
   <link rel="stylesheet" href="/static/css/styles.css" />
   <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
   <script nomodule="" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>
   <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
   <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900" rel="stylesheet">
@@ -70,6 +71,22 @@
     cursor: not-allowed;
     pointer-events: none;
   }
+  .select2-container--open {
+    z-index: 9999 !important; /* Ensure dropdown is above modal (z-index 9000) */
+  }
+  .select2-dropdown {
+    z-index: 9999 !important;
+  }
+  .select2 {
+    color: black;
+  }
+  .select2-results__group {
+    color: blue;
+  }
+  .select2-results__options {
+    color: black;
+  }
+
 </style>
 </head>
 
@@ -712,7 +729,22 @@
               </div>
 
               <!-- Multiple Checkboxes (inline) -->
-              <div class="form-group required">
+               <div class="form-group required">
+  <label class="col-md-4 control-label" for="fines">Fines</label>
+  <div class="col-md-8">
+    <select id="ticket-select" name="fines" class="form-control" multiple required>
+      <optgroup label="Crime not listed">
+        <option id="ticket-option-other">Other</option>
+      </optgroup>
+    </select>
+    <script>
+      $('#ticket-select').on('change', function() {
+        console.log('Ticket select options:', $(this).html());
+      });
+    </script>
+  </div>
+</div>
+              <!-- <div class="form-group required">
                 <label class="col-md-4 control-label" for="fines">Fines</label>
                 <div class="col-md-4">
 
@@ -723,7 +755,7 @@
                       </optgroup>
                   </select>
                 </div>
-              </div>
+              </div> -->
 
               <div id="ticket-other-div" class="form-group required" style="display:none">
                 <label class="col-md-4 control-label" for="ticket-other">Other</label>
@@ -1569,6 +1601,7 @@
  <script src="/static/js/details-modal.js"></script>
 <script src="/static/js/bootstrap.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <script>if (window.module) module = window.module;</script>
 <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
@@ -2552,15 +2585,15 @@ function showBoloModal() {
         }
       });
 
-      $('#ticket-select').change(function (e) {
-        var selected = $(e.target).val();
-        let total = 0;
-        selected.forEach(val => {
-          let subVal = val.substring(2);
-          total += parseInt(subVal);
-        });
-        $('#amount').val(parseInt(total));
-      });
+      // $('#ticket-select').change(function (e) {
+      //   var selected = $(e.target).val();
+      //   let total = 0;
+      //   selected.forEach(val => {
+      //     let subVal = val.substring(2);
+      //     total += parseInt(subVal);
+      //   });
+      //   $('#amount').val(parseInt(total));
+      // });
 
       $("#submitTicket").on('click', function () {
         $('#crimeList').val($("#ticket-select").find("option:selected").text());
@@ -2637,15 +2670,15 @@ function showBoloModal() {
       }
     })
 
-    $('#ticket-select').change(function (e) {
-      var selected=$(e.target).val();
-      let total=0
-      selected.forEach(val => {
-        let subVal=val.substring(2)
-        total+=parseInt(subVal)
-      })
-      $('#amount').val(parseInt(total))
-    })
+    // $('#ticket-select').change(function (e) {
+    //   var selected=$(e.target).val();
+    //   let total=0
+    //   selected.forEach(val => {
+    //     let subVal=val.substring(2)
+    //     total+=parseInt(subVal)
+    //   })
+    //   $('#amount').val(parseInt(total))
+    // })
 
     $("#submitTicket").on('click', function () {
       $('#crimeList').val($("#ticket-select").find("option:selected").text())

@@ -937,6 +937,108 @@ $(document).ready(function () {
       $("#ticket-civ-action-type").text("Citation");
       $("#ticket-civ-date").text(new Date().toLocaleDateString());
       $("#civID").val(currentItem._id);
+      $("#ticket-select").val([]);
+      $("#ticket-other").val("");
+      $("#amount").val("");
+
+      // Fetch community fines
+      const communityId = dbUser.user.lastAccessedCommunity.communityID;
+      $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}`,
+        method: "GET",
+        success: function (data) {
+          console.log("Community fines data:", JSON.stringify(data, null, 2));
+          const communityFines = data?.community?.fines?.categories || [];
+          console.log("Community fines array:", communityFines);
+          const $select = $("#ticket-select");
+          $select.find('optgroup:not([label="Crime not listed"])').remove();
+          if (communityFines.length === 0) {
+            console.log("No fines categories found, using fallback");
+            $select.prepend(
+              '<optgroup label="No fines available"><option disabled>No fines found</option></optgroup>'
+            );
+          } else {
+            communityFines.forEach((category) => {
+              console.log("Processing category:", category.name, category);
+              const $optgroup = $(
+                `<optgroup label="${category.name || "Unknown"}"></optgroup>`
+              );
+              (category.fines || []).forEach((fine) => {
+                console.log("Adding fine:", fine.name, fine.amount);
+                $optgroup.append(
+                  `<option value="${fine.name}" data-amount="${fine.amount}">${fine.name} ($${fine.amount})</option>`
+                );
+              });
+              $select.prepend($optgroup);
+            });
+          }
+          console.log("Final select HTML:", $select.html());
+          // Initialize Select2
+          $select.select2({
+            placeholder: "Select fines...",
+            allowClear: true,
+            width: "100%",
+            dropdownParent: $("#ticketModal"),
+          });
+          // Update total amount on fine selection
+          $select.on("change", function () {
+            const selectedFines = $(this).val() || [];
+            const total = selectedFines
+              .filter((fine) => fine !== "Other")
+              .reduce((sum, fine) => {
+                const amount =
+                  parseInt(
+                    $(`#ticket-select option[value="${fine}"]`).data("amount")
+                  ) || 0;
+                return sum + amount;
+              }, 0);
+            $("#amount").val(total);
+            console.log(
+              "Selected fines:",
+              selectedFines,
+              "Total amount:",
+              total
+            );
+          });
+        },
+        error: function (xhr) {
+          console.error("Error fetching community fines:", xhr.responseText);
+          alert(
+            "Failed to load fines: " +
+              (xhr.responseJSON?.message || "Unknown error")
+          );
+          const $select = $("#ticket-select");
+          $select.find('optgroup:not([label="Crime not listed"])').remove();
+          $select.prepend(
+            '<optgroup label="Error"><option disabled>Failed to load fines</option></optgroup>'
+          );
+          $select.select2({
+            placeholder: "Select fines...",
+            allowClear: true,
+            width: "100%",
+            dropdownParent: $("#ticketModal"),
+          });
+          $select.on("change", function () {
+            const selectedFines = $(this).val() || [];
+            const total = selectedFines
+              .filter((fine) => fine !== "Other")
+              .reduce((sum, fine) => {
+                const amount =
+                  parseInt(
+                    $(`#ticket-select option[value="${fine}"]`).data("amount")
+                  ) || 0;
+                return sum + amount;
+              }, 0);
+            $("#amount").val(total);
+            console.log(
+              "Selected fines:",
+              selectedFines,
+              "Total amount:",
+              total
+            );
+          });
+        },
+      });
     } else if (action === "Issue Warning") {
       $("#warningModal").modal("show");
       $("#warning-civ-first-name").text(currentItem.civilian?.name || "");
@@ -1077,22 +1179,22 @@ $(document).ready(function () {
     const currentDate = new Date().toISOString().split("T")[0];
     const selectedFines = $("#ticket-select").val() || [];
     const otherFine = $("#ticket-other").val();
-    const fineAmount = parseInt($("#amount").val()) || 0;
     const fines = selectedFines
       .filter((fine) => fine !== "Other")
-      .map((fine) => ({
-        fineType: fine,
-        fineAmount:
-          fineAmount /
-          (selectedFines.includes("Other")
-            ? selectedFines.length
-            : selectedFines.length + 1),
-        category: "Other",
-      }));
+      .map((fine) => {
+        const $option = $(`#ticket-select option[value="${fine}"]`);
+        const amount = parseInt($option.data("amount")) || 0;
+        return {
+          fineType: fine,
+          fineAmount: amount,
+          category: $option.closest("optgroup").attr("label") || "Other",
+        };
+      });
     if (selectedFines.includes("Other") && otherFine) {
+      const otherAmount = parseInt($("#amount").val()) || 0;
       fines.push({
         fineType: otherFine,
-        fineAmount: fineAmount / (selectedFines.length + 1),
+        fineAmount: otherAmount,
         category: "Other",
       });
     }
