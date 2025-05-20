@@ -91,10 +91,13 @@ $(document).ready(function () {
 
     // Show modal after cleanup
     setTimeout(() => {
+      $("body").removeClass("modal-open");
+      $(".modal-backdrop").remove();
       $("#detailsModal").modal({ backdrop: "static", keyboard: true });
       fetchDetails();
       isOpeningModal = false;
-    }, 200); // Increased delay for smoother transition
+      console.log("Details modal opened, state:", $("#detailsModal").data());
+    }, 300); // Increased delay for stability
   }
 
   // Go back to previous item in history
@@ -127,6 +130,13 @@ $(document).ready(function () {
     vehicles = [];
     firearms = [];
     console.log("Details modal closed, state reset.");
+    // Ensure no modal state lingers
+    setTimeout(() => {
+      if ($(".modal:visible").length === 0) {
+        $("body").removeClass("modal-open");
+        $(".modal-backdrop").remove();
+      }
+    }, 300);
   });
 
   // Update loading statuses in DOM

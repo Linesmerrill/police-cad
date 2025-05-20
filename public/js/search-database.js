@@ -379,10 +379,15 @@ $(document).ready(function () {
     fetchSearchResults(query, false);
   });
 
-  $("#searchDatabaseModal").on("show.bs.modal", function (e) {
-    const type = $(e.relatedTarget).data("search-type") || "Civilian";
-    setSearchType(type);
-    loadRecentSearches();
+  // Add to $(document).ready in search-database.js
+  $("#searchDatabaseModal").on("show.bs.modal", function () {
+    $("body").removeClass("modal-open");
+    $(".modal-backdrop").remove();
+    $(".modal")
+      .not("#searchDatabaseModal")
+      .modal("hide")
+      .removeData("bs.modal");
+    console.log("Search modal opening, cleaned up other modals.");
   });
 
   // Set search type and reset state
