@@ -19,7 +19,6 @@ $(document).ready(function () {
   // Show modal and fetch data
   function showDetailsModal(item, type, isFromLink = false) {
     if (isOpeningModal) {
-      console.log("Modal opening in progress, skipping.");
       return;
     }
     isOpeningModal = true;
@@ -96,7 +95,6 @@ $(document).ready(function () {
       $("#detailsModal").modal({ backdrop: "static", keyboard: true });
       fetchDetails();
       isOpeningModal = false;
-      console.log("Details modal opened, state:", $("#detailsModal").data());
     }, 300); // Increased delay for stability
   }
 
@@ -129,7 +127,6 @@ $(document).ready(function () {
     licenses = [];
     vehicles = [];
     firearms = [];
-    console.log("Details modal closed, state reset.");
     // Ensure no modal state lingers
     setTimeout(() => {
       if ($(".modal:visible").length === 0) {
@@ -290,8 +287,6 @@ $(document).ready(function () {
               url: `${API_URL}/api/v1/arrest-report/arrestee/${itemId}?limit=3&page=0`,
               method: "GET",
               success: function (data) {
-                console.log("civilianId", itemId);
-                console.log("Fetch Details arrest reports", data);
                 arrestReports = data.data || [];
                 totalArrestReports = data.totalCount || 0;
                 currentArrestPage = 1;
@@ -352,7 +347,6 @@ $(document).ready(function () {
       url: `${API_URL}/api/v1/arrest-report/arrestee/${itemId}?limit=3&page=${page}`,
       method: "GET",
       success: function (data) {
-        console.log("fetchArrestReports", data);
         arrestReports = data.data || [];
         totalArrestReports = data.totalCount || 0;
         currentArrestPage = page;
@@ -863,7 +857,6 @@ $(document).ready(function () {
       )
     )
       return;
-    console.log("Updating license:", licenseId, newStatus);
     $.ajax({
       url: `${API_URL}/api/v1/license/${licenseId}`,
       method: "PUT",
@@ -888,7 +881,6 @@ $(document).ready(function () {
     let updateData = {};
     let confirmMessage = "";
     const civilianId = currentItem._id;
-    console.log("Updating civilian:", civilianId, updateData, currentItem);
 
     if (action === "Update On Probation") {
       const newStatus = !currentItem.civilian.onProbation;
@@ -966,24 +958,19 @@ $(document).ready(function () {
         url: `${API_URL}/api/v1/community/${communityId}`,
         method: "GET",
         success: function (data) {
-          console.log("Community fines data:", JSON.stringify(data, null, 2));
           const communityFines = data?.community?.fines?.categories || [];
-          console.log("Community fines array:", communityFines);
           const $select = $("#ticket-select");
           $select.find('optgroup:not([label="Crime not listed"])').remove();
           if (communityFines.length === 0) {
-            console.log("No fines categories found, using fallback");
             $select.prepend(
               '<optgroup label="No fines available"><option disabled>No fines found</option></optgroup>'
             );
           } else {
             communityFines.forEach((category) => {
-              console.log("Processing category:", category.name, category);
               const $optgroup = $(
                 `<optgroup label="${category.name || "Unknown"}"></optgroup>`
               );
               (category.fines || []).forEach((fine) => {
-                console.log("Adding fine:", fine.name, fine.amount);
                 $optgroup.append(
                   `<option value="${fine.name}" data-amount="${fine.amount}">${fine.name} ($${fine.amount})</option>`
                 );
@@ -991,7 +978,6 @@ $(document).ready(function () {
               $select.prepend($optgroup);
             });
           }
-          console.log("Final select HTML:", $select.html());
           // Initialize Select2
           $select.select2({
             placeholder: "Select fines...",
@@ -1012,12 +998,6 @@ $(document).ready(function () {
                 return sum + amount;
               }, 0);
             $("#amount").val(total);
-            console.log(
-              "Selected fines:",
-              selectedFines,
-              "Total amount:",
-              total
-            );
           });
         },
         error: function (xhr) {
@@ -1049,12 +1029,6 @@ $(document).ready(function () {
                 return sum + amount;
               }, 0);
             $("#amount").val(total);
-            console.log(
-              "Selected fines:",
-              selectedFines,
-              "Total amount:",
-              total
-            );
           });
         },
       });

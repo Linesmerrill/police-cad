@@ -387,7 +387,6 @@ $(document).ready(function () {
       .not("#searchDatabaseModal")
       .modal("hide")
       .removeData("bs.modal");
-    console.log("Search modal opening, cleaned up other modals.");
   });
 
   // Set search type and reset state
@@ -431,4 +430,49 @@ $(document).ready(function () {
     // Implement based on #viewFirearm modal fields
     // Example: $('#serialNum').val(item.firearm?.serialNumber || '');
   }
+
+  function showSearchDatabaseModal(value) {
+    // Map searchType to button IDs
+    const buttonMap = {
+      Civilian: "#searchTypeCivilian",
+      Vehicle: "#searchTypeVehicle",
+      Firearm: "#searchTypeFirearm",
+    };
+
+    // Set search type input
+    $("#searchType").val(value);
+
+    // Clean up modal state
+    $("body").removeClass("modal-open");
+    $(".modal-backdrop").remove();
+    $(".modal")
+      .not("#searchDatabaseModal")
+      .modal("hide")
+      .removeData("bs.modal");
+
+    // Update button states
+    const buttonId = buttonMap[value];
+    if (buttonId) {
+      $(".search-type-btn").removeClass("active");
+      $(buttonId).addClass("active");
+      // Trigger click to update UI (if needed)
+      $(buttonId).trigger("click");
+    } else {
+      console.warn("No button mapped for searchType:", value);
+    }
+
+    // Show modal
+    $("#searchDatabaseModal")
+      .modal("show")
+      .one("shown.bs.modal", function () {});
+  }
+
+  $(".search-type-btn").on("click", function () {
+    const type = $(this).data("type");
+    $(".search-type-btn").removeClass("active");
+    $(this).addClass("active");
+    $("#searchType").val(type);
+  });
+
+  window.showSearchDatabaseModal = showSearchDatabaseModal;
 });
