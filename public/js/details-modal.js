@@ -357,6 +357,12 @@ $(document).ready(function () {
         <div class="mb-2"><span class="text-gray">License Plate:</span> ${
           data.plate || "N/A"
         }</div>
+        <div class="mb-2"><span class="text-gray">License Plate State:</span> ${
+          data.licensePlateState || "N/A"
+        }</div>
+        <div class="mb-2"><span class="text-gray">Type:</span> ${
+          data.type || "N/A"
+        }</div>
         <div class="mb-2"><span class="text-gray">Make:</span> ${
           data.make || "N/A"
         }</div>
@@ -372,7 +378,7 @@ $(document).ready(function () {
         <div class="mb-2"><span class="text-gray">Registered Owner:</span> ${
           owner
             ? `<a href="#" class="owner-link" data-id="${
-                owner.civilian._id
+                data.linkedCivilianID
               }" data-type="Civilian">${owner.civilian.name || "Unknown"}</a>`
             : "No Owner"
         }</div>
@@ -394,7 +400,7 @@ $(document).ready(function () {
         <div class="mb-2"><span class="text-gray">Registered Owner:</span> ${
           owner
             ? `<a href="#" class="owner-link" data-id="${
-                owner.civilian._id
+                data.linkedCivilianID
               }" data-type="Civilian">${owner.civilian.name || "Unknown"}</a>`
             : "No Owner"
         }</div>
@@ -582,7 +588,7 @@ $(document).ready(function () {
       actionsHtml += `
         <button class="btn btn-primary btn-block mb-2 action-button" data-action="Update On Probation">Update On Probation</button>
         <button class="btn btn-primary btn-block mb-2 action-button" data-action="Update On Parole">Update On Parole</button>
-        <button class="btn btn-primary btn-block mb-2 action-button" data-action="Clear Warrant">Clear Warrant</button>
+        <button class="btn btn-primary btn-block mb-2 action-button" data-action="Update Warrant">Update Warrant</button>
         <button class="btn btn-primary btn-block mb-2 action-button" data-action="Issue Citation">Issue Citation</button>
         <button class="btn btn-primary btn-block mb-2 action-button" data-action="Issue Warning">Issue Warning</button>
         <button class="btn btn-danger btn-block mb-2 action-button" data-action="Arrest">Arrest</button>
@@ -650,6 +656,7 @@ $(document).ready(function () {
       )
     )
       return;
+    console.log("Updating license:", licenseId, newStatus);
     $.ajax({
       url: `${API_URL}/api/v1/license/${licenseId}`,
       method: "PUT",
@@ -674,6 +681,7 @@ $(document).ready(function () {
     let updateData = {};
     let confirmMessage = "";
     const civilianId = currentItem._id;
+    console.log("Updating civilian:", civilianId, updateData, currentItem);
 
     if (action === "Update On Probation") {
       const newStatus = !currentItem.civilian.onProbation;
@@ -687,9 +695,22 @@ $(document).ready(function () {
       confirmMessage = `Are you sure you want to set this civilian's status to ${
         newStatus ? "On parole" : "No longer on parole"
       }?`;
-    } else if (action === "Clear Warrant") {
-      updateData = { warrants: [] };
-      confirmMessage = "Are you sure you want to clear the active warrant?";
+    } else if (action === "Update Warrant") {
+      hasWarrants = currentItem.civilian.warrants?.length > 0;
+      if (hasWarrants) {
+        confirmMessage = "Are you sure you want to clear the active warrant?";
+        updateData = { warrants: [] };
+      } else {
+        confirmMessage = "Are you sure you want to issue a warrant?";
+        updateData = {
+          warrants: [
+            {
+              status: "Granted",
+              date: new Date().toISOString(),
+            },
+          ],
+        };
+      }
     }
 
     if (!confirm(confirmMessage)) return;
@@ -701,7 +722,7 @@ $(document).ready(function () {
       contentType: "application/json",
       success: function (response) {
         alert("Status updated successfully.");
-        currentItem = response;
+        // currentItem = response;
         fetchDetails();
       },
       error: function (xhr) {
@@ -717,7 +738,7 @@ $(document).ready(function () {
   // Open existing action modals
   function openActionModal(action) {
     if (
-      ["Update On Probation", "Update On Parole", "Clear Warrant"].includes(
+      ["Update On Probation", "Update On Parole", "Update Warrant"].includes(
         action
       )
     ) {
