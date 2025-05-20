@@ -12,6 +12,9 @@ $(document).ready(function () {
   let arrestReports = [];
   let totalArrestReports = 0;
   let currentArrestPage = 0;
+  let criminalHistory = [];
+  let totalCriminalHistory = 0;
+  let currentCriminalPage = 1;
 
   // Show modal and fetch data
   function showDetailsModal(item, type, isFromLink = false) {
@@ -66,6 +69,11 @@ $(document).ready(function () {
         {
           id: "firearms",
           label: "Looking up registered firearms",
+          status: "pending",
+        },
+        {
+          id: "criminalHistory",
+          label: "Looking up criminal history",
           status: "pending",
         },
         {
@@ -156,6 +164,12 @@ $(document).ready(function () {
         licenses = [];
         vehicles = [];
         firearms = [];
+        arrestReports = [];
+        totalCriminalHistory = criminalHistory.filter(
+          (entry) => entry.type === "Citation" || entry.type === "Warning"
+        ).length;
+        currentCriminalPage = 1;
+        criminalHistory = currentItem.civilian?.criminalHistory || [];
         loadingStatuses.find((s) => s.id === "details").status = "success";
         updateLoadingStatuses();
 
@@ -199,6 +213,8 @@ $(document).ready(function () {
 
         // Fetch linked items for Civilian
         if (currentType === "Civilian") {
+          loadingStatuses.find((s) => s.id === "criminalHistory").status =
+            "success";
           requests.push(
             $.ajax({
               url: `${API_URL}/api/v1/licenses/civilian/${itemId}?limit=3&page=1`,
@@ -666,13 +682,69 @@ $(document).ready(function () {
     }
     $("#linkedItems").html(linkedHtml);
 
-    // Criminal History and Arrest Reports (Placeholders)
-    $("#criminalHistory").html(
-      '<h5 class="text-white mb-2">Criminal History</h5><p class="text-gray">Not implemented yet.</p>'
-    );
-    // $("#arrestReports").html(
-    //   '<h5 class="text-white mb-2">Arrest Reports</h5><p class="text-gray">Not implemented yet.</p>'
-    // );
+    // Criminal History
+    // Criminal History (Civilian Only)
+    let criminalHistoryHtml = "";
+    if (currentType === "Civilian") {
+      const historyEntries = (currentItem.civilian.criminalHistory || [])
+        .filter(
+          (entry) => entry.type === "Citation" || entry.type === "Warning"
+        )
+        .slice((currentCriminalPage - 1) * 3, currentCriminalPage * 3);
+      totalCriminalHistory = (
+        currentItem.civilian.criminalHistory || []
+      ).filter(
+        (entry) => entry.type === "Citation" || entry.type === "Warning"
+      ).length;
+      criminalHistoryHtml = `
+    <h5 class="text-white mb-2">Criminal History (${totalCriminalHistory})</h5>
+    ${
+      historyEntries.length > 0
+        ? historyEntries
+            .map(
+              (entry) => `
+          <div class="details-item">
+            <div class="d-flex justify-content-between">
+              <span>Type: ${entry.type || "N/A"}</span>
+              <span>Date: ${
+                entry.createdAt
+                  ? new Date(entry.createdAt).toLocaleDateString()
+                  : "N/A"
+              }</span>
+            </div>
+            <p class="text-gray mb-0">Notes: ${entry.notes || "N/A"}</p>
+            ${
+              entry.type === "Citation" && entry.fines
+                ? `<p class="text-gray mb-0">Fines: ${entry.fines
+                    .map((f) => `${f.fineType}: $${f.fineAmount}`)
+                    .join(", ")}</p>`
+                : ""
+            }
+          </div>
+        `
+            )
+            .join("")
+        : '<p class="text-gray">No citations or warnings found.</p>'
+    }
+    ${
+      totalCriminalHistory > 3
+        ? `
+          <div class="d-flex justify-content-between mt-2">
+            <button class="btn btn-primary" onclick="changeCriminalPage(${
+              currentCriminalPage - 1
+            })" ${currentCriminalPage === 1 ? "disabled" : ""}>Previous</button>
+            <button class="btn btn-primary" onclick="changeCriminalPage(${
+              currentCriminalPage + 1
+            })" ${
+            currentCriminalPage * 3 >= totalCriminalHistory ? "disabled" : ""
+          }>Next</button>
+          </div>
+        `
+        : ""
+    }
+  `;
+    }
+    $("#criminalHistory").html(criminalHistoryHtml);
 
     // Action Buttons
     let actionsHtml = "";
@@ -718,6 +790,12 @@ $(document).ready(function () {
       console.warn("Invalid expiration date format:", expirationDate);
       return false;
     }
+  }
+
+  function changeCriminalPage(page) {
+    if (page < 1) return;
+    currentCriminalPage = page;
+    renderDetails();
   }
 
   // Handle report stolen
@@ -963,10 +1041,106 @@ $(document).ready(function () {
     });
   }
 
+  function submitWarningReport() {
+    const civilianId = $("#civIDWarning").val();
+    const currentDate = new Date().toISOString().split("T")[0];
+    const newEntry = {
+      officerID: dbUser._id || "Unknown",
+      type: "Warning",
+      fines: [],
+      notes: $("#warning-civ-additional-notes").val() || null,
+      date: currentDate,
+    };
+
+    $.ajax({
+      url: `${API_URL}/api/v1/civilian/${civilianId}/criminal-history`,
+      method: "POST",
+      data: JSON.stringify(newEntry),
+      contentType: "application/json",
+      success: function () {
+        alert("Warning issued successfully.");
+        $("#warningModal").modal("hide");
+        fetchDetails();
+      },
+      error: function (xhr) {
+        console.error("Error issuing warning:", xhr.responseText);
+        alert(
+          "Failed to issue warning: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
+  function submitCitationReport() {
+    const civilianId = $("#civID").val();
+    const currentDate = new Date().toISOString().split("T")[0];
+    const selectedFines = $("#ticket-select").val() || [];
+    const otherFine = $("#ticket-other").val();
+    const fineAmount = parseInt($("#amount").val()) || 0;
+    const fines = selectedFines
+      .filter((fine) => fine !== "Other")
+      .map((fine) => ({
+        fineType: fine,
+        fineAmount:
+          fineAmount /
+          (selectedFines.includes("Other")
+            ? selectedFines.length
+            : selectedFines.length + 1),
+        category: "Other",
+      }));
+    if (selectedFines.includes("Other") && otherFine) {
+      fines.push({
+        fineType: otherFine,
+        fineAmount: fineAmount / (selectedFines.length + 1),
+        category: "Other",
+      });
+    }
+
+    const newEntry = {
+      officerID: dbUser._id || "Unknown",
+      type: "Citation",
+      fines: fines.length > 0 ? fines : [],
+      notes: otherFine || selectedFines.join(", ") || null,
+      date: currentDate,
+    };
+
+    $.ajax({
+      url: `${API_URL}/api/v1/civilian/${civilianId}/criminal-history`,
+      method: "POST",
+      data: JSON.stringify(newEntry),
+      contentType: "application/json",
+      success: function () {
+        alert("Citation issued successfully.");
+        $("#ticketModal").modal("hide");
+        fetchDetails();
+      },
+      error: function (xhr) {
+        console.error("Error issuing citation:", xhr.responseText);
+        alert(
+          "Failed to issue citation: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
+  // Add submit handler for warning form
+  $("#warning-form").on("submit", function (e) {
+    e.preventDefault();
+    submitWarningReport();
+  });
+
   // Add submit handler for arrest form
   $("#arrest-form").on("submit", function (e) {
     e.preventDefault();
     submitArrestReport();
+  });
+
+  // Add submit handler for ticket form
+  $("#ticket-form").on("submit", function (e) {
+    e.preventDefault();
+    submitCitationReport();
   });
 
   // Add click handler for details items
@@ -999,5 +1173,6 @@ $(document).ready(function () {
   // Expose showDetailsModal and goBack globally
   window.showDetailsModal = showDetailsModal;
   window.fetchArrestReports = fetchArrestReports;
+  window.changeCriminalPage = changeCriminalPage;
   window.goBack = goBack;
 });

@@ -673,7 +673,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form id="ticket-form" class="form-horizontal" action="/create-ticket" method="POST">
+          <form id="ticket-form" class="form-horizontal">
             <fieldset>
 
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
@@ -749,7 +749,7 @@
                   <input id="crimeList" type="hidden" name="crimeList" value="">
                   <input type="hidden" name="officerID" value="<%=user._id%>">
                   <input type="hidden" name="route" value="police-dashboard">
-                  <button id="submitTicket" class="btn btn-primary" onclick="hideTicketCivPopover()">Submit</button>
+                  <button id="submitTicket" class="btn btn-primary" onclick="hideTicketCivPopover()" type="submit">Submit</button>
                 </div>
               </div>
             </fieldset>
@@ -763,7 +763,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-body">
-          <form id="warning-form" class="form-horizontal" action="/create-ticket" method="POST">
+          <form id="warning-form" class="form-horizontal">
             <fieldset>
 
               <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
@@ -800,7 +800,7 @@
                 </div>
               </div>
 
-              <input type="hidden" name="isWarning" value="true">
+              <input id="civIDWarning" type="hidden" name="civIDWarning">
               <input type="hidden" name="amount" value="0">
               <!-- Button -->
               <div class="form-group">
@@ -808,7 +808,7 @@
                 <div class="col-md-4">
                   <input type="hidden" name="route" value="police-dashboard">
                   <input id="warningCrimeList" type="hidden" name="crimeList" value="">
-                  <button id="submitWarning" class="btn btn-primary" onclick="hideWarningCivPopover()">Submit</button>
+                  <button id="submitWarning" class="btn btn-primary" onclick="hideWarningCivPopover()" type="submit">Submit</button>
                 </div>
               </div>
             </fieldset>
