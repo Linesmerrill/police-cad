@@ -19,19 +19,23 @@ $(document).ready(function () {
   // Show modal and fetch data
   function showDetailsModal(item, type, isFromLink = false) {
     if (isOpeningModal) {
+      console.log("Modal opening in progress, skipping.");
       return;
     }
     isOpeningModal = true;
 
-    // Clear history if opening from outside (e.g., search)
+    // Clear history if not from link
     if (!isFromLink) {
       modalHistory = [];
     }
-    // Push current item to history
     modalHistory.push({ item, type });
 
-    // Hide any open modals and clear state
-    $(".modal").modal("hide").removeData("bs.modal");
+    // Hide other modals and clean up
+    $(".modal").not("#detailsModal").modal("hide").removeData("bs.modal");
+    $("body").removeClass("modal-open");
+    $(".modal-backdrop").fadeOut(200, function () {
+      $(this).remove();
+    });
 
     currentItem = item;
     currentType = type;
@@ -72,43 +76,47 @@ $(document).ready(function () {
           status: "pending",
         },
         {
-          id: "criminalHistory",
-          label: "Looking up criminal history",
+          id: "arrestReports",
+          label: "Looking up arrest reports",
           status: "pending",
         },
         {
-          id: "arrestReports",
-          label: "Looking up arrest reports",
+          id: "criminalHistory",
+          label: "Looking up criminal history",
           status: "pending",
         }
       );
     }
     updateLoadingStatuses();
 
-    // Show modal after a delay
+    // Show modal after cleanup
     setTimeout(() => {
-      $("#detailsModal").modal({ backdrop: "static" });
+      $("#detailsModal").modal({ backdrop: "static", keyboard: true });
       fetchDetails();
       isOpeningModal = false;
-    }, 100);
+    }, 200); // Increased delay for smoother transition
   }
 
   // Go back to previous item in history
   function goBack() {
     if (modalHistory.length > 1) {
-      modalHistory.pop(); // Remove current item
+      modalHistory.pop();
       const previous = modalHistory[modalHistory.length - 1];
       showDetailsModal(previous.item, previous.type, true);
     } else {
-      hideModal("detailsModal");
+      $("#detailsModal").modal("hide");
     }
   }
 
   // Handle modal close
   $("#detailsModal").on("hide.bs.modal", function () {
     isOpeningModal = false;
-    $(this).removeData("bs.modal");
-    modalHistory = []; // Clear history on full close
+    $(this).removeData("bs.modal"); // Clear modal data
+    $("body").removeClass("modal-open"); // Remove modal-open class
+    $(".modal-backdrop").fadeOut(200, function () {
+      $(this).remove();
+    }); // Smoothly remove backdrop
+    modalHistory = [];
     $("#detailsLoading").show();
     $("#detailsContent").hide();
     loadingStatuses = [];
@@ -118,6 +126,7 @@ $(document).ready(function () {
     licenses = [];
     vehicles = [];
     firearms = [];
+    console.log("Details modal closed, state reset.");
   });
 
   // Update loading statuses in DOM
