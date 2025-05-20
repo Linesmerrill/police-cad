@@ -9,6 +9,9 @@ $(document).ready(function () {
   let isOpeningModal = false;
   let loadingStatuses = [];
   let modalHistory = []; // Navigation stack
+  let arrestReports = [];
+  let totalArrestReports = 0;
+  let currentArrestPage = 0;
 
   // Show modal and fetch data
   function showDetailsModal(item, type, isFromLink = false) {
@@ -63,6 +66,11 @@ $(document).ready(function () {
         {
           id: "firearms",
           label: "Looking up registered firearms",
+          status: "pending",
+        },
+        {
+          id: "arrestReports",
+          label: "Looking up arrest reports",
           status: "pending",
         }
       );
@@ -242,6 +250,31 @@ $(document).ready(function () {
                   "error";
                 updateLoadingStatuses();
               },
+            }),
+            $.ajax({
+              url: `${API_URL}/api/v1/arrest-report/arrestee/${itemId}?limit=3&page=0`,
+              method: "GET",
+              success: function (data) {
+                console.log("civilianId", itemId);
+                console.log("Fetch Details arrest reports", data);
+                arrestReports = data.data || [];
+                totalArrestReports = data.totalCount || 0;
+                currentArrestPage = 1;
+                loadingStatuses.find((s) => s.id === "arrestReports").status =
+                  "success";
+                updateLoadingStatuses();
+              },
+              error: function (xhr) {
+                console.error(
+                  "Error fetching arrest reports:",
+                  xhr.responseText
+                );
+                arrestReports = [];
+                totalArrestReports = 0;
+                loadingStatuses.find((s) => s.id === "arrestReports").status =
+                  "error";
+                updateLoadingStatuses();
+              },
             })
           );
         }
@@ -270,6 +303,36 @@ $(document).ready(function () {
         );
         hideModal("detailsModal");
         isOpeningModal = false;
+      },
+    });
+  }
+
+  function fetchArrestReports(page) {
+    if (page < 0) return;
+    const itemId = currentItem._id;
+    loadingStatuses.find((s) => s.id === "arrestReports").status = "pending";
+    updateLoadingStatuses();
+
+    $.ajax({
+      url: `${API_URL}/api/v1/arrest-report/arrestee/${itemId}?limit=3&page=${page}`,
+      method: "GET",
+      success: function (data) {
+        console.log("fetchArrestReports", data);
+        arrestReports = data.data || [];
+        totalArrestReports = data.totalCount || 0;
+        currentArrestPage = page;
+        loadingStatuses.find((s) => s.id === "arrestReports").status =
+          "success";
+        updateLoadingStatuses();
+        renderDetails();
+      },
+      error: function (xhr) {
+        console.error("Error fetching arrest reports:", xhr.responseText);
+        arrestReports = [];
+        totalArrestReports = 0;
+        loadingStatuses.find((s) => s.id === "arrestReports").status = "error";
+        updateLoadingStatuses();
+        renderDetails();
       },
     });
   }
@@ -423,6 +486,53 @@ $(document).ready(function () {
     }
     $("#detailsInfo").html(detailsHtml);
 
+    // Arrest Reports (Civilian Only)
+    let arrestReportsHtml = "";
+    if (currentType === "Civilian") {
+      arrestReportsHtml = `
+    <h5 class="text-white mb-2">Arrest Reports (${arrestReports.length})</h5>
+    ${
+      arrestReports.length > 0
+        ? arrestReports
+            .map(
+              (report) => `
+          <div class="details-item">
+            <div class="d-flex justify-content-between">
+              <span>Case #${report.arrestReport.reportNumber || "N/A"}</span>
+              <span>${report.arrestReport.arrestDate || "N/A"}</span>
+            </div>
+            <p class="text-gray mb-0">Charges: ${
+              report.arrestReport.charges || "N/A"
+            }</p>
+            <p class="text-gray mb-0">Location: ${
+              report.arrestReport.arrestLocation || "N/A"
+            }</p>
+          </div>
+        `
+            )
+            .join("")
+        : '<p class="text-gray">No arrest reports found.</p>'
+    }
+    ${
+      totalArrestReports > 3
+        ? `
+          <div class="d-flex justify-content-between mt-2">
+            <button class="btn btn-primary" onclick="fetchArrestReports(${
+              currentArrestPage - 1
+            })" ${currentArrestPage === 1 ? "disabled" : ""}>Previous</button>
+            <button class="btn btn-primary" onclick="fetchArrestReports(${
+              currentArrestPage + 1
+            })" ${
+            currentArrestPage * 3 >= totalArrestReports ? "disabled" : ""
+          }>Next</button>
+          </div>
+        `
+        : ""
+    }
+  `;
+    }
+    $("#arrestReports").html(arrestReportsHtml);
+
     // Linked Items (Civilian Only)
     let linkedHtml = "";
     if (currentType === "Civilian") {
@@ -560,9 +670,9 @@ $(document).ready(function () {
     $("#criminalHistory").html(
       '<h5 class="text-white mb-2">Criminal History</h5><p class="text-gray">Not implemented yet.</p>'
     );
-    $("#arrestReports").html(
-      '<h5 class="text-white mb-2">Arrest Reports</h5><p class="text-gray">Not implemented yet.</p>'
-    );
+    // $("#arrestReports").html(
+    //   '<h5 class="text-white mb-2">Arrest Reports</h5><p class="text-gray">Not implemented yet.</p>'
+    // );
 
     // Action Buttons
     let actionsHtml = "";
@@ -745,21 +855,48 @@ $(document).ready(function () {
       updateCivilianStatus(action);
     } else if (action === "Issue Citation") {
       $("#ticketModal").modal("show");
-      $("#ticket-civ-first-name").val(currentItem.civilian?.firstName || "");
-      $("#ticket-civ-last-name").val(currentItem.civilian?.lastName || "");
-      $("#ticket-civ-dob").val(currentItem.civilian?.birthday || "");
+      $("#ticket-civ-name").text(currentItem.civilian?.name || "");
+      $("#ticket-civ-action-type").text("Citation");
+      $("#ticket-civ-date").text(new Date().toLocaleDateString());
       $("#civID").val(currentItem._id);
     } else if (action === "Issue Warning") {
       $("#warningModal").modal("show");
-      $("#warning-civ-first-name").val(currentItem.civilian?.firstName || "");
-      $("#warning-civ-last-name").val(currentItem.civilian?.lastName || "");
-      $("#warning-civ-dob").val(currentItem.civilian?.birthday || "");
+      $("#warning-civ-first-name").text(currentItem.civilian?.name || "");
+      $("#warning-civ-action-type").text("Warning");
+      $("#warning-civ-date").text(new Date().toLocaleDateString());
       $("#civIDWarning").val(currentItem._id);
     } else if (action === "Arrest") {
       $("#arrestModal").modal("show");
-      $("#arrest-civ-first-name").val(currentItem.civilian?.firstName || "");
-      $("#arrest-civ-last-name").val(currentItem.civilian?.lastName || "");
+      $("#arrest-report-case-no").val(
+        Math.floor(Math.random() * (9999999 - 100000)) + 100000
+      );
+      let today = new Date();
+      let day = String(today.getDate()).padStart(2, "0");
+      let month = String(today.getMonth() + 1).padStart(2, "0"); // Month is 0-indexed
+      let year = today.getFullYear();
+      let formattedDate = `${year}-${month}-${day}`;
+      let hours = today.getHours().toString().padStart(2, "0");
+      let minutes = today.getMinutes().toString().padStart(2, "0");
+      let currentTime = hours + ":" + minutes;
+      $("#arrest-report-date").val(formattedDate);
+      $("#arrest-report-time").val(currentTime);
+      $("#arrest-report-incident-date").val(formattedDate);
+      $("#arrest-report-incident-time").val(currentTime);
+      $("#arrest-civ-first-name").val(currentItem.civilian?.name || "");
       $("#arrest-civ-dob").val(currentItem.civilian?.birthday || "");
+      $("#arrest-civ-address").val(currentItem.civilian?.address || "");
+      $("#arrest-civ-height").val(currentItem.civilian?.height || "");
+      $("#arrest-civ-weight").val(currentItem.civilian?.weight || "");
+      $("#arrest-civ-eyes").val(currentItem.civilian?.eyeColor || "");
+      $("#arrest-civ-hair").val(currentItem.civilian?.hairColor || "");
+      //   $("#arrest-civ-weight").val(currentItem.civilian?.weight || "");
+
+      $("#arrest-location").val("");
+      $("#incident-location").val("");
+      $("#arrest-civ-charges").val("");
+      $("#forceUsed").val("");
+      $("#detail").val("");
+      $("#actions-taken").val("");
       $("#civIDArrest").val(currentItem._id);
     } else if (action === "Update License") {
       const licenseId = $(this).data("license-id");
@@ -771,6 +908,66 @@ $(document).ready(function () {
       handleReportStolen(itemId, isStolen);
     }
   }
+
+  // Handle arrest report submission
+  function submitArrestReport() {
+    const formData = {
+      arrestReport: {
+        reportNumber: $("#arrest-report-case-no").val(),
+        arrestDate: $("#arrest-report-date").val(),
+        arrestTime: $("#arrest-report-time").val(),
+        arrestLocation: $("#arrest-location").val(),
+        incidentDate: $("#arrest-report-incident-date").val(),
+        incidentTime: $("#arrest-report-incident-time").val(),
+        incidentLocation: $("#incident-location").val(),
+        arrestee: {
+          id: $("#civIDArrest").val(),
+          name: $("#arrest-civ-first-name").val(),
+          dob: $("#arrest-civ-dob").val(),
+          address: $("#arrest-civ-address").val(),
+          height: $("#arrest-civ-height").val(),
+          weight: $("#arrest-civ-weight").val(),
+          eyeColor: $("#arrest-civ-eyes").val(),
+          hairColor: $("#arrest-civ-hair").val(),
+          phone: $("#arrest-civ-phone").val(),
+        },
+        officer: {
+          name: $("#reporting-officer").val(),
+          badgeNumber: dbUser.user.callSign || "Unknown",
+        },
+        charges: $("#arrest-civ-charges").val(),
+        narrative: $("#detail").val(),
+        witnesses: $("#actions-taken").val(),
+        forceUsed: $("#forceUsed").val() === "Yes",
+        attachedForms: [], // Placeholder; extend if forms are added
+      },
+    };
+
+    $.ajax({
+      url: `${API_URL}/api/v1/arrest-report`,
+      method: "POST",
+      data: JSON.stringify(formData),
+      contentType: "application/json",
+      success: function () {
+        alert("Arrest report created successfully.");
+        $("#arrestModal").modal("hide");
+        fetchDetails();
+      },
+      error: function (xhr) {
+        console.error("Error creating arrest report:", xhr.responseText);
+        alert(
+          "Failed to create arrest report: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
+  // Add submit handler for arrest form
+  $("#arrest-form").on("submit", function (e) {
+    e.preventDefault();
+    submitArrestReport();
+  });
 
   // Add click handler for details items
   $(document).on("click", ".details-item", function () {
@@ -801,5 +998,6 @@ $(document).ready(function () {
 
   // Expose showDetailsModal and goBack globally
   window.showDetailsModal = showDetailsModal;
+  window.fetchArrestReports = fetchArrestReports;
   window.goBack = goBack;
 });
