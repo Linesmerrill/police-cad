@@ -26,6 +26,7 @@
   <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
   <script type="text/javascript" src="static/js/tail.select.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
   <script src="/static/js/jquery.min.js"></script>
   <script src="/static/js/jquery.easing.min.js"></script>
   <script src="/static/js/wow.js"></script>
@@ -51,6 +52,18 @@
     #statusCallDetail {
       padding: 0.5em 1em;
     }
+    .select2 {
+    color: black;
+  }
+  .select2-results__group {
+    color: blue;
+  }
+  .select2-results__options {
+    color: black;
+  }
+  .badge-secondary {
+    padding: 0.5em 1em;
+  }
   </style>
 </head>
 
@@ -1404,7 +1417,7 @@
             <label class="col-md-4 control-label">Departments:</label>
             <div class="col-md-8">
               <div id="departmentsCallDetail" class="d-flex flex-wrap"></div>
-              <button id="editDepartmentsBtn" class="btn btn-outline-primary btn-md mt-2" style="display: none;" onclick="openDepartmentModal()">Select Departments</button>
+              <select id="departmentsSelect" multiple class="form-control mt-2" style="display: none;"></select>
             </div>
           </div>
 
@@ -1413,7 +1426,7 @@
             <label class="col-md-4 control-label">Assigned To:</label>
             <div class="col-md-8">
               <div id="assignedToCallDetail" class="d-flex flex-wrap"></div>
-              <button id="editMembersBtn" class="btn btn-outline-primary btn-md mt-2" style="display: none;" onclick="openMemberModal()">Select Members</button>
+              <select id="membersSelect" multiple class="form-control mt-2" style="display: none;"></select>
             </div>
           </div>
 

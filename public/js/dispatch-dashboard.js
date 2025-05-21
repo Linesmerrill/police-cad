@@ -430,9 +430,9 @@ $(document).ready(function () {
           .prop("disabled", true);
 
         // Departments
-        const departmentIds = [...new Set(callData.call.departments || [])]; // Deduplicate
+        const departmentIds = [...new Set(callData.call.departments || [])];
         console.log("Department IDs:", departmentIds);
-        $("#departmentsCallDetail").empty(); // Clear before appending
+        $("#departmentsCallDetail").empty();
         $.ajax({
           url: `${API_URL}/api/v1/community/${dbUser.user.lastAccessedCommunity.communityID}/departments`,
           method: "GET",
@@ -453,6 +453,19 @@ $(document).ready(function () {
               "Department badges appended:",
               $("#departmentsCallDetail .badge").length
             );
+
+            // Populate departments dropdown
+            $("#departmentsSelect")
+              .empty()
+              .append(
+                departmentsData.map(
+                  (dept) => `
+                <option value="${dept._id}" ${
+                    departmentIds.includes(dept._id) ? "selected" : ""
+                  }>${dept.name}</option>
+              `
+                )
+              );
           },
           error: function (xhr) {
             console.error("Error fetching departments:", xhr.responseText);
@@ -460,9 +473,9 @@ $(document).ready(function () {
         });
 
         // Assigned To
-        const memberIds = [...new Set(callData.call.assignedTo || [])]; // Deduplicate
+        const memberIds = [...new Set(callData.call.assignedTo || [])];
         console.log("Member IDs:", memberIds);
-        $("#assignedToCallDetail").empty(); // Clear before appending
+        $("#assignedToCallDetail").empty();
         $.ajax({
           url: `${API_URL}/api/v1/community/${dbUser.user.lastAccessedCommunity.communityID}/members?limit=100`,
           method: "GET",
@@ -485,6 +498,19 @@ $(document).ready(function () {
               "Member badges appended:",
               $("#assignedToCallDetail .badge").length
             );
+
+            // Populate members dropdown
+            $("#membersSelect")
+              .empty()
+              .append(
+                membersData.map(
+                  (member) => `
+                <option value="${member._id}" ${
+                    memberIds.includes(member._id) ? "selected" : ""
+                  }>${member.user.username}</option>
+              `
+                )
+              );
           },
           error: function (xhr) {
             console.error("Error fetching members:", xhr.responseText);
@@ -539,13 +565,37 @@ $(document).ready(function () {
     $("#titleCallDetail, #detailsCallDetail").prop("disabled", !isEditMode);
     $("#editCallBtn").toggle(!isEditMode);
     $("#saveCallBtn, #cancelEditBtn").toggle(isEditMode);
-    $("#editDepartmentsBtn, #editMembersBtn").toggle(isEditMode);
+    $("#departmentsSelect, #membersSelect").toggle(isEditMode);
+    $("#departmentsCallDetail, #assignedToCallDetail").toggle(!isEditMode);
     $("#addNoteBtn, #deleteCallBtn, #closeCallBtn, #reopenCallBtn").toggle(
       !isEditMode
     );
     $("#addNoteSection").hide();
-    if (!isEditMode) {
-      // Reset fields to original values
+    if (isEditMode) {
+      // Initialize Select2
+      $("#departmentsSelect")
+        .select2({
+          placeholder: "Select departments",
+          width: "100%",
+          dropdownParent: $("#callDetailModal"),
+        })
+        .on("change", function () {
+          callData.call.departments = $(this).val() || [];
+          console.log("Departments updated:", callData.call.departments);
+        });
+      $("#membersSelect")
+        .select2({
+          placeholder: "Select members",
+          width: "100%",
+          dropdownParent: $("#callDetailModal"),
+        })
+        .on("change", function () {
+          callData.call.assignedTo = $(this).val() || [];
+          console.log("Members updated:", callData.call.assignedTo);
+        });
+    } else {
+      // Destroy Select2
+      $("#departmentsSelect, #membersSelect").select2("destroy");
       $("#titleCallDetail").val(callData.call.title || "");
       $("#detailsCallDetail").val(callData.call.details || "");
       populateCallDetails($("#callIDDetail").val());
@@ -650,7 +700,6 @@ $(document).ready(function () {
   }
 
   function saveChanges() {
-    // Clear DOM elements to prevent duplicates
     $("#departmentsCallDetail").empty();
     $("#assignedToCallDetail").empty();
     console.log("Cleared departments and assignedTo before saving.");
@@ -658,8 +707,8 @@ $(document).ready(function () {
     const updatedCall = {
       title: $("#titleCallDetail").val().trim(),
       details: $("#detailsCallDetail").val().trim(),
-      departments: [...new Set(callData.call.departments)], // Deduplicate
-      assignedTo: [...new Set(callData.call.assignedTo)], // Deduplicate
+      departments: [...new Set(callData.call.departments)],
+      assignedTo: [...new Set(callData.call.assignedTo)],
     };
     console.log("Saving call with data:", updatedCall);
     $.ajax({
