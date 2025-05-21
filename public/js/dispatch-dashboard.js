@@ -8,10 +8,13 @@ $(document).ready(function () {
   let callData = null;
   let departmentsData = [];
   let membersData = [];
+  let currentDraw = 0;
+  let officerListTable = null;
   let currentUnitPage = 1;
   const unitLimit = 10;
-  let officerListTable;
   let lastDataHash = "";
+  let tenCodesCache = [];
+  let memberDataCache = {};
   let isProcessingEditNoteModal = false; // Prevent recursive modal opens
   let isProcessingCallDetails = false; // Guard against multiple calls
   let isCallModalSelect2Initialized = false; // Track Select2 state
@@ -83,7 +86,6 @@ $(document).ready(function () {
         status: true,
       },
     };
-    console.log("payload", payload);
     $.ajax({
       url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolo`,
       method: "POST",
@@ -377,11 +379,6 @@ $(document).ready(function () {
           }>Next</button>
           `);
         }
-        console.log("Calls loaded:", {
-          page: currentCallPage,
-          count: calls.length,
-          total: totalCount,
-        });
       },
       error: function (xhr) {
         console.error("Error loading calls:", xhr.responseText);
@@ -410,7 +407,6 @@ $(document).ready(function () {
 
   function populateCallDetails(callId) {
     if (isProcessingCallDetails) {
-      console.log("populateCallDetails blocked, already processing.");
       return;
     }
     isProcessingCallDetails = true;
@@ -419,7 +415,6 @@ $(document).ready(function () {
       url: `${API_URL}/api/v1/call/${callId}`,
       method: "GET",
       success: function (response) {
-        console.log("Call details:", response);
         callData = response;
         $("#createdAtCallDetail").text(
           new Date(callData.call.createdAt).toLocaleString()
@@ -437,13 +432,11 @@ $(document).ready(function () {
 
         // Departments
         const departmentIds = [...new Set(callData.call.departments || [])];
-        console.log("Department IDs:", departmentIds);
         $("#departmentsCallDetail").empty();
         $.ajax({
           url: `${API_URL}/api/v1/community/${dbUser.user.lastAccessedCommunity.communityID}/departments`,
           method: "GET",
           success: function (deptResponse) {
-            console.log("Departments response:", deptResponse);
             departmentsData = deptResponse.departments.filter(
               (d) => d.template?.name !== "Civilian"
             );
@@ -455,10 +448,6 @@ $(document).ready(function () {
                 );
               }
             });
-            console.log(
-              "Department badges appended:",
-              $("#departmentsCallDetail .badge").length
-            );
 
             // Populate departments dropdown
             $("#departmentsSelect")
@@ -480,7 +469,6 @@ $(document).ready(function () {
 
         // Assigned To
         const memberIds = [...new Set(callData.call.assignedTo || [])];
-        console.log("Member IDs:", memberIds);
         $("#assignedToCallDetail").empty();
         $.ajax({
           url: `${API_URL}/api/v1/community/${dbUser.user.lastAccessedCommunity.communityID}/members?limit=100`,
@@ -500,10 +488,6 @@ $(document).ready(function () {
                 `);
               }
             });
-            console.log(
-              "Member badges appended:",
-              $("#assignedToCallDetail .badge").length
-            );
 
             // Populate members dropdown
             $("#membersSelect")
@@ -588,7 +572,6 @@ $(document).ready(function () {
         })
         .on("change", function () {
           callData.call.departments = $(this).val() || [];
-          console.log("Departments updated:", callData.call.departments);
         });
       $("#membersSelect")
         .select2({
@@ -598,7 +581,6 @@ $(document).ready(function () {
         })
         .on("change", function () {
           callData.call.assignedTo = $(this).val() || [];
-          console.log("Members updated:", callData.call.assignedTo);
         });
     } else {
       // Destroy Select2
@@ -709,7 +691,6 @@ $(document).ready(function () {
   function saveChanges() {
     $("#departmentsCallDetail").empty();
     $("#assignedToCallDetail").empty();
-    console.log("Cleared departments and assignedTo before saving.");
 
     const updatedCall = {
       title: $("#titleCallDetail").val().trim(),
@@ -717,7 +698,6 @@ $(document).ready(function () {
       departments: [...new Set(callData.call.departments)],
       assignedTo: [...new Set(callData.call.assignedTo)],
     };
-    console.log("Saving call with data:", updatedCall);
     $.ajax({
       url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}`,
       method: "PUT",
@@ -726,7 +706,6 @@ $(document).ready(function () {
       success: function () {
         alert("Call updated successfully.");
         toggleEditMode();
-        console.log("Saving call, calling populateCallDetails.");
         populateCallDetails($("#callIDDetail").val());
       },
       error: function (xhr) {
@@ -889,7 +868,6 @@ $(document).ready(function () {
 
   function openEditNoteModal(noteId, noteText) {
     if (isProcessingEditNoteModal) {
-      console.log("Edit note modal blocked, processing in progress.");
       return;
     }
     isProcessingEditNoteModal = true;
@@ -912,20 +890,16 @@ $(document).ready(function () {
     });
 
     // Log textarea clicks to debug loop
-    $("#editNoteInput").on("click input", function (e) {
-      console.log("Edit note textarea event:", e.type, "value:", $(this).val());
-    });
+    $("#editNoteInput").on("click input", function (e) {});
 
     // Allow modal to open without immediate focus
     setTimeout(() => {
       isProcessingEditNoteModal = false;
-      console.log("Edit note modal opened, noteId:", noteId, "text:", noteText);
     }, 100);
   }
 
   // Handle modal show to prevent backdrop issues
   $("#editNoteModal").on("show.bs.modal", function () {
-    console.log("Edit note modal opening.");
     $(".modal-backdrop").not(":last").remove();
     $("body").addClass("modal-open");
     $("#editNoteModal").css("z-index", 1100);
@@ -938,20 +912,12 @@ $(document).ready(function () {
     $(".modal-backdrop").remove();
     $("body").removeClass("modal-open");
     isProcessingEditNoteModal = false;
-    console.log("Edit note modal closed.");
   });
 
   // Debug modal events to trace recursion
   $("#editNoteModal").on(
     "show.bs.modal shown.bs.modal hide.bs.modal hidden.bs.modal",
-    function (e) {
-      console.log(
-        "Edit note modal event:",
-        e.type,
-        "active modals:",
-        $(".modal:visible").length
-      );
-    }
+    function (e) {}
   );
 
   function saveEditedNote() {
@@ -1016,7 +982,6 @@ $(document).ready(function () {
       if (isCallModalSelect2Initialized) {
         try {
           $("#callDepartments, #callMembers").select2("destroy");
-          console.log("Select2 destroyed for call modal.");
         } catch (e) {
           console.error("Error destroying Select2:", e);
         }
@@ -1029,7 +994,6 @@ $(document).ready(function () {
         url: `${API_URL}/api/v1/community/${dbUser.user.lastAccessedCommunity.communityID}/departments`,
         method: "GET",
         success: function (deptResponse) {
-          console.log("Departments response:", deptResponse);
           departmentsData =
             deptResponse.departments.filter(
               (d) => d.template?.name !== "Civilian"
@@ -1049,9 +1013,7 @@ $(document).ready(function () {
               width: "100%",
               dropdownParent: $("#callModal"),
             })
-            .on("change", function () {
-              console.log("Call departments selected:", $(this).val());
-            });
+            .on("change", function () {});
           isCallModalSelect2Initialized = true;
         },
         error: function (xhr) {
@@ -1091,9 +1053,7 @@ $(document).ready(function () {
               width: "100%",
               dropdownParent: $("#callModal"),
             })
-            .on("change", function () {
-              console.log("Call members selected:", $(this).val());
-            });
+            .on("change", function () {});
           isCallModalSelect2Initialized = true;
         },
         error: function (xhr) {
@@ -1109,7 +1069,6 @@ $(document).ready(function () {
           isCallModalSelect2Initialized = true;
         },
       });
-      console.log("Call modal opening, initializing Select2.");
     });
 
   // Clean up on modal close
@@ -1120,14 +1079,12 @@ $(document).ready(function () {
       if (isCallModalSelect2Initialized) {
         try {
           $("#callDepartments, #callMembers").select2("destroy");
-          console.log("Select2 destroyed on modal close.");
         } catch (e) {
           console.error("Error destroying Select2 on close:", e);
         }
       }
       $("#callDepartments, #callMembers").empty();
       isCallModalSelect2Initialized = false;
-      console.log("Call modal closed, inputs cleared.");
     });
 
   function createCall() {
@@ -1164,7 +1121,6 @@ $(document).ready(function () {
       createdByID: createdById,
       createdByUsername,
     };
-    console.log("Creating call with data:", newCall);
 
     $.ajax({
       url: `${API_URL}/api/v1/calls`,
@@ -1192,182 +1148,240 @@ $(document).ready(function () {
     });
   }
 
-  function populateOfficerListTable(page = 1) {
-    currentUnitPage = page;
+  function populateOfficerListTable() {
     const communityId = dbUser.user.lastAccessedCommunity.communityID;
-    let commData = null;
 
-    // Check if DataTable is initialized
-    if ($.fn.DataTable.isDataTable("#officerListTable")) {
-      // Check for data changes
+    // Pre-fetch tenCodes and memberData
+    // IMPORTANT: If this AJAX call fails or takes too long, it can prevent DataTable from initializing.
+    // Consider making this truly async and initializing DataTable in its 'success' callback,
+    // or ensuring these caches are populated before this function is called.
+    if (!tenCodesCache.length) {
       $.ajax({
-        url: `${API_URL}/api/v1/community/${communityId}/members?page=${currentUnitPage}&limit=${unitLimit}`,
+        url: `${API_URL}/api/v1/community/${communityId}`,
         type: "GET",
-        success: function (json) {
-          const newDataHash = JSON.stringify(
-            json.members.map((m) => ({
-              id: m._id,
-              username: m.user.username,
-              callSign: m.user.callSign,
-              tenCodeID: (commData?.community?.members[m._id] || {}).tenCodeID,
-            }))
-          );
-          if (newDataHash !== lastDataHash) {
-            lastDataHash = newDataHash;
-            officerListTable?.ajax.reload(null, false);
-            console.log("Data changed, reloaded table.");
-          } else {
-            console.log("No data change, skipping reload.");
-          }
+        async: false, // This is a synchronous call, which can block the UI.
+        // For a production app, you typically want to avoid `async: false`.
+        success: function (commData) {
+          tenCodesCache = commData.community.tenCodes || [];
+          memberDataCache = commData.community.members || {};
+          $("#community-name").text(commData?.community?.name);
         },
         error: function (xhr) {
-          console.error("Error checking members for update:", xhr.responseText);
+          console.error(
+            "Error pre-fetching community details:",
+            xhr.responseText
+          );
+          // Potentially display an error to the user or stop function execution
+          return; // Stop if crucial data isn't loaded
         },
       });
-    } else {
-      // Initialize DataTable
+    }
+
+    if (!$.fn.DataTable.isDataTable("#officerListTable")) {
       officerListTable = $("#officerListTable").DataTable({
-        serverSide: true,
+        serverSide: true, // DataTables will make AJAX requests for data
         paging: true,
-        pageLength: unitLimit,
-        searching: false,
-        ordering: true,
-        bLengthChange: false,
+        pageLength: unitLimit, // Make sure unitLimit is defined and correct (e.g., 10, 25, 50)
+        searching: false, // Set to true if you implement server-side searching based on user input
+        ordering: false, // Set to true if you implement server-side sorting
+        bLengthChange: false, // Disables the "Show X entries" dropdown
+        info: false, // Disables the "Showing X to Y of Z entries" message
+        processing: false, // Shows the "Processing..." message
         ajax: {
           url: `${API_URL}/api/v1/community/${communityId}/members`,
           type: "GET",
+          // 'data' function is used to modify the parameters DataTables sends to your API
           data: function (d) {
-            d.page = Math.floor(d.start / d.length) + 1;
-            d.limit = d.length;
-            d.draw = d.draw;
+            // DataTables automatically sends 'start', 'length', and 'draw'
+            // We capture 'draw' to send it back in our 'dataSrc' function.
+            currentDraw = d.draw;
+
+            // Map DataTables' parameters to your API's parameters
+            d.page = Math.floor(d.start / d.length) + 1; // Calculate 1-based page number
+            d.limit = d.length; // Your API's limit per page (same as DataTables' length)
+
+            // You can remove or log d.draw if you want, but DataTables handles sending it.
+            // delete d.draw; // If your backend truly doesn't want it, but usually it's ignored if not used.
           },
+          // 'dataSrc' function is used to massage the raw JSON response from your API
+          // into the format DataTables expects (an object with draw, recordsTotal, recordsFiltered, data)
           dataSrc: function (json) {
-            json.draw = json.draw || 1;
-            json.recordsTotal = json.totalUsers || 0;
-            json.recordsFiltered = json.totalUsers || 0;
-            console.log("AJAX response:", json);
-            if (!json.members || json.members.length === 0) {
-              console.warn("No members returned for page:", currentUnitPage);
+            // *** DEBUGGER HERE ***
+            // Execution will pause here after your API returns a response.
+            // Inspect the 'json' object in the browser console.
+            // debugger;
+
+            // Ensure 'totalUsers' and 'members' are present in your API's JSON response
+            const totalUsers = json.totalUsers || 0;
+
+            if (totalUsers === 0 && json.members && json.members.length > 0) {
+              console.warn(
+                "totalUsers is 0, but 'members' array has data. This might cause pagination issues."
+              );
+            } else if (
+              totalUsers > 0 &&
+              (!json.members || json.members.length === 0)
+            ) {
+              console.warn(
+                "totalUsers is > 0, but 'members' array is empty. This might indicate an issue with your API's pagination logic for the current page."
+              );
             }
-            lastDataHash = JSON.stringify(
-              json.members.map((m) => ({
-                id: m._id,
-                username: m.user.username,
-                callSign: m.user.callSign,
-                tenCodeID: (commData?.community?.members[m._id] || {})
-                  .tenCodeID,
-              }))
-            );
-            return json.members || [];
+
+            // Construct the object that DataTables expects from your API's response
+            const dataTableResponse = {
+              // Use the captured 'currentDraw' since your API doesn't return it directly.
+              // This is CRUCIAL for DataTables to clear the "Processing..." message.
+              draw: currentDraw,
+              recordsTotal: totalUsers,
+              recordsFiltered: totalUsers, // Assuming no server-side filtering for now, so total = filtered
+              data: json.members || [], // Your array of member objects for the current page
+            };
+
+            // *** CRITICAL CHECK ***
+            // DataTables' dataSrc function MUST return the array of data rows directly.
+            if (!Array.isArray(dataTableResponse.data)) {
+              console.error(
+                "ERROR: dataSrc is NOT returning an array! DataTables will fail to render rows. Check 'json.members'."
+              );
+              return []; // Return empty array to prevent further errors
+            }
+
+            // Return the array of data rows to DataTables
+            return dataTableResponse.data;
           },
-          error: function (xhr) {
-            console.error("Error fetching members:", xhr.responseText);
-            officerListTable.clear().draw();
-            officerListTable.row
-              .add([
-                '<tr><td colspan="3" class="text-center">Error loading units.</td></tr>',
-              ])
-              .draw();
+          // 'error' function handles AJAX failures
+          error: function (xhr, error, thrown) {
+            console.error(
+              "Error fetching members:",
+              xhr.responseText,
+              error,
+              thrown
+            );
+            officerListTable.clear().draw(); // Clear existing data if there was an error
+            $("#officerListTable tbody").html(
+              '<tr><td colspan="3" class="text-center">Error loading units. Please try again.</td></tr>'
+            );
+            // DataTables typically handles clearing the processing message on error,
+            // but if it sticks, this could indicate a network issue or malformed error response.
           },
         },
         columns: [
           {
             data: "user.username",
             title: "Username",
-            render: (data) => data || "",
+            // 'render' function formats the data for display
+            render: (data) => data || "", // Ensure data is not null/undefined
           },
           {
-            data: null,
+            data: null, // Use null because we're creating the content from multiple fields
             title: "Call Sign",
-            render: (data) =>
-              data.user.callSign ? `Unit ${data.user.callSign}` : "No Unit #",
+            // 'render' function for computed values
+            render: (data) => {
+              // *** DEBUGGER HERE ***
+              // This debugger will hit for each row being rendered.
+              // Inspect 'data' to ensure it has 'user.callSign'.
+              // debugger; // Uncomment only if you suspect issues with specific rows
+              return data.user && data.user.callSign
+                ? `Unit ${data.user.callSign}`
+                : "No Unit #";
+            },
           },
           {
-            data: null,
+            data: null, // Use null because we're creating custom HTML (select dropdown)
             title: "Status",
-            render: function (data) {
-              return `<select class="status-select" data-user-id="${data._id}"></select>`;
+            // 'createdCell' is used for direct DOM manipulation within the cell, like adding a dropdown
+            createdCell: function (cell, cellData, rowData) {
+              // *** DEBUGGER HERE ***
+              // This debugger will hit for each cell in this column being created.
+              // Inspect 'rowData' to ensure it has '_id' and 'user.callSign' etc.
+              // debugger; // Uncomment only if you suspect issues with cell creation
+
+              // Ensure rowData and its properties are accessible
+              if (!rowData || !rowData._id) {
+                console.error(
+                  "rowData or rowData._id is missing for cell creation.",
+                  rowData
+                );
+                $(cell).empty().text("N/A"); // Provide fallback
+                return;
+              }
+
+              const $select = $(
+                `<select class="status-select" data-user-id="${rowData._id}"></select>`
+              );
+              $(cell).empty().append($select); // Clear cell content and append the select
+
+              // Access memberDataCache and tenCodesCache safely
+              const memberData = memberDataCache[rowData._id] || {};
+              const currentTenCode = tenCodesCache.find(
+                (code) => code._id === memberData.tenCodeID
+              );
+
+              // Build options for the select dropdown
+              const selectOptions =
+                tenCodesCache.length > 0
+                  ? tenCodesCache
+                      .map(
+                        (code) =>
+                          `<option value="${code._id}" ${
+                            code._id === memberData.tenCodeID ? "selected" : ""
+                          }>${code.code}</option>`
+                      )
+                      .join("")
+                  : "";
+
+              $select.append(`
+                            <option value="Unknown" ${
+                              !currentTenCode ? "selected" : ""
+                            }>Unknown</option>
+                            ${selectOptions}
+                        `);
+
+              // Attach event listener for change (using .off().on() to prevent multiple bindings)
+              $select.off("change").on("change", function () {
+                const userId = $(this).data("user-id");
+                const tenCodeID = $(this).val();
+                const departmentId =
+                  document.getElementById("boloDepartmentID")?.value || null; // Ensure this element exists
+                $.ajax({
+                  url: `${API_URL}/api/v1/community/${communityId}/members/${userId}/tenCode`,
+                  method: "PUT",
+                  data: JSON.stringify({
+                    departmentId: departmentId,
+                    tenCodeID: tenCodeID === "Unknown" ? null : tenCodeID,
+                  }),
+                  contentType: "application/json",
+                  success: function () {
+                    // Update cache after successful update
+                    if (memberDataCache[userId]) {
+                      memberDataCache[userId].tenCodeID =
+                        tenCodeID === "Unknown" ? null : tenCodeID;
+                    }
+                  },
+                  error: function (xhr) {
+                    console.error(
+                      "Error updating unit status:",
+                      xhr.responseText
+                    );
+                    alert(
+                      "Failed to update unit status: " +
+                        (xhr.responseJSON?.message || "Unknown error")
+                    );
+                  },
+                });
+              });
             },
           },
         ],
+        // 'drawCallback' is useful for actions that need to run after each table draw (initial load, page change, sort, etc.)
         drawCallback: function () {
-          $.ajax({
-            url: `${API_URL}/api/v1/community/${communityId}`,
-            type: "GET",
-            success: function (commData) {
-              const tenCodes = commData.community.tenCodes || [];
-              officerListTable
-                .column(2)
-                .nodes()
-                .to$()
-                .each(function () {
-                  const $select = $(this).find(".status-select");
-                  const userId = $select.data("user-id");
-                  const memberData = commData.community.members[userId] || {};
-                  const currentTenCode = tenCodes.find(
-                    (code) => code._id === memberData.tenCodeID
-                  );
-                  const selectOptions =
-                    tenCodes.length > 0
-                      ? tenCodes
-                          .map(
-                            (code) =>
-                              `<option value="${code._id}" ${
-                                code._id === memberData.tenCodeID
-                                  ? "selected"
-                                  : ""
-                              }>${code.code}</option>`
-                          )
-                          .join("")
-                      : "";
-                  $select.empty().append(`
-                <option value="Unknown" ${
-                  !currentTenCode ? "selected" : ""
-                }>Unknown</option>
-                ${selectOptions}
-              `);
-                });
-
-              $(".status-select")
-                .off("change")
-                .on("change", function () {
-                  const userId = $(this).data("user-id");
-                  const tenCodeID = $(this).val();
-                  const departmentId =
-                    document.getElementById("boloDepartmentID")?.value || null;
-                  $.ajax({
-                    url: `${API_URL}/api/v1/community/${communityId}/members/${userId}/tenCode`,
-                    method: "PUT",
-                    data: JSON.stringify({
-                      departmentId: departmentId,
-                      tenCodeID: tenCodeID === "Unknown" ? null : tenCodeID,
-                    }),
-                    contentType: "application/json",
-                    success: function () {
-                      console.log("Unit status updated for user:", userId);
-                    },
-                    error: function (xhr) {
-                      console.error(
-                        "Error updating unit status:",
-                        xhr.responseText
-                      );
-                      alert(
-                        "Failed to update unit status: " +
-                          (xhr.responseJSON?.message || "Unknown error")
-                      );
-                    },
-                  });
-                });
-            },
-            error: function (xhr) {
-              console.error(
-                "Error fetching community details:",
-                xhr.responseText
-              );
-            },
-          });
+          // You might put code here to re-initialize tooltips, re-apply styling, etc.
+          // It indicates that the table rendering process is finished.
         },
       });
+    } else {
+      // If the table already exists, just reload its data using ajax.reload()
+      officerListTable?.ajax.reload(null, false); // Reloads data without resetting pagination
     }
   }
 
