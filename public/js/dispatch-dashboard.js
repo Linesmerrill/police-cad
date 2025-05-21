@@ -343,7 +343,7 @@ $(document).ready(function () {
 
             $tbody.append(`
               <tr class="gray-hover" data-toggle="modal" data-id="${callId}" data-target="#callDetailModal"
-                onclick="populateCallDetails('${callId}');populateOfficerList('');populateFireEmsList('');populateClassifierList('')">
+                onclick="populateCallDetails('${callId}')">
                 <td>${createdAt}</td>
                 <td style="text-transform: capitalize;">${description}</td>
                 <td>${unitsAssigned}</td>
@@ -548,6 +548,7 @@ $(document).ready(function () {
         $("#closeCallBtn").toggle(callData.call.status);
         $("#reopenCallBtn").toggle(!callData.call.status);
         $("#callDetailModal").modal("show");
+        $(".modal-backdrop").show();
         isProcessingCallDetails = false;
       },
       error: function (xhr) {
@@ -744,8 +745,18 @@ $(document).ready(function () {
       url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}`,
       method: "DELETE",
       success: function () {
+        $(`#${$("#callIDDetail").val()}-row`).fadeOut(1, function () {
+          $(this).remove();
+        });
+        loadAssignedCalls(); // Refresh call list
+
+        // $(".close").click();
+        $("[data-dismiss=modal]").trigger({ type: "click" });
+        // $("#callDetailModal").modal("hide");
+        // hideModal("callDetailModal");
+        // $("body").removeClass("modal-open");
+        // $(".modal-backdrop").remove();
         alert("Call deleted successfully.");
-        $("#callDetailModal").modal("hide");
       },
       error: function (xhr) {
         console.error("Error deleting call:", xhr.responseText);
@@ -1157,8 +1168,13 @@ $(document).ready(function () {
       contentType: "application/json",
       success: function () {
         alert("Call created successfully.");
-        $("#callModal").modal("hide");
-        hideModal("callModal");
+
+        // hideModal("callModal");
+        // $(".close").click();
+        $("[data-dismiss=modal]").trigger({ type: "click" });
+        // $("#callModal").modal("hide");
+        // $("#callModal").hide();
+        // $(".modal-backdrop").remove();
         loadAssignedCalls();
       },
       error: function (xhr) {

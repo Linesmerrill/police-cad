@@ -1952,35 +1952,9 @@
       </div>
     </div>
 
-    <div id="signal100DetailModal" class="modal" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <span class="modal-title" style="font-size: 18px;">Clear Signal 100</span>
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-              aria-hidden="true">X</button>
-          </div>
-          <div class="modal-footer text-align-center">
-            <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="clearSignal100()">Clear</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    
 
-    <div id="holdTrafficDetailModal" class="modal" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <span class="modal-title" style="font-size: 18px;">Clear 10-3</span>
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-              aria-hidden="true">X</button>
-          </div>
-          <div class="modal-footer text-align-center">
-            <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="clearHoldTraffic()">Clear</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    
 
     <div id="officerHelpModal" class="modal" tabindex="-1" role="dialog">
       <div class="modal-dialog" role="document">
@@ -2082,24 +2056,24 @@
       repopulateFireEmsList(res.vehicleID, res.status)
     });
 
-    socket.on('updated_status', res => {
-      if (res.onDuty&&res.updateDuty) {
-        //socket coming in that a user is going on-duty
-        $('#'+res.userID+"-duty").removeClass('hide')
-        $('#'+res.userID+"-duty").attr('style', 'cursor: pointer')
-      } else if (!res.onDuty&&res.updateDuty) {
-        //socket coming in that a user is going off-duty
-        $('#'+res.userID+"-duty").attr('style', 'background-color: #d9534f !important')
-        $('#'+res.userID+"-duty").addClass('hide')
-      }
-      if (res.status=="Panic") {
-        $('#'+res.userID+"-status").text("🚨 "+res.status+" 🚨")
-      } else {
-        $('#'+res.userID+"-status").text(res.status)
-      }
+    // socket.on('updated_status', res => {
+    //   if (res.onDuty&&res.updateDuty) {
+    //     //socket coming in that a user is going on-duty
+    //     $('#'+res.userID+"-duty").removeClass('hide')
+    //     $('#'+res.userID+"-duty").attr('style', 'cursor: pointer')
+    //   } else if (!res.onDuty&&res.updateDuty) {
+    //     //socket coming in that a user is going off-duty
+    //     $('#'+res.userID+"-duty").attr('style', 'background-color: #d9534f !important')
+    //     $('#'+res.userID+"-duty").addClass('hide')
+    //   }
+    //   if (res.status=="Panic") {
+    //     $('#'+res.userID+"-status").text("🚨 "+res.status+" 🚨")
+    //   } else {
+    //     $('#'+res.userID+"-status").text(res.status)
+    //   }
 
-      repopulateOfficerList(res.userID, res.status)
-    })
+    //   repopulateOfficerList(res.userID, res.status)
+    // })
 
     socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq) => {
       if (dbUser.user.activeCommunity==origReq.activeCommunity) {
