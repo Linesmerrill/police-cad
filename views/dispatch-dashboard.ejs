@@ -38,6 +38,20 @@
   <!-- To hide google translate header bar on each page -->
   <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
   <style type='text/css'> body {position: static !important; top:0px !important;}</style>
+  <style>
+    #titleCallDetail {
+      background-color: transparent !important;
+      color: white !important;
+      
+    }
+    #detailsCallDetail {
+      background-color: transparent !important;
+      color: #fff !important;
+    }
+    #statusCallDetail {
+      padding: 0.5em 1em;
+    }
+  </style>
 </head>
 
 <body>
@@ -1341,105 +1355,160 @@
     </div>
   </div>
 
-  <div id="callDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form id="update-call-form" class="form-horizontal" action="/updateOrDeleteCall" method="post">
-            <fieldset>
+  <!-- Call Detail Modal -->
+<div id="callDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4>Call Details</h4>
+          <button class="btn btn-primary btn-md" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+        </div>
+        <hr style="width: 88%; max-width: 100rem;">
+        
+        <div id="callDetailForm" class="form-horizontal">
+          <!-- Created At -->
+          <div class="form-group">
+            <label class="col-md-4 control-label">Created At:</label>
+            <div class="col-md-8">
+              <h5 id="createdAtCallDetail"></h5>
+            </div>
+          </div>
 
-              <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                aria-hidden="true">X</button>
-              <h4>Call Details</h4>
-              <hr style="width: 88%;max-width: 100rem;">
+          <!-- Status -->
+          <div class="form-group">
+            <label class="col-md-4 control-label">Status:</label>
+            <div class="col-md-8">
+              <h5 id="statusCallDetail" class="badge badge-primary"></h5>
+            </div>
+          </div>
 
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createdBy">Created At:</label>
-                <div class="col-md-4">
-                  <h5 id="createdAtCallDetail"></h5>
+          <!-- Title -->
+          <div class="form-group">
+            <label class="col-md-4 control-label">Title:</label>
+            <div class="col-md-8">
+              <input id="titleCallDetail" type="text" class="form-control" placeholder="Enter call title" maxlength="50" disabled>
+            </div>
+          </div>
+
+          <!-- Details -->
+          <div class="form-group">
+            <label class="col-md-4 control-label">Details:</label>
+            <div class="col-md-8">
+              <textarea id="detailsCallDetail" class="form-control" rows="4" placeholder="Enter call details" maxlength="500" disabled></textarea>
+            </div>
+          </div>
+
+          <!-- Departments -->
+          <div class="form-group">
+            <label class="col-md-4 control-label">Departments:</label>
+            <div class="col-md-8">
+              <div id="departmentsCallDetail" class="d-flex flex-wrap"></div>
+              <button id="editDepartmentsBtn" class="btn btn-outline-primary btn-md mt-2" style="display: none;" onclick="openDepartmentModal()">Select Departments</button>
+            </div>
+          </div>
+
+          <!-- Assigned To -->
+          <div class="form-group">
+            <label class="col-md-4 control-label">Assigned To:</label>
+            <div class="col-md-8">
+              <div id="assignedToCallDetail" class="d-flex flex-wrap"></div>
+              <button id="editMembersBtn" class="btn btn-outline-primary btn-md mt-2" style="display: none;" onclick="openMemberModal()">Select Members</button>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="form-group">
+            <label class="col-md-4 control-label">Notes:</label>
+            <div class="col-md-8">
+              <div id="notesCallDetail"></div>
+              <button id="addNoteBtn" class="btn btn-primary btn-md mt-2" onclick="toggleAddNote()">Add Note</button>
+              <div id="addNoteSection" style="display: none;" class="mt-2">
+                <textarea id="newNoteInput" class="form-control" rows="3" placeholder="Enter your note..." maxlength="500"></textarea>
+                <div class="d-flex justify-content-between mt-2">
+                  <button class="btn btn-secondary btn-md" onclick="toggleAddNote()">Cancel</button>
+                  <button class="btn btn-primary btn-md" onclick="addNote()">Add Note</button>
                 </div>
               </div>
+            </div>
+          </div>
 
-              <!-- Text input-->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="classifier-details">Department:</label>
-                <div class="col-md-4">
-                  <select id="classifier-details" name="classifier" class="select-manipulatable" multiple>
-                  </select>
-                </div>
+          <!-- Action Buttons -->
+          <div class="form-group">
+            <div class="col-md-12 d-flex justify-content-between">
+              <div>
+                <button id="editCallBtn" class="btn btn-primary" onclick="toggleEditMode()">Edit</button>
+                <button id="saveCallBtn" class="btn btn-primary" style="display: none;" onclick="saveChanges()">Save</button>
+                <button id="cancelEditBtn" class="btn btn-secondary" style="display: none;" onclick="toggleEditMode()">Cancel</button>
               </div>
+              <div>
+                <button id="deleteCallBtn" class="btn btn-danger" onclick="deleteCall()">Delete</button>
+                <button id="closeCallBtn" class="btn btn-success" onclick="markAsCompleted()">Close</button>
+                <button id="reopenCallBtn" class="btn btn-warning" style="display: none;" onclick="reopenCall()">Reopen</button>
+              </div>
+            </div>
+          </div>
 
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
-                <div class="col-md-4">
-                  <h5 id="updatedAtCallDetail"></h5>
-                </div>
-              </div>
-
-              <!-- Text input-->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="description">Description:</label>
-                <div class="col-md-4">
-                  <input id="descriptionCallDetail" name="shortDescription" style="text-transform: capitalize;"
-                    type="text" placeholder="description" class="form-control input-md" maxlength="50" required>
-                </div>
-              </div>
-
-              <!-- Multiple Checkboxes (inline) -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="officer-select-details">Assigned Officer(s):</label>
-                <div class="col-md-4">
-                  <select id="officer-select-details" name="assignedOfficers" class="select-manipulatable" multiple>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Multiple Checkboxes (inline) -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="fireEms-select-details">Assigned Fire/EMS: <a data-toggle="modal" href="#assignedFireEmsHelpModal"><i class="fa fa-exclamation-circle"></i></a></label>
-                <div class="col-md-4">
-                  <select id="fireEms-select-details" name="assignedFireEms" class="select-manipulatable" multiple>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Text Area input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="callNotes">Call Notes:</label>
-                <div class="col-md-8 col-md-offset-2">
-                  <textarea id="callNotesDetail" name="callNotes" type="text" rows="4" maxlength="500"
-                    placeholder="call notes" class="form-control input-md"></textarea>
-                </div>
-              </div>
-
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="updateCall"></label>
-                <div class="col-md-4 text-align-center">
-                  <input type="hidden" name="route" value="dispatch-dashboard">
-                  <input id="callIDDetail" type="hidden" name="callID" value="">
-                  <button id="updateCall" type="submit" name="action" value="update" class="btn btn-info"
-                    onclick="hideModal('callDetailModal')">Update</button>
-                </div>
-              </div>
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="deleteCall"></label>
-                <div class="col-md-4 text-align-center">
-                  <button id="deleteCall" type="submit" name="action" value="delete" class="btn btn-danger"
-                    onclick="hideModal('boloDetailModal')">Delete</button>
-                  <button id="closeCall" type="submit" name="action" value="close" class="btn btn-success"
-                    onclick="hideModal('boloDetailModal')">Close</button>
-                </div>
-              </div>
-            </fieldset>
-          </form>
+          <input type="hidden" id="callIDDetail" value="">
         </div>
       </div>
     </div>
   </div>
+</div>
+
+<!-- Department Selection Modal -->
+<div id="departmentModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4>Select Departments</h4>
+          <button class="btn btn-primary btn-md" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+        </div>
+        <input type="text" id="departmentSearch" class="form-control mb-3" placeholder="Search departments...">
+        <div id="departmentList" class="mb-3" style="max-height: 300px; overflow-y: auto;"></div>
+        <button class="btn btn-primary btn-block" data-dismiss="modal">Finish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Member Selection Modal -->
+<div id="memberModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4>Select Members</h4>
+          <button class="btn btn-primary btn-md" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+        </div>
+        <input type="text" id="memberSearch" class="form-control mb-3" placeholder="Search members...">
+        <div id="memberList" class="mb-3" style="max-height: 300px; overflow-y: auto;"></div>
+        <button class="btn btn-primary btn-block" data-dismiss="modal">Finish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Note Modal -->
+<div id="editNoteModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true" style="z-index: 1100;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4>Edit Note</h4>
+          <button class="btn btn-primary btn-md" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+        </div>
+        <textarea id="editNoteInput" class="form-control" rows="3" maxlength="500" style="resize: vertical;"></textarea>
+        <input type="hidden" id="editNoteId">
+        <div class="d-flex justify-content-between mt-3">
+          <button class="btn btn-secondary btn-md" data-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary btn-md" onclick="saveEditedNote()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
   <div id="registeredVehicles" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -1970,8 +2039,7 @@
 <script src="/static/js/bootstrap.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-// <script src="/static/js/scripts.js"></script>
-
+<script src="/static/js/scripts.js"></script>
 <script>if (window.module) module = window.module;</script>
 <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 

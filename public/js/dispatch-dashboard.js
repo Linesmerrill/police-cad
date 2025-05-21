@@ -4,6 +4,11 @@ $(document).ready(function () {
   const boloLimit = 10;
   let currentCallPage = 1;
   const callLimit = 10;
+  let isEditMode = false;
+  let callData = null;
+  let departmentsData = [];
+  let membersData = [];
+  let isProcessingEditNoteModal = false; // Prevent recursive modal opens
 
   fetchAndRenderDepartments(); // Fetch and render departments on page load
 
@@ -396,14 +401,520 @@ $(document).ready(function () {
     loadAssignedCalls();
   }
 
+  function populateCallDetails(callId) {
+    $("#callIDDetail").val(callId);
+    $.ajax({
+      url: `${API_URL}/api/v1/call/${callId}`,
+      method: "GET",
+      success: function (response) {
+        console.log("Call details:", response);
+        callData = response;
+        $("#createdAtCallDetail").text(
+          new Date(callData.call.createdAt).toLocaleString()
+        );
+        $("#statusCallDetail")
+          .text(callData.call.status ? "Open" : "Closed")
+          .removeClass("badge-primary badge-danger")
+          .addClass(callData.call.status ? "badge-primary" : "badge-danger");
+        $("#titleCallDetail")
+          .val(callData.call.title || "")
+          .prop("disabled", true);
+        $("#detailsCallDetail")
+          .val(callData.call.details || "")
+          .prop("disabled", true);
+
+        // Departments
+        const departmentIds = callData.call.departments || [];
+        $("#departmentsCallDetail").empty();
+        $.ajax({
+          url: `${API_URL}/api/v1/departments/community/${dbUser.user.lastAccessedCommunity.communityID}`,
+          method: "GET",
+          success: function (deptResponse) {
+            departmentsData = deptResponse.departments.filter(
+              (d) => d.template?.name !== "Civilian"
+            );
+            departmentIds.forEach((deptId) => {
+              const dept = departmentsData.find((d) => d._id === deptId);
+              if (dept) {
+                $("#departmentsCallDetail").append(
+                  `<span class="badge badge-secondary mr-2 mb-2">${dept.name}</span>`
+                );
+              }
+            });
+          },
+          error: function (xhr) {
+            console.error("Error fetching departments:", xhr.responseText);
+          },
+        });
+
+        // Assigned To
+        const memberIds = callData.call.assignedTo || [];
+        $("#assignedToCallDetail").empty();
+        $.ajax({
+          url: `${API_URL}/api/v1/community/${dbUser.user.lastAccessedCommunity.communityID}/members?limit=100`,
+          method: "GET",
+          success: function (memberResponse) {
+            membersData = memberResponse.members;
+            memberIds.forEach((memberId) => {
+              const member = membersData.find((m) => m._id === memberId);
+              if (member) {
+                $("#assignedToCallDetail").append(`
+                  <span class="badge badge-secondary mr-2 mb-2 d-flex align-items-center">
+                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      member.user.username
+                    )}&background=808080&color=fff&size=24" class="rounded-circle mr-1" style="width: 20px; height: 20px;">
+                    ${member.user.username}
+                  </span>
+                `);
+              }
+            });
+          },
+          error: function (xhr) {
+            console.error("Error fetching members:", xhr.responseText);
+          },
+        });
+
+        // Notes
+        $("#notesCallDetail").empty();
+        (callData.call.callNotes || []).reverse().forEach((note) => {
+          const isOwnNote = note.createdBy === dbUser.user.username;
+          $("#notesCallDetail").append(`
+            <div class="card bg-dark text-white mb-2 p-3">
+              <div class="d-flex justify-content-between">
+                <p class="mb-0">${note.note}</p>
+                ${
+                  isOwnNote
+                    ? `
+                  <div>
+                   
+                    <button class="btn btn-md btn-outline-danger" onclick="deleteNote('${note._id}')"><i class="fa fa-trash"></i></button>
+                  </div>
+                `
+                    : ""
+                }
+              </div>
+              <small class="text-muted">${note.createdBy} • ${new Date(
+            note.createdAt
+          ).toLocaleString()}</small>
+            </div>
+          `);
+        });
+
+        // Show/hide Close/Reopen buttons
+        $("#closeCallBtn").toggle(callData.call.status);
+        $("#reopenCallBtn").toggle(!callData.call.status);
+        $("#callDetailModal").modal("show");
+      },
+      error: function (xhr) {
+        console.error("Error fetching call details:", xhr.responseText);
+        alert(
+          "Failed to load call details: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
+  function toggleEditMode() {
+    isEditMode = !isEditMode;
+    $("#titleCallDetail, #detailsCallDetail").prop("disabled", !isEditMode);
+    $("#editCallBtn").toggle(!isEditMode);
+    $("#saveCallBtn, #cancelEditBtn").toggle(isEditMode);
+    $("#editDepartmentsBtn, #editMembersBtn").toggle(isEditMode);
+    $("#addNoteBtn, #deleteCallBtn, #closeCallBtn, #reopenCallBtn").toggle(
+      !isEditMode
+    );
+    $("#addNoteSection").hide();
+    if (!isEditMode) {
+      // Reset fields to original values
+      $("#titleCallDetail").val(callData.call.title || "");
+      $("#detailsCallDetail").val(callData.call.details || "");
+      populateCallDetails($("#callIDDetail").val());
+    }
+  }
+
+  function openDepartmentModal() {
+    $("#departmentList").empty();
+    const selectedIds = callData.call.departments || [];
+    departmentsData.forEach((dept) => {
+      $("#departmentList").append(`
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="dept-${
+            dept._id
+          }" value="${dept._id}" ${
+        selectedIds.includes(dept._id) ? "checked" : ""
+      }>
+          <label class="form-check-label" for="dept-${dept._id}">${
+        dept.name
+      }</label>
+        </div>
+      `);
+    });
+    $("#departmentSearch")
+      .val("")
+      .on("input", function () {
+        const query = $(this).val().toLowerCase();
+        $("#departmentList .form-check").each(function () {
+          $(this).toggle($(this).text().toLowerCase().includes(query));
+        });
+      });
+    $("#departmentModal")
+      .modal("show")
+      .one("hidden.bs.modal", function () {
+        const selected = [];
+        $("#departmentList input:checked").each(function () {
+          const deptId = $(this).val();
+          const dept = departmentsData.find((d) => d._id === deptId);
+          if (dept) selected.push({ id: dept._id, name: dept.name });
+        });
+        callData.call.departments = selected.map((d) => d.id);
+        $("#departmentsCallDetail").empty();
+        selected.forEach((dept) => {
+          $("#departmentsCallDetail").append(
+            `<span class="badge badge-secondary mr-2 mb-2">${dept.name}</span>`
+          );
+        });
+      });
+  }
+
+  function openMemberModal() {
+    $("#memberList").empty();
+    const selectedIds = callData.call.assignedTo || [];
+    membersData.forEach((member) => {
+      $("#memberList").append(`
+        <div class="form-check d-flex align-items-center">
+          <input type="checkbox" class="form-check-input" id="member-${
+            member._id
+          }" value="${member._id}" ${
+        selectedIds.includes(member._id) ? "checked" : ""
+      }>
+          <label class="form-check-label" for="member-${member._id}">
+            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(
+              member.user.username
+            )}&background=808080&color=fff&size=24" class="rounded-circle mr-2" style="width: 20px; height: 20px;">
+            ${member.user.username}
+          </label>
+        </div>
+      `);
+    });
+    $("#memberSearch")
+      .val("")
+      .on("input", function () {
+        const query = $(this).val().toLowerCase();
+        $("#memberList .form-check").each(function () {
+          $(this).toggle($(this).text().toLowerCase().includes(query));
+        });
+      });
+    $("#memberModal")
+      .modal("show")
+      .one("hidden.bs.modal", function () {
+        const selectedIds = [];
+        $("#memberList input:checked").each(function () {
+          selectedIds.push($(this).val());
+        });
+        callData.call.assignedTo = selectedIds;
+        $("#assignedToCallDetail").empty();
+        selectedIds.forEach((memberId) => {
+          const member = membersData.find((m) => m._id === memberId);
+          if (member) {
+            $("#assignedToCallDetail").append(`
+            <span class="badge badge-secondary mr-2 mb-2 d-flex align-items-center">
+              <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(
+                member.user.username
+              )}&background=808080&color=fff&size=24" class="rounded-circle mr-1" style="width: 20px; height: 20px;">
+              ${member.user.username}
+            </span>
+          `);
+          }
+        });
+      });
+  }
+
+  function saveChanges() {
+    const updatedCall = {
+      title: $("#titleCallDetail").val().trim(),
+      details: $("#detailsCallDetail").val().trim(),
+      departments: callData.call.departments,
+      assignedTo: callData.call.assignedTo,
+    };
+    $.ajax({
+      url: `${API_URL}/api/v1/calls/${$("#callIDDetail").val()}`,
+      method: "PUT",
+      data: JSON.stringify(updatedCall),
+      contentType: "application/json",
+      success: function () {
+        alert("Call updated successfully.");
+        toggleEditMode();
+        populateCallDetails($("#callIDDetail").val());
+      },
+      error: function (xhr) {
+        console.error("Error updating call:", xhr.responseText);
+        alert(
+          "Failed to update call: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
+  function deleteCall() {
+    if (
+      !confirm(
+        "Are you sure you want to delete this call? This action cannot be undone."
+      )
+    )
+      return;
+    $.ajax({
+      url: `${API_URL}/api/v1/calls/${$("#callIDDetail").val()}`,
+      method: "DELETE",
+      success: function () {
+        alert("Call deleted successfully.");
+        $("#callDetailModal").modal("hide");
+      },
+      error: function (xhr) {
+        console.error("Error deleting call:", xhr.responseText);
+        alert(
+          "Failed to delete call: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
+  function markAsCompleted() {
+    if (!confirm("Are you sure you want to mark this call as completed?"))
+      return;
+    const noteData = {
+      note: `${dbUser.user.username} marked the call as completed.`,
+      createdBy: "system",
+      createdAt: new Date().toISOString(),
+    };
+    $.ajax({
+      url: `${API_URL}/api/v1/calls/${$("#callIDDetail").val()}`,
+      method: "PUT",
+      data: JSON.stringify({ status: false }),
+      contentType: "application/json",
+      success: function () {
+        $.ajax({
+          url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}/note`,
+          method: "POST",
+          data: JSON.stringify(noteData),
+          contentType: "application/json",
+          success: function () {
+            alert("Call marked as completed.");
+            $("#callDetailModal").modal("hide");
+          },
+          error: function (xhr) {
+            console.error("Error adding note:", xhr.responseText);
+            alert("Failed to add completion note.");
+          },
+        });
+      },
+      error: function (xhr) {
+        console.error("Error marking call as completed:", xhr.responseText);
+        alert(
+          "Failed to mark call as completed: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
+  function reopenCall() {
+    if (!confirm("Are you sure you want to reopen this call?")) return;
+    const noteData = {
+      note: `${dbUser.user.username} reopened the call.`,
+      createdBy: "system",
+      createdAt: new Date().toISOString(),
+    };
+    $.ajax({
+      url: `${API_URL}/api/v1/calls/${$("#callIDDetail").val()}`,
+      method: "PUT",
+      data: JSON.stringify({ status: true }),
+      contentType: "application/json",
+      success: function () {
+        $.ajax({
+          url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}/note`,
+          method: "POST",
+          data: JSON.stringify(noteData),
+          contentType: "application/json",
+          success: function () {
+            alert("Call reopened successfully.");
+            populateCallDetails($("#callIDDetail").val());
+          },
+          error: function (xhr) {
+            console.error("Error adding note:", xhr.responseText);
+            alert("Failed to add reopen note.");
+          },
+        });
+      },
+      error: function (xhr) {
+        console.error("Error reopening call:", xhr.responseText);
+        alert(
+          "Failed to reopen call: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
+  function toggleAddNote() {
+    $("#addNoteSection").toggle();
+    $("#newNoteInput").val("");
+  }
+
+  function addNote() {
+    const noteText = $("#newNoteInput").val().trim();
+    if (!noteText) {
+      alert("Please enter a note.");
+      return;
+    }
+    const noteData = {
+      note: noteText,
+      createdBy: dbUser.user.username,
+      createdAt: new Date().toISOString(),
+    };
+    $.ajax({
+      url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}/note`,
+      method: "POST",
+      data: JSON.stringify(noteData),
+      contentType: "application/json",
+      success: function () {
+        alert("Note added successfully.");
+        toggleAddNote();
+        populateCallDetails($("#callIDDetail").val());
+      },
+      error: function (xhr) {
+        console.error("Error adding note:", xhr.responseText);
+        alert(
+          "Failed to add note: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
+  function openEditNoteModal(noteId, noteText) {
+    if (isProcessingEditNoteModal) {
+      console.log("Edit note modal blocked, processing in progress.");
+      return;
+    }
+    isProcessingEditNoteModal = true;
+
+    // Set note data
+    $("#editNoteId").val(noteId);
+    $("#editNoteInput")
+      .val(noteText)
+      .prop("disabled", false)
+      .prop("readonly", false)
+      .removeAttr("disabled readonly");
+
+    // Clear all event handlers to prevent loops
+    $("#editNoteInput").off();
+
+    // Open modal with minimal configuration
+    $("#editNoteModal").modal({
+      backdrop: true,
+      keyboard: true,
+    });
+
+    // Log textarea clicks to debug loop
+    $("#editNoteInput").on("click input", function (e) {
+      console.log("Edit note textarea event:", e.type, "value:", $(this).val());
+    });
+
+    // Allow modal to open without immediate focus
+    setTimeout(() => {
+      isProcessingEditNoteModal = false;
+      console.log("Edit note modal opened, noteId:", noteId, "text:", noteText);
+    }, 100);
+  }
+
+  // Handle modal show to prevent backdrop issues
+  $("#editNoteModal").on("show.bs.modal", function () {
+    console.log("Edit note modal opening.");
+    $(".modal-backdrop").not(":last").remove();
+    $("body").addClass("modal-open");
+    $("#editNoteModal").css("z-index", 1100);
+    $(".modal-backdrop").last().css("z-index", 1090);
+  });
+
+  // Clean up on close
+  $("#editNoteModal").on("hidden.bs.modal", function () {
+    $("#editNoteInput").val("").off();
+    $(".modal-backdrop").remove();
+    $("body").removeClass("modal-open");
+    isProcessingEditNoteModal = false;
+    console.log("Edit note modal closed.");
+  });
+
+  // Debug modal events to trace recursion
+  $("#editNoteModal").on(
+    "show.bs.modal shown.bs.modal hide.bs.modal hidden.bs.modal",
+    function (e) {
+      console.log(
+        "Edit note modal event:",
+        e.type,
+        "active modals:",
+        $(".modal:visible").length
+      );
+    }
+  );
+
+  function saveEditedNote() {
+    const noteId = $("#editNoteId").val();
+    const noteText = $("#editNoteInput").val().trim();
+    if (!noteText) {
+      alert("Note cannot be empty.");
+      return;
+    }
+    $.ajax({
+      url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}/note/${noteId}`,
+      method: "PUT",
+      data: JSON.stringify({ note: noteText, updatedBy: dbUser.user.username }),
+      contentType: "application/json",
+      success: function () {
+        alert("Note updated successfully.");
+        $("#editNoteModal").modal("hide");
+        populateCallDetails($("#callIDDetail").val());
+      },
+      error: function (xhr) {
+        console.error("Error updating note:", xhr.responseText);
+        alert(
+          "Failed to update note: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
+  function deleteNote(noteId) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this note? This action cannot be undone."
+      )
+    )
+      return;
+    $.ajax({
+      url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}/note/${noteId}`,
+      method: "DELETE",
+      success: function () {
+        alert("Note deleted successfully.");
+        populateCallDetails($("#callIDDetail").val());
+      },
+      error: function (xhr) {
+        console.error("Error deleting note:", xhr.responseText);
+        alert(
+          "Failed to delete note: " +
+            (xhr.responseJSON?.message || "Unknown error")
+        );
+      },
+    });
+  }
+
   // Initialize dashboard data
   pollDashboardData();
   setInterval(pollDashboardData, 30000); // Poll every 30 seconds
-
-  // OLD STUFF
-  $("#arrestModal").on("hidden.bs.modal", function () {
-    $("#civIDArrest").popover("hide");
-  });
 
   window.showBoloModal = showBoloModal;
   window.handleCreateBolo = handleCreateBolo;
@@ -414,4 +925,17 @@ $(document).ready(function () {
   window.handleDeleteBolo = handleDeleteBolo;
   window.populateBoloDetails = populateBoloDetails;
   window.changeCallPage = changeCallPage;
+  window.populateCallDetails = populateCallDetails;
+  window.toggleEditMode = toggleEditMode;
+  window.openDepartmentModal = openDepartmentModal;
+  window.openMemberModal = openMemberModal;
+  window.saveChanges = saveChanges;
+  window.deleteCall = deleteCall;
+  window.markAsCompleted = markAsCompleted;
+  window.reopenCall = reopenCall;
+  window.toggleAddNote = toggleAddNote;
+  window.addNote = addNote;
+  window.openEditNoteModal = openEditNoteModal;
+  window.saveEditedNote = saveEditedNote;
+  window.deleteNote = deleteNote;
 });
