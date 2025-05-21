@@ -79,6 +79,9 @@
   .select2-selection--multiple {
     width: 100% !important; /* Ensure multi-select is full width */
   }
+  .status-select {
+    background-color: transparent;
+  }
   </style>
 </head>
 
@@ -282,12 +285,12 @@
                               <table id="officerListTable" class="table table-hover table-bordered">
                                 <thead>
                                   <tr>
-                                    <!-- <th>On/Off Duty</th> -->
                                     <th>Username</th>
                                     <th>Call Sign</th>
                                     <th>Status</th>
                                   </tr>
                                 </thead>
+                                <tbody></tbody>
                               </table>
 
                               <hr style="width: 88%;max-width: 100rem;">
@@ -313,8 +316,8 @@
         
         <div class="container">
           <% if (user.user.activeCommunity !='' && user.user.activeCommunity != null) {%>
-          <div class="col-md-12 col-md-offset-0.75 margin-top-2 margin-bottom-2">
-            <!-- Fire/Ems list -->
+          <!-- <div class="col-md-12 col-md-offset-0.75 margin-top-2 margin-bottom-2">
+            
             <h4 id="fireEms-list">Fire/EMS List: <a data-toggle="modal" href="#fireEMSHelpModal"><i class="fa fa-question-circle"></i></a> </h4>
             <table id="fireEmsListTable" class="table table-hover table-bordered">
               <thead>
@@ -325,7 +328,7 @@
                 </tr>
               </thead>
             </table>
-          </div>
+          </div> -->
 
           <hr style="width: 88%;max-width: 100rem;">
           <%}%>
@@ -2198,24 +2201,24 @@
       })
     })
 
-    socket.on('created_bolo', res => {
-      if (res.bolo.communityID==dbUser.user.activeCommunity) {
-        var containsEmptyRow=$('#boloTable tr>td').hasClass('dataTables_empty');
-        if (containsEmptyRow) {
-          $('#boloTable tbody>tr:first').fadeOut(1, function () {
-            $(this).remove();
-          })
-        }
-        $('#boloTable tr:last').after(
-          `<tr id="`+res._id+`-row" class="gray-hover" data-toggle="modal" data-target="#boloDetailModal" onclick="populateBoloDetails('`+res._id+`')">`+
-          '<td id="'+res._id+'-type" style="text-transform: capitalize;">'+res.bolo.boloType+'</td>'+
-          '<td id="'+res._id+'-location">'+res.bolo.location+'</td>'+
-          '<td id="'+res._id+'-description">'+res.bolo.description+'</td>'+
-          '</tr>').fadeTo(1, function () {
-            $(this).add();
-          })
-      }
-    })
+    // socket.on('created_bolo', res => {
+    //   if (res.bolo.communityID==dbUser.user.activeCommunity) {
+    //     var containsEmptyRow=$('#boloTable tr>td').hasClass('dataTables_empty');
+    //     if (containsEmptyRow) {
+    //       $('#boloTable tbody>tr:first').fadeOut(1, function () {
+    //         $(this).remove();
+    //       })
+    //     }
+    //     $('#boloTable tr:last').after(
+    //       `<tr id="`+res._id+`-row" class="gray-hover" data-toggle="modal" data-target="#boloDetailModal" onclick="populateBoloDetails('`+res._id+`')">`+
+    //       '<td id="'+res._id+'-type" style="text-transform: capitalize;">'+res.bolo.boloType+'</td>'+
+    //       '<td id="'+res._id+'-location">'+res.bolo.location+'</td>'+
+    //       '<td id="'+res._id+'-description">'+res.bolo.description+'</td>'+
+    //       '</tr>').fadeTo(1, function () {
+    //         $(this).add();
+    //       })
+    //   }
+    // })
 
     // socket.on('created_call', res => {
     //   if (res.call.communityID==dbUser.user.activeCommunity) {
@@ -2304,21 +2307,21 @@
   }
 
   $(document).ready(function () {
-    $('#officerListTable').DataTable({
-      "bLengthChange": false,
-      "pageLength": 5,
-      columnDefs: [
-        { type: 'title-numeric', targets: 0 }
-      ]
-    });
+    // $('#officerListTable').DataTable({
+    //   "bLengthChange": false,
+    //   "pageLength": 5,
+    //   columnDefs: [
+    //     { type: 'title-numeric', targets: 0 }
+    //   ]
+    // });
 
-    $('#fireEmsListTable').DataTable({
-      "bLengthChange": false,
-      "pageLength": 5,
-      columnDefs: [
-        { type: 'title-numeric', targets: 0 }
-      ]
-    });
+    // $('#fireEmsListTable').DataTable({
+    //   "bLengthChange": false,
+    //   "pageLength": 5,
+    //   columnDefs: [
+    //     { type: 'title-numeric', targets: 0 }
+    //   ]
+    // });
 
     //load the officer list table, we do this because we want to filter out any
     //officers that are not currently on duty. DataTables is easier to leverage
