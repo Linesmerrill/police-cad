@@ -1296,10 +1296,18 @@ $(document).ready(function () {
               .on("change", function () {
                 const userId = $(this).data("user-id");
                 const tenCodeID = $(this).val();
+                const departmentId =
+                  document.getElementById("boloDepartmentID").value;
+
+                console.log(`communityId: ${communityId}`);
+                console.log(`departmentId: ${departmentId}`);
+                console.log(`userId: ${userId}`);
+                console.log(`tenCodeID: ${tenCodeID}`);
                 $.ajax({
-                  url: `${API_URL}/api/v1/community/${communityId}/members/${userId}`,
+                  url: `${API_URL}/api/v1/community/${communityId}/members/${userId}/tenCode`,
                   method: "PUT",
                   data: JSON.stringify({
+                    departmentId: departmentId,
                     tenCodeID: tenCodeID === "Unknown" ? null : tenCodeID,
                   }),
                   contentType: "application/json",
