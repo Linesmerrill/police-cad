@@ -11,6 +11,7 @@ $(document).ready(function () {
   let currentUnitPage = 1;
   const unitLimit = 10;
   let officerListTable;
+  let lastDataHash = "";
   let isProcessingEditNoteModal = false; // Prevent recursive modal opens
   let isProcessingCallDetails = false; // Guard against multiple calls
   let isCallModalSelect2Initialized = false; // Track Select2 state
@@ -1191,151 +1192,183 @@ $(document).ready(function () {
     });
   }
 
-  function populateOfficerListTable() {
+  function populateOfficerListTable(page = 1) {
+    currentUnitPage = page;
     const communityId = dbUser.user.lastAccessedCommunity.communityID;
+    let commData = null;
 
-    // Destroy existing DataTable if initialized
+    // Check if DataTable is initialized
     if ($.fn.DataTable.isDataTable("#officerListTable")) {
-      officerListTable.destroy();
-      $("#officerListTable tbody").empty();
-    }
-
-    // Initialize DataTable with server-side processing
-    officerListTable = $("#officerListTable").DataTable({
-      serverSide: true,
-      paging: true,
-      pageLength: unitLimit,
-      searching: false,
-      ordering: true,
-      bLengthChange: false,
-      ajax: {
-        url: `${API_URL}/api/v1/community/${communityId}/members`,
+      // Check for data changes
+      $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}/members?page=${currentUnitPage}&limit=${unitLimit}`,
         type: "GET",
-        data: function (d) {
-          d.page = Math.floor(d.start / d.length) + 1;
-          d.limit = d.length;
-          d.draw = d.draw;
-        },
-        dataSrc: function (json) {
-          json.draw = json.draw || 1;
-          json.recordsTotal = json.totalUsers || 0;
-          json.recordsFiltered = json.totalUsers || 0;
-          console.log("AJAX response:", json);
-          return json.members || [];
+        success: function (json) {
+          const newDataHash = JSON.stringify(
+            json.members.map((m) => ({
+              id: m._id,
+              username: m.user.username,
+              callSign: m.user.callSign,
+              tenCodeID: (commData?.community?.members[m._id] || {}).tenCodeID,
+            }))
+          );
+          if (newDataHash !== lastDataHash) {
+            lastDataHash = newDataHash;
+            officerListTable?.ajax.reload(null, false);
+            console.log("Data changed, reloaded table.");
+          } else {
+            console.log("No data change, skipping reload.");
+          }
         },
         error: function (xhr) {
-          console.error("Error fetching members:", xhr.responseText);
-          officerListTable.clear().draw();
-          officerListTable.row
-            .add([
-              '<tr><td colspan="3" class="text-center">Error loading units.</td></tr>',
-            ])
-            .draw();
+          console.error("Error checking members for update:", xhr.responseText);
         },
-      },
-      columns: [
-        {
-          data: "user.username",
-          title: "Username",
-          render: (data) => data || "",
-        },
-        {
-          data: null,
-          title: "Call Sign",
-          render: (data) =>
-            data.user.callSign ? `Unit ${data.user.callSign}` : "No Unit #",
-        },
-        {
-          data: null,
-          title: "Status",
-          render: function (data) {
-            return `<select class="status-select" data-user-id="${data._id}"></select>`;
-          },
-        },
-      ],
-      drawCallback: function () {
-        $.ajax({
-          url: `${API_URL}/api/v1/community/${communityId}`,
+      });
+    } else {
+      // Initialize DataTable
+      officerListTable = $("#officerListTable").DataTable({
+        serverSide: true,
+        paging: true,
+        pageLength: unitLimit,
+        searching: false,
+        ordering: true,
+        bLengthChange: false,
+        ajax: {
+          url: `${API_URL}/api/v1/community/${communityId}/members`,
           type: "GET",
-          success: function (commData) {
-            const tenCodes = commData.community.tenCodes || [];
-            officerListTable
-              .column(2)
-              .nodes()
-              .to$()
-              .each(function () {
-                const $select = $(this).find(".status-select");
-                const userId = $select.data("user-id");
-                const memberData = commData.community.members[userId] || {};
-                const currentTenCode = tenCodes.find(
-                  (code) => code._id === memberData.tenCodeID
-                );
-                const selectOptions =
-                  tenCodes.length > 0
-                    ? tenCodes
-                        .map(
-                          (code) =>
-                            `<option value="${code._id}" ${
-                              code._id === memberData.tenCodeID
-                                ? "selected"
-                                : ""
-                            }>${code.code}</option>`
-                        )
-                        .join("")
-                    : "";
-                $select.empty().append(`
-              <option value="Unknown" ${
-                !currentTenCode ? "selected" : ""
-              }>Unknown</option>
-              ${selectOptions}
-            `);
-              });
-
-            $(".status-select")
-              .off("change")
-              .on("change", function () {
-                const userId = $(this).data("user-id");
-                const tenCodeID = $(this).val();
-                const departmentId =
-                  document.getElementById("boloDepartmentID").value;
-
-                console.log(`communityId: ${communityId}`);
-                console.log(`departmentId: ${departmentId}`);
-                console.log(`userId: ${userId}`);
-                console.log(`tenCodeID: ${tenCodeID}`);
-                $.ajax({
-                  url: `${API_URL}/api/v1/community/${communityId}/members/${userId}/tenCode`,
-                  method: "PUT",
-                  data: JSON.stringify({
-                    departmentId: departmentId,
-                    tenCodeID: tenCodeID === "Unknown" ? null : tenCodeID,
-                  }),
-                  contentType: "application/json",
-                  success: function () {
-                    console.log("Unit status updated for user:", userId);
-                  },
-                  error: function (xhr) {
-                    console.error(
-                      "Error updating unit status:",
-                      xhr.responseText
-                    );
-                    alert(
-                      "Failed to update unit status: " +
-                        (xhr.responseJSON?.message || "Unknown error")
-                    );
-                  },
-                });
-              });
+          data: function (d) {
+            d.page = Math.floor(d.start / d.length) + 1;
+            d.limit = d.length;
+            d.draw = d.draw;
+          },
+          dataSrc: function (json) {
+            json.draw = json.draw || 1;
+            json.recordsTotal = json.totalUsers || 0;
+            json.recordsFiltered = json.totalUsers || 0;
+            console.log("AJAX response:", json);
+            if (!json.members || json.members.length === 0) {
+              console.warn("No members returned for page:", currentUnitPage);
+            }
+            lastDataHash = JSON.stringify(
+              json.members.map((m) => ({
+                id: m._id,
+                username: m.user.username,
+                callSign: m.user.callSign,
+                tenCodeID: (commData?.community?.members[m._id] || {})
+                  .tenCodeID,
+              }))
+            );
+            return json.members || [];
           },
           error: function (xhr) {
-            console.error(
-              "Error fetching community details:",
-              xhr.responseText
-            );
+            console.error("Error fetching members:", xhr.responseText);
+            officerListTable.clear().draw();
+            officerListTable.row
+              .add([
+                '<tr><td colspan="3" class="text-center">Error loading units.</td></tr>',
+              ])
+              .draw();
           },
-        });
-      },
-    });
+        },
+        columns: [
+          {
+            data: "user.username",
+            title: "Username",
+            render: (data) => data || "",
+          },
+          {
+            data: null,
+            title: "Call Sign",
+            render: (data) =>
+              data.user.callSign ? `Unit ${data.user.callSign}` : "No Unit #",
+          },
+          {
+            data: null,
+            title: "Status",
+            render: function (data) {
+              return `<select class="status-select" data-user-id="${data._id}"></select>`;
+            },
+          },
+        ],
+        drawCallback: function () {
+          $.ajax({
+            url: `${API_URL}/api/v1/community/${communityId}`,
+            type: "GET",
+            success: function (commData) {
+              const tenCodes = commData.community.tenCodes || [];
+              officerListTable
+                .column(2)
+                .nodes()
+                .to$()
+                .each(function () {
+                  const $select = $(this).find(".status-select");
+                  const userId = $select.data("user-id");
+                  const memberData = commData.community.members[userId] || {};
+                  const currentTenCode = tenCodes.find(
+                    (code) => code._id === memberData.tenCodeID
+                  );
+                  const selectOptions =
+                    tenCodes.length > 0
+                      ? tenCodes
+                          .map(
+                            (code) =>
+                              `<option value="${code._id}" ${
+                                code._id === memberData.tenCodeID
+                                  ? "selected"
+                                  : ""
+                              }>${code.code}</option>`
+                          )
+                          .join("")
+                      : "";
+                  $select.empty().append(`
+                <option value="Unknown" ${
+                  !currentTenCode ? "selected" : ""
+                }>Unknown</option>
+                ${selectOptions}
+              `);
+                });
+
+              $(".status-select")
+                .off("change")
+                .on("change", function () {
+                  const userId = $(this).data("user-id");
+                  const tenCodeID = $(this).val();
+                  const departmentId =
+                    document.getElementById("boloDepartmentID")?.value || null;
+                  $.ajax({
+                    url: `${API_URL}/api/v1/community/${communityId}/members/${userId}/tenCode`,
+                    method: "PUT",
+                    data: JSON.stringify({
+                      departmentId: departmentId,
+                      tenCodeID: tenCodeID === "Unknown" ? null : tenCodeID,
+                    }),
+                    contentType: "application/json",
+                    success: function () {
+                      console.log("Unit status updated for user:", userId);
+                    },
+                    error: function (xhr) {
+                      console.error(
+                        "Error updating unit status:",
+                        xhr.responseText
+                      );
+                      alert(
+                        "Failed to update unit status: " +
+                          (xhr.responseJSON?.message || "Unknown error")
+                      );
+                    },
+                  });
+                });
+            },
+            error: function (xhr) {
+              console.error(
+                "Error fetching community details:",
+                xhr.responseText
+              );
+            },
+          });
+        },
+      });
+    }
   }
 
   // Update changeUnitPage
