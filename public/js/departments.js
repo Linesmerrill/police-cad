@@ -30,9 +30,7 @@ function fetchAndRenderDepartments() {
         const useForm = ["police", "fire", "ems", "dispatch"].includes(
           template.toLowerCase()
         );
-        const isDisabled = ["dispatch", "fire", "ems"].includes(
-          template.toLowerCase()
-        );
+        const isDisabled = ["fire", "ems"].includes(template.toLowerCase());
 
         // Map icons and routes
         switch (template.toLowerCase()) {
@@ -47,8 +45,8 @@ function fetchAndRenderDepartments() {
             break;
           case "dispatch":
             icon = "fa-headset";
-            action = "#"; // Disabled, no action
-            redirect = "";
+            action = "/select-department";
+            redirect = "/dispatch-dashboard";
             break;
           case "fire":
             icon = "fa-fire-extinguisher";

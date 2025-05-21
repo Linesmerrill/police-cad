@@ -450,7 +450,16 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/dispatch-dashboard", authCheck, function (req, res) {
-    return res.render("dispatch-dashboard");
+    var context = req.app.locals.specialContext;
+    req.app.locals.specialContext = null;
+    const departmentId = req.session.departmentId || null;
+    res.render("dispatch-dashboard", {
+      user: req.user,
+      referer: encodeURIComponent("/dispatch-dashboard"),
+      redirect: encodeURIComponent(redirect),
+      context: null,
+      departmentId,
+    });
   });
 
   // app.js

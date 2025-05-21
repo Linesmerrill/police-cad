@@ -2789,8 +2789,6 @@ a[data-toggle="collapse"].collapsed .rotate {
     cursor: pointer;
 }
 
-
-
 #manage-next-firearm-page-btn {
     color: white;
     background: transparent;
@@ -2933,6 +2931,13 @@ a[data-toggle="collapse"].collapsed .rotate {
     color: white;
     background-color: #00aced;
     cursor: pointer;
+}
+
+.disabled-department {
+    opacity: 0.6;
+    background-color: rgba(0, 0, 0, 0.3);
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .isDisabled {

@@ -11,6 +11,8 @@
   <meta name="generator" content="Codeply">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap.min.css" />
   <link rel="stylesheet" href="/static/css/animate.min.css" />
   <link rel="stylesheet" href="/static/css/ionicons.min.css" />
   <link rel="stylesheet" href="/static/css/tail.select-dark.min.css" />
@@ -65,12 +67,7 @@
   .rotate.expanded {
     transform: rotate(90deg);
   }
-  .disabled-department {
-    opacity: 0.6;
-    background-color: rgba(0, 0, 0, 0.3);
-    cursor: not-allowed;
-    pointer-events: none;
-  }
+  
   .select2-container--open {
     z-index: 9999 !important; /* Ensure dropdown is above modal (z-index 9000) */
   }
@@ -2363,11 +2360,6 @@ function showBoloModal() {
   clearBoloForm();
   $('#boloModal').modal('show');
 }
-
-// function showSearchDatabaseModal(value) {
-//   $('#searchType').val(value);
-//   $('#searchDatabaseModal').modal('show');
-// }
 
     // Load 10-codes when modal is shown
     $('#10codesModal').on('show.bs.modal', function() {
