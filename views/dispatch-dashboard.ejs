@@ -107,16 +107,16 @@
                     class="fa fa-plus-square ml-3 mr-3"></span> Create Call</a>
                 <% } %>
           </li>
-          <li>
+          <!-- <li>
             <a data-toggle="modal" href="#10codesModal"><span class="fa fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
-          </li>
+          </li> -->
           <li>
             <a href="/penal-code"><span class="fa fa-laptop ml-3 mr-3"></span>Penal Codes <i
                 class="fa fa-external-link-alt"></i></a>
           </li>
-          <li>
+          <!-- <li>
             <a data-toggle="modal" href="#notepadModal"><span class="fa fa-clipboard ml-3 mr-3"></span> Notepad</a>
-          </li>
+          </li> -->
           <li>
             <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
                 class="fa fa-external-link-alt"></i></a>
@@ -140,8 +140,7 @@
             </button>
           </div>
           <div class="navbar-header" style="position: absolute; left: 85px;">
-            <h1 class="cursive"><a href="/dispatch-dashboard"><i class="fa-solid fa-headset"></i> Dispatch Operations</a>
-            </h1>
+            <h1 class="cursive"><a href="/dispatch-dashboard"><i class="fa-solid fa-headset"></i> Dispatch Operations</a> • <a href="/community-dashboard"><span id="community-name"></span></a></h1>
           </div>
         </div>
         <a data-toggle="modal" href="#signal100DetailModal" style="z-index: 8;width: 100%;">
@@ -212,7 +211,7 @@
 
                         <!-- imports the community specific alerts -->
                         <% include community-alerts %>
-                          <div class="col-md-10 col-md-offset-1 text-center">
+                          <!-- <div class="col-md-10 col-md-offset-1 text-center">
                             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
                               <button type="button" class="btn btn-danger btn-lg margin-top-2 margin-bottom-1"
                                 onclick="signal100()"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>
@@ -225,7 +224,7 @@
                                   class="btn btn-danger btn-lg margin-top-2 mock-disabled margin-bottom-1"><i
                                     class="fa fa-exclamation-circle" aria-hidden="true"></i> Signal 100</button>
                                 <% } %>
-                          </div>
+                          </div> -->
                           <% if (user.user.activeCommunity =='' || user.user.activeCommunity ==null) {%>
                             <div class="col-md-10 col-md-offset-1 text-center">
                               <h3><i class="fa fa-arrow-left"></i> Click on any of the search buttons to get started
@@ -291,29 +290,22 @@
           <div id="active-bolo-container" class="col-md-12 col-md-offset-0.75 margin-top-2">
             <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
               <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Active BOLOs:</span> <button
-                type="button" data-toggle="modal" href="#boloModal"
-                class="btn btn-primary btn-md pull-right margin-bottom-1" onclick="clearBoloForm()">Create BOLO</button>
+                type="button" data-toggle="modal" href="javascript:void(0)"
+                class="btn btn-primary btn-md pull-right margin-bottom-1" onclick="showBoloModal()">Create BOLO</button>
+                <!-- <a href="javascript:void(0)" onclick="showBoloModal()"><span
+      class="fa fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a> -->
               <table id="boloTable" class="table table-hover table-bordered">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Location</th>
-                    <th>Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                 
-                      <tr id="boloid-row" class="gray-hover" data-toggle="modal" data-id=""
-                        data-target="#boloDetailModal" onclick="populateBoloDetails('boloid')">
-                        <td id="boloid-type" style="text-transform: capitalize;">
-                        </td>
-                        <td id="boloid-location">
-                        </td>
-                        <td id="boloid-description">
-                        </td>
-                      </tr>
-                </tbody>
-              </table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Location</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Populated dynamically by loadBolos -->
+  </tbody>
+</table>
               <% } %>
           </div>
           <div class="col-md-12 col-md-offset-0.75 margin-top-2">
@@ -545,100 +537,90 @@
   </div>
 
   <div id="boloDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form id="update-bolo-form" class="form-horizontal" action="/updateOrDeleteBolo" method="post">
-            <fieldset>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <form id="update-bolo-form" class="form-horizontal" onsubmit="event.preventDefault(); handleUpdateBolo();">
+          <fieldset>
+            <!-- Form Name -->
+            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            <h4>BOLO Details</h4>
+            <hr style="width: 88%;max-width: 100rem;">
 
-              <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                aria-hidden="true">X</button>
-              <h4>BOLO Details</h4>
-              <hr style="width: 88%;max-width: 100rem;">
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="boloTitleDetail">Title:</label>
+              <div class="col-md-4">
+                <input id="boloTitleDetail" name="boloTitle" style="text-transform: capitalize;" type="text"
+                  placeholder="Title" class="form-control input-md" maxlength="50" required>
+              </div>
+            </div>
 
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createdBy">Created By:</label>
-                <div class="col-md-4">
-                  <h5 id="createdByDetail"></h5>
-                </div>
+            <!-- Text input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="locationDetail">Location:</label>
+              <div class="col-md-4">
+                <input id="locationDetail" name="location" style="text-transform: capitalize;" type="text"
+                  placeholder="Location" class="form-control input-md" maxlength="50" required>
               </div>
+            </div>
 
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createdBy">Created At:</label>
-                <div class="col-md-4">
-                  <h5 id="createdAtDetail"></h5>
-                </div>
+            <!-- Text Area input-->
+            <div class="form-group required">
+              <label class="col-md-4 control-label" for="descriptionDetail">Description:</label>
+              <div class="col-md-8 col-md-offset-2">
+                <textarea id="descriptionDetail" name="description" rows="4" maxlength="500"
+                  placeholder="Description" class="form-control input-md" required></textarea>
               </div>
+            </div>
 
-              <!-- Text input-->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
-                <div class="col-md-4">
-                  <h5 id="updatedAtDetail"></h5>
-                </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="dateCreatedDetail">Date Created:</label>
+              <div class="col-md-4">
+                <h5 id="dateCreatedDetail"></h5>
               </div>
+            </div>
 
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="boloType">Type:</label>
-                <div class="col-md-4">
-                  <select id="boloTypeDetail" name="boloType" class="form-control" selected="selected" required>
-                    <option value="person">Person</option>
-                    <option value="vehicle">Vehicle</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="lastUpdatedDetail">Last Updated:</label>
+              <div class="col-md-4">
+                <h5 id="lastUpdatedDetail"></h5>
               </div>
+            </div>
 
-              <!-- Text input-->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="location">Last Seen Around:</label>
-                <div class="col-md-4">
-                  <input id="locationDetail" name="location" style="text-transform: capitalize;" type="text"
-                    placeholder="location" class="form-control input-md" maxlength="50" required>
-                </div>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="statusDetail">Status:</label>
+              <div class="col-md-4">
+                <h5 id="statusDetail"></h5>
               </div>
+            </div>
 
-              <!-- Text Area input-->
-              <div class="form-group required">
-                <label class="col-md-4 control-label" for="description">Description:</label>
-                <div class="col-md-8 col-md-offset-2">
-                  <textarea id="descriptionDetail" name="description" type="text" rows="4" maxlength="500"
-                    placeholder="description" class="form-control input-md" required></textarea>
-                </div>
-              </div>
+            <!-- Hidden input for boloID -->
+            <input id="boloIDDetail" type="hidden" name="boloID" value="">
 
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="updateBolo"></label>
-                <div class="col-md-4 text-align-center">
-                  <input type="hidden" name="route" value="dispatch-dashboard">
-                  <input id="boloIDDetail" type="hidden" name="boloID" value="">
-                  <button id="updateBolo" type="submit" name="action" value="update" class="btn btn-info"
-                    onclick="hideModal('boloDetailModal')">Update</button>
-                </div>
+            <!-- Button -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="updateBolo"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="updateBolo" type="submit" class="btn btn-info">Update</button>
               </div>
-            </fieldset>
-          </form>
-          <form id="delete-bolo-form">
-            <fieldset>
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="deleteBolo"></label>
-                <div class="col-md-4 text-align-center">
-                  <input type="hidden" name="route" value="dispatch-dashboard">
-                  <!-- <input id="boloIDDetail" type="hidden" name="boloID" value=""> -->
-                  <button id="deleteBolo" type="submit" name="action" value="delete" class="btn btn-danger"
-                    onclick="hideModal('boloDetailModal')">Delete</button>
-                </div>
+            </div>
+          </fieldset>
+        </form>
+        <form id="delete-bolo-form" onsubmit="event.preventDefault(); handleDeleteBolo();">
+          <fieldset>
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="deleteBolo"></label>
+              <div class="col-md-4 text-align-center">
+                <button id="deleteBolo" type="submit" class="btn btn-danger">Delete</button>
               </div>
-            </fieldset>
-          </form>
-        </div>
+            </div>
+          </fieldset>
+        </form>
       </div>
     </div>
   </div>
+</div>
 
   <div id="viewWarrant" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -2263,6 +2245,9 @@
   var pageLicense = 0;
   var civFirstName = "";
   var civLastName = "";
+  const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+  let currentBoloPage = 0;
+  const boloLimit = 10;
 
   $.delete=function (url, data, callback, type) {
     if ($.isFunction(data)) {
@@ -2547,6 +2532,81 @@
       }
       socket.emit('load_panic_statuses', myReq)
     }
+  }
+
+  // AJAX function to load active BOLOs
+  // Needs to be inside of this file so it can access the departmentId variable
+  function loadActiveBOLOs() {
+    const communityId = dbUser.user.lastAccessedCommunity.communityID;
+    if (!communityId) {
+      console.warn("No community ID found, skipping BOLO load.");
+      return;
+    }
+
+    $.ajax({
+      url: `${API_URL}/api/v1/bolos?communityId=${communityId}&departmentId=${departmentId}&limit=${boloLimit}&page=${currentBoloPage}&status=true`,
+      method: "GET",
+      success: function (response) {
+        const $tbody = $("#boloTable tbody");
+        $tbody.empty(); // Clear existing rows
+        const bolos = response.data || [];
+        const totalCount = response.totalCount || bolos.length; // Fallback if totalCount is missing
+
+        if (bolos.length === 0) {
+          $tbody.append(
+            '<tr><td colspan="3" class="text-center">No BOLOs found.</td></tr>'
+          );
+        } else {
+          bolos.forEach((bolo) => {
+            const boloId = bolo._id;
+            $tbody.append(`
+              <tr class="gray-hover" data-toggle="modal" data-id="${boloId}" data-target="#boloDetailModal" onclick="populateBoloDetails('${boloId}')">
+                <td style="text-transform: capitalize;">${
+                  bolo.bolo?.title || "N/A"
+                }</td>
+                <td>${bolo.bolo?.location || "N/A"}</td>
+                <td>${bolo.bolo?.description || "N/A"}</td>
+              </tr>
+            `);
+          });
+        }
+
+        // Add pagination controls
+        const $pagination = $("#boloTable").next(".bolo-pagination");
+        if ($pagination.length === 0) {
+          $("#boloTable").after(
+            '<div class="bolo-pagination d-flex justify-content-between mt-2"></div>'
+          );
+        }
+        const $paginationContainer = $(".bolo-pagination");
+        $paginationContainer.empty();
+        if (totalCount > boloLimit) {
+          $paginationContainer.append(`
+            <button class="btn btn-primary" onclick="changeBoloPage(${
+              currentBoloPage - 1
+            })" ${currentBoloPage === 1 ? "disabled" : ""}>Previous</button>
+            <button class="btn btn-primary" onclick="changeBoloPage(${
+              currentBoloPage + 1
+            })" ${
+            currentBoloPage * boloLimit >= totalCount ? "disabled" : ""
+          }>Next</button>
+          `);
+        }
+        console.log("BOLOs loaded:", {
+          page: currentBoloPage,
+          count: bolos.length,
+          total: totalCount,
+        });
+      },
+      error: function (xhr) {
+        console.error("Error loading BOLOs:", xhr.responseText);
+        $("#boloTable tbody")
+          .empty()
+          .append(
+            '<tr><td colspan="3" class="text-center">Error loading BOLOs.</td></tr>'
+          );
+      },
+    });
   }
 
   function getRegisteredFirearms(registeredOwnerID, index) {

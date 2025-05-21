@@ -1735,7 +1735,7 @@ function selectTenCode(tenCodeID) {
       const communityId = dbUser.user.lastAccessedCommunity.communityID;
       if (!communityId) return;
       $.ajax({
-        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolos?communityId=${communityId}&departmentId=${departmentId}`,
+        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolos?communityId=${communityId}&departmentId=${departmentId}&status=true`,
         method: 'GET',
         success: function(bolos) {
           const $container = $('#active-bolo-container');
