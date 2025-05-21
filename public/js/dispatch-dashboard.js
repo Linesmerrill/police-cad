@@ -9,6 +9,7 @@ $(document).ready(function () {
   let departmentsData = [];
   let membersData = [];
   let isProcessingEditNoteModal = false; // Prevent recursive modal opens
+  let isProcessingCallDetails = false; // Guard against multiple calls
 
   fetchAndRenderDepartments(); // Fetch and render departments on page load
 
@@ -402,6 +403,11 @@ $(document).ready(function () {
   }
 
   function populateCallDetails(callId) {
+    if (isProcessingCallDetails) {
+      console.log("populateCallDetails blocked, already processing.");
+      return;
+    }
+    isProcessingCallDetails = true;
     $("#callIDDetail").val(callId);
     $.ajax({
       url: `${API_URL}/api/v1/call/${callId}`,
@@ -424,12 +430,14 @@ $(document).ready(function () {
           .prop("disabled", true);
 
         // Departments
-        const departmentIds = callData.call.departments || [];
-        $("#departmentsCallDetail").empty();
+        const departmentIds = [...new Set(callData.call.departments || [])]; // Deduplicate
+        console.log("Department IDs:", departmentIds);
+        $("#departmentsCallDetail").empty(); // Clear before appending
         $.ajax({
-          url: `${API_URL}/api/v1/departments/community/${dbUser.user.lastAccessedCommunity.communityID}`,
+          url: `${API_URL}/api/v1/community/${dbUser.user.lastAccessedCommunity.communityID}/departments`,
           method: "GET",
           success: function (deptResponse) {
+            console.log("Departments response:", deptResponse);
             departmentsData = deptResponse.departments.filter(
               (d) => d.template?.name !== "Civilian"
             );
@@ -441,6 +449,10 @@ $(document).ready(function () {
                 );
               }
             });
+            console.log(
+              "Department badges appended:",
+              $("#departmentsCallDetail .badge").length
+            );
           },
           error: function (xhr) {
             console.error("Error fetching departments:", xhr.responseText);
@@ -448,8 +460,9 @@ $(document).ready(function () {
         });
 
         // Assigned To
-        const memberIds = callData.call.assignedTo || [];
-        $("#assignedToCallDetail").empty();
+        const memberIds = [...new Set(callData.call.assignedTo || [])]; // Deduplicate
+        console.log("Member IDs:", memberIds);
+        $("#assignedToCallDetail").empty(); // Clear before appending
         $.ajax({
           url: `${API_URL}/api/v1/community/${dbUser.user.lastAccessedCommunity.communityID}/members?limit=100`,
           method: "GET",
@@ -468,6 +481,10 @@ $(document).ready(function () {
                 `);
               }
             });
+            console.log(
+              "Member badges appended:",
+              $("#assignedToCallDetail .badge").length
+            );
           },
           error: function (xhr) {
             console.error("Error fetching members:", xhr.responseText);
@@ -504,6 +521,7 @@ $(document).ready(function () {
         $("#closeCallBtn").toggle(callData.call.status);
         $("#reopenCallBtn").toggle(!callData.call.status);
         $("#callDetailModal").modal("show");
+        isProcessingCallDetails = false;
       },
       error: function (xhr) {
         console.error("Error fetching call details:", xhr.responseText);
@@ -511,6 +529,7 @@ $(document).ready(function () {
           "Failed to load call details: " +
             (xhr.responseJSON?.message || "Unknown error")
         );
+        isProcessingCallDetails = false;
       },
     });
   }
@@ -631,20 +650,27 @@ $(document).ready(function () {
   }
 
   function saveChanges() {
+    // Clear DOM elements to prevent duplicates
+    $("#departmentsCallDetail").empty();
+    $("#assignedToCallDetail").empty();
+    console.log("Cleared departments and assignedTo before saving.");
+
     const updatedCall = {
       title: $("#titleCallDetail").val().trim(),
       details: $("#detailsCallDetail").val().trim(),
-      departments: callData.call.departments,
-      assignedTo: callData.call.assignedTo,
+      departments: [...new Set(callData.call.departments)], // Deduplicate
+      assignedTo: [...new Set(callData.call.assignedTo)], // Deduplicate
     };
+    console.log("Saving call with data:", updatedCall);
     $.ajax({
-      url: `${API_URL}/api/v1/calls/${$("#callIDDetail").val()}`,
+      url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}`,
       method: "PUT",
       data: JSON.stringify(updatedCall),
       contentType: "application/json",
       success: function () {
         alert("Call updated successfully.");
         toggleEditMode();
+        console.log("Saving call, calling populateCallDetails.");
         populateCallDetails($("#callIDDetail").val());
       },
       error: function (xhr) {
@@ -665,7 +691,7 @@ $(document).ready(function () {
     )
       return;
     $.ajax({
-      url: `${API_URL}/api/v1/calls/${$("#callIDDetail").val()}`,
+      url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}`,
       method: "DELETE",
       success: function () {
         alert("Call deleted successfully.");
@@ -690,7 +716,7 @@ $(document).ready(function () {
       createdAt: new Date().toISOString(),
     };
     $.ajax({
-      url: `${API_URL}/api/v1/calls/${$("#callIDDetail").val()}`,
+      url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}`,
       method: "PUT",
       data: JSON.stringify({ status: false }),
       contentType: "application/json",
@@ -702,6 +728,7 @@ $(document).ready(function () {
           contentType: "application/json",
           success: function () {
             alert("Call marked as completed.");
+            hideModal("callDetailModal");
             $("#callDetailModal").modal("hide");
           },
           error: function (xhr) {
@@ -728,7 +755,7 @@ $(document).ready(function () {
       createdAt: new Date().toISOString(),
     };
     $.ajax({
-      url: `${API_URL}/api/v1/calls/${$("#callIDDetail").val()}`,
+      url: `${API_URL}/api/v1/call/${$("#callIDDetail").val()}`,
       method: "PUT",
       data: JSON.stringify({ status: true }),
       contentType: "application/json",
