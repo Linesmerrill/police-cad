@@ -2,6 +2,8 @@ $(document).ready(function () {
   const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
   let currentBoloPage = 0;
   const boloLimit = 10;
+  let currentCallPage = 1;
+  const callLimit = 10;
 
   fetchAndRenderDepartments(); // Fetch and render departments on page load
 
@@ -275,37 +277,116 @@ $(document).ready(function () {
   function loadAssignedCalls() {
     const communityId = dbUser.user.lastAccessedCommunity.communityID;
     const userId = dbUser._id;
-    if (!communityId) return;
+    if (!communityId) {
+      console.warn("No community ID found, skipping call load.");
+      return;
+    }
+
     $.ajax({
-      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/calls/community/${communityId}?status=true`,
+      url: `${API_URL}/api/v1/calls/community/${communityId}?status=true&limit=${callLimit}&page=${currentCallPage}`,
       method: "GET",
-      success: function (data) {
-        const $container = $("#assigned-call-container");
-        $container.find("a").remove();
-        $container.find("span").remove();
-        $container.append(
-          "<span><h4>Open Calls: </h4><h5>Click for details</h5></span>"
-        );
-        data.forEach((call) => {
-          const is911Call =
-            call?.call?.title?.startsWith("911:") ||
-            call?.call?.details?.startsWith("911:");
-          const alertClass = is911Call ? "alert-danger" : "alert-success";
-          $container.append(
-            `<a id="${call._id}" href="javascript:void(0)" onclick="event.stopPropagation(); populateCallDetails('${call._id}');">
-            <div class="alert ${alertClass} alert-dismissible show" role="alert">
-              Opened: <span id="${call._id}-createdAt" style="text-transform:capitalize">
-                <time>${call?.call?.createdAt}</time> | Description: <span id="${call._id}-description">${call?.call?.title} | ${call?.call?.details}</span>
-              </span>
-            </div>
-          </a>`
+      success: function (response) {
+        const $tbody = $("#callTable tbody");
+        $tbody.empty(); // Clear existing rows
+        const calls = response.data || response; // Fallback if response is array
+        const totalCount = response.totalCount || calls.length; // Fallback if totalCount missing
+
+        if (calls.length === 0) {
+          $tbody.append(
+            '<tr><td colspan="3" class="text-center">No calls found.</td></tr>'
           );
+        } else {
+          calls.forEach((call) => {
+            const callId = call._id;
+            const createdAt = call.call?.createdAt
+              ? new Date(call.call.createdAt).toLocaleString()
+              : "N/A";
+            const description =
+              `${call.call?.title || ""}${
+                call.call?.details ? " | " + call.call.details : ""
+              }` || "N/A";
+            const policeUnits =
+              call.call?.assignedOfficers?.length > 0
+                ? call.call.assignedOfficers
+                    .map(
+                      (o) =>
+                        `${o.name || "Unknown"} (${o.badgeNumber || "N/A"})`
+                    )
+                    .join(", ")
+                : "None";
+            const fireEmsUnits =
+              call.call?.assignedFireEms?.length > 0
+                ? call.call.assignedFireEms
+                    .map((u) => u.unitName || "Unknown")
+                    .join(", ")
+                : "None";
+            const unitsAssigned =
+              `
+              ${
+                policeUnits !== "None"
+                  ? `<span class="badge badge-secondary">${policeUnits} (Police)</span>`
+                  : ""
+              }
+              ${
+                fireEmsUnits !== "None"
+                  ? `<span class="badge badge-secondary">${fireEmsUnits}</span>`
+                  : ""
+              }
+            ` || "None";
+
+            $tbody.append(`
+              <tr class="gray-hover" data-toggle="modal" data-id="${callId}" data-target="#callDetailModal"
+                onclick="populateCallDetails('${callId}');populateOfficerList('');populateFireEmsList('');populateClassifierList('')">
+                <td>${createdAt}</td>
+                <td style="text-transform: capitalize;">${description}</td>
+                <td>${unitsAssigned}</td>
+              </tr>
+            `);
+          });
+        }
+
+        // Add pagination controls
+        const $pagination = $("#callTable").next(".call-pagination");
+        if ($pagination.length === 0) {
+          $("#callTable").after(
+            '<div class="call-pagination d-flex justify-content-between mt-2"></div>'
+          );
+        }
+        const $paginationContainer = $(".call-pagination");
+        $paginationContainer.empty();
+        if (totalCount > callLimit) {
+          $paginationContainer.append(`
+            <button class="btn btn-primary" onclick="changeCallPage(${
+              currentCallPage - 1
+            })" ${currentCallPage === 1 ? "disabled" : ""}>Previous</button>
+            <button class="btn btn-primary" onclick="changeCallPage(${
+              currentCallPage + 1
+            })" ${
+            currentCallPage * callLimit >= totalCount ? "disabled" : ""
+          }>Next</button>
+          `);
+        }
+        console.log("Calls loaded:", {
+          page: currentCallPage,
+          count: calls.length,
+          total: totalCount,
         });
       },
       error: function (xhr) {
-        console.error("Error loading assigned calls:", xhr.responseText);
+        console.error("Error loading calls:", xhr.responseText);
+        $("#callTable tbody")
+          .empty()
+          .append(
+            '<tr><td colspan="3" class="text-center">Error loading calls.</td></tr>'
+          );
       },
     });
+  }
+
+  function changeCallPage(page) {
+    if (page < 1) return;
+    currentCallPage = page;
+    loadAssignedCalls();
   }
 
   // Polling function to refresh dynamic data
@@ -332,4 +413,5 @@ $(document).ready(function () {
   window.handleUpdateBolo = handleUpdateBolo;
   window.handleDeleteBolo = handleDeleteBolo;
   window.populateBoloDetails = populateBoloDetails;
+  window.changeCallPage = changeCallPage;
 });

@@ -316,41 +316,17 @@
                 class="btn btn-primary btn-md pull-right margin-bottom-1"
                 onclick="fillOfficerList();fillClassifierList();fillFireEmsList();clearCallForm()">Create Call</button>
               <table id="callTable" class="table table-hover table-bordered">
-                <thead>
-                  <tr>
-                    <th>Created At</th>
-                    <th>Description</th>
-                    <th>Units Assigned</th>
-                  </tr>
-                </thead>
-                <tbody>
-                 
-                        <tr id="callsid-row" class="gray-hover" data-toggle="modal" data-id=""
-                          data-target="#callDetailModal"
-                          onclick="populateCallDetails('callsid');populateOfficerList('');populateFireEmsList('');populateClassifierList('')">
-                          <td id="callsid-createdAt">
-                          </td>
-                          <td id="callsid-description" style="text-transform: capitalize;">
-                          </td>
-                          <td id="callsid-units-assigned">
-                            
-                                      <span class="badge badge-secondary">
-                                       
-                                        () (Police)
-                                        </span>
-                                      
-                            
-                                      <span class="badge badge-secondary">
-                                        Engine # | ()
-                                      </span>
-                                   
-                          
-                          </td>
-                        </tr>
-
-                    
-                </tbody>
-              </table>
+  <thead>
+    <tr>
+      <th>Created At</th>
+      <th>Description</th>
+      <th>Units Assigned</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Populated dynamically by loadAssignedCalls -->
+  </tbody>
+</table>
 
           </div>
         </div>
