@@ -348,6 +348,7 @@ function renderCommunityCards(communities) {
                     <img src="${community?.community?.imageLink || 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1746915829/temp-community-image_ebspfe.jpg'}" alt="${community?.community?.name}" style="max-width: 100%; width: 5em; height: 5em" />
                     <h4 style="min-height: 2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${truncatedName}${badge}${isLegacy ? ' <span class="legacy-label">(Legacy)</span>' : ''}</h4>
                     <h5 style="color: #94a3b8;">${community?.community?.membersCount || 1} Members</h5>
+                    <h5 style="color: #22c55e;">${community?.community?.subscription?.active ? community?.community?.promotionalText : '</br>'}</h5>
                     ${isLegacy ? `
                         <p class="legacy-note">Please reconcile this community in the mobile app.</p>
                         <div>
