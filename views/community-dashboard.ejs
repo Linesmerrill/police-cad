@@ -341,10 +341,12 @@ function renderCommunityCards(communities) {
             const isLegacy = community.isLegacy;
             const isActive = !isLegacy && community._id === activeCommunityId;
             const badge = community?.community?.subscription?.active && community?.community?.subscription?.plan !== 'basic' ? ' <span class="community-subscription-badge" style="vertical-align: middle;"><svg xmlns="http://www.w3.org/2000/svg" fill="#eab308" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6" style="color: #000000; width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>' : '';
+            const name = community?.community?.name || '';
+            const truncatedName = name.length > 20 ? name.substring(0, 17) + '...' : name;
             cardsContainer.append(`
                 <div class="col-md-3 community-card">
                     <img src="${community?.community?.imageLink || 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1746915829/temp-community-image_ebspfe.jpg'}" alt="${community?.community?.name}" style="max-width: 100%; width: 5em; height: 5em" />
-                    <h4>${community?.community?.name}${badge}${isLegacy ? ' <span class="legacy-label">(Legacy)</span>' : ''}</h4>
+                    <h4 style="min-height: 2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${truncatedName}${badge}${isLegacy ? ' <span class="legacy-label">(Legacy)</span>' : ''}</h4>
                     <h5 style="color: #94a3b8;">${community?.community?.membersCount || 1} Members</h5>
                     ${isLegacy ? `
                         <p class="legacy-note">Please reconcile this community in the mobile app.</p>
