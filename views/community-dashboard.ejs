@@ -316,8 +316,9 @@ function fetchCommunityDetails(communityIds, newData, newActiveCommunityId) {
 function renderActiveCommunity(activeCommunity) {
     const display = $('#active-community-display');
     if (activeCommunity) {
+        const badge = activeCommunity?.community?.subscription?.active && activeCommunity?.community?.subscription?.plan !== 'basic' ? ' <span class="community-subscription-badge" style="vertical-align: middle;"><svg xmlns="http://www.w3.org/2000/svg" fill="#eab308" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6" style="color: #000000; width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>' : '';
         display.html(`
-            <h4>${activeCommunity?.community?.name}${activeCommunity.isLegacy ? ' (Legacy)' : ''}</h4>
+            <h4>${activeCommunity?.community?.name}${badge}${activeCommunity.isLegacy ? ' (Legacy)' : ''}</h4>
             <img src="${activeCommunity?.community?.imageLink || 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1746915829/temp-community-image_ebspfe.jpg'}" alt="${activeCommunity?.community?.name}" style="max-width: 200px; width: 5em; height: 5em" />
         `);
         $('#departments-section').show();
