@@ -2,85 +2,6 @@ const { useState, useEffect } = React;
 
 const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
 
-// Mock data for Discover and Browse sections
-const mockRecommendedCommunities = [
-  {
-    _id: "rec1",
-    name: "Urban Enforcers",
-    imageLink: "/static/images/rec1-logo.png",
-    description: "Dynamic urban roleplay with intense missions.",
-    memberCount: 300,
-    platform: "PC",
-    code: "URBAN",
-  },
-  {
-    _id: "rec2",
-    name: "Xbox Tactical Ops",
-    imageLink: "/static/images/rec2-logo.png",
-    description: "Tactical police ops for Xbox players.",
-    memberCount: 220,
-    platform: "Xbox",
-    code: "TACTICAL",
-  },
-  {
-    _id: "rec3",
-    name: "PSN Rescue Squad",
-    imageLink: "/static/images/rec3-logo.png",
-    description: "Rescue-focused RP for PlayStation users.",
-    memberCount: 190,
-    platform: "PlayStation",
-    code: "RESCUE",
-  },
-];
-
-const mockAllCommunities = [
-  {
-    _id: "all1",
-    name: "Pacific Coast PD",
-    imageLink: "/static/images/all1-logo.png",
-    description: "Coastal police roleplay with open-world missions.",
-    memberCount: 280,
-    platform: "PC",
-    code: "PACIFIC",
-  },
-  {
-    _id: "all2",
-    name: "Xbox City Watch",
-    imageLink: "/static/images/all2-logo.png",
-    description: "City-based law enforcement for Xbox.",
-    memberCount: 160,
-    platform: "Xbox",
-    code: "CITYWATCH",
-  },
-  {
-    _id: "all3",
-    name: "PSN Fire Brigade",
-    imageLink: "/static/images/all3-logo.png",
-    description: "Firefighting RP on PlayStation.",
-    memberCount: 130,
-    platform: "PlayStation",
-    code: "FIREBRIGADE",
-  },
-  {
-    _id: "all4",
-    name: "Cross-Platform EMS",
-    imageLink: "/static/images/all4-logo.png",
-    description: "EMS roleplay across all platforms.",
-    memberCount: 200,
-    platform: "PC",
-    code: "CROSSPLATFORM",
-  },
-  {
-    _id: "all5",
-    name: "GTA V Veterans",
-    imageLink: "/static/images/all5-logo.png",
-    description: "Veteran GTA V roleplayers on Xbox.",
-    memberCount: 250,
-    platform: "Xbox",
-    code: "GTAVETS",
-  },
-];
-
 const mockNotifications = [
   {
     id: "notif1",
@@ -556,9 +477,11 @@ const BrowseCommunities = ({
         <CommunitySection
           title=""
           communities={filteredCommunities}
-          actionText="Explore"
+          //   actionText="Explore"
+          actionText=""
           onAction={(community) =>
-            (window.location.href = `/community/${community._id}`)
+            // (window.location.href = `/community/${community._id}`)
+            (window.location.href = `#`)
           }
           cardsPerView={cardsPerView}
           onPrevPage={onPrevPage}
@@ -570,6 +493,106 @@ const BrowseCommunities = ({
     </div>
   );
 };
+
+const Footer = () => (
+  <footer className="bg-gray-900 text-gray-300 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="flex flex-col items-center md:items-start">
+          <img
+            src="https://www.linespolice-cad.com/static/images/lpc_logo_new_2023_landscape_transparent.png"
+            alt="LPC Logo"
+            className="w-full max-w-xs mb-4"
+          />
+          <p className="text-center md:text-left">
+            World's Leading Free-to-use role-play facilitator
+          </p>
+        </div>
+        <div className="flex flex-col items-center md:items-start">
+          <h2 className="text-lg font-semibold text-white mb-4">Information</h2>
+          <a
+            href="https://github.com/Linesmerrill/police-cad/releases"
+            className="hover:text-white mb-2"
+          >
+            Release Log
+          </a>
+          <a
+            href="https://linesmerrill.github.io/MerrillLines/"
+            className="hover:text-white mb-2"
+          >
+            Developers
+          </a>
+          <a
+            href="https://www.patreon.com/linespolicecad"
+            target="_blank"
+            className="hover:text-white mb-2"
+          >
+            Patreon
+          </a>
+          <a
+            href="https://github.com/linesmerrill/police-cad"
+            target="_blank"
+            className="hover:text-white"
+          >
+            GitHub
+          </a>
+        </div>
+        <div className="flex flex-col items-center md:items-start">
+          <h2 className="text-lg font-semibold text-white mb-4">About</h2>
+          <a href="/faq" className="hover:text-white mb-2">
+            FAQ
+          </a>
+          <a href="/contact-us" className="hover:text-white mb-2">
+            Contact Us
+          </a>
+          <a href="/terms-and-conditions" className="hover:text-white mb-2">
+            Terms and Conditions
+          </a>
+          <a href="/privacy-policy" className="hover:text-white">
+            Privacy Policy
+          </a>
+        </div>
+        <div className="flex flex-col items-center md:items-start">
+          <h2 className="text-lg font-semibold text-white mb-4">Follow</h2>
+          <a
+            href="https://discord.gg/3ECFhqe"
+            target="_blank"
+            className="hover:text-white mb-2"
+          >
+            Discord
+          </a>
+          <a
+            href="https://twitter.com/LinesPoliceCAD"
+            target="_blank"
+            className="hover:text-white mb-2"
+          >
+            Twitter
+          </a>
+          <a
+            href="https://www.facebook.com/linespoliceserver/"
+            target="_blank"
+            className="hover:text-white"
+          >
+            Facebook
+          </a>
+        </div>
+      </div>
+      <div className="mt-12 text-center">
+        <p className="text-gray-400">
+          ©2023 by{" "}
+          <a
+            href="https://sites.google.com/view/tlps-dev/home"
+            target="_blank"
+            className="hover:text-white"
+          >
+            TLPS
+          </a>{" "}
+          All Rights Reserved
+        </p>
+      </div>
+    </div>
+  </footer>
+);
 
 const App = () => {
   const [eliteCommunities, setEliteCommunities] = useState([]);
@@ -917,6 +940,7 @@ const App = () => {
           currentPage={allCommunitiesPage}
           fetchAllCommunitiesPage={fetchAllCommunitiesPage}
         />
+        <Footer />
       </div>
     </div>
   );
