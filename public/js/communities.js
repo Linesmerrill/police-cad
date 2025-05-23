@@ -397,29 +397,33 @@ const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage }) => {
 };
 
 const CommunityCard = ({ community, isActive, actionText, onAction }) => (
-  <div className="card bg-gray-800 rounded-lg shadow-lg p-4 flex flex-col justify-between h-64 w-80 mx-2">
-    <div className="flex flex-col items-center">
-      <img
-        src={community?.imageLink || "/static/images/default-logo.png"}
-        alt={community?.name}
-        className="h-16 w-16 rounded-full object-cover mb-2"
-      />
-      <h3 className="text-xl font-semibold text-white truncate text-center">
-        {community?.name}
-      </h3>
-      <p className="text-gray-400 mt-2">{community?.membersCount} Members</p>
-      {isActive && (
-        <span className="inline-block bg-green-600 text-white text-xs px-2 py-1 rounded-full mt-2">
-          Active
-        </span>
-      )}
+  <div className="card bg-gray-800 rounded-lg shadow-lg flex flex-col h-61 w-80 mx-2">
+    <img
+      src={community?.imageLink || "/static/images/default-logo.png"}
+      alt={community?.name}
+      className="w-5/6 h-1/3 mx-auto rounded-t-lg object-cover"
+    />
+    <div className="p-4 flex flex-col flex-grow justify-between">
+      <div>
+        <h3 className="text-xl font-semibold text-white truncate text-center">
+          {community?.name}
+        </h3>
+        <p className="text-gray-400 mt-2 text-center">
+          {community?.membersCount} Members
+        </p>
+        {isActive && (
+          <span className="inline-block bg-green-600 text-white text-xs px-2 py-1 rounded-full mt-2 mx-auto">
+            Active
+          </span>
+        )}
+      </div>
+      <button
+        onClick={() => onAction(community)}
+        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700"
+      >
+        {actionText}
+      </button>
     </div>
-    <button
-      onClick={() => onAction(community)}
-      className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700"
-    >
-      {actionText}
-    </button>
   </div>
 );
 
