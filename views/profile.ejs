@@ -3,15 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LPC - Communities</title>
+    <title>LPC - Profile</title>
     <link
       rel="shortcut icon"
       type="image/ico"
       href="/static/images/favicon.ico"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
     />
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -23,35 +19,14 @@
         background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
         color: #e2e8f0;
       }
-      .carousel-item {
-        transition: transform 0.5s ease-in-out;
-      }
-      .card {
-        transition: transform 0.3s, box-shadow 0.3s;
-      }
-      .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-      }
-      .scroll-container {
-        scroll-behavior: smooth;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-      }
-      .scroll-container::-webkit-scrollbar {
-        display: none;
-      }
-      #user-circle {
-        font-size: 1.5em;
-      }
     </style>
   </head>
   <body>
     <div id="root"></div>
-    <script type="text/babel" src="/static/js/communities.js"></script>
-    <script type="text/javascript">
-      var dbUser= <%- JSON.stringify(user)%>;
+    <script>
+      var dbUser = <%- JSON.stringify(user) %>;
     </script>
+    <script type="text/babel" src="/static/js/profile.js"></script>
     <script
       type="module"
       src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"

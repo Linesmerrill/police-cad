@@ -205,59 +205,17 @@ module.exports = function (app, passport, server) {
    *   Users can 'copy' the community code or 'edit' the community name.
    *   Also community admins can 'kick' members from their community.
    */
-  app.get("/communities", auth, function (req, res) {
+  app.get("/communities", authCheck, function (req, res) {
     req.app.locals.specialContext = null;
-    var isValid = isValidObjectIdLength(
-      req.session.communityID,
-      "cannot lookup invalid length communityID, route: /communities"
-    );
-    if (!isValid) {
-      req.app.locals.specialContext = "invalidRequest";
-      res.status(400);
-      return res.redirect("back");
-    }
-
-    axios
-      .get(
-        `${policeCadApiUrl}/api/v1/community/${req.session.communityID}/${req.session.passport.user}`,
-        config
-      )
-      .then(function (dbCommunities) {
-        if (!exists(dbCommunities.data)) {
-          console.error();
-          res.status(400);
-          res.redirect("back");
-        } else {
-          axios
-            .get(
-              `${policeCadApiUrl}/api/v1/users/${req.session.communityID}`,
-              config
-            )
-            .then(function (dbMembers) {
-              if (!exists(dbMembers.data)) {
-                res.status(400);
-                res.redirect("back");
-              } else {
-                return res.render("communities", {
-                  members: dbMembers.data,
-                  communities: dbCommunities.data,
-                  userID: req.session.passport.user,
-                  user: req.user,
-                  referer: encodeURIComponent("/communities"),
-                  redirect: encodeURIComponent(redirect),
-                });
-              }
-            })
-            .catch((err) => {
-              res.status(400);
-              res.redirect("back");
-            });
-        }
-      })
-      .catch((err) => {
-        res.status(400);
-        res.redirect("back");
-      });
+    console.log("user", req.user);
+    return res.render("communities", {
+      members: null,
+      communities: null,
+      userID: null,
+      user: req.user,
+      referer: encodeURIComponent("/communities"),
+      redirect: encodeURIComponent(redirect),
+    });
   });
 
   app.get("/owned-communities", auth, function (req, res) {
@@ -422,6 +380,14 @@ module.exports = function (app, passport, server) {
           redirect: encodeURIComponent(redirect),
         });
       });
+  });
+
+  app.get("/profile", authCheck, function (req, res) {
+    return res.render("profile", {
+      user: req.user,
+      referer: encodeURIComponent("/profile"),
+      redirect: encodeURIComponent(redirect),
+    });
   });
 
   app.get("/community-dashboard", authCheck, function (req, res) {
