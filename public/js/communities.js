@@ -507,18 +507,27 @@ const CommunitySection = ({
   );
 };
 
-const BrowseCommunities = ({ communities }) => {
-  const [tag, setTag] = useState("All");
+const BrowseCommunities = ({
+  communities,
+  totalCount,
+  currentTag,
+  setCurrentTag,
+  onPrevPage,
+  onNextPage,
+  currentPage,
+  fetchAllCommunitiesPage,
+}) => {
   const [filteredCommunities, setFilteredCommunities] = useState(communities);
-  const tags = ["All", "PC", "Xbox", "PlayStation"];
+  const tags = ["all", "PC", "Xbox", "PlayStation"];
 
   useEffect(() => {
-    const filtered =
-      tag === "All"
-        ? communities
-        : communities.filter((c) => c.platform === tag);
-    setFilteredCommunities(filtered);
-  }, [tag, communities]);
+    setFilteredCommunities(communities);
+  }, [communities]);
+
+  const handleTagChange = (tag) => {
+    setCurrentTag(tag);
+    fetchAllCommunitiesPage(tag, 0);
+  };
 
   const cardsPerView =
     window.innerWidth >= 1024 ? 4 : window.innerWidth >= 768 ? 3 : 2;
@@ -534,11 +543,11 @@ const BrowseCommunities = ({ communities }) => {
             <button
               key={t}
               className={`px-4 py-2 rounded-full ${
-                tag === t
+                currentTag === t
                   ? "bg-blue-600 text-white"
                   : "bg-gray-700 text-gray-300"
               }`}
-              onClick={() => setTag(t)}
+              onClick={() => handleTagChange(t)}
             >
               {t}
             </button>
@@ -552,10 +561,10 @@ const BrowseCommunities = ({ communities }) => {
             (window.location.href = `/community/${community._id}`)
           }
           cardsPerView={cardsPerView}
-          onPrevPage={() => {}}
-          onNextPage={() => {}}
-          currentPage={0}
-          totalCount={filteredCommunities.length}
+          onPrevPage={onPrevPage}
+          onNextPage={onNextPage}
+          currentPage={currentPage + 1}
+          totalCount={totalCount}
         />
       </div>
     </div>
@@ -573,6 +582,9 @@ const App = () => {
   const [userTotalCount, setUserTotalCount] = useState(0);
   const [recommendedTotalCount, setRecommendedTotalCount] = useState(0);
   const [recommendedPage, setRecommendedPage] = useState(0);
+  const [allCommunitiesTotalCount, setAllCommunitiesTotalCount] = useState(0);
+  const [allCommunitiesPage, setAllCommunitiesPage] = useState(0);
+  const [currentTag, setCurrentTag] = useState("all");
 
   useEffect(() => {
     // Fetch elite communities
@@ -586,7 +598,10 @@ const App = () => {
             promotionalText: item.promotionalText,
             promotionalDescription: item.promotionalDescription,
             tags: item.tags || [],
-            imageLink: item.imageLink || "/static/images/default-logo.png",
+            imageLink:
+              item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
+                ? "/static/images/default-logo.png"
+                : item.imageLink || "/static/images/default-logo.png",
             membersCount: item.membersCount,
             code: item._id, // Use _id as code since not provided
           }))
@@ -622,7 +637,10 @@ const App = () => {
             isActive:
               item._id === dbUser.user.lastAccessedCommunity?.communityID,
             code: item._id,
-            imageLink: item.imageLink || "/static/images/default-logo.png",
+            imageLink:
+              item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
+                ? "/static/images/default-logo.png"
+                : item.imageLink || "/static/images/default-logo.png",
           }));
           setUserCommunities(mappedCommunities);
           console.log(
@@ -652,7 +670,10 @@ const App = () => {
             promotionalText: item.promotionalText,
             promotionalDescription: item.promotionalDescription,
             tags: item.tags || [],
-            imageLink: item.imageLink || "/static/images/default-logo.png",
+            imageLink:
+              item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
+                ? "/static/images/default-logo.png"
+                : item.imageLink || "/static/images/default-logo.png",
             membersCount: item.membersCount,
             code: item._id,
           }));
@@ -675,9 +696,36 @@ const App = () => {
       setRecommendedTotalCount(0);
     }
 
-    // Use mock data for other sections
-
-    setAllCommunities(mockAllCommunities);
+    axios
+      .get(`${API_URL}/api/v2/communities/tag/all?limit=4&page=0`)
+      .then((response) => {
+        const communities = response.data.data.map((item) => ({
+          _id: item._id,
+          name: item.name,
+          promotionalText: item.promotionalText,
+          promotionalDescription: item.promotionalDescription,
+          tags: item.tags || [],
+          imageLink:
+            item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
+              ? "/static/images/default-logo.png"
+              : item.imageLink || "/static/images/default-logo.png",
+          membersCount: item.membersCount,
+          code: item._id,
+        }));
+        setAllCommunities(communities);
+        setAllCommunitiesTotalCount(response.data.totalCount || 0);
+        console.log(
+          "Browse communities:",
+          communities,
+          "Total count:",
+          response.data.totalCount
+        );
+      })
+      .catch((error) => {
+        console.error("Error fetching browse communities:", error);
+        setAllCommunities([]);
+        setAllCommunitiesTotalCount(0);
+      });
   }, []);
 
   const fetchElitePage = (page) => {
@@ -691,7 +739,10 @@ const App = () => {
             promotionalText: item.promotionalText,
             promotionalDescription: item.promotionalDescription,
             tags: item.tags || [],
-            imageLink: item.imageLink || "/static/images/default-logo.png",
+            imageLink:
+              item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
+                ? "/static/images/default-logo.png"
+                : item.imageLink || "/static/images/default-logo.png",
             membersCount: item.membersCount,
             code: item._id,
           }))
@@ -720,7 +771,10 @@ const App = () => {
           membersCount: item.membersCount,
           isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
           code: item._id,
-          imageLink: item.imageLink || "/static/images/default-logo.png",
+          imageLink:
+            item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
+              ? "/static/images/default-logo.png"
+              : item.imageLink || "/static/images/default-logo.png",
         }));
         setUserCommunities(mappedCommunities);
         setUserPage(page);
@@ -750,7 +804,10 @@ const App = () => {
           promotionalText: item.promotionalText,
           promotionalDescription: item.promotionalDescription,
           tags: item.tags || [],
-          imageLink: item.imageLink || "/static/images/default-logo.png",
+          imageLink:
+            item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
+              ? "/static/images/default-logo.png"
+              : item.imageLink || "/static/images/default-logo.png",
           membersCount: item.membersCount,
           code: item._id,
         }));
@@ -769,6 +826,44 @@ const App = () => {
       });
   };
 
+  const fetchAllCommunitiesPage = (tag, page) => {
+    axios
+      .get(`${API_URL}/api/v2/communities/tag/${tag}?limit=4&page=${page}`)
+      .then((response) => {
+        const communities = response.data.data.map((item) => ({
+          _id: item._id,
+          name: item.name,
+          promotionalText: item.promotionalText,
+          promotionalDescription: item.promotionalDescription,
+          tags: item.tags || [],
+          imageLink:
+            item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
+              ? "/static/images/default-logo.png"
+              : item.imageLink || "/static/images/default-logo.png",
+          membersCount: item.membersCount,
+          code: item._id,
+        }));
+        setAllCommunities(communities);
+        setAllCommunitiesTotalCount(response.data.totalCount || 0);
+        setAllCommunitiesPage(page);
+        console.log(
+          "Fetched browse page:",
+          page,
+          "Tag:",
+          tag,
+          "Communities:",
+          communities,
+          "Total count:",
+          response.data.totalCount
+        );
+      })
+      .catch((error) => {
+        console.error("Error fetching browse communities page:", error);
+        setAllCommunities([]);
+        setAllCommunitiesTotalCount(0);
+      });
+  };
+
   const handleRecommendedPrevPage = () => {
     if (recommendedPage > 0) {
       fetchRecommendedPage(recommendedPage - 1);
@@ -778,6 +873,18 @@ const App = () => {
   const handleRecommendedNextPage = () => {
     if (recommendedPage * 3 + 3 < recommendedTotalCount) {
       fetchRecommendedPage(recommendedPage + 1);
+    }
+  };
+
+  const handleAllCommunitiesPrevPage = () => {
+    if (allCommunitiesPage > 0) {
+      fetchAllCommunitiesPage(currentTag, allCommunitiesPage - 1);
+    }
+  };
+
+  const handleAllCommunitiesNextPage = () => {
+    if (allCommunitiesPage * 4 + 4 < allCommunitiesTotalCount) {
+      fetchAllCommunitiesPage(currentTag, allCommunitiesPage + 1);
     }
   };
 
@@ -847,7 +954,16 @@ const App = () => {
           currentPage={recommendedPage + 1}
           totalCount={recommendedTotalCount}
         />
-        <BrowseCommunities communities={allCommunities} />
+        <BrowseCommunities
+          communities={allCommunities}
+          totalCount={allCommunitiesTotalCount}
+          currentTag={currentTag}
+          setCurrentTag={setCurrentTag}
+          onPrevPage={handleAllCommunitiesPrevPage}
+          onNextPage={handleAllCommunitiesNextPage}
+          currentPage={allCommunitiesPage}
+          fetchAllCommunitiesPage={fetchAllCommunitiesPage}
+        />
       </div>
     </div>
   );
