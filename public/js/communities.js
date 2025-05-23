@@ -608,12 +608,6 @@ const App = () => {
           .sort((a, b) => a.name.localeCompare(b.name)); // Sort by name
         setEliteCommunities(communities);
         setEliteTotalCount(response.data.totalCount || 0);
-        console.log(
-          "Elite communities:",
-          communities,
-          "Total count:",
-          response.data.totalCount
-        );
       })
       .catch((error) => {
         console.error("Error fetching elite communities:", error);
@@ -643,12 +637,6 @@ const App = () => {
                 : item.imageLink || "/static/images/default-logo.png",
           }));
           setUserCommunities(mappedCommunities);
-          console.log(
-            "User communities:",
-            mappedCommunities,
-            "Total count:",
-            response.data.totalCount
-          );
         })
         .catch((error) => {
           console.error("Error fetching user communities:", error);
@@ -679,12 +667,6 @@ const App = () => {
           }));
           setRecommendedCommunities(communities);
           setRecommendedTotalCount(response.data.totalCount || 0);
-          console.log(
-            "Discover communities:",
-            communities,
-            "Total count:",
-            response.data.totalCount
-          );
         })
         .catch((error) => {
           console.error("Error fetching discover communities:", error);
@@ -714,12 +696,6 @@ const App = () => {
         }));
         setAllCommunities(communities);
         setAllCommunitiesTotalCount(response.data.totalCount || 0);
-        console.log(
-          "Browse communities:",
-          communities,
-          "Total count:",
-          response.data.totalCount
-        );
       })
       .catch((error) => {
         console.error("Error fetching browse communities:", error);
@@ -749,7 +725,6 @@ const App = () => {
           .sort((a, b) => a.name.localeCompare(b.name));
         setEliteCommunities(communities);
         setElitePage(page);
-        console.log("Fetched elite page:", page, "Communities:", communities);
       })
       .catch((error) => {
         console.error("Error fetching elite communities page:", error);
@@ -778,12 +753,6 @@ const App = () => {
         }));
         setUserCommunities(mappedCommunities);
         setUserPage(page);
-        console.log(
-          "Fetched user page:",
-          page,
-          "Communities:",
-          mappedCommunities
-        );
       })
       .catch((error) => {
         console.error("Error fetching user communities:", error);
@@ -813,12 +782,6 @@ const App = () => {
         }));
         setRecommendedCommunities(communities);
         setRecommendedPage(page);
-        console.log(
-          "Fetched discover page:",
-          page,
-          "Communities:",
-          communities
-        );
       })
       .catch((error) => {
         console.error("Error fetching discover communities page:", error);
@@ -846,16 +809,6 @@ const App = () => {
         setAllCommunities(communities);
         setAllCommunitiesTotalCount(response.data.totalCount || 0);
         setAllCommunitiesPage(page);
-        console.log(
-          "Fetched browse page:",
-          page,
-          "Tag:",
-          tag,
-          "Communities:",
-          communities,
-          "Total count:",
-          response.data.totalCount
-        );
       })
       .catch((error) => {
         console.error("Error fetching browse communities page:", error);
