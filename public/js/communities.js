@@ -835,9 +835,11 @@ const App = () => {
         <CommunitySection
           title="Discover Communities"
           communities={recommendedCommunities}
-          actionText="Learn More"
+          //   actionText="Learn More"
+          actionText=""
           onAction={(community) =>
-            (window.location.href = `/community/${community._id}`)
+            // (window.location.href = `/community/${community._id}`)
+            (window.location.href = `#`)
           }
           cardsPerView={3}
           onPrevPage={handleRecommendedPrevPage}
