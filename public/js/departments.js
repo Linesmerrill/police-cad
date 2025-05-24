@@ -92,13 +92,13 @@ function fetchAndRenderDepartments() {
       });
 
       // Append Communities link
-      html += `
-        <li>
-          <a href="/community-dashboard">
-            <span class="fa fa-users ml-3 mr-3"></span> Communities
-          </a>
-        </li>
-      `;
+      // html += `
+      //   <li>
+      //     <a href="/community-dashboard">
+      //       <span class="fa fa-users ml-3 mr-3"></span> Communities
+      //     </a>
+      //   </li>
+      // `;
 
       $("#toggleDepartment").html(html);
       // Enable tooltips for disabled departments
