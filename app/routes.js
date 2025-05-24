@@ -207,7 +207,6 @@ module.exports = function (app, passport, server) {
    */
   app.get("/communities", authCheck, function (req, res) {
     req.app.locals.specialContext = null;
-    console.log("user", req.user);
     return res.render("communities", {
       members: null,
       communities: null,
