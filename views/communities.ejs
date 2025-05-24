@@ -51,9 +51,14 @@
     ></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js" defer></script>
     <script>
-      var dbUser = <%- JSON.stringify(user) %>;
+      var dbUser = <%- JSON.stringify(user || {}) %>;
     </script>
-    <script type="text/babel" src="/static/js/communities.js" defer></script>
+    <script
+      data-cfasync="false"
+      type="text/babel"
+      src="/static/js/communities.js"
+      defer
+    ></script>
     <script
       type="module"
       src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"
@@ -65,7 +70,6 @@
       defer
     ></script>
     <script>
-      // Log errors to console
       window.onerror = function (message, source, lineno, colno, error) {
         console.error("Global error:", {
           message,

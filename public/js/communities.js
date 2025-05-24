@@ -26,37 +26,6 @@ const mockNotifications = [
   },
 ];
 
-// Error Boundary Component
-class ErrorBoundary extends React.Component {
-  state = { hasError: false, error: null };
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.error("ErrorBoundary caught:", error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="p-8 text-white">
-          <h1 className="text-2xl">Something went wrong.</h1>
-          <p>{this.state.error?.message || "Unknown error"}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-full"
-          >
-            Reload Page
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 const Navbar = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([
@@ -920,62 +889,60 @@ const App = () => {
   };
 
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen">
-        <Navbar />
-        <div className="pt-16">
-          {eliteCommunities.length > 0 && (
-            <Carousel
-              communities={eliteCommunities}
-              totalCount={eliteTotalCount}
-              onPrev={handleElitePrevPage}
-              onNext={handleEliteNextPage}
-              currentPage={elitePage}
-            />
-          )}
-          <CommunitySection
-            title="Your Communities"
-            communities={userCommunities}
-            actionText="Jump In"
-            onAction={(community) =>
-              // (window.location.href = `/community/${community._id}`)
-              (window.location.href = `/community-dashboard`)
-            }
-            cardsPerView={3}
-            onPrevPage={handleUserPrevPage}
-            onNextPage={handleUserNextPage}
-            currentPage={userPage}
-            totalCount={userTotalCount}
+    <div className="min-h-screen">
+      <Navbar />
+      <div className="pt-16">
+        {eliteCommunities.length > 0 && (
+          <Carousel
+            communities={eliteCommunities}
+            totalCount={eliteTotalCount}
+            onPrev={handleElitePrevPage}
+            onNext={handleEliteNextPage}
+            currentPage={elitePage}
           />
-          <CommunitySection
-            title="Discover Communities"
-            communities={recommendedCommunities}
-            //   actionText="Learn More"
-            actionText=""
-            onAction={(community) =>
-              // (window.location.href = `/community/${community._id}`)
-              (window.location.href = `#`)
-            }
-            cardsPerView={3}
-            onPrevPage={handleRecommendedPrevPage}
-            onNextPage={handleRecommendedNextPage}
-            currentPage={recommendedPage + 1}
-            totalCount={recommendedTotalCount}
-          />
-          <BrowseCommunities
-            communities={allCommunities}
-            totalCount={allCommunitiesTotalCount}
-            currentTag={currentTag}
-            setCurrentTag={setCurrentTag}
-            onPrevPage={handleAllCommunitiesPrevPage}
-            onNextPage={handleAllCommunitiesNextPage}
-            currentPage={allCommunitiesPage}
-            fetchAllCommunitiesPage={fetchAllCommunitiesPage}
-          />
-          <Footer />
-        </div>
+        )}
+        <CommunitySection
+          title="Your Communities"
+          communities={userCommunities}
+          actionText="Jump In"
+          onAction={(community) =>
+            // (window.location.href = `/community/${community._id}`)
+            (window.location.href = `/community-dashboard`)
+          }
+          cardsPerView={3}
+          onPrevPage={handleUserPrevPage}
+          onNextPage={handleUserNextPage}
+          currentPage={userPage}
+          totalCount={userTotalCount}
+        />
+        <CommunitySection
+          title="Discover Communities"
+          communities={recommendedCommunities}
+          //   actionText="Learn More"
+          actionText=""
+          onAction={(community) =>
+            // (window.location.href = `/community/${community._id}`)
+            (window.location.href = `#`)
+          }
+          cardsPerView={3}
+          onPrevPage={handleRecommendedPrevPage}
+          onNextPage={handleRecommendedNextPage}
+          currentPage={recommendedPage + 1}
+          totalCount={recommendedTotalCount}
+        />
+        <BrowseCommunities
+          communities={allCommunities}
+          totalCount={allCommunitiesTotalCount}
+          currentTag={currentTag}
+          setCurrentTag={setCurrentTag}
+          onPrevPage={handleAllCommunitiesPrevPage}
+          onNextPage={handleAllCommunitiesNextPage}
+          currentPage={allCommunitiesPage}
+          fetchAllCommunitiesPage={fetchAllCommunitiesPage}
+        />
+        <Footer />
       </div>
-    </ErrorBoundary>
+    </div>
   );
 };
 
