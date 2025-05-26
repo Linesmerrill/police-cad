@@ -126,7 +126,7 @@
                 <hr style="width: 88%;max-width: 100rem;">
                 <!-- Departments Table -->
                 <div id="departments-section" style="display: none;">
-                    <h3>Departments in Active Community <span><h4><a href="/departments">View Departments <span class="fa fa-circle-arrow-right"></span></a></h4></span></h3>
+                    <h3>Departments in Active Community <span><h4><a id="view-departments-link" href="/departments">View Departments <span class="fa fa-circle-arrow-right"></span></a></h4></span></h3>
                     <!-- <table id="departments-table" class="table table-hover" border="1" frame="box">
                         <thead>
                             <tr style="background-color: #2d2d2d;">
@@ -410,6 +410,7 @@ function renderActiveCommunity(activeCommunity) {
             <img src="${activeCommunity?.community?.imageLink || 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1746915829/temp-community-image_ebspfe.jpg'}" alt="${activeCommunity?.community?.name}" style="max-width: 200px; width: 5em; height: 5em" />
         `);
         $('#departments-section').show();
+    
     } else {
         display.html('<p>No active community selected.</p>');
         $('#departments-section').hide();

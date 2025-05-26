@@ -110,6 +110,7 @@
           <a class="navbar-brand page-scroll" href="/">
             <img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD
           </a>
+        <a id="active-community-name" href="/community-dashboard" class="navbar-brand page-scroll"></a>
         </div>
         <div class="navbar-collapse collapse" id="bs-navbar">
           <ul class="nav navbar-nav navbar-right">
@@ -287,50 +288,86 @@
     }
 
     function renderDepartmentsWithTemplates(communityId, departments, containerId) {
-      const container = $(containerId);
-      container.empty();
-      if (departments === null || departments.length === 0) {
-        container.append('<p class="text-center">No departments found.</p>');
-        return;
-      }
-
-      // Fetch templates for all departments
-      const templatePromises = departments.map(dept => 
-        $.ajax({
-          url: `${API_URL}/api/v1/community/${communityId}/departments/${dept._id}`,
-          method: 'GET',
-          timeout: 5000
-        }).then(result => ({
-          deptId: dept._id,
-          templateName: result?.department?.template?.name || ''
-        })).catch(err => {
-          console.error(`Error fetching template for department ${dept._id}:`, err);
-          return { deptId: dept._id, templateName: '' };
-        })
-      );
-
-      Promise.all(templatePromises).then(templates => {
-        departments.forEach(dept => {
-          console.log(`Template: ${JSON.stringify(templates)}`);
-          console.log(`Department: ${JSON.stringify(dept)}`);
-          const template = templates.find(t => t.deptId === dept._id);
-          const dashboardUrl = getDashboardUrl(template?.templateName?.toLowerCase() || '');
-          container.append(`
-            <div class="col-md-3 department-card">
-              <img src="${dept.image || 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1746915829/temp-community-image_ebspfe.jpg'}" alt="${dept.name}" />
-              <h5 style="min-height: 2em;">
-                ${dept.name || 'N/A'}
-              </h5>
-              ${dashboardUrl ? `
-                <button class="btn btn-primary btn-sm" onclick="goToDepartment('${dept._id}', '${dashboardUrl}')">Go to Dashboard</button>
-              ` : `
-                <p class="text-gray-400">No dashboard available</p>
-              `}
-            </div>
-          `);
-        });
-      });
+    const container = $(containerId);
+    container.empty();
+    if (departments === null || departments.length === 0) {
+      container.append('<p class="text-center">No departments found.</p>');
+      return;
     }
+
+    // Fetch templates for all departments
+    const templatePromises = departments.map(dept => 
+      $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}/departments/${dept._id}`,
+        method: 'GET',
+        timeout: 5000
+      }).then(result => ({
+        deptId: dept._id,
+        templateName: result?.department?.template?.name || ''
+      })).catch(err => {
+        console.error(`Error fetching template for department ${dept._id}:`, err);
+        return { deptId: dept._id, templateName: '' };
+      })
+    );
+
+    Promise.all(templatePromises).then(templates => {
+      departments.forEach(dept => {
+        console.log(`Template: ${JSON.stringify(templates)}`);
+        console.log(`Department: ${JSON.stringify(dept)}`);
+        const template = templates.find(t => t.deptId === dept._id);
+        const dashboardUrl = getDashboardUrl(template?.templateName?.toLowerCase() || '');
+        const isOtherDepartments = containerId === '#other-departments';
+        container.append(`
+          <div class="col-md-3 department-card">
+            <img src="${dept.image || 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1746915829/temp-community-image_ebspfe.jpg'}" alt="${dept.name}" />
+            <h5 style="min-height: 2em;">
+              ${dept.name || 'N/A'}
+            </h5>
+            <h5>
+              (${template?.templateName || 'N/A'})
+            </h5>
+            ${isOtherDepartments ? `
+              <button class="btn btn-primary btn-sm" onclick="showRequestJoinModal()">Request to Join</button>
+            ` : dashboardUrl ? `
+              <button class="btn btn-primary btn-sm" onclick="goToDepartment('${dept._id}', '${dashboardUrl}')">Go to Dashboard</button>
+            ` : `
+              <p class="text-gray-400">No dashboard available</p>
+            `}
+          </div>
+        `);
+      });
+    });
+  }
+
+   function showRequestJoinModal() {
+    const modal = `
+      <div id="requestJoinModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+              <h4 class="modal-title">Request to Join</h4>
+            </div>
+            <div class="modal-body">
+              <p>Request to join in the mobile app - coming soon to the website.</p>
+              <div class="text-center">
+                <a href="https://apps.apple.com/us/app/lpc-app/id6503307483" target="_blank" class="btn btn-primary btn-sm">App Store</a>
+                <a href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp" target="_blank" class="btn btn-primary btn-sm">Google Play</a>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    $('body').append(modal);
+    $('#requestJoinModal').modal('show');
+    $('#requestJoinModal').on('hidden.bs.modal', function() {
+      $(this).remove();
+    });
+  }
 
     function updatePagination(data, type, currentPage) {
       const totalPages = Math.ceil(data.totalCount / limit);
@@ -803,8 +840,35 @@
       });
     }
 
+    function loadActiveCommunity(){
+        const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+        if (!communityId) {
+            $('#no-active-community').show();
+            $('#loading-overlay, #error-overlay, #no-membership, #departments-sections, #create-department-button').hide();
+            return;
+        }
+    
+        $.ajax({
+            url: `${API_URL}/api/v1/community/${communityId}`,
+            method: 'GET',
+            timeout: 10000,
+            success: function(community) {
+            if (community) {
+                $('#active-community-name').text(community?.community?.name || 'N/A');
+            } else {
+                $('#no-active-community').show();
+            }
+            },
+            error: function(xhr, status, error) {
+            console.error('Error loading active community:', { status: xhr.status, responseText: xhr.responseText, error });
+            $('#no-active-community').show();
+            }
+        });
+    }
+
     $(document).ready(function() {
       loadDepartments();
+      loadActiveCommunity();
 
       $('#your-prev-page').click(function() {
         if (yourPage > 1) {
