@@ -401,6 +401,18 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.get("/departments", authCheck, function (req, res) {
+    return res.render("departments", {
+      user: req.user,
+      personas: null,
+      vehicles: null,
+      communities: [],
+      context: null,
+      referer: encodeURIComponent("/departments"),
+      redirect: encodeURIComponent(redirect),
+    });
+  });
+
   app.get("/police-dashboard", authCheck, function (req, res) {
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
