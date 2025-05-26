@@ -671,7 +671,7 @@
                           ${selectedMembers.some(m => m._id === member._id) ? 'checked' : ''} 
                           ${member._id === dbUser._id ? 'disabled' : ''} 
                           onchange="toggleMember('${member._id}', '${member.user.username}', '${member.user.profilePicture || ''}')">
-                        <label for="member-${member._id}">${member.user.username} (${member.user.name || 'No Name'})</label>
+                        <label for="member-${member._id}">${member.user.username}</label>
                         ${['premium', 'premium_plus'].includes(member.user?.subscription?.plan) && member.user?.subscription?.active ? '<i class="fas fa-check-circle text-blue-500"></i>' : ''}
                       </div>
                     `).join('')}
