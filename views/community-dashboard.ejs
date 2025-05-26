@@ -20,15 +20,42 @@
     <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
     <style type='text/css'> body {position: static !important; top:0px !important;}</style>
     <style>
-      .community-card { border: 1px solid #ddd; padding: 10px; margin: 10px; text-align: center; }
-      .community-card img { max-width: 100%; height: auto; }
-      .active-community { text-align: center; margin-bottom: 20px; }
-      .pagination-controls { text-align: center; margin-top: 20px; }
-      .department-row:hover { cursor: pointer; background-color: #f5f5f5; }
-      .legacy-label { color: #ff9800; font-weight: bold; }
-      .legacy-note { font-size: 0.9em; color: #666; }
-      #notification-symbol { font-size: 1.5em; }
-    </style>
+  .community-card { 
+    border: 1px solid #ddd; 
+    padding: 10px; 
+    margin: 10px; 
+    text-align: center; 
+    position: relative; 
+  }
+  .community-card img { max-width: 100%; height: auto; }
+  .active-community { text-align: center; margin-bottom: 20px; }
+  .pagination-controls { text-align: center; margin-top: 20px; }
+  .department-row:hover { cursor: pointer; background-color: #f5f5f5; }
+  .legacy-label { color: #ff9800; font-weight: bold; }
+  .pending-label { color: #ff9800; font-weight: bold; }
+  .legacy-note { font-size: 0.9em; color: #666; }
+  #notification-symbol { font-size: 1.5em; }
+  .trash-icon-container {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: #4b5563;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .trash-icon {
+    color: #ef4444;
+    font-size: 14px;
+  }
+  .member-checkbox {
+    margin: 5px 0;
+  }
+</style>
 </head>
 
 <body>
@@ -228,6 +255,7 @@ $(document).ready(function () {
     }
 
     fetchCommunityData();
+    // fetchLegacyData();
 
     $('#prev-page').click(function() {
         if (currentPage > 1) {
@@ -271,70 +299,105 @@ function dismissTutorial() {
 }
 
 function fetchCommunityData(newActiveCommunityId = null) {
-    $.ajax({
-        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/user/${dbUser._id}/communities?filter=status%3Aapproved`,
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/user/${dbUser._id}/communities`,
+    method: 'GET',
+    success: function(newData) {
+        console.log('Success fetching community data:', newData);
+        
+      // Separate communities by status
+      const approvedCommunities = newData.filter(item => item.status === 'approved');
+      const pendingCommunities = newData.filter(item => item.status === 'pending');
+      console.log('Approved Communities:', approvedCommunities);
+      console.log('Pending Communities:', pendingCommunities);
+      $.ajax({
+        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/communities/${dbUser._id}`,
         method: 'GET',
-        success: function(newData) {
-            $.ajax({
+        success: function(legacyData) {
+          const legacyCommunities = legacyData.filter(community => 
+            community?.community?.code && community.community.code !== ""
+          );
+          const communityIds = [
+            ...approvedCommunities.map(item => ({ id: item.communityId, isLegacy: false, isPending: false })),
+            ...pendingCommunities.map(item => ({ id: item.communityId, isLegacy: false, isPending: true })),
+            ...legacyCommunities.map(item => ({ id: item._id, isLegacy: true, isPending: false }))
+          ];
+          fetchCommunityDetails(communityIds, newData.concat(legacyCommunities), newActiveCommunityId);
+        },
+        error: function(err) {
+          console.error('Error fetching legacy community data:', err);
+          const communityIds = [
+            ...approvedCommunities.map(item => ({ id: item.communityId, isLegacy: false, isPending: false })),
+            ...pendingCommunities.map(item => ({ id: item.communityId, isLegacy: false, isPending: true }))
+          ];
+          fetchCommunityDetails(communityIds, newData, newActiveCommunityId);
+        }
+      });
+    },
+    error: function(err) {
+      console.error('Error fetching community data:', err);
+      $('#community-cards').html('<p>Error loading communities. Please try again later.</p>');
+      $('.pagination-controls').hide();
+    }
+  });
+}
+
+function fetchLegacyData() {
+    $.ajax({
                 url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/communities/${dbUser._id}`,
                 method: 'GET',
                 success: function(legacyData) {
+                    console.log(`legacyData:`, legacyData);
                     if (legacyData && legacyData.length > 0) {
                         const filteredLegacyData = legacyData.filter(community => community?.community?.code !== "");
                     const communityIds = [
-                        ...newData.map(item => ({ id: item.communityId, isLegacy: false })),
+                        // ...newData.map(item => ({ id: item.communityId, isLegacy: false })),
                         ...filteredLegacyData.map(item => ({ id: item._id, isLegacy: true }))
                     ];
-                    fetchCommunityDetails(communityIds, newData, newActiveCommunityId);
+                    fetchCommunityDetails(communityIds, legacyData, null);
                     } else {
-                        const communityIds = [
-                        ...newData.map(item => ({ id: item.communityId, isLegacy: false }))
+                        console.log(`No legacy communities found for user ${dbUser._id}`);
+                    //     const communityIds = [
+                    //     ...newData.map(item => ({ id: item.communityId, isLegacy: false }))
                         
-                    ];
+                    // ];
                       
-                    fetchCommunityDetails(communityIds, newData, newActiveCommunityId);
+                    // fetchCommunityDetails(communityIds, newData, newActiveCommunityId);
                     }
                     
                 },
                 error: function(err) {
                     console.error('Error fetching legacy community data:', err);
-                    const communityIds = newData.map(item => ({ id: item.communityId, isLegacy: false }));
-                    fetchCommunityDetails(communityIds, newData, newActiveCommunityId);
+                    // const communityIds = newData.map(item => ({ id: item.communityId, isLegacy: false }));
+                    // fetchCommunityDetails(communityIds, newData, newActiveCommunityId);
                 }
             });
-        },
-        error: function(err) {
-            console.error('Error fetching community data:', err);
-            $('#community-cards').html('<p>Error loading communities. Please try again later.</p>');
-            $('.pagination-controls').hide();
-        }
-    });
 }
 
 function fetchCommunityDetails(communityIds, newData, newActiveCommunityId) {
-    const promises = communityIds.map(({ id, isLegacy }) => 
-        $.ajax({
-            url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${id}`,
-            method: 'GET'
-        }).then(result => ({ ...result, isLegacy }))
-    );
+  const promises = communityIds.map(({ id, isLegacy, isPending }) => 
+    $.ajax({
+      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${id}`,
+      method: 'GET'
+    }).then(result => ({ ...result, isLegacy, isPending }))
+  );
 
-    Promise.all(promises)
-        .then(results => {
-            allCommunities = results;
-            const currentActiveCommunityId = newActiveCommunityId || activeCommunityId;
-            const activeCommunity = allCommunities.find(c => c._id === currentActiveCommunityId) || null;
-            renderActiveCommunity(activeCommunity);
-            renderCommunityCards(allCommunities);
-            if (activeCommunity && activeCommunity?.community?.departments && !activeCommunity.isLegacy) {
-                renderDepartments(activeCommunity?.community?.departments);
-            }
-        })
-        .catch(err => {
-            console.error('Error fetching community details:', err);
-            $('#community-cards').html('<p>Error loading community details. Please try again later.</p>');
-            $('.pagination-controls').hide();
-        });
+  Promise.all(promises)
+    .then(results => {
+      allCommunities = results;
+      const currentActiveCommunityId = newActiveCommunityId || activeCommunityId;
+      const activeCommunity = allCommunities.find(c => c._id === currentActiveCommunityId) || null;
+      renderActiveCommunity(activeCommunity);
+      renderCommunityCards(allCommunities);
+      if (activeCommunity && activeCommunity?.community?.departments && !activeCommunity.isLegacy) {
+        renderDepartments(activeCommunity?.community?.departments);
+      }
+    })
+    .catch(err => {
+      console.error('Error fetching community details:', err);
+      $('#community-cards').html('<p>Error loading community details. Please try again later.</p>');
+      $('.pagination-controls').hide();
+    });
 }
 
 function renderActiveCommunity(activeCommunity) {
@@ -352,50 +415,110 @@ function renderActiveCommunity(activeCommunity) {
     }
 }
 
-function renderCommunityCards(communities) {
-    const cardsContainer = $('#community-cards');
-    cardsContainer.empty();
+ function renderCommunityCards(communities) {
+  const cardsContainer = $('#community-cards');
+  cardsContainer.empty();
 
-    if (communities && communities.length > 0) {
-        const start = (currentPage - 1) * communitiesPerPage;
-        const end = start + communitiesPerPage;
-        const paginatedCommunities = communities.slice(start, end);
+  if (communities && communities.length > 0) {
+    const start = (currentPage - 1) * communitiesPerPage;
+    const end = start + communitiesPerPage;
+    const paginatedCommunities = communities.slice(start, end);
 
-        paginatedCommunities.forEach(community => {
-            const isLegacy = community.isLegacy;
-            const isActive = !isLegacy && community._id === activeCommunityId;
-            const badge = community?.community?.subscription?.active && community?.community?.subscription?.plan !== 'basic' ? ' <span class="community-subscription-badge" style="vertical-align: middle;"><svg xmlns="http://www.w3.org/2000/svg" fill="#eab308" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6" style="color: #000000; width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>' : '';
-            const name = community?.community?.name || '';
-            const truncatedName = name.length > 20 ? name.substring(0, 17) + '...' : name;
-            cardsContainer.append(`
-                <div class="col-md-3 community-card">
-                    <img src="${community?.community?.imageLink || 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1746915829/temp-community-image_ebspfe.jpg'}" alt="${community?.community?.name}" style="max-width: 100%; width: 5em; height: 5em" />
-                    <h4 style="min-height: 2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${truncatedName}${badge}${isLegacy ? ' <span class="legacy-label">(Legacy)</span>' : ''}</h4>
-                    <h5 style="color: #94a3b8;">${community?.community?.membersCount || 1} Members</h5>
-                    <h5 style="color: #22c55e;">${community?.community?.subscription?.active ? community?.community?.promotionalText : '</br>'}</h5>
-                    ${isLegacy ? `
-                        <p class="legacy-note">Please reconcile this community in the mobile app.</p>
-                        <div>
-                            <a href="https://apps.apple.com/us/app/lpc-app/id6503307483" target="_blank" class="btn btn-primary btn-sm">App Store</a>
-                            <a href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp" target="_blank" class="btn btn-primary btn-sm">Google Play</a>
-                        </div>
-                    ` : `
-                        <button class="btn btn-primary" onclick="setActiveCommunity('${community._id}')" ${isActive ? 'disabled' : ''}>${isActive ? 'Already Active' : 'Set as Active'}</button>
-                    `}
-                </div>
-            `);
-        });
+    paginatedCommunities.forEach(community => {
+      console.log(`Rendering community:`, community);
+      const isLegacy = community.isLegacy;
+      const isPending = community.isPending;
+      const isActive = !isLegacy && !isPending && community._id === activeCommunityId;
+      const badge = community?.community?.subscription?.active && community?.community?.subscription?.plan !== 'basic' 
+        ? ' <span class="community-subscription-badge" style="vertical-align: middle;"><svg xmlns="http://www.w3.org/2000/svg" fill="#eab308" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6" style="color: #000000; width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>' 
+        : '';
+      const name = community?.community?.name || '';
+      const truncatedName = name.length > 20 ? name.substring(0, 17) + '...' : name;
+      const membersCount = community?.community?.membersCount || 0;
+      const membersText = `${membersCount} ${membersCount === 1 ? 'Member' : 'Members'}`;
+      cardsContainer.append(`
+        <div class="col-md-3 community-card">
+          ${isLegacy ? `
+            <div class="trash-icon-container" onclick="showDeleteModal('${community._id}', '${name.replace(/'/g, "\\'")}')">
+              <i class="fas fa-trash-alt trash-icon"></i>
+            </div>
+          ` : ''}
+          <img src="${community?.community?.imageLink || 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1746915829/temp-community-image_ebspfe.jpg'}" alt="${community?.community?.name}" style="max-width: 100%; width: 5em; height: 5em" />
+          <h4 style="min-height: 2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            ${truncatedName}${badge}
+          </h4>
+          <h5>${isLegacy ? ' <span class="legacy-label">(Legacy)</span>' : isPending ? ' <span class="pending-label" style="color: #ff9800; font-weight: bold;">(Pending)</span>' : ''}</h5>
+          <h5 style="color: #94a3b8;">
+            ${community?.community?.membersCount === 1 ? '1 Member' : `${community?.community?.membersCount || 1} Members`}
+          </h5>
+          <h5 style="color: #22c55e;">${community?.community?.subscription?.active ? community?.community?.promotionalText : '</br>'}</h5>
+          ${isLegacy ? `
+            <button class="btn btn-warning btn-sm" onclick="showMigrateModal('${community._id}')">Migrate</button>
+          ` : isPending ? `
+            <button class="btn btn-primary btn-sm" disabled>Requested</button>
+          ` : `
+            <button class="btn btn-primary btn-sm" onclick="setActiveCommunity('${community._id}')" ${isActive ? 'disabled' : ''}>
+              ${isActive ? 'Already Active' : 'Set as Active'}
+            </button>
+          `}
+        </div>
+      `);
+    });
 
-        const totalPages = Math.ceil(communities.length / communitiesPerPage);
-        $('#page-info').text(`Page ${currentPage} of ${totalPages}`);
-        $('#prev-page').prop('disabled', currentPage === 1);
-        $('#next-page').prop('disabled', currentPage === totalPages || totalPages === 0);
-        $('.pagination-controls').show();
-    } else {
-        cardsContainer.html('<p>No communities found.</p>');
-        $('.pagination-controls').hide();
-    }
+    const totalPages = Math.ceil(communities.length / communitiesPerPage);
+    $('#page-info').text(`Page ${currentPage} of ${totalPages}`);
+    $('#prev-page').prop('disabled', currentPage === 1);
+    $('#next-page').prop('disabled', currentPage === totalPages || totalPages === 0);
+    $('.pagination-controls').show();
+  } else {
+    cardsContainer.html('<p>No communities found.</p>');
+    $('.pagination-controls').hide();
+  }
 }
+
+function showDeleteModal(communityId, communityName) {
+    const modal = `
+      <div id="deleteModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+              <h4 class="modal-title">Delete Community</h4>
+            </div>
+            <div class="modal-body">
+              <p>Are you sure you want to delete "${communityName}"? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-danger" onclick="deleteCommunity('${communityId}')">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    $('body').append(modal);
+    $('#deleteModal').modal('show');
+    $('#deleteModal').on('hidden.bs.modal', function() {
+      $(this).remove();
+    });
+  }
+
+function deleteCommunity(communityId) {
+    $.ajax({
+      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}`,
+      method: 'DELETE',
+      success: function() {
+        $('#deleteModal').modal('hide');
+        $('#successCopyMessage').html('<strong>Success!</strong> Community deleted.').show().delay(2000).fadeOut();
+        fetchCommunityData(); // Refresh community list
+      },
+      error: function(xhr, status, error) {
+        console.error('Error deleting community:', { status: xhr.status, responseText: xhr.responseText, error });
+        $('#deleteModal').modal('hide');
+        $('#successCopyMessage').html('<strong>Error!</strong> Failed to delete community: ' + (xhr.responseText || error) + '.').show().delay(2000).fadeOut();
+      }
+    });
+  }
 
 function renderDepartments(departments) {
     const table = $('#departments-table').DataTable();
@@ -445,6 +568,245 @@ function setActiveCommunity(communityId) {
         }
     });
 }
+
+function showMigrateModal(communityId) {
+    $.ajax({
+      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/users/${communityId}`,
+      method: 'GET',
+      success: function(users) {
+        const modal = `
+          <div id="migrateModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                  <h4 class="modal-title">Migrate Legacy Community - Select Members</h4>
+                </div>
+                <div class="modal-body">
+                  <p><strong>Owner:</strong> You (${dbUser.user.username})</p>
+                  <h5>Members to Migrate (<span id="migrate-member-count">${users.length || 1}</span>)</h5>
+                  <div id="member-list" style="max-height: 200px; overflow-y: auto;">
+                    ${users.map(user => `
+                      <div class="member-checkbox">
+                        <input type="checkbox" id="member-${user._id}" value="${user._id}" checked 
+                          onchange="updateMigrateCount()">
+                        <label for="member-${user._id}">${user.username || 'User ' + user._id}</label>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-primary" onclick="showMigrateStepTwo('${communityId}')">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        $('body').append(modal);
+        $('#migrateModal').modal('show');
+        $('#migrateModal').on('hidden.bs.modal', function() {
+          $(this).remove();
+        });
+      },
+      error: function(err) {
+        console.error('Error fetching community members:', err);
+        $('#successCopyMessage').html('<strong>Error!</strong> Failed to load members for migration.').show().delay(2000).fadeOut();
+      }
+    });
+  }
+
+  function updateMigrateCount() {
+    const selectedCount = $('#member-list input:checked').length;
+    $('#migrate-member-count').text(selectedCount);
+  }
+
+function showMigrateStepTwo(communityId) {
+    const selectedMembers = $('#member-list input:checked').map(function() { return $(this).val(); }).get();
+    $('#migrateModal').modal('hide');
+
+    let visibility = 'public'; // Default visibility
+    window.setVisibility = function(value) {
+      visibility = value;
+      $('#visibility-private-btn').toggleClass('bg-blue-500 text-white bg-gray-300', value === 'private');
+      $('#visibility-public-btn').toggleClass('bg-blue-500 text-white bg-gray-300', value === 'public');
+      $('#visibility-private').toggleClass('font-semibold', value === 'private');
+      $('#visibility-public').toggleClass('font-semibold', value === 'public');
+    };
+
+    const modal = `
+      <div id="migrateStepTwoModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+              <h4 class="modal-title">Migrate Legacy Community - Step 2</h4>
+            </div>
+            <div class="modal-body">
+              <h5 class="text-lg font-semibold">Important Migration Information</h5>
+              <p class="text-base">By migrating to the new system, you will lose the following data from your legacy community:</p>
+              <ul class="list-disc ml-5">
+                <li>Civilians</li>
+                <li>Vehicles</li>
+                <li>Weapons</li>
+                <li>Calls</li>
+                <li>BOLOs</li>
+              </ul>
+              <p class="text-base font-semibold mt-4">Benefits of migrating to the new system:</p>
+              <ul class="list-disc ml-5">
+                <li>Permission-based access</li>
+                <li>Customizable 10-codes</li>
+                <li>Customizable fines</li>
+                <li>Enhanced civilian, vehicle, and weapon features</li>
+                <li>Unlimited departments, fully customizable</li>
+                <li>And so much more!</li>
+              </ul>
+              
+              
+              <p class="text-base font-semibold mt-4">Are you sure you want to migrate?</p>
+              <p class="text-sm text-gray-600">We are sure you will love the new content!</p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" onclick="confirmMigration('${communityId}', [${selectedMembers.map(id => `'${id}'`)}], '${"public"}')" data-dismiss="modal">Confirm Migration</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    $('body').append(modal);
+    $('#migrateStepTwoModal').modal('show');
+    $('#migrateStepTwoModal').on('hidden.bs.modal', function() {
+      $(this).remove();
+    });
+  }
+
+  function confirmMigration(communityId, selectedMembers, visibility) {
+    const API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+    const community = allCommunities.find(c => c._id === communityId);
+    const communityName = community?.community?.name || '';
+
+    // Show loading overlay
+    const loadingOverlay = `
+      <div id="loadingOverlay" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-sm">
+          <div class="modal-content">
+            <div class="modal-body text-center">
+              <p>Migrating community...</p>
+              <i class="fas fa-spinner fa-spin fa-2x"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    $('body').append(loadingOverlay);
+    $('#loadingOverlay').modal('show');
+
+    // Validate inputs
+    if (!communityName) {
+      $('#loadingOverlay').modal('hide');
+      $('#successCopyMessage').html('<strong>Error!</strong> Community name cannot be empty.').show().delay(2000).fadeOut();
+      return;
+    }
+
+    if (!dbUser._id) {
+      $('#loadingOverlay').modal('hide');
+      $('#successCopyMessage').html('<strong>Error!</strong> User ID cannot be empty.').show().delay(2000).fadeOut();
+      return;
+    }
+
+    // if (selectedMembers.length >= 0) {
+    //   $('#loadingOverlay').modal('hide');
+    //   $('#successCopyMessage').html('<strong>Error!</strong> No members selected for migration.').show().delay(2000).fadeOut();
+    //   return;
+    // }
+
+    // Create new community
+    const communityData = {
+        community: {
+      name: communityName,
+      ownerID: dbUser._id,
+      visibility: visibility
+        }
+    };
+    console.log(`Creating new community with data:`, communityData);
+
+    $.ajax({
+      url: `${API_URL}/api/v1/community`,
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(communityData),
+      success: function(newCommunity) {
+        if (selectedMembers.length > 0) {
+        // Update join requests for selected members
+        const joinRequestPromises = selectedMembers
+          .filter(member => member !== dbUser._id)
+          .map(member => 
+            $.ajax({
+              url: `${API_URL}/api/v1/community/join-request`,
+              method: 'PUT',
+              contentType: 'application/json',
+              data: JSON.stringify({
+                communityId: newCommunity?.community?.communityId,
+                userId: member,
+                status: 'approved',
+                isActive: 'true'
+              })
+            })
+          );
+
+        Promise.all(joinRequestPromises)
+          .then(() => {
+            // Archive legacy community
+            $.ajax({
+              url: `${API_URL}/api/v1/community/${communityId}/archive`,
+              method: 'POST',
+              success: function() {
+                $('#loadingOverlay').modal('hide');
+                $('#migrateStepTwoModal').modal('hide');
+                $('#successCopyMessage').html('<strong>Success!</strong> Community migrated successfully.').show().delay(2000).fadeOut();
+                fetchCommunityData(); // Refresh community list
+              },
+              error: function(xhr, status, error) {
+                console.error('Error archiving community:', { status: xhr.status, responseText: xhr.responseText, error });
+                $('#loadingOverlay').modal('hide');
+                $('#successCopyMessage').html('<strong>Error!</strong> Failed to archive community: ' + (xhr.responseText || error) + '.').show().delay(2000).fadeOut();
+              }
+            });
+          })
+          .catch(err => {
+            console.error('Error updating join requests:', err);
+            $('#loadingOverlay').modal('hide');
+            $('#successCopyMessage').html('<strong>Error!</strong> Failed to update join requests: ' + err + '.').show().delay(2000).fadeOut();
+          });
+        } else {
+            // Archive legacy community if no members to migrate
+            $.ajax({
+              url: `${API_URL}/api/v1/community/${communityId}/archive`,
+              method: 'POST',
+              success: function() {
+                $('#loadingOverlay').modal('hide');
+                $('#migrateStepTwoModal').modal('hide');
+                $('#successCopyMessage').html('<strong>Success!</strong> Community migrated successfully.').show().delay(2000).fadeOut();
+                fetchCommunityData(); // Refresh community list
+              },
+              error: function(xhr, status, error) {
+                console.error('Error archiving community:', { status: xhr.status, responseText: xhr.responseText, error });
+                $('#loadingOverlay').modal('hide');
+                $('#successCopyMessage').html('<strong>Error!</strong> Failed to archive community: ' + (xhr.responseText || error) + '.').show().delay(2000).fadeOut();
+              }
+            });
+          }
+      },
+      error: function(xhr, status, error) {
+        console.error('Error creating new community:', { status: xhr.status, responseText: xhr.responseText, error });
+        $('#loadingOverlay').modal('hide');
+        $('#successCopyMessage').html('<strong>Error!</strong> Failed to migrate community: ' + (xhr.responseText || error) + '.').show().delay(2000).fadeOut();
+      }
+    });
+  }
+
+
 
 function fillAccountDetails() {
     $('#accountEmail').val(dbUser.user.email);
