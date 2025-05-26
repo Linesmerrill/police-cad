@@ -279,12 +279,22 @@ function fetchCommunityData(newActiveCommunityId = null) {
                 url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/communities/${dbUser._id}`,
                 method: 'GET',
                 success: function(legacyData) {
-                    const filteredLegacyData = legacyData.filter(community => community?.community?.code !== "");
+                    if (legacyData && legacyData.length > 0) {
+                        const filteredLegacyData = legacyData.filter(community => community?.community?.code !== "");
                     const communityIds = [
                         ...newData.map(item => ({ id: item.communityId, isLegacy: false })),
                         ...filteredLegacyData.map(item => ({ id: item._id, isLegacy: true }))
                     ];
                     fetchCommunityDetails(communityIds, newData, newActiveCommunityId);
+                    } else {
+                        const communityIds = [
+                        ...newData.map(item => ({ id: item.communityId, isLegacy: false }))
+                        
+                    ];
+                      
+                    fetchCommunityDetails(communityIds, newData, newActiveCommunityId);
+                    }
+                    
                 },
                 error: function(err) {
                     console.error('Error fetching legacy community data:', err);
