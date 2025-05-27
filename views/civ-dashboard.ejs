@@ -276,6 +276,12 @@ a:not([href]):not([tabindex]):not(.pager a) {
   cursor: not-allowed;
   pointer-events: none;
 }
+#newLicenseModal {
+      z-index: 1060 !important;
+    }
+    #newLicenseModal .modal-backdrop {
+      z-index: 1055 !important;
+    }
 </style>
 </head>
 
@@ -924,63 +930,43 @@ a:not([href]):not([tabindex]):not(.pager a) {
   <div id="newLicenseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
+        <div class="modal-header">
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4 class="modal-title">Add New License</h4>
+        </div>
         <div class="modal-body">
-          <form id="create-license-form" class="form-horizontal" action="#" method="post">
-            <fieldset>
-
-            <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-            <h4>Add a New License</h4>
-            <hr style="width: 88%;max-width: 100rem;">
-
-            <div class="form-group required">
-              <label class="col-md-3 control-label" for="license-type">License Type:</label>
-              <div class="col-md-5">
-                <select id="license-type" name="licenseType" class="form-control">
-                  <% include license-list %>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group required">
-              <label class="col-md-3 control-label" for="license-status">License Status:</label>
-              <div class="col-md-5">
-                <select id="license-status" name="licenseStatus" class="form-control">
-                  <option value="pending">Pending</option>
-                  <option value="valid">Valid</option>
-                  <option value="expired">Expired</option>
-                  <option value="suspended">Suspended</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group required">
-              <label class="col-md-3 control-label" for="expirationDate">Expiration Date:</label>
-              <div class="col-md-5">
-              <input id="expirationDate" name="expirationDate" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
-              </div>
-            </div>
-
+          <form id="create-license-form">
             <div class="form-group">
-              <label class="col-md-3 control-label" for="additionalNotes">Additional Notes:</label>
-              <div class="col-md-8">
-                <input id="additionalNotes" name="additionalNotes" type="text" placeholder="additional notes" class="form-control input-md">
-              </div>
+              <label for="license-type-new">License Type *</label>
+              <input type="text" id="license-type-new" class="form-control" required placeholder="e.g., Driver's License">
             </div>
-            
-
-            <!-- Button -->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="create-firearm"></label>
-              <div class="col-md-4">
-                <input type="hidden" id="license-owner" name="licenseOwner" value="">
-                <input type="hidden" id="new-license-userID" name="userID" value="<%= user._id %>">
-                <input type="hidden" id="new-license-activeCommunityID" name="activeCommunityID" value="<%=user.user.activeCommunity%>">
-                <button id="create-firearm" onclick="hideFirearmMessage()" class="btn btn-primary">Create</button>
-              </div>
+              <label for="license-status-new">Status *</label>
+              <select id="license-status-new" class="form-control" required>
+                <option value="Pending">Pending</option>
+                <option value="Valid">Valid</option>
+                <option value="Approved">Approved</option>
+                <option value="Suspended">Suspended</option>
+                <option value="Revoked">Revoked</option>
+              </select>
             </div>
-            </fieldset>
-            </form>
+            <div class="form-group">
+              <label for="license-issued-new">Issued Date *</label>
+              <input type="date" id="license-issued-new" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label for="license-expiry-new">Expiry Date *</label>
+              <input type="date" id="license-expiry-new" class="form-control" required>
+            </div>
+            <div class="form-group">
+                  <label for="license-additional-notes-new">Additional Notes</label>
+                  <input type="text" id="license-additional-notes-new" class="form-control" placeholder="Additional notes (optional)">
+                </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="createLicense()">Create</button>
         </div>
       </div>
     </div>
@@ -1131,7 +1117,7 @@ a:not([href]):not([tabindex]):not(.pager a) {
     <a class="nav-link" id="pills-firearms-tab" data-toggle="pill" href="#pills-firearms" role="tab" aria-controls="pills-firearms" aria-selected="false" onclick="getLinkedFirearms(0)">Manage Firearms</a>
   </li>
             <li>
-              <a data-toggle="pill" href="#pills-dmv">DMV</a>
+              <a class="nav-link" id="pills-dmv-tab" data-toggle="pill" href="#pills-dmv" role="tab" aria-controls="pills-dmv" aria-selected="false" onclick="getLicenses(0)">Licenses</a>
             </li>
             <li>
               <a data-toggle="pill" href="#pills-records">Records</a>
@@ -1341,45 +1327,38 @@ a:not([href]):not([tabindex]):not(.pager a) {
 
             <!-- dmv tab (showing all of the users licenses)-->
             <div class="tab-pane fade" id="pills-dmv">
-              <div class="col-md-12 col-md-offset-0.75 margin-top-2">
-                <div class="margin-bottom-1">
-                  <span id="active-bolos margin-right-1" style="font-size: 18px;">Licenses:</span> <!-- <button data-toggle="modal" href="#newLicenseModal" data-dismiss="modal" aria-hidden="true"  class="btn btn-primary btn-md pull-right" onclick="">Add License</button> -->
-                </div>
-                <!-- <div>
-                  <label>Search:
-                    <input id="license-search" type="search" class="form-control input-sm" placeholder aria-controls="thumbnail">
-                  </label>
-                </div> -->
-
-                <!-- List of licenses -->
-                <div id="licenses-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
-                  <!-- <div id="licenses-loading" class="text-align-center" style="width: 100%;">
-                    <div class="lds-facebook"><div></div><div></div><div></div></div>
-                  </div> -->
-                </div>
-
-                <!-- Loading error -->
-                <div id="issue-loading-licenses-alert" style="display:none">
-                  <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading licenses, try refreshing the page...</p>
-                </div>
-
-                <!-- No licenses registered message -->
-                <div id="no-licenses-message" style="display:none">
-                  <p class="text-center" style="font-style: italic; font-size: 14px">No registered licenses, try adding one...</p>
-                </div>
-
-                <!-- Paginated navigation list -->
-                <div>
-                  <nav aria-label="...">
-                    <ul class="pager">
-                      <li><a id="prev-license-page-btn" onclick="getPrevLicensePage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
-                      <li><a id="next-license-page-btn" onclick="getNextLicensePage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
-                    </ul>
-                  </nav>
-                </div>
-                
-              </div>
+    <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+      <div class="margin-bottom-1">
+        <span id="active-licenses" class="margin-right-1" style="font-size: 18px;">Licenses:</span>
+        <button class="btn btn-primary btn-md pull-right" onclick="showNewLicenseModal()">Add License</button>
+      </div>
+      <div>
+        <label>Search:
+          <input id="license-search" type="search" class="form-control input-sm" placeholder="Search Licenses" aria-controls="thumbnail">
+        </label>
+      </div>
+      <div id="licenses-thumbnail" class="row flex-main" style="margin-top: 0.5em;">
+        <div id="licenses-loading" class="text-align-center" style="width: 100%;">
+          <div class="lds-facebook"><div></div><div></div><div></div></div>
+        </div>
+      </div>
+      <div id="issue-loading-licenses-alert" style="display:none">
+        <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading licenses, try refreshing the page...</p>
+      </div>
+      <div id="no-licenses-message" style="display:none">
+        <p class="text-center" style="font-style: italic; font-size: 14px">No registered licenses, try adding one...</p>
+      </div>
+      <div>
+        <nav aria-label="...">
+          <ul class="pager">
+            <li><a id="prev-license-page-btn" class="" onclick="getPrevLicensePage()"> <i class="fa fa-chevron-circle-left pr-1" aria-hidden="true"></i> Previous</a></li>
+            <li><a id="next-license-page-btn" onclick="getNextLicensePage()">Next <i class="fa fa-chevron-circle-right pl-1" aria-hidden="true"></i></a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
             </div>
+
             <div class="tab-pane fade" id="pills-records">
               <h4>Criminal History</h4>
                     <ul class="nav nav-pills mb-3 margin-bottom-1" id="pills-tab" role="tablist">
@@ -1625,68 +1604,6 @@ a:not([href]):not([tabindex]):not(.pager a) {
   </div>
 </div>
 
-  <div id="viewLicense" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-            <form class="form-horizontal" action="/updateOrDeleteLicense" method="post">
-              <fieldset>
-
-            <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-            <h4>License Details</h4>
-            <hr style="width: 88%;max-width: 100rem;">
-
-            <div class="form-group required">
-              <label class="col-md-3 control-label" for="license-type">License Type:</label>
-              <div class="col-md-5">
-                <select id="license-type-details" name="licenseType" class="form-control">
-                  <% include license-list %>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group required">
-              <label class="col-md-3 control-label" for="license-status">License Status:</label>
-              <div class="col-md-5">
-                <select id="license-status-details" name="licenseStatus" class="form-control">
-                  <option value="pending">Pending</option>
-                  <option value="valid">Valid</option>
-                  <option value="expired">Expired</option>
-                  <option value="suspended">Suspended</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group required">
-              <label class="col-md-3 control-label" for="expirationDate">Expiration Date:</label>
-              <div class="col-md-5">
-              <input id="expirationDate-details" name="expirationDate" type="date" max="2999-12-31" min="1900-01-01" class="form-control input-md" required>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="col-md-3 control-label" for="additionalNotes">Additional Notes:</label>
-              <div class="col-md-8">
-                <input id="additionalNotes-details" name="additionalNotes" type="text" placeholder="additional notes" class="form-control input-md">
-              </div>
-            </div>
-            <div class="form-group">
-              <div class="col-md-12 text-align-center margin-bottom-2">
-                  <input type="hidden" id="licenseID" name="licenseID">
-                  <input type="hidden" id="licenseOwnerID" name="licenseOwnerID">
-                  <input type="hidden" name="backLocation" value="/civ-dashboard">
-                  <button type="submit" value="update" name="action" class="btn btn-info">Update License</button>
-                  <button type="submit" value="delete" name="action" class="btn btn-danger">Delete License</button>
-              </div>
-            </div>
-            </fieldset>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <div id="nonCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -1703,6 +1620,95 @@ a:not([href]):not([tabindex]):not(.pager a) {
             <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">OK <i
                 class="ion-android-close"></i></button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <div id="viewLicenseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4 class="modal-title">License Details</h4>
+        </div>
+        <div class="modal-body">
+          <form id="view-license-form">
+            <input type="hidden" id="licenseID">
+            <div class="form-group">
+              <label for="license-type-details">License Type *</label>
+              <input type="text" id="license-type-details" class="form-control" required placeholder="e.g., Driver's License">
+            </div>
+            <div class="form-group">
+              <label for="license-status-details">Status *</label>
+              <select id="license-status-details" class="form-control" required>
+                <option value="Pending">Pending</option>
+                <option value="Valid">Valid</option>
+                <option value="Approved">Approved</option>
+                <option value="Suspended">Suspended</option>
+                <option value="Revoked">Revoked</option>
+                
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="license-expiry-details">Expiry Date *</label>
+              <input type="date" id="license-expiry-details" class="form-control" required>
+            </div>
+            <div class="form-group">
+                  <label for="license-additional-notes-details">Additional Notes</label>
+                  <input type="text" id="license-additional-notes-details" class="form-control" placeholder="Additional notes (optional)">
+                </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" onclick="deleteLicense()">Delete</button>
+          <button type="button" class="btn btn-primary" onclick="updateLicense()">Update</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newLicenseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+          <h4 class="modal-title">Add New License</h4>
+        </div>
+        <div class="modal-body">
+          <form id="create-license-form">
+            <div class="form-group">
+              <label for="license-type-new">License Type *</label>
+              <input type="text" id="license-type-new" class="form-control" required placeholder="e.g., Driver's License">
+            </div>
+            <div class="form-group">
+              <label for="license-status-new">Status *</label>
+              <select id="license-status-new" class="form-control" required>
+                <option value="Pending">Pending</option>
+                <option value="Valid">Valid</option>
+                <option value="Approved">Approved</option>
+                <option value="Suspended">Suspended</option>
+                <option value="Revoked">Revoked</option>
+              </select>
+            </div>
+           
+            <div class="form-group">
+              <label for="license-expiry-new">Expiry Date *</label>
+              <input type="date" id="license-expiry-new" class="form-control" required>
+            </div>
+            <div class="form-group">
+                  <label for="license-additional-notes-new">Additional Notes</label>
+                  <input type="text" id="license-additional-notes-new" class="form-control" placeholder="Additional notes (optional)">
+                </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="createLicense()">Create</button>
         </div>
       </div>
     </div>
@@ -2828,6 +2834,277 @@ function deleteFirearm() {
     }
   });
 }
+
+// Global variables for licenses
+  let licensePage = 0;
+  let allLicenses = [];
+  let hasMoreLicenses = false;
+  const licensesPerPage = 8;
+
+  // Fetch licenses for a civilian
+  function getLicenses(page) {
+    const civilianId = $('#civilianIDView').text();
+    if (!civilianId) return;
+
+    $('#licenses-loading').show();
+    $('#licenses-thumbnail').show();
+    $('#no-licenses-message').hide();
+    $('#issue-loading-licenses-alert').hide();
+    $('#prev-license-page-btn').parent().toggleClass('disabled', page === 0);
+
+    $.ajax({
+      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/licenses/civilian/${civilianId}?limit=${licensesPerPage}&page=${page}`,
+      method: 'GET',
+      success: function(data) {
+        if ($('#civilianIDView').text() !== civilianId) return;
+
+        licensePage = page;
+        hasMoreLicenses = data.data.length === licensesPerPage;
+
+        renderLicenses(data?.data || [], civilianId);
+        $('#licenses-loading').hide();
+        $('#prev-license-page-btn').parent().toggleClass('disabled', page === 0);
+        $('#next-license-page-btn').parent().toggleClass('disabled', !hasMoreLicenses || data.totalCount <= (page + 1) * licensesPerPage);
+        if (data.data.length === 0) {
+          $('#no-licenses-message').show();
+        }
+      },
+      error: function(xhr) {
+        if ($('#civilianIDView').text() !== civilianId) return;
+        console.error('Error fetching licenses:', xhr.responseText);
+        $('#licenses-loading').hide();
+        $('#issue-loading-licenses-alert').show();
+        alert('Failed to load licenses: ' + (xhr.responseJSON?.message || 'Unknown error'));
+      }
+    });
+  }
+  
+  // Pagination functions
+  function getPrevLicensePage() {
+    if (licensePage > 0) {
+      getLicenses(licensePage - 1);
+    }
+  }
+
+  function getNextLicensePage() {
+    getLicenses(licensePage + 1);
+  }
+
+  // Render licenses in the thumbnail grid
+  function renderLicenses(licenses, civilianId) {
+    if ($('#civilianIDView').text() !== civilianId) return;
+
+    const $thumbnail = $('#licenses-thumbnail');
+    $thumbnail.empty();
+
+    if (licenses.length === 0) {
+      $('#no-licenses-message').show();
+      $('#licenses-loading').hide();
+      return;
+    }
+
+    allLicenses = licenses;
+    licenses.forEach(license => {
+      $thumbnail.append(`
+        <div id="licenses-thumbnail-${license._id}" class="col-xs-6 col-sm-3 col-md-2 text-align-center civ-thumbnails flex-li-wrapper">
+          <div class="thumbnail thumbnail-box flex-wrapper" style="align-items:center;" data-toggle="modal" data-target="#viewLicenseModal" onclick="viewLicense('${license._id}')">
+            <ion-icon class="font-size-4-vmax" name="card-outline"></ion-icon>
+            <div class="caption capitalize">
+              <h4 id="licenses-thumbnail-type-${license._id}" class="color-white capitalize">${license?.license?.type}</h4>
+              <h5 id="licenses-thumbnail-status-${license._id}" class="color-white">${license?.license?.status}</h5>
+              <h5 id="licenses-thumbnail-expiry-${license._id}" class="color-white">EXP: ${license?.license?.expirationDate}</h5>
+            </div>
+          </div>
+        </div>
+      `);
+    });
+    $('#licenses-loading').hide();
+  }
+
+  // Search functionality for licenses
+  $('#license-search').on('input', function() {
+    const query = $(this).val().toLowerCase();
+    const civilianId = $('#civilianIDView').text();
+    const filteredLicenses = allLicenses.filter(license =>
+      license.type?.toLowerCase().includes(query) ||
+      license.status?.toLowerCase().includes(query)
+    );
+    renderLicenses(filteredLicenses, civilianId);
+  });
+
+  // View license details
+  function viewLicense(licenseId) {
+    $.ajax({
+      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/license/${licenseId}`,
+      method: 'GET',
+      success: function(license) {
+        $('#licenseID').val(license._id);
+        $('#license-type-details').val(license?.license?.type);
+        $('#license-status-details').val(license?.license?.status);
+        $('#license-expiry-details').val(license?.license?.expirationDate ? new Date(license?.license?.expirationDate).toISOString().split('T')[0] : '');
+        $('#license-additional-notes-details').val(license?.license?.notes);
+        $('#viewLicenseModal').modal('show');
+      },
+      error: function() {
+        alert('Error loading license details. Please try again.');
+      }
+    });
+  }
+
+  // Create a new license
+  function createLicense() {
+    const civilianId = $('#civilianIDView').text();
+    if ($('#license-type-new').val().trim() === '') {
+      alert('Please enter a license type.');
+      return;
+    }
+    if ($('#license-status-new').val().trim() === '') {
+      alert('Please select a status.');
+      return;
+    }
+    if ($('#license-expiry-new').val().trim() === '') {
+      alert('Please select an expiry date.');
+      return;
+    }
+
+    const licenseData = {
+      type: $('#license-type-new').val().trim(),
+      status: $('#license-status-new').val(),
+      expirationDate: $('#license-expiry-new').val(),
+      notes: $('#license-additional-notes-new').val().trim(),
+      civilianID: civilianId,
+    };
+
+
+    $.ajax({
+      url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/license',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify(licenseData),
+      success: function() {
+        alert('License created successfully!');
+        $('#newLicenseModal').modal('hide');
+        $('#create-license-form')[0].reset();
+        getLicenses(licensePage);
+      },
+      error: function(xhr) {
+        alert('Error creating license: ' + (xhr.responseJSON?.message || 'Please try again.'));
+      }
+    });
+  }
+
+  // Update an existing license
+  function updateLicense() {
+    const licenseId = $('#licenseID').val();
+    if ($('#license-type-details').val().trim() === '') {
+      alert('Please enter a license type.');
+      return;
+    }
+    if ($('#license-status-details').val().trim() === '') {
+      alert('Please select a status.');
+      return;
+    }
+    if ($('#license-expiry-details').val().trim() === '') {
+      alert('Please select an expiry date.');
+      return;
+    }
+
+    const licenseData = {
+      type: $('#license-type-details').val().trim(),
+      status: $('#license-status-details').val(),
+      expirationDate: $('#license-expiry-details').val(),
+      notes: $('#license-additional-notes-details').val(),
+    };
+
+    $.ajax({
+      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/license/${licenseId}`,
+      method: 'PUT',
+      contentType: 'application/json',
+      data: JSON.stringify(licenseData),
+      success: function() {
+        alert('License updated successfully!');
+        $('#viewLicenseModal').modal('hide');
+        getLicenses(licensePage);
+      },
+      error: function() {
+        alert('Error updating license. Please try again.');
+      }
+    });
+  }
+
+  // Delete a license
+  function deleteLicense() {
+    if (!confirm('Are you sure you want to delete this license?')) return;
+
+    const licenseId = $('#licenseID').val();
+
+    $.ajax({
+      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/license/${licenseId}`,
+      method: 'DELETE',
+      success: function() {
+        alert('License deleted successfully!');
+        $('#viewLicenseModal').modal('hide');
+        getLicenses(licensePage);
+      },
+      error: function() {
+        alert('Error deleting license. Please try again.');
+      }
+    });
+  }
+
+  function showNewLicenseModal() {
+    // Hide viewLicenseModal to prevent overlap
+    $('#viewLicenseModal').modal('hide');
+    
+    // Ensure any existing newLicenseModal is removed
+    $('#newLicenseModal').remove();
+    
+    // Re-append and show newLicenseModal
+    $('body').append(`
+      <div id="newLicenseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4 class="modal-title">Add New License</h4>
+            </div>
+            <div class="modal-body">
+              <form id="create-license-form">
+                <div class="form-group">
+                  <label for="license-type-new">License Type *</label>
+                  <input type="text" id="license-type-new" class="form-control" required placeholder="e.g., Driver's License">
+                </div>
+                <div class="form-group">
+                  <label for="license-status-new">Status *</label>
+                  <select id="license-status-new" class="form-control" required>
+                    <option value="Pending">Pending</option>
+                    <option value="Valid">Valid</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Suspended">Suspended</option>
+                    <option value="Revoked">Revoked</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="license-expiry-new">Expiry Date *</label>
+                  <input type="date" id="license-expiry-new" class="form-control" required>
+                </div>
+                <div class="form-group">
+                  <label for="license-additional-notes-new">Additional Notes</label>
+                  <input type="text" id="license-additional-notes-new" class="form-control" placeholder="Additional notes (optional)">
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" onclick="createLicense()">Create</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+    $('#newLicenseModal').modal('show');
+  }
 
   var socket = io();
   var myObj = {

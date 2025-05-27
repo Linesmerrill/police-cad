@@ -304,13 +304,10 @@ function fetchCommunityData(newActiveCommunityId = null) {
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/user/${dbUser._id}/communities`,
     method: 'GET',
     success: function(newData) {
-        console.log('Success fetching community data:', newData);
         
       // Separate communities by status
       const approvedCommunities = newData.filter(item => item.status === 'approved');
       const pendingCommunities = newData.filter(item => item.status === 'pending');
-      console.log('Approved Communities:', approvedCommunities);
-      console.log('Pending Communities:', pendingCommunities);
       $.ajax({
         url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/communities/${dbUser._id}`,
         method: 'GET',
@@ -348,7 +345,6 @@ function fetchLegacyData() {
                 url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/communities/${dbUser._id}`,
                 method: 'GET',
                 success: function(legacyData) {
-                    console.log(`legacyData:`, legacyData);
                     if (legacyData && legacyData.length > 0) {
                         const filteredLegacyData = legacyData.filter(community => community?.community?.code !== "");
                     const communityIds = [
@@ -357,7 +353,6 @@ function fetchLegacyData() {
                     ];
                     fetchCommunityDetails(communityIds, legacyData, null);
                     } else {
-                        console.log(`No legacy communities found for user ${dbUser._id}`);
                     //     const communityIds = [
                     //     ...newData.map(item => ({ id: item.communityId, isLegacy: false }))
                         
@@ -427,7 +422,6 @@ function renderActiveCommunity(activeCommunity) {
     const paginatedCommunities = communities.slice(start, end);
 
     paginatedCommunities.forEach(community => {
-      console.log(`Rendering community:`, community);
       const isLegacy = community.isLegacy;
       const isPending = community.isPending;
       const isActive = !isLegacy && !isPending && community._id === activeCommunityId;
@@ -731,7 +725,6 @@ function showMigrateStepTwo(communityId) {
       visibility: visibility
         }
     };
-    console.log(`Creating new community with data:`, communityData);
 
     $.ajax({
       url: `${API_URL}/api/v1/community`,

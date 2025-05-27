@@ -312,8 +312,6 @@
 
     Promise.all(templatePromises).then(templates => {
       departments.forEach(dept => {
-        console.log(`Template: ${JSON.stringify(templates)}`);
-        console.log(`Department: ${JSON.stringify(dept)}`);
         const template = templates.find(t => t.deptId === dept._id);
         const dashboardUrl = getDashboardUrl(template?.templateName?.toLowerCase() || '');
         const isOtherDepartments = containerId === '#other-departments';
@@ -633,7 +631,6 @@
       url: `${API_URL}/api/v1/community/${communityId}/members?limit=100`,
       method: 'GET',
       success: function(data) {
-        console.log('data', data);
         const members = data.members || [];
         const modal = `
           <div id="createDepartmentStep3Modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
