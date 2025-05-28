@@ -304,9 +304,6 @@ function fetchCommunityData(newActiveCommunityId = null) {
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/user/${dbUser._id}/communities`,
     method: 'GET',
     success: function(newData) {
-        console.log("userId", dbUser._id)
-        
-        console.log("community data", newData);
         
       // Separate communities by status
       const approvedCommunities = newData?.filter(item => item.status === 'approved');
