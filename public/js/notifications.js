@@ -194,7 +194,6 @@ function handleNotificationAction(notificationId, action) {
       })
     );
   } else if (notification.type === "join_request" && !notification.data3) {
-    console.log("Handling join request for community:", notification);
     requests.push(
       $.ajax({
         url: `${API_URL}/api/v1/user/${notification.sentFromID}/communities?migration=false`,
@@ -438,7 +437,6 @@ $(document).ready(function () {
     );
 
     socket.onopen = function () {
-      console.log("WebSocket connected to /ws/notifications");
       reconnectAttempts = 0; // Reset on successful connection
       // Start ping to keep connection alive
       startPing();
@@ -452,18 +450,10 @@ $(document).ready(function () {
     };
 
     socket.onclose = function (event) {
-      console.log("WebSocket closed:", {
-        code: event.code,
-        reason: event.reason || "Unknown",
-      });
       stopPing();
       if (reconnectAttempts < maxReconnectAttempts) {
         const delay = baseReconnectDelay * Math.pow(2, reconnectAttempts); // Exponential backoff
-        console.log(
-          `Attempting reconnect in ${delay}ms (attempt ${
-            reconnectAttempts + 1
-          }/${maxReconnectAttempts})`
-        );
+
         reconnectAttempts++;
         setTimeout(connectWebSocket, delay);
       } else {
@@ -481,7 +471,6 @@ $(document).ready(function () {
     pingInterval = setInterval(() => {
       if (socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: "ping" }));
-        console.log("Sent ping");
       }
     }, 30000); // Ping every 30 seconds
   }
