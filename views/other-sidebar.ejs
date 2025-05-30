@@ -13,14 +13,15 @@
 </li>
 <div class="collapse in" id="toggleOther">
   <li>
-    <a data-toggle="modal" href="#notificationModal" onclick="markAsRead()"
-      ><span id="notification-symbol" class="fa fa-bell mr-3 notif"
-        ><small
-          class="d-flex align-items-center justify-content-center"
-          id="notification-count"
-        ></small
-      ></span>
-      Notifications</a
+    <a
+      data-toggle="modal"
+      href="#notificationModal"
+      onclick="fetchNotifications(0)"
+    >
+      <span id="notification-symbol" class="fa fa-bell notif">
+        <small id="notification-count" class="notification-badge"></small>
+      </span>
+      &nbsp;&nbsp;&nbsp;Notifications</a
     >
   </li>
   <li>

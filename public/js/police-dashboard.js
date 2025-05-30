@@ -13,12 +13,6 @@ function toggleInput(showClass, hideClass) {
   $(`.${hideClass}`).removeClass("show").addClass("hide");
 }
 
-function markAsRead() {
-  document.cookie = "notification-symbol=v3.1.0";
-  $("#notification-symbol").removeClass("notif");
-  $("#notification-count").text("");
-}
-
 function hideModal(modalID) {
   $("#" + modalID).modal("hide");
 }
@@ -575,10 +569,4 @@ function openNameDatabase(registeredOwner, activeCommunityID) {
     }
   }
   return (document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&activeCommunityID=${activeCommID}`);
-}
-
-function markAsRead() {
-  document.cookie = "notification-symbol=v3.1.0";
-  $("#notification-symbol").removeClass("notif");
-  $("#notification-count").text("");
 }

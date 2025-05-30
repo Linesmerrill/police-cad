@@ -35,6 +35,71 @@
   .pending-label { color: #ff9800; font-weight: bold; }
   .legacy-note { font-size: 0.9em; color: #666; }
   #notification-symbol { font-size: 1.5em; }
+  /* notification styles */
+  .notification-badge {
+      position: absolute;
+      top: 10px;
+      right: 8px;
+      background-color: #dc3545;
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+      line-height: 18px;
+      text-align: center;
+      display: none;
+    }
+    .notification-badge.show {
+      display: block;
+    }
+  #toast-container {
+    position: fixed;
+    top: 60px; /* Adjusted from 20px to avoid navbar overlap */
+    right: 20px;
+    z-index: 1070;
+  }
+  .custom-toast {
+    position: relative;
+    min-width: 250px;
+    max-width: 350px;
+    background: #2d3748;
+    color: #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    display: none; /* Initially hidden for fadeIn */
+  }
+  .custom-toast-header {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: #1f2937;
+    border-bottom: 1px solid #4b5563;
+  }
+  .custom-toast-header strong {
+    flex: 1;
+    font-size: 14px;
+  }
+  .custom-toast-header small {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-right: 10px;
+  }
+  .custom-toast-header .close {
+    color: #e2e8f0;
+    font-size: 14px;
+    padding: 0 5px;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+  .custom-toast-body {
+    padding: 10px;
+    font-size: 14px;
+  }
+  /* end of notification styles */
   .trash-icon-container {
     position: absolute;
     top: 5px;
@@ -79,16 +144,14 @@
                     <!-- <li><a href="/trending-communities">Trending</a></li> -->
                     <!-- <li><a href="/search">Search</a></li> -->
                     <li>
-                        <a data-toggle="modal" href="#notificationModal" onclick="markAsRead()"
-                        ><span id="notification-symbol" class="fa fa-bell notif"
-                            ><small
-                            class="d-flex align-items-center justify-content-center"
-                            id="notification-count"
-                            ></small
-                        ></span>
-                        </a
-                        >
-                    </li>
+    <a data-toggle="modal" href="#notificationModal" onclick="fetchNotifications(0)">
+      <span id="notification-symbol" class="fa fa-bell notif">
+        <small id="notification-count" class="notification-badge" ></small>
+      </span>
+    </a>
+  </li>
+
+  
                     <li><a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"><ion-icon class="nav-user-icon" name="person-circle-outline"></ion-icon></a></li>
                 </ul>
             </div>
@@ -147,6 +210,7 @@
         </div>
     </header>
     <% include account-management %>
+    <% include partials/notificationModal %>
     <% include footer %>
 
     <!-- Tutorial Modal -->
@@ -184,6 +248,7 @@
     <script src="/static/js/jquery.easing.min.js"></script>
     <script src="/static/js/wow.js"></script>
     <script src="/static/js/scripts.js"></script>
+    <script src="/static/js/notifications.js"></script>
     <script src="/static/js/ads.js"></script>
     <script>if (window.module) module = window.module;</script>
 </body>
@@ -192,6 +257,7 @@
 
 <script type="text/javascript">
   var dbUser = <%- JSON.stringify(user) %>;
+  const API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
   var currentPage = 1;
   var communitiesPerPage = 3;
   var allCommunities = [];

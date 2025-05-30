@@ -365,12 +365,6 @@ function toggleInput(showClass, hideClass) {
   $(`.${hideClass}`).removeClass("show").addClass("hide");
 }
 
-function markAsRead() {
-  document.cookie = "notification-symbol=v3.1.0";
-  $("#notification-symbol").removeClass("notif");
-  $("#notification-count").text("");
-}
-
 function hideModal(modalID) {
   $("#" + modalID).modal("hide");
 }

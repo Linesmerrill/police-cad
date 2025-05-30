@@ -1,0 +1,111 @@
+<div
+  id="notificationModal"
+  class="modal fade"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+        <h4 class="modal-title">Notifications</h4>
+      </div>
+      <div class="modal-body">
+        <div
+          id="notification-error"
+          class="alert alert-danger alert-dismissible"
+          role="alert"
+          style="display: none"
+        >
+          <button
+            type="button"
+            class="close"
+            data-dismiss="alert"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+          <strong>Error!</strong> <span id="notification-error-message"></span>
+        </div>
+        <div
+          id="notification-loading"
+          class="text-align-center"
+          style="width: 100%"
+        >
+          <div class="lds-facebook">
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        </div>
+        <div id="notification-list" style="display: none"></div>
+        <div id="no-notifications" class="text-center" style="display: none">
+          <p style="font-style: italic; font-size: 14px">
+            No notifications found.
+          </p>
+        </div>
+        <div
+          id="notification-load-more"
+          class="text-center"
+          style="margin-top: 10px; display: none"
+        >
+          <button class="btn btn-primary" onclick="loadMoreNotifications()">
+            Load More
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container for Live Notifications -->
+<div id="toast-container"></div>
+
+<!-- Ellipsis Menu Modal -->
+<div
+  id="notificationMenuModal"
+  class="modal fade"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+        <h4 class="modal-title">Notification Options</h4>
+      </div>
+      <div class="modal-body">
+        <button
+          class="btn btn-default btn-block"
+          onclick="markNotificationAsRead()"
+        >
+          Mark as Read
+        </button>
+        <button class="btn btn-danger btn-block" onclick="deleteNotification()">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -104,10 +104,10 @@ const Navbar = () => {
                 onClick={toggleNotifPopout}
                 className="text-gray-300 hover:text-white px-3 py-2 rounded-md relative"
               >
-                <ion-icon
+                {/* <ion-icon
                   name="notifications-outline"
                   class="text-2xl"
-                ></ion-icon>
+                ></ion-icon> */}
                 {unreadCount > 0 && (
                   <span className="absolute top-0 right-0 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     {unreadCount}
