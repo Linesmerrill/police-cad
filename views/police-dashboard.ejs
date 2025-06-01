@@ -208,7 +208,7 @@
         </li>
         <div class="collapse in" id="toggleUtilities">
           <li>
-            <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+            <% if (user.user?.lastAccessedCommunity != null ) {%>
   <a href="javascript:void(0)" onclick="showBoloModal()"><span
       class="fa fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
 <% } else {%>
@@ -331,7 +331,7 @@
                                 <% include community-alerts %>
 
                                   <div class="container text-center width-100 margin-top-2">
-                                    <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+                                    <% if (user.user?.lastAccessedCommunity !=null ) {%>
                                       
                                             <h4 id="currentStatus" class="text-align-center">Your Current Status:
                                               <%=user.user.dispatchStatus%>
@@ -375,8 +375,7 @@
                                             <% } %>
 
                                               
-                                                  <% if (user.user.activeCommunity=='' ||
-                                                    user.user.activeCommunity==null) {%>
+                                                  <% if (user.user?.lastAccessedCommunity==null) {%>
                                                     <div class="col-lg-10 col-lg-offset-1 margin-top-2 text-center">
                                                       <h3><i class="fa fa-arrow-left"></i> Click on any of the search
                                                         buttons to get started</h3>
@@ -1525,39 +1524,6 @@
     </div>
   </div>
 
-  <div id="leaveActiveCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-body">
-          <form class="form-horizontal" action="/leavePoliceActiveCommunity" method="post">
-            <fieldset>
-
-              <!-- Form Name -->
-              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
-                aria-hidden="true">X</button>
-              <h4>Leave Active Community</h4>
-              <hr style="width: 88%;max-width: 100rem;">
-
-              <p>NOTE: All civilians and vehicles that were created in this community will no longer
-                show up when searching after you leave.
-              </p>
-              <p>Are you sure you want to leave this community?</p>
-
-              <!-- Button -->
-              <div class="form-group">
-                <label class="col-md-4 control-label" for="leaveActiveCommunity"></label>
-                <div class="col-md-4 text-align-center">
-                  <input type="hidden" name="route" value="police-dashboard">
-                  <button id="leaveActiveCommunity" value="<%= user._id %>" name="userID"
-                    class="btn btn-danger">Leave</button>
-                </div>
-              </div>
-            </fieldset>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <div id="createCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -1717,7 +1683,7 @@ const codesPerPage = 10;
     // AJAX function to update officer status
 function updateStatus(statusCode) {
   const userId = dbUser._id;
-  const communityId = dbUser.user.lastAccessedCommunity.communityID;
+  const communityId = dbUser.user?.lastAccessedCommunity.communityID;
   const data = { departmentID: departmentId, tenCodeID: statusCode };
   $.ajax({
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/members/${userId}/tenCode`,
@@ -1761,7 +1727,7 @@ function selectTenCode(tenCodeID) {
 
     // AJAX function to load panic statuses, signal 100, and hold traffic
     function loadPanicStatuses() {
-      const communityId = dbUser.user.lastAccessedCommunity.communityID;
+      const communityId = dbUser.user?.lastAccessedCommunity.communityID;
       if (!communityId) return;
       $.ajax({
         url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/panic`,
@@ -1808,7 +1774,7 @@ function selectTenCode(tenCodeID) {
 
     // AJAX function to load active BOLOs
     function loadActiveBOLOs() {
-      const communityId = dbUser.user.lastAccessedCommunity.communityID;
+      const communityId = dbUser.user?.lastAccessedCommunity.communityID;
       if (!communityId) return;
       $.ajax({
         url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/bolos?communityId=${communityId}&departmentId=${departmentId}&status=true`,
@@ -1837,7 +1803,7 @@ function selectTenCode(tenCodeID) {
 
     // AJAX function to load assigned calls
 function loadAssignedCalls() {
-  const communityId = dbUser.user.lastAccessedCommunity.communityID;
+  const communityId = dbUser.user?.lastAccessedCommunity.communityID;
   const userId = dbUser._id;
   if (!communityId) return;
   $.ajax({
@@ -1870,7 +1836,7 @@ function loadAssignedCalls() {
 
     // AJAX function to fetch 10-codes
 function loadTenCodes() {
-  const communityId = dbUser.user.lastAccessedCommunity.communityID;
+  const communityId = dbUser.user?.lastAccessedCommunity.communityID;
   if (!communityId) {
     $('#noTenCodes').text('Please join a community to view 10-codes.').show();
     $('#tenCodesTable').hide();
@@ -1925,7 +1891,7 @@ function loadTenCodes() {
 // Fetch and display user's current 10-code status
 function loadCurrentStatus() {
   const userId = dbUser._id;
-  const communityId = dbUser.user.lastAccessedCommunity.communityID;
+  const communityId = dbUser.user?.lastAccessedCommunity.communityID;
   $.ajax({
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}`,
     method: 'GET',
@@ -2154,7 +2120,7 @@ function populateCallDetails(callId) {
       }
 
       // Fetch departments
-      const communityId = dbUser.user.lastAccessedCommunity.communityID;
+      const communityId = dbUser.user?.lastAccessedCommunity.communityID;
       $.ajax({
         url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/departments`,
         method: 'GET'
@@ -2342,7 +2308,7 @@ function createBolo(title, location, description, scope, communityID, department
 
 // Handle create BOLO form submission
 function handleCreateBolo() {
-  const communityId = dbUser.user.lastAccessedCommunity.communityID;
+  const communityId = dbUser.user?.lastAccessedCommunity.communityID;
       if (!communityId) {
         alert('Failed to load community, please try refreshing the page and try again.');
         hideModal('boloModal');
@@ -2677,7 +2643,7 @@ function showBoloModal() {
     var myReq={
       userID: dbUser._id,
       userUsername: dbUser.user.username,
-      activeCommunity: dbUser.user.lastAccessedCommunity.communityID
+      activeCommunity: dbUser.user?.lastAccessedCommunity.communityID
     }
     socket.emit('load_panic_statuses', myReq)
   }
