@@ -210,7 +210,7 @@
         </li>
         <div class="collapse in" id="toggleUtilities">
           <li>
-            <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+            <% if (user.user?.lastAccessedCommunity !=null) {%>
   <a href="javascript:void(0)" onclick="showBoloModal()"><span
       class="fa fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
 <% } else {%>
@@ -219,7 +219,7 @@
 <% } %>
           </li>
           <li>
-            <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+            <% if (user.user?.lastAccessedCommunity !=null) {%>
               <a data-toggle="modal" href="#callModal" onclick=""><span
                   class="fa fa-plus-square ml-3 mr-3"></span> Create Call</a>
               <% } else {%>
@@ -346,7 +346,7 @@
                                     class="fa fa-exclamation-circle" aria-hidden="true"></i> Signal 100</button>
                                 <% } %>
                           </div> -->
-                          <% if (user.user.activeCommunity =='' || user.user.activeCommunity ==null) {%>
+                          <% if (user.user?.lastAccessedCommunity ==null) {%>
                             <div class="col-md-10 col-md-offset-1 text-center">
                               <h3><i class="fa fa-arrow-left"></i> Click on any of the search buttons to get started
                               </h3>
@@ -391,7 +391,7 @@
 
         
         <div class="container">
-          <% if (user.user.activeCommunity !='' && user.user.activeCommunity != null) {%>
+          <% if (user.user?.lastAccessedCommunity != null) {%>
           <!-- <div class="col-md-12 col-md-offset-0.75 margin-top-2 margin-bottom-2">
             
             <h4 id="fireEms-list">Fire/EMS List: <a data-toggle="modal" href="#fireEMSHelpModal"><i class="fa fa-question-circle"></i></a> </h4>
@@ -409,7 +409,7 @@
           <hr style="width: 88%;max-width: 100rem;">
           <%}%>
           <div id="active-bolo-container" class="col-md-12 col-md-offset-0.75 margin-top-2">
-            <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+            <% if (user.user?.lastAccessedCommunity !=null) {%>
               <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Active BOLOs:</span> <button
                 type="button" data-toggle="modal" href="javascript:void(0)"
                 class="btn btn-primary btn-md pull-right margin-bottom-1" onclick="showBoloModal()">Create BOLO</button>
@@ -2602,12 +2602,12 @@
   });
 
   window.onload=function () {
-    if (dbUser.user.activeCommunity!=null&&dbUser.user.activeCommunity!=undefined) {
+    if (dbUser.user?.lastAccessedCommunity!=null) {
       var socket=io();
       var myReq={
         userID: dbUser._id,
         userUsername: dbUser.user.username,
-        activeCommunity: dbUser.user.activeCommunity
+        activeCommunity: dbUser.user?.lastAccessedCommunity.communityID
       }
       socket.emit('load_panic_statuses', myReq)
     }
@@ -2695,7 +2695,7 @@
 
     myReq={
       regOwnerID: registeredOwnerID,
-      communityID: dbUser.user.activeCommunity
+      communityID: dbUser.user?.lastAccessedCommunity.communityID
     }
     socket.emit('get_reg_arm', myReq)
     socket.on('load_reg_arm_result', res => {
@@ -2749,7 +2749,7 @@
     myReq={
       regOwner: registeredOwner,
       regOwnerID: registeredOwnerID, //new ID established 1/30/2021 so will only work on vehicles after this date
-      communityID: dbUser.user.activeCommunity
+      communityID: dbUser.user?.lastAccessedCommunity.communityID
     }
     socket.emit('get_reg_veh', myReq)
     socket.on('load_reg_veh_result', res => {
