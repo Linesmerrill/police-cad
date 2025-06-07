@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invite to <%= communityName %></title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .bg-invite {
+        background-image: url("https://zos.alipayobjects.com/rmsportal/hzPBTkqtFpLlWCi.jpg");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+        position: relative; /* Ensure proper layering */
+      }
+      /* .bg-invite::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #1a202c;
+        z-index: -1;
+      } */
+      .overlay {
+        background-color: rgba(0, 0, 0, 0.7); /* Dark overlay for readability */
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body class="bg-invite text-white flex flex-col min-h-screen">
+    <!-- Header -->
+    <header class="bg-gray-800 p-4 shadow-md">
+      <div class="container mx-auto">
+        <a href="/"><h2 class="text-xl font-bold">Lines Police CAD</h2></a>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex items-center justify-center flex-1">
+      <div class="overlay p-6 rounded-lg max-w-md w-full mx-4">
+        <% if (process.env.NODE_ENV === 'development') { %>
+        <script type="text/javascript">
+          // Pass server-side variables to JavaScript
+          var dbUser = <%- JSON.stringify(user) || 'null' %>;
+          var inviteCode = <%- JSON.stringify(inviteCode) || 'null' %>;
+          var communityName = <%- JSON.stringify(communityName) || 'null' %>;
+          var redirect = <%- JSON.stringify(redirect) || 'null' %>;
+          console.log("User:", dbUser);
+          console.log("Invite Code:", inviteCode);
+          console.log("Community Name:", communityName);
+          console.log("Redirect URL:", redirect);
+        </script>
+        <% } %>
+        <h1 class="text-4xl font-extrabold mb-4 text-center text-blue-400">
+          Invite to <%= communityName %>
+        </h1>
+        <p class="text-lg mb-6 text-center text-gray-300">
+          You’ve been invited to join <%= communityName %>!
+        </p>
+        <% if (user) { %>
+        <form action="/community/join" method="POST" class="text-center">
+          <input type="hidden" name="inviteCode" value="<%= inviteCode %>" />
+          <button
+            type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300"
+            aria-label="Join Community"
+          >
+            <span class="spinner hidden">Loading...</span>
+            <span class="text">Join Community</span>
+          </button>
+        </form>
+        <p class="mt-4 text-center text-sm text-gray-400">
+          You are logged in as <%= user.user.username %>
+        </p>
+        <% } else { %>
+        <p class="text-md mb-4 text-center text-gray-400">
+          Please log in to join the community. You will be redirected after
+          login.
+        </p>
+        <div class="text-center">
+          <a
+            href="/login?redirect=<%= redirect %>"
+            class="text-lg font-medium text-blue-400 hover:text-blue-300 underline transition duration-200"
+            aria-label="Log in"
+            >Log In</a
+          >
+        </div>
+        <% } %>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 p-4 mt-auto">
+      <div class="container mx-auto text-center text-gray-400">
+        <p>© 2025 Lines Police CAD. All rights reserved.</p>
+      </div>
+    </footer>
+    <script>
+      document.querySelector("form")?.addEventListener("submit", function () {
+        const button = this.querySelector("button");
+        button.querySelector(".spinner").classList.remove("hidden");
+        button.querySelector(".text").classList.add("hidden");
+      });
+    </script>
+  </body>
+</html>

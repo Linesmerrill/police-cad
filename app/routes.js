@@ -439,6 +439,74 @@ module.exports = function (app, passport, server) {
     });
   });
 
+  app.get("/invite/:code", authCheck, async function (req, res) {
+    try {
+      const { code } = req.params;
+      const apiUrl = `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/invite/${code}`;
+      const response = await axios.get(apiUrl, { timeout: 5000 }); // 5-second timeout
+      const inviteData = response.data;
+      if (
+        !inviteData ||
+        inviteData.remainingUses === 0 ||
+        (inviteData.expiresAt && new Date(inviteData.expiresAt) < new Date())
+      ) {
+        return res.status(400).render("error", {
+          message: "Invalid or expired invite code.",
+          redirect: req.originalUrl,
+        });
+      }
+
+      return res.render("invite", {
+        user: req.user,
+        inviteCode: code,
+        communityName: inviteData.communityName,
+        redirect: encodeURIComponent(`/invite/${code}`),
+      });
+    } catch (error) {
+      console.error("Error validating invite code:", error);
+      if (error.response?.status === 404) {
+        return res.status(404).render("error", {
+          message: "Invite code not found.",
+          redirect: req.originalUrl,
+        });
+      }
+      return res.status(500).render("error", {
+        message: "An error occurred while processing the invite.",
+      });
+    }
+  });
+
+  app.post("/community/join", authCheck, async function (req, res) {
+    try {
+      const { inviteCode } = req.body;
+      const apiUrl = `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/join`;
+      const response = await axios.post(
+        apiUrl,
+        {
+          inviteCode,
+          userId: req.user._id,
+        },
+        { timeout: 5000 }
+      );
+      if (response.data.status === "joined") {
+        return res.redirect("/community-dashboard");
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === "development")
+        console.error("Error joining community:", error);
+      if (error.response?.status === 403) {
+        return res.status(403).render("error", {
+          message: "You are banned from this community.",
+          redirect: `/invite/${req.body.inviteCode}`,
+        });
+      }
+      return res.status(500).render("error", {
+        message: "Failed to join community. Please try again.",
+        redirect: `/invite/${req.body.inviteCode}`,
+      });
+    }
+  });
+
   // app.js
   app.post("/select-department", authCheck, (req, res) => {
     const { departmentId, redirect } = req.body;
@@ -4974,6 +5042,7 @@ function authCheck(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   } else {
+    const redirect = encodeURIComponent(req.originalUrl); // Preserve the invite URL
     if (req.route.path.includes("signup")) {
       res.render(req.route.path.substring(1), {
         message: req.flash("signuperror"),
@@ -4981,7 +5050,7 @@ function authCheck(req, res, next) {
     } else if (req.route.path.includes("login")) {
       res.render(req.route.path.substring(1), { message: req.flash("error") });
     } else {
-      res.redirect("login");
+      res.redirect(`/login?redirect=${redirect}`);
     }
   }
 }
