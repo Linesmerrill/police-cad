@@ -493,7 +493,7 @@ module.exports = function (app, passport, server) {
         { timeout: 5000 }
       );
       if (response.data.status === "joined") {
-        return res.redirect("/community-dashboard");
+        return res.redirect("/community-dashboard?success=true");
       }
     } catch (error) {
       if (process.env.NODE_ENV === "development")

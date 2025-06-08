@@ -256,6 +256,20 @@
 </html>
 
 <script type="text/javascript">
+  $(document).ready(function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'true') {
+      $('#successCopyMessage').html('<strong>Success!</strong> Community joined.').show().delay(5000).fadeOut(function() {
+        // Remove success param from URL after fade-out
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.delete('success');
+        history.replaceState({}, document.title, newUrl.toString());
+      });
+    }
+  });
+</script>
+
+<script type="text/javascript">
   var dbUser = <%- JSON.stringify(user) %>;
   const API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
   var currentPage = 1;
