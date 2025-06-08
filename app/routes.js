@@ -81,7 +81,8 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/login", function (req, res) {
-    res.render("login");
+    const redirect = req.query.redirect || "/community-dashboard";
+    res.render("login", { redirect: encodeURIComponent(redirect) });
   });
 
   app.get("/signup", function (req, res) {
@@ -151,7 +152,12 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/login-civ", authCheck, function (req, res) {
-    return res.redirect("/community-dashboard");
+    // if (req.isAuthenticated()) {
+    const redirect = req.session.redirect || "/community-dashboard";
+    delete req.session.redirect; // Clear after use
+    return res.redirect(redirect);
+    // }
+    // res.render("login-civ");
   });
 
   app.get("/login-police", authCheck, function (req, res) {
@@ -443,7 +449,7 @@ module.exports = function (app, passport, server) {
     try {
       const { code } = req.params;
       const apiUrl = `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/invite/${code}`;
-      const response = await axios.get(apiUrl, { timeout: 5000 }); // 5-second timeout
+      const response = await axios.get(apiUrl, { timeout: 5000 });
       const inviteData = response.data;
       if (
         !inviteData ||
@@ -455,12 +461,10 @@ module.exports = function (app, passport, server) {
           redirect: req.originalUrl,
         });
       }
-
       return res.render("invite", {
         user: req.user,
         inviteCode: code,
         communityName: inviteData.communityName,
-        redirect: encodeURIComponent(`/invite/${code}`),
       });
     } catch (error) {
       console.error("Error validating invite code:", error);
@@ -506,6 +510,17 @@ module.exports = function (app, passport, server) {
       });
     }
   });
+
+  function authCheck(req, res, next) {
+    if (req.isAuthenticated()) {
+      return next();
+    } else {
+      req.session.redirect = req.originalUrl; // Store the original URL in session
+      res.render("login-civ", {
+        message: "",
+      });
+    }
+  }
 
   // app.js
   app.post("/select-department", authCheck, (req, res) => {
@@ -1352,10 +1367,16 @@ module.exports = function (app, passport, server) {
   app.post(
     "/login-civ",
     passport.authenticate("login", {
-      successRedirect: "/community-dashboard",
       failureRedirect: "/login-civ",
       failureFlash: true,
-    })
+      passReqToCallback: true,
+    }),
+    function (req, res, next) {
+      console.log("Session redirect value:", req.session.redirect);
+      const redirect = req.session.redirect || "/community-dashboard";
+      delete req.session.redirect; // Clear the session redirect after use
+      res.redirect(redirect);
+    }
   );
 
   app.post(
@@ -5038,22 +5059,24 @@ function auth(req, res, next) {
   return res.render("not-authorized");
 }
 
-function authCheck(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
-  } else {
-    const redirect = encodeURIComponent(req.originalUrl); // Preserve the invite URL
-    if (req.route.path.includes("signup")) {
-      res.render(req.route.path.substring(1), {
-        message: req.flash("signuperror"),
-      });
-    } else if (req.route.path.includes("login")) {
-      res.render(req.route.path.substring(1), { message: req.flash("error") });
-    } else {
-      res.redirect(`/login?redirect=${redirect}`);
-    }
-  }
-}
+// function authCheck(req, res, next) {
+//   if (req.isAuthenticated()) {
+//     // Store redirect in res.locals for the next handler
+//     res.locals.redirect = req.query.redirect || "/community-dashboard";
+//     return next();
+//   } else {
+//     const redirect = encodeURIComponent(req.originalUrl);
+//     if (req.route.path.includes("signup")) {
+//       res.render(req.route.path.substring(1), {
+//         message: req.flash("signuperror"),
+//       });
+//     } else if (req.route.path.includes("login")) {
+//       res.render(req.route.path.substring(1), { message: req.flash("error") });
+//     } else {
+//       res.redirect(`/login-civ?redirect=${redirect}`);
+//     }
+//   }
+// }
 
 function exists(v) {
   if (v !== undefined) {
