@@ -176,8 +176,13 @@ module.exports = function (app, passport, server) {
     return res.redirect("/dispatch-dashboard");
   });
 
-  app.get("/signup-civ", authCheck, function (req, res) {
-    return res.redirect("/community-dashboard");
+  app.get("/signup-civ", function (req, res) {
+    if (req.isAuthenticated()) {
+      return res.redirect("/community-dashboard");
+    }
+    res.render("signup-civ", {
+      message: "",
+    });
   });
 
   app.get("/signup-police", authCheck, function (req, res) {
