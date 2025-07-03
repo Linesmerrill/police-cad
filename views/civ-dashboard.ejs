@@ -209,7 +209,7 @@ body {
   border: 1px solid #444;
   color: #fff;
   width: 100%;
-  max-width: 100%; /* Ensure it doesn’t overflow */
+  max-width: 100%; /* Ensure it doesn't overflow */
 }
 
 .civilians-section {
@@ -2007,6 +2007,10 @@ function createNewCiv() {
   });
 }
 
+function loadTicketsAndWarnings(civId) {
+  // TODO: Implement this function
+}
+
 // Update civilian
 function updateCiv() {
   const form = $('#update-delete-civ-form');
@@ -3211,7 +3215,12 @@ function deleteFirearm() {
 
   $('#update-delete-civ-form').on('submit', function(e) {
     e.preventDefault();
-    updateCiv();
+    const action = $('#userBtnValue').val();
+    if (action === 'update') {
+      updateCiv();
+    } else if (action === 'delete') {
+      deleteCiv();
+    }
   });
 
   $('#call911Form').on('submit', function(e) {
@@ -3381,6 +3390,30 @@ $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 10);
       });
     })
   }
+
+    function deleteCiv() {
+      const civId = $('#civilianIDView').text();
+      if (!civId) {
+        alert('No civilian selected.');
+        return;
+      }
+      if (!confirm('Are you sure you want to delete this civilian?')) return;
+
+      $.ajax({
+        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilian/${civId}`,
+        method: 'DELETE',
+        success: function () {
+          $(`#personas-thumbnail-${civId}`).remove();
+          $('#viewCiv').modal('hide');
+          $('#successfully-updated-alert').removeClass('hide').addClass('show').text('Civilian deleted successfully!').delay(2000).fadeOut(1000, function () {
+            $(this).addClass('hide').removeClass('show');
+          });
+        },
+        error: function (xhr) {
+          alert('Failed to delete civilian: ' + (xhr.responseJSON?.message || 'Unknown error'));
+        }
+      });
+    }
 
 </script>
 
