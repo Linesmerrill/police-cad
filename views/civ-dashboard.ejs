@@ -920,9 +920,9 @@ a:not([href]):not([tabindex]):not(.pager a) {
             </div>
             <!-- Select Basic -->
             <div class="form-group">
-              <label class="col-md-4 control-label" for="is-stolen-new">Marked Stolen?</label>
+              <label class="col-md-4 control-label" for="vehicle-is-stolen">Marked Stolen?</label>
               <div class="col-md-4">
-                <select id="is-stolen-new" name="isStolen" class="form-control">
+                <select id="vehicle-is-stolen" name="isStolen" class="form-control">
                   <option value="false">No</option>
                   <option value="true">Yes</option>
                 </select>
@@ -977,9 +977,9 @@ a:not([href]):not([tabindex]):not(.pager a) {
             </div>
             
             <div class="form-group">
-              <label class="col-md-4 control-label" for="is-stolen-new">Marked Stolen?</label>
+              <label class="col-md-4 control-label" for="firearm-is-stolen">Marked Stolen?</label>
               <div class="col-md-6">
-                <select id="is-stolen-new" name="isStolen" class="form-control">
+                <select id="firearm-is-stolen" name="isStolen" class="form-control">
                   <option value="false">No</option>
                   <option value="true">Yes</option>
                 </select>
@@ -2232,6 +2232,19 @@ function createVehicle() {
     alert('Please enter a license plate.');
     return;
   }
+
+  // Additional validation
+  const vin = $('#vin').val().trim();
+  if (vin.length !== 17) {
+    alert('VIN must be exactly 17 characters long.');
+    return;
+  }
+
+  const plate = $('#plate').val().trim();
+  if (plate.length > 8) {
+    alert('License plate must be 8 characters or less.');
+    return;
+  }
   const vehicleData = {
     vin: $('#vin').val().trim(),
     type: $('#vehicle-type').val().trim(),
@@ -2241,12 +2254,17 @@ function createVehicle() {
     year: $('#year').val().trim(),
     licensePlateState: $('#licensePlateState').val().trim(),
     color: $('#color').val().trim(),
+    image: '',
     validRegistration: $('#valid-registration').val(),
     validInsurance: $('#valid-insurance').val(),
-    isStolen: $('#is-stolen-new').val(),
+    isStolen: $('#vehicle-is-stolen').val(),
     userID: userId,
     activeCommunityID: communityId
   };
+
+  // Debugging output
+  console.log('Vehicle creation data:', vehicleData);
+  // console.log('Raw isStolen value:', $('#vehicle-is-stolen')en value:', $('#vehicle-is-stolen').val() === 'true');
 
   $.ajax({
     url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle',
@@ -2260,6 +2278,7 @@ function createVehicle() {
       getVehicles(vehiclePage); // Refresh vehicle list
     },
     error: function(xhr) {
+      // console.log('API Error Respon                                    , xhr.respon s e Te                                    //         console.log('API Error Status:            hr.                            us)                                                                //                 console.                                    'API                         Er                r                 r Headers:', xhr.g                        e          llResponseHeaders());
       alert('Error creating vehicle: ' + (xhr.responseJSON?.message || 'Please try again.'));
     }
   });
@@ -2284,7 +2303,7 @@ function viewVehicle(vehicleId) {
       $('#colorView').val(vehicle?.vehicle?.color);
       $('#validRegView').val(vehicle?.vehicle?.validRegistration ? 'true' : 'false');
       $('#validInsView').val(vehicle?.vehicle?.validInsurance ? 'true' : 'false');
-      $('#stolenView').val(vehicle?.vehicle?.isStolen ? 'true' : 'false');
+      $('#stolenView').val(vehicle?.vehicle?.isStolen === 'true' ? 'true' : 'false');
       
       // Show the modal
       $('#viewVeh').modal('show');
@@ -2308,9 +2327,10 @@ function updateVehicle() {
     year: $('#yearVeh').val().trim(),
     licensePlateState: $('#plateStateVeh').val().trim(),
     color: $('#colorView').val().trim(),
+    image: '',
     validRegistration: $('#validRegView').val(),
     validInsurance: $('#validInsView').val(),
-    markedStolen: $('#stolenView').val(),
+    isStolen: $('#stolenView').val(),
     // communityID: '<%= user.user.activeCommunity %>',
     activeCommunityID: communityId,
     userID: userId
@@ -2839,7 +2859,7 @@ function createFirearm() {
     name: $('#add-firearm-name').val().trim(),
     serialNumber: $('#serial-number-new').val().trim(),
     caliber: $('#add-firearm-caliber').val().trim(),
-    isStolen: $('#is-stolen-new').val(),
+    isStolen: $('#firearm-is-stolen').val() === 'true',
     userID: userId,
     activeCommunityID: communityId
   };
@@ -2875,7 +2895,7 @@ function updateFirearm() {
     name: $('#name-details').val().trim(),
     serialNumber: $('#serial-number-details').val().trim(),
     caliber: $('#caliber-details').val().trim(),
-    isStolen: $('#is-stolen-details').val(),
+    isStolen: $('#is-stolen-details').val() === 'true',
     userID: userId,
     activeCommunityID: communityId
   };
