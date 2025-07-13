@@ -95,7 +95,6 @@ $(document).ready(function () {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       success: function (response) {
-        console.log('API Response:', response); // Debug log
         let results = [];
         let paginationData = {};
         
@@ -129,9 +128,6 @@ $(document).ready(function () {
           };
         }
 
-        console.log('Pagination Data:', paginationData); // Debug log
-        console.log('Results count:', results.length); // Debug log
-
         // Update pagination state
         if (paginationData.totalResults !== undefined) {
           totalResults = paginationData.totalResults;
@@ -161,8 +157,6 @@ $(document).ready(function () {
             return;
           }
         }
-
-        console.log('Final pagination state:', { currentPage, totalPages, totalResults }); // Debug log
 
         // Fetch owner names for Vehicle and Firearm
         fetchOwnerNames(results, function () {
@@ -333,7 +327,6 @@ $(document).ready(function () {
         ? `Owner: ${ownerCache[item.vehicle.linkedCivilianID] || "Unknown"}`
         : "";
       isStolen = item.vehicle?.isStolen === 'true';
-      console.log('Vehicle isStolen value:', item.vehicle?.isStolen, 'Evaluated isStolen:', isStolen);
       recentSearchQuery =
         item.vehicle?.make || item.vehicle?.plate || searchQuery;
     } else if (searchType === "Firearm") {

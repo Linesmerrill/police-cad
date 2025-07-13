@@ -176,13 +176,6 @@ $(document).ready(function () {
       headers: { "Content-Type": "application/json" },
       success: function (response) {
         currentItem = response;
-        console.log('API Response for', currentType, ':', response);
-        if (currentType === 'Vehicle' && response.vehicle) {
-          console.log('Vehicle isStolen value:', response.vehicle.isStolen, 'Type:', typeof response.vehicle.isStolen);
-        }
-        if (currentType === 'Firearm' && response.firearm) {
-          console.log('Firearm isStolen value:', response.firearm.isStolen, 'Type:', typeof response.firearm.isStolen);
-        }
         owner = null;
         licenses = [];
         vehicles = [];

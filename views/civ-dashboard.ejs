@@ -2261,10 +2261,6 @@ function createVehicle() {
     activeCommunityID: communityId
   };
 
-  // Debugging output
-  console.log('Vehicle creation data:', vehicleData);
-  // console.log('Raw isStolen value:', $('#vehicle-is-stolen')en value:', $('#vehicle-is-stolen').val() === 'true');
-
   $.ajax({
     url: 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/vehicle',
     method: 'POST',
@@ -2277,7 +2273,6 @@ function createVehicle() {
       getVehicles(vehiclePage); // Refresh vehicle list
     },
     error: function(xhr) {
-      // console.log('API Error Respon                                    , xhr.respon s e Te                                    //         console.log('API Error Status:            hr.                            us)                                                                //                 console.                                    'API                         Er                r                 r Headers:', xhr.g                        e          llResponseHeaders());
       alert('Error creating vehicle: ' + (xhr.responseJSON?.message || 'Please try again.'));
     }
   });
