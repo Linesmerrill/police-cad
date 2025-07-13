@@ -332,8 +332,8 @@ $(document).ready(function () {
       owner = item.vehicle?.linkedCivilianID
         ? `Owner: ${ownerCache[item.vehicle.linkedCivilianID] || "Unknown"}`
         : "";
-      isStolen =
-        item.vehicle?.isStolen === true || item.vehicle?.isStolen === "true";
+      isStolen = item.vehicle?.isStolen === 'true';
+      console.log('Vehicle isStolen value:', item.vehicle?.isStolen, 'Evaluated isStolen:', isStolen);
       recentSearchQuery =
         item.vehicle?.make || item.vehicle?.plate || searchQuery;
     } else if (searchType === "Firearm") {

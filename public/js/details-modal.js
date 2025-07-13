@@ -176,6 +176,13 @@ $(document).ready(function () {
       headers: { "Content-Type": "application/json" },
       success: function (response) {
         currentItem = response;
+        console.log('API Response for', currentType, ':', response);
+        if (currentType === 'Vehicle' && response.vehicle) {
+          console.log('Vehicle isStolen value:', response.vehicle.isStolen, 'Type:', typeof response.vehicle.isStolen);
+        }
+        if (currentType === 'Firearm' && response.firearm) {
+          console.log('Firearm isStolen value:', response.firearm.isStolen, 'Type:', typeof response.firearm.isStolen);
+        }
         owner = null;
         licenses = [];
         vehicles = [];
@@ -465,7 +472,7 @@ $(document).ready(function () {
           data.year || "N/A"
         }</div>
         <div class="mb-2"><span class="text-gray">Stolen:</span> ${
-          data.isStolen ? '<span class="badge-stolen">Yes</span>' : "No"
+          data.isStolen === 'true' ? '<span class="badge-stolen">Yes</span>' : "No"
         }</div>
         <div class="mb-2"><span class="text-gray">Registered Owner:</span> ${
           owner
@@ -487,7 +494,7 @@ $(document).ready(function () {
           data.caliber || "N/A"
         }</div>
         <div class="mb-2"><span class="text-gray">Stolen:</span> ${
-          data.isStolen ? '<span class="badge-stolen">Yes</span>' : "No"
+          data.isStolen === 'true' ? '<span class="badge-stolen">Yes</span>' : "No"
         }</div>
         <div class="mb-2"><span class="text-gray">Registered Owner:</span> ${
           owner
@@ -631,7 +638,7 @@ $(document).ready(function () {
                     vehicle.vehicle.year ? "(" + vehicle.vehicle.year + ")" : ""
                   }</span>
               ${
-                vehicle.vehicle.isStolen
+                vehicle.vehicle.isStolen === 'true'
                   ? '<span class="badge-status badge-stolen">Stolen</span>'
                   : ""
               }
@@ -670,7 +677,7 @@ $(document).ready(function () {
                     firearm.firearm.caliber || ""
                   }</span>
               ${
-                firearm.firearm.isStolen
+                firearm.firearm.isStolen === 'true'
                   ? '<span class="badge-status badge-stolen">Stolen</span>'
                   : ""
               }
@@ -763,10 +770,8 @@ $(document).ready(function () {
     let actionsHtml = "";
     if (currentType === "Vehicle" || currentType === "Firearm") {
       actionsHtml += `
-        <button class="btn btn-warning btn-block mb-2 action-button" data-action="Report Stolen" data-stolen="${
-          data.isStolen
-        }">
-          ${data.isStolen ? "Mark as Not Stolen" : "Report Stolen"}
+        <button class="btn btn-warning btn-block mb-2 action-button" data-action="Report Stolen" data-stolen="${data.isStolen === 'true'}">
+          ${data.isStolen === 'true' ? "Mark as Not Stolen" : "Report Stolen"}
         </button>
       `;
     } else if (currentType === "License") {
