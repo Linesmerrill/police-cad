@@ -811,15 +811,13 @@ $(document).ready(function () {
 
   // Handle report stolen
   function handleReportStolen(itemId, isStolen) {
-    const isCurrentlyStolen = isStolen === 'true';
-    if (
-      !confirm(
-        `Are you sure you want to ${
-          isCurrentlyStolen ? "mark as not stolen" : "report as stolen"
-        }?`
-      )
-    )
-      return;
+    const isCurrentlyStolen = isStolen === true || isStolen === 'true';
+    const newStolenStatus = isCurrentlyStolen ? "false" : "true";
+    const actionText = isCurrentlyStolen ? "mark as not stolen" : "report as stolen";
+    const successText = isCurrentlyStolen ? "marked as not stolen" : "reported as stolen";
+    
+    if (!confirm(`Are you sure you want to ${actionText}?`)) return;
+    
     const updateUrl =
       currentType === "Vehicle"
         ? `${API_URL}/api/v1/vehicle/${itemId}`
@@ -827,14 +825,10 @@ $(document).ready(function () {
     $.ajax({
       url: updateUrl,
       method: "PUT",
-      data: JSON.stringify({ isStolen: isCurrentlyStolen ? "false" : "true" }),
+      data: JSON.stringify({ isStolen: newStolenStatus }),
       contentType: "application/json",
       success: function () {
-        alert(
-          `Successfully ${
-            isCurrentlyStolen ? "marked as not stolen" : "reported as stolen"
-          }.`
-        );
+        alert(`Successfully ${successText}.`);
         fetchDetails();
       },
       error: function (xhr) {
