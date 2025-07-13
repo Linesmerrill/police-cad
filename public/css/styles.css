@@ -3136,5 +3136,89 @@ a[aria-disabled="true"] {
 }
 
 .color-yellow {
-    color: yellow
+    color: #ffc107;
+    }
+    
+    /* Enhanced pagination styles for search database */
+    .pagination-info {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    
+    .pagination-info small {
+        color: #6c757d;
+        font-size: 14px;
+    }
+    
+    .pagination {
+        margin-bottom: 0;
+    }
+    
+    .pagination .page-item .page-link {
+        background-color: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+        padding: 8px 12px;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+    
+    .pagination .page-item .page-link:hover {
+        background-color: #4a5568;
+        border-color: #718096;
+        color: #f7fafc;
+        text-decoration: none;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: #3182ce;
+        border-color: #3182ce;
+        color: #ffffff;
+    }
+    
+    .pagination .page-item.disabled .page-link {
+        background-color: #1a202c;
+        border-color: #2d3748;
+        color: #718096;
+        cursor: not-allowed;
+    }
+    
+    .pagination .page-item.disabled .page-link:hover {
+        background-color: #1a202c;
+        border-color: #2d3748;
+        color: #718096;
+    }
+    
+    .pagination .page-link:focus {
+        box-shadow: 0 0 0 0.2rem rgba(49, 130, 206, 0.25);
+        outline: none;
+    }
+    
+    /* Search database specific pagination */
+    #searchResultsPagination .pagination {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    #searchResultsPagination .page-item {
+        margin: 0 2px;
+    }
+    
+    #searchResultsPagination .page-link {
+        border-radius: 4px;
+        min-width: 40px;
+        text-align: center;
+    }
+    
+    /* Responsive pagination */
+    @media (max-width: 576px) {
+        .pagination .page-item .page-link {
+            padding: 6px 8px;
+            font-size: 12px;
+            min-width: 35px;
+        }
+    
+        .pagination-info small {
+            font-size: 12px;
+        }
 }

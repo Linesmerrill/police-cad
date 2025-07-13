@@ -7,8 +7,13 @@ $(document).ready(function () {
   let recentSearches = [];
   let ownerCache = {};
   let currentPage = 1;
-  const resultsPerPage = 4;
+  let totalPages = 1;
+  let totalResults = 0;
+  const resultsPerPage = 5;
   const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+
+  // Initialize recent searches
+  loadRecentSearches();
 
   // Load recent searches from localStorage
   function loadRecentSearches() {
@@ -55,10 +60,16 @@ $(document).ready(function () {
       return;
     }
 
+    // Show loading state for main searches (not suggestions)
+    if (!isSuggestion) {
+      $("#searchResults").html('<div class="text-center"><div class="lds-facebook"><div></div><div></div><div></div></div><p class="text-gray mt-2">Searching...</p></div>');
+      $("#searchResultsPagination").empty();
+    }
+
     let url;
     const params = new URLSearchParams({
       limit: resultsPerPage,
-      page: isSuggestion ? 0 : currentPage - 1,
+      page: isSuggestion ? 0 : currentPage - 1, // API uses 0-based pagination
     });
 
     if (searchType === "Civilian") {
@@ -84,14 +95,74 @@ $(document).ready(function () {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       success: function (response) {
-        let results = response || [];
+        console.log('API Response:', response); // Debug log
+        let results = [];
+        let paginationData = {};
+        
+        // Handle different API response structures
         if (searchType === "Civilian") {
           results = response || [];
+          // Check if response has pagination metadata
+          if (response && typeof response === 'object' && !Array.isArray(response)) {
+            results = response.data || response.results || [];
+            paginationData = {
+              totalPages: response.totalPages || response.total_pages || 1,
+              totalResults: response.totalResults || response.total_results || response.total || results.length,
+              currentPage: response.currentPage || response.current_page || currentPage
+            };
+          }
         } else if (searchType === "Vehicle") {
-          results = response.vehicles || [];
+          results = response.vehicles || response.data || [];
+          // Always try to extract pagination data from response
+          paginationData = {
+            totalPages: response.totalPages || Math.ceil((response.total || results.length) / resultsPerPage),
+            totalResults: response.total || results.length,
+            currentPage: response.page !== undefined ? response.page + 1 : currentPage // Convert 0-based to 1-based
+          };
         } else if (searchType === "Firearm") {
-          results = response.firearms || [];
+          results = response.firearms || response.data || [];
+          // Always try to extract pagination data from response
+          paginationData = {
+            totalPages: response.totalPages || Math.ceil((response.total || results.length) / resultsPerPage),
+            totalResults: response.total || results.length,
+            currentPage: response.page !== undefined ? response.page + 1 : currentPage // Convert 0-based to 1-based
+          };
         }
+
+        console.log('Pagination Data:', paginationData); // Debug log
+        console.log('Results count:', results.length); // Debug log
+
+        // Update pagination state
+        if (paginationData.totalResults !== undefined) {
+          totalResults = paginationData.totalResults;
+          totalPages = paginationData.totalPages;
+          currentPage = paginationData.currentPage;
+        } else {
+          // Fallback: estimate pagination based on results
+          const hasMoreResults = results.length === resultsPerPage;
+          totalPages = hasMoreResults ? currentPage + 1 : currentPage;
+          totalResults = (totalPages - 1) * resultsPerPage + results.length;
+        }
+
+        // Ensure we have valid values
+        totalPages = Math.max(1, totalPages);
+        totalResults = Math.max(0, totalResults);
+        currentPage = Math.max(1, Math.min(currentPage, totalPages));
+
+        // Special case: if we have total results but no results on this page,
+        // we might be on a page that doesn't exist, so adjust
+        if (totalResults > 0 && results.length === 0 && currentPage > 1) {
+          // Check if we're beyond the last page
+          const actualTotalPages = Math.ceil(totalResults / resultsPerPage);
+          if (currentPage > actualTotalPages) {
+            currentPage = actualTotalPages;
+            // Re-fetch the correct page
+            fetchSearchResults(searchQuery, false);
+            return;
+          }
+        }
+
+        console.log('Final pagination state:', { currentPage, totalPages, totalResults }); // Debug log
 
         // Fetch owner names for Vehicle and Firearm
         fetchOwnerNames(results, function () {
@@ -106,9 +177,17 @@ $(document).ready(function () {
       },
       error: function (xhr) {
         console.error("Search error:", xhr.responseText);
-        alert(
-          "Failed to search: " + (xhr.responseJSON?.message || "Unknown error")
-        );
+        const errorMessage = xhr.responseJSON?.message || "Unknown error";
+        
+        if (!isSuggestion) {
+          $("#searchResults").html(`<div class="alert alert-danger">Failed to search: ${errorMessage}</div>`);
+          $("#searchResultsPagination").empty();
+        }
+        
+        // Don't show alert for suggestions, only for main searches
+        if (!isSuggestion) {
+          alert("Failed to search: " + errorMessage);
+        }
       },
     });
   }
@@ -182,18 +261,43 @@ $(document).ready(function () {
 
   // Render search results
   function renderResults() {
-    const start = (currentPage - 1) * resultsPerPage;
-    const end = start + resultsPerPage;
-    const paginatedResults = searchResults.slice(start, end);
-
     const $results = $("#searchResults");
     $results.empty();
+    
     if (searchResults.length > 0) {
-      paginatedResults.forEach((item) =>
+      searchResults.forEach((item) =>
         $results.append(renderItem(item, false))
       );
     } else {
-      $results.html('<p class="text-gray">No results found.</p>');
+      // Show different messages based on whether a search was performed
+      if (searchQuery.trim()) {
+        if (totalResults > 0) {
+          // We have total results but no results on this page
+          $results.html(`
+            <div class="text-center">
+              <i class="fa fa-search fa-2x text-gray mb-2"></i>
+              <p class="text-gray">No ${searchType.toLowerCase()}s found on page ${currentPage}</p>
+              <small class="text-muted">Try navigating to a different page</small>
+            </div>
+          `);
+        } else {
+          // No results at all
+          $results.html(`
+            <div class="text-center">
+              <i class="fa fa-search fa-2x text-gray mb-2"></i>
+              <p class="text-gray">No ${searchType.toLowerCase()}s found matching "${searchQuery}"</p>
+              <small class="text-muted">Try adjusting your search terms or search type</small>
+            </div>
+          `);
+        }
+      } else {
+        $results.html(`
+          <div class="text-center">
+            <i class="fa fa-info-circle fa-2x text-gray mb-2"></i>
+            <p class="text-gray">Enter a search term to find ${searchType.toLowerCase()}s</p>
+          </div>
+        `);
+      }
     }
 
     updatePagination();
@@ -303,44 +407,117 @@ $(document).ready(function () {
     }
   }
 
-  // Update pagination
+  // Enhanced pagination with proper controls
   function updatePagination() {
-    const totalPages = Math.ceil(searchResults.length / resultsPerPage);
     const $pagination = $("#searchResultsPagination");
     $pagination.empty();
 
-    $pagination.append(`
+    // Only show pagination if we have results or if we're on a page with no results but there are total results
+    if (searchResults.length === 0 && totalResults === 0) {
+      return;
+    }
+
+    // Show results count
+    const startResult = (currentPage - 1) * resultsPerPage + 1;
+    const endResult = Math.min(currentPage * resultsPerPage, totalResults);
+    
+    // Only show results count if we have total results
+    if (totalResults > 0) {
+      $pagination.append(`
+        <div class="pagination-info mb-2">
+          <small class="text-muted">
+            Showing ${startResult}-${endResult} of ${totalResults} results
+          </small>
+        </div>
+      `);
+    }
+
+    // Create pagination controls
+    const $paginationList = $('<ul class="pagination justify-content-center"></ul>');
+    
+    // Previous button
+    $paginationList.append(`
       <li class="page-item ${currentPage === 1 ? "disabled" : ""}">
-        <a class="page-link" href="#" onclick="changeSearchPage(${
-          currentPage - 1
-        })">Previous</a>
+        <a class="page-link" href="#" onclick="changeSearchPage(${currentPage - 1})" ${currentPage === 1 ? 'tabindex="-1"' : ''}>
+          <i class="fa fa-chevron-left"></i> Previous
+        </a>
       </li>
     `);
 
-    for (let i = 1; i <= totalPages; i++) {
-      $pagination.append(`
+    // Page numbers
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    // First page and ellipsis
+    if (startPage > 1) {
+      $paginationList.append(`
+        <li class="page-item">
+          <a class="page-link" href="#" onclick="changeSearchPage(1)">1</a>
+        </li>
+      `);
+      if (startPage > 2) {
+        $paginationList.append(`
+          <li class="page-item disabled">
+            <span class="page-link">...</span>
+          </li>
+        `);
+      }
+    }
+
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      $paginationList.append(`
         <li class="page-item ${i === currentPage ? "active" : ""}">
           <a class="page-link" href="#" onclick="changeSearchPage(${i})">${i}</a>
         </li>
       `);
     }
 
-    $pagination.append(`
+    // Last page and ellipsis
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        $paginationList.append(`
+          <li class="page-item disabled">
+            <span class="page-link">...</span>
+          </li>
+        `);
+      }
+      $paginationList.append(`
+        <li class="page-item">
+          <a class="page-link" href="#" onclick="changeSearchPage(${totalPages})">${totalPages}</a>
+        </li>
+      `);
+    }
+
+    // Next button
+    $paginationList.append(`
       <li class="page-item ${currentPage === totalPages ? "disabled" : ""}">
-        <a class="page-link" href="#" onclick="changeSearchPage(${
-          currentPage + 1
-        })">Next</a>
+        <a class="page-link" href="#" onclick="changeSearchPage(${currentPage + 1})" ${currentPage === totalPages ? 'tabindex="-1"' : ''}>
+          Next <i class="fa fa-chevron-right"></i>
+        </a>
       </li>
     `);
+
+    $pagination.append($paginationList);
   }
 
   // Change search results page
   function changeSearchPage(page) {
-    if (page < 1 || page > Math.ceil(searchResults.length / resultsPerPage))
-      return;
+    if (page < 1 || page > totalPages) return;
+    
     currentPage = page;
+    // Make a new API call for the requested page
     fetchSearchResults(searchQuery, false);
   }
+
+  // Make changeSearchPage globally available
+  window.changeSearchPage = changeSearchPage;
 
   // Event handlers
   $("#searchTypeCivilian").on("click", function () {
@@ -360,11 +537,13 @@ $(document).ready(function () {
     })
     .on("keypress", function (e) {
       if (e.which === 13) {
+        currentPage = 1; // Reset to first page for new searches
         fetchSearchResults(searchQuery, false);
       }
     });
 
   $("#searchButton").on("click", function () {
+    currentPage = 1; // Reset to first page for new searches
     fetchSearchResults(searchQuery, false);
   });
 
@@ -376,6 +555,7 @@ $(document).ready(function () {
     setSearchType(type);
     searchQuery = query;
     $("#searchQuery").val(query);
+    currentPage = 1; // Reset to first page for recent searches
     fetchSearchResults(query, false);
   });
 
@@ -387,6 +567,8 @@ $(document).ready(function () {
       .not("#searchDatabaseModal")
       .modal("hide")
       .removeData("bs.modal");
+    // Initialize recent searches when modal opens
+    loadRecentSearches();
   });
 
   // Set search type and reset state
@@ -396,9 +578,12 @@ $(document).ready(function () {
     searchResults = [];
     suggestions = [];
     currentPage = 1;
+    totalPages = 1;
+    totalResults = 0;
     $("#searchQuery").val("");
     $("#searchSuggestions").hide();
-    renderResults();
+    $("#searchResults").empty();
+    $("#searchResultsPagination").empty();
     $(".search-type-btn").removeClass("active");
     $(`#searchType${type}`).addClass("active");
     $("#searchQuery").attr("placeholder", `Search ${type}s...`);
