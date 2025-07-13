@@ -321,7 +321,7 @@ $(document).ready(function () {
     } else if (searchType === "Vehicle") {
       title = item.vehicle
         ? `${item.vehicle.make || ""} ${item.vehicle.model || ""} (${
-            item.vehicle.year || "Unknown"
+            item.vehicle.type || "Unknown"
           })`.trim()
         : "Unknown Vehicle";
       subtitle = item.vehicle
