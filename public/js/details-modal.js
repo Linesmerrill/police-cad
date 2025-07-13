@@ -763,7 +763,7 @@ $(document).ready(function () {
     let actionsHtml = "";
     if (currentType === "Vehicle" || currentType === "Firearm") {
       actionsHtml += `
-        <button class="btn btn-warning btn-block mb-2 action-button" data-action="Report Stolen" data-stolen="${data.isStolen === 'true'}">
+        <button class="btn btn-warning btn-block mb-2 action-button" data-action="Report Stolen" data-stolen="${data.isStolen || 'false'}">
           ${data.isStolen === 'true' ? "Mark as Not Stolen" : "Report Stolen"}
         </button>
       `;
@@ -811,10 +811,11 @@ $(document).ready(function () {
 
   // Handle report stolen
   function handleReportStolen(itemId, isStolen) {
+    const isCurrentlyStolen = isStolen === 'true';
     if (
       !confirm(
         `Are you sure you want to ${
-          isStolen ? "mark as not stolen" : "report as stolen"
+          isCurrentlyStolen ? "mark as not stolen" : "report as stolen"
         }?`
       )
     )
@@ -826,12 +827,12 @@ $(document).ready(function () {
     $.ajax({
       url: updateUrl,
       method: "PUT",
-      data: JSON.stringify({ isStolen: isStolen ? false : true }),
+      data: JSON.stringify({ isStolen: isCurrentlyStolen ? "false" : "true" }),
       contentType: "application/json",
       success: function () {
         alert(
           `Successfully ${
-            isStolen ? "marked as not stolen" : "reported as stolen"
+            isCurrentlyStolen ? "marked as not stolen" : "reported as stolen"
           }.`
         );
         fetchDetails();
