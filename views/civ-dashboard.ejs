@@ -2403,9 +2403,8 @@ function fetchCivName(civId) {
     return data?.civilian?.name || 'Unknown';
   }).catch(function(xhr, status, error) {
     console.error(`Error fetching civilian name for ID ${civId}:`, xhr.responseText);
-    alert('Error fetching civilian name: ' + (xhr.responseJSON?.message || 'Please try again.'));
-    console.error('Error fetching civilian name:', error);
-    return null;
+    // Don't show alert for deleted civilians, just return 'Unknown'
+    return 'Unknown';
   });
 }
 
@@ -2425,7 +2424,7 @@ function renderLinkedVehicles(vehicles, civilianId) {
     if (vehicle?.vehicle?.linkedCivilianID && vehicle?.vehicle?.linkedCivilianID !== civilianId && vehicle?.vehicle?.linkedCivilianID !== "") {
       return fetchCivName(vehicle?.vehicle?.linkedCivilianID).then(name => ({
         vehicle,
-        linkedCivName: name || 'Unknown'
+        linkedCivName: name
       }));
     }
     return Promise.resolve({ vehicle, linkedCivName: '' });
@@ -2617,7 +2616,7 @@ function renderLinkedFirearms(firearms, civilianId) {
     if (firearm?.firearm?.linkedCivilianID && firearm?.firearm?.linkedCivilianID !== civilianId && firearm?.firearm?.linkedCivilianID !== "") {
       return fetchCivName(firearm?.firearm?.linkedCivilianID).then(name => ({
         firearm,
-        linkedCivName: name || 'Unknown'
+        linkedCivName: name
       }));
     }
     return Promise.resolve({ firearm, linkedCivName: '' });
