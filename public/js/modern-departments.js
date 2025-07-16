@@ -11,7 +11,7 @@ function fetchAndRenderModernDepartments() {
   }
 
   $.ajax({
-    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/departments`,
+    url: `${API_URL}/api/v1/community/${communityId}/departments`,
     method: "GET",
     headers: {},
     success: function (data) {

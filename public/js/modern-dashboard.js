@@ -2486,18 +2486,33 @@ function renderLinkedFirearms(firearms, civilianId) {
             let linkedInfo = '';
 
             if (isLinkedToCurrent) {
-                buttonHtml = `<button onclick=\"delinkFirearm('${firearm._id}')\" style=\"background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%) !important; color:#fff !important; border:none !important; border-radius:8px !important; padding:0.6rem 1.2rem !important; font-weight:500 !important; cursor:pointer !important; width:100% !important; margin-top:0.5rem !important; transition:all 0.2s ease !important; font-size:1rem !important; box-shadow:0 4px 14px 0 rgba(239,68,68,0.4) !important;\">Delink</button>`;
+                buttonHtml = `<button onclick="delinkFirearm('${firearm._id}')" style="background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%) !important; color:#fff !important; border:none !important; border-radius:8px !important; padding:0.6rem 1.2rem !important; font-weight:500 !important; cursor:pointer !important; width:100% !important; margin-top:0.5rem !important; transition:all 0.2s ease !important; font-size:1rem !important; box-shadow:0 4px 14px 0 rgba(239,68,68,0.4) !important;">Delink</button>`;
             } else {
-                buttonHtml = `<button onclick=\"linkFirearm('${firearm._id}')\" style=\"background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%) !important; color:#fff !important; border:none !important; border-radius:8px !important; padding:0.6rem 1.2rem !important; font-weight:500 !important; cursor:pointer !important; width:100% !important; margin-top:0.5rem !important; transition:all 0.2s ease !important; font-size:1rem !important; box-shadow:0 4px 14px 0 rgba(99,102,241,0.4) !important;\">Link</button>`;
+                buttonHtml = `<button onclick="linkFirearm('${firearm._id}')" style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%) !important; color:#fff !important; border:none !important; border-radius:8px !important; padding:0.6rem 1.2rem !important; font-weight:500 !important; cursor:pointer !important; width:100% !important; margin-top:0.5rem !important; transition:all 0.2s ease !important; font-size:1rem !important; box-shadow:0 4px 14px 0 rgba(99,102,241,0.4) !important;">Link</button>`;
                 if (isLinkedToOther && firearm?.firearm?.linkedCivilianID !== "") {
-                    linkedInfo = `<p style=\"color:#a0aec0; font-size:0.875rem; margin:0.5rem 0 0;\">Linked to ${linkedCivName}</p>`;
+                    linkedInfo = `<p style="color:#a0aec0; font-size:0.875rem; margin:0.5rem 0 0;">Linked to ${linkedCivName}</p>`;
                 }
             }
 
             const firearmCard = document.createElement('div');
             firearmCard.className = 'card';
             firearmCard.innerHTML = `
-                <div class=\"card-header\">\n                    <div class=\"card-avatar\">\n                        <i class=\"fa fa-crosshairs\"></i>\n                    </div>\n                    <div>\n                        <h4 class=\"card-title\">${firearm?.firearm?.name || ''} ${firearm?.firearm?.weaponType || ''}</h4>\n                        <p class=\"card-subtitle\">${firearm?.firearm?.serialNumber || 'No Serial'}</p>\n                    </div>\n                </div>\n                <div class=\"card-content\">\n                    <p>Type: ${firearm?.firearm?.weaponType || 'Unknown'}</p>\n                    <p>Caliber: ${firearm?.firearm?.caliber || 'Unknown'}</p>\n                    ${linkedInfo}\n                    ${buttonHtml}\n                </div>\n            `;
+                <div class="card-header">
+                    <div class="card-avatar">
+                        <i class="fa fa-crosshairs"></i>
+                    </div>
+                    <div>
+                        <h4 class="card-title">${firearm?.firearm?.name || ''} ${firearm?.firearm?.weaponType || ''}</h4>
+                        <p class="card-subtitle">${firearm?.firearm?.serialNumber || 'No Serial'}</p>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <p>Type: ${firearm?.firearm?.weaponType || 'Unknown'}</p>
+                    <p>Caliber: ${firearm?.firearm?.caliber || 'Unknown'}</p>
+                    ${linkedInfo}
+                    ${buttonHtml}
+                </div>
+            `;
             thumbnail.appendChild(firearmCard);
         });
         
