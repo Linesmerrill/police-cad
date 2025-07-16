@@ -2,7 +2,11 @@
 // HeroUI Pro styled departments functionality for the new dashboard
 
 function fetchAndRenderModernDepartments() {
+  console.log('🔄 Fetching modern departments...');
+  console.log('dbUser:', dbUser);
+  
   const communityId = dbUser?.user?.lastAccessedCommunity?.communityID || dbUser?.user?.activeCommunity;
+  console.log('Community ID:', communityId);
   
   if (!communityId) {
     console.warn('No active community found for departments');
@@ -10,12 +14,23 @@ function fetchAndRenderModernDepartments() {
     return;
   }
 
+  console.log('🌐 Making AJAX request to:', `${API_URL}/api/v1/community/${communityId}/departments`);
+  
   $.ajax({
     url: `${API_URL}/api/v1/community/${communityId}/departments`,
     method: "GET",
     headers: {},
     success: function (data) {
+      console.log('✅ AJAX success, data:', data);
       const departments = data.departments || [];
+      console.log('📊 Found departments:', departments.length);
+      
+      if (departments.length === 0) {
+        console.log('📭 No departments found, showing empty state');
+        renderModernDepartmentsEmpty();
+        return;
+      }
+      
       let html = "";
 
       departments.forEach((dept) => {
@@ -108,22 +123,54 @@ function fetchAndRenderModernDepartments() {
       $("[title]").tooltip();
     },
     error: function (xhr) {
-      console.error("Error fetching departments:", xhr.responseText);
+      console.error("❌ Error fetching departments:", xhr.responseText);
+      console.error("Status:", xhr.status);
+      console.error("StatusText:", xhr.statusText);
       renderModernDepartmentsFallback();
     },
   });
 }
 
-function renderModernDepartmentsFallback() {
-  const fallbackHtml = `
+function renderModernDepartmentsEmpty() {
+  console.log('🔄 Rendering empty departments state...');
+  const emptyHtml = `
     <div class="nav-item">
-      <a href="/community-dashboard" class="nav-link">
-        <i class="fa fa-users nav-icon"></i>
-        <span class="nav-text">Communities</span>
+      <div class="nav-link" style="opacity: 0.7; cursor: default;">
+        <i class="fa fa-info-circle nav-icon"></i>
+        <span class="nav-text">No departments found</span>
+      </div>
+    </div>
+    <div class="nav-item">
+      <a href="/community-dashboard" class="nav-link" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+        <i class="fa fa-plus nav-icon"></i>
+        <span class="nav-text">Create Department</span>
       </a>
     </div>
   `;
+  console.log('📝 Setting empty state HTML:', emptyHtml);
+  $("#departmentsSubmenu").html(emptyHtml);
+  console.log('✅ Empty state rendered');
+}
+
+function renderModernDepartmentsFallback() {
+  console.log('🔄 Rendering fallback departments...');
+  const fallbackHtml = `
+    <div class="nav-item">
+      <div class="nav-link" style="opacity: 0.7; cursor: default;">
+        <i class="fa fa-exclamation-triangle nav-icon"></i>
+        <span class="nav-text">Unable to load departments</span>
+      </div>
+    </div>
+    <div class="nav-item">
+      <a href="/community-dashboard" class="nav-link" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+        <i class="fa fa-cog nav-icon"></i>
+        <span class="nav-text">Manage Communities</span>
+      </a>
+    </div>
+  `;
+  console.log('📝 Setting fallback HTML:', fallbackHtml);
   $("#departmentsSubmenu").html(fallbackHtml);
+  console.log('✅ Fallback rendered');
 } 
 
 function escapeHtml(str) {
@@ -133,4 +180,23 @@ function escapeHtml(str) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-} 
+}
+
+// Initialize departments when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 DOM Content Loaded - Initializing departments...');
+  console.log('jQuery available:', typeof $ !== 'undefined');
+  console.log('API_URL available:', typeof API_URL !== 'undefined');
+  console.log('dbUser available:', typeof dbUser !== 'undefined');
+  
+  // Wait a bit for other scripts to load
+  setTimeout(function() {
+    console.log('⏰ Timeout completed, checking functions...');
+    if (typeof fetchAndRenderModernDepartments === 'function') {
+      console.log('✅ fetchAndRenderModernDepartments function found, calling it...');
+      fetchAndRenderModernDepartments();
+    } else {
+      console.error('❌ fetchAndRenderModernDepartments function not found!');
+    }
+  }, 500);
+}); 

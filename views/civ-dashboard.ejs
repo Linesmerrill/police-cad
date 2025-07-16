@@ -19,6 +19,8 @@
   <link rel="stylesheet" href="/static/css/awesomplete.css" />
   <!-- HeroUI Pro CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@heroui/pro@1.0.0/dist/css/heroui-pro.min.css">
+  <!-- Department Background System -->
+  <link rel="stylesheet" href="/static/css/department-backgrounds.css">
   
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3842696805773142" crossorigin="anonymous"></script>
@@ -211,6 +213,8 @@
       overflow-x: hidden;
     }
 
+
+
     /* HeroUI Pro Sidebar */
     .heroui-sidebar {
       position: fixed;
@@ -292,7 +296,7 @@
       align-items: center;
       justify-content: center;
       font-size: 2rem;
-  color: white;
+      color: white;
       border: 3px solid rgba(255, 255, 255, 0.2);
     }
 
@@ -2103,6 +2107,7 @@
   <script src="/static/js/civ-dashboard.js"></script>
   <script src="/static/js/notifications.js"></script>
   <script src="/static/js/modern-dashboard.js"></script>
+  <script src="/static/js/department-backgrounds.js"></script>
   <script src="/static/js/modern-departments.js"></script>
   <script src="/static/js/ads.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
@@ -2197,6 +2202,11 @@
 
       updateSidebarState();
       window.addEventListener('resize', updateSidebarState);
+      
+      // Initialize departments in sidebar
+      if (typeof fetchAndRenderModernDepartments === 'function') {
+        fetchAndRenderModernDepartments();
+      }
     });
   </script>
 
@@ -3401,6 +3411,8 @@
     }
   });
   </script>
+
+
 
 </body>
 </html>
