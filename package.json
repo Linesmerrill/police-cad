@@ -48,9 +48,9 @@
     "tail.select": "^0.5.15"
   },
   "scripts": {
-    "start": "node --optimize_for_size --max-old-space-size=6000 --gc_interval=100 app.js",
+    "start": "node app.js",
     "test": "mocha",
-    "dev": "nodemon --optimize_for_size --max-old-space-size=6000 --gc_interval=100 app.js"
+    "dev": "nodemon --ext js,ejs app.js"
   },
   "engines": {
     "node": "20.x"
