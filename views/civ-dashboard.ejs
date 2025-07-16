@@ -1125,7 +1125,7 @@
     <!-- Top Navigation -->
     <nav class="top-nav">
       <div class="container-fluid">
-        <h1><a href="/civ-dashboard"><i class="fa fa-user"></i> Civilian Dashboard</a></h1>
+        <h1><a href="/civ-dashboard"><i class="fa fa-user"></i> Civilian Dashboard</a> • <a href="/community-dashboard"><span id="community-name" style="background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600;"></span></a></h1>
               </div>
     </nav>
 
@@ -2053,6 +2053,30 @@
   <script type="text/javascript">
     var dbUser = <%- JSON.stringify(user) %>;
     var API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+    
+    // Fetch and display community name
+    document.addEventListener('DOMContentLoaded', function() {
+      if (dbUser && dbUser.user && dbUser.user.lastAccessedCommunity && dbUser.user.lastAccessedCommunity.communityID) {
+        const communityId = dbUser.user.lastAccessedCommunity.communityID;
+        $.ajax({
+          url: `${API_URL}/api/v1/community/${communityId}`,
+          type: "GET",
+          success: function(commData) {
+            if (commData && commData.community && commData.community.name) {
+              $("#community-name").text(commData.community.name);
+            } else {
+              $("#community-name").text("Unknown Community");
+            }
+          },
+          error: function(xhr) {
+            console.error("Error fetching community details:", xhr.responseText);
+            $("#community-name").text("Unknown Community");
+          }
+        });
+      } else {
+        $("#community-name").text("No Community");
+      }
+    });
   </script>
 
   <!-- Scripts -->
