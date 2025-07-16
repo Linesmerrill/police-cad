@@ -24,6 +24,9 @@
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3842696805773142"
        crossorigin="anonymous"></script>
   
+  <!-- Ad Management Script -->
+  <script src="/js/ads.js"></script>
+  
   <!-- Custom Styles -->
   <style>
     :root {
@@ -53,6 +56,7 @@
       padding: 1.5rem;
       box-shadow: 0 2px 8px 0 rgba(30,32,44,0.10);
       border: 1px solid #35385a;
+      display: none; /* Hidden by default, shown by JavaScript based on subscription */
     }
     
     .heroui-ad-label {
@@ -1138,7 +1142,7 @@
       </script>
 
       <!-- Display Ad - Top Banner -->
-      <div class="heroui-ad-container">
+      <div class="heroui-ad-container" data-ad-type="display" data-ad-position="top">
         <div class="heroui-ad-label">Advertisement</div>
         <div class="heroui-ad-content">
           <!-- Display Ad -->
@@ -1277,7 +1281,7 @@
   </div>
 
   <!-- Multiplex Ad - Bottom Content -->
-  <div class="heroui-ad-container" style="margin: 3rem 0 2rem 0;">
+  <div class="heroui-ad-container" data-ad-type="multiplex" data-ad-position="bottom" style="margin: 3rem 0 2rem 0;">
     <div class="heroui-ad-label">Sponsored Content</div>
     <div class="heroui-ad-content">
       <ins class="adsbygoogle"

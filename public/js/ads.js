@@ -23,3 +23,66 @@ $(document).ready(function () {
     });
   }
 });
+
+// Function to check if user has premium_plus subscription
+function hasPremiumPlus() {
+  return typeof dbUser !== "undefined" && 
+         dbUser?.user?.subscription?.active && 
+         dbUser.user.subscription.plan === "premium_plus";
+}
+
+// Function to check if user has premium subscription
+function hasPremium() {
+  return typeof dbUser !== "undefined" && 
+         dbUser?.user?.subscription?.active && 
+         dbUser.user.subscription.plan === "premium";
+}
+
+// Function to check if ads should be shown based on subscription
+function shouldShowAds() {
+  if (hasPremiumPlus()) {
+    return false; // No ads for premium_plus
+  } else if (hasPremium()) {
+    // 50% chance for premium users
+    return Math.random() < 0.5;
+  } else {
+    return true; // Show ads for free users
+  }
+}
+
+// Function to hide all ad containers
+function hideAllAds() {
+  const adContainers = document.querySelectorAll('.heroui-ad-container');
+  adContainers.forEach(container => {
+    container.style.display = 'none';
+  });
+}
+
+// Function to show ads with premium logic
+function showAdsWithPremiumLogic() {
+  if (hasPremiumPlus()) {
+    // Hide all ads for premium_plus users
+    hideAllAds();
+  } else if (hasPremium()) {
+    // Show 50% of ads for premium users
+    const adContainers = document.querySelectorAll('.heroui-ad-container');
+    adContainers.forEach((container, index) => {
+      if (Math.random() < 0.5) {
+        container.style.display = 'block';
+      } else {
+        container.style.display = 'none';
+      }
+    });
+  } else {
+    // Show all ads for free users
+    const adContainers = document.querySelectorAll('.heroui-ad-container');
+    adContainers.forEach(container => {
+      container.style.display = 'block';
+    });
+  }
+}
+
+// Initialize ad visibility when DOM is ready
+$(document).ready(function() {
+  showAdsWithPremiumLogic();
+});
