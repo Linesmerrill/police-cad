@@ -2758,14 +2758,11 @@
               
               <!-- Profile Picture -->
               <div style="text-align:center; margin-bottom:2rem;">
-                <div style="width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:3rem; color:#fff; margin:0 auto 1rem; border:3px solid #35385a;">
+                <div id="accountProfilePicUpload" style="width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:3rem; color:#fff; margin:0 auto 1rem; border:3px solid #35385a; position:relative; cursor:pointer; transition:box-shadow 0.25s, border 0.25s;">
                   <i class="fa fa-user"></i>
-                </div>
-                <div style="color:#a0aec0; font-size:0.9rem;">
-                  <a href="https://en.gravatar.com/support/activating-your-account/" target="_blank" style="color:#667eea; text-decoration:none;">
-                    <i class="fa fa-external-link-alt" style="margin-right:0.3rem;"></i>
-                    Update via Gravatar
-                  </a>
+                  <span style="position:absolute; bottom:12px; right:12px; background:rgba(30,32,44,0.85); border-radius:50%; padding:10px; display:flex; align-items:center; justify-content:center; transition:background 0.2s;">
+                    <i class="fa fa-camera" style="font-size:1.55rem; color:#f7fafc;"></i>
+                  </span>
                 </div>
               </div>
               
@@ -3195,6 +3192,52 @@
       spinner.style.display = 'none';
     }
   }
+  </script>
+
+  <!-- Coming Soon Modal -->
+  <div id="comingSoonModal" class="heroui-modal" style="display:none; position:fixed; z-index:2200; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+    <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:340px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2rem 1.5rem 1.5rem 1.5rem; position:relative; text-align:center;">
+      <button aria-label="Close" onclick="closeComingSoonModal()" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+      <div style="font-size:2.5rem; color:#f093fb; margin-bottom:1rem;"><i class="fa fa-hammer"></i></div>
+      <div style="font-size:1.3rem; font-weight:700; color:#f7fafc; margin-bottom:0.5rem;">Coming Soon</div>
+      <div style="color:#a0aec0; font-size:1rem;">Photo uploads are still under construction.<br>Check back soon!</div>
+    </div>
+  </div>
+  <script>
+  function openComingSoonModal() {
+    document.getElementById('comingSoonModal').style.display = 'flex';
+  }
+  function closeComingSoonModal() {
+    document.getElementById('comingSoonModal').style.display = 'none';
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    // Intercept all file input clicks for image uploads
+    var fileInputs = [
+      document.getElementById('civImageInput'),
+      document.getElementById('vehImageInput'),
+      document.getElementById('newVehImageInput'),
+      document.getElementById('firearmImageInput'),
+      document.getElementById('newFirearmImageInput')
+    ];
+    fileInputs.forEach(function(input) {
+      if (input) {
+        input.addEventListener('click', function(e) {
+          e.preventDefault();
+          openComingSoonModal();
+          return false;
+        });
+      }
+    });
+    // Intercept profile pic click in Account Settings modal (custom avatar)
+    var accountPic = document.getElementById('accountProfilePicUpload');
+    if (accountPic) {
+      accountPic.addEventListener('click', function(e) {
+        e.preventDefault();
+        openComingSoonModal();
+        return false;
+      });
+    }
+  });
   </script>
 
 </body>
