@@ -968,7 +968,10 @@
     <button class="mobile-toggle" id="mobileToggle" style="margin-left:1rem; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); border:none; border-radius:8px; width:40px; height:40px; color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem; box-shadow:0 2px 8px rgba(102,126,234,0.10); cursor:pointer;">
       <i class="fa fa-bars"></i>
     </button>
-    <span style="margin-left:1.2rem; font-size:1.15rem; font-weight:700; color:#f7fafc; letter-spacing:0.01em;">Civilian Dashboard</span>
+    <div style="margin-left:1.2rem; display:flex; flex-direction:column; align-items:flex-start;">
+      <span style="font-size:1.15rem; font-weight:700; color:#f7fafc; letter-spacing:0.01em;">Civilian Dashboard</span>
+      <span id="mobile-community-name" style="font-size:0.9rem; font-weight:600; background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing:0.01em;"></span>
+    </div>
   </div>
 
   <!-- Sidebar Overlay -->
@@ -2064,17 +2067,21 @@
           success: function(commData) {
             if (commData && commData.community && commData.community.name) {
               $("#community-name").text(commData.community.name);
+              $("#mobile-community-name").text(commData.community.name);
             } else {
               $("#community-name").text("Unknown Community");
+              $("#mobile-community-name").text("Unknown Community");
             }
           },
           error: function(xhr) {
             console.error("Error fetching community details:", xhr.responseText);
             $("#community-name").text("Unknown Community");
+            $("#mobile-community-name").text("Unknown Community");
           }
         });
       } else {
         $("#community-name").text("No Community");
+        $("#mobile-community-name").text("No Community");
       }
     });
   </script>
