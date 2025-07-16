@@ -71,16 +71,16 @@ function fetchAndRenderModernDepartments() {
         if (useForm) {
           html += `
             <div class="nav-item">
-              <form action="${action}" method="POST" style="display: inline; width: 100%;">
-                <input type="hidden" name="departmentId" value="${departmentId}">
-                <input type="hidden" name="redirect" value="${redirect}">
+              <form action="${escapeHtml(action)}" method="POST" style="display: inline; width: 100%;">
+                <input type="hidden" name="departmentId" value="${escapeHtml(departmentId)}">
+                <input type="hidden" name="redirect" value="${escapeHtml(redirect)}">
                 <a href="#" class="nav-link" ${
                   isDisabled
                     ? 'style="opacity: 0.5; cursor: not-allowed;" title="This department is not yet available"'
                     : 'onclick="this.parentNode.submit()"'
                 }>
-                  <i class="fa ${icon} nav-icon"></i>
-                  <span class="nav-text">${name} (${template})</span>
+                  <i class="fa ${escapeHtml(icon)} nav-icon"></i>
+                  <span class="nav-text">${escapeHtml(name)} (${escapeHtml(template)})</span>
                 </a>
               </form>
             </div>
@@ -88,13 +88,13 @@ function fetchAndRenderModernDepartments() {
         } else {
           html += `
             <div class="nav-item">
-              <a href="${action}" class="nav-link" ${
+              <a href="${escapeHtml(action)}" class="nav-link" ${
                 isDisabled
                   ? 'style="opacity: 0.5; cursor: not-allowed;" title="This department is not yet available"'
                   : ""
               }>
-                <i class="fa ${icon} nav-icon"></i>
-                <span class="nav-text">${name} (${template})</span>
+                <i class="fa ${escapeHtml(icon)} nav-icon"></i>
+                <span class="nav-text">${escapeHtml(name)} (${escapeHtml(template)})</span>
               </a>
             </div>
           `;
@@ -124,4 +124,13 @@ function renderModernDepartmentsFallback() {
     </div>
   `;
   $("#departmentsSubmenu").html(fallbackHtml);
+} 
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 } 
