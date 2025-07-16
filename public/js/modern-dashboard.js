@@ -964,7 +964,7 @@ function updateCivModern(civId) {
         activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID
     };
     $.ajax({
-        url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/civilian/${civId}`,
+        url: `${API_URL}/api/v1/civilian/${civId}`,
         method: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify(data),
