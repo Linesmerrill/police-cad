@@ -29,6 +29,9 @@ $(document).ready(function() {
     loadFirearms();
     loadLicenses();
     
+    // Setup subscription badge
+    setupSubscriptionBadge();
+    
     // Load departments
     fetchAndRenderModernDepartments();
     
@@ -3446,3 +3449,63 @@ $(document).on('click', '.heroui-tab[data-tab="records"]', function() {
     });
   }, 50);
 });
+
+// --- Subscription Badge Functionality ---
+
+function setupSubscriptionBadge() {
+    const subscriptionBadge = document.getElementById('subscription-badge');
+    const subscriptionText = document.getElementById('subscription-text');
+    const subscriptionIcon = subscriptionBadge.querySelector('i');
+    
+    if (!subscriptionBadge || !subscriptionText || !subscriptionIcon) {
+        console.error('Subscription badge elements not found');
+        return;
+    }
+    
+    // Check if user has an active subscription
+    const isSubscriptionActive = dbUser?.user?.subscription?.active === true;
+    
+    if (!isSubscriptionActive) {
+        // No active subscription, show free badge
+        subscriptionBadge.classList.remove('premium-plus', 'premium', 'basic');
+        subscriptionBadge.classList.add('free');
+        subscriptionText.textContent = 'Free';
+        subscriptionIcon.className = 'fa fa-user';
+        subscriptionBadge.style.display = 'inline-flex';
+        return;
+    }
+    
+    // Get subscription plan from dbUser
+    const subscriptionPlan = dbUser?.user?.subscription?.plan || 'free';
+    
+    // Remove all existing classes
+    subscriptionBadge.classList.remove('premium-plus', 'premium', 'basic', 'free');
+    
+    // Set badge content and styling based on subscription plan
+    switch (subscriptionPlan.toLowerCase()) {
+        case 'premium_plus':
+            subscriptionBadge.classList.add('premium-plus');
+            subscriptionText.innerHTML = 'Premium<span class="subscription-plus">+</span>';
+            subscriptionIcon.className = 'fa fa-crown';
+            break;
+        case 'premium':
+            subscriptionBadge.classList.add('premium');
+            subscriptionText.textContent = 'Premium';
+            subscriptionIcon.className = 'fa fa-star';
+            break;
+        case 'basic':
+            subscriptionBadge.classList.add('basic');
+            subscriptionText.textContent = 'Basic';
+            subscriptionIcon.className = 'fa fa-check-circle';
+            break;
+        case 'free':
+        default:
+            subscriptionBadge.classList.add('free');
+            subscriptionText.textContent = 'Free';
+            subscriptionIcon.className = 'fa fa-user';
+            break;
+    }
+    
+    // Show the badge
+    subscriptionBadge.style.display = 'inline-flex';
+}

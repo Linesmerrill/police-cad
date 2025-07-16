@@ -21,8 +21,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@heroui/pro@1.0.0/dist/css/heroui-pro.min.css">
   
   <!-- Google AdSense -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3842696805773142"
-       crossorigin="anonymous"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3842696805773142" crossorigin="anonymous"></script>
   
   <!-- Ad Management Script -->
   <script src="/js/ads.js"></script>
@@ -317,6 +316,55 @@
 
     .heroui-sidebar.collapsed .user-name,
     .heroui-sidebar.collapsed .user-role {
+      display: none;
+    }
+    
+    /* Subscription Badge Styles */
+    .subscription-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.5rem;
+      transition: all 0.2s ease;
+    }
+    
+    .subscription-badge.premium-plus {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      color: #1f2937;
+      box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+    }
+    
+    .subscription-badge.premium-plus .subscription-plus {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-left: 0.1rem;
+    }
+    
+    .subscription-badge.premium {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    .subscription-badge.basic {
+      background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(72, 187, 120, 0.3);
+    }
+    
+    .subscription-badge.free {
+      background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(160, 174, 192, 0.3);
+    }
+    
+    .heroui-sidebar.collapsed .subscription-badge {
       display: none;
     }
 
@@ -953,7 +1001,11 @@
       <div class="user-name">
         <%=user.user.username%>
             </div>
-      <div class="user-role">Civilian</div>
+      <div class="user-role"><%= user.user.role || 'Civilian' %></div>
+      <div id="subscription-badge" class="subscription-badge" style="display: none;">
+        <i class="fa fa-crown"></i>
+        <span id="subscription-text">Premium</span>
+      </div>
   </div>
 
     <!-- Navigation -->
@@ -3342,4 +3394,3 @@
     width: 100%;
   }
 </style>
-
