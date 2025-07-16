@@ -515,10 +515,14 @@ $(document).ready(function () {
     }
     $("#detailsInfo").html(detailsHtml);
 
-    // Arrest Reports (Civilian Only)
-    let arrestReportsHtml = "";
-    if (currentType === "Civilian") {
-      arrestReportsHtml = `
+    // --- Records Sub-Tabs Logic ---
+    const isCriminalTabActive = $("#tabCriminalHistory").hasClass("active");
+    const isMedicalTabActive = $("#tabMedicalHistory").hasClass("active");
+
+    // Criminal History & Arrest Reports (only if Criminal tab is active)
+    if (isCriminalTabActive && currentType === "Civilian") {
+      // Arrest Reports
+      let arrestReportsHtml = `
     <h5 class="text-white mb-2">Arrest Reports (${arrestReports.length})</h5>
     ${
       arrestReports.length > 0
@@ -546,159 +550,17 @@ $(document).ready(function () {
       totalArrestReports > 3
         ? `
           <div class="d-flex justify-content-between mt-2">
-            <button class="btn btn-primary" onclick="fetchArrestReports(${
-              currentArrestPage - 1
-            })" ${currentArrestPage === 1 ? "disabled" : ""}>Previous</button>
-            <button class="btn btn-primary" onclick="fetchArrestReports(${
-              currentArrestPage + 1
-            })" ${
-            currentArrestPage * 3 >= totalArrestReports ? "disabled" : ""
-          }>Next</button>
+            <button class="btn btn-primary" onclick="fetchArrestReports(${currentArrestPage - 1})" ${currentArrestPage === 1 ? "disabled" : ""}>Previous</button>
+            <button class="btn btn-primary" onclick="fetchArrestReports(${currentArrestPage + 1})" ${currentArrestPage * 3 >= totalArrestReports ? "disabled" : ""}>Next</button>
           </div>
         `
         : ""
     }
   `;
-    }
-    $("#arrestReports").html(arrestReportsHtml);
+      $("#arrestReports").html(arrestReportsHtml);
 
-    // Linked Items (Civilian Only)
-    let linkedHtml = "";
-    if (currentType === "Civilian") {
-      linkedHtml += `
-        <h5 class="text-white mb-2">Licenses (${licenses.length})</h5>
-        ${
-          licenses.length > 0
-            ? licenses
-                .map(
-                  (license) => `
-          <div class="details-item" data-id="${
-            license._id
-          }" data-type="License" data-item='${JSON.stringify({
-                    _id: license._id,
-                    license: license.license,
-                  })}'>
-            <div class="d-flex justify-content-between">
-              <span>${license.license.type || "License"}</span>
-              <span>
-                ${
-                  license.license.status === "Revoked"
-                    ? '<span class="badge-status badge-revoked">Revoked</span>'
-                    : ""
-                }
-                ${
-                  license.license.expirationDate &&
-                  isExpired(license.license.expirationDate)
-                    ? '<span class="badge-status badge-expired">Expired</span>'
-                    : ""
-                }
-              </span>
-            </div>
-            <p class="text-gray mb-0">Status: ${
-              license.license.status || "N/A"
-            } | Exp: ${license.license.expirationDate || "N/A"}</p>
-            <p class="text-gray mb-0">${license.license.notes || ""}</p>
-          </div>
-        `
-                )
-                .join("")
-            : '<p class="text-gray">No licenses found.</p>'
-        }
-        ${
-          licenses.length > 3
-            ? `
-          <button class="btn btn-primary btn-block mt-2" onclick="alert('View All Licenses not implemented')">View All Licenses</button>
-        `
-            : ""
-        }
-
-        <h5 class="text-white mb-2 mt-4">Registered Vehicles</h5>
-        ${
-          vehicles.length > 0
-            ? vehicles
-                .map(
-                  (vehicle) => `
-          <div class="details-item" data-id="${
-            vehicle._id
-          }" data-type="Vehicle" data-item='${JSON.stringify({
-                    _id: vehicle._id,
-                    vehicle: vehicle.vehicle,
-                  })}'>
-            <div class="d-flex justify-content-between">
-              <span>${vehicle.vehicle.make || ""} ${
-                    vehicle.vehicle.model || ""
-                  } ${
-                    vehicle.vehicle.year ? "(" + vehicle.vehicle.year + ")" : ""
-                  }</span>
-              ${
-                vehicle.vehicle.isStolen === 'true'
-                  ? '<span class="badge-status badge-stolen">Stolen</span>'
-                  : ""
-              }
-            </div>
-            <p class="text-gray mb-0">VIN: ${
-              vehicle.vehicle.vin || "N/A"
-            } | Plate: ${vehicle.vehicle.plate || "N/A"}</p>
-          </div>
-        `
-                )
-                .join("")
-            : '<p class="text-gray">No registered vehicles.</p>'
-        }
-        ${
-          vehicles.length > 3
-            ? `
-          <button class="btn btn-primary btn-block mt-2" onclick="alert('View All Vehicles not implemented')">View All Vehicles</button>
-        `
-            : ""
-        }
-
-        <h5 class="text-white mb-2 mt-4">Registered Firearms</h5>
-        ${
-          firearms.length > 0
-            ? firearms
-                .map(
-                  (firearm) => `
-          <div class="details-item" data-id="${
-            firearm._id
-          }" data-type="Firearm" data-item='${JSON.stringify({
-                    _id: firearm._id,
-                    firearm: firearm.firearm,
-                  })}'>
-            <div class="d-flex justify-content-between">
-              <span>${firearm.firearm.name || ""} ${
-                    firearm.firearm.caliber || ""
-                  }</span>
-              ${
-                firearm.firearm.isStolen === 'true'
-                  ? '<span class="badge-status badge-stolen">Stolen</span>'
-                  : ""
-              }
-            </div>
-            <p class="text-gray mb-0">Serial: ${
-              firearm.firearm.serialNumber || "N/A"
-            }</p>
-          </div>
-        `
-                )
-                .join("")
-            : '<p class="text-gray">No registered firearms.</p>'
-        }
-        ${
-          firearms.length > 3
-            ? `
-          <button class="btn btn-primary btn-block mt-2" onclick="alert('View All Firearms not implemented')">View All Firearms</button>
-        `
-            : ""
-        }
-      `;
-    }
-    $("#linkedItems").html(linkedHtml);
-
-    // Criminal History
-    // Criminal History (Civilian Only)
-    let criminalHistoryHtml = "";
-    if (currentType === "Civilian") {
+      // Criminal History
+      let criminalHistoryHtml = "";
       const historyEntries = (currentItem.civilian.criminalHistory || [])
         .filter(
           (entry) => entry.type === "Citation" || entry.type === "Warning"
@@ -743,21 +605,27 @@ $(document).ready(function () {
       totalCriminalHistory > 3
         ? `
           <div class="d-flex justify-content-between mt-2">
-            <button class="btn btn-primary" onclick="changeCriminalPage(${
-              currentCriminalPage - 1
-            })" ${currentCriminalPage === 1 ? "disabled" : ""}>Previous</button>
-            <button class="btn btn-primary" onclick="changeCriminalPage(${
-              currentCriminalPage + 1
-            })" ${
-            currentCriminalPage * 3 >= totalCriminalHistory ? "disabled" : ""
-          }>Next</button>
+            <button class="btn btn-primary" onclick="changeCriminalPage(${currentCriminalPage - 1})" ${currentCriminalPage === 1 ? "disabled" : ""}>Previous</button>
+            <button class="btn btn-primary" onclick="changeCriminalPage(${currentCriminalPage + 1})" ${currentCriminalPage * 3 >= totalCriminalHistory ? "disabled" : ""}>Next</button>
           </div>
         `
         : ""
     }
   `;
+      $("#criminalHistory").html(criminalHistoryHtml);
+    } else {
+      // If not active, clear content
+      $("#arrestReports").html("");
+      $("#criminalHistory").html("");
     }
-    $("#criminalHistory").html(criminalHistoryHtml);
+
+    // Medical History (only if Medical tab is active)
+    if (isMedicalTabActive && currentType === "Civilian") {
+      // Placeholder for now
+      $("#medicalHistory").html('<p class="text-gray">Medical history records will appear here.</p>');
+    } else {
+      $("#medicalHistory").html("");
+    }
 
     // Action Buttons
     let actionsHtml = "";
@@ -1258,9 +1126,35 @@ $(document).ready(function () {
     openActionModal.call(this, action);
   });
 
+  // --- Records Sub-Tab Switching ---
+  $(document).on('click', '#tabCriminalHistory', function() {
+    $('#tabCriminalHistory').addClass('active');
+    $('#tabMedicalHistory').removeClass('active');
+    $('#recordsTabCriminal').show();
+    $('#recordsTabMedical').hide();
+  });
+  $(document).on('click', '#tabMedicalHistory', function() {
+    $('#tabMedicalHistory').addClass('active');
+    $('#tabCriminalHistory').removeClass('active');
+    $('#recordsTabMedical').show();
+    $('#recordsTabCriminal').hide();
+  });
+  // Ensure default state on modal open
+  $('#detailsModal').on('show.bs.modal', function() {
+    $('#tabCriminalHistory').addClass('active');
+    $('#tabMedicalHistory').removeClass('active');
+    $('#recordsTabCriminal').show();
+    $('#recordsTabMedical').hide();
+  });
+
   // Expose showDetailsModal and goBack globally
   window.showDetailsModal = showDetailsModal;
   window.fetchArrestReports = fetchArrestReports;
   window.changeCriminalPage = changeCriminalPage;
   window.goBack = goBack;
+});
+
+// --- Ensure renderDetails runs on tab switch ---
+$(document).on('click', '#tabCriminalHistory, #tabMedicalHistory', function() {
+  setTimeout(renderDetails, 0);
 });

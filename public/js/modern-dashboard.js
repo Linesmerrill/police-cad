@@ -1209,6 +1209,74 @@ function openCivDetailsModal(civ) {
         $('#civWeightKg').val(civData.weight || '');
         $('#civWeightLbs').val('');
     }
+
+    // --- Civilian Records Sub-Tab Logic ---
+    function renderCivRecordsTabs(civData) {
+      // Render Criminal History
+      const criminalHistory = civData.criminalHistory || [];
+      let criminalHtml = '';
+      if (criminalHistory.length === 0) {
+        criminalHtml = `<div style="color:#a0aec0;text-align:center;padding:2rem 0;">No criminal history found.</div>`;
+      } else {
+        criminalHtml = criminalHistory.map(entry => {
+          const fines = (entry.fines || []).map(fine => `<li><strong>${fine.fineType}</strong> (${fine.category}): $${fine.fineAmount}</li>`).join('');
+          return `
+            <div class="criminal-history-entry" style="background:#23263a;border-radius:10px;padding:1rem;margin-bottom:1.25rem;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;font-size:1.1rem;">${entry.type || 'Unknown Type'}</div>
+                <div style="font-size:0.95rem;color:#a0aec0;">${new Date(entry.createdAt).toLocaleDateString()}</div>
+              </div>
+              <ul style="margin:0.5rem 0 0.5rem 1.25rem;padding:0;list-style:disc;">${fines}</ul>
+              <div style="font-size:0.95rem;color:#a0aec0;">${entry.notes ? `<strong>Notes:</strong> ${entry.notes}` : ''}</div>
+              ${entry.redacted ? '<div style="color:#ef4444;font-weight:600;">Redacted</div>' : ''}
+            </div>
+          `;
+        }).join('');
+      }
+      $('#civRecordsTabCriminal').html(criminalHtml);
+
+      // Render Medical History (placeholder for now)
+      $('#civRecordsTabMedical').html('<div style="color:#a0aec0;text-align:center;padding:2rem 0;">No medical history records found.</div>');
+    }
+
+    // Tab switching logic for Records sub-tabs
+    $(document).on('click', '#civTabCriminalHistory', function() {
+      $('#civTabCriminalHistory, #civTabMedicalHistory').removeClass('active');
+      $('#civTabCriminalHistory').addClass('active');
+      $('#civRecordsTabCriminal').show();
+      $('#civRecordsTabMedical').hide();
+    });
+    $(document).on('click', '#civTabMedicalHistory', function() {
+      $('#civTabCriminalHistory, #civTabMedicalHistory').removeClass('active');
+      $('#civTabMedicalHistory').addClass('active');
+      $('#civRecordsTabMedical').show();
+      $('#civRecordsTabCriminal').hide();
+    });
+
+    // Show default sub-tab when Records tab is shown
+    $(document).on('click', '.heroui-tab[data-tab="records"]', function() {
+      setTimeout(function() {
+        $('#civTabCriminalHistory').addClass('active');
+        $('#civTabMedicalHistory').removeClass('active');
+        $('#civRecordsTabCriminal').show();
+        $('#civRecordsTabMedical').hide();
+        // Render content for the selected civilian
+        const civId = $('#civIdHidden').val();
+        const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
+        const civData = civ?.civilian || civ || {};
+        renderCivRecordsTabs(civData);
+      }, 50);
+    });
+
+    // Also render records when modal is opened and Records tab is already active
+    $('#civDetailsModal').on('show', function() {
+      if ($('.heroui-tab[data-tab="records"]').hasClass('active')) {
+        const civId = $('#civIdHidden').val();
+        const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
+        const civData = civ?.civilian || civ || {};
+        renderCivRecordsTabs(civData);
+      }
+    });
 } 
 
 // Close civilian details modal
@@ -3254,4 +3322,177 @@ $(document).ready(function() {
         });
         modal.querySelector(`#licenseTabContent-${tab}`).style.display = 'block';
     });
+});
+
+// --- Modern Criminal History Tab ---
+let cachedArrestReports = [];
+let cachedArrestReportsCount = 0;
+
+function renderCriminalHistoryTab(civData) {
+  // 1. Metrics
+  const criminalHistory = civData.criminalHistory || [];
+  const citations = criminalHistory.filter(e => e.type === 'Citation');
+  const warnings = criminalHistory.filter(e => e.type === 'Warning');
+  const arrestReports = cachedArrestReports || [];
+  const metricsHtml = `
+    <div class="heroui-metrics-row" style="display:flex;gap:1.5rem;margin-bottom:1.5rem;">
+      <div class="heroui-metric-card" style="flex:1;background:#23263a;border-radius:12px;padding:1.25rem;display:flex;flex-direction:column;align-items:center;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);">
+        <div style="font-size:2rem;font-weight:700;color:#667eea;">${citations.length}</div>
+        <div style="color:#a0aec0;font-size:1.1rem;">Citations</div>
+      </div>
+      <div class="heroui-metric-card" style="flex:1;background:#23263a;border-radius:12px;padding:1.25rem;display:flex;flex-direction:column;align-items:center;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);">
+        <div style="font-size:2rem;font-weight:700;color:#fbbf24;">${warnings.length}</div>
+        <div style="color:#a0aec0;font-size:1.1rem;">Warnings</div>
+      </div>
+      <div class="heroui-metric-card" style="flex:1;background:#23263a;border-radius:12px;padding:1.25rem;display:flex;flex-direction:column;align-items:center;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);">
+        <div style="font-size:2rem;font-weight:700;color:#ef4444;">${cachedArrestReportsCount}</div>
+        <div style="color:#a0aec0;font-size:1.1rem;">Arrest Reports</div>
+      </div>
+    </div>`;
+
+  // 2. Toggles (Custom HeroUI Pro styles)
+  const activeStyle = 'background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);font-weight:600;font-size:1.1rem;padding:0.75rem 1rem;border-radius:8px 8px 0 0;flex:1;transition:all 0.2s;outline:none;';
+  const inactiveStyle = 'background:#23263a;color:#fff;border:1.5px solid #35385a;box-shadow:none;font-weight:600;font-size:1.1rem;padding:0.75rem 1rem;border-radius:8px 8px 0 0;flex:1;transition:all 0.2s;outline:none;';
+  const togglesHtml = `
+    <div class="heroui-toggle-row" style="display:flex;gap:1rem;margin-bottom:1.25rem;">
+      <button class="criminal-toggle-btn" id="criminalToggleCitations" style="${activeStyle}" data-type="Citation">Citations</button>
+      <button class="criminal-toggle-btn" id="criminalToggleWarnings" style="${inactiveStyle}" data-type="Warning">Warnings</button>
+      <button class="criminal-toggle-btn" id="criminalToggleArrests" style="${inactiveStyle}" data-type="Arrest">Arrest Reports</button>
+    </div>`;
+
+  // 3. Content area
+  const contentHtml = `<div id="criminalHistoryContentArea"></div>`;
+
+  $('#civRecordsTabCriminal').html(metricsHtml + togglesHtml + contentHtml);
+
+  renderCriminalHistoryEntries('Citation', civData);
+}
+
+function renderCriminalHistoryEntries(type, civData) {
+  let html = '';
+  if (type === 'Citation' || type === 'Warning') {
+    const entries = (civData.criminalHistory || []).filter(e => e.type === type);
+    if (entries.length === 0) {
+      html = `<div style="color:#a0aec0;text-align:center;padding:2rem 0;">No ${type.toLowerCase()}s found.</div>`;
+    } else {
+      html = entries.map(entry => `
+        <div class="heroui-criminal-card" style="background:#23263a;border-radius:10px;padding:1rem;margin-bottom:1.25rem;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-weight:600;font-size:1.1rem;">${entry.type}</div>
+            <div style="font-size:0.95rem;color:#a0aec0;">${new Date(entry.createdAt).toLocaleDateString()}</div>
+            <ul style="margin:0.5rem 0 0.5rem 1.25rem;padding:0;list-style:disc;">${(entry.fines||[]).map(fine => `<li><strong>${fine.fineType}</strong> (${fine.category}): $${fine.fineAmount}</li>`).join('')}</ul>
+            <div style="font-size:0.95rem;color:#a0aec0;">${entry.notes ? `<strong>Notes:</strong> ${entry.notes}` : ''}</div>
+            ${entry.redacted ? '<div style="color:#ef4444;font-weight:600;">Redacted</div>' : ''}
+          </div>
+          <button class="heroui-trash-btn" data-type="criminal" data-id="${entry._id}" title="Delete" style="background:none;border:none;color:#ef4444;font-size:1.5rem;cursor:pointer;"><i class="fa fa-trash"></i></button>
+        </div>
+      `).join('');
+    }
+  } else if (type === 'Arrest') {
+    const entries = cachedArrestReports || [];
+    if (entries.length === 0) {
+      html = `<div style="color:#a0aec0;text-align:center;padding:2rem 0;">No arrest reports found.</div>`;
+    } else {
+      html = entries.map(entry => `
+        <div class="heroui-criminal-card" style="background:#23263a;border-radius:10px;padding:1rem;margin-bottom:1.25rem;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-weight:600;font-size:1.1rem;">Arrest Report</div>
+            <div style="font-size:0.95rem;color:#a0aec0;">${new Date(entry.arrestDate).toLocaleDateString()}</div>
+            <div style="font-size:0.95rem;color:#a0aec0;"><strong>Charges:</strong> ${entry.charges || 'N/A'}</div>
+            <div style="font-size:0.95rem;color:#a0aec0;"><strong>Location:</strong> ${entry.arrestLocation || 'N/A'}</div>
+          </div>
+          <button class="heroui-trash-btn" data-type="arrest" data-id="${entry._id}" title="Delete" style="background:none;border:none;color:#ef4444;font-size:1.5rem;cursor:pointer;"><i class="fa fa-trash"></i></button>
+        </div>
+      `).join('');
+    }
+  }
+  $('#criminalHistoryContentArea').html(html);
+}
+
+// Toggle logic (Custom HeroUI Pro styles)
+$(document).on('click', '.criminal-toggle-btn', function() {
+  const activeStyle = 'background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);font-weight:600;font-size:1.1rem;padding:0.75rem 1rem;border-radius:8px 8px 0 0;flex:1;transition:all 0.2s;outline:none;';
+  const inactiveStyle = 'background:#23263a;color:#fff;border:1.5px solid #35385a;box-shadow:none;font-weight:600;font-size:1.1rem;padding:0.75rem 1rem;border-radius:8px 8px 0 0;flex:1;transition:all 0.2s;outline:none;';
+  $('.criminal-toggle-btn').attr('style', inactiveStyle);
+  $(this).attr('style', activeStyle);
+  const type = $(this).data('type');
+  const civId = $('#civIdHidden').val();
+  const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
+  const civData = civ?.civilian || civ || {};
+  if (type === 'Arrest') {
+    fetchArrestReportsForCiv(civId, function() {
+      renderCriminalHistoryEntries('Arrest', civData);
+    });
+  } else {
+    renderCriminalHistoryEntries(type, civData);
+  }
+});
+
+function fetchArrestReportsForCiv(civId, cb) {
+  $.ajax({
+    url: `${API_URL}/api/v1/arrest-report/arrestee/${civId}`,
+    method: 'GET',
+    success: function(data) {
+      cachedArrestReports = (data.data || []).map(r => r.arrestReport || r);
+      cachedArrestReportsCount = data.totalCount || cachedArrestReports.length;
+      if (typeof cb === 'function') cb();
+    },
+    error: function() {
+      cachedArrestReports = [];
+      cachedArrestReportsCount = 0;
+      if (typeof cb === 'function') cb();
+    }
+  });
+}
+
+// Delete logic
+$(document).on('click', '.heroui-trash-btn', function() {
+  const type = $(this).data('type');
+  const id = $(this).data('id');
+  const civId = $('#civIdHidden').val();
+  if (!confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
+  if (type === 'criminal') {
+    $.ajax({
+      url: `${API_URL}/api/v1/civilian/${civId}/criminal-history/${id}`,
+      method: 'DELETE',
+      success: function() {
+        // Remove from UI
+        const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
+        const civData = civ?.civilian || civ || {};
+        civData.criminalHistory = (civData.criminalHistory || []).filter(e => e._id !== id);
+        renderCriminalHistoryTab(civData);
+      },
+      error: function() {
+        showToast('Failed to delete record.');
+      }
+    });
+  } else if (type === 'arrest') {
+    $.ajax({
+      url: `${API_URL}/api/v1/arrest-report/${id}`,
+      method: 'DELETE',
+      success: function() {
+        cachedArrestReports = cachedArrestReports.filter(e => e._id !== id);
+        cachedArrestReportsCount--;
+        const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
+        const civData = civ?.civilian || civ || {};
+        renderCriminalHistoryTab(civData);
+      },
+      error: function() {
+        showToast('Failed to delete arrest report.');
+      }
+    });
+  }
+});
+
+// When Records tab is shown, render the new tab
+$(document).on('click', '.heroui-tab[data-tab="records"]', function() {
+  setTimeout(function() {
+    const civId = $('#civIdHidden').val();
+    const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
+    const civData = civ?.civilian || civ || {};
+    // Fetch arrest reports for metrics
+    fetchArrestReportsForCiv(civId, function() {
+      renderCriminalHistoryTab(civData);
+    });
+  }, 50);
 });

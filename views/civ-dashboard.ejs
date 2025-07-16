@@ -820,6 +820,31 @@
       position: static !important;
       top: 0px !important;
     }
+
+    @media (max-width: 600px) {
+      #civDetailsModal .heroui-modal-close {
+        position: absolute;
+        top: 0.75rem;
+        right: 1rem;
+        z-index: 10;
+        font-size: 2rem;
+        background: none;
+        border: none;
+        color: #fff;
+        padding: 0.5rem 1rem;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px 0 rgba(30,32,44,0.10);
+        transition: background 0.2s;
+      }
+      #civDetailsModal .heroui-modal-close:active,
+      #civDetailsModal .heroui-modal-close:focus {
+        background: #23263a;
+        outline: none;
+      }
+      #civDetailsModal .heroui-modal-tabs {
+        margin-top: 3.5rem !important;
+      }
+    }
   </style>
 </head>
 
@@ -1195,8 +1220,9 @@
   <!-- HeroUI Civilian Details Modal -->
   <div id="civDetailsModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
     <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:700px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2.5rem 2rem 2rem 2rem; position:relative; max-height:90vh; overflow-y:auto;">
-      <button id="civDetailsModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-      <!-- Tabs -->
+      <div class="heroui-modal-close-row-mobile" style="width:100%;display:block;text-align:right;margin-bottom:1.5rem;">
+        <button class="heroui-modal-close" id="civDetailsModalClose" aria-label="Close" style="font-size:2rem;background:none;border:none;color:#fff;z-index:10;">&times;</button>
+      </div>
       <div class="heroui-tabs" style="display:flex; gap:1.2rem; border-bottom:1.5px solid #35385a; margin-bottom:2rem;">
         <button class="heroui-tab active" data-tab="edit" style="background:none; border:none; color:#fff; font-size:1.1rem; font-weight:600; padding:0.5rem 1.2rem; border-radius:8px 8px 0 0; cursor:pointer;">Edit Civilian</button>
         <button class="heroui-tab" data-tab="vehicles" style="background:none; border:none; color:#a0aec0; font-size:1.1rem; font-weight:600; padding:0.5rem 1.2rem; border-radius:8px 8px 0 0; cursor:pointer;">Manage Vehicles</button>
@@ -1473,7 +1499,20 @@
         </div>
       </div>
       <div class="heroui-tab-content" id="civTabContent-records" style="display:none;">
-        <div style="color:#e0e7ff; font-size:1.1rem;">[Records content goes here]</div>
+        <!-- Records Sub-Tabs -->
+        <div id="civRecordsTabs" class="mb-3" style="display: flex; gap: 1.5rem; border-bottom: 1px solid #444;">
+          <button id="civTabCriminalHistory" class="civ-records-tab-btn active" type="button" style="background: none; border: none; color: #fff; font-weight: 600; font-size: 1.1rem; padding: 0.5rem 1rem; border-bottom: 3px solid #667eea;">Criminal History</button>
+          <button id="civTabMedicalHistory" class="civ-records-tab-btn" type="button" style="background: none; border: none; color: #a0aec0; font-weight: 600; font-size: 1.1rem; padding: 0.5rem 1rem; border-bottom: 3px solid transparent;">Medical History</button>
+        </div>
+        <div id="civRecordsTabCriminal" class="civ-records-tab-content" style="display: block;">
+          <div id="civCriminalHistory" class="mt-4"></div>
+          <div id="civArrestReports" class="mt-4"></div>
+        </div>
+        <div id="civRecordsTabMedical" class="civ-records-tab-content" style="display: none;">
+          <div id="civMedicalHistory" class="mt-4">
+            <p class="text-gray">Medical history records will appear here.</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -3076,4 +3115,25 @@
 
 </body>
 </html>
+
+<style>
+  .civ-records-tab-btn.active {
+    color: #fff !important;
+    border-bottom: 3px solid #667eea !important;
+  }
+  .civ-records-tab-btn {
+    color: #a0aec0;
+    border-bottom: 3px solid transparent;
+    background: none;
+    outline: none;
+    transition: color 0.2s, border-bottom 0.2s;
+    cursor: pointer;
+  }
+  .civ-records-tab-btn:hover {
+    color: #fff;
+  }
+  .civ-records-tab-content {
+    width: 100%;
+  }
+</style>
 

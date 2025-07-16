@@ -1427,6 +1427,79 @@ pre code {
   }
 }
 
+/* --- HeroUI Pro Criminal History Tab Styles --- */
+.heroui-metrics-row {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.heroui-metric-card {
+  flex: 1;
+  background: #23263a;
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 2px 8px 0 rgba(30,32,44,0.10);
+}
+.heroui-toggle-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+.heroui-toggle-btn {
+  flex: 1;
+  background: #18192a;
+  border: 1.5px solid #35385a;
+  color: #a0aec0;
+  font-weight: 600;
+  font-size: 1.1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 3px solid transparent;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  transition: color 0.2s, border-bottom 0.2s, background 0.2s, border 0.2s;
+  margin-bottom: -2px;
+  box-shadow: none;
+}
+.heroui-toggle-btn.active {
+  color: #fff;
+  background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+  border-bottom: 3px solid #667eea;
+  border-color: #667eea;
+  z-index: 1;
+  box-shadow: 0 2px 8px 0 rgba(102,126,234,0.15);
+}
+.heroui-toggle-btn:hover, .heroui-toggle-btn:focus {
+  color: #fff;
+  background: #35385a;
+  border-color: #667eea;
+  outline: none;
+}
+.heroui-criminal-card {
+  background: #23263a;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 2px 8px 0 rgba(30,32,44,0.10);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.heroui-trash-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.heroui-trash-btn:hover, .heroui-trash-btn:focus {
+  color: #b91c1c;
+  outline: none;
+}
+
 @media (min-width: 992px) {
   .col-lg {
     -ms-flex-preferred-size: 0;
@@ -6204,12 +6277,6 @@ a.badge-dark.focus {
 .list-group-horizontal .list-group-item {
   margin-right: -1px;
   margin-bottom: 0;
-}
-
-.list-group-horizontal .list-group-item:first-child {
-  border-top-left-radius: 0.25rem;
-  border-bottom-left-radius: 0.25rem;
-  border-top-right-radius: 0;
 }
 
 .list-group-horizontal .list-group-item:last-child {
