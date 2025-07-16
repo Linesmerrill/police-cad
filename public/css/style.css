@@ -1397,6 +1397,36 @@ pre code {
   }
 }
 
+/* --- Notification Modal Mobile Button Styles --- */
+@media (max-width: 600px) {
+  .notification-modal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1rem;
+  }
+  .notification-modal-buttons .notification-approve,
+  .notification-modal-buttons .notification-deny {
+    width: 100%;
+    font-size: 1.25rem;
+    padding: 1rem 0;
+    border-radius: 10px;
+    margin: 0;
+  }
+  .notification-approve,
+  .notification-deny {
+    width: 100%;
+    font-size: 1.25rem;
+    padding: 1rem 0;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+  }
+  .notification-deny {
+    margin-bottom: 0;
+  }
+}
+
 @media (min-width: 992px) {
   .col-lg {
     -ms-flex-preferred-size: 0;
@@ -8457,6 +8487,36 @@ button.bg-dark:focus {
   }
 }
 
+/* --- Notification Modal Mobile Button Styles --- */
+@media (max-width: 600px) {
+  .notification-modal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1rem;
+  }
+  .notification-modal-buttons .notification-approve,
+  .notification-modal-buttons .notification-deny {
+    width: 100%;
+    font-size: 1.25rem;
+    padding: 1rem 0;
+    border-radius: 10px;
+    margin: 0;
+  }
+  .notification-approve,
+  .notification-deny {
+    width: 100%;
+    font-size: 1.25rem;
+    padding: 1rem 0;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+  }
+  .notification-deny {
+    margin-bottom: 0;
+  }
+}
+
 @media (min-width: 1200px) {
   .flex-xl-row {
     -webkit-box-orient: horizontal !important;
@@ -10622,6 +10682,36 @@ button.bg-dark:focus {
   .ml-lg-auto,
   .mx-lg-auto {
     margin-left: auto !important;
+  }
+}
+
+/* --- Notification Modal Mobile Button Styles --- */
+@media (max-width: 600px) {
+  .notification-modal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1rem;
+  }
+  .notification-modal-buttons .notification-approve,
+  .notification-modal-buttons .notification-deny {
+    width: 100%;
+    font-size: 1.25rem;
+    padding: 1rem 0;
+    border-radius: 10px;
+    margin: 0;
+  }
+  .notification-approve,
+  .notification-deny {
+    width: 100%;
+    font-size: 1.25rem;
+    padding: 1rem 0;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+  }
+  .notification-deny {
+    margin-bottom: 0;
   }
 }
 
