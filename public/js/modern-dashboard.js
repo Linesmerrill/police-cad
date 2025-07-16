@@ -23,18 +23,7 @@ const linkedFirearmsPerPage = 8;
 
 // Initialize dashboard when document is ready
 $(document).ready(function() {
-    console.log('🚀 Modern Dashboard Initializing...');
-    console.log('📊 Global variables:', {
-        API_URL: typeof API_URL !== 'undefined' ? API_URL : 'UNDEFINED',
-        dbUser: typeof dbUser !== 'undefined' ? 'DEFINED' : 'UNDEFINED',
-        currentCivPage,
-        currentVehPage,
-        currentGunPage,
-        itemsPerPage
-    });
-    
     // Load initial data
-    console.log('🚀 Initial page values:', { currentCivPage, currentVehPage, currentGunPage, currentLicensePage });
     loadCivilians();
     loadVehicles();
     loadFirearms();
@@ -73,9 +62,7 @@ $(document).ready(function() {
     });
     
     $('#firearmDetailsEditBtn').click(function() {
-        console.log('Edit button clicked');
         const firearmId = document.getElementById('firearmIdHidden').value;
-        console.log('Firearm ID:', firearmId);
         if (firearmId) {
             updateFirearmModern(firearmId);
         } else {
@@ -103,7 +90,6 @@ $(document).ready(function() {
         const civId = document.getElementById('civIdHidden').value;
         if (civId && confirm('Are you sure you want to delete this civilian? This action cannot be undone.')) {
             // Add delete civilian functionality here
-            console.log('Delete civilian:', civId);
             showToast('Delete functionality not yet implemented');
         }
     });
@@ -252,10 +238,8 @@ $(document).ready(function() {
 
 // Search functionality
 function setupSearch() {
-    console.log('🔍 Setting up search functionality...');
     $('#civilian-search').on('input', function() {
         const searchTerm = $(this).val().toLowerCase();
-        console.log('🔍 Search term:', searchTerm);
         
         if (searchTerm.length >= 2) {
             // Search across all sections
@@ -270,13 +254,11 @@ function setupSearch() {
 }
 
 function searchAllSections(searchTerm) {
-    console.log('🔍 Searching all sections for:', searchTerm);
     // Search civilians
     $.ajax({
         url: `${API_URL}/api/v1/civilians/search?q=${searchTerm}&limit=8&page=0`,
         method: 'GET',
         success: function(data) {
-            console.log('🔍 Civilian search results:', data);
             if (data && data.civilians) {
                 renderCivilians(data.civilians);
             }
@@ -291,7 +273,6 @@ function searchAllSections(searchTerm) {
         url: `${API_URL}/api/v1/vehicles/search?q=${searchTerm}&limit=8&page=0`,
         method: 'GET',
         success: function(data) {
-            console.log('🔍 Vehicle search results:', data);
             if (data && data.vehicles) {
                 renderVehicles(data.vehicles);
             }
@@ -306,7 +287,6 @@ function searchAllSections(searchTerm) {
         url: `${API_URL}/api/v1/firearms/search?q=${searchTerm}&limit=8&page=0`,
         method: 'GET',
         success: function(data) {
-            console.log('🔍 Firearm search results:', data);
             if (data && data.firearms) {
                 renderFirearms(data.firearms);
             }
@@ -321,7 +301,6 @@ function searchAllSections(searchTerm) {
         url: `${API_URL}/api/v1/licenses/search?q=${searchTerm}&limit=8&page=1`,
         method: 'GET',
         success: function(data) {
-            console.log('🔍 License search results:', data);
             let licenses = [];
             if (data && data.data) {
                 licenses = data.data;
@@ -392,11 +371,6 @@ function searchAllSections(searchTerm) {
 
 // Load Civilians
 function loadCivilians() {
-    console.log('👥 Loading civilians...');
-    console.log('👥 API URL:', `${API_URL}/api/v1/civilians/user/${dbUser._id}?active_community_id=${dbUser.user.lastAccessedCommunity?.communityID}&limit=${itemsPerPage}&page=${currentCivPage}`);
-    console.log('👥 User ID:', dbUser._id);
-    console.log('👥 Community ID:', dbUser.user.lastAccessedCommunity?.communityID);
-    
     $('#civilians-loading').show();
     $('#personas-thumbnail').hide();
     $('#issue-loading-personnel-alert').hide();
@@ -1012,7 +986,6 @@ $(document).ready(function() {
         e.preventDefault();
         // Get the civilian ID from the hidden input
         const civId = $('#civIdHidden').val();
-        console.log('Updating civilian with ID:', civId);
         if (civId) {
             updateCivModern(civId);
         } else {
@@ -1023,10 +996,8 @@ $(document).ready(function() {
 
 // When opening the modal, store the current civ ID for update
 function openCivDetailsModal(civ) {
-    console.log('openCivDetailsModal called with:', civ);
     const civId = civ._id;
     const civData = civ.civilian ? civ.civilian : civ;
-    console.log('civData:', civData);
     
     // Ensure any existing modals are properly closed first
     closeVehDetailsModal();
@@ -1126,7 +1097,6 @@ function openCivDetailsModal(civ) {
     const tabContent = civModal.querySelector('#civTabContent-edit');
     if (tabContent) {
         tabContent.style.display = 'block';
-        console.log('Set civTabContent-edit display to block');
     } else {
         console.error('civTabContent-edit element not found');
     }
@@ -1300,20 +1270,17 @@ function closeCivDetailsModal() {
 
 // Open the new civilian modal
 function openNewCivModal() {
-    console.log('🚀 Opening new civilian modal...');
     $('#newCivModal').modal('show');
 }
 
 // Toggle input visibility for height/weight units
 function toggleInput(showClass, hideClass) {
-    console.log('🔄 Toggling input:', showClass, hideClass);
     $('.' + showClass).show();
     $('.' + hideClass).hide();
 }
 
 // Create new civilian
 function createNewCiv() {
-    console.log('👤 Creating new civilian...');
     const heightObj = getHeightAndClassification();
     const weightObj = getWeightAndClassification();
     const formData = {
@@ -1335,8 +1302,6 @@ function createNewCiv() {
         userID: dbUser._id,
         activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID
     };
-    
-    console.log('📝 Form data:', formData);
     
     // Validate required fields
     if (!formData.name) {
@@ -1646,7 +1611,6 @@ function updateVehModern(vehId) {
 
 // Open Add New Vehicle modal
 function openNewVehicleModal() {
-    console.log('[AddVehicle] Opening Add New Vehicle modal');
     document.getElementById('createVehicleForm').reset();
     $('#newVehicleModal').modal('show');
 }
@@ -1670,7 +1634,6 @@ $(document).ready(function() {
     // Handle Add New Vehicle form submission
     $('#createVehicleForm').on('submit', function(e) {
         e.preventDefault();
-        console.log('[AddVehicle] Submitting new vehicle form');
         
         // Helper function to convert select values to boolean strings
         function selectToBoolString(val) {
@@ -1697,7 +1660,6 @@ $(document).ready(function() {
             userID: dbUser._id,
             activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID
         };
-        console.log('[AddVehicle] Data to send:', data);
         // Validate required fields
         if (!data.plate) {
             showToast('License plate is required');
@@ -1718,7 +1680,6 @@ $(document).ready(function() {
             contentType: 'application/json',
             data: JSON.stringify(data),
             success: function(response) {
-                console.log('[AddVehicle] Vehicle created successfully:', response);
                 showToast('Vehicle created successfully!');
                 closeNewVehicleModal();
                 // Reset the form
@@ -1765,7 +1726,6 @@ function getLinkedVehicles(page) {
             
             // Store the vehicles for search filtering
             allLinkedVehicles = data || [];
-            console.log('🚗 Loaded vehicles for search:', allLinkedVehicles);
 
             renderLinkedVehicles(data || [], civilianId);
             document.getElementById('manage-vehicles-loading').style.display = 'none';
@@ -1840,10 +1800,8 @@ function renderLinkedVehicles(vehicles, civilianId) {
             let linkedInfo = '';
 
             if (isLinkedToCurrent) {
-                console.log('Rendering DELINK button with gradient styles');
                 buttonHtml = `<button onclick="delinkVehicle('${vehicle._id}')" style="background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%) !important; color:#fff !important; border:none !important; border-radius:8px !important; padding:0.6rem 1.2rem !important; font-weight:500 !important; cursor:pointer !important; width:100% !important; margin-top:0.5rem !important; transition:all 0.2s ease !important; font-size:1rem !important; box-shadow:0 4px 14px 0 rgba(239,68,68,0.4) !important;">Delink</button>`;
             } else {
-                console.log('Rendering LINK button with gradient styles');
                 buttonHtml = `<button onclick="linkVehicle('${vehicle._id}')" style="background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%) !important; color:#fff !important; border:none !important; border-radius:8px !important; padding:0.6rem 1.2rem !important; font-weight:500 !important; cursor:pointer !important; width:100% !important; margin-top:0.5rem !important; transition:all 0.2s ease !important; font-size:1rem !important; box-shadow:0 4px 14px 0 rgba(99,102,241,0.4) !important;">Link</button>`;
                 if (isLinkedToOther && vehicle?.vehicle?.linkedCivilianID !== "") {
                     linkedInfo = `<p style="color:#a0aec0; font-size:0.875rem; margin:0.5rem 0 0;">Linked to ${linkedCivName}</p>`;
@@ -2098,7 +2056,6 @@ function updateFirearmModern(firearmId) {
         headers: { 'Content-Type': 'application/json' },
         data: JSON.stringify(formData),
         success: function(response) {
-            console.log('Firearm update success:', response);
             showToast('Firearm updated successfully!');
             closeFirearmDetailsModal();
             
@@ -2173,7 +2130,6 @@ function loadFirearmSocketData(firearmID) {
 
 // Notification Modal Functions
 function openNotificationModal() {
-    console.log('Opening notification modal');
     const modal = document.getElementById('notificationModal');
     if (modal) {
         modal.style.display = 'flex';
@@ -2183,7 +2139,6 @@ function openNotificationModal() {
 }
 
 function closeNotificationModal() {
-    console.log('Closing notification modal');
     const modal = document.getElementById('notificationModal');
     if (modal) {
         modal.style.display = 'none';
@@ -2192,7 +2147,6 @@ function closeNotificationModal() {
 }
 
 function openNotificationMenuModal() {
-    console.log('Opening notification menu modal');
     const modal = document.getElementById('notificationMenuModal');
     if (modal) {
         modal.style.display = 'flex';
@@ -2201,7 +2155,6 @@ function openNotificationMenuModal() {
 }
 
 function closeNotificationMenuModal() {
-    console.log('Closing notification menu modal');
     const modal = document.getElementById('notificationMenuModal');
     if (modal) {
         modal.style.display = 'none';
@@ -2211,7 +2164,6 @@ function closeNotificationMenuModal() {
 
 // Account Modal Functions
 function openAccountModal() {
-    console.log('Opening account modal');
     const modal = document.getElementById('accountModal');
     if (modal) {
         modal.style.display = 'flex';
@@ -2240,7 +2192,6 @@ function openAccountModal() {
 }
 
 function closeAccountModal() {
-    console.log('Closing account modal');
     const modal = document.getElementById('accountModal');
     if (modal) {
         modal.style.display = 'none';
@@ -2249,7 +2200,6 @@ function closeAccountModal() {
 }
 
 function openDeleteAccountModal() {
-    console.log('Opening delete account modal');
     const modal = document.getElementById('deleteAccountConfirmModal');
     if (modal) {
         modal.style.display = 'flex';
@@ -2258,7 +2208,6 @@ function openDeleteAccountModal() {
 }
 
 function closeDeleteAccountModal() {
-    console.log('Closing delete account modal');
     const modal = document.getElementById('deleteAccountConfirmModal');
     if (modal) {
         modal.style.display = 'none';
@@ -2267,33 +2216,28 @@ function closeDeleteAccountModal() {
 }
 
 function fillAccountDetails() {
-    console.log('Filling account details');
     $('#accountEmail').val(dbUser.user.email);
     $('#accountUsername').val(dbUser.user.username);
     $('#accountCallSign').val(dbUser.user.callSign);
 }
 
 function initializeAccountSettings() {
-    console.log('Initializing account settings');
     $('#panic-button-check-sound').prop("checked", dbUser.user.panicButtonSound);
     $('#alert-volume-slider').val(dbUser.user.alertVolumeLevel || 50);
     $('#volume-display').text(dbUser.user.alertVolumeLevel || 50);
 }
 
 function cancelUsername() {
-    console.log('Canceling username change');
     $('#accountUsername').val(dbUser.user.username);
     $('#updateUsernameBtns').hide();
 }
 
 function cancelCallSign() {
-    console.log('Canceling call sign change');
     $('#accountCallSign').val(dbUser.user.callSign);
     $('#updateCallSignBtns').hide();
 }
 
 function togglePanicBtnSound() {
-    console.log('Toggling panic button sound');
     var socket = io();
     socket.emit('update_panic_btn_sound', dbUser);
     socket.on('load_panic_btn_result', (res) => {
@@ -2303,7 +2247,6 @@ function togglePanicBtnSound() {
 }
 
 function adjustAlertVolumeSlider() {
-    console.log('Adjusting alert volume');
     var socket = io();
     var volumeAmount = $('#alert-volume-slider').val();
     var myObj = {
@@ -2328,7 +2271,6 @@ function openAlertVolumeHelp() {
 
 // Call 911 Modal Functions
 function openCall911Modal() {
-    console.log('Opening 911 call modal');
     const modal = document.getElementById('call911Modal');
     if (modal) {
         modal.style.display = 'flex';
@@ -2343,7 +2285,6 @@ function openCall911Modal() {
 }
 
 function closeCall911Modal() {
-    console.log('Closing 911 call modal');
     const modal = document.getElementById('call911Modal');
     if (modal) {
         modal.style.display = 'none';
@@ -2355,7 +2296,6 @@ function closeCall911Modal() {
 }
 
 function submit911Call() {
-    console.log('Submitting 911 call');
     
     // Get form data
     const name = document.getElementById('call911Name').value.trim();
@@ -2546,10 +2486,8 @@ function renderLinkedFirearms(firearms, civilianId) {
             let linkedInfo = '';
 
             if (isLinkedToCurrent) {
-                console.log('Rendering DELINK firearm button with gradient styles');
                 buttonHtml = `<button onclick=\"delinkFirearm('${firearm._id}')\" style=\"background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%) !important; color:#fff !important; border:none !important; border-radius:8px !important; padding:0.6rem 1.2rem !important; font-weight:500 !important; cursor:pointer !important; width:100% !important; margin-top:0.5rem !important; transition:all 0.2s ease !important; font-size:1rem !important; box-shadow:0 4px 14px 0 rgba(239,68,68,0.4) !important;\">Delink</button>`;
             } else {
-                console.log('Rendering LINK firearm button with gradient styles');
                 buttonHtml = `<button onclick=\"linkFirearm('${firearm._id}')\" style=\"background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%) !important; color:#fff !important; border:none !important; border-radius:8px !important; padding:0.6rem 1.2rem !important; font-weight:500 !important; cursor:pointer !important; width:100% !important; margin-top:0.5rem !important; transition:all 0.2s ease !important; font-size:1rem !important; box-shadow:0 4px 14px 0 rgba(99,102,241,0.4) !important;\">Link</button>`;
                 if (isLinkedToOther && firearm?.firearm?.linkedCivilianID !== "") {
                     linkedInfo = `<p style=\"color:#a0aec0; font-size:0.875rem; margin:0.5rem 0 0;\">Linked to ${linkedCivName}</p>`;
@@ -3090,7 +3028,6 @@ function createLicenseModern() {
     // If we're in the civilian modal, use the selected civilian ID
     // If we're in the main licenses tab, leave it empty for now
     const civilianId = document.getElementById('civIdHidden').value;
-    console.log('Creating license with civilian ID:', civilianId);
     
     const formData = {
         type: document.getElementById('newLicenseType').value.trim(),
@@ -3099,8 +3036,6 @@ function createLicenseModern() {
         notes: document.getElementById('newLicenseNotes').value.trim() || "",
         civilianID: civilianId || ""
     };
-    
-    console.log('License form data:', formData);
     
     // Validate required fields
     if (!formData.type || !formData.status || !formData.expirationDate) {
