@@ -846,6 +846,25 @@
       }
     }
   </style>
+  <style>
+    @media (max-width: 768px) {
+      .top-nav {
+        display: none !important;
+      }
+    }
+  </style>
+  <style>
+    @media (min-width: 769px) {
+      #lpc-footer {
+        margin-left: 280px;
+      }
+    }
+    @media (max-width: 768px) {
+      #lpc-footer {
+        margin-left: 0;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -1029,10 +1048,10 @@
         <div style="display: flex; align-items: center; gap: 1.25rem;">
           <i class="fa fa-lightbulb" style="font-size: 1.7rem; color: #f7fafc;"></i>
           <div>
-            <div style="font-size: 1.15rem; font-weight: 600; letter-spacing: 0.01em;">💡 Tips & Tricks</div>
+            <div style="font-size: 1.15rem; font-weight: 600; letter-spacing: 0.01em;">Tips & Tricks</div>
             <div style="font-size: 1rem; color: #e0e7ff; margin-top: 0.15rem;">
               Did you know? You can quickly add a new civilian, vehicle, or firearm using the <b>+ Add</b> buttons below!<br>
-              Need help or want to give feedback? <a href="https://discord.gg/lines" target="_blank" rel="noopener" style="color: #f093fb; text-decoration: underline; font-weight: 500;">Join our Discord</a> or check out the <a href="/faq" style="color: #f093fb; text-decoration: underline; font-weight: 500;">FAQ</a>.
+              Need help or want to give feedback? <a href="https://discord.gg/3ECFhqe" target="_blank" rel="noopener" style="color: #f093fb; text-decoration: underline; font-weight: 500;">Join our Discord</a> or check out the <a href="/faq" style="color: #f093fb; text-decoration: underline; font-weight: 500;">FAQ</a>.
             </div>
           </div>
         </div>
@@ -2020,7 +2039,7 @@
   </script>
 
   <!-- Modern Footer -->
-  <footer id="lpc-footer" style="background: var(--dark-bg); color: var(--text-secondary); padding: 2rem 0 1.5rem 0; border-top: 1px solid var(--border-color); margin-top: 3rem; margin-left: 280px; transition: margin-left 0.3s;">
+  <footer id="lpc-footer" style="background: var(--dark-bg); color: var(--text-secondary); padding: 2rem 0 1.5rem 0; border-top: 1px solid var(--border-color); margin-top: 3rem; transition: margin-left 0.3s;">
     <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
               <div style="display: flex; align-items: center; gap: 0.75rem;">
           <img src="/static/images/lpc-logo.svg?v=2" alt="LPC Logo" style="width: 32px; height: 32px; border-radius: 6px;">
@@ -2029,19 +2048,12 @@
       <div style="margin-top: 1rem; font-size: 1rem; color: var(--text-secondary);">&copy; <%= new Date().getFullYear() %> Lines Police CAD. Making roleplay easier.</div>
       <div style="margin-top: 1.5rem; display: flex; gap: 1.2rem;">
         <a href="https://github.com/linespolicecad" target="_blank" rel="noopener" style="color: var(--text-secondary); font-size: 1.3rem;"><i class="fab fa-github"></i></a>
-        <a href="https://discord.gg/lines" target="_blank" rel="noopener" style="color: var(--text-secondary); font-size: 1.3rem;"><i class="fab fa-discord"></i></a>
+        <a href="https://discord.gg/3ECFhqe" target="_blank" rel="noopener" style="color: var(--text-secondary); font-size: 1.3rem;"><i class="fab fa-discord"></i></a>
         <a href="mailto:support@linespolicecad.com" style="color: var(--text-secondary); font-size: 1.3rem;"><i class="fa fa-envelope"></i></a>
       </div>
       <div style="margin-top: 2.5rem; color: #44475a; font-size: 0.95rem;">Made with <span style="color: #f093fb;">&#10084;</span> by the LPC Team</div>
     </div>
   </footer>
-  <style>
-    @media (max-width: 768px) {
-      #lpc-footer {
-        margin-left: 0 !important;
-      }
-    }
-  </style>
 
   <!-- New Civilian Choice Modal -->
   <div id="newCivChoiceModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
