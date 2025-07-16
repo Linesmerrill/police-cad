@@ -4,6 +4,12 @@
   "version": "4.0.0",
   "main": "server.js",
   "dependencies": {
+    "@heroui/button": "^2.2.22",
+    "@heroui/drawer": "^2.2.19",
+    "@heroui/navbar": "^2.2.20",
+    "@heroui/react": "^2.7.11",
+    "@heroui/system": "^2.4.18",
+    "@heroui/theme": "^2.4.17",
     "async": "^3.2.2",
     "axios": "^0.25.0",
     "bcrypt-nodejs": "0.0.3",
@@ -50,6 +56,7 @@
     "node": "20.x"
   },
   "devDependencies": {
-    "nodemon": "^2.0.22"
+    "nodemon": "^2.0.22",
+    "tailwindcss": "^4.1.11"
   }
 }
