@@ -515,9 +515,115 @@ $(document).ready(function () {
     }
     $("#detailsInfo").html(detailsHtml);
 
+    // --- Linked Items Section (Licenses, Vehicles, Firearms) ---
+    if (currentType === "Civilian") {
+      // Licenses
+      let licensesHtml = `
+        <h5 class="text-white mb-2">Licenses (${licenses.length})</h5>
+        ${
+          licenses.length > 0
+            ? licenses
+                .map(
+                  (license) => `
+                <div class="details-item">
+                  <div class="d-flex justify-content-between">
+                    <span>${license.type || "N/A"}</span>
+                    <span class="${isExpired(license.expirationDate) ? 'text-danger' : 'text-success'}">${
+                      license.status || "N/A"
+                    }</span>
+                  </div>
+                  <p class="text-gray mb-0">Expires: ${
+                    license.expirationDate || "N/A"
+                  }</p>
+                  <p class="text-gray mb-0">Notes: ${
+                    license.notes || "N/A"
+                  }</p>
+                </div>
+              `
+                )
+                .join("")
+            : '<p class="text-gray">No licenses found.</p>'
+        }
+      `;
+      $("#licenses").html(licensesHtml);
+
+      // Vehicles
+      let vehiclesHtml = `
+        <h5 class="text-white mb-2">Registered Vehicles (${vehicles.length})</h5>
+        ${
+          vehicles.length > 0
+            ? vehicles
+                .map(
+                  (vehicle) => `
+                <div class="details-item">
+                  <div class="d-flex justify-content-between">
+                    <span>${vehicle.make || ""} ${vehicle.model || ""}</span>
+                    <span class="${vehicle.isStolen === 'true' ? 'text-danger' : 'text-success'}">${
+                      vehicle.isStolen === 'true' ? 'Stolen' : 'Not Stolen'
+                    }</span>
+                  </div>
+                  <p class="text-gray mb-0">VIN: ${
+                    vehicle.vin?.toUpperCase() || "N/A"
+                  }</p>
+                  <p class="text-gray mb-0">Plate: ${
+                    vehicle.plate || "N/A"
+                  } (${vehicle.licensePlateState || "N/A"})</p>
+                  <p class="text-gray mb-0">Year: ${
+                    vehicle.year || "N/A"
+                  }</p>
+                </div>
+              `
+                )
+                .join("")
+            : '<p class="text-gray">No registered vehicles found.</p>'
+        }
+      `;
+      $("#vehicles").html(vehiclesHtml);
+
+      // Firearms
+      let firearmsHtml = `
+        <h5 class="text-white mb-2">Registered Firearms (${firearms.length})</h5>
+        ${
+          firearms.length > 0
+            ? firearms
+                .map(
+                  (firearm) => `
+                <div class="details-item">
+                  <div class="d-flex justify-content-between">
+                    <span>${firearm.name || "N/A"}</span>
+                    <span class="${firearm.isStolen === 'true' ? 'text-danger' : 'text-success'}">${
+                      firearm.isStolen === 'true' ? 'Stolen' : 'Not Stolen'
+                    }</span>
+                  </div>
+                  <p class="text-gray mb-0">Serial: ${
+                    firearm.serialNumber || "N/A"
+                  }</p>
+                  <p class="text-gray mb-0">Caliber: ${
+                    firearm.caliber || "N/A"
+                  }</p>
+                </div>
+              `
+                )
+                .join("")
+            : '<p class="text-gray">No registered firearms found.</p>'
+        }
+      `;
+      $("#firearms").html(firearmsHtml);
+    }
+
     // --- Records Sub-Tabs Logic ---
-    const isCriminalTabActive = $("#tabCriminalHistory").hasClass("active");
-    const isMedicalTabActive = $("#tabMedicalHistory").hasClass("active");
+    // Fix race condition: Check if tabs exist and have proper state, default to Criminal tab if uncertain
+    const $criminalTab = $("#tabCriminalHistory");
+    const $medicalTab = $("#tabMedicalHistory");
+    
+    // If neither tab is active, default to Criminal tab
+    if (!$criminalTab.hasClass("active") && !$medicalTab.hasClass("active")) {
+      $criminalTab.addClass("active");
+      $medicalTab.removeClass("active");
+    }
+    
+    const isCriminalTabActive = $criminalTab.hasClass("active");
+    const isMedicalTabActive = $medicalTab.hasClass("active");
 
     // Criminal History & Arrest Reports (only if Criminal tab is active)
     if (isCriminalTabActive && currentType === "Civilian") {
