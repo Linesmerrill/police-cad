@@ -72,15 +72,15 @@ function renderNotifications() {
   $list.empty();
 
   allNotifications.forEach((notification) => {
-    const isUnseen = !notification.seen ? "background-color: #1e3a8a;" : "";
+    const isUnseen = !notification.seen ? "background: rgba(102,126,234,0.1); border-left: 3px solid #667eea;" : "";
     let actionButtons = "";
     if (
       ["friend_request", "join_request"].includes(notification.type) &&
       !notification.status
     ) {
       actionButtons = `
-          <div class="btn-group pull-right" style="margin-left: 10px;">
-            <button class="btn btn-success btn-sm" onclick="handleNotificationAction('${
+          <div style="display: flex; gap: 0.5rem; margin-left: 1rem;">
+            <button style="background: #48bb78; color: #fff; border: none; border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;" onclick="handleNotificationAction('${
               notification.notificationId
             }', 'approved')" 
               ${
@@ -94,7 +94,7 @@ function renderNotifications() {
                   : "Approve"
               }
             </button>
-            <button class="btn btn-danger btn-sm" onclick="handleNotificationAction('${
+            <button style="background: #f56565; color: #fff; border: none; border-radius: 6px; padding: 0.4rem 0.8rem; font-size: 0.9rem; cursor: pointer; transition: all 0.2s;" onclick="handleNotificationAction('${
               notification.notificationId
             }', 'declined')" 
               ${
@@ -111,7 +111,7 @@ function renderNotifications() {
           </div>
         `;
     } else if (notification.status) {
-      actionButtons = `<p class="text-muted pull-right" style="margin: 0;">${
+      actionButtons = `<p style="color: #a0aec0; margin: 0; font-size: 0.9rem;">${
         notification.status === "approved" ? "Accepted" : "Declined"
       } request</p>`;
     }
@@ -128,9 +128,9 @@ function renderNotifications() {
     }
 
     $list.append(`
-        <div class="notification-item" style="padding: 10px; border-bottom: 1px solid #4b5563; ${isUnseen}">
-          <div class="row">
-            <div class="col-xs-2">
+        <div class="notification-item" style="padding: 1.2rem; border-bottom: 1px solid #35385a; ${isUnseen}; transition: all 0.2s;">
+          <div style="display: flex; align-items: flex-start; gap: 1rem;">
+            <div style="flex-shrink: 0;">
               <img src="${
                 notification.senderProfilePic ||
                 "https://ui-avatars.com/api/?name=" +
@@ -139,19 +139,21 @@ function renderNotifications() {
               }" 
                 alt="${
                   notification.senderUsername || "Unknown"
-                }" style="width: 50px; height: 50px; border-radius: 50%;">
+                }" style="width: 50px; height: 50px; border-radius: 50%; border: 2px solid #35385a;">
             </div>
-            <div class="col-xs-8">
-              <div style="display: flex; align-items: center;">
-                <p style="margin: 0; flex: 1;">${message}</p>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;">
+                <div style="flex: 1; min-width: 0;">
+                  <p style="margin: 0 0 0.5rem 0; color: #f7fafc; font-size: 1rem; line-height: 1.4;">${message}</p>
+                  <small style="color: #a0aec0; font-size: 0.9rem;">${notification.timeAgo}</small>
+                </div>
                 ${actionButtons}
               </div>
-              <small class="text-muted">${notification.timeAgo}</small>
             </div>
-            <div class="col-xs-2 text-right">
-              <button class="btn btn-link" onclick="openNotificationMenu('${
+            <div style="flex-shrink: 0;">
+              <button style="background: none; border: none; color: #a0aec0; font-size: 1.2rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: all 0.2s;" onclick="openNotificationMenu('${
                 notification.notificationId
-              }')">
+              }')" onmouseover="this.style.color='#f7fafc'" onmouseout="this.style.color='#a0aec0'">
                 <i class="fas fa-ellipsis-v"></i>
               </button>
             </div>
@@ -302,20 +304,29 @@ function openNotificationMenu(notificationId) {
   if (!notification) return;
 
   // Update modal content based on seen status
-  const $modalBody = $("#notificationMenuModal .modal-body");
+  const $modalBody = $("#notificationMenuModal .heroui-modal-content div:last-child");
   $modalBody.empty();
   if (!notification.seen) {
     $modalBody.append(`
-        <button class="btn btn-default btn-block" onclick="markNotificationAsRead()">Mark as Read</button>
-        <button class="btn btn-danger btn-block" onclick="deleteNotification()">Delete</button>
+        <button onclick="markNotificationAsRead()" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:left; width:100%; margin-bottom:0.75rem;">
+          <i class="fa fa-check" style="margin-right:0.5rem; color:#48bb78;"></i>
+          Mark as Read
+        </button>
+        <button onclick="deleteNotification()" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:left; width:100%;">
+          <i class="fa fa-trash" style="margin-right:0.5rem;"></i>
+          Delete
+        </button>
       `);
   } else {
     $modalBody.append(`
-        <button class="btn btn-danger btn-block" onclick="deleteNotification()">Delete</button>
+        <button onclick="deleteNotification()" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:left; width:100%;">
+          <i class="fa fa-trash" style="margin-right:0.5rem;"></i>
+          Delete
+        </button>
       `);
   }
 
-  $("#notificationMenuModal").modal("show");
+  openNotificationMenuModal();
 }
 
 function markNotificationAsRead() {
@@ -333,7 +344,7 @@ function markNotificationAsRead() {
       );
       renderNotifications();
       fetchNotifications(0); // Refresh unseenCount
-      $("#notificationMenuModal").modal("hide");
+      closeNotificationMenuModal();
     },
     error: function (xhr) {
       console.error("Error marking notification as read:", xhr.responseText);
@@ -359,7 +370,7 @@ function deleteNotification() {
     method: "DELETE",
     success: function () {
       fetchNotifications(0); // Refresh unseenCount
-      $("#notificationMenuModal").modal("hide");
+      closeNotificationMenuModal();
     },
     error: function (xhr) {
       console.error("Error deleting notification:", xhr.responseText);
@@ -369,6 +380,10 @@ function deleteNotification() {
       );
     },
   });
+}
+
+function closeNotificationMenuModal() {
+  $("#notificationMenuModal").modal("hide");
 }
 
 function showToastNotification(notification) {
