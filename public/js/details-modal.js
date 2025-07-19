@@ -46,11 +46,9 @@ $(document).ready(function () {
     if (type === "Civilian" && (!isFromLink || civilianCache.civilianId !== item._id)) {
       civilianCache = {
         civilianId: null,
-        vehicles: null,
-        firearms: null,
-        vehiclePage: 1,
+        vehicles: {},
+        firearms: {},
         vehicleTotal: 0,
-        firearmPage: 1,
         firearmTotal: 0
       };
     }
@@ -1211,11 +1209,9 @@ $(document).ready(function () {
       // Clear cache when clicking on owner link (different civilian)
       civilianCache = {
         civilianId: null,
-        vehicles: null,
-        firearms: null,
-        vehiclePage: 1,
+        vehicles: {},
+        firearms: {},
         vehicleTotal: 0,
-        firearmPage: 1,
         firearmTotal: 0
       };
       
@@ -1286,11 +1282,9 @@ $(document).ready(function () {
   // Cache for civilian data
   let civilianCache = {
     civilianId: null,
-    vehicles: null,
-    firearms: null,
-    vehiclePage: 1,
+    vehicles: {}, // Object to store vehicles by page: { 0: [...], 1: [...], etc }
+    firearms: {}, // Object to store firearms by page: { 0: [...], 1: [...], etc }
     vehicleTotal: 0,
-    firearmPage: 1,
     firearmTotal: 0
   };
 
@@ -1304,14 +1298,15 @@ $(document).ready(function () {
     const civilianId = currentItem?._id;
     if (!civilianId) return;
     
-    // Check if we have cached data for this civilian
-    if (civilianCache.civilianId === civilianId && civilianCache.vehicles !== null) {
-      displayVehicles(civilianCache.vehicles, civilianCache.vehicleTotal, page);
+    // Check if we have cached data for this civilian and page
+    const cacheKey = page - 1; // Convert to 0-based index for cache
+    if (civilianCache.civilianId === civilianId && civilianCache.vehicles[cacheKey]) {
+      displayVehicles(civilianCache.vehicles[cacheKey], civilianCache.vehicleTotal, page);
       return;
     }
     
     vehiclePage = page;
-    const url = `${API_URL}/api/v1/vehicles/registered-owner/${civilianId}?limit=3&page=0`;
+    const url = `${API_URL}/api/v1/vehicles/registered-owner/${civilianId}?limit=3&page=${page - 1}`;
 
     $('#vehiclesList').html(`
       <div class="text-center">
@@ -1371,9 +1366,9 @@ $(document).ready(function () {
         const vehicles = response.vehicles || [];
         vehicleTotal = response.total || 0;
         
-        // Cache the results
+        // Cache the results by page
         civilianCache.civilianId = civilianId;
-        civilianCache.vehicles = vehicles;
+        civilianCache.vehicles[cacheKey] = vehicles;
         civilianCache.vehicleTotal = vehicleTotal;
         
         // Wait for loading animation to complete (1.2 seconds) then show results
@@ -1453,14 +1448,15 @@ $(document).ready(function () {
     const civilianId = currentItem?._id;
     if (!civilianId) return;
     
-    // Check if we have cached data for this civilian
-    if (civilianCache.civilianId === civilianId && civilianCache.firearms !== null) {
-      displayFirearms(civilianCache.firearms, civilianCache.firearmTotal, page);
+    // Check if we have cached data for this civilian and page
+    const cacheKey = page - 1; // Convert to 0-based index for cache
+    if (civilianCache.civilianId === civilianId && civilianCache.firearms[cacheKey]) {
+      displayFirearms(civilianCache.firearms[cacheKey], civilianCache.firearmTotal, page);
       return;
     }
     
     firearmPage = page;
-    const url = `${API_URL}/api/v1/firearms/registered-owner/${civilianId}?limit=3&page=0`;
+    const url = `${API_URL}/api/v1/firearms/registered-owner/${civilianId}?limit=3&page=${page - 1}`;
     $('#firearmsList').html(`
       <div class="text-center">
         <div class="loading-step mb-2">
@@ -1519,9 +1515,9 @@ $(document).ready(function () {
         const firearms = response.firearms || [];
         firearmTotal = response.total || 0;
         
-        // Cache the results
+        // Cache the results by page
         civilianCache.civilianId = civilianId;
-        civilianCache.firearms = firearms;
+        civilianCache.firearms[cacheKey] = firearms;
         civilianCache.firearmTotal = firearmTotal;
         
         // Wait for loading animation to complete (1.2 seconds) then show results
@@ -1598,4 +1594,6 @@ $(document).ready(function () {
   window.searchFirearm = searchFirearm;
   window.displayVehicles = displayVehicles;
   window.displayFirearms = displayFirearms;
+  window.loadVehicles = loadVehicles;
+  window.loadFirearms = loadFirearms;
 });
