@@ -1,8 +1,13 @@
 // Shared Notepad Module
 // This module contains all notepad functionality to be used by both police and dispatch dashboards
 
-// Configuration
-const API_BASE_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1';
+// Configuration - will be set by the dashboard
+let API_BASE_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1';
+
+// Function to set API URL from dashboard
+function setApiUrl(apiUrl) {
+  API_BASE_URL = apiUrl + '/api/v1';
+}
 
 // Global variables
 let userNotepadNotes = [];
@@ -408,4 +413,5 @@ window.showMobileTab = showMobileTab;
 window.selectNote = selectNote;
 window.clearNoteSelection = clearNoteSelection;
 window.saveNoteFromForm = saveNoteFromForm;
-window.initNotepad = initNotepad; 
+window.initNotepad = initNotepad;
+window.setApiUrl = setApiUrl; 

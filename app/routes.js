@@ -502,6 +502,7 @@ module.exports = function (app, passport, server) {
       redirect: encodeURIComponent(redirect),
       context: null,
       departmentId,
+      apiUrl: policeCadApiUrl,
     });
   });
 
@@ -515,6 +516,7 @@ module.exports = function (app, passport, server) {
       redirect: encodeURIComponent(redirect),
       context: null,
       departmentId,
+      apiUrl: policeCadApiUrl,
     });
   });
 

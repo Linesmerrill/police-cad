@@ -2461,6 +2461,10 @@ function showBoloModal() {
   var civLastName = "";
 
   $(document).ready(function () {
+    // Set API URL for shared notepad module
+    if (typeof setApiUrl === 'function') {
+      setApiUrl('<%= apiUrl %>');
+    }
 
     fetchAndRenderDepartments();
     $('[title]').tooltip();

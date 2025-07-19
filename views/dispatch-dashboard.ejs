@@ -2389,6 +2389,11 @@
   }
 
   $(document).ready(function () {
+    // Set API URL for shared notepad module
+    if (typeof setApiUrl === 'function') {
+      setApiUrl('<%= apiUrl %>');
+    }
+
     // $('#officerListTable').DataTable({
     //   "bLengthChange": false,
     //   "pageLength": 5,
