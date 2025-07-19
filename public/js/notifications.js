@@ -382,6 +382,10 @@ function deleteNotification() {
   });
 }
 
+function closeNotificationMenuModal() {
+  $("#notificationMenuModal").modal("hide");
+}
+
 function showToastNotification(notification) {
   const toastId = `toast-${notification._id}`;
   let message;
