@@ -1,0 +1,144 @@
+/* Department Background Image System */
+/* This file provides consistent background image styling for all department dashboards */
+
+/* Department background image mapping */
+:root {
+  --department-bg-image: url('/static/images/civ-bkground.jpg'); /* Default */
+}
+
+/* Main content background */
+.main-content {
+  position: relative;
+}
+
+.main-content::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 280px; /* Account for sidebar width */
+  right: 0;
+  bottom: 0;
+  background-image: var(--department-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  opacity: 0.6; /* Very visible background */
+  z-index: -1;
+  transition: left 0.3s ease;
+}
+
+.main-content.sidebar-collapsed::before {
+  left: 72px; /* Account for collapsed sidebar width */
+}
+
+/* HeroUI Pro Sidebar User Profile Background */
+.heroui-sidebar .user-profile {
+  position: relative;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-radius: 12px;
+  margin: 0 1rem 1rem 1rem;
+  overflow: hidden;
+}
+
+.heroui-sidebar .user-profile::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: var(--department-bg-image);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.85; /* Very prominent background */
+  z-index: -1;
+  border-radius: 12px;
+}
+
+.heroui-sidebar .user-profile::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(26, 32, 44, 0.8) 0%, rgba(23, 25, 35, 0.8) 100%);
+  z-index: -1;
+  border-radius: 12px;
+}
+
+/* Legacy sidebar user profile background (for old dashboards) */
+#sidebar .img.bg-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+#sidebar .img.bg-wrap::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: var(--department-bg-image);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.9; /* Very prominent background */
+  z-index: -1;
+}
+
+#sidebar .img.bg-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(50, 55, 61, 0.9) 0%, rgba(50, 55, 61, 0.9) 100%);
+  z-index: -1;
+}
+
+/* Ensure user profile elements appear above background */
+.user-avatar,
+.user-name,
+.user-role,
+.subscription-badge,
+.user-logo h3,
+.user-logo h5,
+.profile-picture {
+  position: relative;
+  z-index: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-content::before {
+    left: 0;
+  }
+  
+  .heroui-sidebar .user-profile {
+    margin: 0 0.5rem 1rem 0.5rem;
+  }
+}
+
+/* Department-specific background images */
+.department-civilian {
+  --department-bg-image: url('/static/images/civ-bkground.jpg');
+}
+
+.department-police {
+  --department-bg-image: url('/static/images/police-corner-bg.jpg');
+}
+
+.department-dispatch {
+  --department-bg-image: url('/static/images/dispatch-corner-bg2.jpg');
+}
+
+.department-ems {
+  --department-bg-image: url('/static/images/ems-bkground.jpg');
+}
+
+.department-fire {
+  --department-bg-image: url('/static/images/fire-ems-corner-bg.jpg');
+} 

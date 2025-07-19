@@ -396,7 +396,7 @@
             ${isOtherDepartments ? `
               <button class="btn btn-primary btn-sm" onclick="showRequestJoinModal()">Request to Join</button>
             ` : dashboardUrl ? `
-              <button class="btn btn-primary btn-sm" onclick="goToDepartment('${dept._id}', '${dashboardUrl}')">Go to Dashboard</button>
+              <button class="btn btn-primary btn-sm" onclick="goToDepartment('${dept._id}', '${dashboardUrl}', '${dept.name || ''}')">Go to Dashboard</button>
             ` : `
               <p class="text-gray-400">No dashboard available</p>
             `}
@@ -451,7 +451,25 @@
       return '';
     }
 
-    function goToDepartment(departmentId, dashboardUrl) {
+    function encodeDepartmentId(departmentId) {
+      // Simple reversible encoding: convert to base64 and replace some characters
+      const base64 = btoa(departmentId);
+      return base64
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+    }
+
+    function goToDepartment(departmentId, dashboardUrl, departmentName) {
+      // For civilian departments, navigate directly with parameters
+      if (dashboardUrl === '/civ-dashboard') {
+        const encodedDeptId = encodeDepartmentId(departmentId);
+        const url = `${dashboardUrl}?dept=${encodeURIComponent(departmentName)}&d=${encodedDeptId}`;
+        window.location.href = url;
+        return;
+      }
+      
+      // For other departments, use the form submission method
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = '/select-department';
