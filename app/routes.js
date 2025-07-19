@@ -314,7 +314,28 @@ module.exports = function (app, passport, server) {
     
     // Get department info from query parameters
     const departmentName = req.query.dept || null;
-    const departmentId = req.query.deptId || null;
+    const encodedDeptId = req.query.d || null;
+    
+    // Decode the department ID if present
+    let departmentId = null;
+    if (encodedDeptId) {
+      try {
+        // Reverse the encoding: restore base64 padding and decode
+        let base64 = encodedDeptId
+          .replace(/-/g, '+')
+          .replace(/_/g, '/');
+        
+        // Add padding back
+        while (base64.length % 4) {
+          base64 += '=';
+        }
+        
+        departmentId = Buffer.from(base64, 'base64').toString('utf8');
+      } catch (e) {
+        console.error('Failed to decode department ID:', e);
+        departmentId = null;
+      }
+    }
     
     res.render("civ-dashboard", {
       user: req.user,

@@ -67,7 +67,8 @@ function fetchAndRenderModernDepartments() {
             action = "/civ-dashboard";
             // Add department name as query parameter for civilian departments
             if (action !== "#") {
-              action += `?dept=${encodeURIComponent(name)}&deptId=${encodeURIComponent(departmentId)}`;
+              const encodedDeptId = encodeDepartmentId(departmentId);
+              action += `?dept=${encodeURIComponent(name)}&d=${encodedDeptId}`;
             }
             break;
           case "police":
@@ -137,10 +138,19 @@ function fetchAndRenderModernDepartments() {
         // Check if there's a specific department in the URL
         const urlParams = new URLSearchParams(window.location.search);
         const urlDeptName = urlParams.get('dept');
+        const encodedDeptId = urlParams.get('d');
         
         if (urlDeptName) {
           // Use the department name from URL (for specific department selection)
           updateDashboardTitle(decodeURIComponent(urlDeptName));
+          
+          // Store the decoded department ID for potential future use
+          if (encodedDeptId) {
+            const decodedDeptId = decodeDepartmentId(encodedDeptId);
+            if (decodedDeptId) {
+              window.currentDepartmentId = decodedDeptId;
+            }
+          }
         } else if (civilianDepartmentName) {
           // Only update if the title is still the default "Civilian Dashboard"
           const currentTitle = document.getElementById('main-dashboard-title');
@@ -200,6 +210,34 @@ function renderModernDepartmentsFallback() {
   $("#departmentsSubmenu").html(fallbackHtml);
   console.log('✅ Fallback rendered');
 } 
+
+function encodeDepartmentId(departmentId) {
+  // Simple reversible encoding: convert to base64 and replace some characters
+  const base64 = btoa(departmentId);
+  return base64
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
+
+function decodeDepartmentId(encodedId) {
+  // Reverse the encoding: restore base64 padding and decode
+  let base64 = encodedId
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  
+  // Add padding back
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  
+  try {
+    return atob(base64);
+  } catch (e) {
+    console.error('Failed to decode department ID:', e);
+    return null;
+  }
+}
 
 function updateDashboardTitle(departmentName) {
   console.log('🔄 Updating dashboard title to:', departmentName);

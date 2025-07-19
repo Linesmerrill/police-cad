@@ -451,10 +451,20 @@
       return '';
     }
 
+    function encodeDepartmentId(departmentId) {
+      // Simple reversible encoding: convert to base64 and replace some characters
+      const base64 = btoa(departmentId);
+      return base64
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
+    }
+
     function goToDepartment(departmentId, dashboardUrl, departmentName) {
       // For civilian departments, navigate directly with parameters
       if (dashboardUrl === '/civ-dashboard') {
-        const url = `${dashboardUrl}?dept=${encodeURIComponent(departmentName)}&deptId=${encodeURIComponent(departmentId)}`;
+        const encodedDeptId = encodeDepartmentId(departmentId);
+        const url = `${dashboardUrl}?dept=${encodeURIComponent(departmentName)}&d=${encodedDeptId}`;
         window.location.href = url;
         return;
       }
