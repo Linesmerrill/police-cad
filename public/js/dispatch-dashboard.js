@@ -520,7 +520,7 @@ $(document).ready(function () {
                     ? `
                   <div>
                    
-                    <button class="btn btn-md btn-outline-danger" onclick="deleteNote('${note._id}')"><i class="fa fa-trash"></i></button>
+                    <button class="btn btn-md btn-outline-danger" onclick="deleteCallNote('${note._id}')"><i class="fa fa-trash"></i></button>
                   </div>
                 `
                     : ""
@@ -947,7 +947,7 @@ $(document).ready(function () {
     });
   }
 
-  function deleteNote(noteId) {
+  function deleteCallNote(noteId) {
     if (
       !confirm(
         "Are you sure you want to delete this note? This action cannot be undone."
@@ -1772,6 +1772,11 @@ $(document).ready(function () {
   pollDashboardData();
   setInterval(pollDashboardData, 30000); // Poll every 30 seconds
 
+  // Initialize notepad functionality from shared module
+  if (typeof initNotepad === 'function') {
+    initNotepad();
+  }
+
   window.showBoloModal = showBoloModal;
   window.handleCreateBolo = handleCreateBolo;
   window.clearBoloForm = clearBoloForm;
@@ -1793,30 +1798,8 @@ $(document).ready(function () {
   window.addNote = addNote;
   window.openEditNoteModal = openEditNoteModal;
   window.saveEditedNote = saveEditedNote;
-  window.deleteNote = deleteNote;
+  window.deleteCallNote = deleteCallNote;
   window.createCall = createCall;
   window.changeUnitPage = changeUnitPage;
-  // Delete current note from the form
-  function deleteCurrentNote() {
-    const noteId = $('#note-id').val();
-    if (noteId) {
-      deleteUserNote(noteId);
-      // After deletion, hide the form and show the no-note-selected message
-      hideNoteForm();
-      // On mobile, switch to notes tab to show the updated list
-      if (window.innerWidth <= 768) {
-        setTimeout(() => showMobileTab('notes'), 100);
-      }
-    }
-  }
-
-  window.showAddNoteForm = showAddNoteForm;
-  window.hideNoteForm = hideNoteForm;
-  window.editNote = editNote;
-  window.deleteUserNote = deleteUserNote;
-  window.deleteCurrentNote = deleteCurrentNote;
-  window.selectNote = selectNote;
-  window.clearNoteSelection = clearNoteSelection;
-  window.saveNoteFromForm = saveNoteFromForm;
-  window.showMobileTab = showMobileTab;
+  // Notepad functions are now provided by the shared notepad.js module
 });

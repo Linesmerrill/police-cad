@@ -393,19 +393,8 @@ function clearBoloForm() {
   document.getElementById("create-bolo-form").reset();
 }
 
-// Notepad functionality
-let userNotepadNotes = [];
-
-// Load user notes
-function loadUserNotes() {
-  // Notes are already part of the user object
-  if (dbUser && dbUser.user && dbUser.user.notes) {
-    userNotepadNotes = dbUser.user.notes;
-  } else {
-    userNotepadNotes = [];
-  }
-  renderNotes();
-}
+// Notepad functionality - using shared module
+// The shared notepad module is loaded separately and provides all notepad functionality
 
 // Render notes in the container
 function renderNotes() {
@@ -736,40 +725,12 @@ function saveNoteFromForm() {
   saveNote(noteData);
 }
 
-// Handle note form submission
+// Initialize notepad functionality from shared module
 $(document).ready(function() {
-  $('#note-form').on('submit', function(e) {
-    e.preventDefault();
-    saveNoteFromForm();
-  });
-  
-  // Load notes when notepad modal is shown
-  $('#notepadModal').on('show.bs.modal', function() {
-    loadUserNotes();
-    
-    // On mobile, show notes tab by default
-    if (window.innerWidth <= 768) {
-      showMobileTab('notes');
-    }
-  });
-  
-  // Add CSS for selected note items
-  $('<style>')
-    .prop('type', 'text/css')
-    .html(`
-      .note-item:hover {
-        background-color: #3d3d3d !important;
-      }
-      .note-item.selected {
-        background-color: #007bff !important;
-      }
-      .note-item.selected h6,
-      .note-item.selected p,
-      .note-item.selected small {
-        color: #ffffff !important;
-      }
-    `)
-    .appendTo('head');
+  // Initialize the shared notepad module
+  if (typeof initNotepad === 'function') {
+    initNotepad();
+  }
 });
 
 function clearTextarea() {
@@ -964,10 +925,4 @@ function deleteCurrentNote() {
   }
 }
 
-// Export functions to global scope
-window.showAddNoteForm = showAddNoteForm;
-window.hideNoteForm = hideNoteForm;
-window.editNote = editNote;
-window.deleteNote = deleteNote;
-window.deleteCurrentNote = deleteCurrentNote;
-window.showMobileTab = showMobileTab;
+// Notepad functions are now provided by the shared notepad.js module
