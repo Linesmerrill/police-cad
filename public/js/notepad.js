@@ -19,33 +19,21 @@ function isValidObjectId(id) {
 
 // Load user notes
 function loadUserNotes() {
-  console.log('Loading user notes...');
-  console.log('dbUser:', dbUser);
-  
   // Notes are already part of the user object
   if (dbUser && dbUser.user && dbUser.user.notes) {
     userNotepadNotes = dbUser.user.notes;
-    console.log('Found notes:', userNotepadNotes.length);
   } else {
     userNotepadNotes = [];
-    console.log('No notes found, using empty array');
   }
   renderNotes();
 }
 
 // Render notes in the container
 function renderNotes() {
-  console.log('Rendering notes...');
-  console.log('userNotepadNotes:', userNotepadNotes);
-  
   const container = $('#notes-container');
   const noNotesMessage = $('#no-notes-message');
   
-  console.log('Container found:', container.length > 0);
-  console.log('No notes message found:', noNotesMessage.length > 0);
-  
   if (userNotepadNotes.length === 0) {
-    console.log('No notes to display, showing empty message');
     container.empty();
     noNotesMessage.show();
     return;
@@ -205,7 +193,7 @@ function deleteNote(noteId) {
           dbUser.user.notes = dbUser.user.notes.filter(n => n._id !== noteId);
         }
         // Update our local array to match
-        userNotepadNotes = [...dbUser.user.notes];
+        userNotepadNotes = [...(dbUser.user.notes || [])];
         renderNotes();
       },
       error: function(xhr) {
@@ -266,7 +254,7 @@ function saveNote(noteData) {
           }
         }
         // Update our local array to match
-        userNotepadNotes = [...dbUser.user.notes];
+        userNotepadNotes = [...(dbUser.user.notes || [])];
         renderNotes();
         hideNoteForm();
         // Select the newly updated note
@@ -336,7 +324,7 @@ function saveNote(noteData) {
             dbUser.user.notes.unshift(response.note);
           }
           // Update our local array to match
-          userNotepadNotes = [...dbUser.user.notes];
+          userNotepadNotes = [...(dbUser.user.notes || [])];
         }
         renderNotes();
         hideNoteForm();
@@ -388,7 +376,6 @@ function initNotepad() {
   
   // Load notes when notepad modal is shown
   $('#notepadModal').on('show.bs.modal', function() {
-    console.log('Notepad modal shown, loading notes...');
     loadUserNotes();
     
     // On mobile, show notes tab by default

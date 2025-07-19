@@ -395,6 +395,73 @@ function clearBoloForm() {
 
 // All notepad functionality is now provided by the shared notepad.js module
 
+// Core dashboard functions and event handlers
+function togglePanicBtnSound() {
+  var socket = io();
+  var myReq = {
+    userID: dbUser._id,
+    panicButtonSound: $("#panic-button-check-sound").prop("checked"),
+  };
+  socket.emit("update_panic_button_sound", myReq);
+}
+
+function adjustAlertVolumeSlider() {
+  var socket = io();
+  var myReq = {
+    userID: dbUser._id,
+    alertVolumeLevel: $("#alert-volume-slider").val(),
+  };
+  socket.emit("update_alert_volume", myReq);
+}
+
+function loadCitations() {
+  var socket = io();
+  var myReq = {
+    userID: dbUser._id,
+    communityID: dbUser.user.activeCommunity,
+  };
+  socket.emit("load_citations", myReq);
+}
+
+function loadWarnings() {
+  var socket = io();
+  var myReq = {
+    userID: dbUser._id,
+    communityID: dbUser.user.activeCommunity,
+  };
+  socket.emit("load_warnings", myReq);
+}
+
+function openNameDatabase() {
+  $("#nameDatabaseModal").modal("show");
+}
+
+// Modal event handlers
+$("#ticketModal").on("show.bs.modal", function () {
+  hideTicketCivPopover();
+});
+
+$("#warningModal").on("show.bs.modal", function () {
+  hideWarningCivPopover();
+});
+
+$("#arrestModal").on("show.bs.modal", function () {
+  hideArrestReportPopover();
+});
+
+$("#createWarrantModal").on("show.bs.modal", function () {
+  hideCivPopover();
+});
+
+$("#clearWarrantModal").on("show.bs.modal", function () {
+  hideWarrantClearPopover();
+});
+
+$("#plateDatabaseModal").on("show.bs.modal", function () {
+  // Reset form when modal opens
+  document.getElementById("plate-search-form").reset();
+});
+
 // Initialize notepad functionality from shared module
 $(document).ready(function() {
   // Initialize the shared notepad module
