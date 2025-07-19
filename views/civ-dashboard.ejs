@@ -2327,19 +2327,15 @@
               <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label class="col-md-4 control-label" for="height" style="color: #e0e7ff; font-weight: 500;">Height</label>
                 <div class="col-md-8">
-                  <div style="display: flex; gap: 1rem; align-items: center;">
-                    <label style="color: #a0aec0; margin: 0;">
-                      <input id="imperial" value="imperial" type="radio" name="heightClassification" checked onclick="toggleInput('height-imperial', 'height-metric')" style="margin-right: 0.5rem;"> Imperial (ft.in.)
-                    </label>
-                    <label style="color: #a0aec0; margin: 0;">
-                      <input id="metric" value="metric" type="radio" name="heightClassification" onclick="toggleInput('height-metric', 'height-imperial')" style="margin-right: 0.5rem;"> Metric (cm)
-                    </label>
+                  <div style="display: flex; background:#1e2028; border:1.5px solid #35385a; border-radius:8px; padding:0.25rem; margin-bottom: 0.75rem; width:fit-content;">
+                    <button type="button" class="height-toggle-btn active" data-value="imperial" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.9rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;">Imperial (ft/in)</button>
+                    <button type="button" class="height-toggle-btn" data-value="metric" style="background:transparent; color:#a0aec0; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.9rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;">Metric (cm)</button>
                   </div>
                 </div>
               </div>
 
               <!-- Height Imperial -->
-              <div class="form-group height-imperial" style="margin-bottom: 1.5rem;">
+              <div class="form-group civ-height-imperial" style="margin-bottom: 1.5rem;">
                 <label class="col-md-4 control-label" for="height" style="color: #e0e7ff; font-weight: 500;">Height</label>
                 <div class="col-md-8">
                   <div style="display: flex; gap: 1rem;">
@@ -2350,7 +2346,7 @@
               </div>
 
               <!-- Height Metric -->
-              <div class="form-group height-metric" style="margin-bottom: 1.5rem; display: none;">
+              <div class="form-group civ-height-metric" style="margin-bottom: 1.5rem; display: none;">
                 <label class="col-md-4 control-label" for="height" style="color: #e0e7ff; font-weight: 500;">Height</label>
                 <div class="col-md-8">
                   <input id="centimeters" name="heightCentimeters" min="0" max="457" type="number" placeholder="cm" class="form-control input-md heroui-input" style="background: #1e2028; border: 1px solid #35385a; color: #f7fafc; border-radius: 8px; padding: 0.75rem;">
@@ -2361,19 +2357,15 @@
               <div class="form-group" style="margin-bottom: 1.5rem;">
                 <label class="col-md-4 control-label" style="color: #e0e7ff; font-weight: 500;">Weight</label>
                 <div class="col-md-8">
-                  <div style="display: flex; gap: 1rem; align-items: center;">
-                    <label style="color: #a0aec0; margin: 0;">
-                      <input id="imperial-weight" value="imperial" type="radio" name="weightClassification" checked onclick="toggleInput('weight-imperial', 'weight-metric')" style="margin-right: 0.5rem;"> Imperial (lbs)
-                    </label>
-                    <label style="color: #a0aec0; margin: 0;">
-                      <input id="metric-weight" value="metric" type="radio" name="weightClassification" onclick="toggleInput('weight-metric', 'weight-imperial')" style="margin-right: 0.5rem;"> Metric (kg)
-                    </label>
+                  <div style="display: flex; background:#1e2028; border:1.5px solid #35385a; border-radius:8px; padding:0.25rem; margin-bottom: 0.75rem; width:fit-content;">
+                    <button type="button" class="weight-toggle-btn active" data-value="imperial" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.9rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;">lbs</button>
+                    <button type="button" class="weight-toggle-btn" data-value="metric" style="background:transparent; color:#a0aec0; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.9rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;">kg</button>
                   </div>
                 </div>
               </div>
 
               <!-- Weight Imperial -->
-              <div class="form-group weight-imperial" style="margin-bottom: 1.5rem;">
+              <div class="form-group civ-weight-imperial" style="margin-bottom: 1.5rem;">
                 <label class="col-md-4 control-label" for="weight" style="color: #e0e7ff; font-weight: 500;">Weight</label>
                 <div class="col-md-8">
                   <input id="pounds" name="weightImperial" min="0" max="1000" type="number" placeholder="lbs" class="form-control input-md heroui-input" style="background: #1e2028; border: 1px solid #35385a; color: #f7fafc; border-radius: 8px; padding: 0.75rem;">
@@ -2381,7 +2373,7 @@
               </div>
 
               <!-- Weight Metric -->
-              <div class="form-group weight-metric" style="margin-bottom: 1.5rem; display: none;">
+              <div class="form-group civ-weight-metric" style="margin-bottom: 1.5rem; display: none;">
                 <label class="col-md-4 control-label" for="weight" style="color: #e0e7ff; font-weight: 500;">Weight</label>
                 <div class="col-md-8">
                   <input id="kilos" name="weightMetric" min="0" max="453" type="number" placeholder="kg" class="form-control input-md heroui-input" style="background: #1e2028; border: 1px solid #35385a; color: #f7fafc; border-radius: 8px; padding: 0.75rem;">
@@ -2580,7 +2572,7 @@
                 <label for="newVehVin" style="color:#e0e7ff; font-weight:500;">VIN*</label>
                 <div style="display:flex; align-items:center; gap:0.5rem;">
                   <input id="newVehVin" name="vin" type="text" class="heroui-input veh-input" style="width:100%; margin-top:0.2rem;" required placeholder="VIN" minlength="17" maxlength="17" />
-                  <button type="button" id="generateNewVinBtn" class="btn btn-info" style="margin-left:0.5rem; padding:0.3rem 1rem; border-radius:8px; font-size:1rem;">Generate</button>
+                  <button type="button" id="generateNewVinBtn" style="background:linear-gradient(135deg,#10b981 0%,#059669 100%); color:#fff; border:none; border-radius:8px; padding:0.5rem 1rem; font-size:0.9rem; font-weight:500; cursor:pointer; transition:all 0.2s ease; box-shadow:0 2px 8px rgba(16,185,129,0.15); display:flex; align-items:center; gap:0.5rem;"><i class="fa fa-magic"></i> Generate</button>
                 </div>
               </div>
             </div>
@@ -2674,7 +2666,7 @@
                   <label for="firearmSerial" style="color:#e0e7ff; font-weight:500;">Serial Number*</label>
                   <div style="display:flex; align-items:center; gap:0.5rem;">
                     <input id="firearmSerial" name="serialNumber" type="text" class="heroui-input firearm-input" style="width:100%; margin-top:0.2rem;" required placeholder="Serial Number" />
-                    <button type="button" id="generateSerialBtn" class="btn btn-info" style="margin-left:0.5rem; padding:0.3rem 1rem; border-radius:8px; font-size:1rem;">Generate</button>
+                    <button type="button" id="generateSerialBtn" style="background:linear-gradient(135deg,#10b981 0%,#059669 100%); color:#fff; border:none; border-radius:8px; padding:0.5rem 1rem; font-size:0.9rem; font-weight:500; cursor:pointer; transition:all 0.2s ease; box-shadow:0 2px 8px rgba(16,185,129,0.15); display:flex; align-items:center; gap:0.5rem;"><i class="fa fa-magic"></i> Generate</button>
                   </div>
                 </div>
               </div>
@@ -2742,7 +2734,7 @@
                 <label for="newFirearmSerial" style="color:#e0e7ff; font-weight:500;">Serial Number*</label>
                 <div style="display:flex; align-items:center; gap:0.5rem;">
                   <input id="newFirearmSerial" name="serialNumber" type="text" class="heroui-input firearm-input" style="width:100%; margin-top:0.2rem;" required placeholder="Serial Number" />
-                  <button type="button" id="generateNewSerialBtn" class="btn btn-info" style="margin-left:0.5rem; padding:0.3rem 1rem; border-radius:8px; font-size:1rem;">Generate</button>
+                  <button type="button" id="generateNewSerialBtn" style="background:linear-gradient(135deg,#10b981 0%,#059669 100%); color:#fff; border:none; border-radius:8px; padding:0.5rem 1rem; font-size:0.9rem; font-weight:500; cursor:pointer; transition:all 0.2s ease; box-shadow:0 2px 8px rgba(16,185,129,0.15); display:flex; align-items:center; gap:0.5rem;"><i class="fa fa-magic"></i> Generate</button>
                 </div>
               </div>
             </div>
