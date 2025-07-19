@@ -1,20 +1,69 @@
 <div id="notepadModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-body">
-          <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-          <h4>Notepad</h4>
-          <hr style="width: 88%;max-width: 100rem;">
-          <div class="row">
-            <div class="col-md-10 col-md-offset-1">
-          <textarea id="notepad-textarea" class="width-100 " rows="15" maxlength="2000"></textarea>
+  <div class="modal-dialog modal-xl" style="max-width: 90%; height: 80vh;">
+    <div class="modal-content" style="background-color: #1e1e1e; color: #ffffff; height: 100%; border: none;">
+      <div class="modal-body" style="padding: 0; height: 100%;">
+        <!-- Header -->
+        <div style="background-color: #2d2d2d; padding: 15px; border-bottom: 1px solid #404040;">
+          <div class="d-flex justify-content-between align-items-center">
+            <h4 style="margin: 0; color: #ffffff;">Notepad</h4>
+            <button class="btn btn-link text-white" type="button" data-dismiss="modal" aria-hidden="true" style="font-size: 18px; padding: 0;">×</button>
+          </div>
         </div>
-        <label class="col-md-4 control-label" for=""></label>
-                <div class="col-md-4 text-align-center">
-                  <button class="btn btn-info" onclick="clearTextarea()">Clear</button>
+        
+        <!-- Main Content Area -->
+        <div class="row" style="height: calc(100% - 70px); margin: 0;">
+          <!-- Sidebar - Notes List -->
+          <div class="col-md-4" style="background-color: #2d2d2d; border-right: 1px solid #404040; padding: 0; height: 100%; overflow-y: auto;">
+            <!-- Add New Note Button -->
+            <div style="padding: 15px; border-bottom: 1px solid #404040;">
+              <button class="btn btn-success btn-block" onclick="showAddNoteForm()" style="background-color: #28a745; border: none;">
+                <i class="fa fa-plus"></i> New Note
+              </button>
+            </div>
+            
+            <!-- Notes List -->
+            <div id="notes-container" style="padding: 0;">
+              <!-- Notes will be loaded here dynamically -->
+            </div>
+            <div id="no-notes-message" class="text-center" style="display: none; padding: 20px; color: #888;">
+              <p>No notes found. Add a new note to get started.</p>
+            </div>
+          </div>
+          
+          <!-- Main Content - Note View/Edit -->
+          <div class="col-md-8" style="background-color: #1e1e1e; padding: 0; height: 100%; overflow-y: auto;">
+            <!-- Note Content Area -->
+            <div id="note-content-area" style="padding: 20px; height: 100%;">
+              <div id="no-note-selected" class="text-center" style="color: #888; margin-top: 50px;">
+                <i class="fa fa-sticky-note" style="font-size: 48px; margin-bottom: 20px;"></i>
+                <h5>Select a note to view or edit</h5>
+                <p>Choose a note from the sidebar or create a new one</p>
+              </div>
+              
+              <!-- Note View/Edit Form (initially hidden) -->
+              <div id="note-form-container" style="display: none; height: 100%;">
+                <div style="margin-bottom: 20px;">
+                  <input type="text" id="note-title" class="form-control" placeholder="Note title" maxlength="100" required 
+                         style="background-color: #2d2d2d; border: 1px solid #404040; color: #ffffff; font-size: 18px; padding: 10px;">
                 </div>
+                <div style="height: calc(100% - 80px);">
+                  <textarea id="note-content" class="form-control" placeholder="Start writing your note..." maxlength="1000" required
+                            style="background-color: #2d2d2d; border: 1px solid #404040; color: #ffffff; height: 100%; resize: none; padding: 15px; font-size: 14px; line-height: 1.6;"></textarea>
+                </div>
+                <div style="margin-top: 15px; text-align: right;">
+                  <button type="button" class="btn btn-secondary" onclick="hideNoteForm()" style="background-color: #6c757d; border: none; margin-right: 10px;">Cancel</button>
+                  <button type="button" class="btn btn-primary" onclick="saveNoteFromForm()" style="background-color: #007bff; border: none;">Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        </div>
+        
+        <!-- Hidden form for submission -->
+        <form id="note-form" style="display: none;">
+          <input type="hidden" id="note-id" value="">
+        </form>
       </div>
     </div>
   </div>
+</div>

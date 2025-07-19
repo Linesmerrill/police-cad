@@ -393,6 +393,282 @@ function clearBoloForm() {
   document.getElementById("create-bolo-form").reset();
 }
 
+// Notepad functionality
+let userNotepadNotes = [];
+
+// Load user notes
+function loadUserNotes() {
+  // Notes are already part of the user object
+  if (dbUser && dbUser.user && dbUser.user.notes) {
+    userNotepadNotes = dbUser.user.notes;
+  } else {
+    userNotepadNotes = [];
+  }
+  renderNotes();
+}
+
+// Render notes in the container
+function renderNotes() {
+  const container = $('#notes-container');
+  const noNotesMessage = $('#no-notes-message');
+  
+  if (userNotepadNotes.length === 0) {
+    container.empty();
+    noNotesMessage.show();
+    return;
+  }
+  
+  noNotesMessage.hide();
+  
+  // Sort notes by updatedAt (newest first)
+  const sortedNotes = [...userNotepadNotes].sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+  
+  container.empty();
+  sortedNotes.forEach(note => {
+    // Handle potential undefined content
+    const content = note.content || '';
+    const previewText = content.length > 50 ? `${content.substring(0, 50)}...` : content;
+    const updatedDate = new Date(note.updatedAt || note.createdAt || Date.now()).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    
+    const noteHtml = `
+      <div class="note-item" data-note-id="${note._id}" onclick="selectNote('${note._id}')" style="padding: 15px; border-bottom: 1px solid #404040; cursor: pointer; transition: background-color 0.2s;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div style="flex: 1; min-width: 0;">
+            <h6 style="margin: 0 0 5px 0; color: #ffffff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${note.title || 'Untitled'}</h6>
+            <p style="margin: 0 0 8px 0; color: #ccc; font-size: 13px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${previewText}</p>
+            <small style="color: #888; font-size: 11px;">${updatedDate}</small>
+          </div>
+          <div style="margin-left: 10px;">
+            <button class="btn btn-sm btn-link text-danger" onclick="event.stopPropagation(); deleteNote('${note._id}')" style="padding: 2px 6px; color: #dc3545;">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    container.append(noteHtml);
+  });
+}
+
+// Show add note form
+function showAddNoteForm() {
+  $('#note-id').val('');
+  $('#note-title').val('');
+  $('#note-content').val('');
+  $('#note-form-container').show();
+  $('#no-note-selected').hide();
+  clearNoteSelection();
+}
+
+// Hide note form
+function hideNoteForm() {
+  $('#note-form-container').hide();
+  $('#no-note-selected').show();
+  $('#note-form')[0].reset();
+  clearNoteSelection();
+}
+
+// Select note for viewing/editing
+function selectNote(noteId) {
+  const note = userNotepadNotes.find(n => n._id === noteId);
+  if (!note) return;
+  
+  // Update visual selection
+  $('.note-item').removeClass('selected');
+  $(`.note-item[data-note-id="${noteId}"]`).addClass('selected');
+  
+  // Show note content
+  $('#note-id').val(note._id);
+  $('#note-title').val(note.title || '');
+  $('#note-content').val(note.content || '');
+  $('#note-form-container').show();
+  $('#no-note-selected').hide();
+}
+
+// Clear note selection
+function clearNoteSelection() {
+  $('.note-item').removeClass('selected');
+}
+
+// Edit note (legacy function for compatibility)
+function editNote(noteId) {
+  selectNote(noteId);
+}
+
+// Delete note
+function deleteNote(noteId) {
+  if (!confirm('Are you sure you want to delete this note?')) {
+    return;
+  }
+  
+  const userId = dbUser._id;
+  $.ajax({
+    url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/users/${userId}/notes/${noteId}`,
+    method: 'DELETE',
+    success: function(response) {
+      // Update the user object with the new notes data
+      if (response && response.user && response.user.notes) {
+        dbUser.user.notes = response.user.notes;
+        userNotepadNotes = dbUser.user.notes;
+      } else {
+        // Fallback to local update
+        userNotepadNotes = userNotepadNotes.filter(n => n._id !== noteId);
+      }
+      renderNotes();
+    },
+    error: function(xhr) {
+      console.error('Error deleting note:', xhr.responseText);
+      // For now, just remove from local array since API doesn't exist
+      userNotepadNotes = userNotepadNotes.filter(n => n._id !== noteId);
+      renderNotes();
+      alert('Note deleted locally (API not available yet)');
+    }
+  });
+}
+
+// Save note (create or update)
+function saveNote(noteData) {
+  const userId = dbUser._id;
+  const noteId = $('#note-id').val();
+  
+  if (noteId) {
+    // Update existing note - preserve createdAt, only update updatedAt
+    const existingNote = userNotepadNotes.find(n => n._id === noteId);
+    const updateData = {
+      title: noteData.title,
+      content: noteData.content,
+      createdAt: existingNote ? existingNote.createdAt : noteData.createdAt,
+      updatedAt: new Date().toISOString()
+    };
+    
+    $.ajax({
+      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/users/${userId}/notes/${noteId}`,
+      method: 'PUT',
+      data: JSON.stringify(updateData),
+      contentType: 'application/json',
+      success: function(response) {
+              // Update the user object with the new notes data
+      if (response && response.user && response.user.notes) {
+        dbUser.user.notes = response.user.notes;
+        userNotepadNotes = dbUser.user.notes;
+      } else {
+        // Fallback to local update
+        const index = userNotepadNotes.findIndex(n => n._id === noteId);
+        if (index !== -1) {
+          userNotepadNotes[index] = response.data || { ...updateData, _id: noteId };
+        }
+      }
+        renderNotes();
+        hideNoteForm();
+      },
+      error: function(xhr) {
+        console.error('Error updating note:', xhr.responseText);
+        // For now, update locally since API doesn't exist
+        const index = userNotepadNotes.findIndex(n => n._id === noteId);
+        if (index !== -1) {
+          userNotepadNotes[index] = { ...updateData, _id: noteId };
+        }
+        renderNotes();
+        hideNoteForm();
+        // Select the newly updated note
+        setTimeout(() => selectNote(noteId), 100);
+        alert('Note updated locally (API not available yet)');
+      }
+    });
+  } else {
+    // Create new note
+    $.ajax({
+      url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/users/${userId}/notes`,
+      method: 'POST',
+      data: JSON.stringify(noteData),
+      contentType: 'application/json',
+      success: function(response) {
+              // Update the user object with the new notes data
+      if (response && response.user && response.user.notes) {
+        dbUser.user.notes = response.user.notes;
+        userNotepadNotes = dbUser.user.notes;
+      } else {
+        // Fallback to local update
+        userNotepadNotes.unshift(response.data || { ...noteData, _id: Date.now().toString() });
+      }
+        renderNotes();
+        hideNoteForm();
+        // Select the newly created note
+        if (response && response.data && response.data._id) {
+          setTimeout(() => selectNote(response.data._id), 100);
+        }
+      },
+      error: function(xhr) {
+        console.error('Error creating note:', xhr.responseText);
+        // For now, add locally since API doesn't exist
+        const newNote = { ...noteData, _id: Date.now().toString() };
+        userNotepadNotes.unshift(newNote);
+        renderNotes();
+        hideNoteForm();
+        // Select the newly created note
+        setTimeout(() => selectNote(newNote._id), 100);
+        alert('Note created locally (API not available yet)');
+      }
+    });
+  }
+}
+
+// Save note from form
+function saveNoteFromForm() {
+  const title = $('#note-title').val().trim();
+  const content = $('#note-content').val().trim();
+  
+  if (!title || !content) {
+    alert('Please fill in both title and content.');
+    return;
+  }
+  
+  const currentTime = new Date().toISOString();
+  const noteData = {
+    title: title,
+    content: content,
+    createdAt: currentTime,
+    updatedAt: currentTime
+  };
+  
+  saveNote(noteData);
+}
+
+// Handle note form submission
+$(document).ready(function() {
+  $('#note-form').on('submit', function(e) {
+    e.preventDefault();
+    saveNoteFromForm();
+  });
+  
+  // Load notes when notepad modal is shown
+  $('#notepadModal').on('show.bs.modal', function() {
+    loadUserNotes();
+  });
+  
+  // Add CSS for selected note items
+  $('<style>')
+    .prop('type', 'text/css')
+    .html(`
+      .note-item:hover {
+        background-color: #3d3d3d !important;
+      }
+      .note-item.selected {
+        background-color: #007bff !important;
+      }
+      .note-item.selected h6,
+      .note-item.selected p,
+      .note-item.selected small {
+        color: #ffffff !important;
+      }
+    `)
+    .appendTo('head');
+});
+
 function clearTextarea() {
   $("#notepad-textarea").val("");
 }
@@ -570,3 +846,9 @@ function openNameDatabase(registeredOwner, activeCommunityID) {
   }
   return (document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&activeCommunityID=${activeCommID}`);
 }
+
+// Export functions to global scope
+window.showAddNoteForm = showAddNoteForm;
+window.hideNoteForm = hideNoteForm;
+window.editNote = editNote;
+window.deleteNote = deleteNote;
