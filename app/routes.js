@@ -26,7 +26,7 @@ var sanitize = require("mongo-sanitize");
 let randomstring = require("randomstring");
 var axios = require("axios");
 
-var policeCadApiUrl = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+var policeCadApiUrl = process.env.POLICE_CAD_API_URL;
 var policeCadApiToken = process.env.POLICE_CAD_API_TOKEN;
 
 // Config for axios requests, can be reused and only declared once
