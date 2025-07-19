@@ -32,6 +32,7 @@ function fetchAndRenderModernDepartments() {
       }
       
       let html = "";
+      let civilianDepartmentName = null;
 
       departments.forEach((dept) => {
         const template = dept?.template?.name;
@@ -44,6 +45,11 @@ function fetchAndRenderModernDepartments() {
             `Skipping department due to missing or invalid data - ID: ${departmentId}, Template: ${template}`
           );
           return;
+        }
+
+        // Store civilian department name for header update
+        if (template.toLowerCase() === "civilian") {
+          civilianDepartmentName = name;
         }
 
         let icon = "fa-building";
@@ -59,6 +65,10 @@ function fetchAndRenderModernDepartments() {
           case "civilian":
             icon = "fa-user";
             action = "/civ-dashboard";
+            // Add department name as query parameter for civilian departments
+            if (action !== "#") {
+              action += `?dept=${encodeURIComponent(name)}&deptId=${encodeURIComponent(departmentId)}`;
+            }
             break;
           case "police":
             icon = "fa-shield";
@@ -121,6 +131,24 @@ function fetchAndRenderModernDepartments() {
       
       // Enable tooltips for disabled departments
       $("[title]").tooltip();
+      
+      // Update dashboard title if we're on the civilian dashboard
+      if (window.location.pathname === '/civ-dashboard') {
+        // Check if there's a specific department in the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlDeptName = urlParams.get('dept');
+        
+        if (urlDeptName) {
+          // Use the department name from URL (for specific department selection)
+          updateDashboardTitle(decodeURIComponent(urlDeptName));
+        } else if (civilianDepartmentName) {
+          // Only update if the title is still the default "Civilian Dashboard"
+          const currentTitle = document.getElementById('main-dashboard-title');
+          if (currentTitle && currentTitle.textContent === 'Civilian Dashboard') {
+            updateDashboardTitle(civilianDepartmentName);
+          }
+        }
+      }
     },
     error: function (xhr) {
       console.error("❌ Error fetching departments:", xhr.responseText);
@@ -172,6 +200,24 @@ function renderModernDepartmentsFallback() {
   $("#departmentsSubmenu").html(fallbackHtml);
   console.log('✅ Fallback rendered');
 } 
+
+function updateDashboardTitle(departmentName) {
+  console.log('🔄 Updating dashboard title to:', departmentName);
+  
+  // Update mobile header title
+  const mobileTitle = document.getElementById('dashboard-title');
+  if (mobileTitle) {
+    mobileTitle.textContent = departmentName;
+    console.log('✅ Updated mobile dashboard title');
+  }
+  
+  // Update main header title
+  const mainTitle = document.getElementById('main-dashboard-title');
+  if (mainTitle) {
+    mainTitle.textContent = departmentName;
+    console.log('✅ Updated main dashboard title');
+  }
+}
 
 function escapeHtml(str) {
   return String(str)

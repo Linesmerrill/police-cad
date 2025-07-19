@@ -311,6 +311,11 @@ module.exports = function (app, passport, server) {
     // const { userId, communityId } = req.decodedData;
     var context = req.app.locals.specialContext;
     req.app.locals.specialContext = null;
+    
+    // Get department info from query parameters
+    const departmentName = req.query.dept || null;
+    const departmentId = req.query.deptId || null;
+    
     res.render("civ-dashboard", {
       user: req.user,
       // userId,
@@ -318,6 +323,8 @@ module.exports = function (app, passport, server) {
       context: context,
       referer: encodeURIComponent("/civ-dashboard"),
       redirect: encodeURIComponent(redirect),
+      departmentName: departmentName,
+      departmentId: departmentId,
     });
   });
 

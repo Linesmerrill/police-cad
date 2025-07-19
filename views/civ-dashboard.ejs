@@ -983,7 +983,7 @@
       <i class="fa fa-bars"></i>
     </button>
     <div style="margin-left:1.2rem; display:flex; flex-direction:column; align-items:flex-start;">
-      <span style="font-size:1.15rem; font-weight:700; color:#f7fafc; letter-spacing:0.01em;">Civilian Dashboard</span>
+      <span id="dashboard-title" style="font-size:1.15rem; font-weight:700; color:#f7fafc; letter-spacing:0.01em;"><%= departmentName || 'Civilian Dashboard' %></span>
       <span id="mobile-community-name" style="font-size:0.9rem; font-weight:600; background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing:0.01em;"></span>
     </div>
   </div>
@@ -1142,7 +1142,7 @@
     <!-- Top Navigation -->
     <nav class="top-nav">
       <div class="container-fluid">
-        <h1><a href="/civ-dashboard"><i class="fa fa-user"></i> Civilian Dashboard</a> • <a href="/community-dashboard"><span id="community-name" style="background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600;"></span></a></h1>
+        <h1><a href="/civ-dashboard"><i class="fa fa-user"></i> <span id="main-dashboard-title"><%= departmentName || 'Civilian Dashboard' %></span></a> • <a href="/community-dashboard"><span id="community-name" style="background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 600;"></span></a></h1>
               </div>
     </nav>
 
