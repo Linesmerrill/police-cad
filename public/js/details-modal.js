@@ -16,6 +16,15 @@ $(document).ready(function () {
   let totalCriminalHistory = 0;
   let currentCriminalPage = 1;
 
+  // Cache for civilian data
+  let civilianCache = {
+    civilianId: null,
+    vehicles: {}, // Object to store vehicles by page: { 0: [...], 1: [...], etc }
+    firearms: {}, // Object to store firearms by page: { 0: [...], 1: [...], etc }
+    vehicleTotal: 0,
+    firearmTotal: 0
+  };
+
   // Show modal and fetch data
   function showDetailsModal(item, type, isFromLink = false) {
     if (isOpeningModal) {
@@ -1278,15 +1287,6 @@ $(document).ready(function () {
     $('.records-tab-content').hide();
     $('#tabContentCriminal').show();
   });
-
-  // Cache for civilian data
-  let civilianCache = {
-    civilianId: null,
-    vehicles: {}, // Object to store vehicles by page: { 0: [...], 1: [...], etc }
-    firearms: {}, // Object to store firearms by page: { 0: [...], 1: [...], etc }
-    vehicleTotal: 0,
-    firearmTotal: 0
-  };
 
   // Vehicle pagination variables
   let vehiclePage = 1;
