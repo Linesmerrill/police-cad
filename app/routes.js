@@ -26,7 +26,7 @@ var sanitize = require("mongo-sanitize");
 let randomstring = require("randomstring");
 var axios = require("axios");
 
-var policeCadApiUrl = process.env.POLICE_CAD_API_URL;
+var policeCadApiUrl = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 var policeCadApiToken = process.env.POLICE_CAD_API_TOKEN;
 
 // Config for axios requests, can be reused and only declared once
@@ -307,46 +307,86 @@ module.exports = function (app, passport, server) {
     }
   };
 
-  app.get("/civ-dashboard", authCheck, function (req, res) {
-    // const { userId, communityId } = req.decodedData;
-    var context = req.app.locals.specialContext;
-    req.app.locals.specialContext = null;
-    
-    // Get department info from query parameters
-    const departmentName = req.query.dept || null;
-    const encodedDeptId = req.query.d || null;
-    
-    // Decode the department ID if present
-    let departmentId = null;
-    if (encodedDeptId) {
-      try {
-        // Reverse the encoding: restore base64 padding and decode
-        let base64 = encodedDeptId
-          .replace(/-/g, '+')
-          .replace(/_/g, '/');
+    app.get("/civ-dashboard", authCheck, async function (req, res) {
+    try {
+      // const { userId, communityId } = req.decodedData;
+      var context = req.app.locals.specialContext;
+      req.app.locals.specialContext = null;
+      
+      // Get department info from query parameters
+      const departmentName = req.query.dept || null;
+      const encodedDeptId = req.query.d || null;
+      
+      // Decode the department ID if present
+      let departmentId = null;
+      if (encodedDeptId) {
+        try {
+          // Reverse the encoding: restore base64 padding and decode
+          let base64 = encodedDeptId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          
+          // Add padding back
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          
+                  departmentId = Buffer.from(base64, 'base64').toString('utf8');
+        } catch (e) {
+          console.error('Failed to decode department ID:', e);
+          departmentId = null;
+        }
+      }
+      
+      // If a specific department is requested, verify user access
+      if (departmentId && departmentName) {
+        const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
         
-        // Add padding back
-        while (base64.length % 4) {
-          base64 += '=';
+        if (!communityId) {
+          return res.status(403).render("error", {
+            message: "No active community found. Please select a community first.",
+            redirect: "/community-dashboard",
+          });
         }
         
-        departmentId = Buffer.from(base64, 'base64').toString('utf8');
-      } catch (e) {
-        console.error('Failed to decode department ID:', e);
-        departmentId = null;
+        // Check if user has access to this department by fetching user's departments
+        const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
+        
+        try {
+          const userDepartmentsResponse = await axios.get(apiUrl, config);
+          
+          const userDepartments = userDepartmentsResponse.data.data || [];
+          const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+          
+          if (!userHasAccess) {
+            return res.status(403).render("error", {
+              message: "You don't have access to this department. Please contact the department administrator.",
+              redirect: "/departments",
+            });
+          }
+        } catch (apiError) {
+          console.error('API Error:', apiError.message);
+          // Allow access if API is not available - this is a fallback
+        }
       }
+      
+      res.render("civ-dashboard", {
+        user: req.user,
+        // userId,
+        // communityId,
+        context: context,
+        referer: encodeURIComponent("/civ-dashboard"),
+        redirect: encodeURIComponent(redirect),
+        departmentName: departmentName,
+        departmentId: departmentId,
+      });
+    } catch (error) {
+      console.error('🚨 Error in civ-dashboard route:', error);
+      return res.status(500).render("error", {
+        message: "An error occurred while loading the dashboard. Please try again.",
+        redirect: "/community-dashboard",
+      });
     }
-    
-    res.render("civ-dashboard", {
-      user: req.user,
-      // userId,
-      // communityId,
-      context: context,
-      referer: encodeURIComponent("/civ-dashboard"),
-      redirect: encodeURIComponent(redirect),
-      departmentName: departmentName,
-      departmentId: departmentId,
-    });
   });
 
   app.get("/ems-dashboard", authCheck, function (req, res) {
