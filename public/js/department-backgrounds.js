@@ -17,10 +17,8 @@ function setDepartmentBackground(departmentType, customImageUrl = null) {
   // Use custom image if provided, otherwise use default
   if (customImageUrl && customImageUrl.trim() !== '') {
     backgroundImage = customImageUrl;
-    console.log(`🎨 Using custom background for ${departmentType} department:`, customImageUrl);
   } else {
     backgroundImage = departmentBackgrounds[departmentType] || departmentBackgrounds['civilian'];
-    console.log(`🏢 Using default background for ${departmentType} department:`, backgroundImage);
   }
   
   // Update CSS custom property
@@ -73,7 +71,6 @@ async function fetchDepartmentBackground(departmentType) {
   try {
     // Check if we have user data and community info
     if (typeof dbUser === 'undefined' || !dbUser.user || !dbUser.user.lastAccessedCommunity) {
-      console.log('No user or community data available, using default background');
       return null;
     }
 
@@ -83,7 +80,6 @@ async function fetchDepartmentBackground(departmentType) {
     // Fetch departments for the community
     const response = await fetch(`${API_URL}/api/v1/community/${communityId}/departments`);
     if (!response.ok) {
-      console.log('Failed to fetch departments, using default background');
       return null;
     }
     
@@ -98,11 +94,9 @@ async function fetchDepartmentBackground(departmentType) {
     
     // Return the custom image if available
     if (currentDepartment && currentDepartment.image && currentDepartment.image.trim() !== '') {
-      console.log(`Using custom background for ${departmentType} department:`, currentDepartment.image);
       return currentDepartment.image;
     }
     
-    console.log(`No custom background found for ${departmentType} department, using default`);
     return null;
     
   } catch (error) {
@@ -146,21 +140,6 @@ function setDepartmentBackgroundManually(departmentType, customImageUrl = null) 
 document.addEventListener('DOMContentLoaded', function() {
   initializeDepartmentBackground();
 });
-
-// Demo function for testing custom images (can be called from browser console)
-function demoCustomBackgrounds() {
-  console.log('🎨 Department Background System Demo');
-  console.log('Available functions:');
-  console.log('- setDepartmentBackgroundManually("police", "https://example.com/custom.jpg")');
-  console.log('- setDepartmentBackgroundManually("dispatch", "https://example.com/custom.jpg")');
-  console.log('- setDepartmentBackgroundManually("ems", "https://example.com/custom.jpg")');
-  console.log('- setDepartmentBackgroundManually("civilian", "https://example.com/custom.jpg")');
-  console.log('- initializeDepartmentBackground()');
-  
-  // Example: Set a custom police background
-  console.log('Setting custom police background...');
-  setDepartmentBackgroundManually('police', 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&h=1080&fit=crop');
-}
 
 // Export functions for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {

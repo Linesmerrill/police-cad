@@ -2,11 +2,7 @@
 // HeroUI Pro styled departments functionality for the new dashboard
 
 function fetchAndRenderModernDepartments() {
-  console.log('🔄 Fetching modern departments...');
-  console.log('dbUser:', dbUser);
-  
   const communityId = dbUser?.user?.lastAccessedCommunity?.communityID || dbUser?.user?.activeCommunity;
-  console.log('Community ID:', communityId);
   
   if (!communityId) {
     console.warn('No active community found for departments');
@@ -14,19 +10,14 @@ function fetchAndRenderModernDepartments() {
     return;
   }
 
-  console.log('🌐 Making AJAX request to:', `${API_URL}/api/v1/community/${communityId}/departments`);
-  
   $.ajax({
     url: `${API_URL}/api/v1/community/${communityId}/departments`,
     method: "GET",
     headers: {},
     success: function (data) {
-      console.log('✅ AJAX success, data:', data);
       const departments = data.departments || [];
-      console.log('📊 Found departments:', departments.length);
       
       if (departments.length === 0) {
-        console.log('📭 No departments found, showing empty state');
         renderModernDepartmentsEmpty();
         return;
       }
@@ -41,9 +32,6 @@ function fetchAndRenderModernDepartments() {
 
         // Skip if departmentId or template is invalid
         if (!departmentId || departmentId === "undefined" || !template) {
-          console.warn(
-            `Skipping department due to missing or invalid data - ID: ${departmentId}, Template: ${template}`
-          );
           return;
         }
 
@@ -170,7 +158,6 @@ function fetchAndRenderModernDepartments() {
 }
 
 function renderModernDepartmentsEmpty() {
-  console.log('🔄 Rendering empty departments state...');
   const emptyHtml = `
     <div class="nav-item">
       <div class="nav-link" style="opacity: 0.7; cursor: default;">
@@ -185,13 +172,10 @@ function renderModernDepartmentsEmpty() {
       </a>
     </div>
   `;
-  console.log('📝 Setting empty state HTML:', emptyHtml);
   $("#departmentsSubmenu").html(emptyHtml);
-  console.log('✅ Empty state rendered');
 }
 
 function renderModernDepartmentsFallback() {
-  console.log('🔄 Rendering fallback departments...');
   const fallbackHtml = `
     <div class="nav-item">
       <div class="nav-link" style="opacity: 0.7; cursor: default;">
@@ -206,9 +190,7 @@ function renderModernDepartmentsFallback() {
       </a>
     </div>
   `;
-  console.log('📝 Setting fallback HTML:', fallbackHtml);
   $("#departmentsSubmenu").html(fallbackHtml);
-  console.log('✅ Fallback rendered');
 } 
 
 function encodeDepartmentId(departmentId) {
@@ -240,20 +222,17 @@ function decodeDepartmentId(encodedId) {
 }
 
 function updateDashboardTitle(departmentName) {
-  console.log('🔄 Updating dashboard title to:', departmentName);
   
   // Update mobile header title
   const mobileTitle = document.getElementById('dashboard-title');
   if (mobileTitle) {
     mobileTitle.textContent = departmentName;
-    console.log('✅ Updated mobile dashboard title');
   }
   
   // Update main header title
   const mainTitle = document.getElementById('main-dashboard-title');
   if (mainTitle) {
     mainTitle.textContent = departmentName;
-    console.log('✅ Updated main dashboard title');
   }
 }
 
@@ -268,19 +247,12 @@ function escapeHtml(str) {
 
 // Initialize departments when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('🚀 DOM Content Loaded - Initializing departments...');
-  console.log('jQuery available:', typeof $ !== 'undefined');
-  console.log('API_URL available:', typeof API_URL !== 'undefined');
-  console.log('dbUser available:', typeof dbUser !== 'undefined');
-  
   // Wait a bit for other scripts to load
   setTimeout(function() {
-    console.log('⏰ Timeout completed, checking functions...');
     if (typeof fetchAndRenderModernDepartments === 'function') {
-      console.log('✅ fetchAndRenderModernDepartments function found, calling it...');
       fetchAndRenderModernDepartments();
     } else {
-      console.error('❌ fetchAndRenderModernDepartments function not found!');
+      console.error('fetchAndRenderModernDepartments function not found!');
     }
   }, 500);
 }); 
