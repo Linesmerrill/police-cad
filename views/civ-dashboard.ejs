@@ -3406,6 +3406,25 @@
         });
       }
     });
+    
+    // Intercept all upload container clicks for image uploads
+    var uploadContainers = [
+      document.getElementById('civAvatarUpload'),
+      document.getElementById('vehImageUpload'),
+      document.getElementById('newVehImageUpload'),
+      document.getElementById('firearmImageUpload'),
+      document.getElementById('newFirearmImageUpload')
+    ];
+    uploadContainers.forEach(function(container) {
+      if (container) {
+        container.addEventListener('click', function(e) {
+          e.preventDefault();
+          openComingSoonModal();
+          return false;
+        });
+      }
+    });
+    
     // Intercept profile pic click in Account Settings modal (custom avatar)
     var accountPic = document.getElementById('accountProfilePicUpload');
     if (accountPic) {
