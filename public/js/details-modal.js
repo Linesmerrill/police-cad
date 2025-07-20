@@ -21,8 +21,10 @@ $(document).ready(function () {
     civilianId: null,
     vehicles: {}, // Object to store vehicles by page: { 0: [...], 1: [...], etc }
     firearms: {}, // Object to store firearms by page: { 0: [...], 1: [...], etc }
+    licenses: {}, // Object to store licenses by page: { 0: [...], 1: [...], etc }
     vehicleTotal: 0,
-    firearmTotal: 0
+    firearmTotal: 0,
+    licenseTotal: 0
   };
 
   // Show modal and fetch data
@@ -57,8 +59,10 @@ $(document).ready(function () {
         civilianId: null,
         vehicles: {},
         firearms: {},
+        licenses: {},
         vehicleTotal: 0,
-        firearmTotal: 0
+        firearmTotal: 0,
+        licenseTotal: 0
       };
     }
 
@@ -509,101 +513,7 @@ $(document).ready(function () {
       $('.records-tab-content').hide();
     }
 
-    // --- Linked Items Section (Licenses, Vehicles, Firearms) ---
-    if (currentType === "Civilian") {
-      // Licenses
-      let licensesHtml = `
-        <h5 class="text-white mb-2">Licenses (${licenses.length})</h5>
-        ${
-          licenses.length > 0
-            ? licenses
-                .map(
-                  (license) => `
-                <div class="details-item">
-                  <div class="d-flex justify-content-between">
-                    <span>${license.type || "N/A"}</span>
-                    <span class="${isExpired(license.expirationDate) ? 'text-danger' : 'text-success'}">${
-                      license.status || "N/A"
-                    }</span>
-                  </div>
-                  <p class="text-gray mb-0">Expires: ${
-                    license.expirationDate || "N/A"
-                  }</p>
-                  <p class="text-gray mb-0">Notes: ${
-                    license.notes || "N/A"
-                  }</p>
-                </div>
-              `
-                )
-                .join("")
-            : '<p class="text-gray">No licenses found.</p>'
-        }
-      `;
-      $("#licenses").html(licensesHtml);
 
-      // Vehicles
-      let vehiclesHtml = `
-        <h5 class="text-white mb-2">Registered Vehicles (${vehicles.length})</h5>
-        ${
-          vehicles.length > 0
-            ? vehicles
-                .map(
-                  (vehicle) => `
-                <div class="details-item">
-                  <div class="d-flex justify-content-between">
-                    <span>${vehicle.make || ""} ${vehicle.model || ""}</span>
-                    <span class="${vehicle.isStolen === 'true' ? 'text-danger' : 'text-success'}">${
-                      vehicle.isStolen === 'true' ? 'Stolen' : 'Not Stolen'
-                    }</span>
-                  </div>
-                  <p class="text-gray mb-0">VIN: ${
-                    vehicle.vin?.toUpperCase() || "N/A"
-                  }</p>
-                  <p class="text-gray mb-0">Plate: ${
-                    vehicle.plate || "N/A"
-                  } (${vehicle.licensePlateState || "N/A"})</p>
-                  <p class="text-gray mb-0">Year: ${
-                    vehicle.year || "N/A"
-                  }</p>
-                </div>
-              `
-                )
-                .join("")
-            : '<p class="text-gray">No registered vehicles found.</p>'
-        }
-      `;
-      $("#vehicles").html(vehiclesHtml);
-
-      // Firearms
-      let firearmsHtml = `
-        <h5 class="text-white mb-2">Registered Firearms (${firearms.length})</h5>
-        ${
-          firearms.length > 0
-            ? firearms
-                .map(
-                  (firearm) => `
-                <div class="details-item">
-                  <div class="d-flex justify-content-between">
-                    <span>${firearm.name || "N/A"}</span>
-                    <span class="${firearm.isStolen === 'true' ? 'text-danger' : 'text-success'}">${
-                      firearm.isStolen === 'true' ? 'Stolen' : 'Not Stolen'
-                    }</span>
-                  </div>
-                  <p class="text-gray mb-0">Serial: ${
-                    firearm.serialNumber || "N/A"
-                  }</p>
-                  <p class="text-gray mb-0">Caliber: ${
-                    firearm.caliber || "N/A"
-                  }</p>
-                </div>
-              `
-                )
-                .join("")
-            : '<p class="text-gray">No registered firearms found.</p>'
-        }
-      `;
-      $("#firearms").html(firearmsHtml);
-    }
 
     // --- Records Sub-Tabs Logic ---
     // Fix race condition: Check if tabs exist and have proper state, default to Criminal tab if uncertain
@@ -1277,6 +1187,20 @@ $(document).ready(function () {
     loadFirearms();
   });
   
+  $(document).on('click', '#tabLicenses', function() {
+    // Only allow tab switching for civilians
+    if (currentType !== 'Civilian') return;
+    
+    $('.records-tab-btn').removeClass('active');
+    $('#tabLicenses').addClass('active');
+    // Update inline styles for underline
+    $('.records-tab-btn').css('border-bottom', '3px solid transparent').css('color', '#a0aec0');
+    $('#tabLicenses').css('border-bottom', '3px solid #667eea').css('color', '#fff');
+    $('.records-tab-content').hide();
+    $('#tabContentLicenses').show();
+    loadLicenses();
+  });
+  
   // Ensure default state on modal open
   $('#detailsModal').on('show.bs.modal', function() {
     $('.records-tab-btn').removeClass('active');
@@ -1443,6 +1367,11 @@ $(document).ready(function () {
   let firearmTotal = 0;
   let firearmLimit = 3;
 
+  // License pagination variables
+  let licensePage = 1;
+  let licenseTotal = 0;
+  let licenseLimit = 3;
+
   // Function to load firearms
   function loadFirearms(page = 1) {
     const civilianId = currentItem?._id;
@@ -1583,6 +1512,139 @@ $(document).ready(function () {
     }, 500);
   }
 
+  // Function to load licenses
+  function loadLicenses(page = 1) {
+    const civilianId = currentItem?._id;
+    if (!civilianId) return;
+    
+    // Check if we have cached data for this civilian and page
+    const cacheKey = page - 1; // Convert to 0-based index for cache
+    if (civilianCache.civilianId === civilianId && civilianCache.licenses[cacheKey]) {
+      displayLicenses(civilianCache.licenses[cacheKey], civilianCache.licenseTotal, page);
+      return;
+    }
+    
+    licensePage = page;
+    const url = `${API_URL}/api/v1/licenses/civilian/${civilianId}?limit=6&page=${page}`;
+
+    $('#licensesList').html(`
+      <div class="text-center">
+        <div class="loading-step mb-2">
+          <i class="fa fa-spinner fa-spin text-primary"></i>
+          <span class="ml-2">Checking license database...</span>
+        </div>
+        <div class="loading-step mb-2">
+          <i class="fa fa-spinner fa-spin text-primary"></i>
+          <span class="ml-2">Verifying license status...</span>
+        </div>
+        <div class="loading-step mb-2">
+          <i class="fa fa-spinner fa-spin text-primary"></i>
+          <span class="ml-2">Checking expiration dates...</span>
+        </div>
+        <div class="loading-step mb-2">
+          <i class="fa fa-spinner fa-spin text-primary"></i>
+          <span class="ml-2">Checking license history...</span>
+        </div>
+      </div>
+    `);
+    
+    // Simulate progressive loading
+    let currentStep = 0;
+    const loadingSteps = [
+      'Checking license database...',
+      'Verifying license status...',
+      'Checking expiration dates...',
+      'Checking license history...'
+    ];
+    
+    const updateLoadingStep = () => {
+      if (currentStep < loadingSteps.length) {
+        const stepHtml = loadingSteps.map((step, index) => {
+          const icon = index < currentStep ? 'fa-check text-success' : index === currentStep ? 'fa-spinner fa-spin text-primary' : 'fa-circle text-muted';
+          return `<div class="loading-step mb-2">
+            <i class="fa ${icon}"></i>
+            <span class="ml-2">${step}</span>
+          </div>`;
+        }).join('');
+        
+        $('#licensesList').html(`<div class="text-center">${stepHtml}</div>`);
+        currentStep++;
+        
+        if (currentStep <= loadingSteps.length) {
+          setTimeout(updateLoadingStep, 300);
+        }
+      }
+    };
+    
+    updateLoadingStep();
+    
+    $.ajax({
+      url: url,
+      method: 'GET',
+      success: function(response) {
+        const licenses = response.data || [];
+        licenseTotal = response.totalCount || 0;
+        
+        // Cache the results by page
+        civilianCache.civilianId = civilianId;
+        civilianCache.licenses[cacheKey] = licenses;
+        civilianCache.licenseTotal = licenseTotal;
+        
+        // Wait for loading animation to complete (1.2 seconds) then show results
+        setTimeout(() => {
+          displayLicenses(licenses, licenseTotal, page);
+        }, 1200); // Wait 1.2 seconds for loading animation to complete
+      },
+      error: function(xhr, status, error) {
+        console.error('Error loading licenses:', xhr, status, error);
+        $('#licensesList').html('<p class="text-gray">Error loading licenses.</p>');
+      }
+    });
+  }
+
+  // Function to display licenses (used for both cached and fresh data)
+  function displayLicenses(licenses, total, page) {
+    if (licenses && licenses.length > 0) {
+      let licensesHtml = '';
+      licenses.forEach(item => {
+        const license = item.license;
+        const isExpired = license.expirationDate && new Date(license.expirationDate) < new Date();
+        const statusClass = isExpired ? 'text-danger' : 'text-success';
+        const statusText = isExpired ? 'Expired' : (license.status || 'Valid');
+        
+        licensesHtml += `
+          <div class="details-item">
+            <div class="d-flex justify-content-between">
+              <span>${license.type || 'N/A'}</span>
+              <span class="${statusClass}">${statusText}</span>
+            </div>
+            <p class="text-gray mb-0">Expires: ${license.expirationDate || 'N/A'}</p>
+            <p class="text-gray mb-0">Notes: ${license.notes || 'N/A'}</p>
+            <p class="text-gray mb-0">Created: ${new Date(license.createdAt).toLocaleDateString()}</p>
+          </div>
+        `;
+      });
+      
+      // Add pagination controls
+      const totalPages = Math.ceil(total / licenseLimit);
+      const paginationHtml = `
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <button class="btn btn-secondary btn-sm" onclick="loadLicenses(${page - 1})" ${page <= 1 ? 'disabled' : ''}>
+            <i class="fa fa-chevron-left"></i> Previous
+          </button>
+          <span class="text-gray">Page ${page} of ${totalPages} (${total} total)</span>
+          <button class="btn btn-secondary btn-sm" onclick="loadLicenses(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>
+            Next <i class="fa fa-chevron-right"></i>
+          </button>
+        </div>
+      `;
+      
+      $('#licensesList').html(licensesHtml + paginationHtml);
+    } else {
+      $('#licensesList').html('<p class="text-gray">No licenses found.</p>');
+    }
+  }
+
 
 
   // Expose showDetailsModal and goBack globally
@@ -1594,6 +1656,8 @@ $(document).ready(function () {
   window.searchFirearm = searchFirearm;
   window.displayVehicles = displayVehicles;
   window.displayFirearms = displayFirearms;
+  window.displayLicenses = displayLicenses;
   window.loadVehicles = loadVehicles;
   window.loadFirearms = loadFirearms;
+  window.loadLicenses = loadLicenses;
 });
