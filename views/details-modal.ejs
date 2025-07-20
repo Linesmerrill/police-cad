@@ -49,21 +49,34 @@
           <!-- Linked Items (Civilian Only) -->
           <div id="linkedItems" class="mt-4"></div>
 
-          <!-- Records Sub-Tabs -->
-          <div id="recordsTabs" class="mb-3" style="display: flex; gap: 1.5rem; border-bottom: 1px solid #444;">
+          <!-- Main Tabs -->
+          <div id="mainTabs" class="mb-3" style="display: flex; gap: 1.5rem; border-bottom: 1px solid #444;">
             <button id="tabCriminalHistory" class="records-tab-btn active" type="button" style="background: none; border: none; color: #fff; font-weight: 600; font-size: 1.1rem; padding: 0.5rem 1rem; border-bottom: 3px solid #667eea;">Criminal History</button>
-            <button id="tabMedicalHistory" class="records-tab-btn" type="button" style="background: none; border: none; color: #a0aec0; font-weight: 600; font-size: 1.1rem; padding: 0.5rem 1rem; border-bottom: 3px solid transparent;">Medical History</button>
+            <button id="tabVehicles" class="records-tab-btn" type="button" style="background: none; border: none; color: #a0aec0; font-weight: 600; font-size: 1.1rem; padding: 0.5rem 1rem; border-bottom: 3px solid transparent;">Vehicles</button>
+            <button id="tabFirearms" class="records-tab-btn" type="button" style="background: none; border: none; color: #a0aec0; font-weight: 600; font-size: 1.1rem; padding: 0.5rem 1rem; border-bottom: 3px solid transparent;">Firearms</button>
           </div>
-          <div id="recordsTabCriminal" class="records-tab-content" style="display: block;">
+          
+          <!-- Criminal History Tab Content -->
+          <div id="tabContentCriminal" class="records-tab-content" style="display: block;">
             <!-- Criminal History (Civilian Only) -->
             <div id="criminalHistory" class="mt-4"></div>
             <!-- Arrest Reports (Civilian Only) -->
             <div id="arrestReports" class="mt-4"></div>
           </div>
-          <div id="recordsTabMedical" class="records-tab-content" style="display: none;">
-            <!-- Medical History Placeholder -->
-            <div id="medicalHistory" class="mt-4">
-              <p class="text-gray">Medical history records will appear here.</p>
+          
+          <!-- Vehicles Tab Content -->
+          <div id="tabContentVehicles" class="records-tab-content" style="display: none;">
+            <div id="vehiclesContent" class="mt-4">
+              <h5 class="text-white mb-2">Registered Vehicles</h5>
+              <div id="vehiclesList"></div>
+            </div>
+          </div>
+          
+          <!-- Firearms Tab Content -->
+          <div id="tabContentFirearms" class="records-tab-content" style="display: none;">
+            <div id="firearmsContent" class="mt-4">
+              <h5 class="text-white mb-2">Registered Firearms</h5>
+              <div id="firearmsList"></div>
             </div>
           </div>
 

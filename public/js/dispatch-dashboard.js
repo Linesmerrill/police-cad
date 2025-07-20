@@ -520,7 +520,7 @@ $(document).ready(function () {
                     ? `
                   <div>
                    
-                    <button class="btn btn-md btn-outline-danger" onclick="deleteNote('${note._id}')"><i class="fa fa-trash"></i></button>
+                    <button class="btn btn-md btn-outline-danger" onclick="deleteCallNote('${note._id}')"><i class="fa fa-trash"></i></button>
                   </div>
                 `
                     : ""
@@ -947,7 +947,7 @@ $(document).ready(function () {
     });
   }
 
-  function deleteNote(noteId) {
+  function deleteCallNote(noteId) {
     if (
       !confirm(
         "Are you sure you want to delete this note? This action cannot be undone."
@@ -1391,9 +1391,23 @@ $(document).ready(function () {
     officerListTable.page(page - 1).draw("page");
   }
 
+  // User notepad functionality is now provided by the shared notepad.js module
+
+  // Helper function to check if ID is a valid MongoDB ObjectId
+  function isValidObjectId(id) {
+    return /^[0-9a-fA-F]{24}$/.test(id);
+  }
+
+  // User notepad functions are now provided by the shared notepad.js module
+
   // Initialize dashboard data
   pollDashboardData();
   setInterval(pollDashboardData, 30000); // Poll every 30 seconds
+
+  // Initialize notepad functionality from shared module
+  if (typeof initNotepad === 'function') {
+    initNotepad();
+  }
 
   window.showBoloModal = showBoloModal;
   window.handleCreateBolo = handleCreateBolo;
@@ -1416,7 +1430,8 @@ $(document).ready(function () {
   window.addNote = addNote;
   window.openEditNoteModal = openEditNoteModal;
   window.saveEditedNote = saveEditedNote;
-  window.deleteNote = deleteNote;
+  window.deleteCallNote = deleteCallNote;
   window.createCall = createCall;
   window.changeUnitPage = changeUnitPage;
+  // Notepad functions are now provided by the shared notepad.js module
 });

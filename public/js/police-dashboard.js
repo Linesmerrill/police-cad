@@ -393,180 +393,79 @@ function clearBoloForm() {
   document.getElementById("create-bolo-form").reset();
 }
 
-function clearTextarea() {
-  $("#notepad-textarea").val("");
-}
+// All notepad functionality is now provided by the shared notepad.js module
 
-$("#ticketModal").on("hidden.bs.modal", function () {
-  $("#civID").popover("hide");
-});
-
-$("#warningModal").on("hidden.bs.modal", function () {
-  $("#civIDWarning").popover("hide");
-});
-
-$("#arrestModal").on("hidden.bs.modal", function () {
-  $("#civIDArrest").popover("hide");
-});
-
-$("#createWarrantModal").on("hidden.bs.modal", function () {
-  $("#civIDWarrant").popover("hide");
-});
-
-$("#clearWarrantModal").on("hidden.bs.modal", function () {
-  $("#civIDWarning").popover("hide");
-});
-
-// removes all the names from caching on the website when the modal is closed
-// $('#nameDatabaseModal').on('hidden.bs.modal', function (e) {
-//   let civDetails=document.getElementById('civDetails')
-//   civDetails.style.display='none'
-// })
-
-$("#plateDatabaseModal").on("hidden.bs.modal", function () {
-  $(this).find("form").trigger("reset");
-  $("#plateDetails").removeAttr("style").hide();
-  $("#stolenMessage").removeAttr("style").hide();
-});
-
+// Core dashboard functions and event handlers
 function togglePanicBtnSound() {
   var socket = io();
-  socket.emit("update_panic_btn_sound", dbUser);
-  socket.on("load_panic_btn_result", (res) => {
-    $("#panic-button-check-sound").prop("checked", !res.user.panicButtonSound);
-    $("#successfully-updated-alert")
-      .removeClass("hide")
-      .addClass("show")
-      .delay(2000)
-      .fadeOut(1000, function () {
-        $(this).addClass("hide").removeClass("show");
-      });
-  });
+  var myReq = {
+    userID: dbUser._id,
+    panicButtonSound: $("#panic-button-check-sound").prop("checked"),
+  };
+  socket.emit("update_panic_button_sound", myReq);
 }
 
 function adjustAlertVolumeSlider() {
   var socket = io();
-  var volumeAmount = $("#alert-volume-slider").val();
-  var myObj = {
-    dbUser: dbUser,
-    volume: volumeAmount,
+  var myReq = {
+    userID: dbUser._id,
+    alertVolumeLevel: $("#alert-volume-slider").val(),
   };
-  socket.emit("update_alert_volume_slider", myObj);
-  socket.on("load_alert_volume_result", (res) => {
-    $("#successfully-updated-alert")
-      .removeClass("hide")
-      .addClass("show")
-      .delay(2000)
-      .fadeOut(1000, function () {
-        $(this).addClass("hide").removeClass("show");
-      });
-  });
+  socket.emit("update_alert_volume", myReq);
 }
 
-function loadCitations(civID) {
-  $(`#ticket-body-${civID}`).empty(); //clears the table before loading results
-  var data = {
-    civID: civID,
-  };
+function loadCitations() {
   var socket = io();
-  socket.emit("search_citation", data);
-  socket.on("load_citation_result", (res) => {
-    res.forEach((citation) => {
-      $(`#ticket-body-${civID}`)
-        .append(
-          `<tr id="${citation._id}">
-          <td>
-            ${citation.ticket.date}
-          </td>
-          <td>
-            ${citation.ticket.violation}
-          </td>
-          <td>
-            $${citation.ticket.amount}
-          </td>
-          <td class="text-align-center">
-            <a class='clickable' onclick="deleteCitation('${citation._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
-          </td>
-      </tr>`
-        )
-        .fadeTo(1, function () {
-          $(this).add();
-        });
-    });
-  });
-}
-
-function loadWarnings(civID) {
-  $(`#warning-body-${civID}`).empty();
-  var data = {
-    civID: civID,
+  var myReq = {
+    userID: dbUser._id,
+    communityID: dbUser.user.activeCommunity,
   };
-  var socket = io();
-  socket.emit("search_warnings", data);
-  socket.on("load_warnings_result", (res) => {
-    res.forEach((citation) => {
-      $(`#warning-body-${civID}`)
-        .append(
-          `<tr id="${citation._id}">
-          <td>
-            ${citation.ticket.date}
-          </td>
-          <td>
-            ${citation.ticket.violation}
-          </td>
-          <td class="text-align-center">
-            <a class='clickable' onclick="deleteWarning('${citation._id}', '${civID}')"><i class="glyphicon glyphicon-remove-circle color-alert-red"></i></a>
-          </td>
-      </tr>`
-        )
-        .fadeTo(1, function () {
-          $(this).add();
-        });
-    });
-  });
+  socket.emit("load_citations", myReq);
 }
 
-function openNameDatabase(registeredOwner, activeCommunityID) {
-  var activeCommID = "";
-  if (activeCommunityID != null && activeCommunityID != undefined) {
-    activeCommID = activeCommunityID;
-  }
-  if (registeredOwner == null || registeredOwner == undefined) {
-    if (activeCommID.length == 0) {
-      return (document.location.href = `name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommID}`);
-    }
-    return (document.location.href = `name-search?firstName=&lastName=&activeCommunityID=${activeCommID}`);
-  }
-  let nameAndDOB = registeredOwner.split(" | ");
-  if (nameAndDOB != null && nameAndDOB != undefined) {
-    if (nameAndDOB.length !== 2) {
-      if (activeCommID.length == 0) {
-        return (document.location.href = `name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommID}`);
-      }
-      return (document.location.href = `name-search?firstName=&lastName=&activeCommunityID=${activeCommID}`);
-    }
-  }
-  let firstNameLastName = nameAndDOB[0].split(" ");
-  if (firstNameLastName != null && firstNameLastName != undefined) {
-    if (firstNameLastName.length !== 2) {
-      if (activeCommID.length == 0) {
-        return (document.location.href = `name-search?firstName=&lastName=&dateOfBirth=&activeCommunityID=${activeCommID}`);
-      }
-      return (document.location.href = `name-search?firstName=&lastName=&activeCommunityID=${activeCommID}`);
-    }
-  }
-  //check to see if we are in a community, if we are not,
-  //then we need to use the DOB to do the name search
-  if (activeCommID.length == 0) {
-    let dob = nameAndDOB[1].split(" ");
-    if (dob != null && dob != undefined) {
-      if (dob.length !== 2) {
-        return (document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=&activeCommunityID=${activeCommID}`);
-      }
-      return (document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&dateOfBirth=${
-        dob[1]
-      }&activeCommunityID=${activeCommID}`);
-    }
-  }
-  return (document.location.href = `name-search?firstName=${firstNameLastName[0].trim()}&lastName=${firstNameLastName[1].trim()}&activeCommunityID=${activeCommID}`);
+function loadWarnings() {
+  var socket = io();
+  var myReq = {
+    userID: dbUser._id,
+    communityID: dbUser.user.activeCommunity,
+  };
+  socket.emit("load_warnings", myReq);
 }
+
+function openNameDatabase() {
+  $("#nameDatabaseModal").modal("show");
+}
+
+// Modal event handlers
+$("#ticketModal").on("show.bs.modal", function () {
+  hideTicketCivPopover();
+});
+
+$("#warningModal").on("show.bs.modal", function () {
+  hideWarningCivPopover();
+});
+
+$("#arrestModal").on("show.bs.modal", function () {
+  hideArrestReportPopover();
+});
+
+$("#createWarrantModal").on("show.bs.modal", function () {
+  hideCivPopover();
+});
+
+$("#clearWarrantModal").on("show.bs.modal", function () {
+  hideWarrantClearPopover();
+});
+
+$("#plateDatabaseModal").on("show.bs.modal", function () {
+  // Reset form when modal opens
+  document.getElementById("plate-search-form").reset();
+});
+
+// Initialize notepad functionality from shared module
+$(document).ready(function() {
+  // Initialize the shared notepad module
+  if (typeof initNotepad === 'function') {
+    initNotepad();
+  }
+});

@@ -16,6 +16,15 @@ $(document).ready(function () {
   let totalCriminalHistory = 0;
   let currentCriminalPage = 1;
 
+  // Cache for civilian data
+  let civilianCache = {
+    civilianId: null,
+    vehicles: {}, // Object to store vehicles by page: { 0: [...], 1: [...], etc }
+    firearms: {}, // Object to store firearms by page: { 0: [...], 1: [...], etc }
+    vehicleTotal: 0,
+    firearmTotal: 0
+  };
+
   // Show modal and fetch data
   function showDetailsModal(item, type, isFromLink = false) {
     if (isOpeningModal) {
@@ -41,6 +50,17 @@ $(document).ready(function () {
     $("#detailsTitle").text(`${type} Details`);
     $("#detailsLoading").show();
     $("#detailsContent").hide();
+    
+    // Clear cache if this is a new civilian (not from back button)
+    if (type === "Civilian" && (!isFromLink || civilianCache.civilianId !== item._id)) {
+      civilianCache = {
+        civilianId: null,
+        vehicles: {},
+        firearms: {},
+        vehicleTotal: 0,
+        firearmTotal: 0
+      };
+    }
 
     // Initialize loading statuses
     loadingStatuses = [
@@ -64,16 +84,6 @@ $(document).ready(function () {
     if (currentType === "Civilian") {
       loadingStatuses.push(
         { id: "licenses", label: "Looking up licenses", status: "pending" },
-        {
-          id: "vehicles",
-          label: "Looking up registered vehicles",
-          status: "pending",
-        },
-        {
-          id: "firearms",
-          label: "Looking up registered firearms",
-          status: "pending",
-        },
         {
           id: "arrestReports",
           label: "Looking up arrest reports",
@@ -249,40 +259,7 @@ $(document).ready(function () {
                 updateLoadingStatuses();
               },
             }),
-            $.ajax({
-              url: `${API_URL}/api/v1/vehicles/registered-owner/${itemId}?limit=3&page=0`,
-              method: "GET",
-              success: function (data) {
-                vehicles = data.vehicles || [];
-                loadingStatuses.find((s) => s.id === "vehicles").status =
-                  "success";
-                updateLoadingStatuses();
-              },
-              error: function (xhr) {
-                console.error("Error fetching vehicles:", xhr.responseText);
-                vehicles = [];
-                loadingStatuses.find((s) => s.id === "vehicles").status =
-                  "error";
-                updateLoadingStatuses();
-              },
-            }),
-            $.ajax({
-              url: `${API_URL}/api/v1/firearms/registered-owner/${itemId}?limit=3&page=0`,
-              method: "GET",
-              success: function (data) {
-                firearms = data.firearms || [];
-                loadingStatuses.find((s) => s.id === "firearms").status =
-                  "success";
-                updateLoadingStatuses();
-              },
-              error: function (xhr) {
-                console.error("Error fetching firearms:", xhr.responseText);
-                firearms = [];
-                loadingStatuses.find((s) => s.id === "firearms").status =
-                  "error";
-                updateLoadingStatuses();
-              },
-            }),
+
             $.ajax({
               url: `${API_URL}/api/v1/arrest-report/arrestee/${itemId}?limit=3&page=0`,
               method: "GET",
@@ -514,6 +491,23 @@ $(document).ready(function () {
       `;
     }
     $("#detailsInfo").html(detailsHtml);
+
+    // Show/hide tabs based on type - only show for Civilian
+    if (currentType === "Civilian") {
+      $("#mainTabs").show();
+      // Show criminal history tab by default
+      $('.records-tab-btn').removeClass('active');
+      $('#tabCriminalHistory').addClass('active');
+      $('.records-tab-content').hide();
+      $('#tabContentCriminal').show();
+    } else {
+      // Hide tabs for Vehicle, Firearm, and License
+      $("#mainTabs").hide();
+      // Clear tab content and hide it
+      $('#vehiclesList').empty();
+      $('#firearmsList').empty();
+      $('.records-tab-content').hide();
+    }
 
     // --- Linked Items Section (Licenses, Vehicles, Firearms) ---
     if (currentType === "Civilian") {
@@ -1221,6 +1215,15 @@ $(document).ready(function () {
     const id = $(this).data("id");
     const type = $(this).data("type");
     if (id && type) {
+      // Clear cache when clicking on owner link (different civilian)
+      civilianCache = {
+        civilianId: null,
+        vehicles: {},
+        firearms: {},
+        vehicleTotal: 0,
+        firearmTotal: 0
+      };
+      
       const item = { _id: id };
       showDetailsModal(item, type, true);
     }
@@ -1232,35 +1235,365 @@ $(document).ready(function () {
     openActionModal.call(this, action);
   });
 
-  // --- Records Sub-Tab Switching ---
+  // --- Main Tab Switching ---
   $(document).on('click', '#tabCriminalHistory', function() {
+    // Only allow tab switching for civilians
+    if (currentType !== 'Civilian') return;
+    
+    $('.records-tab-btn').removeClass('active');
     $('#tabCriminalHistory').addClass('active');
-    $('#tabMedicalHistory').removeClass('active');
-    $('#recordsTabCriminal').show();
-    $('#recordsTabMedical').hide();
+    // Update inline styles for underline
+    $('.records-tab-btn').css('border-bottom', '3px solid transparent').css('color', '#a0aec0');
+    $('#tabCriminalHistory').css('border-bottom', '3px solid #667eea').css('color', '#fff');
+    $('.records-tab-content').hide();
+    $('#tabContentCriminal').show();
   });
-  $(document).on('click', '#tabMedicalHistory', function() {
-    $('#tabMedicalHistory').addClass('active');
-    $('#tabCriminalHistory').removeClass('active');
-    $('#recordsTabMedical').show();
-    $('#recordsTabCriminal').hide();
+  
+  $(document).on('click', '#tabVehicles', function() {
+    // Only allow tab switching for civilians
+    if (currentType !== 'Civilian') return;
+    
+    $('.records-tab-btn').removeClass('active');
+    $('#tabVehicles').addClass('active');
+    // Update inline styles for underline
+    $('.records-tab-btn').css('border-bottom', '3px solid transparent').css('color', '#a0aec0');
+    $('#tabVehicles').css('border-bottom', '3px solid #667eea').css('color', '#fff');
+    $('.records-tab-content').hide();
+    $('#tabContentVehicles').show();
+    loadVehicles();
   });
+  
+  $(document).on('click', '#tabFirearms', function() {
+    // Only allow tab switching for civilians
+    if (currentType !== 'Civilian') return;
+    
+    $('.records-tab-btn').removeClass('active');
+    $('#tabFirearms').addClass('active');
+    // Update inline styles for underline
+    $('.records-tab-btn').css('border-bottom', '3px solid transparent').css('color', '#a0aec0');
+    $('#tabFirearms').css('border-bottom', '3px solid #667eea').css('color', '#fff');
+    $('.records-tab-content').hide();
+    $('#tabContentFirearms').show();
+    loadFirearms();
+  });
+  
   // Ensure default state on modal open
   $('#detailsModal').on('show.bs.modal', function() {
+    $('.records-tab-btn').removeClass('active');
     $('#tabCriminalHistory').addClass('active');
-    $('#tabMedicalHistory').removeClass('active');
-    $('#recordsTabCriminal').show();
-    $('#recordsTabMedical').hide();
+    // Set initial styles for underline
+    $('.records-tab-btn').css('border-bottom', '3px solid transparent').css('color', '#a0aec0');
+    $('#tabCriminalHistory').css('border-bottom', '3px solid #667eea').css('color', '#fff');
+    $('.records-tab-content').hide();
+    $('#tabContentCriminal').show();
   });
+
+  // Vehicle pagination variables
+  let vehiclePage = 1;
+  let vehicleTotal = 0;
+  let vehicleLimit = 3;
+
+  // Function to load vehicles
+  function loadVehicles(page = 1) {
+    const civilianId = currentItem?._id;
+    if (!civilianId) return;
+    
+    // Check if we have cached data for this civilian and page
+    const cacheKey = page - 1; // Convert to 0-based index for cache
+    if (civilianCache.civilianId === civilianId && civilianCache.vehicles[cacheKey]) {
+      displayVehicles(civilianCache.vehicles[cacheKey], civilianCache.vehicleTotal, page);
+      return;
+    }
+    
+    vehiclePage = page;
+    const url = `${API_URL}/api/v1/vehicles/registered-owner/${civilianId}?limit=3&page=${page - 1}`;
+
+    $('#vehiclesList').html(`
+      <div class="text-center">
+        <div class="loading-step mb-2">
+          <i class="fa fa-spinner fa-spin text-primary"></i>
+          <span class="ml-2">Checking vehicle registration...</span>
+        </div>
+        <div class="loading-step mb-2">
+          <i class="fa fa-spinner fa-spin text-primary"></i>
+          <span class="ml-2">Checking vehicle history...</span>
+        </div>
+        <div class="loading-step mb-2">
+          <i class="fa fa-spinner fa-spin text-primary"></i>
+          <span class="ml-2">Checking warrants and tickets...</span>
+        </div>
+        <div class="loading-step mb-2">
+          <i class="fa fa-spinner fa-spin text-primary"></i>
+          <span class="ml-2">Checking stolen vehicle database...</span>
+        </div>
+      </div>
+    `);
+    
+    // Simulate progressive loading
+    let currentStep = 0;
+    const loadingSteps = [
+      'Checking vehicle registration...',
+      'Checking vehicle history...',
+      'Checking warrants and tickets...',
+      'Checking stolen vehicle database...'
+    ];
+    
+    const updateLoadingStep = () => {
+      if (currentStep < loadingSteps.length) {
+        const stepHtml = loadingSteps.map((step, index) => {
+          const icon = index < currentStep ? 'fa-check text-success' : index === currentStep ? 'fa-spinner fa-spin text-primary' : 'fa-circle text-muted';
+          return `<div class="loading-step mb-2">
+            <i class="fa ${icon}"></i>
+            <span class="ml-2">${step}</span>
+          </div>`;
+        }).join('');
+        
+        $('#vehiclesList').html(`<div class="text-center">${stepHtml}</div>`);
+        currentStep++;
+        
+        if (currentStep <= loadingSteps.length) {
+          setTimeout(updateLoadingStep, 300);
+        }
+      }
+    };
+    
+    updateLoadingStep();
+    
+    $.ajax({
+      url: url,
+      method: 'GET',
+      success: function(response) {
+        const vehicles = response.vehicles || [];
+        vehicleTotal = response.total || 0;
+        
+        // Cache the results by page
+        civilianCache.civilianId = civilianId;
+        civilianCache.vehicles[cacheKey] = vehicles;
+        civilianCache.vehicleTotal = vehicleTotal;
+        
+        // Wait for loading animation to complete (1.2 seconds) then show results
+        setTimeout(() => {
+          displayVehicles(vehicles, vehicleTotal, page);
+        }, 1200); // Wait 1.2 seconds for loading animation to complete
+      },
+      error: function(xhr, status, error) {
+        console.error('Error loading vehicles:', xhr, status, error);
+        $('#vehiclesList').html('<p class="text-gray">Error loading vehicles.</p>');
+      }
+    });
+  }
+
+  // Function to display vehicles (used for both cached and fresh data)
+  function displayVehicles(vehicles, total, page) {
+    if (vehicles && vehicles.length > 0) {
+      let vehiclesHtml = '';
+      vehicles.forEach((item, index) => {
+        const vehicle = item.vehicle;
+        vehiclesHtml += `
+          <div class="details-item" onclick="searchVehicle('${vehicle.plate}')" style="cursor: pointer;">
+            <div class="d-flex justify-content-between">
+              <span>${vehicle.plate || 'N/A'}</span>
+              <span>${vehicle.color || ''} ${vehicle.model || ''}</span>
+            </div>
+            <p class="text-gray mb-0">Type: ${vehicle.type || 'N/A'}</p>
+            <p class="text-gray mb-0">Make: ${vehicle.make || 'N/A'}</p>
+            <p class="text-gray mb-0">Year: ${vehicle.year || 'N/A'}</p>
+            <p class="text-gray mb-0">VIN: ${vehicle.vin || 'N/A'}</p>
+            ${vehicle.isStolen === 'true' ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
+          </div>
+        `;
+      });
+      
+      // Add pagination controls
+      const totalPages = Math.ceil(total / vehicleLimit);
+      const paginationHtml = `
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <button class="btn btn-secondary btn-sm" onclick="loadVehicles(${page - 1})" ${page <= 1 ? 'disabled' : ''}>
+            <i class="fa fa-chevron-left"></i> Previous
+          </button>
+          <span class="text-gray">Page ${page} of ${totalPages} (${total} total)</span>
+          <button class="btn btn-secondary btn-sm" onclick="loadVehicles(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>
+            Next <i class="fa fa-chevron-right"></i>
+          </button>
+        </div>
+      `;
+      
+      $('#vehiclesList').html(vehiclesHtml + paginationHtml);
+    } else {
+      $('#vehiclesList').html('<p class="text-gray">No vehicles found.</p>');
+    }
+  }
+
+  // Function to search for a vehicle
+  function searchVehicle(plate) {
+    // Close the details modal
+    $('#detailsModal').modal('hide');
+    // Open the search database modal and search for the vehicle
+    showSearchDatabaseModal('Vehicle');
+    // Set the plate number in the search field
+    setTimeout(() => {
+      $('#searchQuery').val(plate);
+      // Trigger the search
+      vehicleSearchPoliceForm();
+    }, 500);
+  }
+
+  // Firearm pagination variables
+  let firearmPage = 1;
+  let firearmTotal = 0;
+  let firearmLimit = 3;
+
+  // Function to load firearms
+  function loadFirearms(page = 1) {
+    const civilianId = currentItem?._id;
+    if (!civilianId) return;
+    
+    // Check if we have cached data for this civilian and page
+    const cacheKey = page - 1; // Convert to 0-based index for cache
+    if (civilianCache.civilianId === civilianId && civilianCache.firearms[cacheKey]) {
+      displayFirearms(civilianCache.firearms[cacheKey], civilianCache.firearmTotal, page);
+      return;
+    }
+    
+    firearmPage = page;
+    const url = `${API_URL}/api/v1/firearms/registered-owner/${civilianId}?limit=3&page=${page - 1}`;
+    $('#firearmsList').html(`
+      <div class="text-center">
+        <div class="loading-step mb-2">
+          <i class="fa fa-spinner fa-spin text-primary"></i>
+          <span class="ml-2">Checking firearm registration...</span>
+        </div>
+        <div class="loading-step mb-2">
+          <i class="fa fa-spinner fa-spin text-primary"></i>
+          <span class="ml-2">Checking serial number database...</span>
+        </div>
+        <div class="loading-step mb-2">
+          <i class="fa fa-spinner fa-spin text-primary"></i>
+          <span class="ml-2">Checking firearm history...</span>
+        </div>
+        <div class="loading-step mb-2">
+          <i class="fa fa-spinner fa-spin text-primary"></i>
+          <span class="ml-2">Checking stolen firearm database...</span>
+        </div>
+      </div>
+    `);
+    
+    // Simulate progressive loading
+    let currentStep = 0;
+    const loadingSteps = [
+      'Checking firearm registration...',
+      'Checking serial number database...',
+      'Checking firearm history...',
+      'Checking stolen firearm database...'
+    ];
+    
+    const updateLoadingStep = () => {
+      if (currentStep < loadingSteps.length) {
+                  const stepHtml = loadingSteps.map((step, index) => {
+            const icon = index < currentStep ? 'fa-check text-success' : index === currentStep ? 'fa-spinner fa-spin text-primary' : 'fa-circle text-muted';
+            return `<div class="loading-step mb-2">
+              <i class="fa ${icon}"></i>
+              <span class="ml-2">${step}</span>
+            </div>`;
+          }).join('');
+        
+        $('#firearmsList').html(`<div class="text-center">${stepHtml}</div>`);
+        currentStep++;
+        
+        if (currentStep <= loadingSteps.length) {
+          setTimeout(updateLoadingStep, 300);
+        }
+      }
+    };
+    
+    updateLoadingStep();
+    
+    $.ajax({
+      url: url,
+      method: 'GET',
+      success: function(response) {
+        const firearms = response.firearms || [];
+        firearmTotal = response.total || 0;
+        
+        // Cache the results by page
+        civilianCache.civilianId = civilianId;
+        civilianCache.firearms[cacheKey] = firearms;
+        civilianCache.firearmTotal = firearmTotal;
+        
+        // Wait for loading animation to complete (1.2 seconds) then show results
+        setTimeout(() => {
+          displayFirearms(firearms, firearmTotal, page);
+        }, 1200); // Wait 1.2 seconds for loading animation to complete
+      },
+      error: function() {
+        $('#firearmsList').html('<p class="text-gray">Error loading firearms.</p>');
+      }
+    });
+  }
+
+  // Function to display firearms (used for both cached and fresh data)
+  function displayFirearms(firearms, total, page) {
+    if (firearms && firearms.length > 0) {
+      let firearmsHtml = '';
+      firearms.forEach(item => {
+        const firearm = item.firearm;
+        firearmsHtml += `
+          <div class="details-item" onclick="searchFirearm('${firearm.serialNumber}')" style="cursor: pointer;">
+            <div class="d-flex justify-content-between">
+              <span>${firearm.serialNumber || 'N/A'}</span>
+              <span>${firearm.weaponType || firearm.name || 'N/A'}</span>
+            </div>
+            <p class="text-gray mb-0">Caliber: ${firearm.caliber || 'N/A'}</p>
+            ${firearm.isStolen === 'true' ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
+          </div>
+        `;
+      });
+      
+      // Add pagination controls
+      const totalPages = Math.ceil(total / firearmLimit);
+      const paginationHtml = `
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <button class="btn btn-secondary btn-sm" onclick="loadFirearms(${page - 1})" ${page <= 1 ? 'disabled' : ''}>
+            <i class="fa fa-chevron-left"></i> Previous
+          </button>
+          <span class="text-gray">Page ${page} of ${totalPages} (${total} total)</span>
+          <button class="btn btn-secondary btn-sm" onclick="loadFirearms(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>
+            Next <i class="fa fa-chevron-right"></i>
+          </button>
+        </div>
+      `;
+      
+      $('#firearmsList').html(firearmsHtml + paginationHtml);
+    } else {
+      $('#firearmsList').html('<p class="text-gray">No firearms found.</p>');
+    }
+  }
+
+  // Function to search for a firearm
+  function searchFirearm(serialNumber) {
+    // Close the details modal
+    $('#detailsModal').modal('hide');
+    // Open the search database modal and search for the firearm
+    showSearchDatabaseModal('Firearm');
+    // Set the serial number in the search field
+    setTimeout(() => {
+      $('#searchQuery').val(serialNumber);
+      // Trigger the search
+      firearmSearchPoliceForm();
+    }, 500);
+  }
+
+
 
   // Expose showDetailsModal and goBack globally
   window.showDetailsModal = showDetailsModal;
   window.fetchArrestReports = fetchArrestReports;
   window.changeCriminalPage = changeCriminalPage;
   window.goBack = goBack;
-});
-
-// --- Ensure renderDetails runs on tab switch ---
-$(document).on('click', '#tabCriminalHistory, #tabMedicalHistory', function() {
-  setTimeout(renderDetails, 0);
+  window.searchVehicle = searchVehicle;
+  window.searchFirearm = searchFirearm;
+  window.displayVehicles = displayVehicles;
+  window.displayFirearms = displayFirearms;
+  window.loadVehicles = loadVehicles;
+  window.loadFirearms = loadFirearms;
 });

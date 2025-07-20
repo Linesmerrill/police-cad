@@ -35,6 +35,7 @@
   <script src="/static/js/wow.js"></script>
   <script src="/static/js/popper.js"></script>
   <script src="/static/js/main.js"></script>
+  <script src="/static/js/notepad.js"></script>
   <script src="/static/js/police-dashboard.js"></script>
   <script src="/static/js/department-backgrounds.js"></script>
   <script src="/static/js/name-database.js"></script>
@@ -223,12 +224,12 @@
             <a data-toggle="modal" href="#10codesModal"><span class="fa fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
           </li> -->
           <li>
+            <a data-toggle="modal" href="#notepadModal"><span class="fa fa-clipboard ml-3 mr-3"></span> Notepad</a>
+          </li>
+          <li>
             <a href="/penal-code"><span class="fa fa-laptop ml-3 mr-3"></span>Penal Codes <i
                 class="fa fa-external-link-alt"></i></a>
           </li>
-          <!-- <li>
-            <a data-toggle="modal" href="#notepadModal"><span class="fa fa-clipboard ml-3 mr-3"></span> Notepad</a>
-          </li> -->
           <li>
             <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
                 class="fa fa-external-link-alt"></i></a>
@@ -1619,7 +1620,7 @@
 
   <% include partials/notificationModal %>
   <!-- <% include 10-codes %> -->
-  <!-- <% include notepad %> -->
+  <% include notepad %>
 </body>
 </div>
 </div>
@@ -2460,6 +2461,10 @@ function showBoloModal() {
   var civLastName = "";
 
   $(document).ready(function () {
+    // Set API URL for shared notepad module
+    if (typeof setApiUrl === 'function') {
+      setApiUrl('<%= apiUrl %>');
+    }
 
     fetchAndRenderDepartments();
     $('[title]').tooltip();
