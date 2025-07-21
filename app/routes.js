@@ -90,6 +90,13 @@ module.exports = function (app, passport, server) {
     try {
       const hash = req.params.hash;
       const communityId = decodeId(hash);
+      // Validate that the decoded communityId is a valid MongoDB ObjectId
+      if (!/^[a-fA-F0-9]{24}$/.test(communityId)) {
+        return res.status(404).render("error", {
+          message: "Community not found or an error occurred.",
+          redirect: "/communities",
+        });
+      }
       // Fetch community details from API
       const apiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}`;
       const response = await axios.get(apiUrl, config);
