@@ -229,93 +229,103 @@ function encodeCommunityId(communityId) {
 
 const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage }) => {
   const [current, setCurrent] = useState(0);
+  const [direction, setDirection] = useState(1); // 1 for next, -1 for prev
 
   useEffect(() => {
     const interval = setInterval(() => {
+      setDirection(1);
       setCurrent((prev) => (prev + 1) % communities.length);
     }, 8000);
     return () => clearInterval(interval);
   }, [communities]);
 
+  if (!communities.length) return null;
+
+  const community = communities[current];
+
   return (
-    <div className="relative w-full h-[600px] bg-gray-800 overflow-hidden">
-      {communities.map((community, index) => (
-        <div
-          key={community._id}
-          className={`absolute top-0 left-0 w-full h-full flex items-center justify-center transition-all duration-500 ${
-            index === current ? "opacity-100" : "opacity-0"
-          }`}
-          style={{ transform: `translateX(${(index - current) * 100}%)` }}
-        >
-          <div
-            className="absolute inset-0 bg-cover bg-center"
-            style={{
-              backgroundImage: `url(${community.imageLink || "/static/images/default-logo.png"})`,
-            }}
-          ></div>
-          <div className="absolute inset-0 bg-black/50"></div>
-          <div className="relative max-w-4xl mx-auto text-center z-10">
-            <h2 className="text-4xl font-bold text-white mb-4">
-              {community.name}
-            </h2>
-            <p className="text-gray-200 text-lg mb-2">
-              {community.promotionalText}
-            </p>
-            <p className="text-gray-300 mb-4">
-              {community.promotionalDescription}
-            </p>
-            <p className="text-gray-400 mb-4">
-              {community.membersCount} Members
-            </p>
-            <div className="flex justify-center space-x-2 mb-6">
-              {community.tags &&
-                community.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-block bg-gray-600 text-gray-200 text-xs px-2 py-1 rounded-full"
-                  >
-                    {tag}
-                  </span>
-                ))}
-            </div>
+    <div className="w-full flex justify-center items-center py-8 z-0 mt-24">
+      <div className="relative max-w-xl w-full mx-4 z-0 min-h-[420px] md:min-h-[480px] flex items-center">
+        {/* Gradient border/glow */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-3xl z-0 pointer-events-none"
+          style={{
+            width: '540px', // card width (500px) + 40px
+            height: '640px', // card height (600px) + 40px
+            background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)',
+            filter: 'blur(12px)',
+            opacity: 0.45,
+          }}></div>
+        {/* Card content with swipe animation */}
+        <div className="relative bg-gray-800 rounded-3xl shadow-2xl pt-20 pb-10 px-8 flex flex-col items-center text-center border border-gray-700 z-10 w-[400px] md:w-[500px] min-h-[520px] md:min-h-[600px] justify-center"
+          style={{
+            boxShadow: '0 12px 48px 0 rgba(124, 58, 237, 0.25), 0 2px 12px 0 rgba(0,0,0,0.18)',
+            minHeight: '520px',
+            maxHeight: '600px',
+            height: '600px',
+          }}>
+          {/* Floating image */}
+          <img
+            src={community.imageLink || "/static/images/default-logo.png"}
+            alt={community.name}
+            className="w-44 h-44 object-contain rounded-2xl shadow-lg bg-gray-900 border border-gray-700 absolute left-1/2 -top-16 -translate-x-1/2"
+            style={{ background: '#181e2a' }}
+          />
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 mt-8 break-words max-w-full leading-tight">{community.name}</h2>
+          <div className="flex flex-wrap justify-center gap-2 mb-2">
+            {community.tags && community.tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-block bg-blue-700 text-blue-100 text-xs px-2 py-1 rounded-full uppercase tracking-wide font-semibold"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+          <p className="text-blue-300 text-base font-semibold mb-2">{community.promotionalText}</p>
+          <p className="text-gray-300 mb-4 text-sm md:text-base">{community.promotionalDescription}</p>
+          <p className="text-gray-400 mb-4">{community.membersCount} Members</p>
+          <button
+            onClick={() => window.location.href = `/community/${encodeCommunityId(community._id)}`}
+            className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold shadow hover:bg-blue-700 transition mb-2"
+          >
+            View Community
+          </button>
+          {/* Navigation Arrows */}
+          <div className="absolute left-0 top-1/2 transform -translate-y-1/2">
             <button
-              onClick={() => window.location.href = `/community/${encodeCommunityId(community._id)}`}
-              className="inline-block bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 mb-4"
+              onClick={() => {
+                setDirection(-1);
+                setCurrent((current - 1 + communities.length) % communities.length);
+              }}
+              className="bg-gray-700 text-white p-2 rounded-full shadow hover:bg-gray-600 focus:outline-none"
+              aria-label="Previous"
             >
-              View Community
+              <ion-icon name="chevron-back-outline" class="text-2xl"></ion-icon>
             </button>
           </div>
+          <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
+            <button
+              onClick={() => {
+                setDirection(1);
+                setCurrent((current + 1) % communities.length);
+              }}
+              className="bg-gray-700 text-white p-2 rounded-full shadow hover:bg-gray-600 focus:outline-none"
+              aria-label="Next"
+            >
+              <ion-icon name="chevron-forward-outline" class="text-2xl"></ion-icon>
+            </button>
+          </div>
+          {/* Dots */}
+          <div className="flex justify-center gap-2 mt-4">
+            {communities.map((_, idx) => (
+              <span
+                key={idx}
+                className={`w-3 h-3 rounded-full ${idx === current ? "bg-blue-600" : "bg-gray-500"} inline-block`}
+              ></span>
+            ))}
+          </div>
         </div>
-      ))}
-      <div className="absolute bottom-8 left-0 right-0 flex justify-center space-x-2 mb-12">
-        {communities.map((_, index) => (
-          <button
-            key={index}
-            className={`w-3 h-3 rounded-full ${
-              index === current ? "bg-blue-600" : "bg-gray-400"
-            }`}
-            onClick={() => setCurrent(index)}
-          ></button>
-        ))}
       </div>
-      {totalCount > 5 && (
-        <>
-          <button
-            onClick={onPrev}
-            disabled={currentPage === 0}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white p-3 rounded-full disabled:opacity-50"
-          >
-            <ion-icon name="chevron-back-outline"></ion-icon>
-          </button>
-          <button
-            onClick={onNext}
-            disabled={currentPage * 5 >= totalCount}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white p-3 rounded-full disabled:opacity-50"
-          >
-            <ion-icon name="chevron-forward-outline"></ion-icon>
-          </button>
-        </>
-      )}
     </div>
   );
 };
@@ -619,19 +629,19 @@ const App = () => {
       .then((response) => {
         const communities = response.data.data
           .map((item) => ({
-            _id: item._id, // Use top-level MongoDB ObjectID
-            name: item.community?.name,
-            promotionalText: item.community?.promotionalText,
-            promotionalDescription: item.community?.promotionalDescription,
-            tags: item.community?.tags || [],
+            _id: item._id,
+            name: item.name,
+            promotionalText: item.promotionalText,
+            promotionalDescription: item.promotionalDescription,
+            tags: item.tags || [],
             imageLink:
-              item.community?.imageLink && item.community?.imageLink.includes("file:///")
+              item.imageLink && item.imageLink.includes("file:///")
                 ? "/static/images/default-logo.png"
-                : item.community?.imageLink || "/static/images/default-logo.png",
-            membersCount: item.community?.membersCount,
-            code: item._id, // for legacy, but not used for hash
+                : item.imageLink || "/static/images/default-logo.png",
+            membersCount: item.membersCount,
+            code: item._id,
           }))
-          .sort((a, b) => a.name.localeCompare(b.name)); // Sort by name
+          .sort((a, b) => a.name.localeCompare(b.name));
         setEliteCommunities(communities);
         setEliteTotalCount(response.data.totalCount || 0);
       })
@@ -904,35 +914,32 @@ const App = () => {
             currentPage={elitePage}
           />
         )}
-        <CommunitySection
-          title="Your Communities"
-          communities={userCommunities}
-          actionText="Jump In"
-          onAction={(community) =>
-            // (window.location.href = `/community/${community._id}`)
-            (window.location.href = `/community-dashboard`)
-          }
-          cardsPerView={3}
-          onPrevPage={handleUserPrevPage}
-          onNextPage={handleUserNextPage}
-          currentPage={userPage}
-          totalCount={userTotalCount}
-        />
-        <CommunitySection
-          title="Discover Communities"
-          communities={recommendedCommunities}
-          //   actionText="Learn More"
-          actionText=""
-          onAction={(community) =>
-            // (window.location.href = `/community/${community._id}`)
-            (window.location.href = `#`)
-          }
-          cardsPerView={3}
-          onPrevPage={handleRecommendedPrevPage}
-          onNextPage={handleRecommendedNextPage}
-          currentPage={recommendedPage + 1}
-          totalCount={recommendedTotalCount}
-        />
+        {dbUser && dbUser._id && (
+          <CommunitySection
+            title="Your Communities"
+            communities={userCommunities}
+            actionText="Jump In"
+            onAction={(community) => (window.location.href = `/community-dashboard`)}
+            cardsPerView={3}
+            onPrevPage={handleUserPrevPage}
+            onNextPage={handleUserNextPage}
+            currentPage={userPage}
+            totalCount={userTotalCount}
+          />
+        )}
+        {dbUser && dbUser._id && (
+          <CommunitySection
+            title="Discover Communities"
+            communities={recommendedCommunities}
+            actionText=""
+            onAction={(community) => (window.location.href = `#`)}
+            cardsPerView={3}
+            onPrevPage={handleRecommendedPrevPage}
+            onNextPage={handleRecommendedNextPage}
+            currentPage={recommendedPage + 1}
+            totalCount={recommendedTotalCount}
+          />
+        )}
         <BrowseCommunities
           communities={allCommunities}
           totalCount={allCommunitiesTotalCount}

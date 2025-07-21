@@ -86,7 +86,7 @@ module.exports = function (app, passport, server) {
     res.render("about-us");
   });
 
-  app.get("/community/:hash", authCheck, async function (req, res) {
+  app.get("/community/:hash", async function (req, res) {
     try {
       const hash = req.params.hash;
       const communityId = decodeId(hash);
@@ -256,7 +256,7 @@ module.exports = function (app, passport, server) {
    *   Users can 'copy' the community code or 'edit' the community name.
    *   Also community admins can 'kick' members from their community.
    */
-  app.get("/communities", authCheck, function (req, res) {
+  app.get("/communities", function (req, res) {
     req.app.locals.specialContext = null;
     return res.render("communities", {
       members: null,

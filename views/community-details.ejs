@@ -44,9 +44,13 @@
           <span class="fa fa-bell text-xl"></span>
           <span class="absolute -top-1 -right-2 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5" style="display:none;">0</span>
         </a>
-        <a href="/profile" class="text-gray-300 hover:text-white">
-          <ion-icon name="person-circle-outline" class="text-3xl align-middle"></ion-icon>
-        </a>
+        <% if (user) { %>
+          <a href="/profile" class="text-gray-300 hover:text-white">
+            <ion-icon name="person-circle-outline" class="text-3xl align-middle"></ion-icon>
+          </a>
+        <% } else { %>
+          <a href="/login-civ" class="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full font-semibold">Login</a>
+        <% } %>
       </div>
     </nav>
     <!-- Back Link -->
