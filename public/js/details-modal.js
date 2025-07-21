@@ -510,6 +510,7 @@ $(document).ready(function () {
       // Clear tab content and hide it
       $('#vehiclesList').empty();
       $('#firearmsList').empty();
+      $('#licensesList').empty(); // <-- Fix: clear licensesList for non-civilian
       $('.records-tab-content').hide();
     }
 
@@ -1525,7 +1526,8 @@ $(document).ready(function () {
     }
     
     licensePage = page;
-    const url = `${API_URL}/api/v1/licenses/civilian/${civilianId}?limit=6&page=${page}`;
+    // Use licenseLimit for API call
+    const url = `${API_URL}/api/v1/licenses/civilian/${civilianId}?limit=${licenseLimit}&page=${page}`;
 
     $('#licensesList').html(`
       <div class="text-center">
@@ -1608,9 +1610,10 @@ $(document).ready(function () {
       let licensesHtml = '';
       licenses.forEach(item => {
         const license = item.license;
-        const isExpired = license.expirationDate && new Date(license.expirationDate) < new Date();
-        const statusClass = isExpired ? 'text-danger' : 'text-success';
-        const statusText = isExpired ? 'Expired' : (license.status || 'Valid');
+        // Use robust isExpired function
+        const isExpiredStatus = isExpired(license.expirationDate);
+        const statusClass = isExpiredStatus ? 'text-danger' : 'text-success';
+        const statusText = isExpiredStatus ? 'Expired' : (license.status || 'Valid');
         
         licensesHtml += `
           <div class="details-item">
