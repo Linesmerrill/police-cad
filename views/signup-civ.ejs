@@ -238,11 +238,23 @@
         document.getElementById('signup-success').style.display = '';
       }
       // --- Error helpers ---
-      function showError(id, msg) {
+      function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>"']/g, function (c) {
+          return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+          }[c];
+        });
+      }
+      function showError(id, msg, allowHTML = false) {
         const el = document.getElementById(id);
         el.classList.remove('signup-status-message');
         el.classList.add('signup-error-message');
-        el.innerHTML = msg; // Use innerHTML to allow HTML tags
+        el.innerHTML = allowHTML ? msg : escapeHTML(msg); // Only allow HTML if explicitly safe
         el.style.display = '';
       }
       function hideError(id) {
@@ -251,11 +263,11 @@
         el.classList.remove('signup-error-message', 'signup-status-message');
         el.style.display = 'none';
       }
-      function showStatus(id, msg) {
+      function showStatus(id, msg, allowHTML = false) {
         const el = document.getElementById(id);
         el.classList.remove('signup-error-message');
         el.classList.add('signup-status-message');
-        el.innerHTML = msg;
+        el.innerHTML = allowHTML ? msg : escapeHTML(msg);
         el.style.display = '';
       }
       // --- Step 1: Email ---
@@ -292,10 +304,10 @@
             checkData.Response.Error &&
             checkData.Response.Error.toLowerCase().includes('duplicate')
           ) {
-            showError('email-error', 'An account with this email already exists. <a href="/login" style="color:#2563eb;text-decoration:underline;">Log in</a> or <a href="/forgot-password" style="color:#2563eb;text-decoration:underline;">reset your password</a>.');
+            showError('email-error', 'An account with this email already exists. <a href="/login" style="color:#2563eb;text-decoration:underline;">Log in</a> or <a href="/forgot-password" style="color:#2563eb;text-decoration:underline;">reset your password</a>.', true);
             return;
           } else if (checkData.Response && checkData.Response.Error) {
-            showError('email-error', checkData.Response.Error);
+            showError('email-error', checkData.Response.Error); // No HTML allowed
             return;
           }
           // If checkData is empty, treat as email does not exist and proceed
@@ -503,7 +515,7 @@
             createData = await createRes.json();
           } catch {}
           if (createRes.status === 409 && createData.Response && createData.Response.Error && createData.Response.Error.toLowerCase().includes('duplicate')) {
-            showError('username-error', 'An account with this email already exists. <a href="/login" style="color:#2563eb;text-decoration:underline;">Log in</a> or <a href="/forgot-password" style="color:#2563eb;text-decoration:underline;">reset your password</a>.');
+            showError('username-error', 'An account with this email already exists. <a href="/login" style="color:#2563eb;text-decoration:underline;">Log in</a> or <a href="/forgot-password" style="color:#2563eb;text-decoration:underline;">reset your password</a>.', true);
             submitBtn.disabled = false;
             return;
           }
