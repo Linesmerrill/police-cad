@@ -1,4 +1,5 @@
 const { useState, useEffect } = React;
+// Remove: import Autocomplete from "@heroui/autocomplete";
 
 const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
 
@@ -507,6 +508,136 @@ const BrowseCommunities = ({
   );
 };
 
+// CommunitySearchBar: HeroUI Free style search bar for communities
+const CommunitySearchBar = () => {
+  const [inputValue, setInputValue] = React.useState("");
+  const [options, setOptions] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [noResults, setNoResults] = React.useState(false);
+  const [showDropdown, setShowDropdown] = React.useState(false);
+  const debounceTimeout = React.useRef();
+  const inputRef = React.useRef();
+
+  const fetchCommunities = (query) => {
+    if (!query) {
+      setOptions([]);
+      setNoResults(false);
+      setShowDropdown(false);
+      return;
+    }
+    setLoading(true);
+    fetch(`${API_URL}/api/v1/search/communities?q=${encodeURIComponent(query)}&limit=6&page=1`)
+      .then((res) => res.json())
+      .then((data) => {
+        const communities = (data.data || []).map((item) => {
+          const c = item.community || item;
+          const subscription = c.subscription || {};
+          const isVerified =
+            ["elite", "premium", "standard"].includes(subscription.plan) && subscription.active === true;
+          return {
+            id: item._id,
+            name: c.name,
+            image: c.imageLink || "/static/images/default-logo.png",
+            description: c.promotionalText || c.promotionalDescription || c.description || "",
+            _id: item._id,
+            isVerified,
+          };
+        });
+        setOptions(communities);
+        setNoResults(communities.length === 0);
+        setShowDropdown(true);
+        setLoading(false);
+      })
+      .catch(() => {
+        setOptions([]);
+        setNoResults(true);
+        setShowDropdown(true);
+        setLoading(false);
+      });
+  };
+
+  // Debounce input
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setInputValue(value);
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(() => {
+      fetchCommunities(value);
+    }, 300);
+  };
+
+  // Handle selection
+  const handleSelection = (selected) => {
+    setShowDropdown(false);
+    setInputValue("");
+    setOptions([]);
+    if (selected && selected._id) {
+      window.location.href = `/community/${encodeCommunityId(selected._id)}`;
+    }
+  };
+
+  // Hide dropdown on outside click
+  React.useEffect(() => {
+    const handleClick = (e) => {
+      if (inputRef.current && !inputRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  return (
+    <div className="w-full flex justify-center py-8 bg-gray-900 z-10">
+      <div className="w-full max-w-2xl relative" ref={inputRef}>
+        <input
+          type="text"
+          className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow"
+          placeholder="Search for a community..."
+          value={inputValue}
+          onChange={handleInputChange}
+          onFocus={() => inputValue && setShowDropdown(true)}
+        />
+        {showDropdown && (
+          <div className="absolute left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
+            {loading ? (
+              <div className="p-4 text-gray-400 text-center">Searching...</div>
+            ) : noResults ? (
+              <div className="p-4 text-gray-400 text-center">No communities found</div>
+            ) : (
+              options.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 p-3 hover:bg-gray-700 cursor-pointer"
+                  onClick={() => handleSelection(item)}
+                >
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-10 h-10 rounded object-cover border border-gray-700 bg-gray-800"
+                  />
+                  <div>
+                    <div className="font-semibold text-white flex items-center gap-1">
+                      {item.name}
+                      {item.isVerified && (
+                        <svg viewBox="0 0 24 24" className="w-5 h-5 inline-block ml-1" style={{ verticalAlign: 'middle' }}>
+                          <circle cx="12" cy="12" r="10" fill="#eab308" />
+                          <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-400 truncate max-w-xs">{item.description}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const Footer = () => (
   <footer className="bg-gray-900 text-gray-300 py-12">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -905,6 +1036,8 @@ const App = () => {
     <div className="min-h-screen">
       <Navbar />
       <div className="pt-16">
+        {/* HeroUI Pro Search Bar */}
+        <CommunitySearchBar />
         {eliteCommunities.length > 0 && (
           <Carousel
             communities={eliteCommunities}
