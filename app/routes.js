@@ -1540,7 +1540,7 @@ module.exports = function (app, passport, server) {
   app.post(
     "/signup-civ",
     passport.authenticate("signup", {
-      successRedirect: "/community-dashboard",
+      successRedirect: "/communities",
       failureRedirect: "/signup-civ",
       failureFlash: true,
     })
