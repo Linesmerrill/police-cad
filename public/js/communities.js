@@ -501,7 +501,7 @@ const BrowseCommunities = ({
 };
 
 // CommunitySearchBar: HeroUI Free style search bar for communities
-const CommunitySearchBar = () => {
+const CommunitySearchBar = ({ onCreateCommunity }) => {
   const [inputValue, setInputValue] = React.useState("");
   const [options, setOptions] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
@@ -639,7 +639,7 @@ const CommunitySearchBar = () => {
           id="create-community-btn"
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition whitespace-nowrap min-w-[160px] w-auto sm:ml-4"
           style={{ marginRight: 0 }}
-          onClick={() => alert('Create Community coming soon!')}
+          onClick={onCreateCommunity}
         >
           <i className="fa fa-plus"></i> Create a New Community
         </button>
@@ -748,6 +748,40 @@ const Footer = () => (
   </footer>
 );
 
+const modalEventName = "open-create-community-modal";
+
+const ComingSoonModal = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+  return (
+    <div
+      className="fixed z-[2200] left-0 top-0 w-screen h-screen bg-[rgba(30,32,44,0.65)] flex items-center justify-center"
+      onClick={onClose}
+      style={{ zIndex: 2200 }}
+    >
+      <div
+        className="bg-[#23263a] rounded-2xl max-w-xs w-[98%] mx-auto shadow-2xl p-8 pt-10 relative text-center border border-gray-700"
+        onClick={e => e.stopPropagation()}
+        style={{ position: 'relative', zIndex: 2210 }}
+      >
+        <button
+          aria-label="Close"
+          tabIndex={0}
+          onClick={onClose}
+          className="absolute top-4 right-4 bg-none border-none text-white text-2xl cursor-pointer opacity-70 hover:opacity-100"
+          style={{ pointerEvents: 'auto', zIndex: 2220 }}
+        >
+          <i className="fa fa-times"></i>
+        </button>
+        <div className="text-5xl text-[#f093fb] mb-4">
+          <i className="fa fa-hammer"></i>
+        </div>
+        <div className="text-xl font-bold text-white mb-2">Coming Soon</div>
+        <div className="text-gray-400 text-base">Community creation is still under construction.<br/>Check back soon!</div>
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   const [eliteCommunities, setEliteCommunities] = useState([]);
   const [userCommunities, setUserCommunities] = useState([]);
@@ -762,6 +796,7 @@ const App = () => {
   const [allCommunitiesTotalCount, setAllCommunitiesTotalCount] = useState(0);
   const [allCommunitiesPage, setAllCommunitiesPage] = useState(0);
   const [currentTag, setCurrentTag] = useState("all");
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   useEffect(() => {
     // Fetch elite communities
@@ -879,6 +914,11 @@ const App = () => {
         setAllCommunities([]);
         setAllCommunitiesTotalCount(0);
       });
+
+    // Listen for global event to open modal (for EJS link)
+    const handler = () => setShowComingSoon(true);
+    window.addEventListener(modalEventName, handler);
+    return () => window.removeEventListener(modalEventName, handler);
   }, []);
 
   const fetchElitePage = (page) => {
@@ -1044,9 +1084,10 @@ const App = () => {
 
   return (
     <div className="min-h-screen">
+      <ComingSoonModal isOpen={showComingSoon} onClose={() => setShowComingSoon(false)} />
       <div className="">
         {/* HeroUI Pro Search Bar */}
-        <CommunitySearchBar />
+        <CommunitySearchBar onCreateCommunity={() => setShowComingSoon(true)} />
         {eliteCommunities.length > 0 && (
           <Carousel
             communities={eliteCommunities}

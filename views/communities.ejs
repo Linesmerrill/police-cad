@@ -9,6 +9,7 @@
       type="image/ico"
       href="/static/images/favicon.ico"
     />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       body {
@@ -33,6 +34,26 @@
       .scroll-container::-webkit-scrollbar {
         display: none;
       }
+      @media (max-width: 600px) {
+        .promo-bar-hide-wrapper {
+          width: 100%;
+          justify-content: flex-end;
+          margin-top: 1rem;
+          order: 2;
+        }
+        #promo-bar-hide {
+          font-size: 0.85rem !important;
+          display: block;
+          width: 100%;
+          text-align: right;
+          margin-left: 0;
+        }
+        #promo-bar {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          padding: 1.25rem 1rem 1.25rem 1rem !important;
+        }
+      }
     </style>
   </head>
   <body>
@@ -49,23 +70,23 @@
       </div>
     </nav>
     <!-- Promo Bar -->
-    <div id="promo-bar" class="heroui-alert heroui-alert-info" style="display: flex;align-items: center;justify-content: space-between;background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);color: #fff;border-radius: 10px;box-shadow: 0 4px 16px rgba(102,126,234,0.10);padding: 1.25rem 2rem 1.25rem 1.5rem;/* margin-bottom: 2rem; */margin-top: 0.5rem;">
+    <div id="promo-bar" class="heroui-alert heroui-alert-info" style="display: flex;align-items: center;justify-content: space-between;background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);color: #fff;border-radius: 10px;box-shadow: 0 4px 16px rgba(102,126,234,0.10);padding: 1.25rem 2rem 1.25rem 1.5rem;/* margin-bottom: 2rem; */margin-top: 0.5rem; position: relative;">
       <div style="display: flex; align-items: center; gap: 1.25rem;">
         <i class="fa fa-lightbulb" style="font-size: 1.7rem; color: #f7fafc;"></i>
         <div>
           <div style="font-size: 1.15rem; font-weight: 600; letter-spacing: 0.01em;">Welcome!</div>
           <div style="font-size: 1rem; color: #e0e7ff; margin-top: 0.15rem;">
-            Search for a community or browse from the selection below.<br>
+            Search for a community or browse from the selection below.<br />
             Looking to create your own? <a href="#" id="create-community-link" style="color: #f093fb; text-decoration: underline; font-weight: 500;">You can start by clicking here.</a>
           </div>
         </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 1.2rem;">
+      <div class="promo-bar-hide-wrapper" style="display: flex; align-items: center; gap: 1.2rem;">
         <a id="promo-bar-hide" href="#" style="color: #f093fb; font-size: 1rem; text-decoration: underline; font-weight: 500; opacity: 0.85;">Don't show again</a>
-        <button id="promo-bar-close" aria-label="Close" style="background: none; border: none; color: #fff; font-size: 1.5rem; margin-left: 0.5rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s;">
-          <i class="fa fa-times"></i>
-        </button>
       </div>
+      <button id="promo-bar-x" aria-label="Close banner" style="position:absolute; top:0.7rem; right:1.2rem; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; z-index: 10;">
+        <i class="fa fa-times"></i>
+      </button>
     </div>
 
     
@@ -84,7 +105,7 @@
           if (bar) bar.style.display = 'none';
           return;
         }
-        var closeBtn = document.getElementById('promo-bar-close');
+        var closeBtn = document.getElementById('promo-bar-x');
         if (closeBtn) {
           closeBtn.addEventListener('click', function() {
             var bar = document.getElementById('promo-bar');
@@ -101,6 +122,17 @@
           });
         }
         
+      });
+    </script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var link = document.getElementById('create-community-link');
+        if (link) {
+          link.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.dispatchEvent(new Event('open-create-community-modal'));
+          });
+        }
       });
     </script>
     <div id="root"></div>
