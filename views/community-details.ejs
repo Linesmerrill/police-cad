@@ -61,7 +61,15 @@
       <% if (community.community) { %>
         <div class="card text-center">
           <img src="<%= community.community.imageLink || '/static/images/default-logo.png' %>" alt="<%= community.community.name %>" class="hero-img mx-auto mb-4" />
-          <h1 class="text-3xl font-bold mb-2"><%= community.community.name %></h1>
+          <h1 class="text-3xl font-bold mb-2">
+            <%= community.community.name %>
+            <% if ((['elite','premium','standard'].includes(community.community.subscription?.plan)) && community.community.subscription?.active) { %>
+              <svg viewBox="0 0 24 24" class="w-6 h-6 inline-block ml-2 align-middle" style="vertical-align: middle;">
+                <circle cx="12" cy="12" r="10" fill="#eab308" />
+                <path d="M8 12.5l3 3 5-5" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            <% } %>
+          </h1>
           <div class="flex flex-wrap justify-center gap-2 mb-2">
             <% if (community.community.tags && community.community.tags.length) { %>
               <% community.community.tags.forEach(function(tag) { %>
