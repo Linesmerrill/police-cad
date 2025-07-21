@@ -673,9 +673,18 @@ $(document).ready(function () {
   function isExpired(expirationDate) {
     if (!expirationDate) return false;
     try {
-      const [month, day, year] = expirationDate.split("/").map(Number);
-      const expDate = new Date(year, month - 1, day);
-      return expDate.getTime() <= Date.now();
+      let expDate;
+      if (expirationDate.includes('-')) {
+        // Format: YYYY-MM-DD
+        expDate = new Date(expirationDate + 'T23:59:59'); // End of day
+      } else if (expirationDate.includes('/')) {
+        // Format: MM/DD/YYYY
+        const [month, day, year] = expirationDate.split('/').map(Number);
+        expDate = new Date(year, month - 1, day, 23, 59, 59);
+      } else {
+        return false;
+      }
+      return expDate.getTime() < Date.now();
     } catch (error) {
       console.warn("Invalid expiration date format:", expirationDate);
       return false;
@@ -1612,14 +1621,24 @@ $(document).ready(function () {
         const license = item.license;
         // Use robust isExpired function
         const isExpiredStatus = isExpired(license.expirationDate);
-        const statusClass = isExpiredStatus ? 'text-danger' : 'text-success';
-        const statusText = isExpiredStatus ? 'Expired' : (license.status || 'Valid');
-        
+        let statusClass = 'text-success';
+        let statusText = license.status || 'Valid';
+        if (license.status && (license.status.toLowerCase() === 'suspended' || license.status.toLowerCase() === 'revoked')) {
+          statusClass = 'text-danger';
+        }
+        // Expired pill if needed
+        let expiredPill = '';
+        if (isExpiredStatus) {
+          expiredPill = `<span class="badge badge-expired ml-2" style="display:inline-block;margin-top:0.25rem;">Expired</span>`;
+        }
         licensesHtml += `
           <div class="details-item">
-            <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between align-items-start">
               <span>${license.type || 'N/A'}</span>
-              <span class="${statusClass}">${statusText}</span>
+              <div class="text-right">
+                <span class="${statusClass}">${statusText}</span>
+                ${expiredPill ? '<br/>' + expiredPill : ''}
+              </div>
             </div>
             <p class="text-gray mb-0">Expires: ${license.expirationDate || 'N/A'}</p>
             <p class="text-gray mb-0">Notes: ${license.notes || 'N/A'}</p>
