@@ -180,8 +180,15 @@ module.exports = function (app, passport, server) {
     if (req.isAuthenticated()) {
       return res.redirect("/community-dashboard");
     }
+    // Validate and fallback for API URL
+    let apiUrl = process.env.POLICE_CAD_API_URL;
+    if (!apiUrl) {
+      console.warn("[WARN] POLICE_CAD_API_URL is not set. Using fallback '/api'.");
+      apiUrl = '/api'; // Fallback to relative API path or set your default here
+    }
     res.render("signup-civ", {
       message: "",
+      apiUrl: apiUrl // Pass API URL to EJS
     });
   });
 
