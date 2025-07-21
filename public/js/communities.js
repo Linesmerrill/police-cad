@@ -581,50 +581,68 @@ const CommunitySearchBar = () => {
 
   return (
     <div className="w-full flex justify-center py-8 bg-gray-900 z-10">
-      <div className="w-full max-w-2xl relative" ref={inputRef}>
-        <input
-          type="text"
-          className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow"
-          placeholder="Search for a community..."
-          value={inputValue}
-          onChange={handleInputChange}
-          onFocus={() => inputValue && setShowDropdown(true)}
-        />
-        {showDropdown && (
-          <div className="absolute left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
-            {loading ? (
-              <div className="p-4 text-gray-400 text-center">Searching...</div>
-            ) : noResults ? (
-              <div className="p-4 text-gray-400 text-center">No communities found</div>
-            ) : (
-              options.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 p-3 hover:bg-gray-700 cursor-pointer"
-                  onClick={() => handleSelection(item)}
-                >
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-10 h-10 rounded object-cover border border-gray-700 bg-gray-800"
-                  />
-                  <div>
-                    <div className="font-semibold text-white flex items-center gap-1">
-                      {item.name}
-                      {item.isVerified && (
-                        <svg viewBox="0 0 24 24" className="w-5 h-5 inline-block ml-1" style={{ verticalAlign: 'middle' }}>
-                          <circle cx="12" cy="12" r="10" fill="#eab308" />
-                          <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      )}
+      <div className="w-full max-w-2xl flex flex-col sm:flex-row items-center gap-4 mx-auto" ref={inputRef}>
+        <div className="flex-grow flex justify-center relative min-w-0">
+          <input
+            type="text"
+            className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow pr-12"
+            placeholder="Search for a community..."
+            value={inputValue}
+            onChange={handleInputChange}
+            onFocus={() => inputValue && setShowDropdown(true)}
+          />
+          {loading && (
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <svg className="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+              </svg>
+            </span>
+          )}
+          {showDropdown && (
+            <div className="absolute left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
+              {loading ? (
+                <div className="p-4 text-gray-400 text-center">Searching...</div>
+              ) : noResults ? (
+                <div className="p-4 text-gray-400 text-center">No communities found</div>
+              ) : (
+                options.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 p-3 hover:bg-gray-700 cursor-pointer"
+                    onClick={() => handleSelection(item)}
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-10 h-10 rounded object-cover border border-gray-700 bg-gray-800"
+                    />
+                    <div>
+                      <div className="font-semibold text-white flex items-center gap-1">
+                        {item.name}
+                        {item.isVerified && (
+                          <svg viewBox="0 0 24 24" className="w-5 h-5 inline-block ml-1" style={{ verticalAlign: 'middle' }}>
+                            <circle cx="12" cy="12" r="10" fill="#eab308" />
+                            <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-400 truncate max-w-xs">{item.description}</div>
                     </div>
-                    <div className="text-xs text-gray-400 truncate max-w-xs">{item.description}</div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+                ))
+              )}
+            </div>
+          )}
+        </div>
+        <button
+          id="create-community-btn"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition whitespace-nowrap min-w-[160px] w-auto sm:ml-4"
+          style={{ marginRight: 0 }}
+          onClick={() => alert('Create Community coming soon!')}
+        >
+          <i className="fa fa-plus"></i> Create a New Community
+        </button>
       </div>
     </div>
   );
@@ -1026,8 +1044,7 @@ const App = () => {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
-      <div className="pt-16">
+      <div className="">
         {/* HeroUI Pro Search Bar */}
         <CommunitySearchBar />
         {eliteCommunities.length > 0 && (

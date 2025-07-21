@@ -36,6 +36,73 @@
     </style>
   </head>
   <body>
+    <!-- Header Bar -->
+    <nav class="flex items-center justify-between px-4 py-3 bg-gray-900 shadow-lg sticky top-0 z-20">
+      <div class="flex items-center space-x-2">
+        <a href="/" class="flex items-center space-x-2">
+          <img src="/static/images/favicon-32x32.png" alt="LPC Logo" class="h-8 w-8" />
+          <span class="text-xl font-bold text-white">Lines Police CAD</span>
+        </a>
+      </div>
+      <div class="flex items-center space-x-4">
+        <a href="/community-dashboard" class="text-blue-400 hover:underline font-semibold">Community Dashboard</a>
+      </div>
+    </nav>
+    <!-- Promo Bar -->
+    <div id="promo-bar" class="heroui-alert heroui-alert-info" style="display: flex;align-items: center;justify-content: space-between;background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);color: #fff;border-radius: 10px;box-shadow: 0 4px 16px rgba(102,126,234,0.10);padding: 1.25rem 2rem 1.25rem 1.5rem;/* margin-bottom: 2rem; */margin-top: 0.5rem;">
+      <div style="display: flex; align-items: center; gap: 1.25rem;">
+        <i class="fa fa-lightbulb" style="font-size: 1.7rem; color: #f7fafc;"></i>
+        <div>
+          <div style="font-size: 1.15rem; font-weight: 600; letter-spacing: 0.01em;">Welcome!</div>
+          <div style="font-size: 1rem; color: #e0e7ff; margin-top: 0.15rem;">
+            Search for a community or browse from the selection below.<br>
+            Looking to create your own? <a href="#" id="create-community-link" style="color: #f093fb; text-decoration: underline; font-weight: 500;">You can start by clicking here.</a>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 1.2rem;">
+        <a id="promo-bar-hide" href="#" style="color: #f093fb; font-size: 1rem; text-decoration: underline; font-weight: 500; opacity: 0.85;">Don't show again</a>
+        <button id="promo-bar-close" aria-label="Close" style="background: none; border: none; color: #fff; font-size: 1.5rem; margin-left: 0.5rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s;">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    
+    <!-- Search and Create Community Group -->
+    
+    <script>
+      function setPromoBarCookie() {
+        document.cookie = 'hidePromoBarCommunities=true; path=/; max-age=31536000'; // 1 year
+      }
+      function getPromoBarCookie() {
+        return document.cookie.split(';').some(c => c.trim().startsWith('hidePromoBarCommunities='));
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        if (getPromoBarCookie()) {
+          var bar = document.getElementById('promo-bar');
+          if (bar) bar.style.display = 'none';
+          return;
+        }
+        var closeBtn = document.getElementById('promo-bar-close');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', function() {
+            var bar = document.getElementById('promo-bar');
+            if (bar) bar.style.display = 'none';
+          });
+        }
+        var hideBtn = document.getElementById('promo-bar-hide');
+        if (hideBtn) {
+          hideBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            setPromoBarCookie();
+            var bar = document.getElementById('promo-bar');
+            if (bar) bar.style.display = 'none';
+          });
+        }
+        
+      });
+    </script>
     <div id="root"></div>
     <script
       src="https://unpkg.com/react@18/umd/react.production.min.js"
