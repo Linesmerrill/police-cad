@@ -156,6 +156,13 @@
   function onSubmit(token) {
     document.getElementById("signInForm").submit();
   }
+  // Always lowercase the email before submitting
+  document.getElementById('signInForm').addEventListener('submit', function(e) {
+    var emailInput = document.getElementById('inputEmail');
+    if (emailInput && emailInput.value) {
+      emailInput.value = emailInput.value.trim().toLowerCase();
+    }
+  });
 </script>
 
 <!--  added for google translate --> 

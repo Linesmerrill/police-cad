@@ -182,6 +182,7 @@ module.exports = function (app, passport, server) {
     }
     res.render("signup-civ", {
       message: "",
+      apiUrl: process.env.POLICE_CAD_API_URL // Pass API URL to EJS
     });
   });
 
