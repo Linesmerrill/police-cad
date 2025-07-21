@@ -222,6 +222,11 @@ const Navbar = () => {
   );
 };
 
+function encodeCommunityId(communityId) {
+  const base64 = btoa(communityId);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage }) => {
   const [current, setCurrent] = useState(0);
 
@@ -245,9 +250,7 @@ const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage }) => {
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: `url(${
-                community.imageLink || "/static/images/default-logo.png"
-              })`,
+              backgroundImage: `url(${community.imageLink || "/static/images/default-logo.png"})`,
             }}
           ></div>
           <div className="absolute inset-0 bg-black/50"></div>
@@ -275,12 +278,12 @@ const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage }) => {
                   </span>
                 ))}
             </div>
-            {/* <a
-              href={`/community/${community._id}`}
-              className="inline-block bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700"
+            <button
+              onClick={() => window.location.href = `/community/${encodeCommunityId(community._id)}`}
+              className="inline-block bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 mb-4"
             >
-              Join Now
-            </a> */}
+              View Community
+            </button>
           </div>
         </div>
       ))}
@@ -362,6 +365,9 @@ const CommunitySection = ({
   const [startIndex, setStartIndex] = useState(0);
   const maxIndex = Math.max(0, communities.length - cardsPerView);
 
+  // Set a default actionText if not provided
+  const buttonLabel = actionText && actionText.trim() !== '' ? actionText : 'View';
+
   const scrollNext = () =>
     setStartIndex((prev) => Math.min(prev + cardsPerView, maxIndex));
   const scrollPrev = () =>
@@ -380,8 +386,8 @@ const CommunitySection = ({
                   key={community._id}
                   community={community}
                   isActive={community.isActive}
-                  actionText={actionText}
-                  onAction={onAction}
+                  actionText={buttonLabel}
+                  onAction={(community) => (window.location.href = `/community/${encodeCommunityId(community._id)}`)}
                 />
               ))}
           </div>
@@ -479,10 +485,7 @@ const BrowseCommunities = ({
           communities={filteredCommunities}
           //   actionText="Explore"
           actionText=""
-          onAction={(community) =>
-            // (window.location.href = `/community/${community._id}`)
-            (window.location.href = `#`)
-          }
+          onAction={(community) => (window.location.href = `/community/${encodeCommunityId(community._id)}`)}
           cardsPerView={cardsPerView}
           onPrevPage={onPrevPage}
           onNextPage={onNextPage}
@@ -616,17 +619,17 @@ const App = () => {
       .then((response) => {
         const communities = response.data.data
           .map((item) => ({
-            _id: item._id,
-            name: item.name,
-            promotionalText: item.promotionalText,
-            promotionalDescription: item.promotionalDescription,
-            tags: item.tags || [],
+            _id: item._id, // Use top-level MongoDB ObjectID
+            name: item.community?.name,
+            promotionalText: item.community?.promotionalText,
+            promotionalDescription: item.community?.promotionalDescription,
+            tags: item.community?.tags || [],
             imageLink:
-              item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
+              item.community?.imageLink && item.community?.imageLink.includes("file:///")
                 ? "/static/images/default-logo.png"
-                : item.imageLink || "/static/images/default-logo.png",
-            membersCount: item.membersCount,
-            code: item._id, // Use _id as code since not provided
+                : item.community?.imageLink || "/static/images/default-logo.png",
+            membersCount: item.community?.membersCount,
+            code: item._id, // for legacy, but not used for hash
           }))
           .sort((a, b) => a.name.localeCompare(b.name)); // Sort by name
         setEliteCommunities(communities);
@@ -734,15 +737,15 @@ const App = () => {
         const communities = response.data.data
           .map((item) => ({
             _id: item._id,
-            name: item.name,
-            promotionalText: item.promotionalText,
-            promotionalDescription: item.promotionalDescription,
-            tags: item.tags || [],
+            name: item.community?.name,
+            promotionalText: item.community?.promotionalText,
+            promotionalDescription: item.community?.promotionalDescription,
+            tags: item.community?.tags || [],
             imageLink:
-              item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
+              item.community?.imageLink && item.community?.imageLink.includes("file:///")
                 ? "/static/images/default-logo.png"
-                : item.imageLink || "/static/images/default-logo.png",
-            membersCount: item.membersCount,
+                : item.community?.imageLink || "/static/images/default-logo.png",
+            membersCount: item.community?.membersCount,
             code: item._id,
           }))
           .sort((a, b) => a.name.localeCompare(b.name));

@@ -40,6 +40,16 @@ var readFile = promisify(fs.readFile);
 
 const redirect = process.env.CLIENT_REDIRECT;
 
+// Utility functions for base64-url encoding/decoding (used for department and now community IDs)
+function encodeId(id) {
+  return Buffer.from(id, 'utf8').toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function decodeId(encoded) {
+  let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) base64 += '=';
+  return Buffer.from(base64, 'base64').toString('utf8');
+}
+
 module.exports = function (app, passport, server) {
   app.get("/", function (req, res) {
     res.render("index", {
@@ -74,6 +84,29 @@ module.exports = function (app, passport, server) {
 
   app.get("/about-us", function (req, res) {
     res.render("about-us");
+  });
+
+  app.get("/community/:hash", authCheck, async function (req, res) {
+    try {
+      const hash = req.params.hash;
+      const communityId = decodeId(hash);
+      // Fetch community details from API
+      const apiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}`;
+      const response = await axios.get(apiUrl, config);
+      const community = response.data || {};
+      // Optionally fetch events, notes, etc. here if available
+      res.render("community-details", {
+        user: req.user,
+        community,
+        referer: encodeURIComponent(`/community/${hash}`),
+        redirect: encodeURIComponent(redirect),
+      });
+    } catch (error) {
+      return res.status(404).render("error", {
+        message: "Community not found or an error occurred.",
+        redirect: "/communities",
+      });
+    }
   });
 
   app.get("/faq", function (req, res) {
@@ -5124,6 +5157,13 @@ module.exports = function (app, passport, server) {
         });
     });
   }); //end of sockets
+
+  
+
+  // Move this to the very end
+  app.get("*", function (req, res) {
+    res.render("page-not-found");
+  });
 }; //end of routes
 
 function auth(req, res, next) {

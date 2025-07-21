@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= community.name %> - Community Details</title>
+    <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+        color: #e2e8f0;
+      }
+      .hero-img {
+        max-height: 260px;
+        object-fit: cover;
+        width: 100%;
+        border-radius: 1rem;
+      }
+      .card {
+        background: #23272f;
+        border-radius: 1rem;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+        padding: 2rem;
+        margin-bottom: 2rem;
+      }
+      @media (max-width: 640px) {
+        .card { padding: 1rem; }
+        .hero-img { max-height: 160px; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header Bar -->
+    <nav class="flex items-center justify-between px-4 py-3 bg-gray-900 shadow-lg sticky top-0 z-20">
+      <div class="flex items-center space-x-2">
+        <a href="/" class="flex items-center space-x-2">
+          <img src="/static/images/favicon-32x32.png" alt="LPC Logo" class="h-8 w-8" />
+          <span class="text-xl font-bold text-white">Lines Police CAD</span>
+        </a>
+      </div>
+      <div class="flex items-center space-x-4">
+        <a href="#" class="relative text-gray-300 hover:text-white">
+          <span class="fa fa-bell text-xl"></span>
+          <span class="absolute -top-1 -right-2 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5" style="display:none;">0</span>
+        </a>
+        <a href="/profile" class="text-gray-300 hover:text-white">
+          <ion-icon name="person-circle-outline" class="text-3xl align-middle"></ion-icon>
+        </a>
+      </div>
+    </nav>
+    <!-- Back Link -->
+    <div class="max-w-3xl mx-auto px-4 mt-6 mb-2">
+      <a href="/communities" class="inline-block text-blue-400 hover:underline text-base mb-4">← Back to Communities</a>
+    </div>
+    <div class="max-w-3xl mx-auto py-8 px-4">
+      <% if (community.community) { %>
+        <div class="card text-center">
+          <img src="<%= community.community.imageLink || '/static/images/default-logo.png' %>" alt="<%= community.community.name %>" class="hero-img mx-auto mb-4" />
+          <h1 class="text-3xl font-bold mb-2"><%= community.community.name %></h1>
+          <div class="flex flex-wrap justify-center gap-2 mb-2">
+            <% if (community.community.tags && community.community.tags.length) { %>
+              <% community.community.tags.forEach(function(tag) { %>
+                <span class="inline-block bg-gray-700 text-gray-200 text-xs px-2 py-1 rounded-full"><%= tag %></span>
+              <% }); %>
+            <% } %>
+          </div>
+          <p class="text-gray-300 mb-2"><%= community.community.promotionalText %></p>
+          <p class="text-gray-400 mb-4"><%= community.community.promotionalDescription %></p>
+          <p class="text-gray-400 mb-2"><%= community.community.description %></p>
+          <p class="text-gray-400 mb-4"><%= community.community.membersCount %> Members</p>
+          <div class="flex flex-wrap justify-center gap-4 mb-4">
+            <% if (community.community.links && community.community.links.length) { %>
+              <% community.community.links.forEach(function(link) { %>
+                <a href="<%= link.url %>" target="_blank" class="text-blue-400 hover:underline">🔗 <%= link.label %></a>
+              <% }); %>
+            <% } %>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="text-xl font-semibold mb-2">Departments</h2>
+          <% if (community.community.departments && community.community.departments.length) { %>
+            <div class="flex flex-wrap gap-2 justify-center">
+              <% community.community.departments.forEach(function(dept) { %>
+                <span class="inline-block bg-gray-800 text-gray-200 text-xs px-3 py-1 rounded-full border border-gray-600"><%= dept.name %></span>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <p class="text-gray-400">No departments listed.</p>
+          <% } %>
+        </div>
+        <div class="card">
+          <h2 class="text-xl font-semibold mb-2">Events</h2>
+          <% if (community.community.events && community.community.events.length) { %>
+            <ul class="text-left mx-auto max-w-xl">
+              <% community.community.events.forEach(function(event) { %>
+                <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700">
+                  <div class="font-semibold text-lg text-white mb-1"><%= event.title %></div>
+                  <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
+                  <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
+                  <% if (event.location) { %>
+                    <div class="text-gray-500 text-xs">Location: <%= event.location %></div>
+                  <% } %>
+                </li>
+              <% }); %>
+            </ul>
+          <% } else { %>
+            <p class="text-gray-400">No events yet.</p>
+          <% } %>
+        </div>
+      <% } else { %>
+        <div class="card text-center">
+          <h2 class="text-2xl font-bold mb-4">Community Not Found</h2>
+          <p class="text-gray-400">Sorry, we couldn't load this community's details.</p>
+        </div>
+      <% } %>
+    </div>
+  </body>
+</html> 
