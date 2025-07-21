@@ -246,16 +246,8 @@ const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage }) => {
 
   return (
     <div className="w-full flex justify-center items-center py-8 z-0 mt-24">
-      <div className="relative max-w-xl w-full mx-4 z-0 min-h-[420px] md:min-h-[480px] flex items-center">
-        {/* Gradient border/glow */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-3xl z-0 pointer-events-none"
-          style={{
-            width: '540px', // card width (500px) + 40px
-            height: '640px', // card height (600px) + 40px
-            background: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)',
-            filter: 'blur(12px)',
-            opacity: 0.45,
-          }}></div>
+      <div className="relative max-w-xl w-full mx-auto z-0 min-h-[420px] md:min-h-[480px] flex items-center justify-center">
+        {/* Removed background gradient for mobile and desktop */}
         {/* Card content with swipe animation */}
         <div className="relative bg-gray-800 rounded-3xl shadow-2xl pt-20 pb-10 px-8 flex flex-col items-center text-center border border-gray-700 z-10 w-[400px] md:w-[500px] min-h-[520px] md:min-h-[600px] justify-center"
           style={{
