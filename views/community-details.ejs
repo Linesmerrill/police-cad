@@ -59,6 +59,58 @@
     </div>
     <div class="max-w-3xl mx-auto py-8 px-4">
       <% if (community.community) { %>
+        <% 
+          let isMemberApproved = false;
+          let isMemberPending = false;
+          let memberSinceYear = null;
+          // Get community ID from the route parameter (already decoded by the route)
+          let communityId = community._id;
+          if (communityId && typeof communityId === 'object' && communityId.$oid) {
+            communityId = communityId.$oid;
+          }
+          
+          if (user && user._doc && user._doc.user && Array.isArray(user._doc.user.communities) && communityId) {
+            user._doc.user.communities.forEach(function(c) {
+              if (String(c.communityId) === String(communityId) && c.status === 'approved') {
+                isMemberApproved = true;
+                // Extract year from MongoDB ObjectId string (first 4 bytes are timestamp)
+                if (c._id && typeof c._id === 'string') {
+                  const objectId = c._id;
+                  const timestamp = parseInt(objectId.substring(0, 8), 16) * 1000;
+                  const date = new Date(timestamp);
+                  memberSinceYear = date.getFullYear().toString().slice(-2);
+                }
+              }
+              if (String(c.communityId) === String(communityId) && c.status === 'pending') {
+                isMemberPending = true;
+              }
+            });
+          }
+        %>
+        <% if (user && community.community && !isMemberApproved && !isMemberPending) { %>
+          <form action="/community/join" method="POST" class="mb-4">
+            <input type="hidden" name="inviteCode" value="<%= community.community.code %>">
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold shadow hover:bg-blue-700 transition">
+              Request to Join
+            </button>
+          </form>
+        <% } %>
+        <% if (isMemberApproved && memberSinceYear) { %>
+          <div class="mb-4 flex items-center justify-between">
+            <div class="text-green-400 font-semibold flex items-center">
+              <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              Member since '<%= memberSinceYear %>
+            </div>
+            <button class="bg-red-600 text-white px-4 py-2 rounded-full font-semibold shadow hover:bg-red-700 transition">
+              Leave Community
+            </button>
+          </div>
+        <% } %>
+        <% if (isMemberPending) { %>
+          <div class="mb-4 text-yellow-400 font-semibold">Your request to join is pending approval.</div>
+        <% } %>
         <div class="card text-center">
           <img src="<%= community.community.imageLink || '/static/images/default-logo.png' %>" alt="<%= community.community.name %>" class="hero-img mx-auto mb-4" />
           <h1 class="text-3xl font-bold mb-2">
@@ -89,31 +141,75 @@
             <% } %>
           </div>
         </div>
-        <div class="card">
-          <h2 class="text-xl font-semibold mb-2">Departments</h2>
-          <% if (community.community.departments && community.community.departments.length) { %>
-            <div class="flex flex-wrap gap-2 justify-center">
-              <% community.community.departments.forEach(function(dept) { %>
-                <span class="inline-block bg-gray-800 text-gray-200 text-xs px-3 py-1 rounded-full border border-gray-600"><%= dept.name %></span>
-              <% }); %>
-            </div>
-          <% } else { %>
-            <p class="text-gray-400">No departments listed.</p>
-          <% } %>
-        </div>
+        <% if (isMemberApproved) { %>
+          <div class="card">
+            <h2 class="text-xl font-semibold mb-2">Departments</h2>
+            <% if (community.community.departments && community.community.departments.length) { %>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <% community.community.departments.forEach(function(dept) { %>
+                  <div onclick="navigateToDepartment('<%= dept._id %>', '<%= dept.template && dept.template.name ? dept.template.name : "" %>')" class="block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 border border-gray-700 hover:border-blue-500 cursor-pointer">
+                    <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-32 object-cover rounded mb-2" />
+                    <div class="font-bold text-lg text-white mb-1"><%= dept.name %></div>
+                    <div class="text-gray-400 text-sm mb-1"><%= dept.description || '' %></div>
+                    <div class="text-xs text-gray-500"><%= dept.template?.name || '' %></div>
+                  </div>
+                <% }); %>
+              </div>
+            <% } else { %>
+              <p class="text-gray-400">No departments listed.</p>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="card">
+            <h2 class="text-xl font-semibold mb-2">Departments</h2>
+            <% if (community.community.departments && community.community.departments.length) { %>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <% community.community.departments.forEach(function(dept) { %>
+                  <div class="block bg-gray-800 rounded-lg shadow p-4 border border-gray-700 opacity-70 cursor-not-allowed relative">
+                    <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-32 object-cover rounded mb-2" />
+                    <div class="font-bold text-lg text-white mb-1"><%= dept.name %></div>
+                    <div class="text-gray-400 text-sm mb-1"><%= dept.description || '' %></div>
+                    <div class="text-xs text-gray-500"><%= dept.template?.name || '' %></div>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span class="bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">Members Only</span>
+                    </div>
+                  </div>
+                <% }); %>
+              </div>
+            <% } else { %>
+              <p class="text-gray-400">No departments listed.</p>
+            <% } %>
+          </div>
+        <% } %>
         <div class="card">
           <h2 class="text-xl font-semibold mb-2">Events</h2>
           <% if (community.community.events && community.community.events.length) { %>
             <ul class="text-left mx-auto max-w-xl">
               <% community.community.events.forEach(function(event) { %>
-                <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700">
-                  <div class="font-semibold text-lg text-white mb-1"><%= event.title %></div>
-                  <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
-                  <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
-                  <% if (event.location) { %>
-                    <div class="text-gray-500 text-xs">Location: <%= event.location %></div>
-                  <% } %>
-                </li>
+                <% if (isMemberApproved) { %>
+                  <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700">
+                    <div class="font-semibold text-lg text-white mb-1"><%= event.title %></div>
+                    <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
+                    <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
+                    <% if (event.location) { %>
+                      <div class="text-gray-500 text-xs">Location: <%= event.location %></div>
+                    <% } %>
+                  </li>
+                <% } else { %>
+                  <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700 relative opacity-70 cursor-not-allowed">
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                      <span class="bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">Members Only</span>
+                    </div>
+                    <div class="relative z-0">
+                      <div class="font-semibold text-lg text-white mb-1"><%= event.title %></div>
+                      <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
+                      <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
+                      <% if (event.location) { %>
+                        <div class="text-gray-500 text-xs">Location: <%= event.location %></div>
+                      <% } %>
+                    </div>
+                  </li>
+                <% } %>
               <% }); %>
             </ul>
           <% } else { %>
@@ -129,3 +225,53 @@
     </div>
   </body>
 </html> 
+
+<script>
+function navigateToDepartment(departmentId, templateName) {
+  const deptName = templateName.toLowerCase();
+  let dashboardUrl = '';
+  
+  if (deptName.includes('civilian')) {
+    dashboardUrl = `/civ-dashboard?dept=${encodeURIComponent(templateName)}&d=${departmentId}`;
+  } else if (deptName.includes('police')) {
+    dashboardUrl = `/police-dashboard?dept=${encodeURIComponent(templateName)}&d=${departmentId}`;
+  } else if (deptName.includes('fire') || deptName.includes('ems')) {
+    dashboardUrl = `/ems-dashboard?dept=${encodeURIComponent(templateName)}&d=${departmentId}`;
+  } else if (deptName.includes('dispatch')) {
+    dashboardUrl = `/dispatch-dashboard?dept=${encodeURIComponent(templateName)}&d=${departmentId}`;
+  }
+  
+  if (dashboardUrl) {
+    // First, set the last accessed community
+    const communityId = '<%= community._id %>';
+    const userId = '<%= user._doc._id %>';
+    
+    if (communityId && userId) {
+      fetch('https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/user/last-accessed-community', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+          communityId: communityId,
+          createdAt: new Date().toISOString()
+        })
+      }).then(() => {
+        // Then navigate directly to the dashboard with department parameters
+        window.location.href = dashboardUrl;
+      }).catch(error => {
+        console.error('Error setting last accessed community:', error);
+        // Continue with navigation even if setting last accessed community fails
+        window.location.href = dashboardUrl;
+      });
+    } else {
+      // Fallback if communityId or userId not available
+      window.location.href = dashboardUrl;
+    }
+  } else {
+    console.error('No matching dashboard for department:', templateName);
+    alert('Unknown department type: ' + templateName);
+  }
+}
+</script> 
