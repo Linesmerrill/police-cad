@@ -54,6 +54,22 @@
           padding: 1.25rem 1rem 1.25rem 1rem !important;
         }
       }
+
+      /* Toast animation */
+      @keyframes slide-in {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .animate-slide-in {
+        animation: slide-in 0.3s ease-out;
+      }
     </style>
   </head>
   <body>
@@ -130,6 +146,12 @@
         if (link) {
           link.addEventListener('click', function(e) {
             e.preventDefault();
+            if (!dbUser || !dbUser._id) {
+              // User not logged in, redirect to login with return URL
+              window.location.href = '/login-civ?redirect=' + encodeURIComponent('/communities');
+              return;
+            }
+            // User is logged in, dispatch the modal event
             window.dispatchEvent(new Event('open-create-community-modal'));
           });
         }

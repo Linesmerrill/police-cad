@@ -95,10 +95,10 @@ const Navbar = () => {
           </div>
           <div className="flex items-center space-x-4">
             <a
-              href="/community-dashboard"
+              href="/communities"
               className="text-gray-300 hover:text-white px-3 py-2 rounded-md"
             >
-              Community Dashboard
+              Communities
             </a>
             <div className="relative">
               <button
@@ -579,6 +579,17 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  // Add authentication check function
+  const handleCreateCommunity = () => {
+    if (!dbUser || !dbUser._id) {
+      // User not logged in, redirect to login with return URL
+      window.location.href = '/login-civ?redirect=' + encodeURIComponent('/communities');
+      return;
+    }
+    // User is logged in, open the modal
+    onCreateCommunity();
+  };
+
   return (
     <div className="w-full flex justify-center py-8 bg-gray-900 z-10">
       <div className="w-full max-w-2xl flex flex-col sm:flex-row items-center gap-4 mx-auto" ref={inputRef}>
@@ -639,7 +650,7 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
           id="create-community-btn"
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition whitespace-nowrap min-w-[160px] w-auto sm:ml-4"
           style={{ marginRight: 0 }}
-          onClick={onCreateCommunity}
+          onClick={handleCreateCommunity}
         >
           <i className="fa fa-plus"></i> Create a New Community
         </button>
@@ -750,33 +761,444 @@ const Footer = () => (
 
 const modalEventName = "open-create-community-modal";
 
-const ComingSoonModal = ({ isOpen, onClose }) => {
+// Toast component for notifications
+const Toast = ({ message, type, isVisible, onClose }) => {
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 5000); // Auto dismiss after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, onClose]);
+
+  if (!isVisible) return null;
+
+  const getToastStyles = () => {
+    switch (type) {
+      case 'success':
+        return 'bg-green-600 border-green-500 text-white';
+      case 'error':
+        return 'bg-red-600 border-red-500 text-white';
+      default:
+        return 'bg-blue-600 border-blue-500 text-white';
+    }
+  };
+
+  const getIcon = () => {
+    switch (type) {
+      case 'success':
+        return 'fa-check-circle';
+      case 'error':
+        return 'fa-exclamation-circle';
+      default:
+        return 'fa-info-circle';
+    }
+  };
+
+  return (
+    <div className="fixed top-4 right-4 z-[2300] animate-slide-in">
+      <div className={`flex items-center p-4 rounded-lg shadow-lg border ${getToastStyles()} min-w-[300px] max-w-[400px]`}>
+        <i className={`fa ${getIcon()} text-lg mr-3`}></i>
+        <div className="flex-1">
+          <p className="font-medium">{message}</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="ml-3 text-white/80 hover:text-white transition-colors"
+        >
+          <i className="fa fa-times"></i>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    visibility: "public",
+    tags: [],
+    imageLink: ""
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [ownedCommunityCount, setOwnedCommunityCount] = useState(0);
+  const [userPlan, setUserPlan] = useState("free");
+
+  // Fetch user's owned communities count and subscription plan
+  useEffect(() => {
+    if (isOpen && dbUser?._id) {
+      fetchUserData();
+    }
+  }, [isOpen, dbUser?._id]);
+
+  const fetchUserData = async () => {
+    try {
+      // Fetch user's owned communities using the correct endpoint
+      const response = await fetch(`${API_URL}/api/v1/communities/${dbUser._id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(
+          `Failed to fetch owned communities. \n\nMessage: ${JSON.stringify(
+            data
+          )}. \nCode: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+      const ownedCommunities = data || [];
+      setOwnedCommunityCount(ownedCommunities.length);
+
+      // Get user's subscription plan
+      const plan = dbUser?.user?.subscription?.plan || "free";
+      setUserPlan(plan);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      // Set default values on error
+      setOwnedCommunityCount(0);
+      setUserPlan("free");
+    }
+  };
+
+  const getCommunityLimit = (plan) => {
+    switch (plan) {
+      case "free": return 1;
+      case "base": return 5;
+      case "premium": return 10;
+      case "elite": return Infinity;
+      default: return 1;
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setError(""); // Clear error when user types
+  };
+
+  const handleTagToggle = (tag) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter(t => t !== tag)
+        : [...prev.tags, tag]
+    }));
+  };
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // For now, we'll use a placeholder. In production, you'd upload to a service
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setFormData(prev => ({ ...prev, imageLink: e.target.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const closeToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.name.trim()) {
+      setError("Community name is required");
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      setError("Community description is required");
+      return;
+    }
+
+    const communityLimit = getCommunityLimit(userPlan);
+    
+    if (ownedCommunityCount >= communityLimit) {
+      setError(`Your current subscription (${userPlan}) allows you to create up to ${communityLimit} communit${communityLimit > 1 ? "ies" : "y"}. Upgrade your subscription to create more.`);
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const communityData = {
+        ownerID: dbUser._id,
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        imageLink: formData.imageLink || "/static/images/default-logo.png",
+        visibility: formData.visibility,
+        tags: formData.tags,
+        promotionalText: "",
+        promotionalDescription: ""
+      };
+
+      const response = await fetch(`${API_URL}/api/v1/community`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ community: communityData }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create community");
+      }
+
+      const result = await response.json();
+      
+      // Reset form
+      setFormData({
+        name: "",
+        description: "",
+        visibility: "public",
+        tags: [],
+        imageLink: ""
+      });
+      
+      // Show success toast
+      setToast({
+        message: `Community "${formData.name}" created successfully!`,
+        type: "success",
+        isVisible: true
+      });
+      
+      // Close modal
+      onClose();
+      
+      // Refresh communities after a short delay to show the toast
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
+    } catch (error) {
+      console.error("Error creating community:", error);
+      setError("Failed to create community. Please try again.");
+      
+      // Show error toast
+      setToast({
+        message: "Failed to create community. Please try again.",
+        type: "error",
+        isVisible: true
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
+
+  const communityLimit = getCommunityLimit(userPlan);
+  const canCreateMore = ownedCommunityCount < communityLimit;
+
   return (
     <div
-      className="fixed z-[2200] left-0 top-0 w-screen h-screen bg-[rgba(30,32,44,0.65)] flex items-center justify-center"
+      className="fixed z-[2200] left-0 top-0 w-screen h-screen bg-[rgba(30,32,44,0.65)] flex items-center justify-center p-4"
       onClick={onClose}
       style={{ zIndex: 2200 }}
     >
       <div
-        className="bg-[#23263a] rounded-2xl max-w-xs w-[98%] mx-auto shadow-2xl p-8 pt-10 relative text-center border border-gray-700"
+        className="bg-[#23263a] rounded-2xl max-w-md w-full mx-auto shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
         style={{ position: 'relative', zIndex: 2210 }}
       >
-        <button
-          aria-label="Close"
-          tabIndex={0}
-          onClick={onClose}
-          className="absolute top-4 right-4 bg-none border-none text-white text-2xl cursor-pointer opacity-70 hover:opacity-100"
-          style={{ pointerEvents: 'auto', zIndex: 2220 }}
-        >
-          <i className="fa fa-times"></i>
-        </button>
-        <div className="text-5xl text-[#f093fb] mb-4">
-          <i className="fa fa-hammer"></i>
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-700">
+          <button
+            onClick={onClose}
+            className="text-white text-2xl hover:text-gray-300"
+          >
+            <i className="fa fa-arrow-left"></i>
+          </button>
+          <h2 className="text-xl font-bold text-white">Create A Community</h2>
+          <div className="w-8"></div> {/* Spacer for centering */}
         </div>
-        <div className="text-xl font-bold text-white mb-2">Coming Soon</div>
-        <div className="text-gray-400 text-base">Community creation is still under construction.<br/>Check back soon!</div>
+
+        {/* Content */}
+        <div className="p-6 space-y-6">
+          {/* Community Banner */}
+          <div className="relative">
+            <div className="w-full h-48 bg-gray-800 rounded-lg border-2 border-gray-700 flex items-center justify-center overflow-hidden">
+              {formData.imageLink ? (
+                <img 
+                  src={formData.imageLink} 
+                  alt="Community Banner" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="text-center text-gray-400">
+                  <i className="fa fa-image text-4xl mb-2"></i>
+                  <p>Community Banner</p>
+                </div>
+              )}
+            </div>
+            <label className="absolute bottom-3 right-3 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700">
+              <i className="fa fa-camera"></i>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {/* Community Name */}
+          <div>
+            <label className="block text-white text-sm font-medium mb-2">
+              Community Name <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleInputChange("name", e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter community name"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-white text-sm font-medium mb-2">
+              Description <span className="text-red-400">*</span>
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => handleInputChange("description", e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              rows="3"
+              placeholder="Describe your community"
+            />
+          </div>
+
+          {/* Community Privacy */}
+          <div>
+            <div className="flex items-center mb-3">
+              <label className="block text-white text-sm font-medium">
+                Community Privacy
+              </label>
+              <div className="relative ml-2 group">
+                <i className="fa fa-info-circle text-gray-400 text-sm cursor-help"></i>
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 border border-gray-700">
+                  <div className="mb-1"><strong>Public:</strong> Anyone can search and find your community</div>
+                  <div><strong>Private:</strong> People can only join via an invite link</div>
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                </div>
+              </div>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={() => handleInputChange("visibility", "public")}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  formData.visibility === "public"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                }`}
+              >
+                Public
+              </button>
+              <button
+                type="button"
+                onClick={() => handleInputChange("visibility", "private")}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  formData.visibility === "private"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                }`}
+              >
+                Private
+              </button>
+            </div>
+          </div>
+
+          {/* Platform Tags */}
+          <div>
+            <div className="flex items-center mb-3">
+              <label className="block text-white text-sm font-medium">
+                Platform Tags
+              </label>
+              <div className="relative ml-2 group">
+                <i className="fa fa-info-circle text-gray-400 text-sm cursor-help"></i>
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 border border-gray-700 max-w-xs">
+                  You can optionally select one or many tags - these help people find platform specific communities
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                </div>
+              </div>
+            </div>
+            <p className="text-gray-400 text-xs mb-3">optional</p>
+            <div className="flex flex-wrap gap-2">
+              {["Xbox", "PlayStation", "PC"].map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => handleTagToggle(tag)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    formData.tags.includes(tag)
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Subscription Info */}
+          {!canCreateMore && (
+            <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
+              <p className="text-red-400 text-sm">
+                {error || `You've reached your community limit (${communityLimit}). Upgrade your subscription to create more.`}
+              </p>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && canCreateMore && (
+            <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Community Count Info */}
+          <div className="bg-gray-800/50 rounded-lg p-4">
+            <p className="text-gray-300 text-sm">
+              You have created {ownedCommunityCount} of {communityLimit} allowed communit{communityLimit > 1 ? "ies" : "y"} 
+              ({userPlan} plan)
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 border-t border-gray-700">
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading || !canCreateMore}
+            className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
+              isLoading || !canCreateMore
+                ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700"
+            }`}
+          >
+            {isLoading ? (
+              <span className="flex items-center justify-center">
+                <i className="fa fa-spinner fa-spin mr-2"></i>
+                Creating...
+              </span>
+            ) : (
+              "Create Community"
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -797,6 +1219,8 @@ const App = () => {
   const [allCommunitiesPage, setAllCommunitiesPage] = useState(0);
   const [currentTag, setCurrentTag] = useState("all");
   const [showComingSoon, setShowComingSoon] = useState(false);
+  const [showCreateCommunityModal, setShowCreateCommunityModal] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "success", isVisible: false });
 
   useEffect(() => {
     // Fetch elite communities
@@ -916,7 +1340,7 @@ const App = () => {
       });
 
     // Listen for global event to open modal (for EJS link)
-    const handler = () => setShowComingSoon(true);
+    const handler = () => setShowCreateCommunityModal(true);
     window.addEventListener(modalEventName, handler);
     return () => window.removeEventListener(modalEventName, handler);
   }, []);
@@ -1084,10 +1508,11 @@ const App = () => {
 
   return (
     <div className="min-h-screen">
-      <ComingSoonModal isOpen={showComingSoon} onClose={() => setShowComingSoon(false)} />
+      <CreateCommunityModal isOpen={showCreateCommunityModal} onClose={() => setShowCreateCommunityModal(false)} toast={toast} setToast={setToast} />
+      <Toast message={toast.message} type={toast.type} isVisible={toast.isVisible} onClose={() => setToast({ ...toast, isVisible: false })} />
       <div className="">
         {/* HeroUI Pro Search Bar */}
-        <CommunitySearchBar onCreateCommunity={() => setShowComingSoon(true)} />
+        <CommunitySearchBar onCreateCommunity={() => setShowCreateCommunityModal(true)} />
         {eliteCommunities.length > 0 && (
           <Carousel
             communities={eliteCommunities}
@@ -1102,7 +1527,7 @@ const App = () => {
             title="Your Communities"
             communities={userCommunities}
             actionText="Jump In"
-            onAction={(community) => (window.location.href = `/community-dashboard`)}
+            onAction={(community) => (window.location.href = `/communities`)}
             cardsPerView={3}
             onPrevPage={handleUserPrevPage}
             onNextPage={handleUserNextPage}

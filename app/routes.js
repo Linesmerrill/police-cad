@@ -121,7 +121,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/login", function (req, res) {
-    const redirect = req.query.redirect || "/community-dashboard";
+    const redirect = req.query.redirect || "/communities";
     res.render("login", { redirect: encodeURIComponent(redirect) });
   });
 
@@ -193,7 +193,7 @@ module.exports = function (app, passport, server) {
 
   app.get("/login-civ", authCheck, function (req, res) {
     // if (req.isAuthenticated()) {
-    const redirect = req.session.redirect || "/community-dashboard";
+    const redirect = req.session.redirect || "/communities";
     delete req.session.redirect; // Clear after use
     return res.redirect(redirect);
     // }
@@ -209,7 +209,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/login-community", authCheck, function (req, res) {
-    return res.redirect("/community-dashboard");
+    return res.redirect("/communities");
   });
 
   app.get("/login-dispatch", authCheck, function (req, res) {
@@ -218,7 +218,7 @@ module.exports = function (app, passport, server) {
 
   app.get("/signup-civ", function (req, res) {
     if (req.isAuthenticated()) {
-      return res.redirect("/community-dashboard");
+      return res.redirect("/communities");
     }
     // Validate and fallback for API URL
     let apiUrl = process.env.POLICE_CAD_API_URL;
@@ -241,7 +241,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/signup-community", authCheck, function (req, res) {
-    return res.redirect("/community-dashboard");
+    return res.redirect("/communities");
   });
 
   app.get("/signup-dispatch", authCheck, function (req, res) {
@@ -392,7 +392,7 @@ module.exports = function (app, passport, server) {
         if (!communityId) {
           return res.status(403).render("error", {
             message: "No active community found. Please select a community first.",
-            redirect: "/community-dashboard",
+            redirect: "/communities",
           });
         }
         
@@ -431,7 +431,7 @@ module.exports = function (app, passport, server) {
       console.error('🚨 Error in civ-dashboard route:', error);
       return res.status(500).render("error", {
         message: "An error occurred while loading the dashboard. Please try again.",
-        redirect: "/community-dashboard",
+        redirect: "/communities",
       });
     }
   });
@@ -615,7 +615,7 @@ module.exports = function (app, passport, server) {
         { timeout: 5000 }
       );
       if (response.data.status === "joined") {
-        return res.redirect("/community-dashboard?success=true");
+        return res.redirect("/communities?success=true");
       }
     } catch (error) {
       if (process.env.NODE_ENV === "development")
@@ -651,11 +651,11 @@ module.exports = function (app, passport, server) {
 
     if (!departmentId || departmentId === "undefined") {
       req.app.locals.specialContext = "errorNoDepartment";
-      return res.redirect(redirect || "/community-dashboard");
+      return res.redirect(redirect || "/communities");
     }
     if (!communityId) {
       req.app.locals.specialContext = "errorNoCommunity";
-      return res.redirect(redirect || "/community-dashboard");
+      return res.redirect(redirect || "/communities");
     }
 
     // Validate department belongs to community
@@ -669,7 +669,7 @@ module.exports = function (app, passport, server) {
         if (error || response.statusCode !== 200) {
           console.error("Error validating department:", error || body);
           req.app.locals.specialContext = "errorInvalidDepartment";
-          return res.redirect(redirect || "/community-dashboard");
+          return res.redirect(redirect || "/communities");
         }
 
         try {
@@ -679,7 +679,7 @@ module.exports = function (app, passport, server) {
           );
           if (!department) {
             req.app.locals.specialContext = "errorInvalidDepartment";
-            return res.redirect(redirect || "/community-dashboard");
+            return res.redirect(redirect || "/communities");
           }
 
           req.session.departmentId = departmentId;
@@ -687,7 +687,7 @@ module.exports = function (app, passport, server) {
         } catch (err) {
           console.error("Error parsing departments:", err);
           req.app.locals.specialContext = "errorInvalidDepartment";
-          return res.redirect(redirect || "/community-dashboard");
+          return res.redirect(redirect || "/communities");
         }
       }
     );
@@ -1495,7 +1495,7 @@ module.exports = function (app, passport, server) {
     }),
     function (req, res, next) {
       console.log("Session redirect value:", req.session.redirect);
-      const redirect = req.session.redirect || "/community-dashboard";
+      const redirect = req.session.redirect || "/communities";
       delete req.session.redirect; // Clear the session redirect after use
       res.redirect(redirect);
     }
@@ -1522,7 +1522,7 @@ module.exports = function (app, passport, server) {
   app.post(
     "/login-community",
     passport.authenticate("login", {
-      successRedirect: "/community-dashboard",
+      successRedirect: "/communities",
       failureRedirect: "/login-community",
       failureFlash: true,
     })
@@ -1567,7 +1567,7 @@ module.exports = function (app, passport, server) {
   app.post(
     "/signup-community",
     passport.authenticate("signup", {
-      successRedirect: "/community-dashboard",
+      successRedirect: "/communities",
       failureRedirect: "/signup-community",
       failureFlash: true,
     })
