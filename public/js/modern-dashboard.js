@@ -92,8 +92,18 @@ $(document).ready(function() {
     $('#civDetailsDeleteBtn').click(function() {
         const civId = document.getElementById('civIdHidden').value;
         if (civId && confirm('Are you sure you want to delete this civilian? This action cannot be undone.')) {
-            // Add delete civilian functionality here
-            showToast('Delete functionality not yet implemented');
+            $.ajax({
+                url: `${API_URL}/api/v1/civilian/${civId}`,
+                method: 'DELETE',
+                success: function() {
+                    showToast('Civilian deleted successfully!');
+                    closeCivDetailsModal();
+                    loadCivilians();
+                },
+                error: function(xhr) {
+                    showToast('Failed to delete civilian: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                }
+            });
         }
     });
     
@@ -236,6 +246,26 @@ $(document).ready(function() {
     // Volume slider handler
     $('#alert-volume-slider').on('input', function() {
         $('#volume-display').text($(this).val());
+    });
+
+    // Wire up Delete Vehicle button in modal
+    $('#vehDetailsDeleteBtn').off('click').on('click', function(e) {
+        e.preventDefault();
+        const vehId = $('#vehIdHidden').val();
+        if (vehId && confirm('Are you sure you want to delete this vehicle? This action cannot be undone.')) {
+            $.ajax({
+                url: `${API_URL}/api/v1/vehicle/${vehId}`,
+                method: 'DELETE',
+                success: function() {
+                    showToast('Vehicle deleted successfully!');
+                    closeVehDetailsModal();
+                    loadVehicles();
+                },
+                error: function(xhr) {
+                    showToast('Failed to delete vehicle: ' + (xhr.responseJSON?.message || xhr.statusText || 'Unknown error'));
+                }
+            });
+        }
     });
 });
 
