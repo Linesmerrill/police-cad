@@ -6,6 +6,7 @@
     <title><%= community.name %> - Community Details</title>
     <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
       body {
         background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
@@ -28,6 +29,26 @@
         .card { padding: 1rem; }
         .hero-img { max-height: 160px; }
       }
+      
+      /* notification styles */
+      .notification-badge {
+        position: absolute;
+        top: 10px;
+        right: 8px;
+        background-color: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
+        line-height: 18px;
+        text-align: center;
+        display: none;
+      }
+      .notification-badge.show {
+        display: block;
+      }
+      #notification-symbol { font-size: 1.5em; }
     </style>
   </head>
   <body>
@@ -40,12 +61,8 @@
         </a>
       </div>
       <div class="flex items-center space-x-4">
-        <a href="#" class="relative text-gray-300 hover:text-white">
-          <span class="fa fa-bell text-xl"></span>
-          <span class="absolute -top-1 -right-2 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5" style="display:none;">0</span>
-        </a>
         <% if (user) { %>
-          <a href="/profile" class="text-gray-300 hover:text-white">
+          <a onclick="openAccountModal()" class="text-gray-300 hover:text-white" style="cursor: pointer;">
             <ion-icon name="person-circle-outline" class="text-3xl align-middle"></ion-icon>
           </a>
         <% } else { %>
@@ -88,12 +105,9 @@
           }
         %>
         <% if (user && community.community && !isMemberApproved && !isMemberPending) { %>
-          <form action="/community/join" method="POST" class="mb-4">
-            <input type="hidden" name="inviteCode" value="<%= community.community.code %>">
-            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold shadow hover:bg-blue-700 transition">
-              Request to Join
-            </button>
-          </form>
+          <button onclick="openRequestJoinModal()" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold shadow hover:bg-blue-700 transition mb-4">
+            Request to Join
+          </button>
         <% } %>
         <% if (isMemberApproved && memberSinceYear) { %>
           <div class="mb-4 flex items-center justify-between">
@@ -103,7 +117,7 @@
               </svg>
               Member since '<%= memberSinceYear %>
             </div>
-            <button class="bg-red-600 text-white px-4 py-2 rounded-full font-semibold shadow hover:bg-red-700 transition">
+            <button onclick="openLeaveCommunityModal()" class="bg-red-600 text-white px-4 py-2 rounded-full font-semibold shadow hover:bg-red-700 transition">
               Leave Community
             </button>
           </div>
@@ -142,6 +156,26 @@
           </div>
         </div>
         <% if (isMemberApproved) { %>
+          <div class="card mb-6">
+            <h3 class="text-lg font-semibold mb-4 text-center">Community Actions</h3>
+            <div class="flex justify-center space-x-4">
+              <button onclick="openPromoteModal()" class="flex flex-col items-center p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-bullhorn w-6 h-6 mb-2 text-xl"></i>
+                <span class="text-sm font-medium">Promote</span>
+              </button>
+              
+              <button onclick="openSettingsModal()" class="flex flex-col items-center p-4 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-gear w-6 h-6 mb-2 text-xl"></i>
+                <span class="text-sm font-medium">Settings</span>
+              </button>
+              
+              <button onclick="openInviteModal()" class="flex flex-col items-center p-4 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-user-plus w-6 h-6 mb-2 text-xl"></i>
+                <span class="text-sm font-medium">Invite</span>
+              </button>
+            </div>
+          </div>
+          
           <div class="card">
             <h2 class="text-xl font-semibold mb-2">Departments</h2>
             <% if (community.community.departments && community.community.departments.length) { %>
@@ -223,6 +257,366 @@
         </div>
       <% } %>
     </div>
+    
+    <!-- HeroUI Pro Notifications Modal -->
+    <div id="notificationModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; max-height:80vh; overflow-y:auto; position:relative; border:1px solid #35385a;">
+        <button id="notificationModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
+          Notifications
+        </h3>
+        
+        <div id="notification-error" style="display:none; background:#f56565; color:#fff; border-radius:8px; padding:1rem; margin-bottom:1.5rem; border:1px solid #e53e3e;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong>Error!</strong> <span id="notification-error-message"></span>
+            <button type="button" onclick="$('#notification-error').hide()" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+        </div>
+        
+        <div id="notification-loading" style="display:flex; justify-content:center; align-items:center; padding:3rem;">
+          <div style="color:#a0aec0; font-style:italic;">Loading notifications...</div>
+        </div>
+        
+        <!-- Notifications List -->
+        <div id="notification-list" style="display:none; max-height:60vh; overflow-y:auto;">
+          <!-- Dynamic notifications will be loaded here -->
+        </div>
+        
+        <!-- No Notifications State -->
+        <div id="no-notifications" style="display:none; text-align:center; padding:3rem; color:#a0aec0;">
+          <i class="fa fa-bell-slash" style="font-size:3rem; margin-bottom:1rem; opacity:0.5;"></i>
+          <p style="font-style:italic; font-size:1.1rem; margin:0;">No notifications found.</p>
+        </div>
+        
+        <div id="notification-load-more" style="display:none; text-align:center; margin-top:1.5rem;">
+          <button onclick="loadMoreNotifications()" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:all 0.2s;">
+            Load More
+          </button>
+        </div>
+        
+        <div style="margin-top:2rem; text-align:center;">
+          <button id="notificationModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HeroUI Pro Notification Menu Modal -->
+    <div id="notificationMenuModal" class="heroui-modal" style="display:none; position:fixed; z-index:2001; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:400px; width:90%; position:relative; border:1px solid #35385a;">
+        <button id="notificationMenuModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
+          Notification Options
+        </h3>
+        
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+          <button onclick="markNotificationAsRead()" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:left;">
+            <i class="fa fa-check" style="margin-right:0.5rem;"></i> Mark as Read
+          </button>
+          <button onclick="deleteNotification()" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:left;">
+            <i class="fa fa-trash" style="margin-right:0.5rem;"></i> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Management Modal -->
+    <div id="accountModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; position:relative; border:1px solid #35385a;">
+        <button id="accountModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
+          Account Settings
+        </h3>
+        
+        <div style="color:#a0aec0; text-align:center; padding:2rem;">
+          <i class="fa fa-user-circle" style="font-size:4rem; margin-bottom:1rem; opacity:0.5;"></i>
+          <p>Account management features coming soon...</p>
+        </div>
+        
+        <div style="margin-top:2rem; text-align:center;">
+          <button id="accountModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Community Action Modals -->
+    <div id="promoteModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+        <button id="promoteModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-bullhorn" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Promote Community</h3>
+        </div>
+        
+        <div style="color:#a0aec0; text-align:center; padding:1rem;">
+          <p>Community promotion features coming soon...</p>
+        </div>
+        
+        <div style="margin-top:2rem; text-align:center;">
+          <button id="promoteModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="settingsModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+        <button id="settingsModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-gear" style="font-size:3rem; color:#6b7280; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Community Settings</h3>
+        </div>
+        
+        <div style="color:#a0aec0; text-align:center; padding:1rem;">
+          <p>Community settings features coming soon...</p>
+        </div>
+        
+        <div style="margin-top:2rem; text-align:center;">
+          <button id="settingsModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="inviteModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+        <button id="inviteModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-user-plus" style="font-size:3rem; color:#10b981; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Invite Members</h3>
+        </div>
+        
+        <div style="color:#a0aec0; text-align:center; padding:1rem;">
+          <p>Member invitation features coming soon...</p>
+        </div>
+        
+        <div style="margin-top:2rem; text-align:center;">
+          <button id="inviteModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Request to Join Modal -->
+    <div id="requestJoinModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+        <button id="requestJoinModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-users" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Request to Join</h3>
+        </div>
+        
+        <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+          <p>Are you sure you want to request to join <strong style="color:#fff;"><%= community.community.name %></strong>?</p>
+          <p style="font-size:0.9rem; margin-top:0.5rem;">Your request will be sent to the community administrators for approval.</p>
+        </div>
+        
+        <div style="display:flex; gap:1rem; justify-content:center;">
+          <button id="requestJoinModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+            Cancel
+          </button>
+          <button onclick="submitJoinRequest()" style="background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+            Send Request
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leave Community Modal -->
+    <div id="leaveCommunityModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+        <button id="leaveCommunityModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-exclamation-triangle" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Leave Community</h3>
+        </div>
+        
+        <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+          <p>Are you sure you want to leave <strong style="color:#fff;"><%= community.community.name %></strong>?</p>
+          <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">This action cannot be undone. You will lose access to all community features.</p>
+        </div>
+        
+        <div style="display:flex; gap:1rem; justify-content:center;">
+          <button id="leaveCommunityModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+            Cancel
+          </button>
+          <button onclick="submitLeaveCommunity()" style="background:#dc2626; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+            Leave Community
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/notifications.js"></script>
+    <script>
+      // Global variables for notifications
+      let dbUser = null;
+      let currentNotificationId = null;
+      const API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1';
+      
+      // Modal functionality
+      function openNotificationModal() {
+        document.getElementById('notificationModal').style.display = 'flex';
+        // Set dbUser for notifications.js
+        dbUser = {
+          _id: '<%= user && user._doc ? user._doc._id : "" %>',
+          user: {
+            username: '<%= user && user._doc && user._doc.user ? user._doc.user.username : "" %>'
+          }
+        };
+        fetchNotifications(0);
+      }
+      
+      function openAccountModal() {
+        document.getElementById('accountModal').style.display = 'flex';
+      }
+      
+      // Close modals
+      document.getElementById('notificationModalClose').onclick = function() {
+        document.getElementById('notificationModal').style.display = 'none';
+      }
+      
+      document.getElementById('notificationModalCancel').onclick = function() {
+        document.getElementById('notificationModal').style.display = 'none';
+      }
+      
+      document.getElementById('accountModalClose').onclick = function() {
+        document.getElementById('accountModal').style.display = 'none';
+      }
+      
+      document.getElementById('accountModalCancel').onclick = function() {
+        document.getElementById('accountModal').style.display = 'none';
+      }
+      
+      // Close modals when clicking outside
+      window.onclick = function(event) {
+        if (event.target.classList.contains('heroui-modal')) {
+          event.target.style.display = 'none';
+        }
+      }
+      
+      // Placeholder functions for account management
+      function fillAccountDetails() {
+        openAccountModal();
+      }
+      
+      // Placeholder functions for notification actions
+      function markNotificationAsRead() {
+        console.log('Mark as read functionality coming soon...');
+        document.getElementById('notificationMenuModal').style.display = 'none';
+      }
+      
+      function deleteNotification() {
+        console.log('Delete notification functionality coming soon...');
+        document.getElementById('notificationMenuModal').style.display = 'none';
+      }
+      
+      function loadMoreNotifications() {
+        console.log('Load more notifications functionality coming soon...');
+      }
+      
+      // Modal open functions
+      function openPromoteModal() {
+        document.getElementById('promoteModal').style.display = 'flex';
+      }
+      
+      function openSettingsModal() {
+        document.getElementById('settingsModal').style.display = 'flex';
+      }
+      
+      function openInviteModal() {
+        document.getElementById('inviteModal').style.display = 'flex';
+      }
+      
+      function openRequestJoinModal() {
+        document.getElementById('requestJoinModal').style.display = 'flex';
+      }
+      
+      function openLeaveCommunityModal() {
+        document.getElementById('leaveCommunityModal').style.display = 'flex';
+      }
+      
+      // Modal close functions
+      document.getElementById('promoteModalClose').onclick = function() {
+        document.getElementById('promoteModal').style.display = 'none';
+      }
+      
+      document.getElementById('promoteModalCancel').onclick = function() {
+        document.getElementById('promoteModal').style.display = 'none';
+      }
+      
+      document.getElementById('settingsModalClose').onclick = function() {
+        document.getElementById('settingsModal').style.display = 'none';
+      }
+      
+      document.getElementById('settingsModalCancel').onclick = function() {
+        document.getElementById('settingsModal').style.display = 'none';
+      }
+      
+      document.getElementById('inviteModalClose').onclick = function() {
+        document.getElementById('inviteModal').style.display = 'none';
+      }
+      
+      document.getElementById('inviteModalCancel').onclick = function() {
+        document.getElementById('inviteModal').style.display = 'none';
+      }
+      
+      document.getElementById('requestJoinModalClose').onclick = function() {
+        document.getElementById('requestJoinModal').style.display = 'none';
+      }
+      
+      document.getElementById('requestJoinModalCancel').onclick = function() {
+        document.getElementById('requestJoinModal').style.display = 'none';
+      }
+      
+      document.getElementById('leaveCommunityModalClose').onclick = function() {
+        document.getElementById('leaveCommunityModal').style.display = 'none';
+      }
+      
+      document.getElementById('leaveCommunityModalCancel').onclick = function() {
+        document.getElementById('leaveCommunityModal').style.display = 'none';
+      }
+      
+      // Action functions
+      function submitJoinRequest() {
+        // Submit the join request form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/community/join';
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'inviteCode';
+        input.value = '<%= community.community.code %>';
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+      }
+      
+      function submitLeaveCommunity() {
+        console.log('Leave community functionality coming soon...');
+        document.getElementById('leaveCommunityModal').style.display = 'none';
+        // TODO: Implement actual leave community functionality
+      }
+    </script>
   </body>
 </html> 
 
@@ -274,4 +668,25 @@ function navigateToDepartment(departmentId, templateName) {
     alert('Unknown department type: ' + templateName);
   }
 }
+
+// Modal handlers for community actions
+function openPromoteModal() {
+  console.log('Opening promote modal...');
+  // TODO: Implement promote modal
+  alert('Promote modal will be implemented next');
+}
+
+function openSettingsModal() {
+  console.log('Opening settings modal...');
+  // TODO: Implement settings modal
+  alert('Settings modal will be implemented next');
+}
+
+function openInviteModal() {
+  console.log('Opening invite modal...');
+  // TODO: Implement invite modal
+  alert('Invite modal will be implemented next');
+}
+
+
 </script> 
