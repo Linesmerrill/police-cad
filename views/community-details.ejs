@@ -419,10 +419,17 @@
   <ul class="text-left mx-auto max-w-xl">
     <% pagedEvents.forEach(function(event) { %>
       <% if (isMemberApproved) { %>
-        <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700 flex flex-col sm:flex-row items-start gap-4">
+        <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700 flex flex-col sm:flex-row items-start gap-4 relative">
           <img src="<%= event.image || '/static/images/default-logo.png' %>" alt="Event Image" class="w-32 h-24 object-cover rounded mb-2 sm:mb-0" style="min-width:8rem; max-width:8rem; max-height:6rem;" />
           <div class="flex-1">
-            <div class="font-semibold text-lg text-white mb-1"><%= event.title %></div>
+            <div class="flex items-center justify-between mb-1">
+              <div class="font-semibold text-lg text-white"><%= event.title %></div>
+              <% if (canManageEvents) { %>
+                <button class="text-gray-400 hover:text-blue-400 z-10 bg-gray-900 bg-opacity-70 rounded-full p-1 ml-2" title="Edit Event" onclick="event.stopPropagation(); openEditEventModal('<%= event._id %>')">
+                  <i class="fa fa-pencil-alt"></i>
+                </button>
+              <% } %>
+            </div>
             <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
             <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
             <% if (event.location) { %>
@@ -462,6 +469,9 @@
     </div>
   <% } %>
 </div>
+<script>
+  window.allEvents = <%- JSON.stringify(community.community.events || []) %>;
+</script>
 
 <!-- No Event Permission Modal -->
 <div id="noEventPermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
@@ -1956,5 +1966,156 @@ document.getElementById('createEventForm').onsubmit = async function(e) {
     document.getElementById('createEventError').style.display = 'block';
   }
 };
+</script> 
+
+<!-- Edit Event Modal -->
+<div id="editEventModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+    <button onclick="closeEditEventModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-pencil-alt" style="font-size:2.5rem; color:#3b82f6; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Edit Event</h3>
+    </div>
+    <form id="editEventForm" autocomplete="off" onsubmit="event.preventDefault(); saveEditEvent();">
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1">Event Image (Optional)</label>
+        <div id="edit-event-photo-upload" class="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-4 bg-gray-800 cursor-pointer hover:border-blue-500 transition" onclick="document.getElementById('edit-event-photo').click()">
+          <img id="edit-event-photo-preview" src="" alt="Preview" style="display:none; max-width:120px; max-height:120px; border-radius:0.5rem; margin-bottom:0.5rem;" />
+          <i class="fa fa-camera text-2xl text-gray-400 mb-2"></i>
+          <span class="text-gray-400 text-sm">Click to upload photo</span>
+          <input type="file" id="edit-event-photo" accept="image/*" style="display:none;" onchange="handleEditEventPhotoChange(event)" />
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1" for="edit-event-title">Title *</label>
+        <input type="text" id="edit-event-title" required class="w-full text-gray-200 bg-gray-800 rounded p-2" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1" for="edit-event-date">Scheduled Date *</label>
+        <input type="datetime-local" id="edit-event-date" required class="w-full text-gray-200 bg-gray-800 rounded p-2" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1" for="edit-event-location">Location *</label>
+        <input type="text" id="edit-event-location" required class="w-full text-gray-200 bg-gray-800 rounded p-2" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1" for="edit-event-description">Description *</label>
+        <textarea id="edit-event-description" rows="3" required class="w-full text-gray-200 bg-gray-800 rounded p-2"></textarea>
+      </div>
+      <div class="mb-4 flex items-center">
+        <input type="checkbox" id="edit-event-required" class="form-checkbox text-blue-600 mr-2" />
+        <label for="edit-event-required" class="text-gray-300">Attendance Required</label>
+      </div>
+      <div id="editEventError" class="text-red-400 text-sm mb-2" style="display:none;"></div>
+      <div class="flex justify-end gap-2 mt-6">
+        <button type="button" onclick="deleteEditEvent()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">Delete</button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+let currentEditEvent = null;
+function openEditEventModal(eventId) {
+  const allEvents = window.allEvents || [];
+  const event = allEvents.find(e => String(e._id) === String(eventId));
+  if (!event) return;
+  currentEditEvent = eventId;
+  document.getElementById('edit-event-title').value = event.title || '';
+  document.getElementById('edit-event-date').value = event.scheduledDate ? new Date(event.scheduledDate).toISOString().slice(0,16) : '';
+  document.getElementById('edit-event-location').value = event.location || '';
+  document.getElementById('edit-event-description').value = event.description || '';
+  document.getElementById('edit-event-required').checked = !!event.required;
+  const preview = document.getElementById('edit-event-photo-preview');
+  if (event.image) {
+    preview.src = event.image;
+    preview.style.display = 'block';
+  } else {
+    preview.src = '';
+    preview.style.display = 'none';
+  }
+  document.getElementById('editEventModal').style.display = 'flex';
+}
+function closeEditEventModal() {
+  document.getElementById('editEventModal').style.display = 'none';
+  currentEditEvent = null;
+}
+function handleEditEventPhotoChange(e) {
+  const file = e.target.files[0];
+  const preview = document.getElementById('edit-event-photo-preview');
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      preview.src = ev.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    preview.src = '';
+    preview.style.display = 'none';
+  }
+}
+async function saveEditEvent() {
+  if (!currentEditEvent) return;
+  const title = document.getElementById('edit-event-title').value.trim();
+  const scheduledDate = document.getElementById('edit-event-date').value;
+  const location = document.getElementById('edit-event-location').value.trim();
+  const description = document.getElementById('edit-event-description').value.trim();
+  const required = document.getElementById('edit-event-required').checked;
+  let image = '';
+  const photoInput = document.getElementById('edit-event-photo');
+  if (photoInput && photoInput.files && photoInput.files[0]) {
+    // TODO: Upload image to cloud and get URL, for now use a placeholder
+    image = 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1747054441/upload_placeholder.jpg';
+  } else {
+    const preview = document.getElementById('edit-event-photo-preview');
+    image = preview && preview.src ? preview.src : '';
+  }
+  if (!title || !scheduledDate || !location || !description) {
+    document.getElementById('editEventError').textContent = 'All fields except image are required.';
+    document.getElementById('editEventError').style.display = 'block';
+    return;
+  }
+  document.getElementById('editEventError').style.display = 'none';
+  const payload = {
+    title,
+    scheduledDate: new Date(scheduledDate).toISOString(),
+    image,
+    location,
+    description,
+    required
+  };
+  const communityID = '<%= community._id %>';
+  try {
+    const res = await fetch(`${API_URL}/community/${communityID}/events/${currentEditEvent}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Failed to update event');
+    closeEditEventModal();
+    window.location.reload();
+  } catch (err) {
+    document.getElementById('editEventError').textContent = err.message || 'Failed to update event.';
+    document.getElementById('editEventError').style.display = 'block';
+  }
+}
+async function deleteEditEvent() {
+  if (!currentEditEvent) return;
+  if (!confirm('Are you sure you want to delete this event? This action is irreversible.')) return;
+  const communityID = '<%= community._id %>';
+  try {
+    const res = await fetch(`${API_URL}/community/${communityID}/events/${currentEditEvent}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!res.ok) throw new Error('Failed to delete event');
+    closeEditEventModal();
+    window.location.reload();
+  } catch (err) {
+    document.getElementById('editEventError').textContent = err.message || 'Failed to delete event.';
+    document.getElementById('editEventError').style.display = 'block';
+  }
+}
 </script> 
 
