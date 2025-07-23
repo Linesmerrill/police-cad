@@ -278,7 +278,12 @@
                 <% departments.forEach(function(dept) { 
                   var templateName = dept.template && dept.template.name ? dept.template.name.replace(/'/g, "\\'") : '';
                 %>
-                  <div onclick="navigateToDepartment('<%= dept._id %>', '<%= templateName %>')" class="block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 border border-gray-700 hover:border-blue-500 cursor-pointer">
+                  <div class="relative block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 border border-gray-700 hover:border-blue-500 cursor-pointer" onclick="navigateToDepartment('<%= dept._id %>', '<%= templateName %>')">
+                    <% if (canManageDepartments) { %>
+                      <button class="absolute top-2 right-2 text-gray-400 hover:text-blue-400 z-10 bg-gray-900 bg-opacity-70 rounded-full p-1" title="Edit Department" onclick="event.stopPropagation(); openEditDepartmentModal('<%= dept._id %>');">
+                        <i class="fa fa-pencil-alt"></i>
+                      </button>
+                    <% } %>
                     <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-32 object-cover rounded mb-2" />
                     <div class="font-bold text-lg text-white mb-1"><%= dept.name %></div>
                     <div class="text-gray-400 text-sm mb-1"><%= dept.description || '' %></div>
@@ -1583,6 +1588,13 @@ document.getElementById('ownerCannotLeaveModalClose').onclick = function() {
 }
 document.getElementById('ownerCannotLeaveModalCancel').onclick = function() {
   document.getElementById('ownerCannotLeaveModal').style.display = 'none';
+}
+</script>
+
+<script>
+function openEditDepartmentModal(departmentId) {
+  // Placeholder for future edit modal logic
+  alert('Edit Department: ' + departmentId);
 }
 </script>
 
