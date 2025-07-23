@@ -280,7 +280,21 @@
                   var approvalRequired = dept.approvalRequired;
                   var members = Array.isArray(dept.members) ? dept.members : [];
                   var isMember = members.some(function(m) { return m.userID === userId && m.status === 'approved'; });
-                  var canAccess = !approvalRequired || isMember;
+                  var isAdmin = false;
+                  if (userId && community.community && Array.isArray(community.community.roles)) {
+                    community.community.roles.forEach(function(role) {
+                      if (Array.isArray(role.members) && role.members.includes(userId)) {
+                        if (Array.isArray(role.permissions)) {
+                          role.permissions.forEach(function(perm) {
+                            if (perm.name === "administrator" && perm.enabled === true) {
+                              isAdmin = true;
+                            }
+                          });
+                        }
+                      }
+                    });
+                  }
+                  var canAccess = isAdmin || !approvalRequired || isMember;
                 %>
                   <div class="relative block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 border border-gray-700 <%= canAccess ? 'hover:border-blue-500 cursor-pointer' : 'opacity-70 cursor-not-allowed' %>" <%= canAccess ? `onclick=\"navigateToDepartment('${dept._id}', '${templateName}')\"` : '' %>>
                     <% if (canManageDepartments) { %>
