@@ -273,18 +273,29 @@
                 </button>
               <% } %>
             </div>
-            <% if (community.community.departments && community.community.departments.length) { %>
+            <% if (departments && departments.length) { %>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <% community.community.departments.forEach(function(dept) { 
-  var templateName = dept.template && dept.template.name ? dept.template.name.replace(/'/g, "\\'") : '';
-%>
-  <div onclick="navigateToDepartment('<%= dept._id %>', '<%= templateName %>')" class="block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 border border-gray-700 hover:border-blue-500 cursor-pointer">
-    <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-32 object-cover rounded mb-2" />
-    <div class="font-bold text-lg text-white mb-1"><%= dept.name %></div>
-    <div class="text-gray-400 text-sm mb-1"><%= dept.description || '' %></div>
-    <div class="text-xs text-gray-500"><%= dept.template && dept.template.name ? dept.template.name : '' %></div>
-  </div>
-<% }); %>
+                <% departments.forEach(function(dept) { 
+                  var templateName = dept.template && dept.template.name ? dept.template.name.replace(/'/g, "\\'") : '';
+                %>
+                  <div onclick="navigateToDepartment('<%= dept._id %>', '<%= templateName %>')" class="block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 border border-gray-700 hover:border-blue-500 cursor-pointer">
+                    <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-32 object-cover rounded mb-2" />
+                    <div class="font-bold text-lg text-white mb-1"><%= dept.name %></div>
+                    <div class="text-gray-400 text-sm mb-1"><%= dept.description || '' %></div>
+                    <div class="text-xs text-gray-500"><%= dept.template && dept.template.name ? dept.template.name : '' %></div>
+                  </div>
+                <% }); %>
+              </div>
+              <div class="flex justify-center items-center gap-4 mt-4">
+                <form method="get" style="display:inline;">
+                  <input type="hidden" name="deptPage" value="<%= deptPagination.currentPage - 1 %>" />
+                  <button type="submit" class="px-4 py-2 rounded bg-gray-700 text-white font-semibold" <% if (deptPagination.currentPage <= 1) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Prev</button>
+                </form>
+                <span class="text-gray-300">Page <%= deptPagination.currentPage %> of <%= deptPagination.totalPages %></span>
+                <form method="get" style="display:inline;">
+                  <input type="hidden" name="deptPage" value="<%= deptPagination.currentPage + 1 %>" />
+                  <button type="submit" class="px-4 py-2 rounded bg-gray-700 text-white font-semibold" <% if (deptPagination.currentPage >= deptPagination.totalPages) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Next</button>
+                </form>
               </div>
             <% } else { %>
               <p class="text-gray-400">No departments listed.</p>

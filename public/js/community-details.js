@@ -42,4 +42,48 @@ window.openCreateEventModal = function() {
 };
 window.openNoEventPermissionModal = function() {
   document.getElementById('noEventPermissionModal').style.display = 'flex';
-}; 
+};
+
+// --- Department Pagination (AJAX) ---
+document.addEventListener('DOMContentLoaded', function() {
+  const deptSection = document.querySelector('.card h2.text-xl.font-semibold')?.closest('.card');
+  if (!deptSection) return;
+  const urlParams = new URLSearchParams(window.location.search);
+  const hash = window.location.pathname.split('/').pop();
+  function updateDepartments(page) {
+    const reqUrl = `/community/${hash}?deptPage=${page}`;
+    fetch(reqUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(res => res.text())
+      .then(html => {
+        // Parse the returned HTML and extract the departments card
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        const newCard = temp.querySelector('.card h2.text-xl.font-semibold')?.closest('.card');
+        if (newCard && deptSection.parentNode) {
+          deptSection.parentNode.replaceChild(newCard, deptSection);
+          attachPaginationHandlers();
+        }
+      });
+  }
+  function attachPaginationHandlers() {
+    const prevBtn = deptSection.querySelector('form[action] button[type="submit"], form button[type="submit"]:first-of-type');
+    const nextBtn = deptSection.querySelector('form[action] ~ form button[type="submit"], form + form button[type="submit"]');
+    const prevForm = deptSection.querySelector('form');
+    const nextForm = deptSection.querySelectorAll('form')[1];
+    if (prevForm) {
+      prevForm.onsubmit = function(e) {
+        e.preventDefault();
+        const page = parseInt(prevForm.querySelector('input[name="deptPage"]').value, 10);
+        if (page >= 1) updateDepartments(page);
+      };
+    }
+    if (nextForm) {
+      nextForm.onsubmit = function(e) {
+        e.preventDefault();
+        const page = parseInt(nextForm.querySelector('input[name="deptPage"]').value, 10);
+        updateDepartments(page);
+      };
+    }
+  }
+  attachPaginationHandlers();
+}); 

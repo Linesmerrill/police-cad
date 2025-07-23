@@ -101,10 +101,29 @@ module.exports = function (app, passport, server) {
       const apiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}`;
       const response = await axios.get(apiUrl, config);
       const community = response.data || {};
-      // Optionally fetch events, notes, etc. here if available
+
+      // Fetch paginated departments (6 per page, page 1 by default)
+      const userId = req.user && req.user._doc ? req.user._doc._id : (req.user && req.user._id ? req.user._id : null);
+      const page = parseInt(req.query.deptPage, 10) || 1;
+      let departments = [];
+      let totalCount = 0;
+      let totalPages = 1;
+      if (community && community._id && userId) {
+        const deptsApiUrl = `${policeCadApiUrl}/api/v2/community/${community._id}/departments?userId=${userId}&page=${page}&limit=6`;
+        const deptsResponse = await axios.get(deptsApiUrl, config);
+        departments = deptsResponse.data.data || [];
+        totalCount = deptsResponse.data.totalCount || 0;
+        totalPages = Math.max(1, Math.ceil(totalCount / 6));
+      }
       res.render("community-details", {
         user: req.user,
         community,
+        departments,
+        deptPagination: {
+          totalCount,
+          currentPage: page,
+          totalPages
+        },
         referer: encodeURIComponent(`/community/${hash}`),
         redirect: encodeURIComponent(redirect),
       });
