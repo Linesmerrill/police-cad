@@ -1627,6 +1627,8 @@ function openEditDepartmentModal(departmentId) {
       document.getElementById('editDeptImagePreview').src = dept.image || '/static/images/default-logo.png';
       document.getElementById('editDeptName').value = dept.name || '';
       document.getElementById('editDeptDescription').value = dept.description || '';
+      document.getElementById('editDeptApprovalRequired').checked = !!dept.approvalRequired;
+      updateEditDeptVisibilityLabel();
       document.getElementById('editDepartmentModal').style.display = 'flex';
     })
     .catch(() => {
@@ -1635,6 +1637,8 @@ function openEditDepartmentModal(departmentId) {
       document.getElementById('editDeptImagePreview').src = dept.image || '/static/images/default-logo.png';
       document.getElementById('editDeptName').value = dept.name || '';
       document.getElementById('editDeptDescription').value = dept.description || '';
+      document.getElementById('editDeptApprovalRequired').checked = !!dept.approvalRequired;
+      updateEditDeptVisibilityLabel();
       document.getElementById('editDepartmentModal').style.display = 'flex';
     });
 }
@@ -1674,7 +1678,29 @@ window.departmentsListData = JSON.parse("<%= JSON.stringify(departments || []).r
         <label class="block text-gray-300 mb-1" for="editDeptDescription">Description</label>
         <textarea id="editDeptDescription" rows="3" class="w-full text-gray-200 bg-gray-800 rounded p-2"></textarea>
       </div>
-      <div class="flex justify-between gap-2 mt-6">
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1 flex items-center gap-2" for="editDeptApprovalRequired">
+          Visibility
+          <span class="relative group">
+            <i class="fa fa-info-circle text-gray-400 cursor-pointer"></i>
+            <span class="absolute left-6 top-0 w-64 bg-gray-900 text-gray-200 text-xs rounded shadow-lg px-3 py-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <strong>Public</strong>: Anyone in your community can access it.<br/>
+              <strong>Private</strong>: Only those you add can access it (e.g. Police, Dispatch, etc).
+            </span>
+          </span>
+        </label>
+        <div class="flex items-center gap-3 mt-2">
+          <span id="editDeptVisibilityPublic" class="text-sm font-medium <%= !false ? 'text-blue-400' : 'text-gray-400' %>">Public</span>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="editDeptApprovalRequired" class="sr-only peer" onchange="updateEditDeptVisibilityLabel()">
+            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+            <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+          </label>
+          <span id="editDeptVisibilityPrivate" class="text-sm font-medium <%= false ? 'text-blue-400' : 'text-gray-400' %>">Private</span>
+        </div>
+      </div>
+      <div id="createDeptStep1Error" class="text-red-400 text-sm mb-2" style="display:none;"></div>
+      <div class="flex justify-end gap-2 mt-6">
         <button type="button" onclick="deleteEditDepartment()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">Delete</button>
         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold">Save</button>
       </div>
@@ -1704,7 +1730,8 @@ function saveEditDepartment() {
   saveBtn.textContent = 'Saving...';
 
   // Prepare payload
-  const payload = { name, description };
+  const approvalRequired = document.getElementById('editDeptApprovalRequired').checked;
+  const payload = { name, description, approvalRequired };
   // If a new image is selected, upload it (placeholder: just use base64 for now)
   if (imageInput.files && imageInput.files[0]) {
     const reader = new FileReader();
@@ -1768,6 +1795,14 @@ function deleteEditDepartment() {
         deleteBtn.textContent = 'Delete';
       });
   }
+}
+</script> 
+
+<script>
+function updateEditDeptVisibilityLabel() {
+  const checked = document.getElementById('editDeptApprovalRequired').checked;
+  document.getElementById('editDeptVisibilityPublic').className = 'text-sm font-medium ' + (!checked ? 'text-blue-400' : 'text-gray-400');
+  document.getElementById('editDeptVisibilityPrivate').className = 'text-sm font-medium ' + (checked ? 'text-blue-400' : 'text-gray-400');
 }
 </script> 
 
