@@ -12,12 +12,7 @@
         background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
         color: #e2e8f0;
       }
-      .hero-img {
-        max-height: 260px;
-        object-fit: cover;
-        width: 100%;
-        border-radius: 1rem;
-      }
+      /* .hero-img class removed, use Tailwind classes for image ratio */
       .card {
         background: #23272f;
         border-radius: 1rem;
@@ -27,7 +22,6 @@
       }
       @media (max-width: 640px) {
         .card { padding: 1rem; }
-        .hero-img { max-height: 160px; }
       }
       
       /* notification styles */
@@ -137,7 +131,7 @@
           <div class="mb-4 text-yellow-400 font-semibold">Your request to join is pending approval.</div>
         <% } %>
         <div class="card text-center">
-          <img src="<%= community.community.imageLink || '/static/images/default-logo.png' %>" alt="<%= community.community.name %>" class="hero-img mx-auto mb-4" />
+          <img src="<%= community.community.imageLink || '/static/images/default-logo.png' %>" alt="<%= community.community.name %>" class="w-5/6 h-1/3 mx-auto rounded-t-lg object-cover mb-4" />
           <h1 class="text-3xl font-bold mb-2">
             <%= community.community.name %>
             <% if ((['elite','premium','standard'].includes(community.community.subscription?.plan)) && community.community.subscription?.active) { %>
@@ -350,14 +344,16 @@
 <div class="card">
   <div class="flex items-center justify-between mb-2">
     <h2 class="text-xl font-semibold">Events</h2>
-    <% if (canManageEvents) { %>
-      <button onclick="openCreateEventModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full font-semibold shadow transition flex items-center">
-        <i class="fa fa-plus mr-2"></i> Create Event
-      </button>
-    <% } else { %>
-      <button onclick="openNoEventPermissionModal()" class="bg-gray-500 text-white px-4 py-2 rounded-full font-semibold shadow opacity-60 cursor-not-allowed flex items-center" style="pointer-events:auto;">
-        <i class="fa fa-plus mr-2"></i> Create Event
-      </button>
+    <% if (isMemberApproved) { %>
+      <% if (canManageEvents) { %>
+        <button onclick="openCreateEventModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full font-semibold shadow transition flex items-center">
+          <i class="fa fa-plus mr-2"></i> Create Event
+        </button>
+      <% } else { %>
+        <button onclick="openNoEventPermissionModal()" class="bg-gray-500 text-white px-4 py-2 rounded-full font-semibold shadow opacity-60 cursor-not-allowed flex items-center" style="pointer-events:auto;">
+          <i class="fa fa-plus mr-2"></i> Create Event
+        </button>
+      <% } %>
     <% } %>
   </div>
   <% if (community.community.events && community.community.events.length) { %>
