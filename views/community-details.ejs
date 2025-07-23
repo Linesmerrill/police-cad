@@ -1595,14 +1595,25 @@ document.getElementById('ownerCannotLeaveModalCancel').onclick = function() {
 let currentEditDepartment = null;
 function openEditDepartmentModal(departmentId) {
   currentEditDepartment = departmentId;
-  // Populate modal fields with department data
-  const dept = (window.departmentsListData || []).find(d => d._id === departmentId);
-  if (dept) {
-    document.getElementById('editDeptImagePreview').src = dept.image || '/static/images/default-logo.png';
-    document.getElementById('editDeptName').value = dept.name || '';
-    document.getElementById('editDeptDescription').value = dept.description || '';
-  }
-  document.getElementById('editDepartmentModal').style.display = 'flex';
+  const communityId = '<%= community._id %>';
+  // Fetch latest department data from API
+  fetch(`${API_URL}/community/${communityId}/departments/${departmentId}`)
+    .then(res => res.json())
+    .then(data => {
+      const dept = data.department || {};
+      document.getElementById('editDeptImagePreview').src = dept.image || '/static/images/default-logo.png';
+      document.getElementById('editDeptName').value = dept.name || '';
+      document.getElementById('editDeptDescription').value = dept.description || '';
+      document.getElementById('editDepartmentModal').style.display = 'flex';
+    })
+    .catch(() => {
+      // fallback to local data if API fails
+      const dept = (window.departmentsListData || []).find(d => d._id === departmentId) || {};
+      document.getElementById('editDeptImagePreview').src = dept.image || '/static/images/default-logo.png';
+      document.getElementById('editDeptName').value = dept.name || '';
+      document.getElementById('editDeptDescription').value = dept.description || '';
+      document.getElementById('editDepartmentModal').style.display = 'flex';
+    });
 }
 function closeEditDepartmentModal() {
   document.getElementById('editDepartmentModal').style.display = 'none';
@@ -1656,6 +1667,16 @@ function saveEditDepartment() {
   const description = document.getElementById('editDeptDescription').value.trim();
   const imageInput = document.getElementById('editDeptImage');
   const saveBtn = document.querySelector('#editDepartmentModal button[type="submit"]');
+  if (!name) {
+    if (typeof showToast === 'function') {
+      showToast('Department name is required', 2500);
+    } else {
+      alert('Department name is required');
+    }
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+    return;
+  }
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving...';
 
@@ -1675,7 +1696,7 @@ function saveEditDepartment() {
 
   function doUpdate() {
     fetch(`${API_URL}/community/${communityId}/departments/${deptId}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
@@ -1685,7 +1706,12 @@ function saveEditDepartment() {
       })
       .then(() => {
         closeEditDepartmentModal();
-        window.location.reload();
+        if (typeof showToast === 'function') {
+          showToast('Department updated successfully', 2500);
+        } else {
+          alert('Department updated successfully');
+        }
+        setTimeout(() => window.location.reload(), 1200);
       })
       .catch(err => {
         alert(err.message || 'Failed to update department');
