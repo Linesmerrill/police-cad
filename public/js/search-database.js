@@ -326,7 +326,7 @@ $(document).ready(function () {
       owner = item.vehicle?.linkedCivilianID
         ? `Owner: ${ownerCache[item.vehicle.linkedCivilianID] || "Unknown"}`
         : "";
-      isStolen = item.vehicle?.isStolen === 'true';
+      isStolen = item.vehicle?.isStolen === 'true' || item.vehicle?.isStolen === '2';
       recentSearchQuery =
         item.vehicle?.make || item.vehicle?.plate || searchQuery;
     } else if (searchType === "Firearm") {
@@ -340,7 +340,7 @@ $(document).ready(function () {
         ? `Owner: ${ownerCache[item.firearm.linkedCivilianID] || "Unknown"}`
         : "";
       isStolen =
-        item.firearm?.isStolen === true || item.firearm?.isStolen === "true";
+        item.firearm?.isStolen === true || item.firearm?.isStolen === "true" || item.firearm?.isStolen === "2";
       recentSearchQuery =
         item.firearm?.name || item.firearm?.serialNumber || searchQuery;
     }
@@ -600,7 +600,9 @@ $(document).ready(function () {
     $("#colorView").val(item.vehicle?.color || "");
     $("#validRegView").val(item.vehicle?.isRegistered ? "1" : "2");
     $("#validInsView").val(item.vehicle?.isInsured ? "1" : "2");
-    $("#stolenView").val(item.vehicle?.isStolen ? "2" : "1");
+    // Convert to string "true"/"false" system
+    const isStolen = item.vehicle?.isStolen === "2" || item.vehicle?.isStolen === "true";
+    $("#stolenView").val(isStolen ? "true" : "false");
     $("#vehicleID").val(item._id);
   }
 

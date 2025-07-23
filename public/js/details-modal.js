@@ -446,7 +446,7 @@ $(document).ready(function () {
           data.year || "N/A"
         }</div>
         <div class="mb-2"><span class="text-gray">Stolen:</span> ${
-          data.isStolen === 'true' ? '<span class="badge-stolen">Yes</span>' : "No"
+          (data.isStolen === 'true' || data.isStolen === '2') ? '<span class="badge-stolen">Yes</span>' : "No"
         }</div>
         <div class="mb-2"><span class="text-gray">Registered Owner:</span> ${
           owner
@@ -468,7 +468,7 @@ $(document).ready(function () {
           data.caliber || "N/A"
         }</div>
         <div class="mb-2"><span class="text-gray">Stolen:</span> ${
-          data.isStolen === 'true' ? '<span class="badge-stolen">Yes</span>' : "No"
+          (data.isStolen === 'true' || data.isStolen === '2') ? '<span class="badge-stolen">Yes</span>' : "No"
         }</div>
         <div class="mb-2"><span class="text-gray">Registered Owner:</span> ${
           owner
@@ -643,7 +643,7 @@ $(document).ready(function () {
     if (currentType === "Vehicle" || currentType === "Firearm") {
       actionsHtml += `
         <button class="btn btn-warning btn-block mb-2 action-button" data-action="Report Stolen" data-stolen="${data.isStolen || 'false'}">
-          ${data.isStolen === 'true' ? "Mark as Not Stolen" : "Report Stolen"}
+          ${(data.isStolen === 'true' || data.isStolen === '2') ? "Mark as Not Stolen" : "Report Stolen"}
         </button>
       `;
     } else if (currentType === "License") {
@@ -699,8 +699,8 @@ $(document).ready(function () {
 
   // Handle report stolen
   function handleReportStolen(itemId, isStolen) {
-    const isCurrentlyStolen = isStolen === true || isStolen === 'true';
-    const newStolenStatus = isCurrentlyStolen ? "false" : "true";
+    const isCurrentlyStolen = isStolen === true || isStolen === 'true' || isStolen === '2';
+    const newStolenStatus = isCurrentlyStolen ? "false" : "true"; // Use string "true"/"false" system
     const actionText = isCurrentlyStolen ? "mark as not stolen" : "report as stolen";
     const successText = isCurrentlyStolen ? "marked as not stolen" : "reported as stolen";
     
@@ -1333,7 +1333,7 @@ $(document).ready(function () {
             <p class="text-gray mb-0">Make: ${vehicle.make || 'N/A'}</p>
             <p class="text-gray mb-0">Year: ${vehicle.year || 'N/A'}</p>
             <p class="text-gray mb-0">VIN: ${vehicle.vin || 'N/A'}</p>
-            ${vehicle.isStolen === 'true' ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
+            ${(vehicle.isStolen === 'true' || vehicle.isStolen === '2') ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
           </div>
         `;
       });
@@ -1483,7 +1483,7 @@ $(document).ready(function () {
               <span>${firearm.weaponType || firearm.name || 'N/A'}</span>
             </div>
             <p class="text-gray mb-0">Caliber: ${firearm.caliber || 'N/A'}</p>
-            ${firearm.isStolen === 'true' ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
+            ${(firearm.isStolen === 'true' || firearm.isStolen === '2') ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
           </div>
         `;
       });

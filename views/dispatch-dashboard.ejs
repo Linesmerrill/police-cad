@@ -618,8 +618,8 @@
                 <label class="col-md-4 control-label" for="stolenView"><i id="isStolenAlert" class="fa-solid fa-circle-exclamation color-alert-red"></i> Marked Stolen?</label>
                 <div class="col-md-4">
                   <select id="stolenView" name="stolenView" class="form-control disabled-color" selected="selected" required readonly="readonly">
-                    <option value="1">No</option>
-                    <option value="2">Yes</option>
+                    <option value="false">No</option>
+                    <option value="true">Yes</option>
                   </select>
                 </div>
               </div>
@@ -2783,7 +2783,7 @@
             )
           }
           //check if vehicle is stolen and append result
-          if (res[i].vehicle.isStolen==2) {
+          if (res[i].vehicle.isStolen === "true" || res[i].vehicle.isStolen === "2") {
             $('#registered-cars-panel-body-'+index).append(
               `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
               `<strong>Danger!</strong> Vehicle reported as stolen.`+

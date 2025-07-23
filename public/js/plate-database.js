@@ -120,8 +120,10 @@ function populateVehSocketDetails(res) {
     $("#invalidInsuranceAlert").hide();
   }
   $("#roVeh").val(res.vehicle.registeredOwner);
-  $("#stolenView").val(res.vehicle.isStolen);
-  if (res.vehicle.isStolen == "2") {
+  // Convert to string "true"/"false" system
+  const isStolen = res.vehicle.isStolen === "2" || res.vehicle.isStolen === "true";
+  $("#stolenView").val(isStolen ? "true" : "false");
+  if (isStolen) {
     //if the vehicle is stolen, hide the mark stolen button
     //and show the is stolen alert
     $("#markStolenBtn").hide();
@@ -133,7 +135,7 @@ function populateVehSocketDetails(res) {
 }
 
 function updateToIsStolen() {
-  $("#stolenView").val("2");
+  $("#stolenView").val("true");
 }
 
 function getVehicles() {
