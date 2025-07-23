@@ -1592,9 +1592,133 @@ document.getElementById('ownerCannotLeaveModalCancel').onclick = function() {
 </script>
 
 <script>
+let currentEditDepartment = null;
 function openEditDepartmentModal(departmentId) {
-  // Placeholder for future edit modal logic
-  alert('Edit Department: ' + departmentId);
+  currentEditDepartment = departmentId;
+  // Populate modal fields with department data
+  const dept = (window.departmentsListData || []).find(d => d._id === departmentId);
+  if (dept) {
+    document.getElementById('editDeptImagePreview').src = dept.image || '/static/images/default-logo.png';
+    document.getElementById('editDeptName').value = dept.name || '';
+    document.getElementById('editDeptDescription').value = dept.description || '';
+  }
+  document.getElementById('editDepartmentModal').style.display = 'flex';
+}
+function closeEditDepartmentModal() {
+  document.getElementById('editDepartmentModal').style.display = 'none';
 }
 </script>
+
+<!-- Set departmentsListData for edit modal -->
+<script>
+window.departmentsListData = JSON.parse("<%= JSON.stringify(departments || []).replace(/\\/g, '\\\\').replace(/\"/g, '\\\"') %>");
+</script>
+
+<!-- Edit Department Modal -->
+<div id="editDepartmentModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+    <button onclick="closeEditDepartmentModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-pencil-alt" style="font-size:2.5rem; color:#3b82f6; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Edit Department</h3>
+    </div>
+    <form onsubmit="event.preventDefault(); saveEditDepartment();">
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1">Department Photo</label>
+        <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-4 bg-gray-800 cursor-pointer hover:border-blue-500 transition" onclick="document.getElementById('editDeptImage').click()">
+          <img id="editDeptImagePreview" src="/static/images/default-logo.png" alt="Preview" style="max-width:120px; max-height:120px; border-radius:0.5rem; margin-bottom:0.5rem;" />
+          <i class="fa fa-camera text-2xl text-gray-400 mb-2"></i>
+          <span class="text-gray-400 text-sm">Click to upload photo</span>
+          <input type="file" id="editDeptImage" accept="image/*" style="display:none;" onchange="handleEditDeptImageChange(event)" />
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1" for="editDeptName">Department Name</label>
+        <input type="text" id="editDeptName" required class="w-full text-gray-200 bg-gray-800 rounded p-2" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1" for="editDeptDescription">Description</label>
+        <textarea id="editDeptDescription" rows="3" class="w-full text-gray-200 bg-gray-800 rounded p-2"></textarea>
+      </div>
+      <div class="flex justify-between gap-2 mt-6">
+        <button type="button" onclick="deleteEditDepartment()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">Delete</button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold">Save</button>
+      </div>
+    </form>
+  </div>
+</div> 
+
+<script>
+function saveEditDepartment() {
+  const deptId = currentEditDepartment;
+  const communityId = '<%= community._id %>';
+  const name = document.getElementById('editDeptName').value.trim();
+  const description = document.getElementById('editDeptDescription').value.trim();
+  const imageInput = document.getElementById('editDeptImage');
+  const saveBtn = document.querySelector('#editDepartmentModal button[type="submit"]');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving...';
+
+  // Prepare payload
+  const payload = { name, description };
+  // If a new image is selected, upload it (placeholder: just use base64 for now)
+  if (imageInput.files && imageInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      payload.image = ev.target.result;
+      doUpdate();
+    };
+    reader.readAsDataURL(imageInput.files[0]);
+  } else {
+    doUpdate();
+  }
+
+  function doUpdate() {
+    fetch(`${API_URL}/community/${communityId}/departments/${deptId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to update department');
+        return res.json();
+      })
+      .then(() => {
+        closeEditDepartmentModal();
+        window.location.reload();
+      })
+      .catch(err => {
+        alert(err.message || 'Failed to update department');
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save';
+      });
+  }
+}
+function deleteEditDepartment() {
+  const deptId = currentEditDepartment;
+  const communityId = '<%= community._id %>';
+  if (confirm('Are you sure you want to delete this department? This action is irreversible.')) {
+    const deleteBtn = document.querySelector('#editDepartmentModal button.bg-red-600');
+    deleteBtn.disabled = true;
+    deleteBtn.textContent = 'Deleting...';
+    fetch(`${API_URL}/community/${communityId}/departments/${deptId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to delete department');
+        return res.json();
+      })
+      .then(() => {
+        closeEditDepartmentModal();
+        window.location.reload();
+      })
+      .catch(err => {
+        alert(err.message || 'Failed to delete department');
+        deleteBtn.disabled = false;
+        deleteBtn.textContent = 'Delete';
+      });
+  }
+}
+</script> 
 
