@@ -108,7 +108,27 @@ module.exports = function (app, passport, server) {
       let departments = [];
       let totalCount = 0;
       let totalPages = 1;
-      if (community && community._id && userId) {
+      // Determine if user is a member of the community
+      let isMemberApproved = false;
+      if (req.user && req.user._doc && req.user._doc.user && Array.isArray(req.user._doc.user.communities) && community && community._id) {
+        req.user._doc.user.communities.forEach(function(c) {
+          if (String(c.communityId) === String(community._id) && c.status === 'approved') {
+            isMemberApproved = true;
+          }
+        });
+      }
+      if (community && community._id && userId && isMemberApproved) {
+        // Use v1 route to get all departments for members
+        const deptsApiUrl = `${policeCadApiUrl}/api/v1/community/${community._id}/departments`;
+        const deptsResponse = await axios.get(deptsApiUrl, config);
+        const allDepartments = deptsResponse.data.departments || [];
+        totalCount = allDepartments.length;
+        totalPages = Math.max(1, Math.ceil(totalCount / 6));
+        const startIdx = (page - 1) * 6;
+        const endIdx = startIdx + 6;
+        departments = allDepartments.slice(startIdx, endIdx);
+      } else if (community && community._id && userId) {
+        // Fallback to v2 paginated for non-members
         const deptsApiUrl = `${policeCadApiUrl}/api/v2/community/${community._id}/departments?userId=${userId}&page=${page}&limit=6`;
         const deptsResponse = await axios.get(deptsApiUrl, config);
         departments = deptsResponse.data.data || [];
