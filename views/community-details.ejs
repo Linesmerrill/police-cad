@@ -1560,12 +1560,14 @@ function submitLeaveCommunity() {
   const errorDiv = document.getElementById('leaveCommunityError');
   errorDiv.style.display = 'none';
   errorDiv.textContent = '';
+
   // Show loading state (optional)
   const leaveBtn = document.getElementById('leaveCommunityModalConfirm');
   if (leaveBtn) {
     leaveBtn.disabled = true;
     leaveBtn.textContent = 'Leaving...';
   }
+
   fetch(`${API_URL}/user/${userId}/remove-community`, {
     method: "DELETE",
     headers: {
@@ -1817,5 +1819,121 @@ function updateEditDeptVisibilityLabel() {
   document.getElementById('editDeptVisibilityPublic').className = 'text-sm font-medium ' + (!checked ? 'text-blue-400' : 'text-gray-400');
   document.getElementById('editDeptVisibilityPrivate').className = 'text-sm font-medium ' + (checked ? 'text-blue-400' : 'text-gray-400');
 }
+</script> 
+
+<!-- Create Event Modal -->
+<div id="createEventModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+    <button onclick="closeCreateEventModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-calendar-plus" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create Event</h3>
+    </div>
+    <form id="createEventForm" autocomplete="off">
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1">Event Image (Optional)</label>
+        <div id="event-photo-upload" class="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-4 bg-gray-800 cursor-pointer hover:border-blue-500 transition" onclick="document.getElementById('event-photo').click()">
+          <img id="event-photo-preview" src="" alt="Preview" style="display:none; max-width:120px; max-height:120px; border-radius:0.5rem; margin-bottom:0.5rem;" />
+          <i class="fa fa-camera text-2xl text-gray-400 mb-2"></i>
+          <span class="text-gray-400 text-sm">Click to upload photo</span>
+          <input type="file" id="event-photo" accept="image/*" style="display:none;" onchange="handleEventPhotoChange(event)" />
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1" for="event-title">Title *</label>
+        <input type="text" id="event-title" required class="w-full text-gray-200 bg-gray-800 rounded p-2" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1" for="event-date">Scheduled Date *</label>
+        <input type="datetime-local" id="event-date" required class="w-full text-gray-200 bg-gray-800 rounded p-2" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1" for="event-location">Location *</label>
+        <input type="text" id="event-location" required class="w-full text-gray-200 bg-gray-800 rounded p-2" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1" for="event-description">Description *</label>
+        <textarea id="event-description" rows="3" required class="w-full text-gray-200 bg-gray-800 rounded p-2"></textarea>
+      </div>
+      <div class="mb-4 flex items-center">
+        <input type="checkbox" id="event-required" class="form-checkbox text-blue-600 mr-2" />
+        <label for="event-required" class="text-gray-300">Attendance Required</label>
+      </div>
+      <div id="createEventError" class="text-red-400 text-sm mb-2" style="display:none;"></div>
+      <div class="flex justify-end gap-2 mt-6">
+        <button type="button" onclick="closeCreateEventModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Cancel</button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function openCreateEventModal() {
+  document.getElementById('createEventModal').style.display = 'flex';
+}
+function closeCreateEventModal() {
+  document.getElementById('createEventModal').style.display = 'none';
+}
+function handleEventPhotoChange(e) {
+  const file = e.target.files[0];
+  const preview = document.getElementById('event-photo-preview');
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      preview.src = ev.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    preview.src = '';
+    preview.style.display = 'none';
+  }
+}
+document.getElementById('createEventForm').onsubmit = async function(e) {
+  e.preventDefault();
+  const title = document.getElementById('event-title').value.trim();
+  const scheduledDate = document.getElementById('event-date').value;
+  const location = document.getElementById('event-location').value.trim();
+  const description = document.getElementById('event-description').value.trim();
+  const required = document.getElementById('event-required').checked;
+  const communityID = '<%= community._id %>';
+  const host = '<%= user && user._doc ? user._doc._id : "" %>';
+  let image = '';
+  const photoInput = document.getElementById('event-photo');
+  if (photoInput && photoInput.files && photoInput.files[0]) {
+    // TODO: Upload image to cloud and get URL, for now use a placeholder
+    image = 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1747054441/upload_placeholder.jpg';
+  }
+  if (!title || !scheduledDate || !location || !description) {
+    document.getElementById('createEventError').textContent = 'All fields except image are required.';
+    document.getElementById('createEventError').style.display = 'block';
+    return;
+  }
+  document.getElementById('createEventError').style.display = 'none';
+  const payload = {
+    communityID,
+    title,
+    scheduledDate: new Date(scheduledDate).toISOString(),
+    image,
+    location,
+    description,
+    host,
+    coHosts: [],
+    required
+  };
+  try {
+    const res = await fetch(`${API_URL}/community/${communityID}/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Failed to create event');
+    closeCreateEventModal();
+    window.location.reload();
+  } catch (err) {
+    document.getElementById('createEventError').textContent = err.message || 'Failed to create event.';
+    document.getElementById('createEventError').style.display = 'block';
+  }
+};
 </script> 
 
