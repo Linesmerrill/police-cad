@@ -109,11 +109,13 @@ module.exports = function (app, passport, server) {
       let totalCount = 0;
       let totalPages = 1;
       if (community && community._id && userId) {
-        const deptsApiUrl = `${policeCadApiUrl}/api/v2/community/${community._id}/departments?userId=${userId}&page=${page}&limit=6`;
+        // Fetch all departments with full details
+        const deptsApiUrl = `${policeCadApiUrl}/api/v1/community/${community._id}/departments`;
         const deptsResponse = await axios.get(deptsApiUrl, config);
-        departments = deptsResponse.data.data || [];
-        totalCount = deptsResponse.data.totalCount || 0;
-        totalPages = Math.max(1, Math.ceil(totalCount / 6));
+        console.log('Departments API response:', JSON.stringify(deptsResponse.data, null, 2));
+        departments = deptsResponse.data.departments || [];
+        totalCount = departments.length;
+        totalPages = 1; // Pagination will be handled client-side
       }
       res.render("community-details", {
         user: req.user,
@@ -121,11 +123,12 @@ module.exports = function (app, passport, server) {
         departments,
         deptPagination: {
           totalCount,
-          currentPage: page,
-          totalPages
+          currentPage: 1,
+          totalPages: 1
         },
         referer: encodeURIComponent(`/community/${hash}`),
         redirect: encodeURIComponent(redirect),
+        policeCadApiUrl: policeCadApiUrl || '' // always pass this variable
       });
     } catch (error) {
       return res.status(404).render("error", {
