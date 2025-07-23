@@ -412,20 +412,24 @@
     <ul class="text-left mx-auto max-w-xl">
       <% community.community.events.forEach(function(event) { %>
         <% if (isMemberApproved) { %>
-          <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700">
-            <div class="font-semibold text-lg text-white mb-1"><%= event.title %></div>
-            <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
-            <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
-            <% if (event.location) { %>
-              <div class="text-gray-500 text-xs">Location: <%= event.location %></div>
-            <% } %>
+          <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700 flex flex-col sm:flex-row items-start gap-4">
+            <img src="<%= event.image || '/static/images/default-logo.png' %>" alt="Event Image" class="w-32 h-24 object-cover rounded mb-2 sm:mb-0" style="min-width:8rem; max-width:8rem; max-height:6rem;" />
+            <div class="flex-1">
+              <div class="font-semibold text-lg text-white mb-1"><%= event.title %></div>
+              <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
+              <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
+              <% if (event.location) { %>
+                <div class="text-gray-500 text-xs">Location: <%= event.location %></div>
+              <% } %>
+            </div>
           </li>
         <% } else { %>
-          <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700 relative opacity-70 cursor-not-allowed">
-            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <span class="bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">Members Only</span>
-            </div>
-            <div class="relative z-0">
+          <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700 relative opacity-70 cursor-not-allowed flex flex-col sm:flex-row items-start gap-4">
+            <img src="<%= event.image || '/static/images/default-logo.png' %>" alt="Event Image" class="w-32 h-24 object-cover rounded mb-2 sm:mb-0" style="min-width:8rem; max-width:8rem; max-height:6rem;" />
+            <div class="flex-1 relative z-0">
+              <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                <span class="bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">Members Only</span>
+              </div>
               <div class="font-semibold text-lg text-white mb-1"><%= event.title %></div>
               <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
               <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
