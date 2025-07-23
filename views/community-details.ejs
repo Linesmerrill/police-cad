@@ -325,15 +325,18 @@
   var isPublic = dept.approvalRequired === false;
   var isMember = Array.isArray(dept.members) && dept.members.some(function(m) { return m.userID === userId && m.status === 'approved'; });
   var canAccess = canManageDepartments || isPublic || isMember;
+  var shouldDisable = !isMemberApproved || !user;
 %>
-  <div class="block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 border border-gray-700 hover:border-blue-500 <%= canAccess ? 'cursor-pointer' : '' %> min-h-64">
+  <div class="block bg-gray-800 rounded-lg shadow transition p-4 border border-gray-700 min-h-64 relative <%= (!shouldDisable && canAccess) ? 'hover:shadow-lg hover:border-blue-500 cursor-pointer' : 'opacity-60 pointer-events-none' %>">
     <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-32 object-cover rounded mb-2" />
     <div class="font-bold text-lg text-white mb-1"><%= dept.name %></div>
     <div class="text-gray-400 text-sm mb-1"><%= dept.description || '' %></div>
     <div class="text-xs text-gray-500"><%= dept.template?.name || '' %></div>
-    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-      <span class="bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">Members Only</span>
-    </div>
+    <% if (shouldDisable) { %>
+      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <span class="bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">Members Only</span>
+      </div>
+    <% } %>
   </div>
 <% }); %>
               </div>
