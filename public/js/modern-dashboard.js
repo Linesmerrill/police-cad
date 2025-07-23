@@ -92,8 +92,18 @@ $(document).ready(function() {
     $('#civDetailsDeleteBtn').click(function() {
         const civId = document.getElementById('civIdHidden').value;
         if (civId && confirm('Are you sure you want to delete this civilian? This action cannot be undone.')) {
-            // Add delete civilian functionality here
-            showToast('Delete functionality not yet implemented');
+            $.ajax({
+                url: `${API_URL}/api/v1/civilian/${civId}`,
+                method: 'DELETE',
+                success: function() {
+                    showToast('Civilian deleted successfully!');
+                    closeCivDetailsModal();
+                    loadCivilians();
+                },
+                error: function(xhr) {
+                    showToast('Failed to delete civilian: ' + (xhr.responseJSON?.message || 'Unknown error'));
+                }
+            });
         }
     });
     
