@@ -208,25 +208,89 @@
                 </button>
               <% } %>
               
-              <button onclick="openInviteModal()" class="flex flex-col items-center p-4 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-                <i class="fa-solid fa-user-plus w-6 h-6 mb-2 text-xl"></i>
-                <span class="text-sm font-medium">Invite</span>
+              <%
+                // Permission logic for managing members (invite)
+                let canManageMembers = false;
+                if (userId && community.community && Array.isArray(community.community.roles)) {
+                  community.community.roles.forEach(function(role) {
+                    if (Array.isArray(role.members) && role.members.includes(userId)) {
+                      if (Array.isArray(role.permissions)) {
+                        role.permissions.forEach(function(perm) {
+                          if (
+                            (perm.name === "administrator" && perm.enabled === true) ||
+                            (perm.name === "manage members" && perm.enabled === true)
+                          ) {
+                            canManageMembers = true;
+                          }
+                        });
+                      }
+                    }
+                  });
+                }
+              %>
+              <% if (canManageMembers) { %>
+                <button onclick="openInviteModal()" class="flex flex-col items-center p-4 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                  <i class="fa-solid fa-user-plus w-6 h-6 mb-2 text-xl"></i>
+                  <span class="text-sm font-medium">Invite</span>
+                </button>
+              <% } else { %>
+                <button onclick="openNoInvitePermissionModal()" class="flex flex-col items-center p-4 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors" style="pointer-events:auto;">
+                  <i class="fa-solid fa-user-plus w-6 h-6 mb-2 text-xl"></i>
+                  <span class="text-sm font-medium">Invite</span>
+                </button>
+              <% } %>
+              <button onclick="copyCommunityUrl()" class="flex flex-col items-center p-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-share-nodes w-6 h-6 mb-2 text-xl"></i>
+                <span class="text-sm font-medium">Share</span>
               </button>
             </div>
           </div>
           
+          <%
+            // Permission logic for managing departments
+            let canManageDepartments = false;
+            if (userId && community.community && Array.isArray(community.community.roles)) {
+              community.community.roles.forEach(function(role) {
+                if (Array.isArray(role.members) && role.members.includes(userId)) {
+                  if (Array.isArray(role.permissions)) {
+                    role.permissions.forEach(function(perm) {
+                      if (
+                        (perm.name === "administrator" && perm.enabled === true) ||
+                        (perm.name === "manage departments" && perm.enabled === true)
+                      ) {
+                        canManageDepartments = true;
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          %>
           <div class="card">
-            <h2 class="text-xl font-semibold mb-2">Departments</h2>
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="text-xl font-semibold">Departments</h2>
+              <% if (canManageDepartments) { %>
+                <button onclick="openCreateDepartmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full font-semibold shadow transition flex items-center">
+                  <i class="fa fa-plus mr-2"></i> Create Department
+                </button>
+              <% } else { %>
+                <button onclick="openNoDepartmentPermissionModal()" class="bg-gray-500 text-white px-4 py-2 rounded-full font-semibold shadow opacity-60 cursor-not-allowed flex items-center" style="pointer-events:auto;">
+                  <i class="fa fa-plus mr-2"></i> Create Department
+                </button>
+              <% } %>
+            </div>
             <% if (community.community.departments && community.community.departments.length) { %>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <% community.community.departments.forEach(function(dept) { %>
-                  <div onclick="navigateToDepartment('<%= dept._id %>', '<%= dept.template && dept.template.name ? dept.template.name : "" %>')" class="block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 border border-gray-700 hover:border-blue-500 cursor-pointer">
-                    <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-32 object-cover rounded mb-2" />
-                    <div class="font-bold text-lg text-white mb-1"><%= dept.name %></div>
-                    <div class="text-gray-400 text-sm mb-1"><%= dept.description || '' %></div>
-                    <div class="text-xs text-gray-500"><%= dept.template?.name || '' %></div>
-                  </div>
-                <% }); %>
+                <% community.community.departments.forEach(function(dept) { 
+  var templateName = dept.template && dept.template.name ? dept.template.name.replace(/'/g, "\\'") : '';
+%>
+  <div onclick="navigateToDepartment('<%= dept._id %>', '<%= templateName %>')" class="block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 border border-gray-700 hover:border-blue-500 cursor-pointer">
+    <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-32 object-cover rounded mb-2" />
+    <div class="font-bold text-lg text-white mb-1"><%= dept.name %></div>
+    <div class="text-gray-400 text-sm mb-1"><%= dept.description || '' %></div>
+    <div class="text-xs text-gray-500"><%= dept.template && dept.template.name ? dept.template.name : '' %></div>
+  </div>
+<% }); %>
               </div>
             <% } else { %>
               <p class="text-gray-400">No departments listed.</p>
@@ -254,41 +318,114 @@
             <% } %>
           </div>
         <% } %>
-        <div class="card">
-          <h2 class="text-xl font-semibold mb-2">Events</h2>
-          <% if (community.community.events && community.community.events.length) { %>
-            <ul class="text-left mx-auto max-w-xl">
-              <% community.community.events.forEach(function(event) { %>
-                <% if (isMemberApproved) { %>
-                  <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700">
-                    <div class="font-semibold text-lg text-white mb-1"><%= event.title %></div>
-                    <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
-                    <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
-                    <% if (event.location) { %>
-                      <div class="text-gray-500 text-xs">Location: <%= event.location %></div>
-                    <% } %>
-                  </li>
-                <% } else { %>
-                  <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700 relative opacity-70 cursor-not-allowed">
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                      <span class="bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">Members Only</span>
-                    </div>
-                    <div class="relative z-0">
-                      <div class="font-semibold text-lg text-white mb-1"><%= event.title %></div>
-                      <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
-                      <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
-                      <% if (event.location) { %>
-                        <div class="text-gray-500 text-xs">Location: <%= event.location %></div>
-                      <% } %>
-                    </div>
-                  </li>
-                <% } %>
-              <% }); %>
-            </ul>
-          <% } else { %>
-            <p class="text-gray-400">No events yet.</p>
-          <% } %>
-        </div>
+        <%
+  // Get userId for permission checks
+  let userId = null;
+  if (user && user._doc && user._doc._id) {
+    userId = String(user._doc._id);
+  } else if (user && user.user && user.user._id) {
+    userId = String(user.user._id);
+  }
+%>
+<%
+  // Permission logic for managing events (EJS, like departments)
+  let canManageEvents = false;
+  if (userId && community.community && Array.isArray(community.community.roles)) {
+    community.community.roles.forEach(function(role) {
+      if (Array.isArray(role.members) && role.members.includes(userId)) {
+        if (Array.isArray(role.permissions)) {
+          role.permissions.forEach(function(perm) {
+            if (
+              (perm.name === "administrator" && perm.enabled === true) ||
+              (perm.name === "manage community events" && perm.enabled === true)
+            ) {
+              canManageEvents = true;
+            }
+          });
+        }
+      }
+    });
+  }
+%>
+<div class="card">
+  <div class="flex items-center justify-between mb-2">
+    <h2 class="text-xl font-semibold">Events</h2>
+    <% if (canManageEvents) { %>
+      <button onclick="openCreateEventModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full font-semibold shadow transition flex items-center">
+        <i class="fa fa-plus mr-2"></i> Create Event
+      </button>
+    <% } else { %>
+      <button onclick="openNoEventPermissionModal()" class="bg-gray-500 text-white px-4 py-2 rounded-full font-semibold shadow opacity-60 cursor-not-allowed flex items-center" style="pointer-events:auto;">
+        <i class="fa fa-plus mr-2"></i> Create Event
+      </button>
+    <% } %>
+  </div>
+  <% if (community.community.events && community.community.events.length) { %>
+    <ul class="text-left mx-auto max-w-xl">
+      <% community.community.events.forEach(function(event) { %>
+        <% if (isMemberApproved) { %>
+          <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700">
+            <div class="font-semibold text-lg text-white mb-1"><%= event.title %></div>
+            <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
+            <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
+            <% if (event.location) { %>
+              <div class="text-gray-500 text-xs">Location: <%= event.location %></div>
+            <% } %>
+          </li>
+        <% } else { %>
+          <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700 relative opacity-70 cursor-not-allowed">
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <span class="bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">Members Only</span>
+            </div>
+            <div class="relative z-0">
+              <div class="font-semibold text-lg text-white mb-1"><%= event.title %></div>
+              <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
+              <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
+              <% if (event.location) { %>
+                <div class="text-gray-500 text-xs">Location: <%= event.location %></div>
+              <% } %>
+            </div>
+          </li>
+        <% } %>
+      <% }); %>
+    </ul>
+  <% } else { %>
+    <p class="text-gray-400">No events yet.</p>
+  <% } %>
+</div>
+
+<!-- No Event Permission Modal -->
+<div id="noEventPermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+    <button id="noEventPermissionModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-lock" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
+    </div>
+    <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+      <p>You do not have permission to create events.</p>
+      <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage community events</strong> permission from an admin.</p>
+    </div>
+    <div style="margin-top:2rem; text-align:center;">
+      <button id="noEventPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var closeBtn = document.getElementById('noEventPermissionModalClose');
+  var cancelBtn = document.getElementById('noEventPermissionModalCancel');
+  if (closeBtn) closeBtn.onclick = function() {
+    document.getElementById('noEventPermissionModal').style.display = 'none';
+  };
+  if (cancelBtn) cancelBtn.onclick = function() {
+    document.getElementById('noEventPermissionModal').style.display = 'none';
+  };
+});
+</script>
+
       <% } else { %>
         <div class="card text-center">
           <h2 class="text-2xl font-bold mb-4">Community Not Found</h2>
@@ -309,7 +446,7 @@
         <div id="notification-error" style="display:none; background:#f56565; color:#fff; border-radius:8px; padding:1rem; margin-bottom:1.5rem; border:1px solid #e53e3e;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong>Error!</strong> <span id="notification-error-message"></span>
-            <button type="button" onclick="$('#notification-error').hide()" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">
+            <button type="button" onclick="document.getElementById('notification-error').style.display = 'none'" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">
               <i class="fa fa-times"></i>
             </button>
           </div>
@@ -534,6 +671,46 @@
         </div>
         <div style="margin-top:2rem; text-align:center;">
           <button id="noSettingsPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Department Permission Modal -->
+    <div id="noDepartmentPermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+        <button id="noDepartmentPermissionModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-lock" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
+        </div>
+        <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+          <p>You do not have permission to create departments.</p>
+          <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage departments</strong> permission from an admin.</p>
+        </div>
+        <div style="margin-top:2rem; text-align:center;">
+          <button id="noDepartmentPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Invite Permission Modal -->
+    <div id="noInvitePermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+        <button id="noInvitePermissionModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-lock" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
+        </div>
+        <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+          <p>You do not have permission to invite members.</p>
+          <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage members</strong> permission from an admin.</p>
+        </div>
+        <div style="margin-top:2rem; text-align:center;">
+          <button id="noInvitePermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
             Close
           </button>
         </div>
@@ -823,6 +1000,53 @@ document.getElementById('noSettingsPermissionModalCancel').onclick = function() 
   document.getElementById('noSettingsPermissionModal').style.display = 'none';
 }
 
+function openCreateDepartmentModal() {
+  // TODO: Implement create department modal
+  alert('Create Department modal will be implemented next');
+}
+function openNoDepartmentPermissionModal() {
+  document.getElementById('noDepartmentPermissionModal').style.display = 'flex';
+}
+document.getElementById('noDepartmentPermissionModalClose').onclick = function() {
+  document.getElementById('noDepartmentPermissionModal').style.display = 'none';
+}
+document.getElementById('noDepartmentPermissionModalCancel').onclick = function() {
+  document.getElementById('noDepartmentPermissionModal').style.display = 'none';
+}
+
+function openNoInvitePermissionModal() {
+  document.getElementById('noInvitePermissionModal').style.display = 'flex';
+}
+document.getElementById('noInvitePermissionModalClose').onclick = function() {
+  document.getElementById('noInvitePermissionModal').style.display = 'none';
+}
+document.getElementById('noInvitePermissionModalCancel').onclick = function() {
+  document.getElementById('noInvitePermissionModal').style.display = 'none';
+}
+
+function copyCommunityUrl() {
+  const url = window.location.href;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(function() {
+      showToast('Link copied!', 2000);
+    }, function() {
+      showToast('Failed to copy link', 2000);
+    });
+  } else {
+    // fallback for older browsers
+    const tempInput = document.createElement('input');
+    tempInput.value = url;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    try {
+      document.execCommand('copy');
+      showToast('Link copied!', 2000);
+    } catch (err) {
+      showToast('Failed to copy link', 2000);
+    }
+    document.body.removeChild(tempInput);
+  }
+}
 
 </script> 
 
@@ -844,5 +1068,11 @@ function showToast(message, duration = 2500) {
 if (localStorage.getItem('leftCommunityToast')) {
   showToast("You have left the community.", 2500);
   localStorage.removeItem('leftCommunityToast');
+}
+</script> 
+
+<script>
+function openNoEventPermissionModal() {
+  document.getElementById('noEventPermissionModal').style.display = 'flex';
 }
 </script> 
