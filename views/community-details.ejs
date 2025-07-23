@@ -583,136 +583,6 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
     </div>
 
-    <!-- Request to Join Modal -->
-    <div id="requestJoinModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
-        <button id="requestJoinModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-        
-        <div style="text-align:center; margin-bottom:1.5rem;">
-          <i class="fa fa-users" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
-          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Request to Join</h3>
-        </div>
-        
-        <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-          <p>Are you sure you want to request to join <strong style="color:#fff;"><%= community.community.name %></strong>?</p>
-          <p style="font-size:0.9rem; margin-top:0.5rem;">Your request will be sent to the community administrators for approval.</p>
-        </div>
-        
-        <div style="display:flex; gap:1rem; justify-content:center;">
-          <button id="requestJoinModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
-            Cancel
-          </button>
-          <button onclick="submitJoinRequest()" style="background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
-            Send Request
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Leave Community Modal -->
-    <div id="leaveCommunityModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
-        <button id="leaveCommunityModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-        <div style="text-align:center; margin-bottom:1.5rem;">
-          <i class="fa fa-exclamation-triangle" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
-          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Leave Community</h3>
-        </div>
-        <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-          <p>Are you sure you want to leave <strong style="color:#fff;"><%= community.community.name %></strong>?</p>
-          <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">This action cannot be undone. You will lose access to all community features.</p>
-        </div>
-        <div id="leaveCommunityError" style="display:none; color:#f56565; margin-bottom:1rem; text-align:center;"></div>
-        <div style="display:flex; gap:1rem; justify-content:center;">
-          <button id="leaveCommunityModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
-            Cancel
-          </button>
-          <button onclick="submitLeaveCommunity()" style="background:#dc2626; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
-            Leave Community
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Owner Cannot Leave Modal -->
-    <div id="ownerCannotLeaveModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
-        <button id="ownerCannotLeaveModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-        <div style="text-align:center; margin-bottom:1.5rem;">
-          <i class="fa fa-user-shield" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
-          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">You are the Owner</h3>
-        </div>
-        <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-          <p>You are the owner of <strong style="color:#fff;"><%= community.community.name %></strong> and cannot leave the community.</p>
-          <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">Please transfer ownership to another member before leaving.</p>
-        </div>
-        <div style="margin-top:2rem; text-align:center;">
-          <button id="ownerCannotLeaveModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- No Settings Permission Modal -->
-    <div id="noSettingsPermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
-        <button id="noSettingsPermissionModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-        <div style="text-align:center; margin-bottom:1.5rem;">
-          <i class="fa fa-lock" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
-          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
-        </div>
-        <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-          <p>You do not have permission to view community settings.</p>
-          <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage community settings</strong> permission from an admin.</p>
-        </div>
-        <div style="margin-top:2rem; text-align:center;">
-          <button id="noSettingsPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- No Department Permission Modal -->
-    <div id="noDepartmentPermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
-        <button id="noDepartmentPermissionModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-        <div style="text-align:center; margin-bottom:1.5rem;">
-          <i class="fa fa-lock" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
-          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
-        </div>
-        <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-          <p>You do not have permission to create departments.</p>
-          <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage departments</strong> permission from an admin.</p>
-        </div>
-        <div style="margin-top:2rem; text-align:center;">
-          <button id="noDepartmentPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- No Invite Permission Modal -->
-    <div id="noInvitePermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
-        <button id="noInvitePermissionModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-        <div style="text-align:center; margin-bottom:1.5rem;">
-          <i class="fa fa-lock" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
-          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
-        </div>
-        <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-          <p>You do not have permission to invite members.</p>
-          <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage members</strong> permission from an admin.</p>
-        </div>
-        <div style="margin-top:2rem; text-align:center;">
-          <button id="noInvitePermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/js/notifications.js"></script>
     <script>
@@ -906,9 +776,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     </script>
   </body>
-</html> 
-
-<script>
+</html> <script>
 function navigateToDepartment(departmentId, templateName) {
   const deptName = templateName.toLowerCase();
   let dashboardUrl = '';
@@ -997,8 +865,7 @@ document.getElementById('noSettingsPermissionModalCancel').onclick = function() 
 }
 
 function openCreateDepartmentModal() {
-  // TODO: Implement create department modal
-  alert('Create Department modal will be implemented next');
+  document.getElementById('createDepartmentStep1Modal').style.display = 'flex';
 }
 function openNoDepartmentPermissionModal() {
   document.getElementById('noDepartmentPermissionModal').style.display = 'flex';
@@ -1072,3 +939,454 @@ function openNoEventPermissionModal() {
   document.getElementById('noEventPermissionModal').style.display = 'flex';
 }
 </script> 
+
+<% /* --- Create Department Button (if user has permission) --- */ %>
+<% if (typeof isMemberApproved !== 'undefined' && typeof canManageDepartments !== 'undefined' && isMemberApproved && canManageDepartments) { %>
+  <button id="openCreateDepartmentModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full font-semibold shadow transition flex items-center mb-4">
+    <i class="fa fa-plus mr-2"></i> Create Department
+  </button>
+<% } %>
+
+<!-- HeroUI Pro Create Department Modals (Step 1: Basic Info) -->
+<div id="createDepartmentStep1Modal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+    <button onclick="closeCreateDepartmentModal(1)" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-building" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create a Department - Step 1 of 3</h3>
+    </div>
+    <form id="createDepartmentFormStep1">
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1">Department Photo (Optional)</label>
+        <div id="dept-photo-upload" class="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-4 bg-gray-800 cursor-pointer hover:border-blue-500 transition" onclick="document.getElementById('dept-photo').click()">
+          <img id="dept-photo-preview" src="" alt="Preview" style="display:none; max-width:120px; max-height:120px; border-radius:0.5rem; margin-bottom:0.5rem;" />
+          <i class="fa fa-camera text-2xl text-gray-400 mb-2"></i>
+          <span class="text-gray-400 text-sm">Click to upload photo</span>
+          <input type="file" id="dept-photo" accept="image/*" style="display:none;" onchange="handleDeptPhotoChange(event)" />
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1" for="dept-name">Department Name *</label>
+        <input type="text" id="dept-name" required class="w-full text-gray-200 bg-gray-800 rounded p-2" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1" for="dept-description">Description (Optional)</label>
+        <textarea id="dept-description" rows="3" class="w-full text-gray-200 bg-gray-800 rounded p-2"></textarea>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-1">Visibility</label>
+        <div class="flex gap-2">
+          <button type="button" id="visibility-public" class="flex-1 px-4 py-2 rounded-l-lg border border-gray-600 bg-blue-600 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400" onclick="setDeptVisibility('public')">Public</button>
+          <button type="button" id="visibility-private" class="flex-1 px-4 py-2 rounded-r-lg border border-gray-600 bg-gray-700 text-gray-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400" onclick="setDeptVisibility('private')">Private <span class='text-xs'>(Approval required)</span></button>
+        </div>
+        <input type="hidden" id="dept-visibility" name="visibility" value="public" />
+      </div>
+      <div id="createDeptStep1Error" class="text-red-400 text-sm mb-2" style="display:none;"></div>
+      <div class="flex justify-end gap-2 mt-6">
+        <button type="button" onclick="closeCreateDepartmentModal(1)" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Cancel</button>
+        <button type="button" onclick="goToCreateDepartmentStep2()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold">Next</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Step 2: Template Selection -->
+<div id="createDepartmentStep2Modal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:95%; position:relative; border:1px solid #35385a;">
+    <button onclick="closeCreateDepartmentModal(2)" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-layer-group" style="font-size:3rem; color:#a78bfa; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create a Department - Step 2 of 3</h3>
+    </div>
+    <div class="mb-4 text-gray-300 text-center">Select a template to quickly create a department. You can customize each template by toggling components.</div>
+    <div id="templateAccordion" class="flex flex-col gap-2 mb-4"></div>
+    <div id="createDeptStep2Error" class="text-red-400 text-sm mb-2 text-center" style="display:none;"></div>
+    <div class="flex justify-between mt-6">
+      <button type="button" onclick="backToCreateDepartmentStep1()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Back</button>
+      <button type="button" id="createDeptStep2NextBtn" onclick="goToCreateDepartmentStep3()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold opacity-50 cursor-not-allowed" disabled>Next</button>
+    </div>
+  </div>
+</div>
+
+<!-- Step 3: Add Members -->
+<div id="createDepartmentStep3Modal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:95%; position:relative; border:1px solid #35385a;">
+    <button onclick="closeCreateDepartmentModal(3)" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-users" style="font-size:3rem; color:#10b981; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create a Department - Step 3 of 3</h3>
+    </div>
+    <div class="mb-4 text-gray-300 text-center">Add members to the department. Members can have multiple roles.</div>
+    <div class="mb-2 text-sm text-green-400 text-center" id="selectedMembersCount"></div>
+    <div class="mb-4">
+      <div id="selectedMembers" class="flex flex-wrap gap-2 mb-2"></div>
+      <div id="memberList" class="max-h-40 overflow-y-auto"></div>
+      <div id="membersPagination" class="flex justify-center items-center gap-2 mt-2"></div>
+    </div>
+    <div id="createDeptStep3Error" class="text-red-400 text-sm mb-2 text-center" style="display:none;"></div>
+    <div class="flex justify-between mt-6">
+      <button type="button" onclick="backToCreateDepartmentStep2()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Back</button>
+      <button type="button" onclick="finishCreateDepartment()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold">Finish</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// --- Modal State ---
+let createDeptData = {
+  name: '',
+  description: '',
+  image: '',
+  visibility: 'public',
+  template: { name: '', components: [] },
+  members: []
+};
+let createDeptTemplates = [
+  { name: "Civilian", color: "#3b82f6", description: "Basic civilian department with basic components and permissions.", permissions: [ { key: "createCivilians", label: "Create Civilians", default: true }, { key: "createVehicles", label: "Create Vehicles", default: true }, { key: "createFirearms", label: "Create Firearms", default: true }, { key: "call911", label: "Call 911", default: true } ] },
+  { name: "Police", color: "#6366f1", description: "Basic police department with typical components and permissions.", permissions: [ { key: "10CodesInterface", label: "10-codes interface", default: true }, { key: "personSearch", label: "Person Search & Actions", default: true }, { key: "vehicleSearch", label: "Vehicle Search & Actions", default: true }, { key: "firearmSearch", label: "Firearm Search & Actions", default: true }, { key: "createBolos", label: "Create Bolos", default: true }, { key: "viewBolosAndWarrants", label: "View Calls, Bolos & Warrants", default: true }, { key: "notepad", label: "Notepad", default: true } ] },
+  { name: "Dispatch", color: "#f59e42", description: "Can manage calls, dispatch units create bolos and more.", permissions: [ { key: "dispatchUnits", label: "Dispatch Units", default: true }, { key: "createAndManageCalls", label: "Create & Manage Calls", default: true }, { key: "createBolos", label: "Create Bolos", default: true }, { key: "manage911Calls", label: "Manage 911 Calls", default: true }, { key: "nameSearch", label: "Name Search", default: true }, { key: "vehicleSearch", label: "Vehicle Search & Actions", default: true }, { key: "firearmSearch", label: "Firearm Search & Actions", default: true } ] },
+  { name: "Fire", color: "#f87171", description: "Basic fire department with basic components and permissions.", permissions: [ { key: "10CodesInterface", label: "10-codes interface", default: true }, { key: "personSearch", label: "Person Search & Actions", default: true }, { key: "vehicleSearch", label: "Vehicle Search & Actions", default: true }, { key: "createBolos", label: "Create Bolos", default: true }, { key: "viewBolosAndWarrants", label: "View Calls, Bolos & Warrants", default: true }, { key: "notepad", label: "Notepad", default: true } ] },
+  { name: "EMS", color: "#10b981", description: "Basic EMS department with basic components and permissions.", permissions: [ { key: "10CodesInterface", label: "10-codes interface", default: true }, { key: "personSearch", label: "Person Search & Actions", default: true }, { key: "vehicleSearch", label: "Vehicle Search & Actions", default: true }, { key: "createBolos", label: "Create Bolos", default: true }, { key: "viewBolosAndWarrants", label: "View Calls, Bolos & Warrants", default: true }, { key: "notepad", label: "Notepad", default: true } ] },
+  { name: "Custom", color: "#a3a3a3", description: "(Coming Soon!) Add a new department with custom components and permissions.", permissions: [ { key: "talkInChannels", label: "Create your own components (Coming soon)", default: true }, { key: "inviteFriends", label: "Custom features for a new department (Coming soon)", default: true } ] }
+];
+let createDeptPermissionsState = {};
+createDeptTemplates.forEach(t => {
+  let permAcc = {};
+  t.permissions.forEach(p => { permAcc[p.key] = p.default; });
+  createDeptPermissionsState[t.name] = permAcc;
+});
+let createDeptSelectedTemplate = '';
+let createDeptMembers = [];
+let createDeptAllMembers = [];
+
+// --- Modal Open/Close ---
+document.getElementById('openCreateDepartmentModalBtn')?.addEventListener('click', () => {
+  document.getElementById('createDepartmentStep1Modal').style.display = 'flex';
+});
+function closeCreateDepartmentModal(step) {
+  document.getElementById(`createDepartmentStep${step}Modal`).style.display = 'none';
+}
+function backToCreateDepartmentStep1() {
+  document.getElementById('createDepartmentStep2Modal').style.display = 'none';
+  document.getElementById('createDepartmentStep1Modal').style.display = 'flex';
+}
+function backToCreateDepartmentStep2() {
+  document.getElementById('createDepartmentStep3Modal').style.display = 'none';
+  document.getElementById('createDepartmentStep2Modal').style.display = 'flex';
+}
+
+// --- Step 1: Next ---
+function goToCreateDepartmentStep2() {
+  const name = document.getElementById('dept-name').value.trim();
+  if (!name) {
+    document.getElementById('createDeptStep1Error').textContent = 'Department name is required.';
+    document.getElementById('createDeptStep1Error').style.display = 'block';
+    return;
+  }
+  createDeptData.name = name;
+  createDeptData.description = document.getElementById('dept-description').value.trim();
+  // For now, just use a placeholder for image upload
+  const photoInput = document.getElementById('dept-photo');
+  createDeptData.image = photoInput && photoInput.files && photoInput.files[0] ? 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1747054441/upload_placeholder.jpg' : '';
+  const vis = document.querySelector('input[name="visibility"]:checked');
+  createDeptData.visibility = vis ? vis.value : 'public';
+  document.getElementById('createDeptStep1Error').style.display = 'none';
+  document.getElementById('createDepartmentStep1Modal').style.display = 'none';
+  console.log('[CreateDept] Step 1 complete:', JSON.stringify(createDeptData));
+  renderTemplateCards();
+  document.getElementById('createDepartmentStep2Modal').style.display = 'flex';
+}
+
+// --- Step 2: Template Selection ---
+function renderTemplateCards() {
+  const container = document.getElementById('templateAccordion');
+  container.innerHTML = '';
+  createDeptTemplates.forEach((template, idx) => {
+    const isSelected = createDeptSelectedTemplate === template.name;
+    const hasUnsavedChanges = isSelected && createDeptUnsavedChanges;
+    const card = document.createElement('div');
+    card.className = 'rounded-lg shadow border bg-gray-800 border-gray-700 transition-all';
+    if (isSelected) card.classList.add('border-green-500', 'ring-2', 'ring-green-400');
+    card.innerHTML = `
+      <button type="button" class="w-full flex justify-between items-center px-4 py-3 focus:outline-none" onclick="expandTemplateCard(${idx})">
+        <span class="font-bold text-lg" style="color:${template.color}">${template.name}</span>
+        <span class="flex items-center gap-2">
+          ${isSelected ? '<i class=\'fa fa-check-circle text-green-400 text-xl\'></i>' : ''}
+          <i id="template-arrow-${idx}" class="fa fa-chevron-down text-gray-400 transition-transform"></i>
+        </span>
+      </button>
+      <div id="template-details-${idx}" class="px-4 pb-4" style="display:${isSelected ? 'block' : 'none'};">
+        <div class="text-gray-400 text-xs mb-2">${template.description}</div>
+        <div class="mb-2">
+          ${template.permissions.map(perm => `
+            <label class="flex items-center gap-2 mb-1">
+              <input type="checkbox" ${createDeptPermissionsState[template.name][perm.key] ? 'checked' : ''} onchange="onTemplatePermissionChange('${template.name}','${perm.key}',this.checked)" class="form-checkbox text-blue-600" />
+              <span class="text-xs">${perm.label}</span>
+            </label>
+          `).join('')}
+        </div>
+        ${isSelected ? (
+          hasUnsavedChanges
+            ? `<button type="button" class="w-full bg-green-600 hover:bg-green-700 text-white py-1 rounded mt-2 font-semibold transition" onclick="saveTemplatePermissionChanges('${template.name}')"><i class='fa fa-save mr-1'></i>Save</button>`
+            : `<button type="button" class="w-full bg-gray-600 text-gray-300 cursor-not-allowed py-1 rounded mt-2 font-semibold transition" disabled>Selected</button>`
+        ) : `<button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1 rounded mt-2 font-semibold transition" onclick="selectCreateDeptTemplate('${template.name}')">Select</button>`}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+  // Update Next button state
+  const nextBtn = document.getElementById('createDeptStep2NextBtn');
+  if (createDeptSelectedTemplate && !createDeptUnsavedChanges) {
+    nextBtn.disabled = false;
+    nextBtn.classList.remove('opacity-50','cursor-not-allowed');
+  } else {
+    nextBtn.disabled = true;
+    nextBtn.classList.add('opacity-50','cursor-not-allowed');
+  }
+}
+window.onTemplatePermissionChange = function(templateName, permKey, checked) {
+  createDeptPermissionsState[templateName][permKey] = checked;
+  if (createDeptSelectedTemplate === templateName) {
+    createDeptUnsavedChanges = true;
+    renderTemplateCards();
+  }
+}
+window.saveTemplatePermissionChanges = function(templateName) {
+  createDeptUnsavedChanges = false;
+  renderTemplateCards();
+  showToast('Template permissions updated!', 1500);
+}
+window.selectCreateDeptTemplate = function(templateName) {
+  createDeptSelectedTemplate = templateName;
+  createDeptUnsavedChanges = false;
+  renderTemplateCards();
+}
+// Add this variable to modal state:
+let createDeptUnsavedChanges = false;
+
+// --- Step 3: Add Members with Pagination ---
+let membersPage = 1;
+let membersLimit = 10;
+let membersTotal = 0;
+let membersTotalPages = 1;
+
+function fetchCommunityMembers(page = 1) {
+  membersPage = page;
+  const communityId = '<%= community._id %>';
+  fetch(`${API_URL}/community/${communityId}/members?limit=${membersLimit}&page=${page}`)
+    .then(res => res.json())
+    .then(data => {
+      let newMembers = data.members || [];
+      membersTotal = data.totalUsers || 0;
+      membersTotalPages = Math.max(1, Math.ceil(membersTotal / membersLimit));
+      createDeptAllMembers = newMembers;
+      // Preselect current user only on first load
+      if (page === 1 && createDeptMembers.length === 0) {
+        const currentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
+        createDeptMembers = [newMembers.find(m => m._id === currentUserId)].filter(Boolean);
+      }
+      renderMemberList();
+      renderMembersPagination();
+      document.getElementById('createDepartmentStep3Modal').style.display = 'flex';
+    });
+}
+
+function renderMembersPagination() {
+  const container = document.getElementById('membersPagination');
+  container.innerHTML = '';
+  if (membersTotalPages <= 1) return;
+  // Prev button
+  const prevBtn = document.createElement('button');
+  prevBtn.textContent = 'Prev';
+  prevBtn.className = 'px-2 py-1 rounded bg-gray-700 text-gray-200 font-semibold disabled:opacity-50';
+  prevBtn.disabled = membersPage === 1;
+  prevBtn.onclick = () => fetchCommunityMembers(membersPage - 1);
+  container.appendChild(prevBtn);
+  // Page numbers
+  for (let i = 1; i <= membersTotalPages; i++) {
+    if (i === 1 || i === membersTotalPages || Math.abs(i - membersPage) <= 2) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.className = 'px-2 py-1 rounded font-semibold ' + (i === membersPage ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200');
+      btn.disabled = i === membersPage;
+      btn.onclick = () => fetchCommunityMembers(i);
+      container.appendChild(btn);
+    } else if (i === membersPage - 3 || i === membersPage + 3) {
+      const dots = document.createElement('span');
+      dots.textContent = '...';
+      dots.className = 'px-2 text-gray-400';
+      container.appendChild(dots);
+    }
+  }
+  // Next button
+  const nextBtn = document.createElement('button');
+  nextBtn.textContent = 'Next';
+  nextBtn.className = 'px-2 py-1 rounded bg-gray-700 text-gray-200 font-semibold disabled:opacity-50';
+  nextBtn.disabled = membersPage === membersTotalPages;
+  nextBtn.onclick = () => fetchCommunityMembers(membersPage + 1);
+  container.appendChild(nextBtn);
+}
+
+function renderMemberList() {
+  const memberList = document.getElementById('memberList');
+  const selectedMembersDiv = document.getElementById('selectedMembers');
+  const selectedMembersCount = document.getElementById('selectedMembersCount');
+  memberList.innerHTML = '';
+  selectedMembersDiv.innerHTML = '';
+  createDeptAllMembers.forEach(member => {
+    const isSelected = createDeptMembers.some(m => m._id === member._id);
+    const div = document.createElement('div');
+    div.className = 'flex items-center gap-2 mb-1';
+    div.innerHTML = `
+      <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleCreateDeptMember('${member._id}')" />
+      <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" class="w-6 h-6 rounded-full" />
+      <span>${member.user.username}</span>
+    `;
+    memberList.appendChild(div);
+    if (isSelected) {
+      const selDiv = document.createElement('div');
+      selDiv.className = 'flex items-center gap-1 bg-gray-700 rounded px-2 py-1 mb-1';
+      selDiv.innerHTML = `
+        <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" class="w-5 h-5 rounded-full" />
+        <span class="text-xs">${member.user.username}</span>
+        ${member._id !== '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>' ? `<button onclick="toggleCreateDeptMember('${member._id}')" class="ml-1 text-red-400">&times;</button>` : ''}
+      `;
+      selectedMembersDiv.appendChild(selDiv);
+    }
+  });
+  selectedMembersCount.textContent = `${createDeptMembers.length} member${createDeptMembers.length === 1 ? '' : 's'} selected`;
+}
+
+function toggleCreateDeptMember(memberId) {
+  const idx = createDeptMembers.findIndex(m => m._id === memberId);
+  if (idx === -1) {
+    const member = createDeptAllMembers.find(m => m._id === memberId);
+    if (member) createDeptMembers.push(member);
+  } else {
+    createDeptMembers.splice(idx, 1);
+  }
+  renderMemberList();
+}
+
+function finishCreateDepartment(skipMembers = false) {
+  if (!skipMembers && createDeptMembers.length === 0) {
+    document.getElementById('createDeptStep3Error').textContent = 'At least one member is required.';
+    document.getElementById('createDeptStep3Error').style.display = 'block';
+    return;
+  }
+  document.getElementById('createDeptStep3Error').style.display = 'none';
+  createDeptData.members = createDeptMembers.map(m => ({ userID: m._id, status: 'approved' }));
+  const communityId = '<%= community._id %>';
+  // Map visibility to approvalRequired and build payload
+  const payload = {
+    name: createDeptData.name,
+    description: createDeptData.description,
+    image: createDeptData.image,
+    approvalRequired: createDeptData.visibility === 'private',
+    members: createDeptData.members,
+    template: createDeptData.template
+  };
+  console.log('[CreateDept] Submitting department payload:', JSON.stringify(payload));
+  fetch(`${API_URL}/community/${communityId}/departments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(async res => {
+      const text = await res.text();
+      console.log('[CreateDept] Department API raw response:', text);
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        throw new Error('Server did not return JSON. See console for details.');
+      }
+    })
+    .then(response => {
+      if (!skipMembers) {
+        fetch(`/api/v1/community/${communityId}/departments/${response.department_id}/members`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ memberIds: createDeptMembers.map(m => m._id) })
+        })
+          .then(() => {
+            closeCreateDepartmentModal(3);
+            showToast('Department created successfully!', 2500);
+            window.location.reload();
+          });
+      } else {
+        closeCreateDepartmentModal(3);
+        showToast('Department created successfully!', 2500);
+        window.location.reload();
+      }
+    })
+    .catch(err => {
+      console.error('[CreateDept] Failed to create department:', err);
+      document.getElementById('createDeptStep3Error').textContent = err.message || 'Failed to create department.';
+      document.getElementById('createDeptStep3Error').style.display = 'block';
+    });
+}
+
+// --- Step 1: Photo Upload & Visibility ---
+function handleDeptPhotoChange(e) {
+  const file = e.target.files[0];
+  const preview = document.getElementById('dept-photo-preview');
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      preview.src = ev.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    preview.src = '';
+    preview.style.display = 'none';
+  }
+}
+function setDeptVisibility(val) {
+  document.getElementById('dept-visibility').value = val;
+  if (val === 'public') {
+    document.getElementById('visibility-public').classList.add('bg-blue-600','text-white');
+    document.getElementById('visibility-public').classList.remove('bg-gray-700','text-gray-200');
+    document.getElementById('visibility-private').classList.add('bg-gray-700','text-gray-200');
+    document.getElementById('visibility-private').classList.remove('bg-blue-600','text-white');
+  } else {
+    document.getElementById('visibility-private').classList.add('bg-blue-600','text-white');
+    document.getElementById('visibility-private').classList.remove('bg-gray-700','text-gray-200');
+    document.getElementById('visibility-public').classList.add('bg-gray-700','text-gray-200');
+    document.getElementById('visibility-public').classList.remove('bg-blue-600','text-white');
+  }
+}
+
+function goToCreateDepartmentStep3() {
+  if (!createDeptSelectedTemplate) {
+    document.getElementById('createDeptStep2Error').textContent = 'Please select a template.';
+    document.getElementById('createDeptStep2Error').style.display = 'block';
+    return;
+  }
+  createDeptData.template = {
+    name: createDeptSelectedTemplate,
+    components: Object.keys(createDeptPermissionsState[createDeptSelectedTemplate]).map(key => ({ name: key, enabled: createDeptPermissionsState[createDeptSelectedTemplate][key] }))
+  };
+  document.getElementById('createDeptStep2Error').style.display = 'none';
+  document.getElementById('createDepartmentStep2Modal').style.display = 'none';
+  console.log('[CreateDept] Step 2 complete:', JSON.stringify(createDeptData));
+  fetchCommunityMembers();
+}
+
+window.expandTemplateCard = function(idx) {
+  createDeptTemplates.forEach((template, i) => {
+    const details = document.getElementById(`template-details-${i}`);
+    const arrow = document.getElementById(`template-arrow-${i}`);
+    if (details) {
+      if (i === idx) {
+        details.style.display = details.style.display === 'block' ? 'none' : 'block';
+        if (arrow) arrow.style.transform = details.style.display === 'block' ? 'rotate(180deg)' : '';
+      } else {
+        details.style.display = 'none';
+        if (arrow) arrow.style.transform = '';
+      }
+    }
+  });
+}
+</script> 
+
