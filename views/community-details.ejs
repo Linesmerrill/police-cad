@@ -175,10 +175,38 @@
                 <span class="text-sm font-medium">Promote</span>
               </button>
               
-              <button onclick="openSettingsModal()" class="flex flex-col items-center p-4 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
-                <i class="fa-solid fa-gear w-6 h-6 mb-2 text-xl"></i>
-                <span class="text-sm font-medium">Settings</span>
-              </button>
+              <%
+                let canManageSettings = false;
+                const userId = user && user._doc ? String(user._doc._id) : null;
+                if (userId && community.community && Array.isArray(community.community.roles)) {
+                  community.community.roles.forEach(function(role) {
+                    if (Array.isArray(role.members) && role.members.includes(userId)) {
+                      if (Array.isArray(role.permissions)) {
+                        role.permissions.forEach(function(perm) {
+                          if (
+                            (perm.name === "administrator" && perm.enabled === true) ||
+                            (perm.name === "manage community settings" && perm.enabled === true)
+                          ) {
+                            canManageSettings = true;
+                          }
+                        });
+                      }
+                    }
+                  });
+                }
+              %>
+
+              <% if (canManageSettings) { %>
+                <button onclick="openSettingsModal()" class="flex flex-col items-center p-4 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
+                  <i class="fa-solid fa-gear w-6 h-6 mb-2 text-xl"></i>
+                  <span class="text-sm font-medium">Settings</span>
+                </button>
+              <% } else { %>
+                <button onclick="openNoSettingsPermissionModal()" class="flex flex-col items-center p-4 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors" style="pointer-events:auto;">
+                  <i class="fa-solid fa-gear w-6 h-6 mb-2 text-xl"></i>
+                  <span class="text-sm font-medium">Settings</span>
+                </button>
+              <% } %>
               
               <button onclick="openInviteModal()" class="flex flex-col items-center p-4 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
                 <i class="fa-solid fa-user-plus w-6 h-6 mb-2 text-xl"></i>
@@ -492,6 +520,26 @@
       </div>
     </div>
 
+    <!-- No Settings Permission Modal -->
+    <div id="noSettingsPermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+        <button id="noSettingsPermissionModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-lock" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
+        </div>
+        <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+          <p>You do not have permission to view community settings.</p>
+          <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage community settings</strong> permission from an admin.</p>
+        </div>
+        <div style="margin-top:2rem; text-align:center;">
+          <button id="noSettingsPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/js/notifications.js"></script>
     <script>
@@ -763,6 +811,16 @@ document.getElementById('ownerCannotLeaveModalClose').onclick = function() {
 }
 document.getElementById('ownerCannotLeaveModalCancel').onclick = function() {
   document.getElementById('ownerCannotLeaveModal').style.display = 'none';
+}
+
+function openNoSettingsPermissionModal() {
+  document.getElementById('noSettingsPermissionModal').style.display = 'flex';
+}
+document.getElementById('noSettingsPermissionModalClose').onclick = function() {
+  document.getElementById('noSettingsPermissionModal').style.display = 'none';
+}
+document.getElementById('noSettingsPermissionModalCancel').onclick = function() {
+  document.getElementById('noSettingsPermissionModal').style.display = 'none';
 }
 
 
