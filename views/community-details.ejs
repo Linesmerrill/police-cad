@@ -109,6 +109,11 @@
             Request to Join
           </button>
         <% } %>
+        <% let isOwner = false;
+           if (user && user._doc && community.community && community.community.ownerID) {
+             isOwner = String(community.community.ownerID) === String(user._doc._id);
+           }
+        %>
         <% if (isMemberApproved && memberSinceYear) { %>
           <div class="mb-4 flex items-center justify-between">
             <div class="text-green-400 font-semibold flex items-center">
@@ -117,9 +122,15 @@
               </svg>
               Member since '<%= memberSinceYear %>
             </div>
-            <button onclick="openLeaveCommunityModal()" class="bg-red-600 text-white px-4 py-2 rounded-full font-semibold shadow hover:bg-red-700 transition">
-              Leave Community
-            </button>
+            <% if (isOwner) { %>
+              <button onclick="openOwnerCannotLeaveModal()" class="bg-gray-500 text-white px-4 py-2 rounded-full font-semibold shadow cursor-not-allowed opacity-60">
+                Leave Community
+              </button>
+            <% } else { %>
+              <button onclick="openLeaveCommunityModal()" class="bg-red-600 text-white px-4 py-2 rounded-full font-semibold shadow hover:bg-red-700 transition">
+                Leave Community
+              </button>
+            <% } %>
           </div>
         <% } %>
         <% if (isMemberPending) { %>
@@ -441,17 +452,15 @@
     <div id="leaveCommunityModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
       <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
         <button id="leaveCommunityModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-        
         <div style="text-align:center; margin-bottom:1.5rem;">
           <i class="fa fa-exclamation-triangle" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
           <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Leave Community</h3>
         </div>
-        
         <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
           <p>Are you sure you want to leave <strong style="color:#fff;"><%= community.community.name %></strong>?</p>
           <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">This action cannot be undone. You will lose access to all community features.</p>
         </div>
-        
+        <div id="leaveCommunityError" style="display:none; color:#f56565; margin-bottom:1rem; text-align:center;"></div>
         <div style="display:flex; gap:1rem; justify-content:center;">
           <button id="leaveCommunityModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
             Cancel
@@ -462,7 +471,27 @@
         </div>
       </div>
     </div>
-    
+
+    <!-- Owner Cannot Leave Modal -->
+    <div id="ownerCannotLeaveModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+        <button id="ownerCannotLeaveModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-user-shield" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">You are the Owner</h3>
+        </div>
+        <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+          <p>You are the owner of <strong style="color:#fff;"><%= community.community.name %></strong> and cannot leave the community.</p>
+          <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">Please transfer ownership to another member before leaving.</p>
+        </div>
+        <div style="margin-top:2rem; text-align:center;">
+          <button id="ownerCannotLeaveModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/js/notifications.js"></script>
     <script>
@@ -612,9 +641,47 @@
       }
       
       function submitLeaveCommunity() {
-        console.log('Leave community functionality coming soon...');
-        document.getElementById('leaveCommunityModal').style.display = 'none';
-        // TODO: Implement actual leave community functionality
+        const userId = '<%= user && user._doc ? user._doc._id : "" %>';
+        const communityId = '<%= community._id %>';
+        const errorDiv = document.getElementById('leaveCommunityError');
+        errorDiv.style.display = 'none';
+        errorDiv.textContent = '';
+
+        // Show loading state (optional)
+        const leaveBtn = document.querySelector('#leaveCommunityModal button[onclick="submitLeaveCommunity()"]');
+        if (leaveBtn) {
+          leaveBtn.disabled = true;
+          leaveBtn.textContent = 'Leaving...';
+        }
+
+        fetch(`${API_URL}/user/${userId}/remove-community`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ communityId }),
+        })
+          .then(async (response) => {
+            if (!response.ok) {
+              const data = await response.json();
+              throw new Error(
+                `Failed to remove user from community.\n\nMessage: ${data.message}.\nCode: ${response.status}`
+              );
+            }
+            return response.json();
+          })
+          .then(() => {
+            localStorage.setItem('leftCommunityToast', '1');
+            window.location.href = "/communities";
+          })
+          .catch((error) => {
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = error.message || "An error occurred.";
+            if (leaveBtn) {
+              leaveBtn.disabled = false;
+              leaveBtn.textContent = 'Leave Community';
+            }
+          });
       }
     </script>
   </body>
@@ -688,5 +755,36 @@ function openInviteModal() {
   alert('Invite modal will be implemented next');
 }
 
+function openOwnerCannotLeaveModal() {
+  document.getElementById('ownerCannotLeaveModal').style.display = 'flex';
+}
+document.getElementById('ownerCannotLeaveModalClose').onclick = function() {
+  document.getElementById('ownerCannotLeaveModal').style.display = 'none';
+}
+document.getElementById('ownerCannotLeaveModalCancel').onclick = function() {
+  document.getElementById('ownerCannotLeaveModal').style.display = 'none';
+}
 
+
+</script> 
+
+<div id="toast" style="display:none; position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); background:#23272f; color:#fff; padding:1rem 2rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); z-index:3000; font-weight:500;">
+  <span id="toast-message"></span>
+</div>
+
+<script>
+function showToast(message, duration = 2500) {
+  const toast = document.getElementById('toast');
+  const toastMsg = document.getElementById('toast-message');
+  toastMsg.textContent = message;
+  toast.style.display = 'block';
+  setTimeout(() => {
+    toast.style.display = 'none';
+  }, duration);
+}
+
+if (localStorage.getItem('leftCommunityToast')) {
+  showToast("You have left the community.", 2500);
+  localStorage.removeItem('leftCommunityToast');
+}
 </script> 
