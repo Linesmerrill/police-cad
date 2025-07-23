@@ -277,8 +277,12 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <% departments.forEach(function(dept) { 
                   var templateName = dept.template && dept.template.name ? dept.template.name.replace(/'/g, "\\'") : '';
+                  var approvalRequired = dept.approvalRequired;
+                  var members = Array.isArray(dept.members) ? dept.members : [];
+                  var isMember = members.some(function(m) { return m.userID === userId && m.status === 'approved'; });
+                  var canAccess = !approvalRequired || isMember;
                 %>
-                  <div class="relative block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 border border-gray-700 hover:border-blue-500 cursor-pointer" onclick="navigateToDepartment('<%= dept._id %>', '<%= templateName %>')">
+                  <div class="relative block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 border border-gray-700 <%= canAccess ? 'hover:border-blue-500 cursor-pointer' : 'opacity-70 cursor-not-allowed' %>" <%= canAccess ? `onclick=\"navigateToDepartment('${dept._id}', '${templateName}')\"` : '' %>>
                     <% if (canManageDepartments) { %>
                       <button class="absolute top-2 right-2 text-gray-400 hover:text-blue-400 z-10 bg-gray-900 bg-opacity-70 rounded-full p-1" title="Edit Department" onclick="event.stopPropagation(); openEditDepartmentModal('<%= dept._id %>');">
                         <i class="fa fa-pencil-alt"></i>
@@ -288,6 +292,11 @@
                     <div class="font-bold text-lg text-white mb-1"><%= dept.name %></div>
                     <div class="text-gray-400 text-sm mb-1"><%= dept.description || '' %></div>
                     <div class="text-xs text-gray-500"><%= dept.template && dept.template.name ? dept.template.name : '' %></div>
+                    <% if (!canAccess) { %>
+                      <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                        <span class="bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">Members Only</span>
+                      </div>
+                    <% } %>
                   </div>
                 <% }); %>
               </div>
