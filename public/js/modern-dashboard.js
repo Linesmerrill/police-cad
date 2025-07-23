@@ -247,6 +247,26 @@ $(document).ready(function() {
     $('#alert-volume-slider').on('input', function() {
         $('#volume-display').text($(this).val());
     });
+
+    // Wire up Delete Vehicle button in modal
+    $('#vehDetailsDeleteBtn').off('click').on('click', function(e) {
+        e.preventDefault();
+        const vehId = $('#vehIdHidden').val();
+        if (vehId && confirm('Are you sure you want to delete this vehicle? This action cannot be undone.')) {
+            $.ajax({
+                url: `${API_URL}/api/v1/vehicle/${vehId}`,
+                method: 'DELETE',
+                success: function() {
+                    showToast('Vehicle deleted successfully!');
+                    closeVehDetailsModal();
+                    loadVehicles();
+                },
+                error: function(xhr) {
+                    showToast('Failed to delete vehicle: ' + (xhr.responseJSON?.message || xhr.statusText || 'Unknown error'));
+                }
+            });
+        }
+    });
 });
 
 // Search functionality
