@@ -435,24 +435,45 @@ module.exports = function (app, passport, server) {
           });
         }
         
-        // Check if user has access to this department by fetching user's departments
-        const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
-        
+        // --- ADMIN CHECK USING COMMUNITY ROLES API ---
+        let isAdmin = false;
         try {
-          const userDepartmentsResponse = await axios.get(apiUrl, config);
-          
-          const userDepartments = userDepartmentsResponse.data.data || [];
-          const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
-          
-          if (!userHasAccess) {
-            return res.status(403).render("error", {
-              message: "You don't have access to this department. Please contact the department administrator.",
-              redirect: "/departments",
-            });
+          const rolesApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/roles`;
+          const rolesResponse = await axios.get(rolesApiUrl, config);
+          const roles = rolesResponse.data || [];
+          roles.forEach(role => {
+            if (Array.isArray(role.members) && role.members.includes(String(req.user._id))) {
+              if (Array.isArray(role.permissions)) {
+                role.permissions.forEach(perm => {
+                  if (perm.name === 'administrator' && perm.enabled === true) {
+                    isAdmin = true;
+                  }
+                });
+              }
+            }
+          });
+        } catch (err) {
+          console.error('Error fetching community roles:', err.message);
+        }
+        // --- END ADMIN CHECK ---
+        
+        if (!isAdmin) {
+          // Check if user has access to this department by fetching user's departments
+          const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
+          try {
+            const userDepartmentsResponse = await axios.get(apiUrl, config);
+            const userDepartments = userDepartmentsResponse.data.data || [];
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+            if (!userHasAccess) {
+              return res.status(403).render("error", {
+                message: "You don't have access to this department. Please contact the department administrator.",
+                redirect: "/departments",
+              });
+            }
+          } catch (apiError) {
+            console.error('API Error:', apiError.message);
+            // Allow access if API is not available - this is a fallback
           }
-        } catch (apiError) {
-          console.error('API Error:', apiError.message);
-          // Allow access if API is not available - this is a fallback
         }
       }
       
