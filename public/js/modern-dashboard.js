@@ -3562,3 +3562,18 @@ function setupSubscriptionBadge() {
     // Show the badge
     subscriptionBadge.style.display = 'inline-flex';
 }
+
+// Helper function to convert select values to string "true"/"false"
+function selectToBoolString(val) {
+    // Accepts "1" (yes/true), "2" (no/false), "true", "false", true, false
+    if (val === "1" || val === "true" || val === true) return "true";
+    if (val === "2" || val === "false" || val === false) return "false";
+    return "true"; // default to true for registration/insurance
+}
+
+// Special handling for stolen status - convert to string "true"/"false" system
+function selectToStolenString(val) {
+    if (val === "2" || val === "true" || val === true) return "true"; // Stolen = "true"
+    if (val === "1" || val === "false" || val === false) return "false"; // Not stolen = "false"
+    return "false"; // default to not stolen
+}
