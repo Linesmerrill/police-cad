@@ -410,7 +410,7 @@ $(document).ready(function () {
         }</div>
         <div class="mb-2"><span class="text-gray">Warrants:</span> ${
           data.warrants?.length > 0
-            ? '<span class="text-danger">Active Warrant</span>'
+            ? '<span class="text-danger" style="cursor: pointer; text-decoration: underline;" onclick="viewWarrantDetails()">Active Warrant</span>'
             : "None"
         }</div>
         <div class="mb-2"><span class="text-gray">Parole:</span> ${
@@ -1160,6 +1160,32 @@ $(document).ready(function () {
     const action = $(this).data("action");
     openActionModal.call(this, action);
   });
+
+  // View warrant details
+  window.viewWarrantDetails = function() {
+    if (currentType === "Civilian" && currentItem.civilian?.warrants?.length > 0) {
+      // Show warrant details in a modal or alert for now
+      const warrants = currentItem.civilian.warrants;
+      let warrantDetails = "Warrant Details:\n\n";
+      
+      warrants.forEach((warrant, index) => {
+        warrantDetails += `Warrant ${index + 1}:\n`;
+        warrantDetails += `Status: ${warrant.status || 'Active'}\n`;
+        warrantDetails += `Date: ${warrant.date ? new Date(warrant.date).toLocaleDateString() : 'N/A'}\n`;
+        warrantDetails += `Type: ${warrant.type || 'N/A'}\n`;
+        warrantDetails += `Reasons: ${warrant.reasons || 'N/A'}\n`;
+        warrantDetails += `Reporting Officer: ${warrant.reportingOfficer || 'N/A'}\n\n`;
+      });
+      
+      warrantDetails += "For additional warrant details, contact:\n";
+      warrantDetails += "Judge John Smith\n";
+      warrantDetails += "Superior Court\n";
+      warrantDetails += "Phone: (555) 123-4567\n";
+      warrantDetails += "Email: judge.smith@courts.gov";
+      
+      alert(warrantDetails);
+    }
+  };
 
   // --- Main Tab Switching ---
   $(document).on('click', '#tabCriminalHistory', function() {
