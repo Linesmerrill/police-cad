@@ -308,8 +308,9 @@ $(document).ready(function () {
 
     if (searchType === "Civilian") {
       title = item.civilian?.name || "Unknown";
+      const hasWarrants = item.civilian?.warrants?.length > 0;
       subtitle = `DOB: ${item.civilian?.birthday || "Unknown"} | Status: ${
-        item.civilian?.warrants?.length > 0 ? "Active Warrant" : "No Warrants"
+        hasWarrants ? '<span style="color: #ef4444; font-weight: bold;">Active Warrant</span>' : "No Warrants"
       }`;
       recentSearchQuery = title;
     } else if (searchType === "Vehicle") {
