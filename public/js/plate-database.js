@@ -40,6 +40,9 @@ function vehicleSearchPoliceForm() {
                     <h4 id="search-results-vehicles-thumbnail-plate-${res[i]._id}" class="color-white license-plate">#${res[i].vehicle.plate})</h4>
                     <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
                     <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${res[i].vehicle.registeredOwner}</h5>
+                    ${(res[i].vehicle.isStolen === 'true' || res[i].vehicle.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                    ${(res[i].vehicle.validRegistration === 'false' || res[i].vehicle.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
+                    ${(res[i].vehicle.validInsurance === 'false' || res[i].vehicle.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
                   </div>
                 </div> 
               </div>`
@@ -105,15 +108,20 @@ function populateVehSocketDetails(res) {
   }
   $("#modelVeh").val(res.vehicle.model);
   $("#colorView").val(res.vehicle.color);
-  $("#validRegView").val(res.vehicle.validRegistration);
-  if (res.vehicle.validRegistration == "2") {
+  // Convert to string "true"/"false" system for registration
+  const isValidRegistration = res.vehicle.validRegistration === "1" || res.vehicle.validRegistration === "true";
+  $("#validRegView").val(isValidRegistration ? "true" : "false");
+  if (!isValidRegistration) {
     //if the vehicle is not registered, show the is invalid alert
     $("#invalidRegistrationAlert").show();
   } else {
     $("#invalidRegistrationAlert").hide();
   }
-  $("#validInsView").val(res.vehicle.validInsurance);
-  if (res.vehicle.validInsurance == "2") {
+  
+  // Convert to string "true"/"false" system for insurance
+  const isValidInsurance = res.vehicle.validInsurance === "1" || res.vehicle.validInsurance === "true";
+  $("#validInsView").val(isValidInsurance ? "true" : "false");
+  if (!isValidInsurance) {
     //if the vehicle is not insured, show the is invalid alert
     $("#invalidInsuranceAlert").show();
   } else {
@@ -170,6 +178,9 @@ function getVehicles() {
             <div class="caption">
               <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
               <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+              ${(res[i].vehicle.isStolen === 'true' || res[i].vehicle.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+              ${(res[i].vehicle.validRegistration === 'false' || res[i].vehicle.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
+              ${(res[i].vehicle.validInsurance === 'false' || res[i].vehicle.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
             </div>
           </div>
         </div>`
@@ -213,6 +224,9 @@ function getNextVehPage() {
           <div class="caption">
             <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
             <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+            ${(res[i].vehicle.isStolen === 'true' || res[i].vehicle.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+            ${(res[i].vehicle.validRegistration === 'false' || res[i].vehicle.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
+            ${(res[i].vehicle.validInsurance === 'false' || res[i].vehicle.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
           </div>
         </div>
       </div>`
@@ -260,6 +274,9 @@ function getPrevVehPage() {
           <div class="caption">
             <h4 class="color-white license-plate">#${res[i].vehicle.plate})</h4>
             <h5 class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
+            ${(res[i].vehicle.isStolen === 'true' || res[i].vehicle.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+            ${(res[i].vehicle.validRegistration === 'false' || res[i].vehicle.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
+            ${(res[i].vehicle.validInsurance === 'false' || res[i].vehicle.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
           </div>
         </div>
       </div>`
@@ -298,6 +315,9 @@ function getNextSearchVehPage() {
                       <h4 id="search-results-vehicles-thumbnail-plate-${res[i]._id}" class="color-white license-plate">#${res[i].vehicle.plate})</h4>
                       <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
                       <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${res[i].vehicle.registeredOwner}</h5>
+                      ${(res[i].vehicle.isStolen === 'true' || res[i].vehicle.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                      ${(res[i].vehicle.validRegistration === 'false' || res[i].vehicle.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
+                      ${(res[i].vehicle.validInsurance === 'false' || res[i].vehicle.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
                     </div>
                   </div> 
                 </div>`
@@ -352,6 +372,9 @@ function getPrevSearchVehPage() {
                       <h4 id="search-results-vehicles-thumbnail-plate-${res[i]._id}" class="color-white license-plate">#${res[i].vehicle.plate})</h4>
                       <h5 id="search-results-vehicles-thumbnail-color-model-${res[i]._id}" class="color-white">${res[i].vehicle.color} ${res[i].vehicle.model}</h5>
                       <h5 id="search-results-vehicles-thumbnail-owner-${res[i]._id}" class="color-white capitalize">${res[i].vehicle.registeredOwner}</h5>
+                      ${(res[i].vehicle.isStolen === 'true' || res[i].vehicle.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                      ${(res[i].vehicle.validRegistration === 'false' || res[i].vehicle.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID REG</p>' : ''}
+                      ${(res[i].vehicle.validInsurance === 'false' || res[i].vehicle.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold; font-size:12px; margin:5px 0 0;"><i class="fa fa-exclamation-triangle"></i> INVALID INS</p>' : ''}
                     </div>
                   </div> 
                 </div>`

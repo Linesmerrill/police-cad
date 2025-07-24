@@ -445,8 +445,14 @@ $(document).ready(function () {
         <div class="mb-2"><span class="text-gray">Year:</span> ${
           data.year || "N/A"
         }</div>
+        <div class="mb-2"><span class="text-gray">Registration:</span> ${
+          (data.validRegistration === 'true' || data.validRegistration === '1') ? '<span class="badge-stolen" style="background-color: #10b981; color: white;">Valid</span>' : '<span class="badge-stolen" style="background-color: #ef4444; color: white;">Invalid</span>'
+        }</div>
+        <div class="mb-2"><span class="text-gray">Insurance:</span> ${
+          (data.validInsurance === 'true' || data.validInsurance === '1') ? '<span class="badge-stolen" style="background-color: #10b981; color: white;">Valid</span>' : '<span class="badge-stolen" style="background-color: #ef4444; color: white;">Invalid</span>'
+        }</div>
         <div class="mb-2"><span class="text-gray">Stolen:</span> ${
-          (data.isStolen === 'true' || data.isStolen === '2') ? '<span class="badge-stolen">Yes</span>' : "No"
+          (data.isStolen === 'true' || data.isStolen === '2') ? '<span class="badge-stolen">Yes</span>' : '<span class="badge-stolen" style="background-color: #10b981; color: white;">No</span>'
         }</div>
         <div class="mb-2"><span class="text-gray">Registered Owner:</span> ${
           owner

@@ -598,8 +598,13 @@ $(document).ready(function () {
     $("#plateVeh").val(item.vehicle?.plate || "");
     $("#modelVeh").val(item.vehicle?.model || "");
     $("#colorView").val(item.vehicle?.color || "");
-    $("#validRegView").val(item.vehicle?.isRegistered ? "1" : "2");
-    $("#validInsView").val(item.vehicle?.isInsured ? "1" : "2");
+    // Convert to string "true"/"false" system for registration
+    const isValidRegistration = item.vehicle?.validRegistration === "1" || item.vehicle?.validRegistration === "true";
+    $("#validRegView").val(isValidRegistration ? "true" : "false");
+    
+    // Convert to string "true"/"false" system for insurance
+    const isValidInsurance = item.vehicle?.validInsurance === "1" || item.vehicle?.validInsurance === "true";
+    $("#validInsView").val(isValidInsurance ? "true" : "false");
     // Convert to string "true"/"false" system
     const isStolen = item.vehicle?.isStolen === "2" || item.vehicle?.isStolen === "true";
     $("#stolenView").val(isStolen ? "true" : "false");

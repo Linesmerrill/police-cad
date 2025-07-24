@@ -561,6 +561,8 @@ function renderVehicles(vehicles) {
                     <p><strong>Model:</strong> ${vehData.model || 'N/A'}</p>
                     <p><strong>Year:</strong> ${vehData.year || 'N/A'}</p>
                     ${(vehData.isStolen === 'true' || vehData.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                    ${(vehData.validRegistration === 'false' || vehData.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID REGISTRATION</p>' : ''}
+                    ${(vehData.validInsurance === 'false' || vehData.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID INSURANCE</p>' : ''}
                 </div>
             </div>
         `;
@@ -1520,11 +1522,11 @@ function openVehDetailsModal(veh) {
     if (yearField) yearField.value = vehData.year || '';
     if (colorField) colorField.value = vehData.color || '';
     
-    // Registration/Insurance fields (handle boolean string values)
+    // Registration/Insurance fields - convert to string "true"/"false" system
     function boolToSelect(val) {
-        if (val === true || val === 'true' || val === 1 || val === '1') return '1';
-        if (val === false || val === 'false' || val === 2 || val === '2') return '2';
-        return '1'; // default to Yes
+        if (val === true || val === 'true' || val === 1 || val === '1') return 'true';
+        if (val === false || val === 'false' || val === 2 || val === '2') return 'false';
+        return 'true'; // default to true
     }
     
     // Special handling for stolen status - convert to string "true"/"false" system
@@ -1594,12 +1596,12 @@ $(document).ready(function() {
 
 // Update Vehicle (modern modal)
 function updateVehModern(vehId) {
-    // Helper function to convert select values to boolean strings
+    // Helper function to convert select values to string "true"/"false"
     function selectToBoolString(val) {
         // Accepts "1" (yes/true), "2" (no/false), "true", "false", true, false
         if (val === "1" || val === "true" || val === true) return "true";
         if (val === "2" || val === "false" || val === false) return "false";
-        return "false"; // default to false
+        return "true"; // default to true for registration/insurance
     }
     
     // Special handling for stolen status - convert to string "true"/"false" system
@@ -1685,12 +1687,12 @@ $(document).ready(function() {
     $('#createVehicleForm').on('submit', function(e) {
         e.preventDefault();
         
-        // Helper function to convert select values to boolean strings
+        // Helper function to convert select values to string "true"/"false"
         function selectToBoolString(val) {
             // Accepts "1" (yes/true), "2" (no/false), "true", "false", true, false
             if (val === "1" || val === "true" || val === true) return "true";
             if (val === "2" || val === "false" || val === false) return "false";
-            return "false"; // default to false
+            return "true"; // default to true for registration/insurance
         }
         
         const data = {
@@ -1874,6 +1876,8 @@ function renderLinkedVehicles(vehicles, civilianId) {
                     <p>Type: ${vehicle?.vehicle?.type || 'Unknown'}</p>
                     <p>Year: ${vehicle?.vehicle?.year || 'Unknown'}</p>
                     ${(vehicle?.vehicle?.isStolen === 'true' || vehicle?.vehicle?.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                    ${(vehicle?.vehicle?.validRegistration === 'false' || vehicle?.vehicle?.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID REGISTRATION</p>' : ''}
+                    ${(vehicle?.vehicle?.validInsurance === 'false' || vehicle?.vehicle?.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID INSURANCE</p>' : ''}
                     ${linkedInfo}
                     ${buttonHtml}
                 </div>
