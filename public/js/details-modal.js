@@ -1340,6 +1340,8 @@ $(document).ready(function () {
             <p class="text-gray mb-0">Year: ${vehicle.year || 'N/A'}</p>
             <p class="text-gray mb-0">VIN: ${vehicle.vin || 'N/A'}</p>
             ${(vehicle.isStolen === 'true' || vehicle.isStolen === '2') ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
+            ${(vehicle.validRegistration === 'false' || vehicle.validRegistration === '2') ? '<span class="badge badge-stolen" style="background-color: #ef4444; color: white;">INVALID REG</span>' : ''}
+            ${(vehicle.validInsurance === 'false' || vehicle.validInsurance === '2') ? '<span class="badge badge-stolen" style="background-color: #ef4444; color: white;">INVALID INS</span>' : ''}
           </div>
         `;
       });
