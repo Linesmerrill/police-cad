@@ -99,7 +99,7 @@
           }
         %>
         <% if (user && community.community && !isMemberApproved && !isMemberPending) { %>
-          <button onclick="openRequestJoinModal()" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold shadow hover:bg-blue-700 transition mb-4">
+          <button id="requestJoinBtn" onclick="openRequestJoinModal()" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold shadow hover:bg-blue-700 transition mb-4">
             Request to Join
           </button>
         <% } %>
@@ -2262,3 +2262,37 @@ async function deleteEditEvent() {
     </div>
   </div>
 </footer> 
+
+<!-- Request to Join Modal -->
+<div id="requestJoinModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:400px; width:90%; position:relative; border:1px solid #35385a;">
+    <button id="requestJoinModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-user-plus" style="font-size:2.5rem; color:#3b82f6; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.3rem; font-weight:600;">Request to Join Community</h3>
+    </div>
+    <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+      <p>Are you sure you want to request to join this community?</p>
+    </div>
+    <div id="requestJoinError" style="display:none; color:#f56565; text-align:center; margin-bottom:1rem;"></div>
+    <div style="margin-top:2rem; text-align:center; display:flex; justify-content:center; gap:1rem;">
+      <button id="requestJoinModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">Cancel</button>
+      <button id="requestJoinModalConfirm" type="button" style="background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">Request to Join</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast for join request feedback (already exists, but ensure it's present) -->
+<div id="toast" style="display:none; position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); background:#23272f; color:#fff; padding:1rem 2rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); z-index:3000; font-weight:500;">
+  <span id="toast-message"></span>
+</div>
+
+<!-- Set dbUser global for JS -->
+<script>
+  window.dbUser = <%- JSON.stringify(user && user._doc ? user._doc : user || {}) %>;
+  window.communityId = "<%= community._id %>";
+  console.log('window.dbUser (EJS):', window.dbUser);
+  console.log('window.communityId (EJS):', window.communityId);
+</script>
+<!-- Include community-details.js for join logic -->
+<script src="/static/js/community-details.js"></script> 

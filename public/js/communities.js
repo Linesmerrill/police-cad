@@ -611,7 +611,10 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
             </span>
           )}
           {showDropdown && (
-            <div className="absolute left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
+            <div
+              className="absolute left-0 right-0 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto"
+              style={{ top: '100%' }}
+            >
               {loading ? (
                 <div className="p-4 text-gray-400 text-center">Searching...</div>
               ) : noResults ? (
@@ -868,15 +871,20 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
     }
   };
 
-  const getCommunityLimit = (plan) => {
-    switch (plan) {
-      case "free": return 1;
-      case "base": return 5;
-      case "premium": return 10;
-      case "elite": return Infinity;
-      default: return 1;
-    }
+  // Plan limits and features mapping
+  const PLAN_LIMITS = {
+    base: 5,
+    premium: 10,
+    premium_plus: Infinity
   };
+  const PLAN_FEATURES = {
+    base: "Create up to 5 communities",
+    premium: "Create up to 10 communities",
+    premium_plus: "Unlimited communities"
+  };
+
+  const getCommunityLimit = (plan) => PLAN_LIMITS[plan] ?? 1;
+  const getPlanFeature = (plan) => PLAN_FEATURES[plan] ?? "Create up to 1 community";
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -921,8 +929,8 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
 
     const communityLimit = getCommunityLimit(userPlan);
     
-    if (ownedCommunityCount >= communityLimit) {
-      setError(`Your current subscription (${userPlan}) allows you to create up to ${communityLimit} communit${communityLimit > 1 ? "ies" : "y"}. Upgrade your subscription to create more.`);
+    if (communityLimit !== Infinity && ownedCommunityCount >= communityLimit) {
+      setError(`Your current subscription (${userPlan}) allows you to create up to ${communityLimit} communit${communityLimit === 1 ? "y" : "ies"}. Upgrade your subscription to create more.`);
       return;
     }
 
@@ -1157,7 +1165,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
           {!canCreateMore && (
             <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
               <p className="text-red-400 text-sm">
-                {error || `You've reached your community limit (${communityLimit}). Upgrade your subscription to create more.`}
+                {error || `You've reached your community limit (${communityLimit === Infinity ? "unlimited" : communityLimit}). Upgrade your subscription to create more.`}
               </p>
             </div>
           )}
@@ -1172,8 +1180,11 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
           {/* Community Count Info */}
           <div className="bg-gray-800/50 rounded-lg p-4">
             <p className="text-gray-300 text-sm">
-              You have created {ownedCommunityCount} of {communityLimit} allowed communit{communityLimit > 1 ? "ies" : "y"} 
+              You have created {ownedCommunityCount} of {communityLimit === Infinity ? "unlimited" : communityLimit} allowed communit{communityLimit === 1 ? "y" : "ies"} 
               ({userPlan} plan)
+            </p>
+            <p className="text-gray-400 text-xs mt-1">
+              {getPlanFeature(userPlan)}
             </p>
           </div>
         </div>
