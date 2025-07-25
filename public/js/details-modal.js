@@ -410,7 +410,7 @@ $(document).ready(function () {
         }</div>
         <div class="mb-2"><span class="text-gray">Warrants:</span> ${
           data.warrants?.length > 0
-            ? '<span class="text-danger">Active Warrant</span>'
+            ? '<span class="text-danger" style="cursor: pointer; text-decoration: underline;" onclick="viewWarrantDetails()">Active Warrant</span>'
             : "None"
         }</div>
         <div class="mb-2"><span class="text-gray">Parole:</span> ${
@@ -445,8 +445,14 @@ $(document).ready(function () {
         <div class="mb-2"><span class="text-gray">Year:</span> ${
           data.year || "N/A"
         }</div>
+        <div class="mb-2"><span class="text-gray">Registration:</span> ${
+          (data.validRegistration === 'true' || data.validRegistration === '1') ? '<span class="badge-stolen" style="background-color: #10b981; color: white;">Valid</span>' : '<span class="badge-stolen" style="background-color: #ef4444; color: white;">Invalid</span>'
+        }</div>
+        <div class="mb-2"><span class="text-gray">Insurance:</span> ${
+          (data.validInsurance === 'true' || data.validInsurance === '1') ? '<span class="badge-stolen" style="background-color: #10b981; color: white;">Valid</span>' : '<span class="badge-stolen" style="background-color: #ef4444; color: white;">Invalid</span>'
+        }</div>
         <div class="mb-2"><span class="text-gray">Stolen:</span> ${
-          data.isStolen === 'true' ? '<span class="badge-stolen">Yes</span>' : "No"
+          (data.isStolen === 'true' || data.isStolen === '2') ? '<span class="badge-stolen">Yes</span>' : '<span class="badge-stolen" style="background-color: #10b981; color: white;">No</span>'
         }</div>
         <div class="mb-2"><span class="text-gray">Registered Owner:</span> ${
           owner
@@ -468,7 +474,7 @@ $(document).ready(function () {
           data.caliber || "N/A"
         }</div>
         <div class="mb-2"><span class="text-gray">Stolen:</span> ${
-          data.isStolen === 'true' ? '<span class="badge-stolen">Yes</span>' : "No"
+          (data.isStolen === 'true' || data.isStolen === '2') ? '<span class="badge-stolen">Yes</span>' : "No"
         }</div>
         <div class="mb-2"><span class="text-gray">Registered Owner:</span> ${
           owner
@@ -643,7 +649,7 @@ $(document).ready(function () {
     if (currentType === "Vehicle" || currentType === "Firearm") {
       actionsHtml += `
         <button class="btn btn-warning btn-block mb-2 action-button" data-action="Report Stolen" data-stolen="${data.isStolen || 'false'}">
-          ${data.isStolen === 'true' ? "Mark as Not Stolen" : "Report Stolen"}
+          ${(data.isStolen === 'true' || data.isStolen === '2') ? "Mark as Not Stolen" : "Report Stolen"}
         </button>
       `;
     } else if (currentType === "License") {
@@ -699,8 +705,8 @@ $(document).ready(function () {
 
   // Handle report stolen
   function handleReportStolen(itemId, isStolen) {
-    const isCurrentlyStolen = isStolen === true || isStolen === 'true';
-    const newStolenStatus = isCurrentlyStolen ? "false" : "true";
+    const isCurrentlyStolen = isStolen === true || isStolen === 'true' || isStolen === '2';
+    const newStolenStatus = isCurrentlyStolen ? "false" : "true"; // Use string "true"/"false" system
     const actionText = isCurrentlyStolen ? "mark as not stolen" : "report as stolen";
     const successText = isCurrentlyStolen ? "marked as not stolen" : "reported as stolen";
     
@@ -1155,6 +1161,32 @@ $(document).ready(function () {
     openActionModal.call(this, action);
   });
 
+  // View warrant details
+  window.viewWarrantDetails = function() {
+    if (currentType === "Civilian" && currentItem.civilian?.warrants?.length > 0) {
+      // Show warrant details in a modal or alert for now
+      const warrants = currentItem.civilian.warrants;
+      let warrantDetails = "Warrant Details:\n\n";
+      
+      warrants.forEach((warrant, index) => {
+        warrantDetails += `Warrant ${index + 1}:\n`;
+        warrantDetails += `Status: ${warrant.status || 'Active'}\n`;
+        warrantDetails += `Date: ${warrant.date ? new Date(warrant.date).toLocaleDateString() : 'N/A'}\n`;
+        warrantDetails += `Type: ${warrant.type || 'N/A'}\n`;
+        warrantDetails += `Reasons: ${warrant.reasons || 'N/A'}\n`;
+        warrantDetails += `Reporting Officer: ${warrant.reportingOfficer || 'N/A'}\n\n`;
+      });
+      
+      warrantDetails += "For additional warrant details, contact:\n";
+      warrantDetails += "Judge John Smith\n";
+      warrantDetails += "Superior Court\n";
+      warrantDetails += "Phone: (555) 123-4567\n";
+      warrantDetails += "Email: judge.smith@courts.gov";
+      
+      alert(warrantDetails);
+    }
+  };
+
   // --- Main Tab Switching ---
   $(document).on('click', '#tabCriminalHistory', function() {
     // Only allow tab switching for civilians
@@ -1333,7 +1365,9 @@ $(document).ready(function () {
             <p class="text-gray mb-0">Make: ${vehicle.make || 'N/A'}</p>
             <p class="text-gray mb-0">Year: ${vehicle.year || 'N/A'}</p>
             <p class="text-gray mb-0">VIN: ${vehicle.vin || 'N/A'}</p>
-            ${vehicle.isStolen === 'true' ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
+            ${(vehicle.isStolen === 'true' || vehicle.isStolen === '2') ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
+            ${(vehicle.validRegistration === 'false' || vehicle.validRegistration === '2') ? '<span class="badge badge-stolen" style="background-color: #ef4444; color: white;">INVALID REG</span>' : ''}
+            ${(vehicle.validInsurance === 'false' || vehicle.validInsurance === '2') ? '<span class="badge badge-stolen" style="background-color: #ef4444; color: white;">INVALID INS</span>' : ''}
           </div>
         `;
       });
@@ -1483,7 +1517,7 @@ $(document).ready(function () {
               <span>${firearm.weaponType || firearm.name || 'N/A'}</span>
             </div>
             <p class="text-gray mb-0">Caliber: ${firearm.caliber || 'N/A'}</p>
-            ${firearm.isStolen === 'true' ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
+            ${(firearm.isStolen === 'true' || firearm.isStolen === '2') ? '<span class="badge badge-stolen">STOLEN</span>' : ''}
           </div>
         `;
       });

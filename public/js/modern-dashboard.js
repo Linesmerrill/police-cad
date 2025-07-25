@@ -560,6 +560,9 @@ function renderVehicles(vehicles) {
                     <p><strong>Make:</strong> ${vehData.make || 'N/A'}</p>
                     <p><strong>Model:</strong> ${vehData.model || 'N/A'}</p>
                     <p><strong>Year:</strong> ${vehData.year || 'N/A'}</p>
+                    ${(vehData.isStolen === 'true' || vehData.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                    ${(vehData.validRegistration === 'false' || vehData.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID REGISTRATION</p>' : ''}
+                    ${(vehData.validInsurance === 'false' || vehData.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID INSURANCE</p>' : ''}
                 </div>
             </div>
         `;
@@ -716,6 +719,7 @@ function renderFirearms(firearms) {
                     <p><strong>Type:</strong> ${gunData.weaponType || 'N/A'}</p>
                     <p><strong>Caliber:</strong> ${gunData.caliber || 'N/A'}</p>
                     <p><strong>Serial:</strong> ${gunData.serialNumber || 'N/A'}</p>
+                    ${(gunData.isStolen === 'true' || gunData.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
                 </div>
             </div>
         `;
@@ -1518,15 +1522,23 @@ function openVehDetailsModal(veh) {
     if (yearField) yearField.value = vehData.year || '';
     if (colorField) colorField.value = vehData.color || '';
     
-    // Registration/Insurance fields (handle boolean string values)
+    // Registration/Insurance fields - convert to string "true"/"false" system
     function boolToSelect(val) {
-        if (val === true || val === 'true' || val === 1 || val === '1') return '1';
-        if (val === false || val === 'false' || val === 2 || val === '2') return '2';
-        return '1'; // default to Yes
+        if (val === true || val === 'true' || val === 1 || val === '1') return 'true';
+        if (val === false || val === 'false' || val === 2 || val === '2') return 'false';
+        return 'true'; // default to true
     }
+    
+    // Special handling for stolen status - convert to string "true"/"false" system
+    function stolenToSelect(val) {
+        if (val === "2" || val === "true" || val === true) return 'true'; // Stolen = "true"
+        if (val === "1" || val === "false" || val === false) return 'false'; // Not stolen = "false"
+        return 'false'; // default to not stolen
+    }
+    
     document.getElementById('vehValidRegistration').value = boolToSelect(vehData.validRegistration);
     document.getElementById('vehValidInsurance').value = boolToSelect(vehData.validInsurance);
-    document.getElementById('vehIsStolen').value = boolToSelect(vehData.isStolen);
+    document.getElementById('vehIsStolen').value = stolenToSelect(vehData.isStolen);
     
     // Show modal
     modal.style.cssText = 'display: flex !important; position: fixed !important; z-index: 2000 !important; left: 0 !important; top: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(30,32,44,0.65) !important; align-items: center !important; justify-content: center !important; visibility: visible !important; opacity: 1 !important;';
@@ -1584,12 +1596,19 @@ $(document).ready(function() {
 
 // Update Vehicle (modern modal)
 function updateVehModern(vehId) {
-    // Helper function to convert select values to boolean strings
+    // Helper function to convert select values to string "true"/"false"
     function selectToBoolString(val) {
         // Accepts "1" (yes/true), "2" (no/false), "true", "false", true, false
         if (val === "1" || val === "true" || val === true) return "true";
         if (val === "2" || val === "false" || val === false) return "false";
-        return "false"; // default to false
+        return "true"; // default to true for registration/insurance
+    }
+    
+    // Special handling for stolen status - convert to string "true"/"false" system
+    function selectToStolenString(val) {
+        if (val === "2" || val === "true" || val === true) return "true"; // Stolen = "true"
+        if (val === "1" || val === "false" || val === false) return "false"; // Not stolen = "false"
+        return "false"; // default to not stolen
     }
     
     const data = {
@@ -1604,7 +1623,7 @@ function updateVehModern(vehId) {
         // registeredOwner removed
         validRegistration: selectToBoolString($('#vehValidRegistration').val()),
         validInsurance: selectToBoolString($('#vehValidInsurance').val()),
-        isStolen: selectToBoolString($('#vehIsStolen').val()),
+        isStolen: selectToStolenString($('#vehIsStolen').val()),
         userID: dbUser._id,
         activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID
     };
@@ -1668,12 +1687,12 @@ $(document).ready(function() {
     $('#createVehicleForm').on('submit', function(e) {
         e.preventDefault();
         
-        // Helper function to convert select values to boolean strings
+        // Helper function to convert select values to string "true"/"false"
         function selectToBoolString(val) {
             // Accepts "1" (yes/true), "2" (no/false), "true", "false", true, false
             if (val === "1" || val === "true" || val === true) return "true";
             if (val === "2" || val === "false" || val === false) return "false";
-            return "false"; // default to false
+            return "true"; // default to true for registration/insurance
         }
         
         const data = {
@@ -1687,7 +1706,7 @@ $(document).ready(function() {
             color: $('#newVehColor').val() ? $('#newVehColor').val().trim() : '',
             validRegistration: selectToBoolString($('#newVehValidRegistration').val()),
             validInsurance: selectToBoolString($('#newVehValidInsurance').val()),
-            isStolen: selectToBoolString($('#newVehIsStolen').val()),
+            isStolen: selectToStolenString($('#newVehIsStolen').val()),
             registeredOwner: '', // Always include, even if empty
             registeredOwnerID: '', // Always include, even if empty
             userID: dbUser._id,
@@ -1856,6 +1875,9 @@ function renderLinkedVehicles(vehicles, civilianId) {
                 <div class="card-content">
                     <p>Type: ${vehicle?.vehicle?.type || 'Unknown'}</p>
                     <p>Year: ${vehicle?.vehicle?.year || 'Unknown'}</p>
+                    ${(vehicle?.vehicle?.isStolen === 'true' || vehicle?.vehicle?.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
+                    ${(vehicle?.vehicle?.validRegistration === 'false' || vehicle?.vehicle?.validRegistration === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID REGISTRATION</p>' : ''}
+                    ${(vehicle?.vehicle?.validInsurance === 'false' || vehicle?.vehicle?.validInsurance === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> INVALID INSURANCE</p>' : ''}
                     ${linkedInfo}
                     ${buttonHtml}
                 </div>
@@ -2542,6 +2564,7 @@ function renderLinkedFirearms(firearms, civilianId) {
                 <div class="card-content">
                     <p>Type: ${firearm?.firearm?.weaponType || 'Unknown'}</p>
                     <p>Caliber: ${firearm?.firearm?.caliber || 'Unknown'}</p>
+                    ${(firearm?.firearm?.isStolen === 'true' || firearm?.firearm?.isStolen === '2') ? '<p style="color:#ef4444; font-weight:bold;"><i class="fa fa-exclamation-triangle"></i> STOLEN</p>' : ''}
                     ${linkedInfo}
                     ${buttonHtml}
                 </div>
@@ -3538,4 +3561,19 @@ function setupSubscriptionBadge() {
     
     // Show the badge
     subscriptionBadge.style.display = 'inline-flex';
+}
+
+// Helper function to convert select values to string "true"/"false"
+function selectToBoolString(val) {
+    // Accepts "1" (yes/true), "2" (no/false), "true", "false", true, false
+    if (val === "1" || val === "true" || val === true) return "true";
+    if (val === "2" || val === "false" || val === false) return "false";
+    return "true"; // default to true for registration/insurance
+}
+
+// Special handling for stolen status - convert to string "true"/"false" system
+function selectToStolenString(val) {
+    if (val === "2" || val === "true" || val === true) return "true"; // Stolen = "true"
+    if (val === "1" || val === "false" || val === false) return "false"; // Not stolen = "false"
+    return "false"; // default to not stolen
 }

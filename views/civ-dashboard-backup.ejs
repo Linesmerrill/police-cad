@@ -2297,7 +2297,9 @@ function viewVehicle(vehicleId) {
       $('#colorView').val(vehicle?.vehicle?.color);
       $('#validRegView').val(vehicle?.vehicle?.validRegistration ? 'true' : 'false');
       $('#validInsView').val(vehicle?.vehicle?.validInsurance ? 'true' : 'false');
-      $('#stolenView').val(vehicle?.vehicle?.isStolen === 'true' ? 'true' : 'false');
+      // Convert to string "true"/"false" system
+const isStolen = vehicle?.vehicle?.isStolen === 'true' || vehicle?.vehicle?.isStolen === '2';
+$('#stolenView').val(isStolen ? 'true' : 'false');
       
       // Show the modal
       $('#viewVeh').modal('show');

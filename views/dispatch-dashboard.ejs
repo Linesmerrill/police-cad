@@ -598,8 +598,8 @@
                 <label class="col-md-4 control-label" for="valid-registration"><i id="invalidRegistrationAlert" class="fa-solid fa-triangle-exclamation color-yellow"></i> Valid Registration?</label>
                 <div class="col-md-4">
                   <select id="validRegView" name="validRegView" class="form-control disabled-color" selected="selected" required readonly="readonly">
-                    <option value="1">Yes</option>
-                    <option value="2">No</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
                   </select>
                 </div>
               </div>
@@ -608,8 +608,8 @@
                 <label class="col-md-4 control-label" for="validInsView"><i id="invalidInsuranceAlert" class="fa-solid fa-triangle-exclamation color-yellow"></i> Valid Insurance?</label>
                 <div class="col-md-4">
                   <select id="validInsView" name="validInsView" class="form-control disabled-color" selected="selected" required readonly="readonly">
-                    <option value="1">Yes</option>
-                    <option value="2">No</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
                   </select>
                 </div>
               </div>
@@ -618,8 +618,8 @@
                 <label class="col-md-4 control-label" for="stolenView"><i id="isStolenAlert" class="fa-solid fa-circle-exclamation color-alert-red"></i> Marked Stolen?</label>
                 <div class="col-md-4">
                   <select id="stolenView" name="stolenView" class="form-control disabled-color" selected="selected" required readonly="readonly">
-                    <option value="1">No</option>
-                    <option value="2">Yes</option>
+                    <option value="false">No</option>
+                    <option value="true">Yes</option>
                   </select>
                 </div>
               </div>
@@ -2783,7 +2783,7 @@
             )
           }
           //check if vehicle is stolen and append result
-          if (res[i].vehicle.isStolen==2) {
+          if (res[i].vehicle.isStolen === "true" || res[i].vehicle.isStolen === "2") {
             $('#registered-cars-panel-body-'+index).append(
               `<div id="stolenMessage" class="alert alert-danger" style="display:block">`+
               `<strong>Danger!</strong> Vehicle reported as stolen.`+
@@ -2797,23 +2797,25 @@
             `Model: ${res[i].vehicle.model}<br/>`
           )
           //check for valid/invalid insurance and append result
-          if (res[i].vehicle.validInsurance==1) {
+          const isValidInsurance = res[i].vehicle.validInsurance === "1" || res[i].vehicle.validInsurance === "true";
+          if (isValidInsurance) {
             $('#registered-cars-panel-body-'+index).append(
-              `<p class="plate-body-text">Insurance: Valid <i class="ion-checkmark-circled color-green"></i></p>`
+              `<p class="plate-body-text">Insurance: <span style="color: #10b981;">true</span> <i class="ion-checkmark-circled color-green"></i></p>`
             )
           } else {
             $('#registered-cars-panel-body-'+index).append(
-              `<p class="plate-body-text">Insurance: Invalid <i class="ion-alert-circled color-red"></i></p>`
+              `<p class="plate-body-text">Insurance: <span style="color: #ef4444;">false</span> <i class="ion-alert-circled color-red"></i></p>`
             )
           }
           //check for valid/invalid registration and append result
-          if (res[i].vehicle.validRegistration==1) {
+          const isValidRegistration = res[i].vehicle.validRegistration === "1" || res[i].vehicle.validRegistration === "true";
+          if (isValidRegistration) {
             $('#registered-cars-panel-body-'+index).append(
-              `<p class="plate-body-text">Registration: Valid <i class="ion-checkmark-circled color-green"></i></p>`
+              `<p class="plate-body-text">Registration: <span style="color: #10b981;">true</span> <i class="ion-checkmark-circled color-green"></i></p>`
             )
           } else {
             $('#registered-cars-panel-body-'+index).append(
-              `<p class="plate-body-text">Registration: Invalid <i class="ion-alert-circled color-red"></i></p>`
+              `<p class="plate-body-text">Registration: <span style="color: #ef4444;">false</span> <i class="ion-alert-circled color-red"></i></p>`
             )
           }
         }
