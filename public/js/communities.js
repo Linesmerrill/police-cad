@@ -224,6 +224,8 @@ const Navbar = () => {
 };
 
 function encodeCommunityId(communityId) {
+  // Use the same encoding as the server-side encodeId function
+  // For simple ASCII strings like MongoDB ObjectIds, btoa should work fine
   const base64 = btoa(communityId);
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }

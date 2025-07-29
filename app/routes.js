@@ -90,8 +90,16 @@ module.exports = function (app, passport, server) {
     try {
       const hash = req.params.hash;
       const communityId = decodeId(hash);
+      
+      console.log('Community route debug:', {
+        hash,
+        communityId,
+        apiUrl: policeCadApiUrl
+      });
+      
       // Validate that the decoded communityId is a valid MongoDB ObjectId
       if (!/^[a-fA-F0-9]{24}$/.test(communityId)) {
+        console.log('Invalid ObjectId format:', communityId);
         return res.status(404).render("error", {
           message: "Community not found or an error occurred.",
           redirect: "/communities",
@@ -99,6 +107,7 @@ module.exports = function (app, passport, server) {
       }
       // Fetch community details from API
       const apiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}`;
+      console.log('Making API request to:', apiUrl);
       const response = await axios.get(apiUrl, config);
       const community = response.data || {};
 
@@ -148,6 +157,12 @@ module.exports = function (app, passport, server) {
         redirect: encodeURIComponent(redirect),
       });
     } catch (error) {
+      console.error('Community route error:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url
+      });
       return res.status(404).render("error", {
         message: "Community not found or an error occurred.",
         redirect: "/communities",
