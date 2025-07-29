@@ -1565,7 +1565,7 @@ const App = () => {
             title="Your Communities"
             communities={userCommunities}
             actionText="Jump In"
-            onAction={(community) => (window.location.href = `/communities`)}
+            onAction={(community) => (window.location.href = `/community/${encodeCommunityId(community._id)}`)}
             cardsPerView={3}
             onPrevPage={handleUserPrevPage}
             onNextPage={handleUserNextPage}
