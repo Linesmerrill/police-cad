@@ -1164,9 +1164,36 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
           {/* Subscription Info */}
           {!canCreateMore && (
             <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
-              <p className="text-red-400 text-sm">
+              <p className="text-red-400 text-sm mb-3">
                 {error || `You've reached your community limit (${communityLimit === Infinity ? "unlimited" : communityLimit}). Upgrade your subscription to create more.`}
               </p>
+              <div className="flex flex-col space-y-2">
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => {
+                      // Open iOS App Store
+                      window.open('https://apps.apple.com/us/app/lpc-app/id6503307483', '_blank');
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center flex-1"
+                  >
+                    <i className="fa fa-apple mr-2"></i>
+                    App Store
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Open Google Play Store
+                      window.open('https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp', '_blank');
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center flex-1"
+                  >
+                    <i className="fa fa-google mr-2"></i>
+                    Google Play
+                  </button>
+                </div>
+                <p className="text-gray-400 text-xs text-center mt-2">
+                  Download the mobile app to upgrade
+                </p>
+              </div>
             </div>
           )}
 
