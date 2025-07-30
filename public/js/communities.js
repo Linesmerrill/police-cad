@@ -1257,6 +1257,34 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
   const getCommunityLimit = (plan) => PLAN_LIMITS[plan] ?? 1;
   const getPlanFeature = (plan) => PLAN_FEATURES[plan] ?? "Create up to 1 community";
 
+  // Helper function to format plan names
+  const formatPlanName = (plan) => {
+    switch (plan) {
+      case 'premium_plus':
+        return 'Premium Plus';
+      case 'premium':
+        return 'Premium';
+      case 'base':
+        return 'Base';
+      default:
+        return plan;
+    }
+  };
+
+  // Helper function to get plan badge styling
+  const getPlanBadgeStyle = (plan) => {
+    switch (plan) {
+      case 'premium_plus':
+        return 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-yellow-900 font-bold';
+      case 'premium':
+        return 'bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold';
+      case 'base':
+        return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold';
+      default:
+        return 'bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold';
+    }
+  };
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setError(""); // Clear error when user types
@@ -1577,13 +1605,21 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
 
           {/* Community Count Info */}
           <div className="bg-gray-800/50 rounded-lg p-4">
-            <p className="text-gray-300 text-base">
-              You have created {ownedCommunityCount} of {communityLimit === Infinity ? "unlimited" : communityLimit} allowed communit{communityLimit === 1 ? "y" : "ies"} 
-              ({userPlan} plan)
-            </p>
-            <p className="text-gray-400 text-sm mt-1">
-              {getPlanFeature(userPlan)}
-            </p>
+            <div className="space-y-3">
+              <p className="text-gray-300 text-base">
+                You have created <span className="font-bold text-white">{ownedCommunityCount} of {communityLimit === Infinity ? "unlimited" : communityLimit}</span> allowed communit{communityLimit === 1 ? "y" : "ies"}
+                <span className="ml-2">
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm ${getPlanBadgeStyle(userPlan)}`}>
+                    {formatPlanName(userPlan)} Plan
+                  </span>
+                </span>
+              </p>
+              <div className="flex items-center">
+                <span className={`inline-block px-3 py-2 rounded-lg text-sm font-semibold ${getPlanBadgeStyle(userPlan)}`}>
+                  {getPlanFeature(userPlan)}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
