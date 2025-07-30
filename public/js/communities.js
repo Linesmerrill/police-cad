@@ -3,6 +3,167 @@ const { useState, useEffect } = React;
 
 const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
 
+// HeroUI Pro Components
+const HeroSection = ({ children, className = "" }) => (
+  <div className={`relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-16 ${className}`}>
+    <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\\"60\\" height=\\"60\\" viewBox=\\"0 0 60 60\\" xmlns=\\"http://www.w3.org/2000/svg\\"%3E%3Cg fill=\\"none\\" fill-rule=\\"evenodd\\"%3E%3Cg fill=\\"%239C92AC\\" fill-opacity=\\"0.05\\"%3E%3Ccircle cx=\\"30\\" cy=\\"30\\" r=\\"2\\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'}}></div>
+    <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {children}
+    </div>
+  </div>
+);
+
+const SectionDivider = ({ title, subtitle, icon, className = "" }) => (
+  <div className={`relative py-12 ${className}`}>
+    <div className="absolute inset-0 flex items-center">
+      <div className="w-full border-t border-gray-700"></div>
+    </div>
+    <div className="relative flex justify-center">
+      <div className="bg-gray-900 px-6 py-3 rounded-full border border-gray-700 shadow-lg">
+        <div className="flex items-center space-x-3">
+          {icon && <i className={`${icon} text-blue-400 text-xl`}></i>}
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-white">{title}</h3>
+            {subtitle && <p className="text-sm text-gray-400">{subtitle}</p>}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const AdBanner = ({ type = "horizontal", className = "" }) => {
+  const [isVisible, setIsVisible] = useState(true);
+  const [showComingSoon, setShowComingSoon] = useState(false);
+  
+  if (!isVisible) return null;
+  
+  const handleUpgradeClick = () => {
+    setShowComingSoon(true);
+  };
+  
+  const ComingSoonModal = () => {
+    if (!showComingSoon) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-gray-800 rounded-lg p-8 max-w-md mx-4 border border-gray-700 shadow-xl">
+          <div className="text-center">
+            <div className="bg-yellow-600 p-3 rounded-full w-fit mx-auto mb-4">
+              <i className="fa fa-tools text-white text-2xl"></i>
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-4">Coming Soon!</h3>
+            <p className="text-gray-300 mb-6">
+              We're currently working on the premium upgrade features. You can access these features in our mobile app right now!
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => setShowComingSoon(false)}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
+              >
+                Got it
+              </button>
+              <button
+                onClick={() => {
+                  setShowComingSoon(false);
+                  // You can add mobile app download link here
+                  window.open('https://apps.apple.com', '_blank');
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
+              >
+                <i className="fa fa-mobile-alt mr-2"></i>
+                Get Mobile App
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
+  if (type === "vertical") {
+    return (
+      <>
+        <div className={`bg-gradient-to-b from-blue-900 to-purple-900 rounded-lg p-4 border border-blue-700 shadow-lg ${className}`}>
+          <div className="text-center">
+            <i className="fa fa-star text-yellow-400 text-2xl mb-2"></i>
+            <h4 className="text-white font-semibold text-sm mb-1">Premium Feature</h4>
+            <p className="text-blue-200 text-xs mb-3">Upgrade to Pro for advanced features</p>
+            <button 
+              onClick={handleUpgradeClick}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-full transition-colors"
+            >
+              Learn More
+            </button>
+          </div>
+          <button 
+            onClick={() => setIsVisible(false)}
+            className="absolute top-2 right-2 text-gray-400 hover:text-white text-xs"
+          >
+            <i className="fa fa-times"></i>
+          </button>
+        </div>
+        <ComingSoonModal />
+      </>
+    );
+  }
+  
+  return (
+    <>
+      <div className={`bg-gradient-to-r from-blue-900 via-purple-900 to-blue-900 rounded-lg p-6 border border-blue-700 shadow-lg ${className}`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <i className="fa fa-rocket text-yellow-400 text-2xl"></i>
+            <div>
+              <h4 className="text-white font-semibold">Boost Your Community</h4>
+              <p className="text-blue-200 text-sm">Get featured placement and premium features</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button 
+              onClick={handleUpgradeClick}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Upgrade Now
+            </button>
+            <button 
+              onClick={() => setIsVisible(false)}
+              className="text-gray-400 hover:text-white"
+            >
+              <i className="fa fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      <ComingSoonModal />
+    </>
+  );
+};
+
+const StatsCard = ({ icon, value, label, color = "blue" }) => (
+  <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 shadow-lg">
+    <div className="flex items-center space-x-3">
+      <div className={`bg-${color}-600 p-2 rounded-lg`}>
+        <i className={`${icon} text-white text-lg`}></i>
+      </div>
+      <div>
+        <div className="text-2xl font-bold text-white">{value}</div>
+        <div className="text-gray-400 text-sm">{label}</div>
+      </div>
+    </div>
+  </div>
+);
+
+const FeatureCard = ({ icon, title, description, color = "blue" }) => (
+  <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg hover:shadow-xl transition-shadow">
+    <div className={`bg-${color}-600 p-3 rounded-lg w-fit mb-4`}>
+      <i className={`${icon} text-white text-xl`}></i>
+    </div>
+    <h4 className="text-white font-semibold text-lg mb-2">{title}</h4>
+    <p className="text-gray-400 text-sm">{description}</p>
+  </div>
+);
+
 const mockNotifications = [
   {
     id: "notif1",
@@ -247,109 +408,229 @@ const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage }) => {
   const community = communities[current];
 
   return (
-    <div className="w-full flex justify-center items-center py-8 z-0 mt-24">
-      <div className="relative max-w-xl w-full mx-auto z-0 min-h-[420px] md:min-h-[480px] flex items-center justify-center">
-        {/* Removed background gradient for mobile and desktop */}
-        {/* Card content with swipe animation */}
-        <div className="relative bg-gray-800 rounded-3xl shadow-2xl pt-20 pb-10 px-8 flex flex-col items-center text-center border border-gray-700 z-10 w-[400px] md:w-[500px] min-h-[520px] md:min-h-[600px] justify-center"
-          style={{
-            boxShadow: '0 12px 48px 0 rgba(124, 58, 237, 0.25), 0 2px 12px 0 rgba(0,0,0,0.18)',
-            minHeight: '520px',
-            maxHeight: '600px',
-            height: '600px',
-          }}>
-          {/* Floating image */}
-          <img
-            src={community.imageLink || "/static/images/default-logo.png"}
-            alt={community.name}
-            className="w-44 h-44 object-contain rounded-2xl shadow-lg bg-gray-900 border border-gray-700 absolute left-1/2 -top-16 -translate-x-1/2"
-            style={{ background: '#181e2a' }}
-          />
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 mt-8 break-words max-w-full leading-tight">{community.name}</h2>
-          <div className="flex flex-wrap justify-center gap-2 mb-2">
-            {community.tags && community.tags.map((tag) => (
-              <span
-                key={tag}
-                className="inline-block bg-blue-700 text-blue-100 text-xs px-2 py-1 rounded-full uppercase tracking-wide font-semibold"
+    <HeroSection className="mt-24">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          Elite Communities
+        </h1>
+        <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+          Discover the most prestigious and active communities on our platform
+        </p>
+      </div>
+      
+      <div className="w-full flex justify-center items-center py-8 z-0">
+        <div className="relative max-w-4xl w-full mx-auto z-0 flex items-center justify-center">
+          {/* Enhanced Card with more content */}
+          <div className="relative bg-gray-800 rounded-3xl shadow-2xl pt-20 pb-10 px-8 flex flex-col items-center text-center border border-gray-700 z-10 w-[400px] md:w-[500px] min-h-[520px] md:min-h-[600px] justify-center"
+            style={{
+              boxShadow: '0 12px 48px 0 rgba(124, 58, 237, 0.25), 0 2px 12px 0 rgba(0,0,0,0.18)',
+              minHeight: '520px',
+              maxHeight: '600px',
+              height: '600px',
+            }}>
+            {/* Elite Badge */}
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-4 py-1 rounded-full font-bold text-sm shadow-lg">
+              <i className="fa fa-crown mr-1"></i>
+              ELITE
+            </div>
+            
+            {/* Floating image */}
+            <img
+              src={community.imageLink || "/static/images/default-logo.png"}
+              alt={community.name}
+              className="w-44 h-44 object-contain rounded-2xl shadow-lg bg-gray-900 border border-gray-700 absolute left-1/2 -top-16 -translate-x-1/2"
+              style={{ background: '#181e2a' }}
+            />
+            
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 mt-8 break-words max-w-full leading-tight">{community.name}</h2>
+            
+            {/* Enhanced Tags */}
+            <div className="flex flex-wrap justify-center gap-2 mb-3">
+              {community.tags && community.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs px-3 py-1 rounded-full uppercase tracking-wide font-semibold shadow-md"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+            
+            {/* Promotional Text with Icon */}
+            {community.promotionalText && (
+              <div className="flex items-center justify-center mb-2">
+                <i className="fa fa-star text-yellow-400 mr-2"></i>
+                <p className="text-blue-300 text-base font-semibold">{community.promotionalText}</p>
+              </div>
+            )}
+            
+            {/* Description */}
+            <p className="text-gray-300 mb-4 text-sm md:text-base leading-relaxed">{community.promotionalDescription}</p>
+            
+            {/* Enhanced Stats */}
+            <div className="flex items-center justify-center space-x-4 mb-4">
+              <div className="flex items-center text-gray-400">
+                <i className="fa fa-users mr-1"></i>
+                <span className="text-sm">{community.membersCount} Members</span>
+              </div>
+              <div className="flex items-center text-green-400">
+                <i className="fa fa-circle mr-1 text-xs"></i>
+                <span className="text-sm">Active</span>
+              </div>
+            </div>
+            
+            {/* Enhanced CTA Button */}
+            <button
+              onClick={() => window.location.href = `/community/${encodeCommunityId(community._id)}`}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 mb-4"
+            >
+              <i className="fa fa-arrow-right mr-2"></i>
+              Explore Community
+            </button>
+            
+            {/* Navigation Arrows */}
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+              <button
+                onClick={() => {
+                  setDirection(-1);
+                  setCurrent((current - 1 + communities.length) % communities.length);
+                }}
+                className="bg-gray-700 text-white p-3 rounded-full shadow-lg hover:bg-gray-600 focus:outline-none transition-colors"
+                aria-label="Previous"
               >
-                {tag}
-              </span>
-            ))}
-          </div>
-          <p className="text-blue-300 text-base font-semibold mb-2">{community.promotionalText}</p>
-          <p className="text-gray-300 mb-4 text-sm md:text-base">{community.promotionalDescription}</p>
-          <p className="text-gray-400 mb-4">{community.membersCount} Members</p>
-          <button
-            onClick={() => window.location.href = `/community/${encodeCommunityId(community._id)}`}
-            className="bg-blue-600 text-white px-6 py-2 rounded-full font-bold shadow hover:bg-blue-700 transition mb-2"
-          >
-            View Community
-          </button>
-          {/* Navigation Arrows */}
-          <div className="absolute left-0 top-1/2 transform -translate-y-1/2">
-            <button
-              onClick={() => {
-                setDirection(-1);
-                setCurrent((current - 1 + communities.length) % communities.length);
-              }}
-              className="bg-gray-700 text-white p-2 rounded-full shadow hover:bg-gray-600 focus:outline-none"
-              aria-label="Previous"
-            >
-              <ion-icon name="chevron-back-outline" class="text-2xl"></ion-icon>
-            </button>
-          </div>
-          <div className="absolute right-0 top-1/2 transform -translate-y-1/2">
-            <button
-              onClick={() => {
-                setDirection(1);
-                setCurrent((current + 1) % communities.length);
-              }}
-              className="bg-gray-700 text-white p-2 rounded-full shadow hover:bg-gray-600 focus:outline-none"
-              aria-label="Next"
-            >
-              <ion-icon name="chevron-forward-outline" class="text-2xl"></ion-icon>
-            </button>
-          </div>
-          {/* Dots */}
-          <div className="flex justify-center gap-2 mt-4">
-            {communities.map((_, idx) => (
-              <span
-                key={idx}
-                className={`w-3 h-3 rounded-full ${idx === current ? "bg-blue-600" : "bg-gray-500"} inline-block`}
-              ></span>
-            ))}
+                <ion-icon name="chevron-back-outline" class="text-2xl"></ion-icon>
+              </button>
+            </div>
+            <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+              <button
+                onClick={() => {
+                  setDirection(1);
+                  setCurrent((current + 1) % communities.length);
+                }}
+                className="bg-gray-700 text-white p-3 rounded-full shadow-lg hover:bg-gray-600 focus:outline-none transition-colors"
+                aria-label="Next"
+              >
+                <ion-icon name="chevron-forward-outline" class="text-2xl"></ion-icon>
+              </button>
+            </div>
+            
+            {/* Enhanced Dots */}
+            <div className="flex justify-center gap-2 mt-4">
+              {communities.map((_, idx) => (
+                <span
+                  key={idx}
+                  className={`w-3 h-3 rounded-full transition-all duration-200 ${idx === current ? "bg-blue-600 scale-125" : "bg-gray-500"} inline-block`}
+                ></span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      
+      {/* Stats Section */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+        <StatsCard 
+          icon="fa fa-users" 
+          value={totalCount} 
+          label="Total Elite Communities" 
+          color="blue" 
+        />
+        <StatsCard 
+          icon="fa fa-star" 
+          value="Premium" 
+          label="Featured Status" 
+          color="yellow" 
+        />
+        <StatsCard 
+          icon="fa fa-shield-alt" 
+          value="Verified" 
+          label="Quality Assured" 
+          color="green" 
+        />
+      </div>
+    </HeroSection>
   );
 };
 
 const CommunityCard = ({ community, isActive, actionText, onAction }) => (
-  <div className="card bg-gray-800 rounded-lg shadow-lg flex flex-col h-61 w-80 mx-2">
-    <img
-      src={community?.imageLink || "/static/images/default-logo.png"}
-      alt={community?.name}
-      className="w-5/6 h-1/3 mx-auto rounded-t-lg object-cover"
-    />
-    <div className="p-4 flex flex-col flex-grow justify-between">
-      <div>
-        <h3 className="text-2xl font-semibold text-white truncate text-center">
-          {community?.name}
-        </h3>
-        <p className="text-gray-400 mt-3 text-center text-lg">
-          {community?.membersCount} Members
-        </p>
-        {isActive && (
-          <span className="inline-block bg-green-600 text-white text-sm px-3 py-1 rounded-full mt-3 mx-auto">
+  <div className="card bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-700 overflow-hidden flex flex-col h-full">
+    {/* Image Container */}
+    <div className="relative h-48 overflow-hidden">
+      <img
+        src={community?.imageLink || "/static/images/default-logo.png"}
+        alt={community?.name}
+        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+      />
+      {/* Overlay with gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60"></div>
+      
+      {/* Active Badge */}
+      {isActive && (
+        <div className="absolute top-3 right-3">
+          <span className="inline-flex items-center bg-green-600 text-white text-xs px-2 py-1 rounded-full font-semibold shadow-lg">
+            <i className="fa fa-circle mr-1 text-xs"></i>
             Active
           </span>
+        </div>
+      )}
+      
+      {/* Member Count Badge */}
+      <div className="absolute bottom-3 left-3">
+        <span className="inline-flex items-center bg-gray-900 bg-opacity-80 text-white text-sm px-3 py-1 rounded-full font-medium">
+          <i className="fa fa-users mr-1"></i>
+          {community?.membersCount} Members
+        </span>
+      </div>
+    </div>
+    
+    {/* Content - Flex grow to push button to bottom */}
+    <div className="p-6 flex flex-col flex-grow">
+      <div className="flex-grow">
+        <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
+          {community?.name}
+        </h3>
+        
+        {/* Tags */}
+        {community?.tags && community.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {community.tags.slice(0, 2).map((tag) => (
+              <span
+                key={tag}
+                className="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium"
+              >
+                {tag}
+              </span>
+            ))}
+            {community.tags.length > 2 && (
+              <span className="inline-block bg-gray-600 text-gray-300 text-xs px-2 py-1 rounded-full">
+                +{community.tags.length - 2}
+              </span>
+            )}
+          </div>
+        )}
+        
+        {/* Promotional Text */}
+        {community?.promotionalText && (
+          <p className="text-blue-300 text-sm font-medium mb-2">
+            <i className="fa fa-star mr-1 text-yellow-400"></i>
+            {community.promotionalText}
+          </p>
+        )}
+        
+        {/* Description */}
+        {community?.promotionalDescription && (
+          <p className="text-gray-400 text-sm line-clamp-2">
+            {community.promotionalDescription}
+          </p>
         )}
       </div>
+      
+      {/* Action Button - Now at bottom */}
       <button
         onClick={() => onAction(community)}
-        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 text-base font-medium"
+        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 mt-4"
       >
+        <i className="fa fa-arrow-right mr-2"></i>
         {actionText}
       </button>
     </div>
@@ -379,11 +660,17 @@ const CommunitySection = ({
     setStartIndex((prev) => Math.max(prev - cardsPerView, 0));
 
   return (
-    <div className="py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-4xl font-bold text-white mb-8">{title}</h2>
+    <div className="py-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Enhanced Header */}
+        <div className="text-center mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">{title}</h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-purple-600 mx-auto rounded-full"></div>
+        </div>
+        
+        {/* Community Cards Grid */}
         <div className="relative">
-          <div className="flex overflow-x-auto scroll-container">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {communities
               .slice(startIndex, startIndex + cardsPerView)
               .map((community) => (
@@ -396,42 +683,63 @@ const CommunitySection = ({
                 />
               ))}
           </div>
+          
+          {/* Enhanced Navigation Arrows */}
           {startIndex > 0 && (
             <button
               onClick={scrollPrev}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-700 hover:bg-gray-600 text-white p-3 rounded-full shadow-lg transition-colors"
             >
-              <ion-icon name="chevron-back-outline"></ion-icon>
+              <ion-icon name="chevron-back-outline" class="text-xl"></ion-icon>
             </button>
           )}
           {startIndex < maxIndex && (
             <button
               onClick={scrollNext}
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-gray-700 text-white p-2 rounded-full"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gray-700 hover:bg-gray-600 text-white p-3 rounded-full shadow-lg transition-colors"
             >
-              <ion-icon name="chevron-forward-outline"></ion-icon>
+              <ion-icon name="chevron-forward-outline" class="text-xl"></ion-icon>
             </button>
           )}
         </div>
+        
+        {/* Enhanced Pagination */}
         {totalCount > cardsPerView && (
-          <div className="flex justify-center mt-4 space-x-4">
+          <div className="flex justify-center items-center mt-8 space-x-4">
             <button
               onClick={onPrevPage}
               disabled={currentPage === 1}
-              className="bg-gray-700 text-white px-4 py-2 rounded-full disabled:opacity-50"
+              className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors flex items-center space-x-2"
             >
-              Previous
+              <ion-icon name="chevron-back-outline" class="text-sm"></ion-icon>
+              <span>Previous</span>
             </button>
-            <span className="text-gray-300 text-base">
-              Page {currentPage} of {Math.ceil(totalCount / cardsPerView)}
-            </span>
+            
+            <div className="flex items-center space-x-2">
+              <span className="text-gray-300 text-base font-medium">
+                Page {currentPage} of {Math.ceil(totalCount / cardsPerView)}
+              </span>
+            </div>
+            
             <button
               onClick={onNextPage}
               disabled={currentPage * cardsPerView >= totalCount}
-              className="bg-gray-700 text-white px-4 py-2 rounded-full disabled:opacity-50"
+              className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors flex items-center space-x-2"
             >
-              Next
+              <span>Next</span>
+              <ion-icon name="chevron-forward-outline" class="text-sm"></ion-icon>
             </button>
+          </div>
+        )}
+        
+        {/* Empty State */}
+        {communities.length === 0 && (
+          <div className="text-center py-12">
+            <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
+              <i className="fa fa-users text-4xl text-gray-500 mb-4"></i>
+              <h3 className="text-xl font-semibold text-white mb-2">No Communities Found</h3>
+              <p className="text-gray-400">Start exploring communities or create your own!</p>
+            </div>
           </div>
         )}
       </div>
@@ -1550,55 +1858,151 @@ const App = () => {
     <div className="min-h-screen">
       <CreateCommunityModal isOpen={showCreateCommunityModal} onClose={() => setShowCreateCommunityModal(false)} toast={toast} setToast={setToast} />
       <Toast message={toast.message} type={toast.type} isVisible={toast.isVisible} onClose={() => setToast({ ...toast, isVisible: false })} />
-      <div className="">
-        {/* HeroUI Pro Search Bar */}
-        <CommunitySearchBar onCreateCommunity={() => setShowCreateCommunityModal(true)} />
-        {eliteCommunities.length > 0 && (
-          <Carousel
-            communities={eliteCommunities}
-            totalCount={eliteTotalCount}
-            onPrev={handleElitePrevPage}
-            onNext={handleEliteNextPage}
-            currentPage={elitePage}
+      
+      {/* Main Layout with Side Ads */}
+      <div className="flex">
+        {/* Left Side Ad */}
+        <div className="hidden lg:block w-64 p-4 space-y-4">
+          <AdBanner type="vertical" className="sticky top-24" />
+          <AdBanner type="vertical" className="sticky top-96" />
+        </div>
+        
+        {/* Main Content */}
+        <div className="flex-1">
+          {/* HeroUI Pro Search Bar */}
+          <CommunitySearchBar onCreateCommunity={() => setShowCreateCommunityModal(true)} />
+          
+          {/* Elite Communities Section */}
+          {eliteCommunities.length > 0 && (
+            <Carousel
+              communities={eliteCommunities}
+              totalCount={eliteTotalCount}
+              onPrev={handleElitePrevPage}
+              onNext={handleEliteNextPage}
+              currentPage={elitePage}
+            />
+          )}
+          
+          {/* Horizontal Ad after Elite */}
+          <div className="px-4 py-6">
+            <AdBanner type="horizontal" />
+          </div>
+          
+          {/* Section Divider */}
+          <SectionDivider 
+            title="Your Communities" 
+            subtitle="Communities you're part of"
+            icon="fa fa-users"
           />
-        )}
-        {dbUser && dbUser._id && (
-          <CommunitySection
-            title="Your Communities"
-            communities={userCommunities}
-            actionText="Jump In"
-            onAction={(community) => (window.location.href = `/community/${encodeCommunityId(community._id)}`)}
-            cardsPerView={3}
-            onPrevPage={handleUserPrevPage}
-            onNextPage={handleUserNextPage}
-            currentPage={userPage}
-            totalCount={userTotalCount}
+          
+          {/* Your Communities Section */}
+          {dbUser && dbUser._id && (
+            <div className="px-4 py-8">
+              <CommunitySection
+                title="Your Communities"
+                communities={userCommunities}
+                actionText="Jump In"
+                onAction={(community) => (window.location.href = `/community/${encodeCommunityId(community._id)}`)}
+                cardsPerView={3}
+                onPrevPage={handleUserPrevPage}
+                onNextPage={handleUserNextPage}
+                currentPage={userPage}
+                totalCount={userTotalCount}
+              />
+            </div>
+          )}
+          
+          {/* Section Divider */}
+          <SectionDivider 
+            title="Discover Communities" 
+            subtitle="Recommended for you"
+            icon="fa fa-compass"
           />
-        )}
-        {dbUser && dbUser._id && (
-          <CommunitySection
-            title="Discover Communities"
-            communities={recommendedCommunities}
-            actionText=""
-            onAction={(community) => (window.location.href = `#`)}
-            cardsPerView={3}
-            onPrevPage={handleRecommendedPrevPage}
-            onNextPage={handleRecommendedNextPage}
-            currentPage={recommendedPage + 1}
-            totalCount={recommendedTotalCount}
+          
+          {/* Discover Communities Section */}
+          {dbUser && dbUser._id && (
+            <div className="px-4 py-8">
+              <CommunitySection
+                title="Discover Communities"
+                communities={recommendedCommunities}
+                actionText=""
+                onAction={(community) => (window.location.href = `#`)}
+                cardsPerView={3}
+                onPrevPage={handleRecommendedPrevPage}
+                onNextPage={handleRecommendedNextPage}
+                currentPage={recommendedPage + 1}
+                totalCount={recommendedTotalCount}
+              />
+            </div>
+          )}
+          
+          {/* Horizontal Ad before Browse */}
+          <div className="px-4 py-6">
+            <AdBanner type="horizontal" />
+          </div>
+          
+          {/* Section Divider */}
+          <SectionDivider 
+            title="Browse All Communities" 
+            subtitle="Explore all available communities"
+            icon="fa fa-globe"
           />
-        )}
-        <BrowseCommunities
-          communities={allCommunities}
-          totalCount={allCommunitiesTotalCount}
-          currentTag={currentTag}
-          setCurrentTag={setCurrentTag}
-          onPrevPage={handleAllCommunitiesPrevPage}
-          onNextPage={handleAllCommunitiesNextPage}
-          currentPage={allCommunitiesPage}
-          fetchAllCommunitiesPage={fetchAllCommunitiesPage}
-        />
-        <Footer />
+          
+          {/* Browse Communities Section */}
+          <div className="px-4 py-8">
+            <BrowseCommunities
+              communities={allCommunities}
+              totalCount={allCommunitiesTotalCount}
+              currentTag={currentTag}
+              setCurrentTag={setCurrentTag}
+              onPrevPage={handleAllCommunitiesPrevPage}
+              onNextPage={handleAllCommunitiesNextPage}
+              currentPage={allCommunitiesPage}
+              fetchAllCommunitiesPage={fetchAllCommunitiesPage}
+            />
+          </div>
+          
+          {/* Features Section */}
+          <HeroSection className="mt-16">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                Why Choose Our Platform?
+              </h2>
+              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+                Join thousands of users who trust our platform for their community needs
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <FeatureCard
+                icon="fa fa-shield-alt"
+                title="Secure & Private"
+                description="Your data is protected with enterprise-grade security and privacy controls."
+                color="green"
+              />
+              <FeatureCard
+                icon="fa fa-rocket"
+                title="Fast & Reliable"
+                description="Lightning-fast performance with 99.9% uptime guarantee."
+                color="blue"
+              />
+              <FeatureCard
+                icon="fa fa-headset"
+                title="24/7 Support"
+                description="Get help whenever you need it with our dedicated support team."
+                color="purple"
+              />
+            </div>
+          </HeroSection>
+          
+          <Footer />
+        </div>
+        
+        {/* Right Side Ad */}
+        <div className="hidden lg:block w-64 p-4 space-y-4">
+          <AdBanner type="vertical" className="sticky top-24" />
+          <AdBanner type="vertical" className="sticky top-96" />
+        </div>
       </div>
     </div>
   );
