@@ -972,6 +972,67 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
   );
 };
 
+// Page Navigation Component inspired by HeroUI Pro
+const PageNavigation = () => {
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }
+  };
+
+  return (
+    <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-lg mx-4 mb-6">
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold text-white flex items-center">
+            <i className="fa fa-compass text-blue-400 mr-2"></i>
+            Quick Navigation
+          </h3>
+          <span className="text-sm text-gray-400">Jump to section</span>
+        </div>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <button
+            onClick={() => scrollToSection('elite-communities')}
+            className="flex flex-col items-center p-3 bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
+          >
+            <i className="fa fa-crown text-xl mb-1"></i>
+            <span className="text-sm font-medium">Elite Communities</span>
+          </button>
+          
+          <button
+            onClick={() => scrollToSection('your-communities')}
+            className="flex flex-col items-center p-3 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
+          >
+            <i className="fa fa-users text-xl mb-1"></i>
+            <span className="text-sm font-medium">Your Communities</span>
+          </button>
+          
+          <button
+            onClick={() => scrollToSection('discover-communities')}
+            className="flex flex-col items-center p-3 bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
+          >
+            <i className="fa fa-compass text-xl mb-1"></i>
+            <span className="text-sm font-medium">Discover Communities</span>
+          </button>
+          
+          <button
+            onClick={() => scrollToSection('browse-communities')}
+            className="flex flex-col items-center p-3 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
+          >
+            <i className="fa fa-globe text-xl mb-1"></i>
+            <span className="text-sm font-medium">Browse Communities</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Footer = () => (
   <footer className="bg-gray-900 text-gray-300 py-12">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1872,16 +1933,21 @@ const App = () => {
           {/* HeroUI Pro Search Bar */}
           <CommunitySearchBar onCreateCommunity={() => setShowCreateCommunityModal(true)} />
           
+          {/* Page Navigation Component inspired by HeroUI Pro */}
+          <PageNavigation />
+          
           {/* Elite Communities Section */}
-          {eliteCommunities.length > 0 && (
-            <Carousel
-              communities={eliteCommunities}
-              totalCount={eliteTotalCount}
-              onPrev={handleElitePrevPage}
-              onNext={handleEliteNextPage}
-              currentPage={elitePage}
-            />
-          )}
+          <div id="elite-communities">
+            {eliteCommunities.length > 0 && (
+              <Carousel
+                communities={eliteCommunities}
+                totalCount={eliteTotalCount}
+                onPrev={handleElitePrevPage}
+                onNext={handleEliteNextPage}
+                currentPage={elitePage}
+              />
+            )}
+          </div>
           
           {/* Horizontal Ad after Elite */}
           <div className="px-4 py-6">
@@ -1896,21 +1962,23 @@ const App = () => {
           />
           
           {/* Your Communities Section */}
-          {dbUser && dbUser._id && (
-            <div className="px-4 py-8">
-              <CommunitySection
-                title="Your Communities"
-                communities={userCommunities}
-                actionText="Jump In"
-                onAction={(community) => (window.location.href = `/community/${encodeCommunityId(community._id)}`)}
-                cardsPerView={3}
-                onPrevPage={handleUserPrevPage}
-                onNextPage={handleUserNextPage}
-                currentPage={userPage}
-                totalCount={userTotalCount}
-              />
-            </div>
-          )}
+          <div id="your-communities">
+            {dbUser && dbUser._id && (
+              <div className="px-4 py-8">
+                <CommunitySection
+                  title="Your Communities"
+                  communities={userCommunities}
+                  actionText="Jump In"
+                  onAction={(community) => (window.location.href = `/community/${encodeCommunityId(community._id)}`)}
+                  cardsPerView={3}
+                  onPrevPage={handleUserPrevPage}
+                  onNextPage={handleUserNextPage}
+                  currentPage={userPage}
+                  totalCount={userTotalCount}
+                />
+              </div>
+            )}
+          </div>
           
           {/* Section Divider */}
           <SectionDivider 
@@ -1920,21 +1988,23 @@ const App = () => {
           />
           
           {/* Discover Communities Section */}
-          {dbUser && dbUser._id && (
-            <div className="px-4 py-8">
-              <CommunitySection
-                title="Discover Communities"
-                communities={recommendedCommunities}
-                actionText=""
-                onAction={(community) => (window.location.href = `#`)}
-                cardsPerView={3}
-                onPrevPage={handleRecommendedPrevPage}
-                onNextPage={handleRecommendedNextPage}
-                currentPage={recommendedPage + 1}
-                totalCount={recommendedTotalCount}
-              />
-            </div>
-          )}
+          <div id="discover-communities">
+            {dbUser && dbUser._id && (
+              <div className="px-4 py-8">
+                <CommunitySection
+                  title="Discover Communities"
+                  communities={recommendedCommunities}
+                  actionText=""
+                  onAction={(community) => (window.location.href = `#`)}
+                  cardsPerView={3}
+                  onPrevPage={handleRecommendedPrevPage}
+                  onNextPage={handleRecommendedNextPage}
+                  currentPage={recommendedPage + 1}
+                  totalCount={recommendedTotalCount}
+                />
+              </div>
+            )}
+          </div>
           
           {/* Horizontal Ad before Browse */}
           <div className="px-4 py-6">
@@ -1949,7 +2019,7 @@ const App = () => {
           />
           
           {/* Browse Communities Section */}
-          <div className="px-4 py-8">
+          <div id="browse-communities" className="px-4 py-8">
             <BrowseCommunities
               communities={allCommunities}
               totalCount={allCommunitiesTotalCount}
