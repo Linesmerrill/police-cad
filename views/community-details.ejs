@@ -109,6 +109,22 @@
         display: block;
       }
       #notification-symbol { font-size: 1.5em; }
+      
+      /* Toast animation */
+      @keyframes slide-in {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .animate-slide-in {
+        animation: slide-in 0.3s ease-out;
+      }
     </style>
   </head>
   <body>
@@ -609,94 +625,16 @@ document.addEventListener('DOMContentLoaded', function() {
       <% } %>
     </div>
     
-    <!-- HeroUI Pro Notifications Modal -->
-    <div id="notificationModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; max-height:80vh; overflow-y:auto; position:relative; border:1px solid #35385a;">
-        <button id="notificationModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-        
-        <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
-          Notifications
-        </h3>
-        
-        <div id="notification-error" style="display:none; background:#f56565; color:#fff; border-radius:8px; padding:1rem; margin-bottom:1.5rem; border:1px solid #e53e3e;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong>Error!</strong> <span id="notification-error-message"></span>
-            <button type="button" onclick="document.getElementById('notification-error').style.display = 'none'" style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">
-              <i class="fa fa-times"></i>
-            </button>
-          </div>
-        </div>
-        
-        <div id="notification-loading" style="display:flex; justify-content:center; align-items:center; padding:3rem;">
-          <div style="color:#a0aec0; font-style:italic;">Loading notifications...</div>
-        </div>
-        
-        <!-- Notifications List -->
-        <div id="notification-list" style="display:none; max-height:60vh; overflow-y:auto;">
-          <!-- Dynamic notifications will be loaded here -->
-        </div>
-        
-        <!-- No Notifications State -->
-        <div id="no-notifications" style="display:none; text-align:center; padding:3rem; color:#a0aec0;">
-          <i class="fa fa-bell-slash" style="font-size:3rem; margin-bottom:1rem; opacity:0.5;"></i>
-          <p style="font-style:italic; font-size:1.1rem; margin:0;">No notifications found.</p>
-        </div>
-        
-        <div id="notification-load-more" style="display:none; text-align:center; margin-top:1.5rem;">
-          <button onclick="loadMoreNotifications()" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:all 0.2s;">
-            Load More
-          </button>
-        </div>
-        
-        <div style="margin-top:2rem; text-align:center;">
-          <button id="notificationModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- HeroUI Pro Notification Menu Modal -->
-    <div id="notificationMenuModal" class="heroui-modal" style="display:none; position:fixed; z-index:2001; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:400px; width:90%; position:relative; border:1px solid #35385a;">
-        <button id="notificationMenuModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-        
-        <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
-          Notification Options
-        </h3>
-        
-        <div style="display:flex; flex-direction:column; gap:1rem;">
-          <button onclick="markNotificationAsRead()" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:left;">
-            <i class="fa fa-check" style="margin-right:0.5rem;"></i> Mark as Read
-          </button>
-          <button onclick="deleteNotification()" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:left;">
-            <i class="fa fa-trash" style="margin-right:0.5rem;"></i> Delete
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Account Management Modal -->
-    <div id="accountModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; position:relative; border:1px solid #35385a;">
-        <button id="accountModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-        
-        <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
-          Account Settings
-        </h3>
-        
-        <div style="color:#a0aec0; text-align:center; padding:2rem;">
-          <i class="fa fa-user-circle" style="font-size:4rem; margin-bottom:1rem; opacity:0.5;"></i>
-          <p>Account management features coming soon...</p>
-        </div>
-        
-        <div style="margin-top:2rem; text-align:center;">
-          <button id="accountModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+    <% if (user && user._doc) { %>
+      <!-- Account Management Modal -->
+      <% include account-management %>
+      
+      <!-- Notification Modal -->
+      <% include partials/notificationModal %>
+      
+      <!-- Include notifications.js for notification functionality -->
+      <script src="/static/js/notifications.js"></script>
+    <% } %>
 
     <!-- Community Action Modals -->
     <div id="promoteModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
@@ -763,72 +701,102 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="/static/js/notifications.js"></script>
     <script>
       // Global variables for notifications
-      let dbUser = null;
+      var dbUser = <%- JSON.stringify(user || {}) %>;
       let currentNotificationId = null;
-      const API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1';
       
-      // Modal functionality
-      function openNotificationModal() {
-        document.getElementById('notificationModal').style.display = 'flex';
-        // Set dbUser for notifications.js
-        dbUser = {
-          _id: '<%= user && user._doc ? user._doc._id : "" %>',
-          user: {
-            username: '<%= user && user._doc && user._doc.user ? user._doc.user.username : "" %>'
-          }
-        };
-        fetchNotifications(0);
-      }
-      
-      function openAccountModal() {
-        document.getElementById('accountModal').style.display = 'flex';
-      }
-      
-      // Close modals
-      document.getElementById('notificationModalClose').onclick = function() {
-        document.getElementById('notificationModal').style.display = 'none';
-      }
-      
-      document.getElementById('notificationModalCancel').onclick = function() {
-        document.getElementById('notificationModal').style.display = 'none';
-      }
-      
-      document.getElementById('accountModalClose').onclick = function() {
-        document.getElementById('accountModal').style.display = 'none';
-      }
-      
-      document.getElementById('accountModalCancel').onclick = function() {
-        document.getElementById('accountModal').style.display = 'none';
-      }
-      
-      // Close modals when clicking outside
-      window.onclick = function(event) {
-        if (event.target.classList.contains('heroui-modal')) {
-          event.target.style.display = 'none';
+      // Global API_URL for notifications.js
+      window.API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+    </script>
+    <script>
+      // Modal Event Listeners
+      document.addEventListener('DOMContentLoaded', function() {
+        // Account button click handler
+        const accountBtn = document.getElementById('accountBtn');
+        if (accountBtn) {
+          accountBtn.addEventListener('click', function() {
+            fillAccountDetails();
+            document.getElementById('accountModal').style.display = 'flex';
+          });
         }
-      }
+        
+        // Account modal close button
+        const accountModalClose = document.getElementById('accountModalClose');
+        if (accountModalClose) {
+          accountModalClose.addEventListener('click', function() {
+            document.getElementById('accountModal').style.display = 'none';
+          });
+        }
+        
+        // Notification button click handler
+        const notificationBtn = document.getElementById('notificationBtn');
+        if (notificationBtn) {
+          notificationBtn.addEventListener('click', function() {
+            document.getElementById('notificationModal').style.display = 'flex';
+            fetchNotifications(0);
+          });
+        }
+        
+        // Notification modal close button
+        const notificationModalClose = document.getElementById('notificationModalClose');
+        if (notificationModalClose) {
+          notificationModalClose.addEventListener('click', function() {
+            document.getElementById('notificationModal').style.display = 'none';
+          });
+        }
+        
+        // Notification modal cancel button
+        const notificationModalCancel = document.getElementById('notificationModalCancel');
+        if (notificationModalCancel) {
+          notificationModalCancel.addEventListener('click', function() {
+            document.getElementById('notificationModal').style.display = 'none';
+          });
+        }
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', function(event) {
+          const accountModal = document.getElementById('accountModal');
+          const notificationModal = document.getElementById('notificationModal');
+          const deactivateModal = document.getElementById('deactivateAccountModal');
+          
+          if (event.target === accountModal && (!deactivateModal || deactivateModal.style.display === 'none')) {
+            accountModal.style.display = 'none';
+          }
+          if (event.target === notificationModal) {
+            notificationModal.style.display = 'none';
+          }
+        });
+        
+        // Initialize notification count on page load
+        if (dbUser && dbUser._id) {
+          // Initialize notification count using the function from notifications.js
+          fetchNotificationCount();
+        }
+      });
       
-      // Placeholder functions for account management
+      // Fill account details function (same as community dashboard)
       function fillAccountDetails() {
-        openAccountModal();
-      }
-      
-      // Placeholder functions for notification actions
-      function markNotificationAsRead() {
-        console.log('Mark as read functionality coming soon...');
-        document.getElementById('notificationMenuModal').style.display = 'none';
-      }
-      
-      function deleteNotification() {
-        console.log('Delete notification functionality coming soon...');
-        document.getElementById('notificationMenuModal').style.display = 'none';
-      }
-      
-      function loadMoreNotifications() {
-        console.log('Load more notifications functionality coming soon...');
+        if (dbUser && dbUser.user) {
+          const emailField = document.getElementById('accountEmail');
+          const usernameField = document.getElementById('accountUsername');
+          const callSignField = document.getElementById('accountCallSign');
+          const profilePicture = document.getElementById('profilePicture');
+          
+          if (emailField) emailField.value = dbUser.user.email;
+          if (usernameField) {
+            usernameField.value = dbUser.user.username;
+            usernameField.defaultValue = dbUser.user.username; // Set default for change detection
+          }
+          if (callSignField) {
+            callSignField.value = dbUser.user.callSign;
+            callSignField.defaultValue = dbUser.user.callSign; // Set default for change detection
+          }
+          if (profilePicture) {
+            const profileImageUrl = dbUser.user.profilePicture || '/static/images/civ-unknown-user.png';
+            profilePicture.style.backgroundImage = `url(${profileImageUrl})`;
+          }
+        }
       }
       
       // Modal open functions
@@ -852,46 +820,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('leaveCommunityModal').style.display = 'flex';
       }
       
-      // Modal close functions
-      document.getElementById('promoteModalClose').onclick = function() {
-        document.getElementById('promoteModal').style.display = 'none';
-      }
-      
-      document.getElementById('promoteModalCancel').onclick = function() {
-        document.getElementById('promoteModal').style.display = 'none';
-      }
-      
-      document.getElementById('settingsModalClose').onclick = function() {
-        document.getElementById('settingsModal').style.display = 'none';
-      }
-      
-      document.getElementById('settingsModalCancel').onclick = function() {
-        document.getElementById('settingsModal').style.display = 'none';
-      }
-      
-      document.getElementById('inviteModalClose').onclick = function() {
-        document.getElementById('inviteModal').style.display = 'none';
-      }
-      
-      document.getElementById('inviteModalCancel').onclick = function() {
-        document.getElementById('inviteModal').style.display = 'none';
-      }
-      
-      document.getElementById('requestJoinModalClose').onclick = function() {
-        document.getElementById('requestJoinModal').style.display = 'none';
-      }
-      
-      document.getElementById('requestJoinModalCancel').onclick = function() {
-        document.getElementById('requestJoinModal').style.display = 'none';
-      }
-      
-      document.getElementById('leaveCommunityModalClose').onclick = function() {
-        document.getElementById('leaveCommunityModal').style.display = 'none';
-      }
-      
-      document.getElementById('leaveCommunityModalCancel').onclick = function() {
-        document.getElementById('leaveCommunityModal').style.display = 'none';
-      }
+      // Modal close functions will be set up in DOMContentLoaded
       
       // Action functions
       function submitJoinRequest() {
@@ -977,44 +906,21 @@ function openInviteModal() {
 function openOwnerCannotLeaveModal() {
   document.getElementById('ownerCannotLeaveModal').style.display = 'flex';
 }
-document.getElementById('ownerCannotLeaveModalClose').onclick = function() {
-  document.getElementById('ownerCannotLeaveModal').style.display = 'none';
-}
-document.getElementById('ownerCannotLeaveModalCancel').onclick = function() {
-  document.getElementById('ownerCannotLeaveModal').style.display = 'none';
-}
 
 function openNoSettingsPermissionModal() {
   document.getElementById('noSettingsPermissionModal').style.display = 'flex';
-}
-document.getElementById('noSettingsPermissionModalClose').onclick = function() {
-  document.getElementById('noSettingsPermissionModal').style.display = 'none';
-}
-document.getElementById('noSettingsPermissionModalCancel').onclick = function() {
-  document.getElementById('noSettingsPermissionModal').style.display = 'none';
 }
 
 function openCreateDepartmentModal() {
   document.getElementById('createDepartmentStep1Modal').style.display = 'flex';
 }
+
 function openNoDepartmentPermissionModal() {
   document.getElementById('noDepartmentPermissionModal').style.display = 'flex';
-}
-document.getElementById('noDepartmentPermissionModalClose').onclick = function() {
-  document.getElementById('noDepartmentPermissionModal').style.display = 'none';
-}
-document.getElementById('noDepartmentPermissionModalCancel').onclick = function() {
-  document.getElementById('noDepartmentPermissionModal').style.display = 'none';
 }
 
 function openNoInvitePermissionModal() {
   document.getElementById('noInvitePermissionModal').style.display = 'flex';
-}
-document.getElementById('noInvitePermissionModalClose').onclick = function() {
-  document.getElementById('noInvitePermissionModal').style.display = 'none';
-}
-document.getElementById('noInvitePermissionModalCancel').onclick = function() {
-  document.getElementById('noInvitePermissionModal').style.display = 'none';
 }
 
 function copyCommunityUrl() {
@@ -1571,26 +1477,7 @@ window.expandTemplateCard = function(idx) {
     </div>
   </div>
 </div>
-<script>
-document.getElementById('noSettingsPermissionModalClose').onclick = function() {
-  document.getElementById('noSettingsPermissionModal').style.display = 'none';
-}
-document.getElementById('noSettingsPermissionModalCancel').onclick = function() {
-  document.getElementById('noSettingsPermissionModal').style.display = 'none';
-}
-document.getElementById('noInvitePermissionModalClose').onclick = function() {
-  document.getElementById('noInvitePermissionModal').style.display = 'none';
-}
-document.getElementById('noInvitePermissionModalCancel').onclick = function() {
-  document.getElementById('noInvitePermissionModal').style.display = 'none';
-}
-document.getElementById('noDepartmentPermissionModalClose').onclick = function() {
-  document.getElementById('noDepartmentPermissionModal').style.display = 'none';
-}
-document.getElementById('noDepartmentPermissionModalCancel').onclick = function() {
-  document.getElementById('noDepartmentPermissionModal').style.display = 'none';
-}
-</script> 
+ 
 
 <!-- Leave Community Confirmation Modal -->
 <div id="leaveCommunityModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
@@ -1618,15 +1505,6 @@ document.getElementById('noDepartmentPermissionModalCancel').onclick = function(
 <script>
 function openLeaveCommunityModal() {
   document.getElementById('leaveCommunityModal').style.display = 'flex';
-}
-document.getElementById('leaveCommunityModalClose').onclick = function() {
-  document.getElementById('leaveCommunityModal').style.display = 'none';
-}
-document.getElementById('leaveCommunityModalCancel').onclick = function() {
-  document.getElementById('leaveCommunityModal').style.display = 'none';
-}
-document.getElementById('leaveCommunityModalConfirm').onclick = function() {
-  submitLeaveCommunity();
 }
 function submitLeaveCommunity() {
   const userId = '<%= user && user._doc ? user._doc._id : "" %>';
@@ -1691,17 +1569,7 @@ function submitLeaveCommunity() {
     </div>
   </div>
 </div>
-<script>
-function openOwnerCannotLeaveModal() {
-  document.getElementById('ownerCannotLeaveModal').style.display = 'flex';
-}
-document.getElementById('ownerCannotLeaveModalClose').onclick = function() {
-  document.getElementById('ownerCannotLeaveModal').style.display = 'none';
-}
-document.getElementById('ownerCannotLeaveModalCancel').onclick = function() {
-  document.getElementById('ownerCannotLeaveModal').style.display = 'none';
-}
-</script>
+
 
 <script>
 let currentEditDepartment = null;
@@ -2330,113 +2198,156 @@ async function deleteEditEvent() {
   <span id="toast-message"></span>
 </div>
 
-<!-- Set dbUser global for JS -->
-<script>
-  window.dbUser = <%- JSON.stringify(user && user._doc ? user._doc : user || {}) %>;
-  window.communityId = "<%= community._id %>";
-  // Global API_URL for notifications.js
-  window.API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
-</script>
-<!-- Include community-details.js for join logic -->
-<script src="/static/js/community-details.js"></script>
+    <!-- Set dbUser global for JS -->
+    <script>
+      window.dbUser = <%- JSON.stringify(user && user._doc ? user._doc : user || {}) %>;
+      window.communityId = "<%= community._id %>";
+    </script>
+    <!-- Include community-details.js for join logic -->
+    <script src="/static/js/community-details.js"></script>
 
-<% if (user && user._doc) { %>
-  <!-- Account Management Modal -->
-  <% include account-management %>
-  
-  <!-- Notification Modal -->
-  <% include partials/notificationModal %>
-  
-  <!-- Include notifications.js for notification functionality -->
-  <script src="/static/js/notifications.js"></script>
-  
-  <!-- Modal Event Listeners -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Account button click handler
-      const accountBtn = document.getElementById('accountBtn');
-      if (accountBtn) {
-        accountBtn.addEventListener('click', function() {
-          fillAccountDetails();
-          document.getElementById('accountModal').style.display = 'flex';
-        });
-      }
+    <% if (user && user._doc) { %>
+      <!-- Account Management Modal -->
+      <% include account-management %>
       
-      // Account modal close button
-      const accountModalClose = document.getElementById('accountModalClose');
-      if (accountModalClose) {
-        accountModalClose.addEventListener('click', function() {
-          document.getElementById('accountModal').style.display = 'none';
-        });
-      }
+      <!-- Notification Modal -->
+      <% include partials/notificationModal %>
       
-      // Notification button click handler
-      const notificationBtn = document.getElementById('notificationBtn');
-      if (notificationBtn) {
-        notificationBtn.addEventListener('click', function() {
-          document.getElementById('notificationModal').style.display = 'flex';
-          fetchNotifications(0);
-        });
-      }
+      <!-- Include notifications.js for notification functionality -->
+      <script src="/static/js/notifications.js"></script>
       
-      // Notification modal close button
-      const notificationModalClose = document.getElementById('notificationModalClose');
-      if (notificationModalClose) {
-        notificationModalClose.addEventListener('click', function() {
-          document.getElementById('notificationModal').style.display = 'none';
-        });
-      }
-      
-      // Notification modal cancel button
-      const notificationModalCancel = document.getElementById('notificationModalCancel');
-      if (notificationModalCancel) {
-        notificationModalCancel.addEventListener('click', function() {
-          document.getElementById('notificationModal').style.display = 'none';
-        });
-      }
-      
-      // Close modals when clicking outside
-      window.addEventListener('click', function(event) {
-        const accountModal = document.getElementById('accountModal');
-        const notificationModal = document.getElementById('notificationModal');
-        
-        if (event.target === accountModal) {
-          accountModal.style.display = 'none';
-        }
-        if (event.target === notificationModal) {
-          notificationModal.style.display = 'none';
-        }
-      });
-      
-                  // Initialize notification count on page load
-            if (dbUser && dbUser._id) {
-              // Initialize notification count using the function from notifications.js
-              fetchNotificationCount();
+      <!-- Modal Event Listeners -->
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          // Account button click handler
+          const accountBtn = document.getElementById('accountBtn');
+          if (accountBtn) {
+            accountBtn.addEventListener('click', function() {
+              fillAccountDetails();
+              document.getElementById('accountModal').style.display = 'flex';
+            });
+          }
+          
+          // Account modal close button
+          const accountModalClose = document.getElementById('accountModalClose');
+          if (accountModalClose) {
+            accountModalClose.addEventListener('click', function() {
+              document.getElementById('accountModal').style.display = 'none';
+            });
+          }
+          
+          // Notification button click handler
+          const notificationBtn = document.getElementById('notificationBtn');
+          if (notificationBtn) {
+            notificationBtn.addEventListener('click', function() {
+              document.getElementById('notificationModal').style.display = 'flex';
+              fetchNotifications(0);
+            });
+          }
+          
+          // Notification modal close button
+          const notificationModalClose = document.getElementById('notificationModalClose');
+          if (notificationModalClose) {
+            notificationModalClose.addEventListener('click', function() {
+              document.getElementById('notificationModal').style.display = 'none';
+            });
+          }
+          
+          // Notification modal cancel button
+          const notificationModalCancel = document.getElementById('notificationModalCancel');
+          if (notificationModalCancel) {
+            notificationModalCancel.addEventListener('click', function() {
+              document.getElementById('notificationModal').style.display = 'none';
+            });
+          }
+          
+          // Close modals when clicking outside
+          window.addEventListener('click', function(event) {
+            const accountModal = document.getElementById('accountModal');
+            const notificationModal = document.getElementById('notificationModal');
+            const deactivateModal = document.getElementById('deactivateAccountModal');
+            
+            if (event.target === accountModal && (!deactivateModal || deactivateModal.style.display === 'none')) {
+              accountModal.style.display = 'none';
             }
-    });
-    
-    // Fill account details function (same as community dashboard)
-    function fillAccountDetails() {
-      if (dbUser && dbUser.user) {
-        const emailField = document.getElementById('accountEmail');
-        const usernameField = document.getElementById('accountUsername');
-        const callSignField = document.getElementById('accountCallSign');
-        const profilePicture = document.getElementById('profilePicture');
+            if (event.target === notificationModal) {
+              notificationModal.style.display = 'none';
+            }
+          });
+          
+          // Initialize notification count on page load
+          if (dbUser && dbUser._id) {
+            // Initialize notification count using the function from notifications.js
+            fetchNotificationCount();
+          }
+          
+          // Set up all modal close handlers
+          const modalCloseHandlers = [
+            { id: 'promoteModalClose', modalId: 'promoteModal' },
+            { id: 'promoteModalCancel', modalId: 'promoteModal' },
+            { id: 'settingsModalClose', modalId: 'settingsModal' },
+            { id: 'settingsModalCancel', modalId: 'settingsModal' },
+            { id: 'inviteModalClose', modalId: 'inviteModal' },
+            { id: 'inviteModalCancel', modalId: 'inviteModal' },
+            { id: 'requestJoinModalClose', modalId: 'requestJoinModal' },
+            { id: 'requestJoinModalCancel', modalId: 'requestJoinModal' },
+            { id: 'leaveCommunityModalClose', modalId: 'leaveCommunityModal' },
+            { id: 'leaveCommunityModalCancel', modalId: 'leaveCommunityModal' },
+            { id: 'ownerCannotLeaveModalClose', modalId: 'ownerCannotLeaveModal' },
+            { id: 'ownerCannotLeaveModalCancel', modalId: 'ownerCannotLeaveModal' },
+            { id: 'noSettingsPermissionModalClose', modalId: 'noSettingsPermissionModal' },
+            { id: 'noSettingsPermissionModalCancel', modalId: 'noSettingsPermissionModal' },
+            { id: 'noInvitePermissionModalClose', modalId: 'noInvitePermissionModal' },
+            { id: 'noInvitePermissionModalCancel', modalId: 'noInvitePermissionModal' },
+            { id: 'noDepartmentPermissionModalClose', modalId: 'noDepartmentPermissionModal' },
+            { id: 'noDepartmentPermissionModalCancel', modalId: 'noDepartmentPermissionModal' }
+          ];
+          
+          modalCloseHandlers.forEach(handler => {
+            const element = document.getElementById(handler.id);
+            if (element) {
+              element.onclick = function() {
+                document.getElementById(handler.modalId).style.display = 'none';
+              };
+            }
+          });
+          
+          // Set up leave community confirm handler
+          const leaveCommunityModalConfirm = document.getElementById('leaveCommunityModalConfirm');
+          if (leaveCommunityModalConfirm) {
+            leaveCommunityModalConfirm.onclick = function() {
+              submitLeaveCommunity();
+            };
+          }
+        });
         
-        if (emailField) emailField.value = dbUser.user.email;
-        if (usernameField) {
-          usernameField.value = dbUser.user.username;
-          usernameField.defaultValue = dbUser.user.username; // Set default for change detection
+        // Fill account details function (same as community dashboard)
+        function fillAccountDetails() {
+          if (dbUser && dbUser.user) {
+            const emailField = document.getElementById('accountEmail');
+            const usernameField = document.getElementById('accountUsername');
+            const callSignField = document.getElementById('accountCallSign');
+            const profilePicture = document.getElementById('profilePicture');
+            
+            if (emailField) emailField.value = dbUser.user.email;
+            if (usernameField) {
+              usernameField.value = dbUser.user.username;
+              usernameField.defaultValue = dbUser.user.username; // Set default for change detection
+            }
+            if (callSignField) {
+              callSignField.value = dbUser.user.callSign;
+              callSignField.defaultValue = dbUser.user.callSign; // Set default for change detection
+            }
+            if (profilePicture) {
+              const profileImageUrl = dbUser.user.profilePicture || '/static/images/civ-unknown-user.png';
+              profilePicture.style.backgroundImage = `url(${profileImageUrl})`;
+            }
+          }
         }
-        if (callSignField) {
-          callSignField.value = dbUser.user.callSign;
-          callSignField.defaultValue = dbUser.user.callSign; // Set default for change detection
-        }
-        if (profilePicture) {
-          const profileImageUrl = dbUser.user.profilePicture || '/static/images/civ-unknown-user.png';
-          profilePicture.style.backgroundImage = `url(${profileImageUrl})`;
-        }
-      }
-    }
-  </script>
-<% } %> 
+      </script>
+    <% } %> 
+    
+    <!-- Toast Container for Live Notifications -->
+    <div id="toast-container"></div>
+  </body>
+</html>

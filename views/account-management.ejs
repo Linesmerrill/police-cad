@@ -32,7 +32,7 @@
             <!-- Profile Image -->
             <div style="text-align:center; margin-bottom:2rem;">
               <div id="profilePicture" style="width:80px; height:80px; border-radius:50%; background-image:url(<%= user.profilePicture || '/static/images/civ-unknown-user.png' %>); background-size:cover; background-position:center; margin:0 auto 1rem; border:3px solid #35385a;"></div>
-              <a href="https://en.gravatar.com/support/activating-your-account/" target="_blank" style="color:#667eea; text-decoration:none; font-size:0.9rem;">
+              <a href="#" onclick="showProfileImageModal()" style="color:#667eea; text-decoration:none; font-size:0.9rem; cursor:pointer;">
                 Update Profile Image <i class="fa fa-external-link-alt"></i>
               </a>
             </div>
@@ -74,7 +74,7 @@
               Password
             </h3>
             <div style="text-align:center;">
-              <button id="updatePassword" type="button" onclick="document.location.href='forgot-password'" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:all 0.2s;">
+              <button id="updatePassword" type="button" onclick="document.location.href='/forgot-password'" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:all 0.2s;">
                 Update Password
               </button>
             </div>
@@ -88,7 +88,7 @@
             </h3>
             <div style="text-align:center;">
               <input id="link" type="text" name="discordToken" value="<%= user.user.discordLoginToken %>" style="display:none;">
-              <img alt="discord" style="width:40px; margin-bottom:1rem;" src="./static/images/discord-icon.svg">
+              <img alt="discord" style="width:40px; margin-bottom:1rem;" src="/static/images/discord-icon.svg">
               <br>
               <% if (user.user.discordConnected) { %>
                 <h5 style="color:#fff; margin-bottom:1rem;"><i style="color:#57C567" class="fa fa-check"></i> Discord account connected</h5>
@@ -115,16 +115,16 @@
             </div>
           </div>
 
-          <!-- Delete Account Section -->
+          <!-- Deactivate Account Section -->
           <div style="margin-bottom:2rem; padding-top:1.5rem; border-top:1px solid #35385a;">
             <h3 style="color:#f56565; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
-              <i class="fa fa-trash" style="margin-right:0.5rem; color:#f56565;"></i>
-              Close Account
+              <i class="fa fa-user-times" style="margin-right:0.5rem; color:#f56565;"></i>
+              Deactivate Account
             </h3>
-            <p style="color:#e2e8f0; margin-bottom:1rem; font-size:0.9rem;"><strong>Warning:</strong> Deleting your account is irreversible.</p>
+            <p style="color:#e2e8f0; margin-bottom:1rem; font-size:0.9rem;"><strong>Warning:</strong> Deactivating your account will hide your profile but can be restored within 30 days.</p>
             <div style="text-align:center;">
-              <button data-toggle="modal" type="button" href="#deleteAccountConfirmModal" style="background:#e53e3e; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer;">
-                Delete Account
+              <button onclick="openDeactivateModal(event)" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer;">
+                Deactivate Account
               </button>
             </div>
           </div>
@@ -170,36 +170,33 @@
   </div>
 </div>
 
-<div id="deleteAccountConfirmModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-body">
-        <form class="form-horizontal" action="/deleteAccount" method="post">
-          <fieldset>
-
-            <!-- Form Name -->
-            <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
-            <h4>Delete Account</h4>
-            <hr style="width: 88%;max-width: 100rem;">
-
-            <p>Warning: Once your account is deleted all created communities, civilians, vehicles, and citations
-              from this account will be deleted. This is non-reversible.
-            </p>
-            <p>Are you sure you want to delete your account?</p>
-
-            <!-- Button -->
-            <div class="form-group">
-              <label class="col-md-4 control-label" for="deleteAccount"></label>
-              <div class="col-md-4 text-align-center">
-                <input type="hidden" name="page" value="/civ-dashboard">
-                <button id="deleteAccount" value="<%= user._id %>" name="userID" class="btn btn-danger">Delete
-                  account</button>
-              </div>
-            </div>
-          </fieldset>
-        </form>
+<!-- Deactivate Account Modal -->
+<div id="deactivateAccountModal" class="heroui-modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:480px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2.5rem 2rem 2rem 2rem; position:relative; max-height:90vh; overflow-y:auto;">
+    <button id="deactivateAccountModalClose" aria-label="Close" onclick="closeDeactivateModal()" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:1.2rem; margin-bottom:1.5rem;">
+      <div style="width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; color:#fff; border:3px solid #35385a;">
+        <i class="fa fa-user"></i>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:1.2rem; font-weight:600; color:#f7fafc;">Deactivate your account</div>
+        <div style="color:#a0aec0; font-size:1rem; margin-top:0.2rem;">@<%= user.user.username %></div>
       </div>
     </div>
+    <div style="margin-bottom:1.5rem;">
+      <div style="color:#f7fafc; font-size:1.05rem; font-weight:600; margin-bottom:0.5rem;">This will deactivate your account</div>
+      <div style="color:#a0aec0; font-size:0.98rem; margin-bottom:1rem;">You're about to start the process of deactivating your account. Your display name, username, and public profile will no longer be viewable on linespolice-cad.com, LPC-APP for iOS, or LPC-APP for Android.</div>
+      <div style="color:#f7fafc; font-size:1.05rem; font-weight:600; margin-bottom:0.5rem;">What else you should know</div>
+      <div style="color:#a0aec0; font-size:0.98rem; margin-bottom:0.5rem;">You can restore your LPC account if it was accidentally or wrongfully deactivated for up to 30 days after deactivation.</div>
+      <div style="color:#a0aec0; font-size:0.98rem; margin-bottom:0.5rem;">If you have any active paid subscriptions (e.g., Premium) purchased through the LPC app, they will remain active. You can manage these subscriptions through the platform where you originally subscribed. Subscriptions purchased on linespolice-cad.com will automatically cancel after you deactivate your account. <a href="/terms-and-conditions" style="color:#667eea; text-decoration:underline;">Learn more about subscriptions</a></div>
+      <div style="color:#a0aec0; font-size:0.98rem; margin-bottom:0.5rem;">Upon deactivating your account, your data will be processed per our <a href="/privacy-policy" style="color:#667eea; text-decoration:underline;">Privacy Policy</a>.</div>
+      <div style="color:#a0aec0; font-size:0.98rem; margin-bottom:0.5rem;">If you just want to change your username, you don't need to deactivate your account — edit it in your settings on your <a href="/profile" style="color:#667eea; text-decoration:underline;">Profile Page</a>.</div>
+      <div style="color:#a0aec0; font-size:0.98rem;">To use your current email address with a different LPC account, <a href="/profile" style="color:#667eea; text-decoration:underline;">change that</a> before you deactivate this account.</div>
+    </div>
+    <button id="deactivateAccountBtn" onclick="handleDeactivateAccount()" style="width:100%; background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.85rem 0; font-weight:600; font-size:1.1rem; margin-top:1.2rem; cursor:pointer; transition:all 0.2s;">
+      <span id="deactivateAccountBtnText">Deactivate</span>
+      <span id="deactivateAccountBtnSpinner" style="display:none; margin-left:0.5rem;"><i class="fa fa-spinner fa-spin"></i></span>
+    </button>
   </div>
 </div>
 
@@ -304,4 +301,82 @@
       callSignBtns.style.display = 'none';
     }
   }
+
+  // Profile Image Modal
+  function showProfileImageModal() {
+    document.getElementById('profileImageModal').style.display = 'flex';
+  }
+
+  function closeProfileImageModal() {
+    document.getElementById('profileImageModal').style.display = 'none';
+  }
+
+  // Deactivate Account Modal
+  function openDeactivateModal(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    document.getElementById('deactivateAccountModal').style.display = 'flex';
+  }
+
+  function closeDeactivateModal() {
+    document.getElementById('deactivateAccountModal').style.display = 'none';
+  }
+
+  async function handleDeactivateAccount() {
+    var btn = document.getElementById('deactivateAccountBtn');
+    var text = document.getElementById('deactivateAccountBtnText');
+    var spinner = document.getElementById('deactivateAccountBtnSpinner');
+    btn.disabled = true;
+    text.style.display = 'none';
+    spinner.style.display = 'inline-block';
+    try {
+      const response = await fetch(`${window.API_URL}/api/v1/user/<%= user._id %>/deactivate`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.ok) {
+        alert('Your account has been deactivated. You can reactivate it within 30 days by contacting us.');
+        window.location.href = '/logout';
+      } else {
+        const data = await response.json().catch(() => ({}));
+        alert(data.message || 'There was an error deactivating your account. Please try again later.');
+      }
+    } catch (e) {
+      alert('There was an error deactivating your account. Please try again later.');
+    } finally {
+      btn.disabled = false;
+      text.style.display = 'inline';
+      spinner.style.display = 'none';
+    }
+  }
+
+  // Add event listener to prevent deactivate modal from closing when clicking inside it
+  document.addEventListener('DOMContentLoaded', function() {
+    const deactivateModal = document.getElementById('deactivateAccountModal');
+    if (deactivateModal) {
+      deactivateModal.addEventListener('click', function(event) {
+        event.stopPropagation();
+      });
+    }
+  });
 </script>
+
+<!-- Profile Image Modal -->
+<div id="profileImageModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
+  <div style="background: #1a202c; border-radius: 12px; padding: 2rem; max-width: 400px; width: 90%; text-align: center; border: 1px solid #35385a;">
+    <div style="margin-bottom: 1.5rem;">
+      <i class="fa fa-tools" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i>
+      <h3 style="color: #fff; margin: 0 0 1rem 0; font-size: 1.5rem; font-weight: 600;">Under Construction</h3>
+      <p style="color: #e2e8f0; margin: 0; font-size: 1rem; line-height: 1.5;">
+        Profile image upload functionality is coming soon! We're working hard to bring you this feature.
+      </p>
+    </div>
+    <button onclick="closeProfileImageModal()" style="background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color: #fff; border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+      Got it!
+    </button>
+  </div>
+</div>
