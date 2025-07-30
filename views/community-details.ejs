@@ -7,6 +7,10 @@
     <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- jQuery and Bootstrap for modals -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" rel="stylesheet">
     <script>
     function encodeDepartmentId(departmentId) {
       // Simple reversible encoding: convert to base64 and replace some characters
@@ -85,17 +89,21 @@
       /* notification styles */
       .notification-badge {
         position: absolute;
-        top: 10px;
-        right: 8px;
+        top: 2px;
+        right: 2px;
         background-color: #dc3545;
         color: white;
         border-radius: 50%;
-        width: 18px;
-        height: 18px;
-        font-size: 10px;
-        line-height: 18px;
+        width: 16px;
+        height: 16px;
+        font-size: 9px;
+        line-height: 16px;
         text-align: center;
         display: none;
+        font-weight: bold;
+        border: 1px solid #1a202c;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        min-width: 16px;
       }
       .notification-badge.show {
         display: block;
@@ -113,12 +121,28 @@
         </a>
       </div>
       <div class="flex items-center space-x-4">
-        <% if (user) { %>
-          <a onclick="openAccountModal()" class="text-gray-300 hover:text-white" style="cursor: pointer;">
-            <ion-icon name="person-circle-outline" class="text-3xl align-middle"></ion-icon>
-          </a>
+        <% if (user && user._doc) { %>
+          <!-- User is logged in - show account and notification buttons -->
+          <div class="flex items-center space-x-3">
+            <!-- Notification Button -->
+            <button id="notificationBtn" class="relative p-2 text-gray-300 hover:text-white transition-colors" style="background: none; border: none; cursor: pointer;">
+              <i class="fa fa-bell text-3xl"></i>
+              <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
+            </button>
+            
+            <!-- Account Button -->
+            <button id="accountBtn" class="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors" style="background: none; border: none; cursor: pointer;">
+              
+              <span class="font-medium"><%= user.user.username || 'User' %></span>
+              <i class="fa fa-chevron-down text-sm"></i>
+            </button>
+          </div>
         <% } else { %>
-          <a href="/login-civ" class="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full font-semibold">Login</a>
+          <!-- User is not logged in - show login button -->
+          <a href="/login-civ?redirect=<%= encodeURIComponent('/community/' + community._id) %>" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105">
+            <i class="fa fa-sign-in-alt mr-2"></i>
+            Login
+          </a>
         <% } %>
       </div>
     </nav>
@@ -2310,6 +2334,109 @@ async function deleteEditEvent() {
 <script>
   window.dbUser = <%- JSON.stringify(user && user._doc ? user._doc : user || {}) %>;
   window.communityId = "<%= community._id %>";
+  // Global API_URL for notifications.js
+  window.API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 </script>
 <!-- Include community-details.js for join logic -->
-<script src="/static/js/community-details.js"></script> 
+<script src="/static/js/community-details.js"></script>
+
+<% if (user && user._doc) { %>
+  <!-- Account Management Modal -->
+  <% include account-management %>
+  
+  <!-- Notification Modal -->
+  <% include partials/notificationModal %>
+  
+  <!-- Include notifications.js for notification functionality -->
+  <script src="/static/js/notifications.js"></script>
+  
+  <!-- Modal Event Listeners -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Account button click handler
+      const accountBtn = document.getElementById('accountBtn');
+      if (accountBtn) {
+        accountBtn.addEventListener('click', function() {
+          fillAccountDetails();
+          document.getElementById('accountModal').style.display = 'flex';
+        });
+      }
+      
+      // Account modal close button
+      const accountModalClose = document.getElementById('accountModalClose');
+      if (accountModalClose) {
+        accountModalClose.addEventListener('click', function() {
+          document.getElementById('accountModal').style.display = 'none';
+        });
+      }
+      
+      // Notification button click handler
+      const notificationBtn = document.getElementById('notificationBtn');
+      if (notificationBtn) {
+        notificationBtn.addEventListener('click', function() {
+          document.getElementById('notificationModal').style.display = 'flex';
+          fetchNotifications(0);
+        });
+      }
+      
+      // Notification modal close button
+      const notificationModalClose = document.getElementById('notificationModalClose');
+      if (notificationModalClose) {
+        notificationModalClose.addEventListener('click', function() {
+          document.getElementById('notificationModal').style.display = 'none';
+        });
+      }
+      
+      // Notification modal cancel button
+      const notificationModalCancel = document.getElementById('notificationModalCancel');
+      if (notificationModalCancel) {
+        notificationModalCancel.addEventListener('click', function() {
+          document.getElementById('notificationModal').style.display = 'none';
+        });
+      }
+      
+      // Close modals when clicking outside
+      window.addEventListener('click', function(event) {
+        const accountModal = document.getElementById('accountModal');
+        const notificationModal = document.getElementById('notificationModal');
+        
+        if (event.target === accountModal) {
+          accountModal.style.display = 'none';
+        }
+        if (event.target === notificationModal) {
+          notificationModal.style.display = 'none';
+        }
+      });
+      
+                  // Initialize notification count on page load
+            if (dbUser && dbUser._id) {
+              // Initialize notification count using the function from notifications.js
+              fetchNotificationCount();
+            }
+    });
+    
+    // Fill account details function (same as community dashboard)
+    function fillAccountDetails() {
+      if (dbUser && dbUser.user) {
+        const emailField = document.getElementById('accountEmail');
+        const usernameField = document.getElementById('accountUsername');
+        const callSignField = document.getElementById('accountCallSign');
+        const profilePicture = document.getElementById('profilePicture');
+        
+        if (emailField) emailField.value = dbUser.user.email;
+        if (usernameField) {
+          usernameField.value = dbUser.user.username;
+          usernameField.defaultValue = dbUser.user.username; // Set default for change detection
+        }
+        if (callSignField) {
+          callSignField.value = dbUser.user.callSign;
+          callSignField.defaultValue = dbUser.user.callSign; // Set default for change detection
+        }
+        if (profilePicture) {
+          const profileImageUrl = dbUser.user.profilePicture || '/static/images/civ-unknown-user.png';
+          profilePicture.style.backgroundImage = `url(${profileImageUrl})`;
+        }
+      }
+    }
+  </script>
+<% } %> 
