@@ -564,6 +564,55 @@ const CommunityCard = ({ community, isActive, actionText, onAction }) => (
       {/* Overlay with gradient */}
       <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60"></div>
       
+      {/* Subscription Badge for communities with active promotions */}
+      {(community?.subscription?.active === true && ["elite", "premium", "standard", "basic"].includes(community?.subscription?.plan)) || community?.promotionalText ? (
+        <div className="absolute top-3 left-3">
+          {(() => {
+            const plan = community?.subscription?.plan;
+            console.log('Community:', community?.name, 'Plan:', plan, 'Subscription:', community?.subscription, 'Promotional:', community?.promotionalText);
+            
+            if (plan === "elite") {
+              return (
+                <span className="inline-flex items-center bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                  <i className="fa fa-crown mr-1"></i>
+                  ELITE
+                </span>
+              );
+            } else if (plan === "premium") {
+              return (
+                <span className="inline-flex items-center bg-gradient-to-r from-purple-400 to-pink-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                  <i className="fa fa-star mr-1"></i>
+                  PREMIUM
+                </span>
+              );
+            } else if (plan === "standard") {
+              return (
+                <span className="inline-flex items-center bg-gradient-to-r from-blue-400 to-indigo-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                  <i className="fa fa-check-circle mr-1"></i>
+                  STANDARD
+                </span>
+              );
+            } else if (plan === "basic") {
+              return (
+                <span className="inline-flex items-center bg-gradient-to-r from-green-400 to-teal-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                  <i className="fa fa-user mr-1"></i>
+                  BASIC
+                </span>
+              );
+            } else if (community?.promotionalText) {
+              // Fallback for communities with promotional text but no subscription data
+              return (
+                <span className="inline-flex items-center bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs px-2 py-1 rounded-full font-bold shadow-lg">
+                  <i className="fa fa-crown mr-1"></i>
+                  ELITE
+                </span>
+              );
+            }
+            return null;
+          })()}
+        </div>
+      ) : null}
+      
       {/* Active Badge */}
       {isActive && (
         <div className="absolute top-3 right-3">
@@ -1851,6 +1900,7 @@ const App = () => {
                 ? "/static/images/default-logo.png"
                 : item.community?.imageLink || "/static/images/default-logo.png",
             membersCount: item.community?.membersCount,
+            subscription: item.community?.subscription || item.subscription,
             code: item._id,
           }))
           .sort((a, b) => a.name.localeCompare(b.name));
@@ -1876,6 +1926,7 @@ const App = () => {
           name: item.name,
           membersCount: item.membersCount,
           isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
+          subscription: item.subscription,
           code: item._id,
           imageLink:
             item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
@@ -1909,6 +1960,7 @@ const App = () => {
               ? "/static/images/default-logo.png"
               : item.imageLink || "/static/images/default-logo.png",
           membersCount: item.membersCount,
+          subscription: item.subscription,
           code: item._id,
         }));
         setRecommendedCommunities(communities);
@@ -1935,6 +1987,7 @@ const App = () => {
               ? "/static/images/default-logo.png"
               : item.imageLink || "/static/images/default-logo.png",
           membersCount: item.membersCount,
+          subscription: item.subscription,
           code: item._id,
         }));
         setAllCommunities(communities);
