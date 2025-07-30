@@ -108,7 +108,10 @@ module.exports = function (app, passport, server) {
       // Fetch community details from API
       const apiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}`;
       console.log('Making API request to:', apiUrl);
+      console.log('Using config:', { headers: config.headers });
       const response = await axios.get(apiUrl, config);
+      console.log('API response status:', response.status);
+      console.log('API response data:', response.data);
       const community = response.data || {};
 
       // Fetch paginated departments (6 per page, page 1 by default)
