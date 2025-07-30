@@ -1034,100 +1034,145 @@ const PageNavigation = () => {
 };
 
 const Footer = () => (
-  <footer className="bg-gray-900 text-gray-300 py-12">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div className="flex flex-col items-center md:items-start">
-          <img
-            src="https://www.linespolice-cad.com/static/images/lpc_logo_new_2023_landscape_transparent.png"
-            alt="LPC Logo"
-            className="w-full max-w-xs mb-4"
-          />
-          <p className="text-center md:text-left text-base">
-            World's Leading Free-to-use role-play facilitator
+  <footer className="bg-gray-900 border-t border-gray-800 mt-16">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {/* Logo and Description */}
+        <div className="lg:col-span-1">
+          <div className="flex items-center space-x-3 mb-4">
+            <img src="/static/images/favicon-32x32.png" alt="LPC Logo" className="h-10 w-10" />
+            <span className="text-2xl font-bold text-white">Lines Police CAD</span>
+          </div>
+          <p className="text-gray-400 text-lg leading-relaxed mb-4">
+            World's Leading Free-to-use role-play facilitator for law enforcement communities.
           </p>
-        </div>
-        <div className="flex flex-col items-center md:items-start">
-          <h2 className="text-xl font-semibold text-white mb-4">Information</h2>
-                      <a
-              href="https://github.com/Linesmerrill/police-cad/releases"
-              className="hover:text-white mb-2 text-base"
-            >
-              Release Log
+          <div className="flex space-x-4">
+            <a href="https://discord.gg/3ECFhqe" target="_blank" className="text-gray-400 hover:text-white transition-colors">
+              <i className="fab fa-discord text-2xl"></i>
             </a>
-            <a
-              href="https://linesmerrill.github.io/MerrillLines/"
-              className="hover:text-white mb-2 text-base"
-            >
-              Developers
+            <a href="https://x.com/LinesPoliceCAD" target="_blank" className="text-gray-400 hover:text-white transition-colors">
+              <i className="fa-brands fa-x-twitter text-2xl"></i>
             </a>
-            <a
-              href="https://www.patreon.com/linespolicecad"
-              target="_blank"
-              className="hover:text-white mb-2 text-base"
-            >
-              Patreon
+            <a href="https://www.facebook.com/linespoliceserver/" target="_blank" className="text-gray-400 hover:text-white transition-colors">
+              <i className="fab fa-facebook text-2xl"></i>
             </a>
-            <a
-              href="https://github.com/linesmerrill/police-cad"
-              target="_blank"
-              className="hover:text-white text-base"
-            >
-            GitHub
-          </a>
+            <a href="https://github.com/linesmerrill/police-cad" target="_blank" className="text-gray-400 hover:text-white transition-colors">
+              <i className="fab fa-github text-2xl"></i>
+            </a>
+          </div>
         </div>
-        <div className="flex flex-col items-center md:items-start">
-          <h2 className="text-xl font-semibold text-white mb-4">About</h2>
-          <a href="/faq" className="hover:text-white mb-2 text-base">
-            FAQ
-          </a>
-          <a href="/contact-us" className="hover:text-white mb-2 text-base">
-            Contact Us
-          </a>
-          <a href="/terms-and-conditions" className="hover:text-white mb-2 text-base">
-            Terms and Conditions
-          </a>
-          <a href="/privacy-policy" className="hover:text-white text-base">
-            Privacy Policy
-          </a>
+
+        {/* Information */}
+        <div>
+          <h3 className="text-white font-semibold text-xl mb-4">Information</h3>
+          <ul className="space-y-2">
+            <li>
+              <a href="https://github.com/Linesmerrill/police-cad/releases" target="_blank" 
+                 className="text-gray-400 hover:text-white transition-colors text-lg">
+                Release Log
+              </a>
+            </li>
+            <li>
+              <a href="https://linesmerrill.github.io/MerrillLines/" target="_blank" 
+                 className="text-gray-400 hover:text-white transition-colors text-lg">
+                Developers
+              </a>
+            </li>
+            <li>
+              <a href="https://www.patreon.com/linespolicecad" target="_blank" 
+                 className="text-gray-400 hover:text-white transition-colors text-lg">
+                Patreon
+              </a>
+            </li>
+            <li>
+              <a href="https://github.com/linesmerrill/police-cad" target="_blank" 
+                 className="text-gray-400 hover:text-white transition-colors text-lg">
+                GitHub
+              </a>
+            </li>
+          </ul>
         </div>
-        <div className="flex flex-col items-center md:items-start">
-          <h2 className="text-xl font-semibold text-white mb-4">Follow</h2>
-          <a
-            href="https://discord.gg/3ECFhqe"
-            target="_blank"
-            className="hover:text-white mb-2 text-base"
-          >
-            Discord
-          </a>
-          <a
-            href="https://twitter.com/LinesPoliceCAD"
-            target="_blank"
-            className="hover:text-white mb-2 text-base"
-          >
-            Twitter
-          </a>
-          <a
-            href="https://www.facebook.com/linespoliceserver/"
-            target="_blank"
-            className="hover:text-white text-base"
-          >
-            Facebook
-          </a>
+
+        {/* About */}
+        <div>
+          <h3 className="text-white font-semibold text-xl mb-4">About</h3>
+          <ul className="space-y-2">
+            <li>
+              <a href="/faq" className="text-gray-400 hover:text-white transition-colors text-lg">
+                FAQ
+              </a>
+            </li>
+            <li>
+              <a href="/contact-us" className="text-gray-400 hover:text-white transition-colors text-lg">
+                Contact Us
+              </a>
+            </li>
+            <li>
+              <a href="/terms-and-conditions" className="text-gray-400 hover:text-white transition-colors text-lg">
+                Terms and Conditions
+              </a>
+            </li>
+            <li>
+              <a href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors text-lg">
+                Privacy Policy
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        {/* Community */}
+        <div>
+          <h3 className="text-white font-semibold text-xl mb-4">Community</h3>
+          <ul className="space-y-2">
+            <li>
+              <a href="/communities" className="text-gray-400 hover:text-white transition-colors text-lg">
+                Communities
+              </a>
+            </li>
+            <li>
+              <a href="/about-us" className="text-gray-400 hover:text-white transition-colors text-lg">
+                About Us
+              </a>
+            </li>
+            <li>
+              <a href="/rules" className="text-gray-400 hover:text-white transition-colors text-lg">
+                Rules
+              </a>
+            </li>
+            <li>
+              <a href="/release-log" className="text-gray-400 hover:text-white transition-colors text-lg">
+                Release Log
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
-      <div className="mt-12 text-center">
-        <p className="text-gray-400 text-base">
-          ©2023 by{" "}
-          <a
-            href="https://sites.google.com/view/tlps-dev/home"
-            target="_blank"
-            className="hover:text-white"
-          >
-            TLPS
-          </a>{" "}
-          All Rights Reserved
-        </p>
+
+      {/* Bottom Section */}
+      <div className="border-t border-gray-800 mt-8 pt-8">
+        <div className="flex flex-col md:flex-row justify-between items-center">
+          <div className="text-gray-400 text-lg mb-4 md:mb-0">
+            ©2024 by{" "}
+            <a href="https://sites.google.com/view/tlps-dev/home" target="_blank" 
+               className="text-blue-400 hover:text-blue-300 transition-colors">
+              TLPS
+            </a>{" "}
+            All Rights Reserved
+          </div>
+          <div className="flex items-center space-x-4">
+            <a href="/" className="text-gray-400 hover:text-white transition-colors text-lg">
+              Home
+            </a>
+            <span className="text-gray-600">•</span>
+            <a href="/login-civ" className="text-gray-400 hover:text-white transition-colors text-lg">
+              Login
+            </a>
+            <span className="text-gray-600">•</span>
+            <a href="/signup-civ" className="text-gray-400 hover:text-white transition-colors text-lg">
+              Sign Up
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </footer>
