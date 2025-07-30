@@ -421,7 +421,7 @@ const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage }) => {
       <div className="w-full flex justify-center items-center py-8 z-0">
         <div className="relative max-w-4xl w-full mx-auto z-0 flex items-center justify-center">
           {/* Enhanced Card with more content */}
-          <div className="relative bg-gray-800 rounded-3xl shadow-2xl pt-20 pb-10 px-8 flex flex-col items-center text-center border border-gray-700 z-10 w-[400px] md:w-[500px] min-h-[520px] md:min-h-[600px] justify-center"
+          <div className="relative bg-gray-800 rounded-3xl shadow-2xl pt-16 pb-10 px-8 flex flex-col items-center text-center border border-gray-700 z-10 w-[400px] md:w-[500px] min-h-[520px] md:min-h-[600px] justify-center"
             style={{
               boxShadow: '0 12px 48px 0 rgba(124, 58, 237, 0.25), 0 2px 12px 0 rgba(0,0,0,0.18)',
               minHeight: '520px',
@@ -434,15 +434,15 @@ const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage }) => {
               ELITE
             </div>
             
-            {/* Floating image */}
+            {/* Image positioned above community name */}
             <img
               src={community.imageLink || "/static/images/default-logo.png"}
               alt={community.name}
-              className="w-44 h-44 object-contain rounded-2xl shadow-lg bg-gray-900 border border-gray-700 absolute left-1/2 -top-16 -translate-x-1/2"
+              className="w-56 h-56 md:w-64 md:h-64 object-contain rounded-2xl shadow-lg bg-gray-900 border border-gray-700 mb-6"
               style={{ background: '#181e2a' }}
             />
             
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 mt-8 break-words max-w-full leading-tight">{community.name}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 break-words max-w-full leading-tight">{community.name}</h2>
             
             {/* Enhanced Tags */}
             <div className="flex flex-wrap justify-center gap-2 mb-3">
