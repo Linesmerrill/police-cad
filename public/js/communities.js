@@ -926,9 +926,9 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
               style={{ top: '100%' }}
             >
               {loading ? (
-                <div className="p-4 text-gray-400 text-center text-base">Searching...</div>
+                <div className="p-4 text-gray-400 text-center text-lg">Searching...</div>
               ) : noResults ? (
-                <div className="p-4 text-gray-400 text-center text-base">No communities found</div>
+                <div className="p-4 text-gray-400 text-center text-lg">No communities found</div>
               ) : (
                 options.map((item) => (
                   <div
@@ -951,7 +951,7 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
                           </svg>
                         )}
                       </div>
-                      <div className="text-sm text-gray-400 truncate max-w-xs">{item.description}</div>
+                      <div className="text-base text-gray-400 truncate max-w-xs">{item.description}</div>
                     </div>
                   </div>
                 ))
@@ -988,11 +988,11 @@ const PageNavigation = () => {
     <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-lg mx-4 mb-6">
       <div className="p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-white flex items-center">
+          <h3 className="text-xl font-semibold text-white flex items-center">
             <i className="fa fa-compass text-blue-400 mr-2"></i>
             Quick Navigation
           </h3>
-          <span className="text-sm text-gray-400">Jump to section</span>
+          <span className="text-base text-gray-400">Jump to section</span>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1000,32 +1000,32 @@ const PageNavigation = () => {
             onClick={() => scrollToSection('elite-communities')}
             className="flex flex-col items-center p-3 bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
           >
-            <i className="fa fa-crown text-xl mb-1"></i>
-            <span className="text-sm font-medium">Elite Communities</span>
+            <i className="fa fa-crown text-2xl mb-1"></i>
+            <span className="text-base font-medium">Elite Communities</span>
           </button>
           
           <button
             onClick={() => scrollToSection('your-communities')}
             className="flex flex-col items-center p-3 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
           >
-            <i className="fa fa-users text-xl mb-1"></i>
-            <span className="text-sm font-medium">Your Communities</span>
+            <i className="fa fa-users text-2xl mb-1"></i>
+            <span className="text-base font-medium">Your Communities</span>
           </button>
           
           <button
             onClick={() => scrollToSection('discover-communities')}
             className="flex flex-col items-center p-3 bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
           >
-            <i className="fa fa-compass text-xl mb-1"></i>
-            <span className="text-sm font-medium">Discover Communities</span>
+            <i className="fa fa-compass text-2xl mb-1"></i>
+            <span className="text-base font-medium">Discover Communities</span>
           </button>
           
           <button
             onClick={() => scrollToSection('browse-communities')}
             className="flex flex-col items-center p-3 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
           >
-            <i className="fa fa-globe text-xl mb-1"></i>
-            <span className="text-sm font-medium">Browse Communities</span>
+            <i className="fa fa-globe text-2xl mb-1"></i>
+            <span className="text-base font-medium">Browse Communities</span>
           </button>
         </div>
       </div>
@@ -1043,81 +1043,81 @@ const Footer = () => (
             alt="LPC Logo"
             className="w-full max-w-xs mb-4"
           />
-          <p className="text-center md:text-left">
+          <p className="text-center md:text-left text-base">
             World's Leading Free-to-use role-play facilitator
           </p>
         </div>
         <div className="flex flex-col items-center md:items-start">
-          <h2 className="text-lg font-semibold text-white mb-4">Information</h2>
-          <a
-            href="https://github.com/Linesmerrill/police-cad/releases"
-            className="hover:text-white mb-2"
-          >
-            Release Log
-          </a>
-          <a
-            href="https://linesmerrill.github.io/MerrillLines/"
-            className="hover:text-white mb-2"
-          >
-            Developers
-          </a>
-          <a
-            href="https://www.patreon.com/linespolicecad"
-            target="_blank"
-            className="hover:text-white mb-2"
-          >
-            Patreon
-          </a>
-          <a
-            href="https://github.com/linesmerrill/police-cad"
-            target="_blank"
-            className="hover:text-white"
-          >
+          <h2 className="text-xl font-semibold text-white mb-4">Information</h2>
+                      <a
+              href="https://github.com/Linesmerrill/police-cad/releases"
+              className="hover:text-white mb-2 text-base"
+            >
+              Release Log
+            </a>
+            <a
+              href="https://linesmerrill.github.io/MerrillLines/"
+              className="hover:text-white mb-2 text-base"
+            >
+              Developers
+            </a>
+            <a
+              href="https://www.patreon.com/linespolicecad"
+              target="_blank"
+              className="hover:text-white mb-2 text-base"
+            >
+              Patreon
+            </a>
+            <a
+              href="https://github.com/linesmerrill/police-cad"
+              target="_blank"
+              className="hover:text-white text-base"
+            >
             GitHub
           </a>
         </div>
         <div className="flex flex-col items-center md:items-start">
-          <h2 className="text-lg font-semibold text-white mb-4">About</h2>
-          <a href="/faq" className="hover:text-white mb-2">
+          <h2 className="text-xl font-semibold text-white mb-4">About</h2>
+          <a href="/faq" className="hover:text-white mb-2 text-base">
             FAQ
           </a>
-          <a href="/contact-us" className="hover:text-white mb-2">
+          <a href="/contact-us" className="hover:text-white mb-2 text-base">
             Contact Us
           </a>
-          <a href="/terms-and-conditions" className="hover:text-white mb-2">
+          <a href="/terms-and-conditions" className="hover:text-white mb-2 text-base">
             Terms and Conditions
           </a>
-          <a href="/privacy-policy" className="hover:text-white">
+          <a href="/privacy-policy" className="hover:text-white text-base">
             Privacy Policy
           </a>
         </div>
         <div className="flex flex-col items-center md:items-start">
-          <h2 className="text-lg font-semibold text-white mb-4">Follow</h2>
+          <h2 className="text-xl font-semibold text-white mb-4">Follow</h2>
           <a
             href="https://discord.gg/3ECFhqe"
             target="_blank"
-            className="hover:text-white mb-2"
+            className="hover:text-white mb-2 text-base"
           >
             Discord
           </a>
           <a
             href="https://twitter.com/LinesPoliceCAD"
             target="_blank"
-            className="hover:text-white mb-2"
+            className="hover:text-white mb-2 text-base"
           >
             Twitter
           </a>
           <a
             href="https://www.facebook.com/linespoliceserver/"
             target="_blank"
-            className="hover:text-white"
+            className="hover:text-white text-base"
           >
             Facebook
           </a>
         </div>
       </div>
       <div className="mt-12 text-center">
-        <p className="text-gray-400">
+        <p className="text-gray-400 text-base">
           ©2023 by{" "}
           <a
             href="https://sites.google.com/view/tlps-dev/home"
@@ -1173,9 +1173,9 @@ const Toast = ({ message, type, isVisible, onClose }) => {
   return (
     <div className="fixed top-4 right-4 z-[2300] animate-slide-in">
       <div className={`flex items-center p-4 rounded-lg shadow-lg border ${getToastStyles()} min-w-[300px] max-w-[400px]`}>
-        <i className={`fa ${getIcon()} text-lg mr-3`}></i>
+        <i className={`fa ${getIcon()} text-xl mr-3`}></i>
         <div className="flex-1">
-          <p className="font-medium">{message}</p>
+          <p className="font-medium text-base">{message}</p>
         </div>
         <button
           onClick={onClose}
@@ -1385,7 +1385,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
       style={{ zIndex: 2200 }}
     >
       <div
-        className="bg-[#23263a] rounded-2xl max-w-md w-full mx-auto shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-[#23263a] rounded-2xl max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
         style={{ position: 'relative', zIndex: 2210 }}
       >
@@ -1397,7 +1397,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
           >
             <i className="fa fa-arrow-left"></i>
           </button>
-          <h2 className="text-xl font-bold text-white">Create A Community</h2>
+          <h2 className="text-2xl font-bold text-white">Create A Community</h2>
           <div className="w-8"></div> {/* Spacer for centering */}
         </div>
 
@@ -1415,7 +1415,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
               ) : (
                 <div className="text-center text-gray-400">
                   <i className="fa fa-image text-4xl mb-2"></i>
-                  <p>Community Banner</p>
+                  <p className="text-base">Community Banner</p>
                 </div>
               )}
             </div>
@@ -1432,7 +1432,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
 
           {/* Community Name */}
           <div>
-            <label className="block text-white text-sm font-medium mb-2">
+            <label className="block text-white text-base font-medium mb-2">
               Community Name <span className="text-red-400">*</span>
             </label>
             <input
@@ -1446,7 +1446,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
 
           {/* Description */}
           <div>
-            <label className="block text-white text-sm font-medium mb-2">
+            <label className="block text-white text-base font-medium mb-2">
               Description <span className="text-red-400">*</span>
             </label>
             <textarea
@@ -1461,12 +1461,12 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
           {/* Community Privacy */}
           <div>
             <div className="flex items-center mb-3">
-              <label className="block text-white text-sm font-medium">
+              <label className="block text-white text-base font-medium">
                 Community Privacy
               </label>
               <div className="relative ml-2 group">
                 <i className="fa fa-info-circle text-gray-400 text-sm cursor-help"></i>
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 border border-gray-700">
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 border border-gray-700">
                   <div className="mb-1"><strong>Public:</strong> Anyone can search and find your community</div>
                   <div><strong>Private:</strong> People can only join via an invite link</div>
                   <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
@@ -1477,7 +1477,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
               <button
                 type="button"
                 onClick={() => handleInputChange("visibility", "public")}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-full text-base font-medium transition-colors ${
                   formData.visibility === "public"
                     ? "bg-blue-600 text-white"
                     : "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -1488,7 +1488,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
               <button
                 type="button"
                 onClick={() => handleInputChange("visibility", "private")}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-full text-base font-medium transition-colors ${
                   formData.visibility === "private"
                     ? "bg-blue-600 text-white"
                     : "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -1502,7 +1502,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
           {/* Platform Tags */}
           <div>
             <div className="flex items-center mb-3">
-              <label className="block text-white text-sm font-medium">
+              <label className="block text-white text-base font-medium">
                 Platform Tags
               </label>
               <div className="relative ml-2 group">
@@ -1513,14 +1513,14 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
                 </div>
               </div>
             </div>
-            <p className="text-gray-400 text-xs mb-3">optional</p>
+            <p className="text-gray-400 text-sm mb-3">optional</p>
             <div className="flex flex-wrap gap-2">
               {["Xbox", "PlayStation", "PC"].map((tag) => (
                 <button
                   key={tag}
                   type="button"
                   onClick={() => handleTagToggle(tag)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-full text-base font-medium transition-colors ${
                     formData.tags.includes(tag)
                       ? "bg-blue-600 text-white"
                       : "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -1535,7 +1535,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
           {/* Subscription Info */}
           {!canCreateMore && (
             <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
-              <p className="text-red-400 text-sm mb-3">
+              <p className="text-red-400 text-base mb-3">
                 {error || `You've reached your community limit (${communityLimit === Infinity ? "unlimited" : communityLimit}). Upgrade your subscription to create more.`}
               </p>
               <div className="flex flex-col space-y-2">
@@ -1545,7 +1545,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
                       // Open iOS App Store
                       window.open('https://apps.apple.com/us/app/lpc-app/id6503307483', '_blank');
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center flex-1"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors flex items-center justify-center flex-1"
                   >
                     <i className="fa fa-apple mr-2"></i>
                     App Store
@@ -1555,13 +1555,13 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
                       // Open Google Play Store
                       window.open('https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp', '_blank');
                     }}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center flex-1"
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors flex items-center justify-center flex-1"
                   >
                     <i className="fa fa-google mr-2"></i>
                     Google Play
                   </button>
                 </div>
-                <p className="text-gray-400 text-xs text-center mt-2">
+                <p className="text-gray-400 text-sm text-center mt-2">
                   Download the mobile app to upgrade
                 </p>
               </div>
@@ -1571,17 +1571,17 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
           {/* Error Message */}
           {error && canCreateMore && (
             <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
-              <p className="text-red-400 text-sm">{error}</p>
+              <p className="text-red-400 text-base">{error}</p>
             </div>
           )}
 
           {/* Community Count Info */}
           <div className="bg-gray-800/50 rounded-lg p-4">
-            <p className="text-gray-300 text-sm">
+            <p className="text-gray-300 text-base">
               You have created {ownedCommunityCount} of {communityLimit === Infinity ? "unlimited" : communityLimit} allowed communit{communityLimit === 1 ? "y" : "ies"} 
               ({userPlan} plan)
             </p>
-            <p className="text-gray-400 text-xs mt-1">
+            <p className="text-gray-400 text-sm mt-1">
               {getPlanFeature(userPlan)}
             </p>
           </div>
