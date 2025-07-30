@@ -3,6 +3,86 @@ const { useState, useEffect } = React;
 
 const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
 
+// Loading Spinner Component
+const LoadingSpinner = ({ size = "md", text = "Loading..." }) => {
+  const sizeClasses = {
+    sm: "w-4 h-4",
+    md: "w-8 h-8", 
+    lg: "w-12 h-12",
+    xl: "w-16 h-16"
+  };
+  
+  return (
+    <div className="flex flex-col items-center justify-center p-8">
+      <div className={`${sizeClasses[size]} animate-spin rounded-full border-4 border-gray-700 border-t-blue-500`}></div>
+      <p className="text-gray-400 mt-4 text-lg">{text}</p>
+    </div>
+  );
+};
+
+// Loading Skeleton for Community Cards
+const CommunityCardSkeleton = () => (
+  <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden flex flex-col h-full animate-pulse">
+    <div className="h-48 bg-gray-700"></div>
+    <div className="p-6 flex flex-col flex-grow">
+      <div className="h-6 bg-gray-700 rounded mb-2"></div>
+      <div className="h-4 bg-gray-700 rounded mb-3 w-3/4"></div>
+      <div className="flex gap-2 mb-3">
+        <div className="h-6 bg-gray-700 rounded-full w-16"></div>
+        <div className="h-6 bg-gray-700 rounded-full w-20"></div>
+      </div>
+      <div className="h-4 bg-gray-700 rounded mb-2"></div>
+      <div className="h-4 bg-gray-700 rounded w-2/3"></div>
+      <div className="mt-auto pt-4">
+        <div className="h-12 bg-gray-700 rounded-lg"></div>
+      </div>
+    </div>
+  </div>
+);
+
+// Loading Skeleton for Carousel
+const CarouselSkeleton = () => (
+  <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-16 mt-24">
+    <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\\"60\\" height=\\"60\\" viewBox=\\"0 0 60 60\\" xmlns=\\"http://www.w3.org/2000/svg\\"%3E%3Cg fill=\\"none\\" fill-rule=\\"evenodd\\"%3E%3Cg fill=\\"%239C92AC\\" fill-opacity=\\"0.05\\"%3E%3Ccircle cx=\\"30\\" cy=\\"30\\" r=\\"2\\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'}}></div>
+    <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="text-center mb-8">
+        <div className="h-12 bg-gray-700 rounded mb-4 mx-auto w-96 animate-pulse"></div>
+        <div className="h-6 bg-gray-700 rounded mx-auto w-80 animate-pulse"></div>
+      </div>
+      
+      <div className="w-full flex justify-center items-center py-8 z-0">
+        <div className="relative max-w-4xl w-full mx-auto z-0 flex items-center justify-center">
+          <div className="relative bg-gray-800 rounded-3xl shadow-2xl pt-16 pb-10 px-8 flex flex-col items-center text-center border border-gray-700 z-10 w-[400px] md:w-[500px] min-h-[520px] md:min-h-[600px] justify-center animate-pulse">
+            <div className="w-56 h-56 md:w-64 md:h-64 bg-gray-700 rounded-2xl mb-6"></div>
+            <div className="h-8 bg-gray-700 rounded mb-2 w-3/4"></div>
+            <div className="flex gap-2 mb-3">
+              <div className="h-6 bg-gray-700 rounded-full w-16"></div>
+              <div className="h-6 bg-gray-700 rounded-full w-20"></div>
+            </div>
+            <div className="h-4 bg-gray-700 rounded mb-2 w-full"></div>
+            <div className="h-4 bg-gray-700 rounded w-2/3"></div>
+            <div className="h-12 bg-gray-700 rounded-full w-48 mt-4"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="bg-gray-800 rounded-lg p-4 border border-gray-700 shadow-lg animate-pulse">
+            <div className="flex items-center space-x-3">
+              <div className="bg-gray-700 p-2 rounded-lg w-12 h-12"></div>
+              <div>
+                <div className="h-8 bg-gray-700 rounded w-20 mb-2"></div>
+                <div className="h-4 bg-gray-700 rounded w-32"></div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 // HeroUI Pro Components
 const HeroSection = ({ children, className = "" }) => (
   <div className={`relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-16 ${className}`}>
@@ -391,17 +471,23 @@ function encodeCommunityId(communityId) {
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage }) => {
+const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage, isLoading = false }) => {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1); // 1 for next, -1 for prev
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setDirection(1);
-      setCurrent((prev) => (prev + 1) % communities.length);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, [communities]);
+    if (!isLoading && communities.length > 0) {
+      const interval = setInterval(() => {
+        setDirection(1);
+        setCurrent((prev) => (prev + 1) % communities.length);
+      }, 8000);
+      return () => clearInterval(interval);
+    }
+  }, [communities, isLoading]);
+
+  if (isLoading) {
+    return <CarouselSkeleton />;
+  }
 
   if (!communities.length) return null;
 
@@ -696,6 +782,7 @@ const CommunitySection = ({
   onNextPage,
   currentPage,
   totalCount,
+  isLoading = false,
 }) => {
   const [startIndex, setStartIndex] = useState(0);
   const maxIndex = Math.max(0, communities.length - cardsPerView);
@@ -719,22 +806,30 @@ const CommunitySection = ({
         
         {/* Community Cards Grid */}
         <div className="relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {communities
-              .slice(startIndex, startIndex + cardsPerView)
-              .map((community) => (
-                <CommunityCard
-                  key={community._id}
-                  community={community}
-                  isActive={community.isActive}
-                  actionText={buttonLabel}
-                  onAction={(community) => (window.location.href = `/community/${encodeCommunityId(community._id)}`)}
-                />
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: cardsPerView }).map((_, index) => (
+                <CommunityCardSkeleton key={index} />
               ))}
-          </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {communities
+                .slice(startIndex, startIndex + cardsPerView)
+                .map((community) => (
+                  <CommunityCard
+                    key={community._id}
+                    community={community}
+                    isActive={community.isActive}
+                    actionText={buttonLabel}
+                    onAction={(community) => (window.location.href = `/community/${encodeCommunityId(community._id)}`)}
+                  />
+                ))}
+            </div>
+          )}
           
           {/* Enhanced Navigation Arrows */}
-          {startIndex > 0 && (
+          {!isLoading && startIndex > 0 && (
             <button
               onClick={scrollPrev}
               className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-700 hover:bg-gray-600 text-white p-3 rounded-full shadow-lg transition-colors"
@@ -742,7 +837,7 @@ const CommunitySection = ({
               <ion-icon name="chevron-back-outline" class="text-xl"></ion-icon>
             </button>
           )}
-          {startIndex < maxIndex && (
+          {!isLoading && startIndex < maxIndex && (
             <button
               onClick={scrollNext}
               className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gray-700 hover:bg-gray-600 text-white p-3 rounded-full shadow-lg transition-colors"
@@ -753,7 +848,7 @@ const CommunitySection = ({
         </div>
         
         {/* Enhanced Pagination */}
-        {totalCount > cardsPerView && (
+        {!isLoading && totalCount > cardsPerView && (
           <div className="flex justify-center items-center mt-8 space-x-4">
             <button
               onClick={onPrevPage}
@@ -782,7 +877,7 @@ const CommunitySection = ({
         )}
         
         {/* Empty State */}
-        {communities.length === 0 && (
+        {!isLoading && communities.length === 0 && (
           <div className="text-center py-12">
             <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
               <i className="fa fa-users text-4xl text-gray-500 mb-4"></i>
@@ -805,6 +900,7 @@ const BrowseCommunities = ({
   onNextPage,
   currentPage,
   fetchAllCommunitiesPage,
+  isLoading = false,
 }) => {
   const [filteredCommunities, setFilteredCommunities] = useState(communities);
   const tags = ["all", "PC", "Xbox", "PlayStation"];
@@ -853,6 +949,7 @@ const BrowseCommunities = ({
           onNextPage={onNextPage}
           currentPage={currentPage + 1}
           totalCount={totalCount}
+          isLoading={isLoading}
         />
       </div>
     </div>
@@ -1761,11 +1858,17 @@ const App = () => {
   const [showCreateCommunityModal, setShowCreateCommunityModal] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "success", isVisible: false });
 
+  // Loading states for each section
+  const [isEliteLoading, setIsEliteLoading] = useState(true);
+  const [isUserLoading, setIsUserLoading] = useState(true);
+  const [isRecommendedLoading, setIsRecommendedLoading] = useState(true);
+  const [isAllCommunitiesLoading, setIsAllCommunitiesLoading] = useState(true);
+
+  // Lazy load elite communities immediately (most important)
   useEffect(() => {
-    // Fetch elite communities
-    axios
-      .get(`${API_URL}/api/v2/communities/elite?limit=5&page=0`)
-      .then((response) => {
+    const fetchEliteCommunities = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/v2/communities/elite?limit=5&page=0`);
         const communities = response.data.data
           .map((item) => ({
             _id: item._id,
@@ -1783,172 +1886,69 @@ const App = () => {
           .sort((a, b) => a.name.localeCompare(b.name));
         setEliteCommunities(communities);
         setEliteTotalCount(response.data.totalCount || 0);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error fetching elite communities:", error);
         setEliteCommunities([]);
         setEliteTotalCount(0);
-      });
+      } finally {
+        setIsEliteLoading(false);
+      }
+    };
 
-    // Fetch user communities
-    if (dbUser && dbUser._id) {
-      axios
-        .get(
-          `${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:approved&limit=3&page=1`
-        )
-        .then((response) => {
-          const communities = response.data.data || [];
-          setUserTotalCount(response.data.totalCount || 0);
-          const mappedCommunities = communities.map((item) => ({
-            _id: item._id,
-            name: item.name,
-            membersCount: item.membersCount,
-            isActive:
-              item._id === dbUser.user.lastAccessedCommunity?.communityID,
-            code: item._id,
-            imageLink:
-              item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
-                ? "/static/images/default-logo.png"
-                : item.imageLink || "/static/images/default-logo.png",
-          }));
-          setUserCommunities(mappedCommunities);
-        })
-        .catch((error) => {
-          console.error("Error fetching user communities:", error);
-          setUserCommunities([]);
-          setUserTotalCount(0);
-        });
-    }
-
-    // Fetch recommended communities
-    if (dbUser && dbUser._id) {
-      axios
-        .get(
-          `${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=3&page=0`
-        )
-        .then((response) => {
-          const communities = response.data.data.map((item) => ({
-            _id: item._id,
-            name: item.name,
-            promotionalText: item.promotionalText,
-            promotionalDescription: item.promotionalDescription,
-            tags: item.tags || [],
-            imageLink:
-              item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
-                ? "/static/images/default-logo.png"
-                : item.imageLink || "/static/images/default-logo.png",
-            membersCount: item.membersCount,
-            code: item._id,
-          }));
-          setRecommendedCommunities(communities);
-          setRecommendedTotalCount(response.data.totalCount || 0);
-        })
-        .catch((error) => {
-          console.error("Error fetching discover communities:", error);
-          setRecommendedCommunities([]);
-          setRecommendedTotalCount(0);
-        });
-    } else {
-      setRecommendedCommunities([]);
-      setRecommendedTotalCount(0);
-    }
-
-    axios
-      .get(`${API_URL}/api/v2/communities/tag/all?limit=4&page=0`)
-      .then((response) => {
-        const communities = response.data.data.map((item) => ({
-          _id: item._id,
-          name: item.name,
-          promotionalText: item.promotionalText,
-          promotionalDescription: item.promotionalDescription,
-          tags: item.tags || [],
-          imageLink:
-            item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
-              ? "/static/images/default-logo.png"
-              : item.imageLink || "/static/images/default-logo.png",
-          membersCount: item.membersCount,
-          code: item._id,
-        }));
-        setAllCommunities(communities);
-        setAllCommunitiesTotalCount(response.data.totalCount || 0);
-      })
-      .catch((error) => {
-        console.error("Error fetching browse communities:", error);
-        setAllCommunities([]);
-        setAllCommunitiesTotalCount(0);
-      });
-
-    // Listen for global event to open modal (for EJS link)
-    const handler = () => setShowCreateCommunityModal(true);
-    window.addEventListener(modalEventName, handler);
-    return () => window.removeEventListener(modalEventName, handler);
+    fetchEliteCommunities();
   }, []);
 
-  const fetchElitePage = (page) => {
-    axios
-      .get(`${API_URL}/api/v2/communities/elite?limit=5&page=${page}`)
-      .then((response) => {
-        const communities = response.data.data
-          .map((item) => ({
-            _id: item._id,
-            name: item.community?.name,
-            promotionalText: item.community?.promotionalText,
-            promotionalDescription: item.community?.promotionalDescription,
-            tags: item.community?.tags || [],
-            imageLink:
-              item.community?.imageLink && item.community?.imageLink.includes("file:///")
-                ? "/static/images/default-logo.png"
-                : item.community?.imageLink || "/static/images/default-logo.png",
-            membersCount: item.community?.membersCount,
-            subscription: item.community?.subscription || item.subscription,
-            code: item._id,
-          }))
-          .sort((a, b) => a.name.localeCompare(b.name));
-        setEliteCommunities(communities);
-        setElitePage(page);
-      })
-      .catch((error) => {
-        console.error("Error fetching elite communities page:", error);
-        setEliteCommunities([]);
-      });
-  };
+  // Lazy load user communities after a short delay
+  useEffect(() => {
+    if (!dbUser || !dbUser._id) {
+      setIsUserLoading(false);
+      return;
+    }
 
-  const fetchUserPage = (page) => {
-    axios
-      .get(
-        `${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:approved&limit=3&page=${page}`
-      )
-      .then((response) => {
+    const timer = setTimeout(async () => {
+      try {
+        const response = await axios.get(
+          `${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:approved&limit=3&page=1`
+        );
         const communities = response.data.data || [];
         setUserTotalCount(response.data.totalCount || 0);
         const mappedCommunities = communities.map((item) => ({
           _id: item._id,
           name: item.name,
           membersCount: item.membersCount,
-          isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
-          subscription: item.subscription,
+          isActive:
+            item._id === dbUser.user.lastAccessedCommunity?.communityID,
           code: item._id,
           imageLink:
-            item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
+            item.imageLink && item.imageLink.includes("file:///")
               ? "/static/images/default-logo.png"
               : item.imageLink || "/static/images/default-logo.png",
         }));
         setUserCommunities(mappedCommunities);
-        setUserPage(page);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error fetching user communities:", error);
         setUserCommunities([]);
         setUserTotalCount(0);
-      });
-  };
+      } finally {
+        setIsUserLoading(false);
+      }
+    }, 500); // Small delay to prioritize elite communities
 
-  const fetchRecommendedPage = (page) => {
-    axios
-      .get(
-        `${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=3&page=${page}`
-      )
-      .then((response) => {
+    return () => clearTimeout(timer);
+  }, [dbUser]);
+
+  // Lazy load recommended communities after user communities
+  useEffect(() => {
+    if (!dbUser || !dbUser._id) {
+      setIsRecommendedLoading(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const response = await axios.get(
+          `${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=3&page=0`
+        );
         const communities = response.data.data.map((item) => ({
           _id: item._id,
           name: item.name,
@@ -1956,26 +1956,31 @@ const App = () => {
           promotionalDescription: item.promotionalDescription,
           tags: item.tags || [],
           imageLink:
-            item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
+            item.imageLink && item.imageLink.includes("file:///")
               ? "/static/images/default-logo.png"
               : item.imageLink || "/static/images/default-logo.png",
           membersCount: item.membersCount,
-          subscription: item.subscription,
           code: item._id,
         }));
         setRecommendedCommunities(communities);
-        setRecommendedPage(page);
-      })
-      .catch((error) => {
-        console.error("Error fetching discover communities page:", error);
+        setRecommendedTotalCount(response.data.totalCount || 0);
+      } catch (error) {
+        console.error("Error fetching discover communities:", error);
         setRecommendedCommunities([]);
-      });
-  };
+        setRecommendedTotalCount(0);
+      } finally {
+        setIsRecommendedLoading(false);
+      }
+    }, 1000); // Delay to prioritize other sections
 
-  const fetchAllCommunitiesPage = (tag, page) => {
-    axios
-      .get(`${API_URL}/api/v2/communities/tag/${tag}?limit=4&page=${page}`)
-      .then((response) => {
+    return () => clearTimeout(timer);
+  }, [dbUser]);
+
+  // Lazy load all communities last (least priority)
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/v2/communities/tag/all?limit=4&page=0`);
         const communities = response.data.data.map((item) => ({
           _id: item._id,
           name: item.name,
@@ -1983,22 +1988,152 @@ const App = () => {
           promotionalDescription: item.promotionalDescription,
           tags: item.tags || [],
           imageLink:
-            item.imageLink && item.imageLink.includes("file:///") // Check for file:/// in imageLink
+            item.imageLink && item.imageLink.includes("file:///")
               ? "/static/images/default-logo.png"
               : item.imageLink || "/static/images/default-logo.png",
           membersCount: item.membersCount,
-          subscription: item.subscription,
           code: item._id,
         }));
         setAllCommunities(communities);
         setAllCommunitiesTotalCount(response.data.totalCount || 0);
-        setAllCommunitiesPage(page);
-      })
-      .catch((error) => {
-        console.error("Error fetching browse communities page:", error);
+      } catch (error) {
+        console.error("Error fetching browse communities:", error);
         setAllCommunities([]);
         setAllCommunitiesTotalCount(0);
-      });
+      } finally {
+        setIsAllCommunitiesLoading(false);
+      }
+    }, 1500); // Longer delay for lowest priority section
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Listen for global event to open modal (for EJS link)
+  useEffect(() => {
+    const handler = () => setShowCreateCommunityModal(true);
+    window.addEventListener(modalEventName, handler);
+    return () => window.removeEventListener(modalEventName, handler);
+  }, []);
+
+  const fetchElitePage = async (page) => {
+    setIsEliteLoading(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/v2/communities/elite?limit=5&page=${page}`);
+      const communities = response.data.data
+        .map((item) => ({
+          _id: item._id,
+          name: item.community?.name,
+          promotionalText: item.community?.promotionalText,
+          promotionalDescription: item.community?.promotionalDescription,
+          tags: item.community?.tags || [],
+          imageLink:
+            item.community?.imageLink && item.community?.imageLink.includes("file:///")
+              ? "/static/images/default-logo.png"
+              : item.community?.imageLink || "/static/images/default-logo.png",
+          membersCount: item.community?.membersCount,
+          subscription: item.community?.subscription || item.subscription,
+          code: item._id,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      setEliteCommunities(communities);
+      setElitePage(page);
+    } catch (error) {
+      console.error("Error fetching elite communities page:", error);
+      setEliteCommunities([]);
+    } finally {
+      setIsEliteLoading(false);
+    }
+  };
+
+  const fetchUserPage = async (page) => {
+    setIsUserLoading(true);
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:approved&limit=3&page=${page}`
+      );
+      const communities = response.data.data || [];
+      setUserTotalCount(response.data.totalCount || 0);
+      const mappedCommunities = communities.map((item) => ({
+        _id: item._id,
+        name: item.name,
+        membersCount: item.membersCount,
+        isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
+        subscription: item.subscription,
+        code: item._id,
+        imageLink:
+          item.imageLink && item.imageLink.includes("file:///")
+            ? "/static/images/default-logo.png"
+            : item.imageLink || "/static/images/default-logo.png",
+      }));
+      setUserCommunities(mappedCommunities);
+      setUserPage(page);
+    } catch (error) {
+      console.error("Error fetching user communities:", error);
+      setUserCommunities([]);
+      setUserTotalCount(0);
+    } finally {
+      setIsUserLoading(false);
+    }
+  };
+
+  const fetchRecommendedPage = async (page) => {
+    setIsRecommendedLoading(true);
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=3&page=${page}`
+      );
+      const communities = response.data.data.map((item) => ({
+        _id: item._id,
+        name: item.name,
+        promotionalText: item.promotionalText,
+        promotionalDescription: item.promotionalDescription,
+        tags: item.tags || [],
+        imageLink:
+          item.imageLink && item.imageLink.includes("file:///")
+            ? "/static/images/default-logo.png"
+            : item.imageLink || "/static/images/default-logo.png",
+        membersCount: item.membersCount,
+        subscription: item.subscription,
+        code: item._id,
+      }));
+      setRecommendedCommunities(communities);
+      setRecommendedPage(page);
+    } catch (error) {
+      console.error("Error fetching discover communities page:", error);
+      setRecommendedCommunities([]);
+    } finally {
+      setIsRecommendedLoading(false);
+    }
+  };
+
+  const fetchAllCommunitiesPage = async (tag, page) => {
+    setIsAllCommunitiesLoading(true);
+    try {
+      const response = await axios.get(`${API_URL}/api/v2/communities/tag/${tag}?limit=4&page=${page}`);
+      const communities = response.data.data.map((item) => ({
+        _id: item._id,
+        name: item.name,
+        promotionalText: item.promotionalText,
+        promotionalDescription: item.promotionalDescription,
+        tags: item.tags || [],
+        imageLink:
+          item.imageLink && item.imageLink.includes("file:///")
+            ? "/static/images/default-logo.png"
+            : item.imageLink || "/static/images/default-logo.png",
+        membersCount: item.membersCount,
+        subscription: item.subscription,
+        code: item._id,
+      }));
+      setAllCommunities(communities);
+      setAllCommunitiesTotalCount(response.data.totalCount || 0);
+      setAllCommunitiesPage(page);
+    } catch (error) {
+      console.error("Error fetching browse communities page:", error);
+      setAllCommunities([]);
+      setAllCommunitiesTotalCount(0);
+    } finally {
+      setIsAllCommunitiesLoading(false);
+    }
   };
 
   const handleRecommendedPrevPage = () => {
@@ -2072,15 +2207,14 @@ const App = () => {
           
           {/* Elite Communities Section */}
           <div id="elite-communities">
-            {eliteCommunities.length > 0 && (
-              <Carousel
-                communities={eliteCommunities}
-                totalCount={eliteTotalCount}
-                onPrev={handleElitePrevPage}
-                onNext={handleEliteNextPage}
-                currentPage={elitePage}
-              />
-            )}
+            <Carousel
+              communities={eliteCommunities}
+              totalCount={eliteTotalCount}
+              onPrev={handleElitePrevPage}
+              onNext={handleEliteNextPage}
+              currentPage={elitePage}
+              isLoading={isEliteLoading}
+            />
           </div>
           
           {/* Horizontal Ad after Elite */}
@@ -2097,7 +2231,7 @@ const App = () => {
           
           {/* Your Communities Section */}
           <div id="your-communities">
-            {dbUser && dbUser._id && (
+            {dbUser && dbUser._id ? (
               <div className="px-4 py-8">
                 <CommunitySection
                   title="Your Communities"
@@ -2109,7 +2243,22 @@ const App = () => {
                   onNextPage={handleUserNextPage}
                   currentPage={userPage}
                   totalCount={userTotalCount}
+                  isLoading={isUserLoading}
                 />
+              </div>
+            ) : (
+              <div className="px-4 py-8">
+                <div className="text-center py-12">
+                  <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
+                    <i className="fa fa-sign-in-alt text-4xl text-gray-500 mb-4"></i>
+                    <h3 className="text-xl font-semibold text-white mb-2">Sign In to See Your Communities</h3>
+                    <p className="text-gray-400 mb-4">Join communities and they'll appear here</p>
+                    <a href="/login-civ?redirect=/communities" className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105">
+                      <i className="fa fa-sign-in-alt mr-2"></i>
+                      Sign In
+                    </a>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -2123,7 +2272,7 @@ const App = () => {
           
           {/* Discover Communities Section */}
           <div id="discover-communities">
-            {dbUser && dbUser._id && (
+            {dbUser && dbUser._id ? (
               <div className="px-4 py-8">
                 <CommunitySection
                   title="Discover Communities"
@@ -2135,7 +2284,22 @@ const App = () => {
                   onNextPage={handleRecommendedNextPage}
                   currentPage={recommendedPage + 1}
                   totalCount={recommendedTotalCount}
+                  isLoading={isRecommendedLoading}
                 />
+              </div>
+            ) : (
+              <div className="px-4 py-8">
+                <div className="text-center py-12">
+                  <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
+                    <i className="fa fa-compass text-4xl text-gray-500 mb-4"></i>
+                    <h3 className="text-xl font-semibold text-white mb-2">Sign In for Personalized Recommendations</h3>
+                    <p className="text-gray-400 mb-4">Get community recommendations based on your interests</p>
+                    <a href="/login-civ?redirect=/communities" className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105">
+                      <i className="fa fa-sign-in-alt mr-2"></i>
+                      Sign In
+                    </a>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -2163,6 +2327,7 @@ const App = () => {
               onNextPage={handleAllCommunitiesNextPage}
               currentPage={allCommunitiesPage}
               fetchAllCommunitiesPage={fetchAllCommunitiesPage}
+              isLoading={isAllCommunitiesLoading}
             />
           </div>
           
