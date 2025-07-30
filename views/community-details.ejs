@@ -162,11 +162,95 @@
         <% } %>
       </div>
     </nav>
-    <!-- Back Link -->
-    <div class="max-w-3xl mx-auto px-4 mt-6 mb-2">
-      <a href="/communities" class="inline-block text-blue-400 hover:underline text-base mb-4">← Back to Communities</a>
-    </div>
-    <div class="max-w-3xl mx-auto py-8 px-4">
+    <!-- Main Layout with Side Ads -->
+    <div class="flex">
+      <!-- Left Side Ad -->
+      <div class="hidden lg:block w-64 p-4 space-y-4">
+        <div class="bg-gradient-to-b from-blue-900 to-purple-900 rounded-lg p-4 border border-blue-700 shadow-lg sticky top-24">
+          <div class="text-center">
+            <i class="fa fa-star text-yellow-400 text-2xl mb-2"></i>
+            <h4 class="text-white font-semibold text-sm mb-1">Premium Feature</h4>
+            <p class="text-blue-200 text-xs mb-3">Upgrade to Pro for advanced features</p>
+            <button 
+              onclick="showComingSoon()"
+              class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-full transition-colors"
+            >
+              Learn More
+            </button>
+          </div>
+        </div>
+        <div class="bg-gradient-to-b from-green-900 to-blue-900 rounded-lg p-4 border border-green-700 shadow-lg sticky top-96">
+          <div class="text-center">
+            <i class="fa fa-rocket text-yellow-400 text-2xl mb-2"></i>
+            <h4 class="text-white font-semibold text-sm mb-1">Boost Community</h4>
+            <p class="text-green-200 text-xs mb-3">Get featured placement</p>
+            <button 
+              onclick="showComingSoon()"
+              class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded-full transition-colors"
+            >
+              Upgrade Now
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Main Content -->
+      <div class="flex-1">
+        <!-- Back Link -->
+        <div class="px-4 mt-6 mb-2">
+          <a href="/communities" class="inline-block text-blue-400 hover:underline text-lg mb-4">← Back to Communities</a>
+        </div>
+        
+        <!-- Page Navigation Component -->
+        <div class="px-4 mb-6">
+          <div class="bg-gray-800 border border-gray-700 rounded-lg shadow-lg">
+            <div class="p-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xl font-semibold text-white flex items-center">
+                  <i class="fa fa-compass text-blue-400 mr-2"></i>
+                  Quick Navigation
+                </h3>
+                <span class="text-base text-gray-400">Jump to section</span>
+              </div>
+              
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <button
+                  onclick="scrollToSection('community-overview')"
+                  class="flex flex-col items-center p-3 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
+                >
+                  <i class="fa fa-info-circle text-2xl mb-1"></i>
+                  <span class="text-base font-medium">Overview</span>
+                </button>
+                
+                <button
+                  onclick="scrollToSection('community-actions')"
+                  class="flex flex-col items-center p-3 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
+                >
+                  <i class="fa fa-cogs text-2xl mb-1"></i>
+                  <span class="text-base font-medium">Actions</span>
+                </button>
+                
+                <button
+                  onclick="scrollToSection('departments-section')"
+                  class="flex flex-col items-center p-3 bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
+                >
+                  <i class="fa fa-building text-2xl mb-1"></i>
+                  <span class="text-base font-medium">Departments</span>
+                </button>
+                
+                <button
+                  onclick="scrollToSection('events-section')"
+                  class="flex flex-col items-center p-3 bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
+                >
+                  <i class="fa fa-calendar text-2xl mb-1"></i>
+                  <span class="text-base font-medium">Events</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="py-8 px-4">
       <% if (community.community) { %>
         <% 
           let isMemberApproved = false;
@@ -196,433 +280,528 @@
             });
           }
         %>
+        
+        <!-- Community Overview Section -->
+        <div id="community-overview" class="card text-center mb-8">
+          <img src="<%= community.community.imageLink || '/static/images/default-logo.png' %>" alt="<%= community.community.name %>" class="w-5/6 max-w-96 h-96 mx-auto rounded-t-lg object-cover mb-6" />
+          <h1 class="text-5xl font-bold mb-4">
+            <%= community.community.name %>
+            <% if ((['elite','premium','standard'].includes(community.community.subscription?.plan)) && community.community.subscription?.active) { %>
+              <svg viewBox="0 0 24 24" class="w-8 h-8 inline-block ml-3 align-middle" style="vertical-align: middle;">
+                <circle cx="12" cy="12" r="10" fill="#eab308" />
+                <path d="M8 12.5l3 3 5-5" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            <% } %>
+          </h1>
+          <div class="flex flex-wrap justify-center gap-3 mb-4">
+            <% if (community.community.tags && community.community.tags.length) { %>
+              <% community.community.tags.forEach(function(tag) { %>
+                <span class="inline-block bg-gray-700 text-gray-200 text-lg px-4 py-2 rounded-full"><%= tag %></span>
+              <% }); %>
+            <% } %>
+          </div>
+          <p class="text-gray-300 mb-4 text-xl"><%= community.community.promotionalText %></p>
+          <p class="text-gray-400 mb-4 text-lg"><%= community.community.promotionalDescription %></p>
+          <p class="text-gray-400 mb-4 text-lg"><%= community.community.description %></p>
+          <p class="text-gray-400 mb-4 text-xl font-medium"><%= community.community.membersCount %> Members</p>
+          <div class="flex flex-wrap justify-center gap-4 mb-4">
+            <% if (community.community.links && community.community.links.length) { %>
+              <% community.community.links.forEach(function(link) { %>
+                <a href="<%= link.url %>" target="_blank" class="text-blue-400 hover:underline text-lg">🔗 <%= link.label %></a>
+              <% }); %>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- HeroUI Pro Stats Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg">
+            <div class="flex items-center space-x-4">
+              <div class="bg-blue-600 p-3 rounded-lg">
+                <i class="fa fa-users text-white text-2xl"></i>
+              </div>
+              <div>
+                <div class="text-3xl font-bold text-white"><%= community.community.membersCount %></div>
+                <div class="text-gray-400 text-lg">Total Members</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg">
+            <div class="flex items-center space-x-4">
+              <div class="bg-green-600 p-3 rounded-lg">
+                <i class="fa fa-building text-white text-2xl"></i>
+              </div>
+              <div>
+                <div class="text-3xl font-bold text-white"><%= departments ? departments.length : 0 %></div>
+                <div class="text-gray-400 text-lg">Departments</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg">
+            <div class="flex items-center space-x-4">
+              <div class="bg-purple-600 p-3 rounded-lg">
+                <i class="fa fa-calendar text-white text-2xl"></i>
+              </div>
+              <div>
+                <div class="text-3xl font-bold text-white"><%= community.community.events ? community.community.events.length : 0 %></div>
+                <div class="text-gray-400 text-lg">Events</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ad Banner Section -->
+        <div class="bg-gradient-to-r from-blue-900 via-purple-900 to-blue-900 rounded-lg p-6 border border-blue-700 shadow-lg mb-8">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <i class="fa fa-rocket text-yellow-400 text-3xl"></i>
+              <div>
+                <h4 class="text-white font-semibold text-xl">Boost Your Community</h4>
+                <p class="text-blue-200 text-lg">Get featured placement and premium features</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-3">
+              <button 
+                onclick="showComingSoon()"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors text-lg font-semibold"
+              >
+                Upgrade Now
+              </button>
+            </div>
+          </div>
+        </div>
+
         <% if (user && community.community && !isMemberApproved && !isMemberPending) { %>
-          <button id="requestJoinBtn" onclick="openRequestJoinModal()" class="bg-blue-600 text-white px-6 py-2 rounded-full font-bold shadow hover:bg-blue-700 transition mb-4">
-            Request to Join
-          </button>
+          <div class="text-center mb-6">
+            <button id="requestJoinBtn" onclick="openRequestJoinModal()" class="bg-blue-600 text-white px-8 py-4 rounded-full font-bold shadow hover:bg-blue-700 transition text-xl">
+              Request to Join
+            </button>
+          </div>
         <% } %>
+        
         <% let isOwner = false;
            if (user && user._doc && community.community && community.community.ownerID) {
              isOwner = String(community.community.ownerID) === String(user._doc._id);
            }
         %>
         <% if (isMemberApproved && memberSinceYear) { %>
-          <div class="mb-4 flex items-center justify-between">
-            <div class="text-green-400 font-semibold flex items-center text-lg">
-              <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <div class="mb-6 flex items-center justify-between">
+            <div class="text-green-400 font-semibold flex items-center text-xl">
+              <svg class="w-7 h-7 mr-3" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
               </svg>
               Member since '<%= memberSinceYear %>
             </div>
             <% if (isOwner) { %>
-              <button onclick="openOwnerCannotLeaveModal()" class="bg-gray-500 text-white px-4 py-2 rounded-full font-semibold shadow cursor-not-allowed opacity-60" style="pointer-events:auto;">
+              <button onclick="openOwnerCannotLeaveModal()" class="bg-gray-500 text-white px-6 py-3 rounded-full font-semibold shadow cursor-not-allowed opacity-60 text-lg" style="pointer-events:auto;">
                 Leave Community
               </button>
             <% } else { %>
-              <button onclick="openLeaveCommunityModal()" class="bg-red-600 text-white px-4 py-2 rounded-full font-semibold shadow hover:bg-red-700 transition">
+              <button onclick="openLeaveCommunityModal()" class="bg-red-600 text-white px-6 py-3 rounded-full font-semibold shadow hover:bg-red-700 transition text-lg">
                 Leave Community
               </button>
             <% } %>
           </div>
         <% } %>
         <% if (isMemberPending) { %>
-          <div class="mb-4 text-yellow-400 font-semibold text-lg">Your request to join is pending approval.</div>
+          <div class="mb-6 text-yellow-400 font-semibold text-xl">Your request to join is pending approval.</div>
         <% } %>
-        <div class="card text-center">
-          <img src="<%= community.community.imageLink || '/static/images/default-logo.png' %>" alt="<%= community.community.name %>" class="w-5/6 h-1/3 mx-auto rounded-t-lg object-cover mb-4" />
-          <h1 class="text-4xl font-bold mb-3">
-            <%= community.community.name %>
-            <% if ((['elite','premium','standard'].includes(community.community.subscription?.plan)) && community.community.subscription?.active) { %>
-              <svg viewBox="0 0 24 24" class="w-7 h-7 inline-block ml-2 align-middle" style="vertical-align: middle;">
-                <circle cx="12" cy="12" r="10" fill="#eab308" />
-                <path d="M8 12.5l3 3 5-5" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+
+        <!-- Community Actions Section -->
+        <div id="community-actions" class="card mb-8">
+          <h3 class="text-2xl font-semibold mb-6 text-center">Community Actions</h3>
+          <div class="flex justify-center space-x-6">
+            <button onclick="openPromoteModal()" class="flex flex-col items-center p-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+              <i class="fa-solid fa-bullhorn w-8 h-8 mb-3 text-2xl"></i>
+              <span class="text-lg font-medium">Promote</span>
+            </button>
+            
+            <%
+              let canManageSettings = false;
+              const userId = user && user._doc ? String(user._doc._id) : null;
+              if (userId && community.community && Array.isArray(community.community.roles)) {
+                community.community.roles.forEach(function(role) {
+                  if (Array.isArray(role.members) && role.members.includes(userId)) {
+                    if (Array.isArray(role.permissions)) {
+                      role.permissions.forEach(function(perm) {
+                        if (
+                          (perm.name === "administrator" && perm.enabled === true) ||
+                          (perm.name === "manage community settings" && perm.enabled === true)
+                        ) {
+                          canManageSettings = true;
+                        }
+                      });
+                    }
+                  }
+                });
+              }
+            %>
+
+            <% if (canManageSettings) { %>
+              <button onclick="openSettingsModal()" class="flex flex-col items-center p-6 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-gear w-8 h-8 mb-3 text-2xl"></i>
+                <span class="text-lg font-medium">Settings</span>
+              </button>
+            <% } else { %>
+              <button onclick="openNoSettingsPermissionModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors text-lg" style="pointer-events:auto;">
+                <i class="fa-solid fa-gear w-8 h-8 mb-3 text-2xl"></i>
+                <span class="text-lg font-medium">Settings</span>
+              </button>
             <% } %>
-          </h1>
-          <div class="flex flex-wrap justify-center gap-2 mb-3">
-            <% if (community.community.tags && community.community.tags.length) { %>
-              <% community.community.tags.forEach(function(tag) { %>
-                <span class="inline-block bg-gray-700 text-gray-200 text-sm px-3 py-1 rounded-full"><%= tag %></span>
-              <% }); %>
+            
+            <%
+              // Permission logic for managing members (invite)
+              let canManageMembers = false;
+              if (userId && community.community && Array.isArray(community.community.roles)) {
+                community.community.roles.forEach(function(role) {
+                  if (Array.isArray(role.members) && role.members.includes(userId)) {
+                    if (Array.isArray(role.permissions)) {
+                      role.permissions.forEach(function(perm) {
+                        if (
+                          (perm.name === "administrator" && perm.enabled === true) ||
+                          (perm.name === "manage members" && perm.enabled === true)
+                        ) {
+                          canManageMembers = true;
+                        }
+                      });
+                    }
+                  }
+                });
+              }
+            %>
+            <% if (canManageMembers) { %>
+              <button onclick="openInviteModal()" class="flex flex-col items-center p-6 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
+                <span class="text-lg font-medium">Invite</span>
+              </button>
+            <% } else { %>
+              <button onclick="openNoInvitePermissionModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors text-lg" style="pointer-events:auto;">
+                <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
+                <span class="text-lg font-medium">Invite</span>
+              </button>
             <% } %>
-          </div>
-          <p class="text-gray-300 mb-3 text-lg"><%= community.community.promotionalText %></p>
-          <p class="text-gray-400 mb-4 text-base"><%= community.community.promotionalDescription %></p>
-          <p class="text-gray-400 mb-3 text-base"><%= community.community.description %></p>
-          <p class="text-gray-400 mb-4 text-lg font-medium"><%= community.community.membersCount %> Members</p>
-          <div class="flex flex-wrap justify-center gap-4 mb-4">
-            <% if (community.community.links && community.community.links.length) { %>
-              <% community.community.links.forEach(function(link) { %>
-                <a href="<%= link.url %>" target="_blank" class="text-blue-400 hover:underline">🔗 <%= link.label %></a>
-              <% }); %>
-            <% } %>
+            <button onclick="copyCommunityUrl()" class="flex flex-col items-center p-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">
+              <i class="fa-solid fa-share-nodes w-8 h-8 mb-3 text-2xl"></i>
+              <span class="text-lg font-medium">Share</span>
+            </button>
           </div>
         </div>
-        <% if (isMemberApproved) { %>
-          <div class="card mb-6">
-            <h3 class="text-lg font-semibold mb-4 text-center">Community Actions</h3>
-            <div class="flex justify-center space-x-4">
-              <button onclick="openPromoteModal()" class="flex flex-col items-center p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-                <i class="fa-solid fa-bullhorn w-6 h-6 mb-2 text-xl"></i>
-                <span class="text-sm font-medium">Promote</span>
+          
+        <%
+          // Permission logic for managing departments
+          let canManageDepartments = false;
+          if (userId && community.community && Array.isArray(community.community.roles)) {
+            community.community.roles.forEach(function(role) {
+              if (Array.isArray(role.members) && role.members.includes(userId)) {
+                if (Array.isArray(role.permissions)) {
+                  role.permissions.forEach(function(perm) {
+                    if (
+                      (perm.name === "administrator" && perm.enabled === true) ||
+                      (perm.name === "manage departments" && perm.enabled === true)
+                    ) {
+                      canManageDepartments = true;
+                    }
+                  });
+                }
+              }
+            });
+          }
+        %>
+        
+        <!-- Departments Section -->
+        <div id="departments-section" class="card">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-3xl font-semibold">Departments</h2>
+            <% if (canManageDepartments) { %>
+              <button onclick="openCreateDepartmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold shadow transition flex items-center text-lg">
+                <i class="fa fa-plus mr-3"></i> Create Department
               </button>
-              
-              <%
-                let canManageSettings = false;
-                const userId = user && user._doc ? String(user._doc._id) : null;
+            <% } else { %>
+              <button onclick="openNoDepartmentPermissionModal()" class="bg-gray-500 text-white px-6 py-3 rounded-full font-semibold shadow opacity-60 cursor-not-allowed flex items-center text-lg" style="pointer-events:auto;">
+                <i class="fa fa-plus mr-3"></i> Create Department
+              </button>
+            <% } %>
+          </div>
+          <% if (departments && departments.length) { %>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <% departments.forEach(function(dept) { 
+                var templateName = dept.template && dept.template.name ? dept.template.name : '';
+                var approvalRequired = dept.approvalRequired;
+                var members = Array.isArray(dept.members) ? dept.members : [];
+                var isMember = members.some(function(m) { return m.userID === userId && m.status === 'approved'; });
+                var isAdmin = false;
                 if (userId && community.community && Array.isArray(community.community.roles)) {
                   community.community.roles.forEach(function(role) {
                     if (Array.isArray(role.members) && role.members.includes(userId)) {
                       if (Array.isArray(role.permissions)) {
                         role.permissions.forEach(function(perm) {
-                          if (
-                            (perm.name === "administrator" && perm.enabled === true) ||
-                            (perm.name === "manage community settings" && perm.enabled === true)
-                          ) {
-                            canManageSettings = true;
+                          if (perm.name === "administrator" && perm.enabled === true) {
+                            isAdmin = true;
                           }
                         });
                       }
                     }
                   });
                 }
-              %>
-
-              <% if (canManageSettings) { %>
-                <button onclick="openSettingsModal()" class="flex flex-col items-center p-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
-                  <i class="fa-solid fa-gear w-6 h-6 mb-2 text-xl"></i>
-                  <span class="text-sm font-medium">Settings</span>
-                </button>
-              <% } else { %>
-                <button onclick="openNoSettingsPermissionModal()" class="flex flex-col items-center p-4 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors" style="pointer-events:auto;">
-                  <i class="fa-solid fa-gear w-6 h-6 mb-2 text-xl"></i>
-                  <span class="text-sm font-medium">Settings</span>
-                </button>
-              <% } %>
-              
-              <%
-                // Permission logic for managing members (invite)
-                let canManageMembers = false;
-                if (userId && community.community && Array.isArray(community.community.roles)) {
-                  community.community.roles.forEach(function(role) {
-                    if (Array.isArray(role.members) && role.members.includes(userId)) {
-                      if (Array.isArray(role.permissions)) {
-                        role.permissions.forEach(function(perm) {
-                          if (
-                            (perm.name === "administrator" && perm.enabled === true) ||
-                            (perm.name === "manage members" && perm.enabled === true)
-                          ) {
-                            canManageMembers = true;
-                          }
-                        });
-                      }
-                    }
-                  });
+                var canAccess = isAdmin || !approvalRequired || isMember;
+                // Determine dashboard URL
+                var dashboardUrl = '';
+                var lowerTemplate = templateName.toLowerCase();
+                if (lowerTemplate.includes('civilian')) {
+                  dashboardUrl = `/civ-dashboard?dept=${encodeURIComponent(dept.name)}&d=${dept._id}`;
+                } else if (lowerTemplate.includes('police')) {
+                  dashboardUrl = `/police-dashboard?dept=${encodeURIComponent(dept.name)}&d=${dept._id}`;
+                } else if (lowerTemplate.includes('fire') || lowerTemplate.includes('ems')) {
+                  dashboardUrl = `/ems-dashboard?dept=${encodeURIComponent(dept.name)}&d=${dept._id}`;
+                } else if (lowerTemplate.includes('dispatch')) {
+                  dashboardUrl = `/dispatch-dashboard?dept=${encodeURIComponent(dept.name)}&d=${dept._id}`;
                 }
               %>
-              <% if (canManageMembers) { %>
-                <button onclick="openInviteModal()" class="flex flex-col items-center p-4 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-                  <i class="fa-solid fa-user-plus w-6 h-6 mb-2 text-xl"></i>
-                  <span class="text-sm font-medium">Invite</span>
-                </button>
-              <% } else { %>
-                <button onclick="openNoInvitePermissionModal()" class="flex flex-col items-center p-4 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors" style="pointer-events:auto;">
-                  <i class="fa-solid fa-user-plus w-6 h-6 mb-2 text-xl"></i>
-                  <span class="text-sm font-medium">Invite</span>
-                </button>
-              <% } %>
-              <button onclick="copyCommunityUrl()" class="flex flex-col items-center p-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">
-                <i class="fa-solid fa-share-nodes w-6 h-6 mb-2 text-xl"></i>
-                <span class="text-sm font-medium">Share</span>
+                <div class="relative block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-6 border border-gray-700 <%= canAccess ? 'hover:border-blue-500 cursor-pointer' : 'opacity-70 cursor-not-allowed' %>"
+                  <%- canAccess && dashboardUrl ? `onclick="navigateToDepartment('${dept._id}', '${dept.name.replace(/'/g, "\\'")}', '${templateName.replace(/'/g, "\\'")}')"` : '' %>>
+                  <% if (canManageDepartments) { %>
+                    <button class="absolute top-3 right-3 text-gray-400 hover:text-blue-400 z-10 bg-gray-900 bg-opacity-70 rounded-full p-2" title="Edit Department" onclick="event.stopPropagation(); openEditDepartmentModal('<%= dept._id %>');">
+                      <i class="fa fa-pencil-alt text-lg"></i>
+                    </button>
+                  <% } %>
+                  <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-40 object-cover rounded mb-4" />
+                  <div class="font-bold text-2xl text-white mb-3"><%= dept.name %></div>
+                  <div class="text-gray-400 text-lg mb-3"><%= dept.description || '' %></div>
+                  <div class="text-base text-gray-500"><%= dept.template && dept.template.name ? dept.template.name : '' %></div>
+                  <% if (!canAccess) { %>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                      <span class="bg-black bg-opacity-60 text-white text-lg px-4 py-2 rounded">Members Only</span>
+                    </div>
+                  <% } %>
+                </div>
+              <% }); %>
+            </div>
+            <div class="flex justify-center items-center gap-4 mt-6">
+              <form method="get" style="display:inline;">
+                <input type="hidden" name="deptPage" value="<%= deptPagination.currentPage - 1 %>" />
+                <button type="submit" class="px-6 py-3 rounded bg-gray-700 text-white font-semibold text-lg" <% if (deptPagination.currentPage <= 1) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Prev</button>
+              </form>
+              <span class="text-gray-300 text-lg">Page <%= deptPagination.currentPage %> of <%= deptPagination.totalPages %></span>
+              <form method="get" style="display:inline;">
+                <input type="hidden" name="deptPage" value="<%= deptPagination.currentPage + 1 %>" />
+                <button type="submit" class="px-6 py-3 rounded bg-gray-700 text-white font-semibold text-lg" <% if (deptPagination.currentPage >= deptPagination.totalPages) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Next</button>
+              </form>
+            </div>
+          <% } else { %>
+            <p class="text-gray-400 text-lg">No departments listed.</p>
+          <% } %>
+        </div>
+        
+        <!-- Ad Banner Section -->
+        <div class="bg-gradient-to-r from-green-900 via-blue-900 to-green-900 rounded-lg p-6 border border-green-700 shadow-lg my-8">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <i class="fa fa-star text-yellow-400 text-3xl"></i>
+              <div>
+                <h4 class="text-white font-semibold text-xl">Premium Features</h4>
+                <p class="text-green-200 text-lg">Unlock advanced community management tools</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-3">
+              <button 
+                onclick="showComingSoon()"
+                class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors text-lg font-semibold"
+              >
+                Learn More
               </button>
             </div>
+          </div>
+        </div>
+        
+                 <!-- Events Section -->
+         <div id="events-section" class="card">
+           <%
+             // Permission logic for managing events (EJS, like departments)
+             let canManageEvents = false;
+             if (userId && community.community && Array.isArray(community.community.roles)) {
+               community.community.roles.forEach(function(role) {
+                 if (Array.isArray(role.members) && role.members.includes(userId)) {
+                   if (Array.isArray(role.permissions)) {
+                     role.permissions.forEach(function(perm) {
+                       if (
+                         (perm.name === "administrator" && perm.enabled === true) ||
+                         (perm.name === "manage community events" && perm.enabled === true)
+                       ) {
+                         canManageEvents = true;
+                       }
+                     });
+                   }
+                 }
+               });
+             }
+           %>
+           <div class="flex items-center justify-between mb-6">
+             <h2 class="text-3xl font-semibold">Events</h2>
+             <% if (isMemberApproved) { %>
+               <% if (canManageEvents) { %>
+                <button onclick="openCreateEventModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold shadow transition flex items-center text-lg">
+                  <i class="fa fa-plus mr-3"></i> Create Event
+                </button>
+              <% } else { %>
+                <button onclick="openNoEventPermissionModal()" class="bg-gray-500 text-white px-6 py-3 rounded-full font-semibold shadow opacity-60 cursor-not-allowed flex items-center text-lg" style="pointer-events:auto;">
+                  <i class="fa fa-plus mr-3"></i> Create Event
+                </button>
+              <% } %>
+            <% } %>
+          </div>
+          <%
+            // Pagination for events
+            const eventsPerPage = 4;
+            const eventPage = parseInt((typeof query !== 'undefined' && query.eventPage) ? query.eventPage : 1, 10) || 1;
+            const allEvents = community.community.events || [];
+            const totalEventPages = Math.max(1, Math.ceil(allEvents.length / eventsPerPage));
+            const pagedEvents = allEvents.slice((eventPage - 1) * eventsPerPage, eventPage * eventsPerPage);
+          %>
+          <ul class="text-left mx-auto max-w-4xl">
+            <% pagedEvents.forEach(function(event) { %>
+              <% if (isMemberApproved) { %>
+                <li class="mb-6 p-6 rounded bg-gray-800 border border-gray-700 flex flex-col sm:flex-row items-start gap-6 relative">
+                  <img src="<%= event.image || '/static/images/default-logo.png' %>" alt="Event Image" class="w-40 h-32 object-cover rounded mb-4 sm:mb-0" style="min-width:10rem; max-width:10rem; max-height:8rem;" />
+                  <div class="flex-1">
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="font-semibold text-2xl text-white"><%= event.title %></div>
+                      <% if (canManageEvents) { %>
+                        <button class="text-gray-400 hover:text-blue-400 z-10 bg-gray-900 bg-opacity-70 rounded-full p-2 ml-3" title="Edit Event" onclick="event.stopPropagation(); openEditEventModal('<%= event._id %>')">
+                          <i class="fa fa-pencil-alt text-lg"></i>
+                        </button>
+                      <% } %>
+                    </div>
+                    <div class="text-gray-400 text-lg mb-3"><%= new Date(event.scheduledDate).toLocaleString() %></div>
+                    <div class="text-gray-300 text-lg mb-3"><%= event.description %></div>
+                    <% if (event.location) { %>
+                      <div class="text-gray-500 text-base">Location: <%= event.location %></div>
+                    <% } %>
+                  </div>
+                </li>
+              <% } else { %>
+                <li class="mb-6 p-6 rounded bg-gray-800 border border-gray-700 relative opacity-70 cursor-not-allowed flex flex-col sm:flex-row items-start gap-6">
+                  <img src="<%= event.image || '/static/images/default-logo.png' %>" alt="Event Image" class="w-40 h-32 object-cover rounded mb-4 sm:mb-0" style="min-width:10rem; max-width:10rem; max-height:8rem;" />
+                  <div class="flex-1 relative z-0">
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                      <span class="bg-black bg-opacity-60 text-white text-base px-3 py-2 rounded">Members Only</span>
+                    </div>
+                    <div class="font-semibold text-xl text-white mb-2"><%= event.title %></div>
+                    <div class="text-gray-400 text-base mb-2"><%= new Date(event.scheduledDate).toLocaleString() %></div>
+                    <div class="text-gray-300 text-base mb-2"><%= event.description %></div>
+                    <% if (event.location) { %>
+                      <div class="text-gray-500 text-sm">Location: <%= event.location %></div>
+                    <% } %>
+                  </div>
+                </li>
+              <% } %>
+            <% }); %>
+          </ul>
+          <% if (totalEventPages > 1) { %>
+            <div class="flex justify-center items-center gap-4 mt-6">
+              <form method="get" style="display:inline;">
+                <% if (typeof query !== 'undefined') { %>
+                  <% Object.keys(query).forEach(function(key) { %>
+                    <% if (key !== 'eventPage') { %>
+                      <input type="hidden" name="<%= key %>" value="<%= query[key] %>" />
+                    <% } %>
+                  <% }); %>
+                <% } %>
+                <input type="hidden" name="eventPage" value="<%= eventPage - 1 %>" />
+                <button type="submit" class="px-6 py-3 rounded bg-gray-700 text-white font-semibold text-lg" <% if (eventPage <= 1) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Prev</button>
+              </form>
+              <span class="text-gray-300 text-lg">Page <%= eventPage %> of <%= totalEventPages %></span>
+              <form method="get" style="display:inline;">
+                <% if (typeof query !== 'undefined') { %>
+                  <% Object.keys(query).forEach(function(key) { %>
+                    <% if (key !== 'eventPage') { %>
+                      <input type="hidden" name="<%= key %>" value="<%= query[key] %>" />
+                    <% } %>
+                  <% }); %>
+                <% } %>
+                <input type="hidden" name="eventPage" value="<%= eventPage + 1 %>" />
+                <button type="submit" class="px-6 py-3 rounded bg-gray-700 text-white font-semibold text-lg" <% if (eventPage >= totalEventPages) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Next</button>
+              </form>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- HeroUI Pro Features Section -->
+        <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-16 mt-16 rounded-lg">
+          <div class="text-center mb-12">
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
+              Community Features
+            </h2>
+            <p class="text-2xl text-gray-300 max-w-4xl mx-auto">
+              Everything you need to manage and grow your community
+            </p>
           </div>
           
-          <%
-            // Permission logic for managing departments
-            let canManageDepartments = false;
-            if (userId && community.community && Array.isArray(community.community.roles)) {
-              community.community.roles.forEach(function(role) {
-                if (Array.isArray(role.members) && role.members.includes(userId)) {
-                  if (Array.isArray(role.permissions)) {
-                    role.permissions.forEach(function(perm) {
-                      if (
-                        (perm.name === "administrator" && perm.enabled === true) ||
-                        (perm.name === "manage departments" && perm.enabled === true)
-                      ) {
-                        canManageDepartments = true;
-                      }
-                    });
-                  }
-                }
-              });
-            }
-          %>
-          <div class="card">
-            <div class="flex items-center justify-between mb-3">
-              <h2 class="text-2xl font-semibold">Departments</h2>
-              <% if (canManageDepartments) { %>
-                <button onclick="openCreateDepartmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full font-semibold shadow transition flex items-center">
-                  <i class="fa fa-plus mr-2"></i> Create Department
-                </button>
-              <% } else { %>
-                <button onclick="openNoDepartmentPermissionModal()" class="bg-gray-500 text-white px-4 py-2 rounded-full font-semibold shadow opacity-60 cursor-not-allowed flex items-center" style="pointer-events:auto;">
-                  <i class="fa fa-plus mr-2"></i> Create Department
-                </button>
-              <% } %>
-            </div>
-            <% if (departments && departments.length) { %>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <% departments.forEach(function(dept) { 
-                  var templateName = dept.template && dept.template.name ? dept.template.name : '';
-                  var approvalRequired = dept.approvalRequired;
-                  var members = Array.isArray(dept.members) ? dept.members : [];
-                  var isMember = members.some(function(m) { return m.userID === userId && m.status === 'approved'; });
-                  var isAdmin = false;
-                  if (userId && community.community && Array.isArray(community.community.roles)) {
-                    community.community.roles.forEach(function(role) {
-                      if (Array.isArray(role.members) && role.members.includes(userId)) {
-                        if (Array.isArray(role.permissions)) {
-                          role.permissions.forEach(function(perm) {
-                            if (perm.name === "administrator" && perm.enabled === true) {
-                              isAdmin = true;
-                            }
-                          });
-                        }
-                      }
-                    });
-                  }
-                  var canAccess = isAdmin || !approvalRequired || isMember;
-                  // Determine dashboard URL
-                  var dashboardUrl = '';
-                  var lowerTemplate = templateName.toLowerCase();
-                  if (lowerTemplate.includes('civilian')) {
-                    dashboardUrl = `/civ-dashboard?dept=${encodeURIComponent(dept.name)}&d=${dept._id}`;
-                  } else if (lowerTemplate.includes('police')) {
-                    dashboardUrl = `/police-dashboard?dept=${encodeURIComponent(dept.name)}&d=${dept._id}`;
-                  } else if (lowerTemplate.includes('fire') || lowerTemplate.includes('ems')) {
-                    dashboardUrl = `/ems-dashboard?dept=${encodeURIComponent(dept.name)}&d=${dept._id}`;
-                  } else if (lowerTemplate.includes('dispatch')) {
-                    dashboardUrl = `/dispatch-dashboard?dept=${encodeURIComponent(dept.name)}&d=${dept._id}`;
-                  }
-                %>
-                  <div class="relative block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-4 border border-gray-700 <%= canAccess ? 'hover:border-blue-500 cursor-pointer' : 'opacity-70 cursor-not-allowed' %>"
-                    <%- canAccess && dashboardUrl ? `onclick="navigateToDepartment('${dept._id}', '${dept.name.replace(/'/g, "\\'")}', '${templateName.replace(/'/g, "\\'")}')"` : '' %>>
-                    <% if (canManageDepartments) { %>
-                      <button class="absolute top-2 right-2 text-gray-400 hover:text-blue-400 z-10 bg-gray-900 bg-opacity-70 rounded-full p-1" title="Edit Department" onclick="event.stopPropagation(); openEditDepartmentModal('<%= dept._id %>');">
-                        <i class="fa fa-pencil-alt"></i>
-                      </button>
-                    <% } %>
-                    <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-32 object-cover rounded mb-3" />
-                    <div class="font-bold text-xl text-white mb-2"><%= dept.name %></div>
-                    <div class="text-gray-400 text-base mb-2"><%= dept.description || '' %></div>
-                    <div class="text-sm text-gray-500"><%= dept.template && dept.template.name ? dept.template.name : '' %></div>
-                    <% if (!canAccess) { %>
-                      <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                        <span class="bg-black bg-opacity-60 text-white text-sm px-3 py-1 rounded">Members Only</span>
-                      </div>
-                    <% } %>
-                  </div>
-                <% }); %>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto px-4">
+            <div class="bg-gray-800 rounded-lg p-8 border border-gray-700 shadow-lg hover:shadow-xl transition-shadow">
+              <div class="bg-blue-600 p-4 rounded-lg w-fit mb-6">
+                <i class="fa fa-users text-white text-3xl"></i>
               </div>
-              <div class="flex justify-center items-center gap-4 mt-4">
-                <form method="get" style="display:inline;">
-                  <input type="hidden" name="deptPage" value="<%= deptPagination.currentPage - 1 %>" />
-                  <button type="submit" class="px-4 py-2 rounded bg-gray-700 text-white font-semibold" <% if (deptPagination.currentPage <= 1) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Prev</button>
-                </form>
-                <span class="text-gray-300 text-base">Page <%= deptPagination.currentPage %> of <%= deptPagination.totalPages %></span>
-                <form method="get" style="display:inline;">
-                  <input type="hidden" name="deptPage" value="<%= deptPagination.currentPage + 1 %>" />
-                  <button type="submit" class="px-4 py-2 rounded bg-gray-700 text-white font-semibold" <% if (deptPagination.currentPage >= deptPagination.totalPages) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Next</button>
-                </form>
-              </div>
-            <% } else { %>
-              <p class="text-gray-400">No departments listed.</p>
-            <% } %>
-          </div>
-        <% } else { %>
-          <div class="card">
-            <h2 class="text-xl font-semibold mb-2">Departments</h2>
-            <% if (community.community.departments && community.community.departments.length) { %>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <% community.community.departments.forEach(function(dept) { %>
-                  <div class="block bg-gray-800 rounded-lg shadow p-4 border border-gray-700 opacity-70 cursor-not-allowed relative">
-                    <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-32 object-cover rounded mb-2" />
-                    <div class="font-bold text-lg text-white mb-1"><%= dept.name %></div>
-                    <div class="text-gray-400 text-sm mb-1"><%= dept.description || '' %></div>
-                    <div class="text-xs text-gray-500"><%= dept.template?.name || '' %></div>
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span class="bg-black bg-opacity-60 text-white text-sm px-3 py-1 rounded">Members Only</span>
-                    </div>
-                  </div>
-                <% }); %>
-              </div>
-            <% } else { %>
-              <p class="text-gray-400">No departments listed.</p>
-            <% } %>
-          </div>
-        <% } %>
-        <%
-  // Get userId for permission checks
-  let userId = null;
-  if (user && user._doc && user._doc._id) {
-    userId = String(user._doc._id);
-  } else if (user && user.user && user.user._id) {
-    userId = String(user.user._id);
-  }
-%>
-<%
-  // Permission logic for managing events (EJS, like departments)
-  let canManageEvents = false;
-  if (userId && community.community && Array.isArray(community.community.roles)) {
-    community.community.roles.forEach(function(role) {
-      if (Array.isArray(role.members) && role.members.includes(userId)) {
-        if (Array.isArray(role.permissions)) {
-          role.permissions.forEach(function(perm) {
-            if (
-              (perm.name === "administrator" && perm.enabled === true) ||
-              (perm.name === "manage community events" && perm.enabled === true)
-            ) {
-              canManageEvents = true;
-            }
-          });
-        }
-      }
-    });
-  }
-%>
-<div class="card">
-  <div class="flex items-center justify-between mb-3">
-    <h2 class="text-2xl font-semibold">Events</h2>
-    <% if (isMemberApproved) { %>
-      <% if (canManageEvents) { %>
-        <button onclick="openCreateEventModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full font-semibold shadow transition flex items-center">
-          <i class="fa fa-plus mr-2"></i> Create Event
-        </button>
-      <% } else { %>
-        <button onclick="openNoEventPermissionModal()" class="bg-gray-500 text-white px-4 py-2 rounded-full font-semibold shadow opacity-60 cursor-not-allowed flex items-center" style="pointer-events:auto;">
-          <i class="fa fa-plus mr-2"></i> Create Event
-        </button>
-      <% } %>
-    <% } %>
-  </div>
-  <%
-    // Pagination for events
-    const eventsPerPage = 4;
-    const eventPage = parseInt((typeof query !== 'undefined' && query.eventPage) ? query.eventPage : 1, 10) || 1;
-    const allEvents = community.community.events || [];
-    const totalEventPages = Math.max(1, Math.ceil(allEvents.length / eventsPerPage));
-    const pagedEvents = allEvents.slice((eventPage - 1) * eventsPerPage, eventPage * eventsPerPage);
-  %>
-  <ul class="text-left mx-auto max-w-xl">
-    <% pagedEvents.forEach(function(event) { %>
-      <% if (isMemberApproved) { %>
-        <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700 flex flex-col sm:flex-row items-start gap-4 relative">
-          <img src="<%= event.image || '/static/images/default-logo.png' %>" alt="Event Image" class="w-32 h-24 object-cover rounded mb-2 sm:mb-0" style="min-width:8rem; max-width:8rem; max-height:6rem;" />
-          <div class="flex-1">
-            <div class="flex items-center justify-between mb-2">
-              <div class="font-semibold text-xl text-white"><%= event.title %></div>
-              <% if (canManageEvents) { %>
-                <button class="text-gray-400 hover:text-blue-400 z-10 bg-gray-900 bg-opacity-70 rounded-full p-1 ml-2" title="Edit Event" onclick="event.stopPropagation(); openEditEventModal('<%= event._id %>')">
-                  <i class="fa fa-pencil-alt"></i>
-                </button>
-              <% } %>
+              <h4 class="text-white font-semibold text-2xl mb-4">Member Management</h4>
+              <p class="text-gray-400 text-lg">Easily manage community members, roles, and permissions with our intuitive interface.</p>
             </div>
-            <div class="text-gray-400 text-base mb-2"><%= new Date(event.scheduledDate).toLocaleString() %></div>
-            <div class="text-gray-300 text-base mb-2"><%= event.description %></div>
-            <% if (event.location) { %>
-              <div class="text-gray-500 text-sm">Location: <%= event.location %></div>
-            <% } %>
-          </div>
-        </li>
-      <% } else { %>
-        <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700 relative opacity-70 cursor-not-allowed flex flex-col sm:flex-row items-start gap-4">
-          <img src="<%= event.image || '/static/images/default-logo.png' %>" alt="Event Image" class="w-32 h-24 object-cover rounded mb-2 sm:mb-0" style="min-width:8rem; max-width:8rem; max-height:6rem;" />
-          <div class="flex-1 relative z-0">
-            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-              <span class="bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">Members Only</span>
+            
+            <div class="bg-gray-800 rounded-lg p-8 border border-gray-700 shadow-lg hover:shadow-xl transition-shadow">
+              <div class="bg-green-600 p-4 rounded-lg w-fit mb-6">
+                <i class="fa fa-building text-white text-3xl"></i>
+              </div>
+              <h4 class="text-white font-semibold text-2xl mb-4">Department System</h4>
+              <p class="text-gray-400 text-lg">Create and manage departments with custom templates and role-based access control.</p>
             </div>
-            <div class="font-semibold text-lg text-white mb-1"><%= event.title %></div>
-            <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
-            <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
-            <% if (event.location) { %>
-              <div class="text-gray-500 text-xs">Location: <%= event.location %></div>
-            <% } %>
+            
+            <div class="bg-gray-800 rounded-lg p-8 border border-gray-700 shadow-lg hover:shadow-xl transition-shadow">
+              <div class="bg-purple-600 p-4 rounded-lg w-fit mb-6">
+                <i class="fa fa-calendar text-white text-3xl"></i>
+              </div>
+              <h4 class="text-white font-semibold text-2xl mb-4">Event Planning</h4>
+              <p class="text-gray-400 text-lg">Schedule and manage community events with detailed information and member notifications.</p>
+            </div>
           </div>
-        </li>
-      <% } %>
-    <% }); %>
-  </ul>
-  <% if (totalEventPages > 1) { %>
-    <div class="flex justify-center items-center gap-4 mt-4">
-      <form method="get" style="display:inline;">
-        <% if (typeof query !== 'undefined') { %>
-          <% Object.keys(query).forEach(function(key) { %>
-            <% if (key !== 'eventPage') { %>
-              <input type="hidden" name="<%= key %>" value="<%= query[key] %>" />
-            <% } %>
-          <% }); %>
-        <% } %>
-        <input type="hidden" name="eventPage" value="<%= eventPage - 1 %>" />
-        <button type="submit" class="px-4 py-2 rounded bg-gray-700 text-white font-semibold" <% if (eventPage <= 1) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Prev</button>
-      </form>
-      <span class="text-gray-300 text-base">Page <%= eventPage %> of <%= totalEventPages %></span>
-      <form method="get" style="display:inline;">
-        <% if (typeof query !== 'undefined') { %>
-          <% Object.keys(query).forEach(function(key) { %>
-            <% if (key !== 'eventPage') { %>
-              <input type="hidden" name="<%= key %>" value="<%= query[key] %>" />
-            <% } %>
-          <% }); %>
-        <% } %>
-        <input type="hidden" name="eventPage" value="<%= eventPage + 1 %>" />
-        <button type="submit" class="px-4 py-2 rounded bg-gray-700 text-white font-semibold" <% if (eventPage >= totalEventPages) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Next</button>
-      </form>
-    </div>
-  <% } %>
-</div>
-<script>
-  window.allEvents = <%- JSON.stringify(community.community.events || []) %>;
-</script>
-
-<!-- No Event Permission Modal -->
-<div id="noEventPermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
-    <button id="noEventPermissionModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-    <div style="text-align:center; margin-bottom:1.5rem;">
-      <i class="fa fa-lock" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
-      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
-    </div>
-    <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-      <p>You do not have permission to create events.</p>
-      <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage community events</strong> permission from an admin.</p>
-    </div>
-    <div style="margin-top:2rem; text-align:center;">
-      <button id="noEventPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
-        Close
-      </button>
-    </div>
-  </div>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  var closeBtn = document.getElementById('noEventPermissionModalClose');
-  var cancelBtn = document.getElementById('noEventPermissionModalCancel');
-  if (closeBtn) closeBtn.onclick = function() {
-    document.getElementById('noEventPermissionModal').style.display = 'none';
-  };
-  if (cancelBtn) cancelBtn.onclick = function() {
-    document.getElementById('noEventPermissionModal').style.display = 'none';
-  };
-});
-</script>
-
+        </div>
       <% } else { %>
         <div class="card text-center">
           <h2 class="text-2xl font-bold mb-4">Community Not Found</h2>
           <p class="text-gray-400">Sorry, we couldn't load this community's details.</p>
         </div>
       <% } %>
+        </div>
+        
+        <!-- Right Side Ad -->
+        <div class="hidden lg:block w-64 p-4 space-y-4">
+          <div class="bg-gradient-to-b from-purple-900 to-blue-900 rounded-lg p-4 border border-purple-700 shadow-lg sticky top-24">
+            <div class="text-center">
+              <i class="fa fa-crown text-yellow-400 text-2xl mb-2"></i>
+              <h4 class="text-white font-semibold text-sm mb-1">Elite Status</h4>
+              <p class="text-purple-200 text-xs mb-3">Get premium community features</p>
+              <button 
+                onclick="showComingSoon()"
+                class="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3 py-1 rounded-full transition-colors"
+              >
+                Upgrade
+              </button>
+            </div>
+          </div>
+          <div class="bg-gradient-to-b from-yellow-900 to-orange-900 rounded-lg p-4 border border-yellow-700 shadow-lg sticky top-96">
+            <div class="text-center">
+              <i class="fa fa-fire text-orange-400 text-2xl mb-2"></i>
+              <h4 class="text-white font-semibold text-sm mb-1">Trending</h4>
+              <p class="text-yellow-200 text-xs mb-3">Join the hottest communities</p>
+              <button 
+                onclick="showComingSoon()"
+                class="bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-3 py-1 rounded-full transition-colors"
+              >
+                Explore
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     
     <% if (user && user._doc) { %>
@@ -2349,5 +2528,54 @@ async function deleteEditEvent() {
     
     <!-- Toast Container for Live Notifications -->
     <div id="toast-container"></div>
+    
+    <!-- Additional JavaScript Functions -->
+    <script>
+      // Navigation function
+      function scrollToSection(sectionId) {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }
+      }
+      
+      // Coming soon modal function
+      function showComingSoon() {
+        alert('Premium features coming soon!');
+      }
+      
+      // Event management functions
+      function openCreateEventModal() {
+        document.getElementById('createEventModal').style.display = 'flex';
+      }
+      
+      function openEditEventModal(eventId) {
+        // TODO: Implement edit event modal
+        alert('Edit event functionality coming soon!');
+      }
+      
+      function closeCreateEventModal() {
+        document.getElementById('createEventModal').style.display = 'none';
+      }
+      
+      function handleEventPhotoChange(e) {
+        const file = e.target.files[0];
+        const preview = document.getElementById('event-photo-preview');
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(ev) {
+            preview.src = ev.target.result;
+            preview.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        } else {
+          preview.src = '';
+          preview.style.display = 'none';
+        }
+      }
+    </script>
   </body>
 </html>
