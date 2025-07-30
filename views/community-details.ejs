@@ -208,8 +208,8 @@
         %>
         <% if (isMemberApproved && memberSinceYear) { %>
           <div class="mb-4 flex items-center justify-between">
-            <div class="text-green-400 font-semibold flex items-center">
-              <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <div class="text-green-400 font-semibold flex items-center text-lg">
+              <svg class="w-6 h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
               </svg>
               Member since '<%= memberSinceYear %>
@@ -226,30 +226,30 @@
           </div>
         <% } %>
         <% if (isMemberPending) { %>
-          <div class="mb-4 text-yellow-400 font-semibold">Your request to join is pending approval.</div>
+          <div class="mb-4 text-yellow-400 font-semibold text-lg">Your request to join is pending approval.</div>
         <% } %>
         <div class="card text-center">
           <img src="<%= community.community.imageLink || '/static/images/default-logo.png' %>" alt="<%= community.community.name %>" class="w-5/6 h-1/3 mx-auto rounded-t-lg object-cover mb-4" />
-          <h1 class="text-3xl font-bold mb-2">
+          <h1 class="text-4xl font-bold mb-3">
             <%= community.community.name %>
             <% if ((['elite','premium','standard'].includes(community.community.subscription?.plan)) && community.community.subscription?.active) { %>
-              <svg viewBox="0 0 24 24" class="w-6 h-6 inline-block ml-2 align-middle" style="vertical-align: middle;">
+              <svg viewBox="0 0 24 24" class="w-7 h-7 inline-block ml-2 align-middle" style="vertical-align: middle;">
                 <circle cx="12" cy="12" r="10" fill="#eab308" />
                 <path d="M8 12.5l3 3 5-5" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             <% } %>
           </h1>
-          <div class="flex flex-wrap justify-center gap-2 mb-2">
+          <div class="flex flex-wrap justify-center gap-2 mb-3">
             <% if (community.community.tags && community.community.tags.length) { %>
               <% community.community.tags.forEach(function(tag) { %>
-                <span class="inline-block bg-gray-700 text-gray-200 text-xs px-2 py-1 rounded-full"><%= tag %></span>
+                <span class="inline-block bg-gray-700 text-gray-200 text-sm px-3 py-1 rounded-full"><%= tag %></span>
               <% }); %>
             <% } %>
           </div>
-          <p class="text-gray-300 mb-2"><%= community.community.promotionalText %></p>
-          <p class="text-gray-400 mb-4"><%= community.community.promotionalDescription %></p>
-          <p class="text-gray-400 mb-2"><%= community.community.description %></p>
-          <p class="text-gray-400 mb-4"><%= community.community.membersCount %> Members</p>
+          <p class="text-gray-300 mb-3 text-lg"><%= community.community.promotionalText %></p>
+          <p class="text-gray-400 mb-4 text-base"><%= community.community.promotionalDescription %></p>
+          <p class="text-gray-400 mb-3 text-base"><%= community.community.description %></p>
+          <p class="text-gray-400 mb-4 text-lg font-medium"><%= community.community.membersCount %> Members</p>
           <div class="flex flex-wrap justify-center gap-4 mb-4">
             <% if (community.community.links && community.community.links.length) { %>
               <% community.community.links.forEach(function(link) { %>
@@ -359,8 +359,8 @@
             }
           %>
           <div class="card">
-            <div class="flex items-center justify-between mb-2">
-              <h2 class="text-xl font-semibold">Departments</h2>
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-2xl font-semibold">Departments</h2>
               <% if (canManageDepartments) { %>
                 <button onclick="openCreateDepartmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full font-semibold shadow transition flex items-center">
                   <i class="fa fa-plus mr-2"></i> Create Department
@@ -413,13 +413,13 @@
                         <i class="fa fa-pencil-alt"></i>
                       </button>
                     <% } %>
-                    <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-32 object-cover rounded mb-2" />
-                    <div class="font-bold text-lg text-white mb-1"><%= dept.name %></div>
-                    <div class="text-gray-400 text-sm mb-1"><%= dept.description || '' %></div>
-                    <div class="text-xs text-gray-500"><%= dept.template && dept.template.name ? dept.template.name : '' %></div>
+                    <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-32 object-cover rounded mb-3" />
+                    <div class="font-bold text-xl text-white mb-2"><%= dept.name %></div>
+                    <div class="text-gray-400 text-base mb-2"><%= dept.description || '' %></div>
+                    <div class="text-sm text-gray-500"><%= dept.template && dept.template.name ? dept.template.name : '' %></div>
                     <% if (!canAccess) { %>
                       <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                        <span class="bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">Members Only</span>
+                        <span class="bg-black bg-opacity-60 text-white text-sm px-3 py-1 rounded">Members Only</span>
                       </div>
                     <% } %>
                   </div>
@@ -430,7 +430,7 @@
                   <input type="hidden" name="deptPage" value="<%= deptPagination.currentPage - 1 %>" />
                   <button type="submit" class="px-4 py-2 rounded bg-gray-700 text-white font-semibold" <% if (deptPagination.currentPage <= 1) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Prev</button>
                 </form>
-                <span class="text-gray-300">Page <%= deptPagination.currentPage %> of <%= deptPagination.totalPages %></span>
+                <span class="text-gray-300 text-base">Page <%= deptPagination.currentPage %> of <%= deptPagination.totalPages %></span>
                 <form method="get" style="display:inline;">
                   <input type="hidden" name="deptPage" value="<%= deptPagination.currentPage + 1 %>" />
                   <button type="submit" class="px-4 py-2 rounded bg-gray-700 text-white font-semibold" <% if (deptPagination.currentPage >= deptPagination.totalPages) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Next</button>
@@ -452,7 +452,7 @@
                     <div class="text-gray-400 text-sm mb-1"><%= dept.description || '' %></div>
                     <div class="text-xs text-gray-500"><%= dept.template?.name || '' %></div>
                     <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span class="bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">Members Only</span>
+                      <span class="bg-black bg-opacity-60 text-white text-sm px-3 py-1 rounded">Members Only</span>
                     </div>
                   </div>
                 <% }); %>
@@ -492,8 +492,8 @@
   }
 %>
 <div class="card">
-  <div class="flex items-center justify-between mb-2">
-    <h2 class="text-xl font-semibold">Events</h2>
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-2xl font-semibold">Events</h2>
     <% if (isMemberApproved) { %>
       <% if (canManageEvents) { %>
         <button onclick="openCreateEventModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full font-semibold shadow transition flex items-center">
@@ -520,18 +520,18 @@
         <li class="mb-4 p-3 rounded bg-gray-800 border border-gray-700 flex flex-col sm:flex-row items-start gap-4 relative">
           <img src="<%= event.image || '/static/images/default-logo.png' %>" alt="Event Image" class="w-32 h-24 object-cover rounded mb-2 sm:mb-0" style="min-width:8rem; max-width:8rem; max-height:6rem;" />
           <div class="flex-1">
-            <div class="flex items-center justify-between mb-1">
-              <div class="font-semibold text-lg text-white"><%= event.title %></div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="font-semibold text-xl text-white"><%= event.title %></div>
               <% if (canManageEvents) { %>
                 <button class="text-gray-400 hover:text-blue-400 z-10 bg-gray-900 bg-opacity-70 rounded-full p-1 ml-2" title="Edit Event" onclick="event.stopPropagation(); openEditEventModal('<%= event._id %>')">
                   <i class="fa fa-pencil-alt"></i>
                 </button>
               <% } %>
             </div>
-            <div class="text-gray-400 text-sm mb-1"><%= new Date(event.scheduledDate).toLocaleString() %></div>
-            <div class="text-gray-300 text-sm mb-1"><%= event.description %></div>
+            <div class="text-gray-400 text-base mb-2"><%= new Date(event.scheduledDate).toLocaleString() %></div>
+            <div class="text-gray-300 text-base mb-2"><%= event.description %></div>
             <% if (event.location) { %>
-              <div class="text-gray-500 text-xs">Location: <%= event.location %></div>
+              <div class="text-gray-500 text-sm">Location: <%= event.location %></div>
             <% } %>
           </div>
         </li>
@@ -566,7 +566,7 @@
         <input type="hidden" name="eventPage" value="<%= eventPage - 1 %>" />
         <button type="submit" class="px-4 py-2 rounded bg-gray-700 text-white font-semibold" <% if (eventPage <= 1) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Prev</button>
       </form>
-      <span class="text-gray-300">Page <%= eventPage %> of <%= totalEventPages %></span>
+      <span class="text-gray-300 text-base">Page <%= eventPage %> of <%= totalEventPages %></span>
       <form method="get" style="display:inline;">
         <% if (typeof query !== 'undefined') { %>
           <% Object.keys(query).forEach(function(key) { %>
@@ -1002,25 +1002,25 @@ function openNoEventPermissionModal() {
         </div>
       </div>
       <div class="mb-4">
-        <label class="block text-gray-300 mb-1" for="dept-name">Department Name *</label>
-        <input type="text" id="dept-name" required class="w-full text-gray-200 bg-gray-800 rounded p-2" />
+        <label class="block text-gray-300 mb-2 text-base" for="dept-name">Department Name *</label>
+        <input type="text" id="dept-name" required class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" />
       </div>
       <div class="mb-4">
-        <label class="block text-gray-300 mb-1" for="dept-description">Description (Optional)</label>
-        <textarea id="dept-description" rows="3" class="w-full text-gray-200 bg-gray-800 rounded p-2"></textarea>
+        <label class="block text-gray-300 mb-2 text-base" for="dept-description">Description (Optional)</label>
+        <textarea id="dept-description" rows="3" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base"></textarea>
       </div>
       <div class="mb-4">
-        <label class="block text-gray-300 mb-1">Visibility</label>
+        <label class="block text-gray-300 mb-2 text-base">Visibility</label>
         <div class="flex gap-2">
-          <button type="button" id="visibility-public" class="flex-1 px-4 py-2 rounded-l-lg border border-gray-600 bg-blue-600 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400" onclick="setDeptVisibility('public')">Public</button>
-          <button type="button" id="visibility-private" class="flex-1 px-4 py-2 rounded-r-lg border border-gray-600 bg-gray-700 text-gray-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400" onclick="setDeptVisibility('private')">Private <span class='text-xs'>(Approval required)</span></button>
+          <button type="button" id="visibility-public" class="flex-1 px-4 py-3 rounded-l-lg border border-gray-600 bg-blue-600 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 text-base" onclick="setDeptVisibility('public')">Public</button>
+          <button type="button" id="visibility-private" class="flex-1 px-4 py-3 rounded-r-lg border border-gray-600 bg-gray-700 text-gray-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 text-base" onclick="setDeptVisibility('private')">Private <span class='text-sm'>(Approval required)</span></button>
         </div>
         <input type="hidden" id="dept-visibility" name="visibility" value="public" />
       </div>
       <div id="createDeptStep1Error" class="text-red-400 text-sm mb-2" style="display:none;"></div>
       <div class="flex justify-end gap-2 mt-6">
-        <button type="button" onclick="closeCreateDepartmentModal(1)" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Cancel</button>
-        <button type="button" onclick="goToCreateDepartmentStep2()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold">Next</button>
+        <button type="button" onclick="closeCreateDepartmentModal(1)" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded text-base font-medium">Cancel</button>
+        <button type="button" onclick="goToCreateDepartmentStep2()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded font-semibold text-base">Next</button>
       </div>
     </form>
   </div>
@@ -1034,12 +1034,12 @@ function openNoEventPermissionModal() {
       <i class="fa fa-layer-group" style="font-size:3rem; color:#a78bfa; margin-bottom:1rem;"></i>
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create a Department - Step 2 of 3</h3>
     </div>
-    <div class="mb-4 text-gray-300 text-center">Select a template to quickly create a department. You can customize each template by toggling components.</div>
+    <div class="mb-4 text-gray-300 text-center text-base">Select a template to quickly create a department. You can customize each template by toggling components.</div>
     <div id="templateAccordion" class="flex flex-col gap-2 mb-4"></div>
     <div id="createDeptStep2Error" class="text-red-400 text-sm mb-2 text-center" style="display:none;"></div>
     <div class="flex justify-between mt-6">
-      <button type="button" onclick="backToCreateDepartmentStep1()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Back</button>
-      <button type="button" id="createDeptStep2NextBtn" onclick="goToCreateDepartmentStep3()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold opacity-50 cursor-not-allowed" disabled>Next</button>
+      <button type="button" onclick="backToCreateDepartmentStep1()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded text-base font-medium">Back</button>
+      <button type="button" id="createDeptStep2NextBtn" onclick="goToCreateDepartmentStep3()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded font-semibold text-base opacity-50 cursor-not-allowed" disabled>Next</button>
     </div>
   </div>
 </div>
@@ -1052,7 +1052,7 @@ function openNoEventPermissionModal() {
       <i class="fa fa-users" style="font-size:3rem; color:#10b981; margin-bottom:1rem;"></i>
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create a Department - Step 3 of 3</h3>
     </div>
-    <div class="mb-4 text-gray-300 text-center">Add members to the department. Members can have multiple roles.</div>
+    <div class="mb-4 text-gray-300 text-center text-base">Add members to the department. Members can have multiple roles.</div>
     <div class="mb-2 text-sm text-green-400 text-center" id="selectedMembersCount"></div>
     <div class="mb-4">
       <div id="selectedMembers" class="flex flex-wrap gap-2 mb-2"></div>
@@ -1061,8 +1061,8 @@ function openNoEventPermissionModal() {
     </div>
     <div id="createDeptStep3Error" class="text-red-400 text-sm mb-2 text-center" style="display:none;"></div>
     <div class="flex justify-between mt-6">
-      <button type="button" onclick="backToCreateDepartmentStep2()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Back</button>
-      <button type="button" onclick="finishCreateDepartment()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold">Finish</button>
+      <button type="button" onclick="backToCreateDepartmentStep2()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded text-base font-medium">Back</button>
+      <button type="button" onclick="finishCreateDepartment()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded font-semibold text-base">Finish</button>
     </div>
   </div>
 </div>
@@ -1233,7 +1233,7 @@ function renderMembersPagination() {
   // Prev button
   const prevBtn = document.createElement('button');
   prevBtn.textContent = 'Prev';
-  prevBtn.className = 'px-2 py-1 rounded bg-gray-700 text-gray-200 font-semibold disabled:opacity-50';
+  prevBtn.className = 'px-3 py-2 rounded bg-gray-700 text-gray-200 font-semibold disabled:opacity-50 text-base';
   prevBtn.disabled = membersPage === 1;
   prevBtn.onclick = () => fetchCommunityMembers(membersPage - 1);
   container.appendChild(prevBtn);
@@ -1242,7 +1242,7 @@ function renderMembersPagination() {
     if (i === 1 || i === membersTotalPages || Math.abs(i - membersPage) <= 2) {
       const btn = document.createElement('button');
       btn.textContent = i;
-      btn.className = 'px-2 py-1 rounded font-semibold ' + (i === membersPage ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200');
+      btn.className = 'px-3 py-2 rounded font-semibold text-base ' + (i === membersPage ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200');
       btn.disabled = i === membersPage;
       btn.onclick = () => fetchCommunityMembers(i);
       container.appendChild(btn);
@@ -1256,7 +1256,7 @@ function renderMembersPagination() {
   // Next button
   const nextBtn = document.createElement('button');
   nextBtn.textContent = 'Next';
-  nextBtn.className = 'px-2 py-1 rounded bg-gray-700 text-gray-200 font-semibold disabled:opacity-50';
+  nextBtn.className = 'px-3 py-2 rounded bg-gray-700 text-gray-200 font-semibold disabled:opacity-50 text-base';
   nextBtn.disabled = membersPage === membersTotalPages;
   nextBtn.onclick = () => fetchCommunityMembers(membersPage + 1);
   container.appendChild(nextBtn);
@@ -1275,7 +1275,7 @@ function renderMemberList() {
     div.innerHTML = `
       <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleCreateDeptMember('${member._id}')" />
       <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" class="w-6 h-6 rounded-full" />
-      <span>${member.user.username}</span>
+      <span class="text-base">${member.user.username}</span>
     `;
     memberList.appendChild(div);
     if (isSelected) {
@@ -1283,7 +1283,7 @@ function renderMemberList() {
       selDiv.className = 'flex items-center gap-1 bg-gray-700 rounded px-2 py-1 mb-1';
       selDiv.innerHTML = `
         <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" class="w-5 h-5 rounded-full" />
-        <span class="text-xs">${member.user.username}</span>
+        <span class="text-sm">${member.user.username}</span>
         ${member._id !== '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>' ? `<button onclick="toggleCreateDeptMember('${member._id}')" class="ml-1 text-red-400">&times;</button>` : ''}
       `;
       selectedMembersDiv.appendChild(selDiv);
@@ -1431,11 +1431,11 @@ window.expandTemplateCard = function(idx) {
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
     </div>
     <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-      <p>You do not have permission to view this item.</p>
-      <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage community settings</strong> permission from an admin to view this content.</p>
+      <p style="font-size:1rem;">You do not have permission to view this item.</p>
+      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage community settings</strong> permission from an admin to view this content.</p>
     </div>
     <div style="margin-top:2rem; text-align:center;">
-      <button id="noSettingsPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+      <button id="noSettingsPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
         Close
       </button>
     </div>
@@ -1449,11 +1449,11 @@ window.expandTemplateCard = function(idx) {
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
     </div>
     <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-      <p>You do not have permission to view this item.</p>
-      <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage members</strong> permission from an admin to view this content.</p>
+      <p style="font-size:1rem;">You do not have permission to view this item.</p>
+      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage members</strong> permission from an admin to view this content.</p>
     </div>
     <div style="margin-top:2rem; text-align:center;">
-      <button id="noInvitePermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+      <button id="noInvitePermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
         Close
       </button>
     </div>
@@ -1467,11 +1467,11 @@ window.expandTemplateCard = function(idx) {
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
     </div>
     <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-      <p>You do not have permission to view this item.</p>
-      <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage departments</strong> permission from an admin to view this content.</p>
+      <p style="font-size:1rem;">You do not have permission to view this item.</p>
+      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage departments</strong> permission from an admin to view this content.</p>
     </div>
     <div style="margin-top:2rem; text-align:center;">
-      <button id="noDepartmentPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+      <button id="noDepartmentPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
         Close
       </button>
     </div>
@@ -1488,15 +1488,15 @@ window.expandTemplateCard = function(idx) {
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Leave Community</h3>
     </div>
     <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-      <p>Are you sure you want to leave this community?</p>
-      <p style="font-size:0.9rem; margin-top:0.5rem; color:#f56565;">This action cannot be undone.</p>
+      <p style="font-size:1rem;">Are you sure you want to leave this community?</p>
+      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;">This action cannot be undone.</p>
     </div>
     <div id="leaveCommunityError" style="display:none; color:#f56565; text-align:center; margin-bottom:1rem;"></div>
     <div style="margin-top:2rem; text-align:center; display:flex; justify-content:center; gap:1rem;">
-      <button id="leaveCommunityModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+      <button id="leaveCommunityModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
         Cancel
       </button>
-      <button id="leaveCommunityModalConfirm" type="button" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+      <button id="leaveCommunityModalConfirm" type="button" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
         Leave Community
       </button>
     </div>
@@ -1560,10 +1560,10 @@ function submitLeaveCommunity() {
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Cannot Leave Community</h3>
     </div>
     <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-      <p>You cannot leave the community until you transfer ownership to another member.</p>
+      <p style="font-size:1rem;">You cannot leave the community until you transfer ownership to another member.</p>
     </div>
     <div style="margin-top:2rem; text-align:center;">
-      <button id="ownerCannotLeaveModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+      <button id="ownerCannotLeaveModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
         Close
       </button>
     </div>
@@ -1619,28 +1619,28 @@ window.departmentsListData = JSON.parse("<%= JSON.stringify(departments || []).r
     </div>
     <form onsubmit="event.preventDefault(); saveEditDepartment();">
       <div class="mb-4">
-        <label class="block text-gray-300 mb-1">Department Photo</label>
+        <label class="block text-gray-300 mb-2 text-base">Department Photo</label>
         <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-4 bg-gray-800 cursor-pointer hover:border-blue-500 transition" onclick="document.getElementById('editDeptImage').click()">
           <img id="editDeptImagePreview" src="/static/images/default-logo.png" alt="Preview" style="max-width:120px; max-height:120px; border-radius:0.5rem; margin-bottom:0.5rem;" />
           <i class="fa fa-camera text-2xl text-gray-400 mb-2"></i>
-          <span class="text-gray-400 text-sm">Click to upload photo</span>
+          <span class="text-gray-400 text-base">Click to upload photo</span>
           <input type="file" id="editDeptImage" accept="image/*" style="display:none;" onchange="handleEditDeptImageChange(event)" />
         </div>
       </div>
       <div class="mb-4">
-        <label class="block text-gray-300 mb-1" for="editDeptName">Department Name</label>
-        <input type="text" id="editDeptName" required class="w-full text-gray-200 bg-gray-800 rounded p-2" />
+        <label class="block text-gray-300 mb-2 text-base" for="editDeptName">Department Name</label>
+        <input type="text" id="editDeptName" required class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" />
       </div>
       <div class="mb-4">
-        <label class="block text-gray-300 mb-1" for="editDeptDescription">Description</label>
-        <textarea id="editDeptDescription" rows="3" class="w-full text-gray-200 bg-gray-800 rounded p-2"></textarea>
+        <label class="block text-gray-300 mb-2 text-base" for="editDeptDescription">Description</label>
+        <textarea id="editDeptDescription" rows="3" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base"></textarea>
       </div>
       <div class="mb-4">
-        <label class="block text-gray-300 mb-1 flex items-center gap-2" for="editDeptApprovalRequired">
+        <label class="block text-gray-300 mb-2 text-base flex items-center gap-2" for="editDeptApprovalRequired">
           Visibility
           <span class="relative group">
             <i class="fa fa-info-circle text-gray-400 cursor-pointer"></i>
-            <span class="absolute left-6 top-0 w-64 bg-gray-900 text-gray-200 text-xs rounded shadow-lg px-3 py-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            <span class="absolute left-6 top-0 w-64 bg-gray-900 text-gray-200 text-sm rounded shadow-lg px-3 py-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
               <strong>Public</strong>: Anyone in your community can access it.<br/>
               <strong>Private</strong>: Only those you add can access it (e.g. Police, Dispatch, etc).
             </span>
@@ -1657,9 +1657,9 @@ window.departmentsListData = JSON.parse("<%= JSON.stringify(departments || []).r
         </div>
       </div>
       <div id="createDeptStep1Error" class="text-red-400 text-sm mb-2" style="display:none;"></div>
-      <div class="flex justify-end gap-2 mt-6">
-        <button type="button" onclick="deleteEditDepartment()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">Delete</button>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold">Save</button>
+              <div class="flex justify-end gap-2 mt-6">
+        <button type="button" onclick="deleteEditDepartment()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded font-semibold text-base">Delete</button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded font-semibold text-base">Save</button>
       </div>
     </form>
   </div>

@@ -334,21 +334,21 @@ const CommunityCard = ({ community, isActive, actionText, onAction }) => (
     />
     <div className="p-4 flex flex-col flex-grow justify-between">
       <div>
-        <h3 className="text-xl font-semibold text-white truncate text-center">
+        <h3 className="text-2xl font-semibold text-white truncate text-center">
           {community?.name}
         </h3>
-        <p className="text-gray-400 mt-2 text-center">
+        <p className="text-gray-400 mt-3 text-center text-lg">
           {community?.membersCount} Members
         </p>
         {isActive && (
-          <span className="inline-block bg-green-600 text-white text-xs px-2 py-1 rounded-full mt-2 mx-auto">
+          <span className="inline-block bg-green-600 text-white text-sm px-3 py-1 rounded-full mt-3 mx-auto">
             Active
           </span>
         )}
       </div>
       <button
         onClick={() => onAction(community)}
-        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700"
+        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 text-base font-medium"
       >
         {actionText}
       </button>
@@ -381,7 +381,7 @@ const CommunitySection = ({
   return (
     <div className="py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-white mb-6">{title}</h2>
+        <h2 className="text-4xl font-bold text-white mb-8">{title}</h2>
         <div className="relative">
           <div className="flex overflow-x-auto scroll-container">
             {communities
@@ -422,7 +422,7 @@ const CommunitySection = ({
             >
               Previous
             </button>
-            <span className="text-gray-300">
+            <span className="text-gray-300 text-base">
               Page {currentPage} of {Math.ceil(totalCount / cardsPerView)}
             </span>
             <button
@@ -618,9 +618,9 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
               style={{ top: '100%' }}
             >
               {loading ? (
-                <div className="p-4 text-gray-400 text-center">Searching...</div>
+                <div className="p-4 text-gray-400 text-center text-base">Searching...</div>
               ) : noResults ? (
-                <div className="p-4 text-gray-400 text-center">No communities found</div>
+                <div className="p-4 text-gray-400 text-center text-base">No communities found</div>
               ) : (
                 options.map((item) => (
                   <div
@@ -634,16 +634,16 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
                       className="w-10 h-10 rounded object-cover border border-gray-700 bg-gray-800"
                     />
                     <div>
-                      <div className="font-semibold text-white flex items-center gap-1">
+                      <div className="font-semibold text-white flex items-center gap-1 text-lg">
                         {item.name}
                         {item.isVerified && (
-                          <svg viewBox="0 0 24 24" className="w-5 h-5 inline-block ml-1" style={{ verticalAlign: 'middle' }}>
+                          <svg viewBox="0 0 24 24" className="w-6 h-6 inline-block ml-1" style={{ verticalAlign: 'middle' }}>
                             <circle cx="12" cy="12" r="10" fill="#eab308" />
                             <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         )}
                       </div>
-                      <div className="text-xs text-gray-400 truncate max-w-xs">{item.description}</div>
+                      <div className="text-sm text-gray-400 truncate max-w-xs">{item.description}</div>
                     </div>
                   </div>
                 ))
