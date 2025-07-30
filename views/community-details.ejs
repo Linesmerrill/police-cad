@@ -516,11 +516,25 @@
   <% if (totalEventPages > 1) { %>
     <div class="flex justify-center items-center gap-4 mt-4">
       <form method="get" style="display:inline;">
+        <% if (typeof query !== 'undefined') { %>
+          <% Object.keys(query).forEach(function(key) { %>
+            <% if (key !== 'eventPage') { %>
+              <input type="hidden" name="<%= key %>" value="<%= query[key] %>" />
+            <% } %>
+          <% }); %>
+        <% } %>
         <input type="hidden" name="eventPage" value="<%= eventPage - 1 %>" />
         <button type="submit" class="px-4 py-2 rounded bg-gray-700 text-white font-semibold" <% if (eventPage <= 1) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Prev</button>
       </form>
       <span class="text-gray-300">Page <%= eventPage %> of <%= totalEventPages %></span>
       <form method="get" style="display:inline;">
+        <% if (typeof query !== 'undefined') { %>
+          <% Object.keys(query).forEach(function(key) { %>
+            <% if (key !== 'eventPage') { %>
+              <input type="hidden" name="<%= key %>" value="<%= query[key] %>" />
+            <% } %>
+          <% }); %>
+        <% } %>
         <input type="hidden" name="eventPage" value="<%= eventPage + 1 %>" />
         <button type="submit" class="px-4 py-2 rounded bg-gray-700 text-white font-semibold" <% if (eventPage >= totalEventPages) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Next</button>
       </form>

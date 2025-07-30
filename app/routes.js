@@ -140,6 +140,7 @@ module.exports = function (app, passport, server) {
         user: req.user,
         community,
         departments,
+        query: req.query,
         deptPagination: {
           totalCount,
           currentPage: page,
