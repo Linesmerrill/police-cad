@@ -333,8 +333,13 @@
                 <i class="fa fa-building text-white text-2xl"></i>
               </div>
               <div>
-                <div class="text-3xl font-bold text-white"><%= departments ? departments.length : 0 %></div>
-                <div class="text-gray-400 text-lg">Departments</div>
+                <% if (isMemberApproved) { %>
+                  <div class="text-3xl font-bold text-white"><%= departments ? departments.length : 0 %></div>
+                  <div class="text-gray-400 text-lg">Departments</div>
+                <% } else { %>
+                  <div class="text-3xl font-bold text-gray-500">?</div>
+                  <div class="text-gray-500 text-lg">Departments</div>
+                <% } %>
               </div>
             </div>
           </div>
@@ -514,17 +519,31 @@
         <div id="departments-section" class="card">
           <div class="flex items-center justify-between mb-6">
             <h2 class="text-3xl font-semibold">Departments</h2>
-            <% if (canManageDepartments) { %>
-              <button onclick="openCreateDepartmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold shadow transition flex items-center text-lg">
-                <i class="fa fa-plus mr-3"></i> Create Department
-              </button>
-            <% } else { %>
-              <button onclick="openNoDepartmentPermissionModal()" class="bg-gray-500 text-white px-6 py-3 rounded-full font-semibold shadow opacity-60 cursor-not-allowed flex items-center text-lg" style="pointer-events:auto;">
-                <i class="fa fa-plus mr-3"></i> Create Department
-              </button>
+            <% if (isMemberApproved) { %>
+              <% if (canManageDepartments) { %>
+                <button onclick="openCreateDepartmentModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold shadow transition flex items-center text-lg">
+                  <i class="fa fa-plus mr-3"></i> Create Department
+                </button>
+              <% } else { %>
+                <button onclick="openNoDepartmentPermissionModal()" class="bg-gray-500 text-white px-6 py-3 rounded-full font-semibold shadow opacity-60 cursor-not-allowed flex items-center text-lg" style="pointer-events:auto;">
+                  <i class="fa fa-plus mr-3"></i> Create Department
+                </button>
+              <% } %>
             <% } %>
           </div>
-          <% if (departments && departments.length) { %>
+          
+          <% if (!isMemberApproved) { %>
+            <div class="text-center py-12">
+              <div class="bg-gray-800 rounded-lg p-8 border border-gray-700 shadow-lg opacity-70">
+                <i class="fa fa-lock text-gray-400 text-4xl mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-300 mb-2">Departments Hidden</h3>
+                <p class="text-gray-400 text-lg mb-4">You cannot view departments as you are not a member yet.</p>
+                <button onclick="scrollToSection('community-overview')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold shadow transition text-lg">
+                  Request to Join Here
+                </button>
+              </div>
+            </div>
+          <% } else if (departments && departments.length) { %>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <% departments.forEach(function(dept) { 
                 var templateName = dept.template && dept.template.name ? dept.template.name : '';
@@ -589,7 +608,7 @@
                 <button type="submit" class="px-6 py-3 rounded bg-gray-700 text-white font-semibold text-lg" <% if (deptPagination.currentPage >= deptPagination.totalPages) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Next</button>
               </form>
             </div>
-          <% } else { %>
+          <% } else if (isMemberApproved) { %>
             <p class="text-gray-400 text-lg">No departments listed.</p>
           <% } %>
         </div>
