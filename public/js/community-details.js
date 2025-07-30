@@ -102,9 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let joinRequestLoading = false;
 
   // Get user and community IDs from EJS globals
-  console.log('window.dbUser at JS load:', window.dbUser);
   const userId = window.dbUser && window.dbUser._id ? window.dbUser._id : null;
-  console.log('userId used for join request:', userId);
   const communityId = window?.communityId || (typeof COMMUNITY_ID !== 'undefined' ? COMMUNITY_ID : null) || (window.community && window.community._id) || null;
   const API_URL = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1';
 

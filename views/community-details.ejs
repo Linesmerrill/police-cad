@@ -1184,7 +1184,6 @@ function goToCreateDepartmentStep2() {
   createDeptData.visibility = vis ? vis.value : 'public';
   document.getElementById('createDeptStep1Error').style.display = 'none';
   document.getElementById('createDepartmentStep1Modal').style.display = 'none';
-  console.log('[CreateDept] Step 1 complete:', JSON.stringify(createDeptData));
   renderTemplateCards();
   document.getElementById('createDepartmentStep2Modal').style.display = 'flex';
 }
@@ -1378,7 +1377,6 @@ function finishCreateDepartment(skipMembers = false) {
     members: createDeptData.members,
     template: createDeptData.template
   };
-  console.log('[CreateDept] Submitting department payload:', JSON.stringify(payload));
   fetch(`${API_URL}/community/${communityId}/departments`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1386,7 +1384,6 @@ function finishCreateDepartment(skipMembers = false) {
   })
     .then(async res => {
       const text = await res.text();
-      console.log('[CreateDept] Department API raw response:', text);
       try {
         return JSON.parse(text);
       } catch (e) {
@@ -1461,7 +1458,6 @@ function goToCreateDepartmentStep3() {
   };
   document.getElementById('createDeptStep2Error').style.display = 'none';
   document.getElementById('createDepartmentStep2Modal').style.display = 'none';
-  console.log('[CreateDept] Step 2 complete:', JSON.stringify(createDeptData));
   fetchCommunityMembers();
 }
 
@@ -2300,8 +2296,6 @@ async function deleteEditEvent() {
 <script>
   window.dbUser = <%- JSON.stringify(user && user._doc ? user._doc : user || {}) %>;
   window.communityId = "<%= community._id %>";
-  console.log('window.dbUser (EJS):', window.dbUser);
-  console.log('window.communityId (EJS):', window.communityId);
 </script>
 <!-- Include community-details.js for join logic -->
 <script src="/static/js/community-details.js"></script> 
