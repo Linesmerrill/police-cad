@@ -250,39 +250,48 @@
           </div>
         </div>
 
-        <div class="py-8 px-4">
-      <% if (community.community) { %>
-        <% 
-          let isMemberApproved = false;
-          let isMemberPending = false;
-          let memberSinceYear = null;
-          // Get community ID from the route parameter (already decoded by the route)
-          let communityId = community._id;
-          if (communityId && typeof communityId === 'object' && communityId.$oid) {
-            communityId = communityId.$oid;
-          }
-          
-          if (user && user._doc && user._doc.user && Array.isArray(user._doc.user.communities) && communityId) {
-            user._doc.user.communities.forEach(function(c) {
-              if (String(c.communityId) === String(communityId) && c.status === 'approved') {
-                isMemberApproved = true;
-                // Extract year from MongoDB ObjectId string (first 4 bytes are timestamp)
-                if (c._id && typeof c._id === 'string') {
-                  const objectId = c._id;
-                  const timestamp = parseInt(objectId.substring(0, 8), 16) * 1000;
-                  const date = new Date(timestamp);
-                  memberSinceYear = date.getFullYear().toString().slice(-2);
+                <div class="py-8 px-4">
+        <% if (community.community) { %>
+          <% 
+            let isMemberApproved = false;
+            let isMemberPending = false;
+            let memberSinceYear = null;
+            // Get community ID from the route parameter (already decoded by the route)
+            let communityId = community._id;
+            if (communityId && typeof communityId === 'object' && communityId.$oid) {
+              communityId = communityId.$oid;
+            }
+            
+            if (user && user._doc && user._doc.user && Array.isArray(user._doc.user.communities) && communityId) {
+              user._doc.user.communities.forEach(function(c) {
+                if (String(c.communityId) === String(communityId) && c.status === 'approved') {
+                  isMemberApproved = true;
+                  // Extract year from MongoDB ObjectId string (first 4 bytes are timestamp)
+                  if (c._id && typeof c._id === 'string') {
+                    const objectId = c._id;
+                    const timestamp = parseInt(objectId.substring(0, 8), 16) * 1000;
+                    const date = new Date(timestamp);
+                    memberSinceYear = date.getFullYear().toString().slice(-2);
+                  }
                 }
-              }
-              if (String(c.communityId) === String(communityId) && c.status === 'pending') {
-                isMemberPending = true;
-              }
-            });
-          }
-        %>
-        
-        <!-- Community Overview Section -->
-        <div id="community-overview" class="card text-center mb-8">
+                if (String(c.communityId) === String(communityId) && c.status === 'pending') {
+                  isMemberPending = true;
+                }
+              });
+            }
+          %>
+          
+          <!-- Request to Join Button - Prominent Position -->
+          <% if (user && community.community && !isMemberApproved && !isMemberPending) { %>
+            <div class="text-center mb-8">
+              <button id="requestJoinBtn" onclick="openRequestJoinModal()" class="bg-blue-600 text-white px-12 py-4 rounded-full font-bold shadow-lg hover:bg-blue-700 transition text-2xl transform hover:scale-105">
+                Request to Join
+              </button>
+            </div>
+          <% } %>
+          
+          <!-- Community Overview Section -->
+          <div id="community-overview" class="card text-center mb-8">
           <img src="<%= community.community.imageLink || '/static/images/default-logo.png' %>" alt="<%= community.community.name %>" class="w-5/6 max-w-96 h-96 mx-auto rounded-t-lg object-cover mb-6" />
           <h1 class="text-5xl font-bold mb-4">
             <%= community.community.name %>
@@ -377,14 +386,6 @@
             </div>
           </div>
         </div>
-
-        <% if (user && community.community && !isMemberApproved && !isMemberPending) { %>
-          <div class="text-center mb-6">
-            <button id="requestJoinBtn" onclick="openRequestJoinModal()" class="bg-blue-600 text-white px-8 py-4 rounded-full font-bold shadow hover:bg-blue-700 transition text-xl">
-              Request to Join
-            </button>
-          </div>
-        <% } %>
         
         <% let isOwner = false;
            if (user && user._doc && community.community && community.community.ownerID) {
