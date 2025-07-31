@@ -1683,6 +1683,24 @@ window.expandTemplateCard = function(idx) {
     </div>
   </div>
 </div>
+<div id="noEventPermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+    <button id="noEventPermissionModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-lock" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
+    </div>
+    <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+      <p style="font-size:1rem;">You do not have permission to create events.</p>
+      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage events</strong> permission from an admin to create events.</p>
+    </div>
+    <div style="margin-top:2rem; text-align:center;">
+      <button id="noEventPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
  
 
 <!-- Leave Community Confirmation Modal -->
@@ -2506,7 +2524,9 @@ async function deleteEditEvent() {
             { id: 'noInvitePermissionModalClose', modalId: 'noInvitePermissionModal' },
             { id: 'noInvitePermissionModalCancel', modalId: 'noInvitePermissionModal' },
             { id: 'noDepartmentPermissionModalClose', modalId: 'noDepartmentPermissionModal' },
-            { id: 'noDepartmentPermissionModalCancel', modalId: 'noDepartmentPermissionModal' }
+            { id: 'noDepartmentPermissionModalCancel', modalId: 'noDepartmentPermissionModal' },
+            { id: 'noEventPermissionModalClose', modalId: 'noEventPermissionModal' },
+            { id: 'noEventPermissionModalCancel', modalId: 'noEventPermissionModal' }
           ];
           
           modalCloseHandlers.forEach(handler => {

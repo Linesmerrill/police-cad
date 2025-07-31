@@ -341,9 +341,7 @@ window.openCreateEventModal = function() {
   // TODO: Implement create event modal
   alert('Create Event modal will be implemented next');
 };
-window.openNoEventPermissionModal = function() {
-  document.getElementById('noEventPermissionModal').style.display = 'flex';
-};
+// openNoEventPermissionModal is defined in the EJS file
 
 // --- Department Pagination (AJAX) ---
 document.addEventListener('DOMContentLoaded', function() {
