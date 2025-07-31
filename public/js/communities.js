@@ -1604,7 +1604,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
       style={{ zIndex: 2200 }}
     >
       <div
-        className="bg-[#23263a] rounded-2xl max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto shadow-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-[#23263a] rounded-2xl max-w-[95vw] sm:max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto shadow-2xl max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
         style={{ position: 'relative', zIndex: 2210 }}
       >
