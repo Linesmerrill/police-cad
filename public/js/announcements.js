@@ -472,12 +472,25 @@
             <p class="text-gray-400">There are no announcements to display.</p>
           </div>
         `;
+        
+        // Update the announcements count in the metrics card
+        const announcementsCountElement = document.getElementById('announcements-count');
+        if (announcementsCountElement) {
+          announcementsCountElement.textContent = '0';
+        }
+        
         return;
       }
 
       container.innerHTML = announcements.map(createAnnouncementCard).join('');
       updatePagination();
       updateUnreadCount();
+
+      // Update the announcements count in the metrics card
+      const announcementsCountElement = document.getElementById('announcements-count');
+      if (announcementsCountElement) {
+        announcementsCountElement.textContent = announcements.length;
+      }
 
     } catch (error) {
       console.error('Error loading announcements:', error);

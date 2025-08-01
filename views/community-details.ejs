@@ -356,7 +356,7 @@
         </div>
 
         <!-- HeroUI Pro Stats Section -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg">
             <div class="flex items-center space-x-4">
               <div class="bg-blue-600 p-3 rounded-lg">
@@ -379,8 +379,37 @@
                   <div class="text-3xl font-bold text-white"><%= departments ? departments.length : 0 %></div>
                   <div class="text-gray-400 text-lg">Departments</div>
                 <% } else { %>
-                  <div class="text-3xl font-bold text-gray-500">?</div>
+                  <div class="text-3xl font-bold text-gray-500 relative group">
+                    ?
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                      Request to join to view
+                      <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
                   <div class="text-gray-500 text-lg">Departments</div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg">
+            <div class="flex items-center space-x-4">
+              <div class="bg-indigo-600 p-3 rounded-lg">
+                <i class="fa fa-bullhorn text-white text-2xl"></i>
+              </div>
+              <div>
+                <% if (isMemberApproved) { %>
+                  <div class="text-3xl font-bold text-white" id="announcements-count">0</div>
+                  <div class="text-gray-400 text-lg">Announcements</div>
+                <% } else { %>
+                  <div class="text-3xl font-bold text-gray-500 relative group">
+                    ?
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                      Request to join to view
+                      <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                  <div class="text-gray-500 text-lg">Announcements</div>
                 <% } %>
               </div>
             </div>
@@ -392,8 +421,19 @@
                 <i class="fa fa-calendar text-white text-2xl"></i>
               </div>
               <div>
-                <div class="text-3xl font-bold text-white"><%= community.community.events ? community.community.events.length : 0 %></div>
-                <div class="text-gray-400 text-lg">Events</div>
+                <% if (isMemberApproved) { %>
+                  <div class="text-3xl font-bold text-white"><%= community.community.events ? community.community.events.length : 0 %></div>
+                  <div class="text-gray-400 text-lg">Events</div>
+                <% } else { %>
+                  <div class="text-3xl font-bold text-gray-500 relative group">
+                    ?
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                      Request to join to view
+                      <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                  <div class="text-gray-500 text-lg">Events</div>
+                <% } %>
               </div>
             </div>
           </div>
