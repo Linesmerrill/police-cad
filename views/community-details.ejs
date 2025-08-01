@@ -1,4 +1,25 @@
 <!DOCTYPE html>
+<%
+  // Global permission logic - defined at the very beginning for use throughout the template
+  let canManageAnnouncements = false;
+  const userId = user && user._doc ? String(user._doc._id) : null;
+  if (userId && community.community && Array.isArray(community.community.roles)) {
+    community.community.roles.forEach(function(role) {
+      if (Array.isArray(role.members) && role.members.includes(userId)) {
+        if (Array.isArray(role.permissions)) {
+          role.permissions.forEach(function(perm) {
+            if (
+              (perm.name === "administrator" && perm.enabled === true) ||
+              (perm.name === "manage community settings" && perm.enabled === true)
+            ) {
+              canManageAnnouncements = true;
+            }
+          });
+        }
+      }
+    });
+  }
+%>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -42,7 +63,7 @@
         const userId = '<%= user && user._doc ? user._doc._id : "" %>';
         
         if (communityId && userId) {
-          fetch('https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/user/last-accessed-community', {
+          fetch('<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>/api/v1/user/last-accessed-community', {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -237,6 +258,17 @@
                 >
                   <i class="fa fa-building text-2xl mb-1"></i>
                   <span class="text-base font-medium">Departments</span>
+                </button>
+                
+                <button
+                  onclick="scrollToSection('announcements-section')"
+                  class="flex flex-col items-center p-3 bg-gradient-to-br from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md relative"
+                >
+                  <i class="fa fa-bullhorn text-2xl mb-1"></i>
+                  <span class="text-base font-medium">Announcements</span>
+                  <div id="nav-announcements-badge" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center hidden">
+                    <span id="nav-unread-number">0</span>
+                  </div>
                 </button>
                 
                 <button
@@ -643,116 +675,189 @@
         </div>
         
                  <!-- Events Section -->
-         <div id="events-section" class="card">
-           <%
-             // Permission logic for managing events (EJS, like departments)
-             let canManageEvents = false;
-             if (userId && community.community && Array.isArray(community.community.roles)) {
-               community.community.roles.forEach(function(role) {
-                 if (Array.isArray(role.members) && role.members.includes(userId)) {
-                   if (Array.isArray(role.permissions)) {
-                     role.permissions.forEach(function(perm) {
-                       if (
-                         (perm.name === "administrator" && perm.enabled === true) ||
-                         (perm.name === "manage community events" && perm.enabled === true)
-                       ) {
-                         canManageEvents = true;
-                       }
-                     });
-                   }
-                 }
-               });
-             }
-           %>
-           <div class="flex items-center justify-between mb-6">
-             <h2 class="text-3xl font-semibold">Events</h2>
-             <% if (isMemberApproved) { %>
-               <% if (canManageEvents) { %>
-                <button onclick="openCreateEventModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold shadow transition flex items-center text-lg">
-                  <i class="fa fa-plus mr-3"></i> Create Event
-                </button>
-              <% } else { %>
-                <button onclick="openNoEventPermissionModal()" class="bg-gray-500 text-white px-6 py-3 rounded-full font-semibold shadow opacity-60 cursor-not-allowed flex items-center text-lg" style="pointer-events:auto;">
-                  <i class="fa fa-plus mr-3"></i> Create Event
-                </button>
-              <% } %>
-            <% } %>
-          </div>
-          <%
-            // Pagination for events
-            const eventsPerPage = 4;
-            const eventPage = parseInt((typeof query !== 'undefined' && query.eventPage) ? query.eventPage : 1, 10) || 1;
-            const allEvents = community.community.events || [];
-            const totalEventPages = Math.max(1, Math.ceil(allEvents.length / eventsPerPage));
-            const pagedEvents = allEvents.slice((eventPage - 1) * eventsPerPage, eventPage * eventsPerPage);
-          %>
-          <ul class="text-left mx-auto max-w-4xl">
-            <% pagedEvents.forEach(function(event) { %>
-              <% if (isMemberApproved) { %>
-                <li class="mb-6 p-6 rounded bg-gray-800 border border-gray-700 flex flex-col sm:flex-row items-start gap-6 relative">
-                  <img src="<%= event.image || '/static/images/default-logo.png' %>" alt="Event Image" class="w-40 h-32 object-cover rounded mb-4 sm:mb-0" style="min-width:10rem; max-width:10rem; max-height:8rem;" />
-                  <div class="flex-1">
-                    <div class="flex items-center justify-between mb-3">
-                      <div class="font-semibold text-2xl text-white"><%= event.title %></div>
-                      <% if (canManageEvents) { %>
-                        <button class="text-gray-400 hover:text-blue-400 z-10 bg-gray-900 bg-opacity-70 rounded-full p-2 ml-3" title="Edit Event" onclick="event.stopPropagation(); openEditEventModal('<%= event._id %>')">
-                          <i class="fa fa-pencil-alt text-lg"></i>
-                        </button>
-                      <% } %>
-                    </div>
-                    <div class="text-gray-400 text-lg mb-3"><%= new Date(event.scheduledDate).toLocaleString() %></div>
-                    <div class="text-gray-300 text-lg mb-3"><%= event.description %></div>
-                    <% if (event.location) { %>
-                      <div class="text-gray-500 text-base">Location: <%= event.location %></div>
-                    <% } %>
-                  </div>
-                </li>
-              <% } else { %>
-                <li class="mb-6 p-6 rounded bg-gray-800 border border-gray-700 relative opacity-70 cursor-not-allowed flex flex-col sm:flex-row items-start gap-6">
-                  <img src="<%= event.image || '/static/images/default-logo.png' %>" alt="Event Image" class="w-40 h-32 object-cover rounded mb-4 sm:mb-0" style="min-width:10rem; max-width:10rem; max-height:8rem;" />
-                  <div class="flex-1 relative z-0">
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                      <span class="bg-black bg-opacity-60 text-white text-base px-3 py-2 rounded">Members Only</span>
-                    </div>
-                    <div class="font-semibold text-xl text-white mb-2"><%= event.title %></div>
-                    <div class="text-gray-400 text-base mb-2"><%= new Date(event.scheduledDate).toLocaleString() %></div>
-                    <div class="text-gray-300 text-base mb-2"><%= event.description %></div>
-                    <% if (event.location) { %>
-                      <div class="text-gray-500 text-sm">Location: <%= event.location %></div>
-                    <% } %>
-                  </div>
-                </li>
-              <% } %>
-            <% }); %>
-          </ul>
-          <% if (totalEventPages > 1) { %>
-            <div class="flex justify-center items-center gap-4 mt-6">
-              <form method="get" style="display:inline;">
-                <% if (typeof query !== 'undefined') { %>
-                  <% Object.keys(query).forEach(function(key) { %>
-                    <% if (key !== 'eventPage') { %>
-                      <input type="hidden" name="<%= key %>" value="<%= query[key] %>" />
-                    <% } %>
-                  <% }); %>
-                <% } %>
-                <input type="hidden" name="eventPage" value="<%= eventPage - 1 %>" />
-                <button type="submit" class="px-6 py-3 rounded bg-gray-700 text-white font-semibold text-lg" <% if (eventPage <= 1) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Prev</button>
-              </form>
-              <span class="text-gray-300 text-lg">Page <%= eventPage %> of <%= totalEventPages %></span>
-              <form method="get" style="display:inline;">
-                <% if (typeof query !== 'undefined') { %>
-                  <% Object.keys(query).forEach(function(key) { %>
-                    <% if (key !== 'eventPage') { %>
-                      <input type="hidden" name="<%= key %>" value="<%= query[key] %>" />
-                    <% } %>
-                  <% }); %>
-                <% } %>
-                <input type="hidden" name="eventPage" value="<%= eventPage + 1 %>" />
-                <button type="submit" class="px-6 py-3 rounded bg-gray-700 text-white font-semibold text-lg" <% if (eventPage >= totalEventPages) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Next</button>
-              </form>
+
+
+        <!-- Announcements Section -->
+        <div id="announcements-section" class="card">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-3">
+              <h2 class="text-3xl font-semibold">Announcements</h2>
+              <div id="unread-count" class="bg-blue-500 text-white text-sm font-bold px-2 py-1 rounded-full hidden">
+                <span id="unread-number">0</span>
+              </div>
+              <button 
+                id="mark-all-read-btn"
+                onclick="markAllAsRead()" 
+                class="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors hidden"
+              >
+                Mark all as read
+              </button>
             </div>
-          <% } %>
+            <button 
+              onclick="<% if (isMemberApproved && canManageAnnouncements) { %>openCreateAnnouncementModal()<% } else { %>openNoAnnouncementPermissionModal()<% } %>" 
+              class="px-6 py-3 rounded-full font-semibold shadow transition flex items-center text-lg <% if (isMemberApproved && canManageAnnouncements) { %>bg-blue-600 hover:bg-blue-700 text-white<% } else { %>bg-gray-500 text-white opacity-60 cursor-not-allowed<% } %>"
+            >
+              <i class="fa fa-plus mr-3"></i> Create Announcement
+            </button>
+          </div>
+
+          <!-- Announcement Type Tabs -->
+          <div class="flex flex-wrap gap-2 mb-6">
+            <button 
+              onclick="filterAnnouncements('all')" 
+              id="tab-all"
+              class="px-4 py-2 rounded-lg font-semibold transition-colors bg-blue-600 text-white"
+            >
+              All
+            </button>
+            <button 
+              onclick="filterAnnouncements('main')" 
+              id="tab-main"
+              class="px-4 py-2 rounded-lg font-semibold transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600"
+            >
+              <i class="fa fa-bullhorn mr-2"></i>Main
+            </button>
+            <button 
+              onclick="filterAnnouncements('session')" 
+              id="tab-session"
+              class="px-4 py-2 rounded-lg font-semibold transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600"
+            >
+              <i class="fa fa-calendar-day mr-2"></i>Session
+            </button>
+            <button 
+              onclick="filterAnnouncements('training')" 
+              id="tab-training"
+              class="px-4 py-2 rounded-lg font-semibold transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600"
+            >
+              <i class="fa fa-graduation-cap mr-2"></i>Training
+            </button>
+          </div>
+
+          <!-- Announcements Container -->
+          <div id="announcements-container" class="space-y-4">
+            <div class="text-center py-8">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p class="text-gray-400 mt-2">Loading announcements...</p>
+            </div>
+          </div>
+
+          <!-- Pagination Container -->
+          <div id="announcements-pagination" class="mt-6">
+            <!-- Pagination controls will be loaded here -->
+          </div>
         </div>
+
+        <!-- Events Section -->
+        <div id="events-section" class="card">
+          <%
+            // Permission logic for managing events (EJS, like departments)
+            let canManageEvents = false;
+            if (userId && community.community && Array.isArray(community.community.roles)) {
+              community.community.roles.forEach(function(role) {
+                if (Array.isArray(role.members) && role.members.includes(userId)) {
+                  if (Array.isArray(role.permissions)) {
+                    role.permissions.forEach(function(perm) {
+                      if (
+                        (perm.name === "administrator" && perm.enabled === true) ||
+                        (perm.name === "manage community events" && perm.enabled === true)
+                      ) {
+                        canManageEvents = true;
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          %>
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-3xl font-semibold">Events</h2>
+            <% if (isMemberApproved) { %>
+              <% if (canManageEvents) { %>
+               <button onclick="openCreateEventModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold shadow transition flex items-center text-lg">
+                 <i class="fa fa-plus mr-3"></i> Create Event
+               </button>
+             <% } else { %>
+               <button onclick="openNoEventPermissionModal()" class="bg-gray-500 text-white px-6 py-3 rounded-full font-semibold shadow opacity-60 cursor-not-allowed flex items-center text-lg" style="pointer-events:auto;">
+                 <i class="fa fa-plus mr-3"></i> Create Event
+               </button>
+             <% } %>
+           <% } %>
+         </div>
+         <%
+           // Pagination for events
+           const eventsPerPage = 4;
+           const eventPage = parseInt((typeof query !== 'undefined' && query.eventPage) ? query.eventPage : 1, 10) || 1;
+           const allEvents = community.community.events || [];
+           const totalEventPages = Math.max(1, Math.ceil(allEvents.length / eventsPerPage));
+           const pagedEvents = allEvents.slice((eventPage - 1) * eventsPerPage, eventPage * eventsPerPage);
+         %>
+         <ul class="text-left mx-auto max-w-4xl">
+           <% pagedEvents.forEach(function(event) { %>
+             <% if (isMemberApproved) { %>
+               <li class="mb-6 p-6 rounded bg-gray-800 border border-gray-700 flex flex-col sm:flex-row items-start gap-6 relative">
+                 <img src="<%= event.image || '/static/images/default-logo.png' %>" alt="Event Image" class="w-40 h-32 object-cover rounded mb-4 sm:mb-0" style="min-width:10rem; max-width:10rem; max-height:8rem;" />
+                 <div class="flex-1">
+                   <div class="flex items-center justify-between mb-3">
+                     <div class="font-semibold text-2xl text-white"><%= event.title %></div>
+                     <% if (canManageEvents) { %>
+                       <button class="text-gray-400 hover:text-blue-400 z-10 bg-gray-900 bg-opacity-70 rounded-full p-2 ml-3" title="Edit Event" onclick="event.stopPropagation(); openEditEventModal('<%= event._id %>')">
+                         <i class="fa fa-pencil-alt text-lg"></i>
+                       </button>
+                     <% } %>
+                   </div>
+                   <div class="text-gray-400 text-lg mb-3"><%= new Date(event.scheduledDate).toLocaleString() %></div>
+                   <div class="text-gray-300 text-lg mb-3"><%= event.description %></div>
+                   <% if (event.location) { %>
+                     <div class="text-gray-500 text-base">Location: <%= event.location %></div>
+                   <% } %>
+                 </div>
+               </li>
+             <% } else { %>
+               <li class="mb-6 p-6 rounded bg-gray-800 border border-gray-700 relative opacity-70 cursor-not-allowed flex flex-col sm:flex-row items-start gap-6">
+                 <img src="<%= event.image || '/static/images/default-logo.png' %>" alt="Event Image" class="w-40 h-32 object-cover rounded mb-4 sm:mb-0" style="min-width:10rem; max-width:10rem; max-height:8rem;" />
+                 <div class="flex-1 relative z-0">
+                   <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                     <span class="bg-black bg-opacity-60 text-white text-base px-3 py-2 rounded">Members Only</span>
+                   </div>
+                   <div class="font-semibold text-xl text-white mb-2"><%= event.title %></div>
+                   <div class="text-gray-400 text-base mb-2"><%= new Date(event.scheduledDate).toLocaleString() %></div>
+                   <div class="text-gray-300 text-base mb-2"><%= event.description %></div>
+                   <% if (event.location) { %>
+                     <div class="text-gray-500 text-sm">Location: <%= event.location %></div>
+                   <% } %>
+                 </div>
+               </li>
+             <% } %>
+           <% }); %>
+         </ul>
+         <% if (totalEventPages > 1) { %>
+           <div class="flex justify-center items-center gap-4 mt-6">
+             <form method="get" style="display:inline;">
+               <% if (typeof query !== 'undefined') { %>
+                 <% Object.keys(query).forEach(function(key) { %>
+                   <% if (key !== 'eventPage') { %>
+                     <input type="hidden" name="<%= key %>" value="<%= query[key] %>" />
+                   <% } %>
+                 <% }); %>
+               <% } %>
+               <input type="hidden" name="eventPage" value="<%= eventPage - 1 %>" />
+               <button type="submit" class="px-6 py-3 rounded bg-gray-700 text-white font-semibold text-lg" <% if (eventPage <= 1) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Prev</button>
+             </form>
+             <span class="text-gray-300 text-lg">Page <%= eventPage %> of <%= totalEventPages %></span>
+             <form method="get" style="display:inline;">
+               <% if (typeof query !== 'undefined') { %>
+                 <% Object.keys(query).forEach(function(key) { %>
+                   <% if (key !== 'eventPage') { %>
+                     <input type="hidden" name="<%= key %>" value="<%= query[key] %>" />
+                   <% } %>
+                 <% }); %>
+               <% } %>
+               <input type="hidden" name="eventPage" value="<%= eventPage + 1 %>" />
+               <button type="submit" class="px-6 py-3 rounded bg-gray-700 text-white font-semibold text-lg" <% if (eventPage >= totalEventPages) { %>disabled style="opacity:0.5;cursor:not-allowed;"<% } %>>Next</button>
+             </form>
+           </div>
+         <% } %>
+       </div>
 
         <!-- HeroUI Pro Features Section -->
         <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-16 mt-16 rounded-lg">
@@ -913,7 +1018,7 @@
       let currentNotificationId = null;
       
       // Global API_URL for notifications.js
-      window.API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+      window.API_URL = '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     </script>
     <script>
       // Modal Event Listeners
@@ -1180,6 +1285,8 @@ if (localStorage.getItem('leftCommunityToast')) {
 function openNoEventPermissionModal() {
   document.getElementById('noEventPermissionModal').style.display = 'flex';
 }
+
+
 </script> 
 
 <% /* --- Create Department Button (if user has permission) --- */ %>
@@ -1701,6 +1808,200 @@ window.expandTemplateCard = function(idx) {
     </div>
   </div>
 </div>
+
+<!-- Create Announcement Modal -->
+<div id="createAnnouncementModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:95%; position:relative; border:1px solid #35385a;">
+    <button id="createAnnouncementModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-bullhorn" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create Announcement</h3>
+    </div>
+    <form id="createAnnouncementForm" action="javascript:void(0)" method="post">
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-2 text-base" for="announcement-title">Title *</label>
+        <input type="text" id="announcement-title" required maxlength="200" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" placeholder="Enter announcement title" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-2 text-base" for="announcement-type">Type *</label>
+        <select id="announcement-type" required class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base">
+          <option value="">Select type</option>
+          <option value="main">Main Announcement</option>
+          <option value="session">Session Announcement</option>
+          <option value="training">Training Announcement</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-2 text-base" for="announcement-priority">Priority</label>
+        <select id="announcement-priority" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-2 text-base" for="announcement-content">Content *</label>
+        <textarea id="announcement-content" required maxlength="5000" rows="6" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" placeholder="Enter announcement content"></textarea>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label class="block text-gray-300 mb-2 text-base" for="announcement-start-time">Start Time (Optional)</label>
+          <input type="datetime-local" id="announcement-start-time" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" />
+        </div>
+        <div>
+          <label class="block text-gray-300 mb-2 text-base" for="announcement-end-time">End Time (Optional)</label>
+          <input type="datetime-local" id="announcement-end-time" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" />
+        </div>
+      </div>
+      <div id="createAnnouncementError" class="text-red-400 text-sm mb-4" style="display:none;"></div>
+      <div class="flex justify-end gap-3">
+        <button type="button" id="createAnnouncementModalCancel" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded text-base font-medium">Cancel</button>
+        <button type="submit" onclick="event.preventDefault(); submitAnnouncement();" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-semibold text-base">Create Announcement</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- No Announcement Permission Modal -->
+<div id="noAnnouncementPermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+    <button id="noAnnouncementPermissionModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-lock" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
+    </div>
+    <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+      <p style="font-size:1rem;">You do not have permission to create announcements.</p>
+      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage announcements</strong> permission from an admin to create announcements.</p>
+    </div>
+    <div style="margin-top:2rem; text-align:center;">
+      <button id="noAnnouncementPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Announcement Modal -->
+<div id="editAnnouncementModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:95%; position:relative; border:1px solid #35385a;">
+    <button onclick="closeEditAnnouncementModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-edit" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Edit Announcement</h3>
+    </div>
+    <form onsubmit="event.preventDefault(); submitEditAnnouncement();">
+      <input type="hidden" id="edit-announcement-id" />
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-title">Title *</label>
+        <input type="text" id="edit-announcement-title" required maxlength="200" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" placeholder="Enter announcement title" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-type">Type *</label>
+        <select id="edit-announcement-type" required class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base">
+          <option value="">Select type</option>
+          <option value="main">Main Announcement</option>
+          <option value="session">Session Announcement</option>
+          <option value="training">Training Announcement</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-priority">Priority</label>
+        <select id="edit-announcement-priority" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-content">Content *</label>
+        <textarea id="edit-announcement-content" required maxlength="5000" rows="6" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" placeholder="Enter announcement content"></textarea>
+      </div>
+      <div id="editAnnouncementError" class="text-red-400 text-sm mb-4" style="display:none;"></div>
+      <div class="flex justify-end gap-3">
+        <button type="button" onclick="closeEditAnnouncementModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded text-base font-medium">Cancel</button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-semibold text-base">Update Announcement</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Announcement Modal -->
+<div id="deleteAnnouncementModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+    <button onclick="closeDeleteAnnouncementModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-trash" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Delete Announcement</h3>
+    </div>
+    <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+      <p style="font-size:1rem;">Are you sure you want to delete this announcement?</p>
+      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;"><strong id="delete-announcement-title"></strong></p>
+      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;">This action cannot be undone.</p>
+    </div>
+    <input type="hidden" id="delete-announcement-id" />
+    <div style="margin-top:2rem; text-align:center; display:flex; justify-content:center; gap:1rem;">
+      <button onclick="closeDeleteAnnouncementModal()" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+        Cancel
+      </button>
+      <button onclick="deleteAnnouncement()" type="button" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+        Delete Announcement
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Comment Modal -->
+<div id="editCommentModal" class="heroui-modal" style="display:none; position:fixed; z-index:4000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:95%; position:relative; border:1px solid #35385a;">
+    <button onclick="closeEditCommentModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-edit" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Edit Comment</h3>
+    </div>
+    <form onsubmit="event.preventDefault(); submitEditComment();">
+      <input type="hidden" id="edit-comment-announcement-id" />
+      <input type="hidden" id="edit-comment-id" />
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-2 text-base" for="edit-comment-content">Comment *</label>
+        <textarea id="edit-comment-content" required maxlength="1000" rows="4" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" placeholder="Enter your comment"></textarea>
+      </div>
+      <div id="editCommentError" class="text-red-400 text-sm mb-4" style="display:none;"></div>
+      <div class="flex justify-end gap-3">
+        <button type="button" onclick="closeEditCommentModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded text-base font-medium">Cancel</button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-semibold text-base">Update Comment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Comment Modal -->
+<div id="deleteCommentModal" class="heroui-modal" style="display:none; position:fixed; z-index:4000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+    <button onclick="closeDeleteCommentModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-trash" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Delete Comment</h3>
+    </div>
+    <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+      <p style="font-size:1rem;">Are you sure you want to delete this comment?</p>
+      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;"><strong id="delete-comment-content"></strong></p>
+      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;">This action cannot be undone.</p>
+    </div>
+    <input type="hidden" id="delete-comment-announcement-id" />
+    <input type="hidden" id="delete-comment-id" />
+    <div style="margin-top:2rem; text-align:center; display:flex; justify-content:center; gap:1rem;">
+      <button onclick="closeDeleteCommentModal()" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+        Cancel
+      </button>
+      <button onclick="deleteComment()" type="button" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+        Delete Comment
+      </button>
+    </div>
+  </div>
+</div>
  
 
 <!-- Leave Community Confirmation Modal -->
@@ -2103,6 +2404,58 @@ document.getElementById('createEventForm').onsubmit = async function(e) {
 };
 </script> 
 
+<!-- Create Announcement Modal -->
+<div id="createAnnouncementModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:90%; position:relative; border:1px solid #35385a;">
+    <button onclick="closeCreateAnnouncementModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-bullhorn" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create Announcement</h3>
+    </div>
+
+  </div>
+</div>
+
+<!-- No Announcement Permission Modal -->
+<div id="noAnnouncementPermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:400px; width:90%; position:relative; border:1px solid #35385a;">
+    <button onclick="closeNoAnnouncementPermissionModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-lock" style="font-size:3rem; color:#ef4444; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Permission Required</h3>
+    </div>
+    <div class="text-center">
+      <p class="text-gray-300 mb-4">You don't have permission to create announcements in this community.</p>
+      <p class="text-gray-400 text-sm mb-6">Please contact a community administrator to request this permission.</p>
+      <button onclick="closeNoAnnouncementPermissionModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Announcement modal functions
+function openCreateAnnouncementModal() {
+  document.getElementById('createAnnouncementModal').style.display = 'flex';
+}
+
+function closeCreateAnnouncementModal() {
+  document.getElementById('createAnnouncementModal').style.display = 'none';
+  // Reset form
+  document.getElementById('createAnnouncementForm').reset();
+  document.getElementById('createAnnouncementError').style.display = 'none';
+}
+
+function openNoAnnouncementPermissionModal() {
+  document.getElementById('noAnnouncementPermissionModal').style.display = 'flex';
+}
+
+function closeNoAnnouncementPermissionModal() {
+  document.getElementById('noAnnouncementPermissionModal').style.display = 'none';
+}
+
+
+</script>
+
 <!-- Edit Event Modal -->
 <div id="editEventModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
   <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
@@ -2422,13 +2775,30 @@ async function deleteEditEvent() {
   <span id="toast-message"></span>
 </div>
 
-    <!-- Set dbUser global for JS -->
+    <!-- Set global variables for JS -->
     <script>
       window.dbUser = <%- JSON.stringify(user && user._doc ? user._doc : user || {}) %>;
       window.communityId = "<%= community._id %>";
+      window.jwtToken = "<%= user && user._doc ? user._doc.jwtToken || '' : '' %>";
+      window.canManageAnnouncements = <%- canManageAnnouncements %>;
+      
+      // For testing - ensure we have a user ID for mock data
+      if (!window.dbUser._id) {
+        window.dbUser._id = 'mock-user-1';
+        window.dbUser.user = window.dbUser.user || {};
+        window.dbUser.user.username = 'TestUser';
+      }
+      
+      // Debug: Log global variables
+      console.log('Global variables set:', {
+        dbUser: window.dbUser,
+        communityId: window.communityId,
+        jwtToken: window.jwtToken ? 'Present' : 'Missing',
+        API_URL: window.API_URL
+      });
     </script>
-    <!-- Include community-details.js for join logic -->
-    <script src="/static/js/community-details.js"></script>
+    <!-- Include announcements.js for announcement functionality -->
+<script src="/static/js/announcements.js"></script>
 
     <% if (user && user._doc) { %>
       <!-- Account Management Modal -->
@@ -2436,9 +2806,6 @@ async function deleteEditEvent() {
       
       <!-- Notification Modal -->
       <% include partials/notificationModal %>
-      
-      <!-- Include notifications.js for notification functionality -->
-      <script src="/static/js/notifications.js"></script>
       
       <!-- Modal Event Listeners -->
       <script>
@@ -2526,7 +2893,9 @@ async function deleteEditEvent() {
             { id: 'noDepartmentPermissionModalClose', modalId: 'noDepartmentPermissionModal' },
             { id: 'noDepartmentPermissionModalCancel', modalId: 'noDepartmentPermissionModal' },
             { id: 'noEventPermissionModalClose', modalId: 'noEventPermissionModal' },
-            { id: 'noEventPermissionModalCancel', modalId: 'noEventPermissionModal' }
+            { id: 'noEventPermissionModalCancel', modalId: 'noEventPermissionModal' },
+            { id: 'noAnnouncementPermissionModalClose', modalId: 'noAnnouncementPermissionModal' },
+            { id: 'noAnnouncementPermissionModalCancel', modalId: 'noAnnouncementPermissionModal' }
           ];
           
           modalCloseHandlers.forEach(handler => {

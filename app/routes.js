@@ -14,6 +14,7 @@ var Call = require("../app/models/calls");
 var Medication = require("../app/models/medication");
 var Condition = require("../app/models/medicalCondition");
 var MedicalReport = require("../app/models/medicalReport");
+var Announcement = require("../app/models/announcement");
 var ObjectId = require("mongodb").ObjectID;
 var nodemailer = require("nodemailer");
 var nodemailerSendgrid = require("nodemailer-sendgrid");
@@ -5463,7 +5464,345 @@ module.exports = function (app, passport, server) {
     });
   }); //end of sockets
 
-  
+  // ===========================================
+  // ANNOUNCEMENT API ROUTES
+  // ===========================================
+
+  // Get all announcements for a community
+  app.get("/api/v1/community/:communityId/announcements", authCheck, async function (req, res) {
+    try {
+      const { communityId } = req.params;
+      const { type, page = 1, limit = 10 } = req.query;
+      
+      if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+      const query = { community: communityId, isActive: true };
+      
+      if (type && ['main', 'session', 'training'].includes(type)) {
+        query.type = type;
+      }
+
+      const announcements = await Announcement.find(query)
+        .sort({ isPinned: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate('creator', 'username profilePicture')
+        .populate('reactions.user', 'username profilePicture')
+        .populate('comments.user', 'username profilePicture');
+
+      const total = await Announcement.countDocuments(query);
+
+      res.json({
+        announcements,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      res.status(500).json({ error: "Failed to fetch announcements" });
+    }
+  });
+
+  // Get a specific announcement
+  app.get("/api/v1/announcement/:announcementId", authCheck, async function (req, res) {
+    try {
+      const { announcementId } = req.params;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      const announcement = await Announcement.findById(announcementId)
+        .populate('creator', 'username profilePicture')
+        .populate('reactions.user', 'username profilePicture')
+        .populate('comments.user', 'username profilePicture');
+
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      // Increment view count
+      await announcement.incrementViewCount();
+
+      res.json({ announcement });
+    } catch (error) {
+      console.error('Error fetching announcement:', error);
+      res.status(500).json({ error: "Failed to fetch announcement" });
+    }
+  });
+
+  // Create a new announcement
+  app.post("/api/v1/community/:communityId/announcements", authCheck, async function (req, res) {
+    try {
+      const { communityId } = req.params;
+      const { title, content, type, priority, startTime, endTime } = req.body;
+      
+      if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+
+      // Validate required fields
+      if (!title || !content || !type) {
+        return res.status(400).json({ error: "Title, content, and type are required" });
+      }
+
+      if (!['main', 'session', 'training'].includes(type)) {
+        return res.status(400).json({ error: "Invalid announcement type" });
+      }
+
+      if (priority && !['low', 'medium', 'high', 'urgent'].includes(priority)) {
+        return res.status(400).json({ error: "Invalid priority level" });
+      }
+
+      // Check if user has permission to create announcements
+      // This would typically check community roles/permissions
+      // For now, we'll allow any authenticated user who is a member
+
+      const announcement = new Announcement({
+        community: communityId,
+        creator: req.user._id,
+        title: title.trim(),
+        content: content.trim(),
+        type,
+        priority: priority || 'medium',
+        startTime: startTime ? new Date(startTime) : null,
+        endTime: endTime ? new Date(endTime) : null
+      });
+
+      await announcement.save();
+      await announcement.populate('creator', 'username profilePicture');
+
+      res.status(201).json({ announcement });
+    } catch (error) {
+      console.error('Error creating announcement:', error);
+      res.status(500).json({ error: "Failed to create announcement" });
+    }
+  });
+
+  // Update an announcement
+  app.put("/api/v1/announcement/:announcementId", authCheck, async function (req, res) {
+    try {
+      const { announcementId } = req.params;
+      const { title, content, type, priority, isActive, isPinned, startTime, endTime } = req.body;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      // Check if user is the creator or has admin permissions
+      if (announcement.creator.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: "Not authorized to edit this announcement" });
+      }
+
+      // Update fields
+      if (title !== undefined) announcement.title = title.trim();
+      if (content !== undefined) announcement.content = content.trim();
+      if (type !== undefined && ['main', 'session', 'training'].includes(type)) {
+        announcement.type = type;
+      }
+      if (priority !== undefined && ['low', 'medium', 'high', 'urgent'].includes(priority)) {
+        announcement.priority = priority;
+      }
+      if (isActive !== undefined) announcement.isActive = isActive;
+      if (isPinned !== undefined) announcement.isPinned = isPinned;
+      if (startTime !== undefined) announcement.startTime = startTime ? new Date(startTime) : null;
+      if (endTime !== undefined) announcement.endTime = endTime ? new Date(endTime) : null;
+
+      await announcement.save();
+      await announcement.populate('creator', 'username profilePicture');
+
+      res.json({ announcement });
+    } catch (error) {
+      console.error('Error updating announcement:', error);
+      res.status(500).json({ error: "Failed to update announcement" });
+    }
+  });
+
+  // Delete an announcement
+  app.delete("/api/v1/announcement/:announcementId", authCheck, async function (req, res) {
+    try {
+      const { announcementId } = req.params;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      // Check if user is the creator or has admin permissions
+      if (announcement.creator.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: "Not authorized to delete this announcement" });
+      }
+
+      await announcement.remove();
+      res.json({ message: "Announcement deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+      res.status(500).json({ error: "Failed to delete announcement" });
+    }
+  });
+
+  // Add/update reaction to an announcement
+  app.post("/api/v1/announcement/:announcementId/reactions", authCheck, async function (req, res) {
+    try {
+      const { announcementId } = req.params;
+      const { emoji } = req.body;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      if (!emoji) {
+        return res.status(400).json({ error: "Emoji is required" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      await announcement.addReaction(req.user._id, emoji);
+      await announcement.populate('reactions.user', 'username profilePicture');
+
+      res.json({ announcement });
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      res.status(500).json({ error: "Failed to add reaction" });
+    }
+  });
+
+  // Remove reaction from an announcement
+  app.delete("/api/v1/announcement/:announcementId/reactions", authCheck, async function (req, res) {
+    try {
+      const { announcementId } = req.params;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      await announcement.removeReaction(req.user._id);
+      await announcement.populate('reactions.user', 'username profilePicture');
+
+      res.json({ announcement });
+    } catch (error) {
+      console.error('Error removing reaction:', error);
+      res.status(500).json({ error: "Failed to remove reaction" });
+    }
+  });
+
+  // Add comment to an announcement
+  app.post("/api/v1/announcement/:announcementId/comments", authCheck, async function (req, res) {
+    try {
+      const { announcementId } = req.params;
+      const { content } = req.body;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ error: "Comment content is required" });
+      }
+
+      if (content.trim().length > 1000) {
+        return res.status(400).json({ error: "Comment too long (max 1000 characters)" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      await announcement.addComment(req.user._id, content.trim());
+      await announcement.populate('comments.user', 'username profilePicture');
+
+      res.json({ announcement });
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      res.status(500).json({ error: "Failed to add comment" });
+    }
+  });
+
+  // Update a comment
+  app.put("/api/v1/announcement/:announcementId/comments/:commentId", authCheck, async function (req, res) {
+    try {
+      const { announcementId, commentId } = req.params;
+      const { content } = req.body;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ error: "Comment content is required" });
+      }
+
+      if (content.trim().length > 1000) {
+        return res.status(400).json({ error: "Comment too long (max 1000 characters)" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      await announcement.editComment(commentId, req.user._id, content.trim());
+      await announcement.populate('comments.user', 'username profilePicture');
+
+      res.json({ announcement });
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      res.status(500).json({ error: "Failed to update comment" });
+    }
+  });
+
+  // Delete a comment
+  app.delete("/api/v1/announcement/:announcementId/comments/:commentId", authCheck, async function (req, res) {
+    try {
+      const { announcementId, commentId } = req.params;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      await announcement.deleteComment(commentId, req.user._id);
+      await announcement.populate('comments.user', 'username profilePicture');
+
+      res.json({ announcement });
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      res.status(500).json({ error: "Failed to delete comment" });
+    }
+  });
+
+  // ===========================================
+  // END ANNOUNCEMENT API ROUTES
+  // ===========================================
 
   // Move this to the very end
   app.get("*", function (req, res) {
