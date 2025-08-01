@@ -65,7 +65,7 @@
   // Update a specific announcement card with fresh data from the API
   async function updateAnnouncementCard(announcementId) {
     try {
-      console.log('🔄 Updating announcement card:', announcementId);
+
       
       const response = await fetch(`${API_URL}/api/v1/announcement/${announcementId}`, {
         method: 'GET',
@@ -89,7 +89,7 @@
       if (existingCard) {
         const newCardHtml = createAnnouncementCard(data.announcement);
         existingCard.outerHTML = newCardHtml;
-        console.log('✅ Announcement card updated successfully');
+
       } else {
         console.warn('⚠️ Could not find announcement card to update');
       }
@@ -207,13 +207,6 @@
 
   // Create announcement card
   function createAnnouncementCard(announcement) {
-    // Debug: log the announcement structure
-    console.log('📋 Creating card for announcement:', {
-      id: announcement._id,
-      title: announcement.title,
-      reactions: announcement.reactions,
-      comments: announcement.comments
-    });
     
     // Defensive programming: ensure announcement object exists and has required properties
     if (!announcement || typeof announcement !== 'object') {
@@ -380,7 +373,6 @@
 
   // Filter announcements by type
   function filterAnnouncements(type) {
-    console.log('🔍 Filtering announcements by type:', type);
     currentAnnouncementPage = 1;
     currentFilterType = type;
     
@@ -426,8 +418,7 @@
         params.append('type', currentFilterType);
       }
 
-      console.log('Loading announcements for community:', window.communityId);
-      console.log('API URL:', window.API_URL);
+      
 
       const response = await fetch(`${API_URL}/api/v1/community/${window.communityId}/announcements?${params}`, {
         method: 'GET',
@@ -436,7 +427,7 @@
         }
       });
 
-      console.log('Response status:', response.status);
+
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -447,7 +438,7 @@
              const data = await response.json();
        
        // Debug: Log the actual response structure
-       console.log('API Response:', data);
+ 
        
        if (!data.success) {
          throw new Error(data.message || 'Failed to load announcements');
@@ -459,7 +450,7 @@
        
        // Handle null announcements from backend
        if (announcements === null) {
-         console.log('📝 Backend returned null announcements, converting to empty array');
+ 
          announcements = [];
        }
        
@@ -572,7 +563,7 @@
 
   // Toggle reaction
   async function toggleReaction(announcementId, emoji) {
-    console.log('toggleReaction called:', { announcementId, emoji });
+
     try {
       // Check if required global variables are available
       if (!window.communityId) {
@@ -627,7 +618,7 @@
 
   // Add comment
   async function addComment(announcementId) {
-    console.log('addComment called:', { announcementId });
+
     try {
       // Check if required global variables are available
       if (!window.communityId) {
@@ -681,7 +672,7 @@
 
   // Open edit comment modal
   function openEditCommentModal(announcementId, commentId, currentContent) {
-    console.log('Opening edit comment modal for comment:', commentId);
+
     
     // Set the form values
     document.getElementById('edit-comment-announcement-id').value = announcementId;
@@ -705,13 +696,13 @@
 
   // Submit edited comment
   async function submitEditComment() {
-    console.log('🎯 submitEditComment function called!');
+
     try {
       const announcementId = document.getElementById('edit-comment-announcement-id').value;
       const commentId = document.getElementById('edit-comment-id').value;
       const content = document.getElementById('edit-comment-content').value.trim();
       
-      console.log('🎯 Edit comment data:', { announcementId, commentId, content });
+
 
       if (!content) {
         showError('Please enter a comment');
@@ -757,7 +748,7 @@
 
   // Open delete comment modal
   function openDeleteCommentModal(announcementId, commentId, commentContent) {
-    console.log('Opening delete comment modal for comment:', commentId);
+
     
     // Set the form values
     document.getElementById('delete-comment-announcement-id').value = announcementId;
@@ -865,16 +856,14 @@
 
   // Open create announcement modal
   function openCreateAnnouncementModal() {
-    console.log('openCreateAnnouncementModal called');
     const modal = document.getElementById('createAnnouncementModal');
-    console.log('Modal element:', modal);
     if (modal) {
       modal.style.display = 'flex';
       document.getElementById('announcement-title').value = '';
       document.getElementById('announcement-content').value = '';
       document.getElementById('announcement-type').value = 'main';
       document.getElementById('announcement-priority').value = 'medium';
-      console.log('Modal opened successfully');
+      
     } else {
       console.error('Modal element not found');
     }
@@ -906,7 +895,7 @@
 
   // Open edit announcement modal
   function openEditAnnouncementModal(announcementId, title, content, type, priority) {
-    console.log('Opening edit modal for announcement:', announcementId);
+
     
     // Set the form values
     document.getElementById('edit-announcement-id').value = announcementId;
@@ -932,7 +921,7 @@
 
   // Open delete announcement modal
   function openDeleteAnnouncementModal(announcementId, title) {
-    console.log('Opening delete modal for announcement:', announcementId);
+
     
     // Set the announcement details
     document.getElementById('delete-announcement-id').value = announcementId;
@@ -955,7 +944,7 @@
 
   // Submit edited announcement
   async function submitEditAnnouncement() {
-    console.log('🎯 submitEditAnnouncement function called!');
+
     try {
       const announcementId = document.getElementById('edit-announcement-id').value;
       const title = document.getElementById('edit-announcement-title').value.trim();
@@ -963,7 +952,7 @@
       const type = document.getElementById('edit-announcement-type').value;
       const priority = document.getElementById('edit-announcement-priority').value;
       
-      console.log('🎯 Edit form data:', { announcementId, title, content, type, priority });
+
 
       if (!title || !content) {
         showError('Please fill in all required fields');
@@ -1007,7 +996,7 @@
 
   // Submit announcement
   async function submitAnnouncement() {
-    console.log('🎯 submitAnnouncement function called!');
+
     try {
       // Check if required global variables are available
       if (!window.communityId) {
@@ -1022,14 +1011,14 @@
       const type = document.getElementById('announcement-type').value;
       const priority = document.getElementById('announcement-priority').value;
       
-      console.log('🎯 Form data:', { title, content, type, priority });
+
 
       if (!title || !content) {
         showError('Please fill in all required fields');
         return;
       }
 
-      console.log('🎯 Making API call to:', `${API_URL}/api/v1/community/${window.communityId}/announcements`);
+
       const requestBody = {
         userId: window.dbUser._id,
         type: type,
@@ -1038,7 +1027,7 @@
         priority: priority,
         isPinned: false
       };
-      console.log('🎯 Request body:', requestBody);
+
       
       const response = await fetch(`${API_URL}/api/v1/community/${window.communityId}/announcements`, {
         method: 'POST',
@@ -1048,7 +1037,7 @@
         body: JSON.stringify(requestBody)
       });
 
-      console.log('🎯 Response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('🎯 API Error response:', errorData);
@@ -1056,7 +1045,7 @@
       }
 
       const data = await response.json();
-      console.log('🎯 API Success response:', data);
+
       
       if (!data.success) {
         throw new Error(data.message || 'Failed to create announcement');
@@ -1086,7 +1075,7 @@
       const createModalCloseBtn = document.getElementById('createAnnouncementModalClose');
       if (createModalCloseBtn) {
         createModalCloseBtn.addEventListener('click', closeCreateAnnouncementModal);
-        console.log('✅ Create modal close button listener added');
+
       } else {
         console.error('❌ Create modal close button not found');
       }
@@ -1095,7 +1084,7 @@
       const createModalCancelBtn = document.getElementById('createAnnouncementModalCancel');
       if (createModalCancelBtn) {
         createModalCancelBtn.addEventListener('click', closeCreateAnnouncementModal);
-        console.log('✅ Create modal cancel button listener added');
+
       } else {
         console.error('❌ Create modal cancel button not found');
       }
@@ -1164,12 +1153,10 @@
   const createAnnouncementForm = document.getElementById('createAnnouncementForm');
   if (createAnnouncementForm) {
     createAnnouncementForm.addEventListener('submit', function(event) {
-      console.log('🎯 Form submit event triggered!');
       event.preventDefault();
-      console.log('🎯 Calling submitAnnouncement()...');
       submitAnnouncement();
     });
-    console.log('✅ Form event listener added successfully');
+    
   } else {
     console.error('❌ Create announcement form not found');
   }
@@ -1203,63 +1190,7 @@
   window.markAllAsRead = markAllAsRead;
   window.loadAnnouncements = loadAnnouncements;
   
-  // Debug: Log exposed functions
-  console.log('Announcement functions exposed:', {
-    submitAnnouncement: typeof window.submitAnnouncement,
-    openCreateAnnouncementModal: typeof window.openCreateAnnouncementModal,
-    closeCreateAnnouncementModal: typeof window.closeCreateAnnouncementModal,
-    filterAnnouncements: typeof window.filterAnnouncements,
-    toggleReaction: typeof window.toggleReaction,
-    addComment: typeof window.addComment
-  });
-  
-  // Test function for debugging
-  window.testAnnouncementFunctions = function() {
-    console.log('=== Testing Announcement Functions ===');
-    console.log('Global variables:', {
-      communityId: window.communityId,
-      dbUser: window.dbUser,
-      jwtToken: window.jwtToken ? 'Present' : 'Missing',
-      API_URL: window.API_URL
-    });
-    
-    console.log('Function availability:', {
-      submitAnnouncement: typeof window.submitAnnouncement,
-      openCreateAnnouncementModal: typeof window.openCreateAnnouncementModal,
-      closeCreateAnnouncementModal: typeof window.closeCreateAnnouncementModal,
-      filterAnnouncements: typeof window.filterAnnouncements,
-      toggleReaction: typeof window.toggleReaction,
-      addComment: typeof window.addComment,
-      loadAnnouncements: typeof window.loadAnnouncements
-    });
-    
-    // Test modal opening
-    try {
-      window.openCreateAnnouncementModal();
-      console.log('✅ Modal opened successfully');
-    } catch (error) {
-      console.error('❌ Error opening modal:', error);
-    }
-    
-    // Test API call
-    console.log('Testing API call...');
-    fetch(`${window.API_URL}/api/v1/community/${window.communityId}/announcements?page=1&limit=5`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-    .then(response => {
-      console.log('API Response status:', response.status);
-      return response.json();
-    })
-    .then(data => {
-      console.log('API Response data:', data);
-    })
-    .catch(error => {
-      console.error('API Error:', error);
-    });
-  };
+
 
   // Initialize when DOM is loaded
   if (document.readyState === 'loading') {
