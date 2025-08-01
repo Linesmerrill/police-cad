@@ -2595,7 +2595,7 @@ document.getElementById('createEventForm').onsubmit = async function(e) {
     required
   };
   try {
-    const res = await fetch(`${API_URL}/community/${communityID}/events`, {
+    const res = await fetch(`${API_URL}/api/v1/community/${communityID}/events`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -2781,7 +2781,7 @@ async function saveEditEvent() {
   };
   const communityID = '<%= community._id %>';
   try {
-    const res = await fetch(`${API_URL}/community/${communityID}/events/${currentEditEvent}`, {
+    const res = await fetch(`${API_URL}/api/v1/community/${communityID}/events/${currentEditEvent}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -2799,7 +2799,7 @@ async function deleteEditEvent() {
   if (!confirm('Are you sure you want to delete this event? This action is irreversible.')) return;
   const communityID = '<%= community._id %>';
   try {
-    const res = await fetch(`${API_URL}/community/${communityID}/events/${currentEditEvent}`, {
+    const res = await fetch(`${API_URL}/api/v1/community/${communityID}/events/${currentEditEvent}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     });
