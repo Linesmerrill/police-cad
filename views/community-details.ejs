@@ -1293,7 +1293,7 @@
           leaveBtn.textContent = 'Leaving...';
         }
 
-        fetch(`${API_URL}/user/${userId}/remove-community`, {
+        fetch(`${API_URL}/api/v1/user/${userId}/remove-community`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -2251,7 +2251,7 @@ function submitLeaveCommunity() {
     leaveBtn.textContent = 'Leaving...';
   }
 
-  fetch(`${API_URL}/user/${userId}/remove-community`, {
+  fetch(`${API_URL}/api/v1/user/${userId}/remove-community`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
