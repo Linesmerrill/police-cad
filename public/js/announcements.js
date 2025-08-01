@@ -5,6 +5,90 @@
 (function() {
   'use strict';
 
+  // Add CSS for reaction tooltips and emoji picker
+  const style = document.createElement('style');
+  style.textContent = `
+    .reaction-button:hover .reaction-tooltip {
+      opacity: 1 !important;
+    }
+    
+    .reaction-button {
+      position: relative;
+    }
+    
+    .reaction-tooltip {
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    .emoji-picker {
+      position: absolute;
+      background: #1e2028;
+      border: 1px solid #35385a;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      min-width: 300px;
+      max-width: 340px;
+    }
+    
+    .emoji-picker-search {
+      width: 100%;
+      padding: 12px 16px;
+      background: #2d3748;
+      border: 1px solid #4a5568;
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+    
+    .emoji-picker-search:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+    
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+      padding: 0 12px 0 4px;
+    }
+    
+    .emoji-option {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 20px;
+    }
+    
+    .emoji-option:hover {
+      background: #4a5568;
+      transform: scale(1.1);
+    }
+    
+    .emoji-category {
+      margin-bottom: 12px;
+    }
+    
+    .emoji-category-title {
+      color: #a0aec0;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+  `;
+  document.head.appendChild(style);
+
   // Get API URL from environment or fallback
   const API_URL = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 
@@ -238,14 +322,34 @@
     const reactions = safeAnnouncement.reactions;
     const comments = safeAnnouncement.comments;
     
-    const reactionsHtml = reactions.length > 0 
-      ? reactions.map(reaction => `
-          <span class="inline-flex items-center bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full mr-2 mb-2">
-            <span class="mr-1">${reaction.emoji}</span>
-            <span>${reaction.user.username}</span>
-          </span>
-        `).join('')
-      : '';
+    // Group reactions by emoji for better display
+    const reactionGroups = {};
+    reactions.forEach(reaction => {
+      if (!reactionGroups[reaction.emoji]) {
+        reactionGroups[reaction.emoji] = [];
+      }
+      reactionGroups[reaction.emoji].push(reaction.user.username);
+    });
+
+    // Create reaction buttons with hover tooltips
+    const reactionsHtml = Object.entries(reactionGroups).map(([emoji, usernames]) => {
+      const count = usernames.length;
+      const tooltipText = `${emoji} reacted by ${usernames.join(', ')}`;
+      const isCurrentUserReacted = usernames.includes(window.dbUser.username);
+      
+      return `
+        <button onclick="toggleReaction('${safeAnnouncement._id}', '${emoji}')" 
+                class="reaction-button relative inline-flex items-center px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white rounded-full transition-all duration-200 border border-gray-600 hover:border-gray-500 ${isCurrentUserReacted ? 'bg-blue-600 border-blue-500 text-white' : ''}"
+                title="${tooltipText}">
+          <span class="text-base mr-1">${emoji}</span>
+          <span class="text-sm font-medium">${count}</span>
+          <div class="reaction-tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-10">
+            ${tooltipText}
+            <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+          </div>
+        </button>
+      `;
+    }).join('');
 
     const commentsHtml = comments.length > 0 
       ? comments.map(comment => {
@@ -322,16 +426,12 @@
          </div>
 
          <div class="flex items-center justify-between mb-4">
-           <div class="flex items-center space-x-4">
-             <button onclick="toggleReaction('${safeAnnouncement._id}', '👍')" class="flex items-center space-x-1 text-gray-400 hover:text-blue-400 transition-colors">
-               <span class="text-2xl">👍</span>
-               <span class="text-lg">${reactions.filter(r => r.emoji === '👍').length}</span>
+           <div class="flex items-center space-x-2">
+             ${reactionsHtml}
+             <button onclick="console.log('Button clicked'); openEmojiPicker('${safeAnnouncement._id}', event)" class="emoji-picker-trigger inline-flex items-center px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-white rounded-full transition-all duration-200 border border-gray-600 hover:border-gray-500">
+               <i class="fas fa-plus text-base"></i>
              </button>
-             <button onclick="toggleReaction('${safeAnnouncement._id}', '👎')" class="flex items-center space-x-1 text-gray-400 hover:text-red-400 transition-colors">
-               <span class="text-2xl">👎</span>
-               <span class="text-lg">${reactions.filter(r => r.emoji === '👎').length}</span>
-             </button>
-             <button onclick="toggleComments('${safeAnnouncement._id}')" class="flex items-center space-x-1 text-gray-400 hover:text-green-400 transition-colors">
+             <button onclick="toggleComments('${safeAnnouncement._id}')" class="flex items-center space-x-1 text-gray-400 hover:text-green-400 transition-colors px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-full transition-all duration-200 border border-gray-600 hover:border-gray-500">
                <i class="fas fa-comment text-xl"></i>
                <span class="text-lg">${comments.length}</span>
              </button>
@@ -342,14 +442,7 @@
            </div>
          </div>
 
-        ${reactionsHtml ? `
-          <div class="mb-4 p-3 bg-gray-700 rounded-lg">
-            <h4 class="text-lg font-medium text-gray-200 mb-2">Reactions</h4>
-            <div class="flex flex-wrap">
-              ${reactionsHtml}
-            </div>
-          </div>
-        ` : ''}
+
 
                           <div id="comments-${safeAnnouncement._id}" class="comments-section ${comments.length > 0 ? '' : 'hidden'}">
            <div class="mb-4">
@@ -1176,6 +1269,124 @@
     });
   }
 
+  // Emoji picker functions
+  let currentEmojiPicker = null;
+  let currentAnnouncementId = null;
+
+  function openEmojiPicker(announcementId, event) {
+    console.log('openEmojiPicker called with:', announcementId, event);
+    
+    // Close any existing picker
+    closeEmojiPicker();
+    
+    currentAnnouncementId = announcementId;
+    
+    // Common emojis for reactions
+    const commonEmojis = [
+      '👍', '👎', '❤️', '😊', '😂', '😍', '🎉', '🔥', '💯', '⭐', '👏', '🙏',
+      '😭', '😡', '🤔', '👀', '💪', '🎯', '🚀', '💎', '🏆', '🎊', '✨', '💖'
+    ];
+    
+    const emojiPickerHtml = `
+      <div class="emoji-picker" id="emojiPicker">
+        <input type="text" class="emoji-picker-search" placeholder="Search emojis..." onkeyup="filterEmojis(this.value)">
+        <div class="emoji-category">
+          <div class="emoji-category-title">Frequently Used</div>
+          <div class="emoji-grid" id="emojiGrid">
+            ${commonEmojis.map(emoji => `
+              <div class="emoji-option" onclick="selectEmoji('${emoji}')" title="${emoji}">
+                ${emoji}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Create and append the picker
+    const pickerElement = document.createElement('div');
+    pickerElement.innerHTML = emojiPickerHtml;
+    console.log('Picker HTML created:', pickerElement.innerHTML);
+    
+    document.body.appendChild(pickerElement.firstElementChild);
+    console.log('Picker appended to body');
+    
+    currentEmojiPicker = document.getElementById('emojiPicker');
+    console.log('Current emoji picker element:', currentEmojiPicker);
+    
+    // Position the picker near the trigger button
+    const triggerButton = event.target.closest('.emoji-picker-trigger');
+    console.log('Trigger button found:', triggerButton);
+    if (triggerButton) {
+      const rect = triggerButton.getBoundingClientRect();
+      console.log('Button rect:', rect);
+      // Position relative to viewport, accounting for scroll
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const scrollX = window.pageXOffset || document.documentElement.scrollLeft;
+      const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+      
+      let left = rect.left + scrollX;
+      let top = rect.bottom + scrollY + 5;
+      
+      // Ensure picker doesn't go off-screen
+      if (left + 280 > viewportWidth + scrollX) {
+        left = viewportWidth + scrollX - 290;
+      }
+      if (top + 200 > viewportHeight + scrollY) {
+        top = rect.top + scrollY - 205; // Position above the button
+      }
+      
+      currentEmojiPicker.style.left = `${left}px`;
+      currentEmojiPicker.style.top = `${top}px`;
+      console.log('Picker positioned at:', left, top, 'scroll:', scrollX, scrollY);
+    } else {
+      // Fallback positioning
+      console.log('No trigger button found, using fallback positioning');
+      currentEmojiPicker.style.left = '50%';
+      currentEmojiPicker.style.top = '50%';
+      currentEmojiPicker.style.transform = 'translate(-50%, -50%)';
+    }
+    
+    // Add click outside listener
+    setTimeout(() => {
+      document.addEventListener('click', closeEmojiPickerOnClickOutside);
+    }, 100);
+  }
+
+  function closeEmojiPicker() {
+    if (currentEmojiPicker) {
+      currentEmojiPicker.remove();
+      currentEmojiPicker = null;
+      currentAnnouncementId = null;
+      document.removeEventListener('click', closeEmojiPickerOnClickOutside);
+    }
+  }
+
+  function closeEmojiPickerOnClickOutside(event) {
+    if (currentEmojiPicker && !currentEmojiPicker.contains(event.target) && !event.target.closest('.emoji-picker-trigger')) {
+      closeEmojiPicker();
+    }
+  }
+
+  function selectEmoji(emoji) {
+    if (currentAnnouncementId) {
+      toggleReaction(currentAnnouncementId, emoji);
+      closeEmojiPicker();
+    }
+  }
+
+  function filterEmojis(searchTerm) {
+    const emojiOptions = document.querySelectorAll('.emoji-option');
+    const searchLower = searchTerm.toLowerCase();
+    
+    emojiOptions.forEach(option => {
+      const emoji = option.textContent;
+      const shouldShow = emoji.includes(searchTerm) || searchTerm === '';
+      option.style.display = shouldShow ? 'flex' : 'none';
+    });
+  }
+
   // Expose functions globally
   window.filterAnnouncements = filterAnnouncements;
   window.goToPage = goToPage;
@@ -1202,6 +1413,10 @@
   window.submitAnnouncement = submitAnnouncement;
   window.markAllAsRead = markAllAsRead;
   window.loadAnnouncements = loadAnnouncements;
+  window.openEmojiPicker = openEmojiPicker;
+  window.closeEmojiPicker = closeEmojiPicker;
+  window.selectEmoji = selectEmoji;
+  window.filterEmojis = filterEmojis;
   
 
 
