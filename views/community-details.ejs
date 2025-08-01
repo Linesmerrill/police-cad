@@ -1506,8 +1506,7 @@ function openNoEventPermissionModal() {
     <div class="mb-2 text-sm text-green-400 text-center" id="selectedMembersCount"></div>
     <div class="mb-4">
       <div id="selectedMembers" class="flex flex-wrap gap-2 mb-2"></div>
-      <div id="memberList" class="max-h-40 overflow-y-auto"></div>
-      <div id="membersPagination" class="flex justify-center items-center gap-2 mt-2"></div>
+      <div id="memberList" class="max-h-60 overflow-y-auto"></div>
     </div>
     <div id="createDeptStep3Error" class="text-red-400 text-sm mb-2 text-center" style="display:none;"></div>
     <div class="flex justify-between mt-6">
@@ -1574,7 +1573,7 @@ function goToCreateDepartmentStep2() {
   // For now, just use a placeholder for image upload
   const photoInput = document.getElementById('dept-photo');
   createDeptData.image = photoInput && photoInput.files && photoInput.files[0] ? 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1747054441/upload_placeholder.jpg' : '';
-  const vis = document.querySelector('input[name="visibility"]:checked');
+  const vis = document.getElementById('dept-visibility');
   createDeptData.visibility = vis ? vis.value : 'public';
   document.getElementById('createDeptStep1Error').style.display = 'none';
   document.getElementById('createDepartmentStep1Modal').style.display = 'none';
@@ -1649,85 +1648,117 @@ window.selectCreateDeptTemplate = function(templateName) {
 // Add this variable to modal state:
 let createDeptUnsavedChanges = false;
 
-// --- Step 3: Add Members with Pagination ---
+// --- Step 3: Add Members with Infinite Scrolling ---
 let membersPage = 1;
-let membersLimit = 10;
+let membersLimit = 50; // Increased limit for better performance
 let membersTotal = 0;
-let membersTotalPages = 1;
+let isLoadingMore = false;
+let hasMoreMembers = true;
 
-function fetchCommunityMembers(page = 1) {
-  membersPage = page;
+function fetchCommunityMembers(page = 1, append = false) {
+  if (isLoadingMore) return;
+  
+  isLoadingMore = true;
   const communityId = '<%= community._id %>';
-  fetch(`${API_URL}/community/${communityId}/members?limit=${membersLimit}&page=${page}`)
-    .then(res => res.json())
+  
+  // Show loading indicator if this is the first load
+  if (page === 1) {
+    const memberList = document.getElementById('memberList');
+    if (memberList) {
+      memberList.innerHTML = `
+        <div class="text-center py-4">
+          <i class="fas fa-spinner fa-spin fa-lg text-blue-500"></i>
+          <p class="text-gray-400 mt-2">Loading members...</p>
+        </div>
+      `;
+    }
+  }
+  
+  fetch(`${API_URL}/api/v1/community/${communityId}/members?limit=${membersLimit}&page=${page}`)
+    .then(res => {
+      if (!res.ok) {
+        throw new Error(`Failed to fetch members: ${res.status} ${res.statusText}`);
+      }
+      return res.json();
+    })
     .then(data => {
       let newMembers = data.members || [];
       membersTotal = data.totalUsers || 0;
-      membersTotalPages = Math.max(1, Math.ceil(membersTotal / membersLimit));
-      createDeptAllMembers = newMembers;
-      // Preselect current user only on first load
-      if (page === 1 && createDeptMembers.length === 0) {
-        const currentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
-        createDeptMembers = [newMembers.find(m => m._id === currentUserId)].filter(Boolean);
+      
+      if (append) {
+        // Append new members to existing list
+        createDeptAllMembers = [...createDeptAllMembers, ...newMembers];
+      } else {
+        // Replace existing members (first load)
+        createDeptAllMembers = newMembers;
       }
+      
+      // Check if there are more members to load
+      hasMoreMembers = createDeptAllMembers.length < membersTotal;
+      
+      // Ensure current user is always selected and can't be deselected
+      const currentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
+      const currentUser = createDeptAllMembers.find(m => m._id === currentUserId);
+      if (currentUser && !createDeptMembers.some(m => m._id === currentUserId)) {
+        createDeptMembers.unshift(currentUser); // Add to beginning of array
+      }
+      
       renderMemberList();
-      renderMembersPagination();
-      document.getElementById('createDepartmentStep3Modal').style.display = 'flex';
+      
+      // Hide step 2 modal and show step 3 (only on first load)
+      if (page === 1) {
+        document.getElementById('createDepartmentStep2Modal').style.display = 'none';
+        document.getElementById('createDepartmentStep3Modal').style.display = 'flex';
+      }
+      
+      isLoadingMore = false;
+    })
+    .catch(error => {
+      console.error('Error fetching community members:', error);
+      isLoadingMore = false;
+      
+      if (typeof showToast === 'function') {
+        showToast(`Failed to load members: ${error.message}`, 3000);
+      } else {
+        alert(`Failed to load members: ${error.message}`);
+      }
     });
 }
 
-function renderMembersPagination() {
-  const container = document.getElementById('membersPagination');
-  container.innerHTML = '';
-  if (membersTotalPages <= 1) return;
-  // Prev button
-  const prevBtn = document.createElement('button');
-  prevBtn.textContent = 'Prev';
-  prevBtn.className = 'px-3 py-2 rounded bg-gray-700 text-gray-200 font-semibold disabled:opacity-50 text-base';
-  prevBtn.disabled = membersPage === 1;
-  prevBtn.onclick = () => fetchCommunityMembers(membersPage - 1);
-  container.appendChild(prevBtn);
-  // Page numbers
-  for (let i = 1; i <= membersTotalPages; i++) {
-    if (i === 1 || i === membersTotalPages || Math.abs(i - membersPage) <= 2) {
-      const btn = document.createElement('button');
-      btn.textContent = i;
-      btn.className = 'px-3 py-2 rounded font-semibold text-base ' + (i === membersPage ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200');
-      btn.disabled = i === membersPage;
-      btn.onclick = () => fetchCommunityMembers(i);
-      container.appendChild(btn);
-    } else if (i === membersPage - 3 || i === membersPage + 3) {
-      const dots = document.createElement('span');
-      dots.textContent = '...';
-      dots.className = 'px-2 text-gray-400';
-      container.appendChild(dots);
-    }
-  }
-  // Next button
-  const nextBtn = document.createElement('button');
-  nextBtn.textContent = 'Next';
-  nextBtn.className = 'px-3 py-2 rounded bg-gray-700 text-gray-200 font-semibold disabled:opacity-50 text-base';
-  nextBtn.disabled = membersPage === membersTotalPages;
-  nextBtn.onclick = () => fetchCommunityMembers(membersPage + 1);
-  container.appendChild(nextBtn);
+function loadMoreMembers() {
+  if (!hasMoreMembers || isLoadingMore) return;
+  
+  membersPage++;
+  fetchCommunityMembers(membersPage, true);
 }
 
 function renderMemberList() {
   const memberList = document.getElementById('memberList');
   const selectedMembersDiv = document.getElementById('selectedMembers');
   const selectedMembersCount = document.getElementById('selectedMembersCount');
+  
+  // Clear existing content
   memberList.innerHTML = '';
   selectedMembersDiv.innerHTML = '';
+  
+  // Render all members
   createDeptAllMembers.forEach(member => {
     const isSelected = createDeptMembers.some(m => m._id === member._id);
+    const currentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
+    const isCurrentUser = member._id === currentUserId;
+    
     const div = document.createElement('div');
     div.className = 'flex items-center gap-2 mb-1';
     div.innerHTML = `
-      <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleCreateDeptMember('${member._id}')" />
+      <input type="checkbox" 
+        ${isCurrentUser ? 'checked' : (isSelected ? 'checked' : '')} 
+        ${isCurrentUser ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} 
+        onchange="toggleCreateDeptMember('${member._id}')" />
       <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" class="w-6 h-6 rounded-full" />
-      <span class="text-base">${member.user.username}</span>
+      <span class="text-base" ${isCurrentUser ? 'style="color: #6c757d; font-style: italic;"' : ''}>${member.user.username}${isCurrentUser ? ' (You - Required)' : ''}</span>
     `;
     memberList.appendChild(div);
+    
     if (isSelected) {
       const selDiv = document.createElement('div');
       selDiv.className = 'flex items-center gap-1 bg-gray-700 rounded px-2 py-1 mb-1';
@@ -1739,10 +1770,29 @@ function renderMemberList() {
       selectedMembersDiv.appendChild(selDiv);
     }
   });
+  
+  // Add infinite scroll trigger at the bottom
+  if (hasMoreMembers) {
+    const loadMoreDiv = document.createElement('div');
+    loadMoreDiv.className = 'text-center py-2';
+    loadMoreDiv.innerHTML = `
+      <button onclick="loadMoreMembers()" class="text-blue-400 hover:text-blue-300 text-sm">
+        ${isLoadingMore ? '<i class="fas fa-spinner fa-spin"></i> Loading...' : 'Load more members'}
+      </button>
+    `;
+    memberList.appendChild(loadMoreDiv);
+  }
+  
   selectedMembersCount.textContent = `${createDeptMembers.length} member${createDeptMembers.length === 1 ? '' : 's'} selected`;
 }
 
 function toggleCreateDeptMember(memberId) {
+  // Prevent current user from being deselected
+  const currentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
+  if (memberId === currentUserId) {
+    return;
+  }
+  
   const idx = createDeptMembers.findIndex(m => m._id === memberId);
   if (idx === -1) {
     const member = createDeptAllMembers.find(m => m._id === memberId);
@@ -1771,7 +1821,7 @@ function finishCreateDepartment(skipMembers = false) {
     members: createDeptData.members,
     template: createDeptData.template
   };
-  fetch(`${API_URL}/community/${communityId}/departments`, {
+  fetch(`${API_URL}/api/v1/community/${communityId}/departments`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
@@ -1786,7 +1836,7 @@ function finishCreateDepartment(skipMembers = false) {
     })
     .then(response => {
       if (!skipMembers) {
-        fetch(`/api/v1/community/${communityId}/departments/${response.department_id}/members`, {
+        fetch(`${API_URL}/api/v1/community/${communityId}/departments/${response.department_id}/members`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ memberIds: createDeptMembers.map(m => m._id) })
@@ -1851,7 +1901,23 @@ function goToCreateDepartmentStep3() {
     components: Object.keys(createDeptPermissionsState[createDeptSelectedTemplate]).map(key => ({ name: key, enabled: createDeptPermissionsState[createDeptSelectedTemplate][key] }))
   };
   document.getElementById('createDeptStep2Error').style.display = 'none';
-  document.getElementById('createDepartmentStep2Modal').style.display = 'none';
+  
+  // Show loading state instead of hiding modal
+  const step2Modal = document.getElementById('createDepartmentStep2Modal');
+  const modalContent = step2Modal.querySelector('div[style*="background:#1e2028"]');
+  const templateAccordion = document.getElementById('templateAccordion');
+  const buttonsContainer = step2Modal.querySelector('.flex.justify-between');
+  
+  if (templateAccordion && buttonsContainer) {
+    templateAccordion.innerHTML = `
+      <div class="text-center">
+        <i class="fas fa-spinner fa-spin fa-2x text-blue-500 mb-3"></i>
+        <p class="text-gray-300">Loading members...</p>
+      </div>
+    `;
+    buttonsContainer.style.display = 'none';
+  }
+  
   fetchCommunityMembers();
 }
 
@@ -2241,7 +2307,7 @@ function openEditDepartmentModal(departmentId) {
   currentEditDepartment = departmentId;
   const communityId = '<%= community._id %>';
   // Fetch latest department data from API
-  fetch(`${API_URL}/community/${communityId}/departments/${departmentId}`)
+  fetch(`${API_URL}/api/v1/community/${communityId}/departments/${departmentId}`)
     .then(res => res.json())
     .then(data => {
       const dept = data.department || {};
@@ -2366,7 +2432,7 @@ function saveEditDepartment() {
   }
 
   function doUpdate() {
-    fetch(`${API_URL}/community/${communityId}/departments/${deptId}`, {
+    fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -2398,7 +2464,7 @@ function deleteEditDepartment() {
     const deleteBtn = document.querySelector('#editDepartmentModal button.bg-red-600');
     deleteBtn.disabled = true;
     deleteBtn.textContent = 'Deleting...';
-    fetch(`${API_URL}/community/${communityId}/departments/${deptId}`, {
+    fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     })

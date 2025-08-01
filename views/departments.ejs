@@ -708,8 +708,20 @@
         enabled: permissionsState[templateName][key]
       }));
       departmentData.template = { name: templateName, components };
-      $('#createDepartmentStep2Modal').modal('hide');
-      showMembersModal();
+      
+      // Show loading state instead of hiding modal
+      $('#createDepartmentStep2Modal .modal-body').html(`
+        <div class="text-center">
+          <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+          <p>Loading members...</p>
+        </div>
+      `);
+      $('#createDepartmentStep2Modal .modal-footer').hide();
+      
+      // Add a small delay to ensure loading state is visible
+      setTimeout(() => {
+        showMembersModal();
+      }, 100);
     }
 
     function showMembersModal() {
@@ -719,6 +731,13 @@
       method: 'GET',
       success: function(data) {
         const members = data.members || [];
+        
+        // Ensure current user is always selected and can't be deselected
+        const currentUser = members.find(m => m._id === dbUser._id);
+        if (currentUser && !selectedMembers.some(m => m._id === dbUser._id)) {
+          selectedMembers.unshift(currentUser); // Add to beginning of array
+        }
+        
         const modal = `
           <div id="createDepartmentStep3Modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -752,10 +771,10 @@
                     ${members.map(member => `
                       <div>
                         <input type="checkbox" id="member-${member._id}" 
-                          ${selectedMembers.some(m => m._id === member._id) ? 'checked' : ''} 
-                          ${member._id === dbUser._id ? 'disabled' : ''} 
+                          ${member._id === dbUser._id ? 'checked' : (selectedMembers.some(m => m._id === member._id) ? 'checked' : '')} 
+                          ${member._id === dbUser._id ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} 
                           onchange="toggleMember('${member._id}', '${member.user.username}', '${member.user.profilePicture || ''}')">
-                        <label for="member-${member._id}">${member.user.username}</label>
+                        <label for="member-${member._id}" ${member._id === dbUser._id ? 'style="color: #6c757d; font-style: italic; cursor: not-allowed;"' : ''}>${member.user.username}${member._id === dbUser._id ? ' (You - Required)' : ''}</label>
                         ${['premium', 'premium_plus'].includes(member.user?.subscription?.plan) && member.user?.subscription?.active ? '<i class="fas fa-check-circle text-blue-500"></i>' : ''}
                       </div>
                     `).join('')}
@@ -771,6 +790,9 @@
             </div>
           </div>
         `;
+        
+        // Hide step 2 modal and show step 3
+        $('#createDepartmentStep2Modal').modal('hide');
         $('body').append(modal);
         $('#createDepartmentStep3Modal').modal('show');
 
@@ -784,6 +806,35 @@
       },
       error: function(err) {
         console.error('Error fetching members:', err);
+        // Restore step 2 modal content on error
+        $('#createDepartmentStep2Modal .modal-body').html(`
+          <p>Select a template to quickly create a department. You can customize each template by toggling components.</p>
+          <div style="display: flex; overflow-x: auto; padding: 10px 0;">
+            ${templates.map(template => `
+              <div class="template-card">
+                <h5>${template.name}</h5>
+                <p class="text-gray-400">${template.description}</p>
+                ${template.permissions.map(perm => `
+                  <div>
+                    <input type="checkbox" id="${template.name}-${perm.key}" 
+                      ${perm.default ? 'checked' : ''} 
+                      onchange="updatePermission('${template.name}', '${perm.key}', this.checked)">
+                    <label for="${template.name}-${perm.key}">${perm.label}</label>
+                  </div>
+                `).join('')}
+                <button class="btn btn-primary btn-sm mt-3" 
+                  ${template.name === 'Custom' ? 'disabled' : ''} 
+                  onclick="selectTemplate('${template.name}')">
+                  Select
+                </button>
+              </div>
+            `).join('')}
+          </div>
+          <div style="display: flex; justify-content: space-evenly;">
+          <span class="fa fa-arrow-left"></span><span class="fa fa-arrow-right"></span>
+          </div>
+        `);
+        $('#createDepartmentStep2Modal .modal-footer').show();
         $('#successCopyMessage').html('<strong>Error!</strong> Failed to load members.').show().delay(2000).fadeOut();
       }
     });
@@ -843,6 +894,11 @@
   }
 
     function toggleMember(memberId, username, profilePicture) {
+      // Prevent current user from being deselected
+      if (memberId === dbUser._id) {
+        return;
+      }
+      
       const isChecked = $(`#member-${memberId}`).is(':checked');
       if (isChecked) {
         if (!selectedMembers.some(m => m._id === memberId)) {
