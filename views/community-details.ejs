@@ -492,75 +492,96 @@
         <div id="community-actions" class="card mb-8">
           <h3 class="text-2xl font-semibold mb-6 text-center">Community Actions</h3>
           <div class="flex justify-center space-x-6">
-            <button onclick="openPromoteModal()" class="flex flex-col items-center p-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-              <i class="fa-solid fa-bullhorn w-8 h-8 mb-3 text-2xl"></i>
-              <span class="text-lg font-medium">Promote</span>
-            </button>
-            
-            <%
-              let canManageSettings = false;
-              const userId = user && user._doc ? String(user._doc._id) : null;
-              if (userId && community.community && Array.isArray(community.community.roles)) {
-                community.community.roles.forEach(function(role) {
-                  if (Array.isArray(role.members) && role.members.includes(userId)) {
-                    if (Array.isArray(role.permissions)) {
-                      role.permissions.forEach(function(perm) {
-                        if (
-                          (perm.name === "administrator" && perm.enabled === true) ||
-                          (perm.name === "manage community settings" && perm.enabled === true)
-                        ) {
-                          canManageSettings = true;
-                        }
-                      });
+            <% if (isMemberApproved) { %>
+              <!-- Promote - Anyone can do, no permission check needed -->
+              <button onclick="openPromoteModal()" class="flex flex-col items-center p-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                <i class="fa-solid fa-bullhorn w-8 h-8 mb-3 text-2xl"></i>
+                <span class="text-lg font-medium">Promote</span>
+              </button>
+              
+              <%
+                let canManageSettings = false;
+                const userId = user && user._doc ? String(user._doc._id) : null;
+                if (userId && community.community && Array.isArray(community.community.roles)) {
+                  community.community.roles.forEach(function(role) {
+                    if (Array.isArray(role.members) && role.members.includes(userId)) {
+                      if (Array.isArray(role.permissions)) {
+                        role.permissions.forEach(function(perm) {
+                          if (
+                            (perm.name === "administrator" && perm.enabled === true) ||
+                            (perm.name === "manage community settings" && perm.enabled === true)
+                          ) {
+                            canManageSettings = true;
+                          }
+                        });
+                      }
                     }
-                  }
-                });
-              }
-            %>
+                  });
+                }
+              %>
 
-            <% if (canManageSettings) { %>
-              <button onclick="openSettingsModal()" class="flex flex-col items-center p-6 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+              <% if (canManageSettings) { %>
+                <button onclick="openSettingsModal()" class="flex flex-col items-center p-6 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+                  <i class="fa-solid fa-gear w-8 h-8 mb-3 text-2xl"></i>
+                  <span class="text-lg font-medium">Settings</span>
+                </button>
+              <% } else { %>
+                <button onclick="openNoSettingsPermissionModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors text-lg" style="pointer-events:auto;">
+                  <i class="fa-solid fa-gear w-8 h-8 mb-3 text-2xl"></i>
+                  <span class="text-lg font-medium">Settings</span>
+                </button>
+              <% } %>
+              
+              <%
+                // Permission logic for managing members (invite)
+                let canManageMembers = false;
+                if (userId && community.community && Array.isArray(community.community.roles)) {
+                  community.community.roles.forEach(function(role) {
+                    if (Array.isArray(role.members) && role.members.includes(userId)) {
+                      if (Array.isArray(role.permissions)) {
+                        role.permissions.forEach(function(perm) {
+                          if (
+                            (perm.name === "administrator" && perm.enabled === true) ||
+                            (perm.name === "manage members" && perm.enabled === true)
+                          ) {
+                            canManageMembers = true;
+                          }
+                        });
+                      }
+                    }
+                  });
+                }
+              %>
+              <% if (canManageMembers) { %>
+                <button onclick="openInviteModal()" class="flex flex-col items-center p-6 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                  <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
+                  <span class="text-lg font-medium">Invite</span>
+                </button>
+              <% } else { %>
+                <button onclick="openNoInvitePermissionModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors text-lg" style="pointer-events:auto;">
+                  <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
+                  <span class="text-lg font-medium">Invite</span>
+                </button>
+              <% } %>
+            <% } else { %>
+              <!-- Non-members see disabled buttons with member-only modal -->
+              <button onclick="openMemberOnlyModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
+                <i class="fa-solid fa-bullhorn w-8 h-8 mb-3 text-2xl"></i>
+                <span class="text-lg font-medium">Promote</span>
+              </button>
+              
+              <button onclick="openMemberOnlyModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
                 <i class="fa-solid fa-gear w-8 h-8 mb-3 text-2xl"></i>
                 <span class="text-lg font-medium">Settings</span>
               </button>
-            <% } else { %>
-              <button onclick="openNoSettingsPermissionModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors text-lg" style="pointer-events:auto;">
-                <i class="fa-solid fa-gear w-8 h-8 mb-3 text-2xl"></i>
-                <span class="text-lg font-medium">Settings</span>
+              
+              <button onclick="openMemberOnlyModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
+                <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
+                <span class="text-lg font-medium">Invite</span>
               </button>
             <% } %>
             
-            <%
-              // Permission logic for managing members (invite)
-              let canManageMembers = false;
-              if (userId && community.community && Array.isArray(community.community.roles)) {
-                community.community.roles.forEach(function(role) {
-                  if (Array.isArray(role.members) && role.members.includes(userId)) {
-                    if (Array.isArray(role.permissions)) {
-                      role.permissions.forEach(function(perm) {
-                        if (
-                          (perm.name === "administrator" && perm.enabled === true) ||
-                          (perm.name === "manage members" && perm.enabled === true)
-                        ) {
-                          canManageMembers = true;
-                        }
-                      });
-                    }
-                  }
-                });
-              }
-            %>
-            <% if (canManageMembers) { %>
-              <button onclick="openInviteModal()" class="flex flex-col items-center p-6 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-                <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
-                <span class="text-lg font-medium">Invite</span>
-              </button>
-            <% } else { %>
-              <button onclick="openNoInvitePermissionModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors text-lg" style="pointer-events:auto;">
-                <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
-                <span class="text-lg font-medium">Invite</span>
-              </button>
-            <% } %>
+            <!-- Share button - always available -->
             <button onclick="copyCommunityUrl()" class="flex flex-col items-center p-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">
               <i class="fa-solid fa-share-nodes w-8 h-8 mb-3 text-2xl"></i>
               <span class="text-lg font-medium">Share</span>
@@ -977,6 +998,33 @@
             </div>
           </div>
         </div>
+        
+        <!-- Member Only Modal -->
+        <div id="memberOnlyModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+          <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+            <button onclick="closeMemberOnlyModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+            <div style="text-align:center; margin-bottom:1.5rem;">
+              <i class="fa fa-users" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
+              <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Members Only</h3>
+            </div>
+            <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+              <p style="font-size:1rem;">This action is only available to community members.</p>
+              <p style="font-size:1rem; margin-top:0.5rem; color:#3b82f6;">Join the community to access all features and actions.</p>
+            </div>
+            <div style="margin-top:2rem; text-align:center;">
+              <% if (isMemberPending) { %>
+                <button disabled class="bg-gray-500 text-white px-6 py-3 rounded-full font-semibold shadow transition text-lg cursor-not-allowed">
+                  Pending Approval
+                </button>
+              <% } else { %>
+                <button onclick="openRequestJoinModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold shadow transition text-lg">
+                  Request to Join Community
+                </button>
+              <% } %>
+            </div>
+          </div>
+        </div>
+        
       <% } else { %>
         <div class="card text-center">
           <h2 class="text-2xl font-bold mb-4">Community Not Found</h2>
@@ -1313,6 +1361,14 @@ function openNoDepartmentPermissionModal() {
 
 function openNoInvitePermissionModal() {
   document.getElementById('noInvitePermissionModal').style.display = 'flex';
+}
+
+function openMemberOnlyModal() {
+  document.getElementById('memberOnlyModal').style.display = 'flex';
+}
+
+function closeMemberOnlyModal() {
+  document.getElementById('memberOnlyModal').style.display = 'none';
 }
 
 function copyCommunityUrl() {
@@ -2083,6 +2139,8 @@ window.expandTemplateCard = function(idx) {
     </div>
   </div>
 </div>
+
+
  
 
 <!-- Leave Community Confirmation Modal -->
