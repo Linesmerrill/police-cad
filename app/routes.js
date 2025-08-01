@@ -5657,7 +5657,7 @@ module.exports = function (app, passport, server) {
     }
   });
 
-  // Add/update reaction to an announcement
+  // Toggle reaction to an announcement
   app.post("/api/v1/announcement/:announcementId/reactions", authCheck, async function (req, res) {
     try {
       const { announcementId } = req.params;
@@ -5676,13 +5676,32 @@ module.exports = function (app, passport, server) {
         return res.status(404).json({ error: "Announcement not found" });
       }
 
-      await announcement.addReaction(req.user._id, emoji);
+      // Check if user already has this reaction
+      const existingReaction = announcement.reactions.find(
+        r => r.user.toString() === req.user._id.toString() && r.emoji === emoji
+      );
+
+      let action;
+      if (existingReaction) {
+        // Remove the reaction
+        await announcement.removeReaction(req.user._id, emoji);
+        action = 'removed';
+      } else {
+        // Add the reaction
+        await announcement.addReaction(req.user._id, emoji);
+        action = 'added';
+      }
+
       await announcement.populate('reactions.user', 'username profilePicture');
 
-      res.json({ announcement });
+      res.json({ 
+        success: true,
+        action: action,
+        announcement 
+      });
     } catch (error) {
-      console.error('Error adding reaction:', error);
-      res.status(500).json({ error: "Failed to add reaction" });
+      console.error('Error toggling reaction:', error);
+      res.status(500).json({ error: "Failed to toggle reaction" });
     }
   });
 

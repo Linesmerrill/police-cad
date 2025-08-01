@@ -76,17 +76,22 @@ announcementSchema.virtual('isScheduled').get(function() {
 
 // Method to add a reaction
 announcementSchema.methods.addReaction = function(userId, emoji) {
-  // Remove existing reaction from this user
-  this.reactions = this.reactions.filter(r => r.user.toString() !== userId.toString());
-  
-  // Add new reaction
+  // Add new reaction (toggle logic is handled in the route)
   this.reactions.push({ user: userId, emoji });
   return this.save();
 };
 
 // Method to remove a reaction
-announcementSchema.methods.removeReaction = function(userId) {
-  this.reactions = this.reactions.filter(r => r.user.toString() !== userId.toString());
+announcementSchema.methods.removeReaction = function(userId, emoji = null) {
+  if (emoji) {
+    // Remove specific emoji reaction from this user
+    this.reactions = this.reactions.filter(r => 
+      !(r.user.toString() === userId.toString() && r.emoji === emoji)
+    );
+  } else {
+    // Remove all reactions from this user (for backward compatibility)
+    this.reactions = this.reactions.filter(r => r.user.toString() !== userId.toString());
+  }
   return this.save();
 };
 
