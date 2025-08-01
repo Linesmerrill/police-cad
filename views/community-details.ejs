@@ -1008,16 +1008,16 @@
               <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Members Only</h3>
             </div>
             <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-              <p style="font-size:1rem;">This action is only available to community members.</p>
-              <p style="font-size:1rem; margin-top:0.5rem; color:#3b82f6;">Join the community to access all features and actions.</p>
+              <p style="font-size:1.125rem;">This action is only available to community members.</p>
+              <p style="font-size:1.125rem; margin-top:0.5rem; color:#3b82f6;">Join the community to access all features and actions.</p>
             </div>
             <div style="margin-top:2rem; text-align:center;">
               <% if (isMemberPending) { %>
-                <button disabled class="bg-gray-500 text-white px-6 py-3 rounded-full font-semibold shadow transition text-lg cursor-not-allowed">
+                <button disabled class="bg-gray-500 text-white px-8 py-4 rounded-full font-semibold shadow transition text-xl cursor-not-allowed">
                   Pending Approval
                 </button>
               <% } else { %>
-                <button onclick="openRequestJoinModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold shadow transition text-lg">
+                <button onclick="openRequestJoinModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-semibold shadow transition text-xl">
                   Request to Join Community
                 </button>
               <% } %>
@@ -1087,11 +1087,11 @@
         </div>
         
         <div style="color:#a0aec0; text-align:center; padding:1rem;">
-          <p>Community promotion features coming soon...</p>
+          <p style="font-size:1.125rem;">Community promotion features coming soon...</p>
         </div>
         
         <div style="margin-top:2rem; text-align:center;">
-          <button id="promoteModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+          <button id="promoteModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
             Close
           </button>
         </div>
@@ -1108,11 +1108,11 @@
         </div>
         
         <div style="color:#a0aec0; text-align:center; padding:1rem;">
-          <p>Community settings features coming soon...</p>
+          <p style="font-size:1.125rem;">Community settings features coming soon...</p>
         </div>
         
         <div style="margin-top:2rem; text-align:center;">
-          <button id="settingsModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+          <button id="settingsModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
             Close
           </button>
         </div>
@@ -1129,11 +1129,11 @@
         </div>
         
         <div style="color:#a0aec0; text-align:center; padding:1rem;">
-          <p>Member invitation features coming soon...</p>
+          <p style="font-size:1.125rem;">Member invitation features coming soon...</p>
         </div>
         
         <div style="margin-top:2rem; text-align:center;">
-          <button id="inviteModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">
+          <button id="inviteModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
             Close
           </button>
         </div>
@@ -1443,34 +1443,34 @@ function openNoEventPermissionModal() {
     </div>
     <form id="createDepartmentFormStep1">
       <div class="mb-4">
-        <label class="block text-gray-300 mb-1">Department Photo (Optional)</label>
+        <label class="block text-gray-300 mb-2 text-lg font-medium">Department Photo (Optional)</label>
         <div id="dept-photo-upload" class="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-4 bg-gray-800 cursor-pointer hover:border-blue-500 transition" onclick="document.getElementById('dept-photo').click()">
           <img id="dept-photo-preview" src="" alt="Preview" style="display:none; max-width:120px; max-height:120px; border-radius:0.5rem; margin-bottom:0.5rem;" />
-          <i class="fa fa-camera text-2xl text-gray-400 mb-2"></i>
-          <span class="text-gray-400 text-sm">Click to upload photo</span>
+          <i class="fa fa-camera text-3xl text-gray-400 mb-2"></i>
+          <span class="text-gray-400 text-lg">Click to upload photo</span>
           <input type="file" id="dept-photo" accept="image/*" style="display:none;" onchange="handleDeptPhotoChange(event)" />
         </div>
       </div>
       <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="dept-name">Department Name *</label>
-        <input type="text" id="dept-name" required class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" />
+        <label class="block text-gray-300 mb-2 text-lg font-medium" for="dept-name">Department Name *</label>
+        <input type="text" id="dept-name" required class="w-full text-gray-200 bg-gray-800 rounded p-4 text-lg" />
       </div>
       <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="dept-description">Description (Optional)</label>
-        <textarea id="dept-description" rows="3" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base"></textarea>
+        <label class="block text-gray-300 mb-2 text-lg font-medium" for="dept-description">Description (Optional)</label>
+        <textarea id="dept-description" rows="3" class="w-full text-gray-200 bg-gray-800 rounded p-4 text-lg"></textarea>
       </div>
       <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base">Visibility</label>
+        <label class="block text-gray-300 mb-2 text-lg font-medium">Visibility</label>
         <div class="flex gap-2">
-          <button type="button" id="visibility-public" class="flex-1 px-4 py-3 rounded-l-lg border border-gray-600 bg-blue-600 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 text-base" onclick="setDeptVisibility('public')">Public</button>
-          <button type="button" id="visibility-private" class="flex-1 px-4 py-3 rounded-r-lg border border-gray-600 bg-gray-700 text-gray-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 text-base" onclick="setDeptVisibility('private')">Private <span class='text-sm'>(Approval required)</span></button>
+          <button type="button" id="visibility-public" class="flex-1 px-4 py-4 rounded-l-lg border border-gray-600 bg-blue-600 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg" onclick="setDeptVisibility('public')">Public</button>
+          <button type="button" id="visibility-private" class="flex-1 px-4 py-4 rounded-r-lg border border-gray-600 bg-gray-700 text-gray-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg" onclick="setDeptVisibility('private')">Private <span class='text-base'>(Approval required)</span></button>
         </div>
         <input type="hidden" id="dept-visibility" name="visibility" value="public" />
       </div>
-      <div id="createDeptStep1Error" class="text-red-400 text-sm mb-2" style="display:none;"></div>
+      <div id="createDeptStep1Error" class="text-red-400 text-base mb-2" style="display:none;"></div>
       <div class="flex justify-end gap-2 mt-6">
-        <button type="button" onclick="closeCreateDepartmentModal(1)" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded text-base font-medium">Cancel</button>
-        <button type="button" onclick="goToCreateDepartmentStep2()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded font-semibold text-base">Next</button>
+        <button type="button" onclick="closeCreateDepartmentModal(1)" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded text-lg font-medium">Cancel</button>
+        <button type="button" onclick="goToCreateDepartmentStep2()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded font-semibold text-lg">Next</button>
       </div>
     </form>
   </div>
@@ -1484,12 +1484,12 @@ function openNoEventPermissionModal() {
       <i class="fa fa-layer-group" style="font-size:3rem; color:#a78bfa; margin-bottom:1rem;"></i>
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create a Department - Step 2 of 3</h3>
     </div>
-    <div class="mb-4 text-gray-300 text-center text-base">Select a template to quickly create a department. You can customize each template by toggling components.</div>
+    <div class="mb-4 text-gray-300 text-center text-lg">Select a template to quickly create a department. You can customize each template by toggling components.</div>
     <div id="templateAccordion" class="flex flex-col gap-2 mb-4"></div>
-    <div id="createDeptStep2Error" class="text-red-400 text-sm mb-2 text-center" style="display:none;"></div>
+    <div id="createDeptStep2Error" class="text-red-400 text-base mb-2 text-center" style="display:none;"></div>
     <div class="flex justify-between mt-6">
-      <button type="button" onclick="backToCreateDepartmentStep1()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded text-base font-medium">Back</button>
-      <button type="button" id="createDeptStep2NextBtn" onclick="goToCreateDepartmentStep3()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded font-semibold text-base opacity-50 cursor-not-allowed" disabled>Next</button>
+      <button type="button" onclick="backToCreateDepartmentStep1()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded text-lg font-medium">Back</button>
+      <button type="button" id="createDeptStep2NextBtn" onclick="goToCreateDepartmentStep3()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded font-semibold text-lg opacity-50 cursor-not-allowed" disabled>Next</button>
     </div>
   </div>
 </div>
@@ -1502,16 +1502,16 @@ function openNoEventPermissionModal() {
       <i class="fa fa-users" style="font-size:3rem; color:#10b981; margin-bottom:1rem;"></i>
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create a Department - Step 3 of 3</h3>
     </div>
-    <div class="mb-4 text-gray-300 text-center text-base">Add members to the department. Members can have multiple roles.</div>
-    <div class="mb-2 text-sm text-green-400 text-center" id="selectedMembersCount"></div>
+    <div class="mb-4 text-gray-300 text-center text-lg">Add members to the department. Members can have multiple roles.</div>
+    <div class="mb-2 text-base text-green-400 text-center" id="selectedMembersCount"></div>
     <div class="mb-4">
       <div id="selectedMembers" class="flex flex-wrap gap-2 mb-2"></div>
       <div id="memberList" class="max-h-60 overflow-y-auto"></div>
     </div>
-    <div id="createDeptStep3Error" class="text-red-400 text-sm mb-2 text-center" style="display:none;"></div>
+    <div id="createDeptStep3Error" class="text-red-400 text-base mb-2 text-center" style="display:none;"></div>
     <div class="flex justify-between mt-6">
-      <button type="button" onclick="backToCreateDepartmentStep2()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded text-base font-medium">Back</button>
-      <button type="button" onclick="finishCreateDepartment()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded font-semibold text-base">Finish</button>
+      <button type="button" onclick="backToCreateDepartmentStep2()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded text-lg font-medium">Back</button>
+      <button type="button" onclick="finishCreateDepartment()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded font-semibold text-lg">Finish</button>
     </div>
   </div>
 </div>
@@ -1592,28 +1592,28 @@ function renderTemplateCards() {
     card.className = 'rounded-lg shadow border bg-gray-800 border-gray-700 transition-all';
     if (isSelected) card.classList.add('border-green-500', 'ring-2', 'ring-green-400');
     card.innerHTML = `
-      <button type="button" class="w-full flex justify-between items-center px-4 py-3 focus:outline-none" onclick="expandTemplateCard(${idx})">
-        <span class="font-bold text-lg" style="color:${template.color}">${template.name}</span>
+      <button type="button" class="w-full flex justify-between items-center px-4 py-4 focus:outline-none" onclick="expandTemplateCard(${idx})">
+        <span class="font-bold text-xl" style="color:${template.color}">${template.name}</span>
         <span class="flex items-center gap-2">
-          ${isSelected ? '<i class=\'fa fa-check-circle text-green-400 text-xl\'></i>' : ''}
-          <i id="template-arrow-${idx}" class="fa fa-chevron-down text-gray-400 transition-transform"></i>
+          ${isSelected ? '<i class=\'fa fa-check-circle text-green-400 text-2xl\'></i>' : ''}
+          <i id="template-arrow-${idx}" class="fa fa-chevron-down text-gray-400 transition-transform text-lg"></i>
         </span>
       </button>
       <div id="template-details-${idx}" class="px-4 pb-4" style="display:${isSelected ? 'block' : 'none'};">
-        <div class="text-gray-400 text-xs mb-2">${template.description}</div>
-        <div class="mb-2">
+        <div class="text-gray-400 text-base mb-3">${template.description}</div>
+        <div class="mb-3">
           ${template.permissions.map(perm => `
-            <label class="flex items-center gap-2 mb-1">
-              <input type="checkbox" ${createDeptPermissionsState[template.name][perm.key] ? 'checked' : ''} onchange="onTemplatePermissionChange('${template.name}','${perm.key}',this.checked)" class="form-checkbox text-blue-600" />
-              <span class="text-xs">${perm.label}</span>
+            <label class="flex items-center gap-3 mb-2">
+              <input type="checkbox" ${createDeptPermissionsState[template.name][perm.key] ? 'checked' : ''} onchange="onTemplatePermissionChange('${template.name}','${perm.key}',this.checked)" class="form-checkbox text-blue-600 w-4 h-4" />
+              <span class="text-base">${perm.label}</span>
             </label>
           `).join('')}
         </div>
         ${isSelected ? (
           hasUnsavedChanges
-            ? `<button type="button" class="w-full bg-green-600 hover:bg-green-700 text-white py-1 rounded mt-2 font-semibold transition" onclick="saveTemplatePermissionChanges('${template.name}')"><i class='fa fa-save mr-1'></i>Save</button>`
-            : `<button type="button" class="w-full bg-gray-600 text-gray-300 cursor-not-allowed py-1 rounded mt-2 font-semibold transition" disabled>Selected</button>`
-        ) : `<button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1 rounded mt-2 font-semibold transition" onclick="selectCreateDeptTemplate('${template.name}')">Select</button>`}
+            ? `<button type="button" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded mt-3 font-semibold transition text-lg" onclick="saveTemplatePermissionChanges('${template.name}')"><i class='fa fa-save mr-2'></i>Save</button>`
+            : `<button type="button" class="w-full bg-gray-600 text-gray-300 cursor-not-allowed py-2 rounded mt-3 font-semibold transition text-lg" disabled>Selected</button>`
+        ) : `<button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded mt-3 font-semibold transition text-lg" onclick="selectCreateDeptTemplate('${template.name}')">Select</button>`}
       </div>
     `;
     container.appendChild(card);
@@ -1748,24 +1748,25 @@ function renderMemberList() {
     const isCurrentUser = member._id === currentUserId;
     
     const div = document.createElement('div');
-    div.className = 'flex items-center gap-2 mb-1';
+    div.className = 'flex items-center gap-3 mb-2';
     div.innerHTML = `
       <input type="checkbox" 
         ${isCurrentUser ? 'checked' : (isSelected ? 'checked' : '')} 
         ${isCurrentUser ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''} 
-        onchange="toggleCreateDeptMember('${member._id}')" />
-      <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" class="w-6 h-6 rounded-full" />
-      <span class="text-base" ${isCurrentUser ? 'style="color: #6c757d; font-style: italic;"' : ''}>${member.user.username}${isCurrentUser ? ' (You - Required)' : ''}</span>
+        onchange="toggleCreateDeptMember('${member._id}')" 
+        class="w-5 h-5" />
+      <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" class="w-8 h-8 rounded-full" />
+      <span class="text-lg" ${isCurrentUser ? 'style="color: #6c757d; font-style: italic;"' : ''}>${member.user.username}${isCurrentUser ? ' (You - Required)' : ''}</span>
     `;
     memberList.appendChild(div);
     
     if (isSelected) {
       const selDiv = document.createElement('div');
-      selDiv.className = 'flex items-center gap-1 bg-gray-700 rounded px-2 py-1 mb-1';
+      selDiv.className = 'flex items-center gap-2 bg-gray-700 rounded px-3 py-2 mb-2';
       selDiv.innerHTML = `
-        <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" class="w-5 h-5 rounded-full" />
-        <span class="text-sm">${member.user.username}</span>
-        ${member._id !== '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>' ? `<button onclick="toggleCreateDeptMember('${member._id}')" class="ml-1 text-red-400">&times;</button>` : ''}
+        <img src="${member.user.profilePicture || `https://ui-avatars.com/api/?name=${member.user.username}&background=808080&color=fff&size=256`}" class="w-6 h-6 rounded-full" />
+        <span class="text-base">${member.user.username}</span>
+        ${member._id !== '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>' ? `<button onclick="toggleCreateDeptMember('${member._id}')" class="ml-2 text-red-400 text-lg">&times;</button>` : ''}
       `;
       selectedMembersDiv.appendChild(selDiv);
     }
@@ -1774,9 +1775,9 @@ function renderMemberList() {
   // Add infinite scroll trigger at the bottom
   if (hasMoreMembers) {
     const loadMoreDiv = document.createElement('div');
-    loadMoreDiv.className = 'text-center py-2';
+    loadMoreDiv.className = 'text-center py-3';
     loadMoreDiv.innerHTML = `
-      <button onclick="loadMoreMembers()" class="text-blue-400 hover:text-blue-300 text-sm">
+      <button onclick="loadMoreMembers()" class="text-blue-400 hover:text-blue-300 text-lg font-medium">
         ${isLoadingMore ? '<i class="fas fa-spinner fa-spin"></i> Loading...' : 'Load more members'}
       </button>
     `;
@@ -1947,11 +1948,11 @@ window.expandTemplateCard = function(idx) {
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
     </div>
     <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-      <p style="font-size:1rem;">You do not have permission to view this item.</p>
-      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage community settings</strong> permission from an admin to view this content.</p>
+      <p style="font-size:1.125rem;">You do not have permission to view this item.</p>
+      <p style="font-size:1.125rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage community settings</strong> permission from an admin to view this content.</p>
     </div>
     <div style="margin-top:2rem; text-align:center;">
-      <button id="noSettingsPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+      <button id="noSettingsPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
         Close
       </button>
     </div>
@@ -1965,11 +1966,11 @@ window.expandTemplateCard = function(idx) {
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
     </div>
     <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-      <p style="font-size:1rem;">You do not have permission to view this item.</p>
-      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage members</strong> permission from an admin to view this content.</p>
+      <p style="font-size:1.125rem;">You do not have permission to view this item.</p>
+      <p style="font-size:1.125rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage members</strong> permission from an admin to view this content.</p>
     </div>
     <div style="margin-top:2rem; text-align:center;">
-      <button id="noInvitePermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+      <button id="noInvitePermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
         Close
       </button>
     </div>
@@ -1983,11 +1984,11 @@ window.expandTemplateCard = function(idx) {
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
     </div>
     <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-      <p style="font-size:1rem;">You do not have permission to view this item.</p>
-      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage departments</strong> permission from an admin to view this content.</p>
+      <p style="font-size:1.125rem;">You do not have permission to view this item.</p>
+      <p style="font-size:1.125rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage departments</strong> permission from an admin to view this content.</p>
     </div>
     <div style="margin-top:2rem; text-align:center;">
-      <button id="noDepartmentPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+      <button id="noDepartmentPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
         Close
       </button>
     </div>
@@ -2001,11 +2002,11 @@ window.expandTemplateCard = function(idx) {
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
     </div>
     <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-      <p style="font-size:1rem;">You do not have permission to create events.</p>
-      <p style="font-size:1rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage events</strong> permission from an admin to create events.</p>
+      <p style="font-size:1.125rem;">You do not have permission to create events.</p>
+      <p style="font-size:1.125rem; margin-top:0.5rem; color:#f56565;">Request the <strong>manage events</strong> permission from an admin to create events.</p>
     </div>
     <div style="margin-top:2rem; text-align:center;">
-      <button id="noEventPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+      <button id="noEventPermissionModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
         Close
       </button>
     </div>
@@ -2015,7 +2016,7 @@ window.expandTemplateCard = function(idx) {
 <!-- Create Announcement Modal -->
 <div id="createAnnouncementModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
   <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:95%; position:relative; border:1px solid #35385a;">
-    <button id="createAnnouncementModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <button onclick="closeCreateAnnouncementModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
     <div style="text-align:center; margin-bottom:1.5rem;">
       <i class="fa fa-bullhorn" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create Announcement</h3>
@@ -2059,7 +2060,7 @@ window.expandTemplateCard = function(idx) {
       </div>
       <div id="createAnnouncementError" class="text-red-400 text-sm mb-4" style="display:none;"></div>
       <div class="flex justify-end gap-3">
-        <button type="button" id="createAnnouncementModalCancel" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded text-base font-medium">Cancel</button>
+        <button type="button" onclick="closeCreateAnnouncementModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded text-base font-medium">Cancel</button>
         <button type="submit" onclick="event.preventDefault(); submitAnnouncement();" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-semibold text-base">Create Announcement</button>
       </div>
     </form>
