@@ -135,6 +135,8 @@
   }
 
   // Mark announcement as seen
+  // TODO: Integrate with backend API to persist seen status in user profile
+  // Currently using localStorage for client-side tracking only
   function markAnnouncementAsSeen(announcementId) {
     seenAnnouncements.add(announcementId);
     saveSeenAnnouncements();
@@ -210,6 +212,8 @@
   }
 
   // Mark all announcements as read
+  // TODO: Integrate with backend API to persist seen status in user profile
+  // Currently using localStorage for client-side tracking only
   function markAllAsRead() {
     document.querySelectorAll('.announcement-card').forEach(card => {
       const announcementId = card.dataset.announcementId;
@@ -368,11 +372,11 @@
                 <div class="flex items-center space-x-2">
                   <span class="text-base text-gray-400">${formatDate(comment.timestamp)}</span>
                                    ${isCurrentUserComment ? `
-                   <button onclick="openEditCommentModal('${safeAnnouncement._id}', '${comment._id}', '${escapeHtml(comment.content)}')"
+                   <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openEditCommentModal('${safeAnnouncement._id}', '${comment._id}', '${escapeHtml(comment.content)}')"
                            class="text-blue-400 hover:text-blue-300 text-base transition-colors">
                      <i class="fas fa-edit"></i>
                    </button>
-                   <button onclick="openDeleteCommentModal('${safeAnnouncement._id}', '${comment._id}', '${escapeHtml(comment.content)}')"
+                   <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openDeleteCommentModal('${safeAnnouncement._id}', '${comment._id}', '${escapeHtml(comment.content)}')"
                            class="text-red-400 hover:text-red-300 text-base transition-colors">
                      <i class="fas fa-trash"></i>
                    </button>
@@ -414,12 +418,12 @@
              }">${safeAnnouncement.type.toUpperCase()}</span>
              ${safeAnnouncement.isPinned ? '<span class="text-yellow-500"><i class="fas fa-thumbtack"></i></span>' : ''}
              ${(safeAnnouncement.creator._id === window.dbUser._id || window.canManageAnnouncements) ? `
-               <button onclick="openEditAnnouncementModal('${safeAnnouncement._id}', '${escapeHtml(safeAnnouncement.title)}', '${escapeHtml(safeAnnouncement.content)}', '${safeAnnouncement.type}', '${safeAnnouncement.priority}')" 
+               <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openEditAnnouncementModal('${safeAnnouncement._id}', '${escapeHtml(safeAnnouncement.title)}', '${escapeHtml(safeAnnouncement.content)}', '${safeAnnouncement.type}', '${safeAnnouncement.priority}')" 
                        class="text-blue-400 hover:text-blue-300 transition-colors ml-2" 
                        title="Edit announcement">
                  <i class="fas fa-edit"></i>
                </button>
-               <button onclick="openDeleteAnnouncementModal('${safeAnnouncement._id}', '${escapeHtml(safeAnnouncement.title)}')" 
+               <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); openDeleteAnnouncementModal('${safeAnnouncement._id}', '${escapeHtml(safeAnnouncement.title)}')" 
                        class="text-red-400 hover:text-red-300 transition-colors ml-2" 
                        title="Delete announcement">
                  <i class="fas fa-trash"></i>
@@ -461,7 +465,7 @@
            <div class="flex space-x-2">
              <input type="text" id="comment-input-${safeAnnouncement._id}" placeholder="Add a comment..." 
                     class="flex-1 px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg">
-             <button onclick="addComment('${safeAnnouncement._id}')" 
+             <button onclick="markAnnouncementAsSeen('${safeAnnouncement._id}'); addComment('${safeAnnouncement._id}')" 
                      class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-lg">
                Comment
              </button>
@@ -1287,6 +1291,9 @@
     // Close any existing picker
     closeEmojiPicker();
     
+    // Mark announcement as seen when user interacts with it
+    markAnnouncementAsSeen(announcementId);
+    
     currentAnnouncementId = announcementId;
     
     // Common emojis for reactions with names and search terms
@@ -1436,6 +1443,7 @@
   window.closeEmojiPicker = closeEmojiPicker;
   window.selectEmoji = selectEmoji;
   window.filterEmojis = filterEmojis;
+  window.markAnnouncementAsSeen = markAnnouncementAsSeen;
   
 
 
