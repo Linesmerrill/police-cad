@@ -545,7 +545,7 @@ const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage, isLoad
             {/* Promotional Text with Icon */}
             {community.promotionalText && (
               <div className="flex items-center justify-center mb-2">
-                <i className="fa fa-star text-yellow-400 mr-2"></i>
+                <i className="fa fa-star text-yellow-400 mr-2" style={{ transform: 'translateY(-5px)' }}></i>
                 <p className="text-blue-300 text-base font-semibold">{community.promotionalText}</p>
               </div>
             )}
@@ -554,7 +554,7 @@ const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage, isLoad
             <p className="text-gray-300 mb-4 text-sm md:text-base leading-relaxed">{community.promotionalDescription}</p>
             
             {/* Enhanced Stats */}
-            <div className="flex items-center justify-center space-x-4 mb-4">
+            <div className="flex items-center justify-center space-x-4 mb-4 bg-black bg-opacity-50 px-4 py-2 rounded-lg">
               <div className="flex items-center text-gray-400">
                 <i className="fa fa-users mr-1"></i>
                 <span className="text-sm">{community.membersCount} Members</span>
@@ -711,10 +711,12 @@ const CommunityCard = ({ community, isActive, actionText, onAction }) => (
       
       {/* Member Count Badge */}
       <div className="absolute bottom-3 left-3">
-        <span className="inline-flex items-center bg-gray-900 bg-opacity-80 text-white text-sm px-3 py-1 rounded-full font-medium">
-          <i className="fa fa-users mr-1"></i>
-          {community?.membersCount} Members
-        </span>
+        <div className="flex items-center bg-black bg-opacity-50 px-4 py-2 rounded-lg">
+          <div className="flex items-center text-gray-400">
+            <i className="fa fa-users mr-1"></i>
+            <span className="text-sm">{community?.membersCount} Members</span>
+          </div>
+        </div>
       </div>
     </div>
     
@@ -1088,10 +1090,10 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
                       className="w-10 h-10 rounded object-cover border border-gray-700 bg-gray-800 flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-white flex items-center gap-1 text-lg">
-                        {item.name}
+                      <div className="font-semibold text-white flex items-baseline gap-2 text-lg">
+                        <span className="truncate">{item.name}</span>
                         {item.isVerified && (
-                          <svg viewBox="0 0 24 24" className="w-6 h-6 inline-block ml-1" style={{ verticalAlign: 'middle' }}>
+                          <svg viewBox="0 0 24 24" className="w-5 h-5 flex-shrink-0" fill="none" style={{ transform: 'translateY(-3px)' }}>
                             <circle cx="12" cy="12" r="10" fill="#eab308" />
                             <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
