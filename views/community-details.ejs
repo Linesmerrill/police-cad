@@ -924,8 +924,19 @@
                   <div class="text-base text-gray-500"><%= dept.template && dept.template.name ? dept.template.name : '' %></div>
                   <% if (!canAccess) { %>
                     <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                      <span class="bg-black bg-opacity-60 text-white text-lg px-4 py-2 rounded">Members Only</span>
+                      <% if (isMemberApproved) { %>
+                        <span class="bg-black bg-opacity-60 text-white text-lg px-4 py-2 rounded">Private</span>
+                      <% } else { %>
+                        <span class="bg-black bg-opacity-60 text-white text-lg px-4 py-2 rounded">Members Only</span>
+                      <% } %>
                     </div>
+                    <% if (!isMemberApproved && !isMemberPending) { %>
+                      <div class="absolute bottom-4 left-4 right-4 z-20">
+                        <button onclick="event.stopPropagation(); openRequestJoinModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition text-sm">
+                          Request to Join
+                        </button>
+                      </div>
+                    <% } %>
                   <% } %>
                 </div>
               <% }); %>
@@ -1150,13 +1161,24 @@
                  <img src="<%= event.image || '/static/images/default-logo.png' %>" alt="Event Image" class="w-40 h-32 object-cover rounded mb-4 sm:mb-0" style="min-width:10rem; max-width:10rem; max-height:8rem;" />
                  <div class="flex-1 relative z-0">
                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                     <span class="bg-black bg-opacity-60 text-white text-base px-3 py-2 rounded">Members Only</span>
+                     <% if (isMemberApproved) { %>
+                       <span class="bg-black bg-opacity-60 text-white text-base px-3 py-2 rounded">Private</span>
+                     <% } else { %>
+                       <span class="bg-black bg-opacity-60 text-white text-base px-3 py-2 rounded">Members Only</span>
+                     <% } %>
                    </div>
                    <div class="font-semibold text-xl text-white mb-2"><%= event.title %></div>
                    <div class="text-gray-400 text-base mb-2"><%= new Date(event.scheduledDate).toLocaleString() %></div>
                    <div class="text-gray-300 text-base mb-2"><%= event.description %></div>
                    <% if (event.location) { %>
                      <div class="text-gray-500 text-sm">Location: <%= event.location %></div>
+                   <% } %>
+                   <% if (!isMemberApproved && !isMemberPending) { %>
+                     <div class="absolute bottom-4 left-4 right-4 z-20">
+                       <button onclick="event.stopPropagation(); openRequestJoinModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition text-sm">
+                         Request to Join
+                       </button>
+                     </div>
                    <% } %>
                  </div>
                </li>
@@ -1237,11 +1259,16 @@
             <button onclick="closeMemberOnlyModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
             <div style="text-align:center; margin-bottom:1.5rem;">
               <i class="fa fa-users" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
-              <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Members Only</h3>
+              <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;"><% if (isMemberApproved) { %>Private<% } else { %>Members Only<% } %></h3>
             </div>
             <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
-              <p style="font-size:1.125rem;">This action is only available to community members.</p>
-              <p style="font-size:1.125rem; margin-top:0.5rem; color:#3b82f6;">Join the community to access all features and actions.</p>
+              <% if (isMemberApproved) { %>
+                <p style="font-size:1.125rem;">This action is only available to department members.</p>
+                <p style="font-size:1.125rem; margin-top:0.5rem; color:#3b82f6;">Contact the department administrator to request access.</p>
+              <% } else { %>
+                <p style="font-size:1.125rem;">This action is only available to community members.</p>
+                <p style="font-size:1.125rem; margin-top:0.5rem; color:#3b82f6;">Join the community to access all features and actions.</p>
+              <% } %>
             </div>
             <div style="margin-top:2rem; text-align:center;">
               <% if (isMemberPending) { %>
@@ -1249,9 +1276,15 @@
                   Pending Approval
                 </button>
               <% } else { %>
-                <button onclick="openRequestJoinModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-semibold shadow transition text-xl">
-                  Request to Join Community
-                </button>
+                <% if (isMemberApproved) { %>
+                  <button onclick="closeMemberOnlyModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-4 rounded-full font-semibold shadow transition text-xl">
+                    Close
+                  </button>
+                <% } else { %>
+                  <button onclick="openRequestJoinModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full font-semibold shadow transition text-xl">
+                    Request to Join Community
+                  </button>
+                <% } %>
               <% } %>
             </div>
           </div>
