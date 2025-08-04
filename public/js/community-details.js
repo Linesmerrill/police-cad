@@ -491,9 +491,21 @@ document.addEventListener('DOMContentLoaded', function() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ communityId: communityId })
       });
+      
+      const data = await res.json();
+      
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.message || 'Failed to send join request.');
+      }
+      
+      // Handle the new response format
+      if (data.status === 'joined') {
+        showToast('Successfully joined community!', 2500);
+        // Redirect to communities page
+        setTimeout(() => {
+          window.location.href = '/communities?success=true';
+        }, 1000);
+        return;
       }
       
       // Send notifications to admins/managers

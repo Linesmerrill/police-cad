@@ -879,6 +879,7 @@ module.exports = function (app, passport, server) {
         user: req.user,
         inviteCode: code,
         communityName: inviteData.communityName,
+        redirect: req.originalUrl,
       });
     } catch (error) {
       console.error("Error validating invite code:", error);
@@ -907,21 +908,49 @@ module.exports = function (app, passport, server) {
         { timeout: 5000 }
       );
       if (response.data.status === "joined") {
-        return res.redirect("/communities?success=true");
+        // Get the community ID from the response
+        const communityId = response.data.communityId || response.data.community?._id;
+        
+        // Check if this is a JSON request
+        if (req.headers['content-type'] === 'application/json') {
+          return res.json({
+            success: true,
+            communityId: communityId ? encodeId(communityId) : null,
+            message: "Successfully joined community"
+          });
+        } else {
+          // Handle regular form submission
+          if (communityId) {
+            return res.redirect(`/community/${encodeId(communityId)}`);
+          } else {
+            return res.redirect("/communities?success=true");
+          }
+        }
       }
     } catch (error) {
       if (process.env.NODE_ENV === "development")
         console.error("Error joining community:", error);
-      if (error.response?.status === 403) {
-        return res.status(403).render("error", {
-          message: "You are banned from this community.",
+      const errorMessage = error.response?.status === 403 
+        ? "You are banned from this community."
+        : "Failed to join community. Please try again.";
+      
+      if (req.headers['content-type'] === 'application/json') {
+        return res.status(error.response?.status || 500).json({
+          success: false,
+          message: errorMessage
+        });
+      } else {
+        if (error.response?.status === 403) {
+          return res.status(403).render("error", {
+            message: errorMessage,
+            redirect: `/invite/${req.body.inviteCode}`,
+          });
+        }
+        return res.status(500).render("error", {
+          message: errorMessage,
           redirect: `/invite/${req.body.inviteCode}`,
         });
       }
-      return res.status(500).render("error", {
-        message: "Failed to join community. Please try again.",
-        redirect: `/invite/${req.body.inviteCode}`,
-      });
     }
   });
 

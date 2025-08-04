@@ -52,7 +52,7 @@
           var dbUser = <%- JSON.stringify(user) || 'null' %>;
           var inviteCode = <%- JSON.stringify(inviteCode) || 'null' %>;
           var communityName = <%- JSON.stringify(communityName) || 'null' %>;
-            var redirect = <% - JSON.stringify(redirect) || 'null' %>;
+            var redirect = <%- JSON.stringify(redirect) || 'null' %>;
         </script>
         <% } %>
         <h1 class="text-4xl font-extrabold mb-4 text-center text-blue-400">
@@ -62,17 +62,19 @@
           You’ve been invited to join <%= communityName %>!
         </p>
         <% if (user) { %>
-        <form action="/community/join" method="POST" class="text-center">
-          <input type="hidden" name="inviteCode" value="<%= inviteCode %>" />
+        <div class="text-center">
+          <div id="error-message" class="hidden mb-4 p-3 bg-red-900/20 border border-red-700 rounded-lg">
+            <p class="text-red-400 text-sm"></p>
+          </div>
           <button
-            type="submit"
+            id="join-button"
             class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300"
             aria-label="Join Community"
           >
             <span class="spinner hidden">Loading...</span>
             <span class="text">Join Community</span>
           </button>
-        </form>
+        </div>
         <p class="mt-4 text-center text-sm text-gray-400">
           You are logged in as <%= user.user.username %>
         </p>
@@ -100,10 +102,62 @@
       </div>
     </footer>
     <script>
-      document.querySelector("form")?.addEventListener("submit", function () {
-        const button = this.querySelector("button");
-        button.querySelector(".spinner").classList.remove("hidden");
-        button.querySelector(".text").classList.add("hidden");
+      document.getElementById("join-button")?.addEventListener("click", async function () {
+        const button = this;
+        const spinner = button.querySelector(".spinner");
+        const text = button.querySelector(".text");
+        const errorMessage = document.getElementById("error-message");
+        const errorText = errorMessage.querySelector("p");
+        
+        // Show loading state
+        spinner.classList.remove("hidden");
+        text.classList.add("hidden");
+        errorMessage.classList.add("hidden");
+        button.disabled = true;
+        
+        try {
+          const response = await fetch("/community/join", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              inviteCode: inviteCode
+            })
+          });
+          
+          if (response.redirected) {
+            // Success - redirect to the new location
+            window.location.href = response.url;
+            return;
+          }
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            // Success - redirect to community page
+            if (data.communityId) {
+              window.location.href = `/community/${data.communityId}`;
+            } else if (data.redirectUrl) {
+              window.location.href = data.redirectUrl;
+            } else {
+              window.location.href = "/communities?success=true";
+            }
+          } else {
+            // Error - show error message
+            errorText.textContent = data.message || "Failed to join community. Please try again.";
+            errorMessage.classList.remove("hidden");
+          }
+        } catch (error) {
+          console.error("Error joining community:", error);
+          errorText.textContent = "Network error. Please try again.";
+          errorMessage.classList.remove("hidden");
+        } finally {
+          // Reset button state
+          spinner.classList.add("hidden");
+          text.classList.remove("hidden");
+          button.disabled = false;
+        }
       });
     </script>
   </body>

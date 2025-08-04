@@ -1703,7 +1703,13 @@
         })
         .then(response => response.json())
         .then(data => {
-          if (data.success) {
+          if (data.status === 'joined') {
+            showToast('Successfully joined community!', 2500, 'success');
+            // Redirect to communities page or reload
+            setTimeout(() => {
+              window.location.href = '/communities?success=true';
+            }, 1000);
+          } else if (data.success) {
             showToast('Join request submitted successfully!', 2500, 'success');
             // Optionally reload the page or update UI
             setTimeout(() => {
