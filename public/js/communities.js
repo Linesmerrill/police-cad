@@ -1768,7 +1768,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
                     }}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors flex items-center justify-center flex-1"
                   >
-                    <i className="fa fa-apple mr-2"></i>
+                    <i className="fa-brands fa-apple mr-2"></i>
                     App Store
                   </button>
                   <button
@@ -1778,7 +1778,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
                     }}
                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors flex items-center justify-center flex-1"
                   >
-                    <i className="fa fa-google mr-2"></i>
+                    <i className="fa-brands fa-google-play mr-2"></i>
                     Google Play
                   </button>
                 </div>
