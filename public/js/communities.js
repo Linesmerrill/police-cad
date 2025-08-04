@@ -917,7 +917,7 @@ const BrowseCommunities = ({
   };
 
   const cardsPerView =
-    window.innerWidth >= 1024 ? 4 : window.innerWidth >= 768 ? 3 : 2;
+    window.innerWidth >= 1024 ? 6 : window.innerWidth >= 768 ? 4 : 3;
 
   return (
     <div className="py-12">
@@ -2111,7 +2111,7 @@ const App = () => {
   const fetchAllCommunitiesPage = async (tag, page) => {
     setIsAllCommunitiesLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/v2/communities/tag/${tag}?limit=4&page=${page}`);
+      const response = await axios.get(`${API_URL}/api/v2/communities/tag/${tag}?limit=6&page=${page}`);
       const communities = response.data.data.map((item) => ({
         _id: item._id,
         name: item.name,
@@ -2157,7 +2157,7 @@ const App = () => {
   };
 
   const handleAllCommunitiesNextPage = () => {
-    if (allCommunitiesPage * 4 + 4 < allCommunitiesTotalCount) {
+    if (allCommunitiesPage * 6 + 6 < allCommunitiesTotalCount) {
       fetchAllCommunitiesPage(currentTag, allCommunitiesPage + 1);
     }
   };
