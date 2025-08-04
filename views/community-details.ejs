@@ -261,7 +261,7 @@
           // Create FormData for unsigned upload
           const formData = new FormData();
           formData.append('file', blob, 'community-image.jpg');
-          formData.append('upload_preset', '<%= process.env.CLOUDINARY_UPLOAD_PRESET %>');
+          formData.append('upload_preset', '<%= process.env.CLOUDINARY_UPLOAD_PRESET || "" %>');
           formData.append('public_id', `community_<%= community._id %>_${Date.now()}`);
           formData.append('folder', 'community-images');
           
