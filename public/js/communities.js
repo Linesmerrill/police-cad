@@ -1048,8 +1048,8 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
 
   return (
     <div className="w-full flex justify-center py-8 bg-gray-900 z-10">
-      <div className="w-full max-w-2xl flex flex-col sm:flex-row items-center gap-4 mx-auto" ref={inputRef}>
-        <div className="flex-grow flex justify-center relative min-w-0">
+      <div className="w-full max-w-4xl px-4 flex flex-col sm:flex-row items-center gap-4 mx-auto" ref={inputRef}>
+        <div className="flex-grow flex justify-center relative min-w-0 w-full">
           <input
             type="text"
             className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow pr-12"
@@ -1068,7 +1068,7 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
           )}
           {showDropdown && (
             <div
-              className="absolute left-0 right-0 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto"
+              className="absolute left-0 right-0 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto w-full"
               style={{ top: '100%' }}
             >
               {loading ? (
@@ -1079,15 +1079,15 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
                 options.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 p-3 hover:bg-gray-700 cursor-pointer"
+                    className="flex items-center gap-3 p-3 hover:bg-gray-700 cursor-pointer w-full"
                     onClick={() => handleSelection(item)}
                   >
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="w-10 h-10 rounded object-cover border border-gray-700 bg-gray-800"
+                      className="w-10 h-10 rounded object-cover border border-gray-700 bg-gray-800 flex-shrink-0"
                     />
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <div className="font-semibold text-white flex items-center gap-1 text-lg">
                         {item.name}
                         {item.isVerified && (
@@ -1097,7 +1097,7 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
                           </svg>
                         )}
                       </div>
-                      <div className="text-base text-gray-400 truncate max-w-xs">{item.description}</div>
+                      <div className="text-base text-gray-400 truncate max-w-full sm:max-w-xs">{item.description}</div>
                     </div>
                   </div>
                 ))
@@ -1107,7 +1107,7 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
         </div>
         <button
           id="create-community-btn"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition whitespace-nowrap min-w-[160px] w-auto sm:ml-4"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition whitespace-nowrap w-full sm:w-auto sm:ml-4"
           style={{ marginRight: 0 }}
           onClick={handleCreateCommunity}
         >
