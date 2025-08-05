@@ -33,6 +33,15 @@ $(document).ready(function () {
     renderRecentSearches();
   }
 
+  // Extract first word from search query for better search results
+  // This improves search accuracy when clicking on recent searches with spaces
+  function extractFirstWord(searchQuery) {
+    if (!searchQuery || typeof searchQuery !== 'string') return searchQuery;
+    const trimmedQuery = searchQuery.trim();
+    const firstSpaceIndex = trimmedQuery.indexOf(' ');
+    return firstSpaceIndex > 0 ? trimmedQuery.substring(0, firstSpaceIndex) : trimmedQuery;
+  }
+
   // Clear recent searches
   function clearRecentSearches() {
     if (confirm("Are you sure you want to clear all recent searches?")) {
@@ -312,6 +321,7 @@ $(document).ready(function () {
       subtitle = `DOB: ${item.civilian?.birthday || "Unknown"} | Status: ${
         hasWarrants ? '<span style="color: #ef4444; font-weight: bold;">Active Warrant</span>' : "No Warrants"
       }`;
+      // Store the full name in recent searches for display purposes
       recentSearchQuery = title;
     } else if (searchType === "Vehicle") {
       title = item.vehicle
@@ -328,6 +338,7 @@ $(document).ready(function () {
         ? `Owner: ${ownerCache[item.vehicle.linkedCivilianID] || "Unknown"}`
         : "";
       isStolen = item.vehicle?.isStolen === 'true' || item.vehicle?.isStolen === '2';
+      // Store the full vehicle info in recent searches for display purposes
       recentSearchQuery =
         item.vehicle?.make || item.vehicle?.plate || searchQuery;
     } else if (searchType === "Firearm") {
@@ -342,6 +353,7 @@ $(document).ready(function () {
         : "";
       isStolen =
         item.firearm?.isStolen === true || item.firearm?.isStolen === "true" || item.firearm?.isStolen === "2";
+      // Store the full firearm info in recent searches for display purposes
       recentSearchQuery =
         item.firearm?.name || item.firearm?.serialNumber || searchQuery;
     }
@@ -388,10 +400,21 @@ $(document).ready(function () {
     $recent.empty();
     if (recentSearches.length > 0) {
       recentSearches.forEach((search) => {
+        // For all search types, show what will actually be searched when there are spaces
+        let displayQuery = search.query;
+        let searchHint = "";
+        if (search.query && search.query.includes(' ')) {
+          const firstWord = extractFirstWord(search.query);
+          if (firstWord !== search.query) {
+            searchHint = ` (will search: "${firstWord}")`;
+          }
+        }
+        
+        const searchQueryToUse = search.query && search.query.includes(' ') ? extractFirstWord(search.query) : search.query;
         $recent.append(`
-          <div class="recent-search" data-query="${search.query}" data-type="${search.type}">
-            <span class="text-white">${search.query}</span>
-            <small class="text-gray">${search.type}</small>
+          <div class="recent-search" data-query="${search.query}" data-type="${search.type}" title="Click to search for \"${searchQueryToUse}\"">
+            <span class="text-white">${displayQuery}</span>
+            <small class="text-gray">${search.type}${searchHint}</small>
           </div>
         `);
       });
@@ -547,10 +570,17 @@ $(document).ready(function () {
     const query = $(this).data("query");
     const type = $(this).data("type");
     setSearchType(type);
-    searchQuery = query;
-    $("#searchQuery").val(query);
+    
+    // For all search types, use first word for better results when there are spaces
+    let searchQueryToUse = query;
+    if (query && query.includes(' ')) {
+      searchQueryToUse = extractFirstWord(query);
+    }
+    
+    searchQuery = searchQueryToUse;
+    $("#searchQuery").val(searchQueryToUse);
     currentPage = 1; // Reset to first page for recent searches
-    fetchSearchResults(query, false);
+    fetchSearchResults(searchQueryToUse, false);
   });
 
   // Add to $(document).ready in search-database.js
