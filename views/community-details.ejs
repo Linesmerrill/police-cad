@@ -546,6 +546,12 @@
             }
           %>
           
+          <!-- Expose community data to JavaScript -->
+          <script>
+            window.communityId = '<%= communityId %>';
+            window.userId = '<%= userId %>';
+          </script>
+          
           <!-- Request to Join Button - Prominent Position -->
           <% if (user && community.community && !isMemberApproved && !isMemberPending) { %>
             <div class="text-center mb-8">
@@ -932,8 +938,8 @@
                     </div>
                     <% if (isMemberApproved) { %>
                       <div class="absolute bottom-4 left-4 right-4 z-20">
-                        <button onclick="event.stopPropagation(); openPrivateDepartmentModal()" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-semibold transition text-sm">
-                          Request Access
+                        <button disabled class="w-full bg-gray-500 text-white px-4 py-2 rounded font-semibold transition text-sm department-join-btn cursor-not-allowed" data-department-id="<%= dept._id %>">
+                          Checking...
                         </button>
                       </div>
                     <% } else if (!isMemberPending) { %>
@@ -1316,6 +1322,34 @@
           </div>
         </div>
         
+        <!-- Department Join Request Modal -->
+        <div id="departmentJoinRequestModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+          <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+            <button id="departmentJoinRequestModalClose" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+            
+            <div style="text-align:center; margin-bottom:1.5rem;">
+              <i class="fa fa-building" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
+              <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Request to Join Department</h3>
+            </div>
+            
+            <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+              <p style="font-size:1.125rem;">Are you sure you want to request to join this department?</p>
+              <p style="font-size:1.125rem; margin-top:0.5rem;">Your request will be sent to department administrators for approval.</p>
+            </div>
+            
+            <div id="departmentJoinRequestError" style="display:none; color:#ef4444; text-align:center; padding:1rem; margin-bottom:1.5rem; background:#1f2937; border-radius:8px; border:1px solid #ef4444;"></div>
+            
+            <div style="margin-top:2rem; text-align:center; display:flex; gap:1rem; justify-content:center;">
+              <button id="departmentJoinRequestModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
+                Cancel
+              </button>
+              <button id="departmentJoinRequestModalConfirm" type="button" style="background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
+                Request to Join
+              </button>
+            </div>
+          </div>
+        </div>
+        
       <% } else { %>
         <div class="card text-center">
           <h2 class="text-2xl font-bold mb-4">Community Not Found</h2>
@@ -1363,8 +1397,8 @@
       <!-- Notification Modal -->
       <% include partials/notificationModal %>
       
-      <!-- Include notifications.js for notification functionality -->
-      <script src="/static/js/notifications.js"></script>
+          <!-- Include notifications.js for notification functionality -->
+    <script src="/static/js/notifications.js"></script>
     <% } %>
 
     <!-- Community Action Modals -->

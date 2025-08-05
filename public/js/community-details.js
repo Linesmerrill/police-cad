@@ -389,6 +389,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Handles the Request to Join logic for the community details page
 
+// Global variables for join request functionality
+let joinRequestLoading = false;
+
 (function() {
   // Get relevant DOM elements
   const requestJoinModal = document.getElementById('requestJoinModal');
@@ -398,7 +401,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const requestJoinError = document.getElementById('requestJoinError');
   const toast = document.getElementById('toast');
   const toastMsg = document.getElementById('toast-message');
-  let joinRequestLoading = false;
 
   // Get user and community IDs from EJS globals
   const userId = window.dbUser && window.dbUser._id ? window.dbUser._id : null;
@@ -593,4 +595,302 @@ async function sendJoinRequestNotification(communityId, user) {
   } catch (error) {
     console.error("Error sending join request notification:", error);
   }
-} 
+}
+
+// Department Join Request Functions
+async function sendUserPendingDepartmentRequest(communityId, departmentId, userId) {
+  try {
+    const response = await fetch(`${API_URL}/api/v1/user/${userId}/pending-department-request`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ communityId, departmentId }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(
+        `Failed to send pending department request. \n\nMessage: ${data.message}. \nCode: ${response.status}`
+      );
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error sending pending department request:", error);
+    throw error;
+  }
+}
+
+async function sendJoinDepartmentRequestNotification(communityId, departmentId, user) {
+  try {
+    // Fetch community details to get roles and permissions
+    const communityRes = await fetch(`${API_URL}/api/v1/community/${communityId}`);
+    if (!communityRes.ok) throw new Error('Failed to fetch community details');
+    const community = await communityRes.json();
+
+    // Fetch department details
+    const departmentRes = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${departmentId}`);
+    if (!departmentRes.ok) throw new Error('Failed to fetch department details');
+    const department = await departmentRes.json();
+
+    // Get user IDs of roles with "manage members" or "administrator" permissions
+    const userIds = (community.community.roles || [])
+      .filter((role) =>
+        (role.permissions || []).some(
+          (permission) =>
+            (permission.name === "manage members" ||
+              permission.name === "administrator") &&
+            permission.enabled
+        )
+      )
+      .flatMap((role) => role.members);
+
+    // Send notification to each user
+    for (const recipientId of userIds) {
+      await fetch(`${API_URL}/api/v1/users/notifications`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sentFromID: user._id,
+          sentToID: recipientId,
+          type: "join_request",
+          data1: communityId,
+          data2: community?.community?.name,
+          data3: departmentId,
+          data4: department?.department?.name,
+          message: `has requested to join`,
+        }),
+      });
+    }
+  } catch (error) {
+    console.error("Error sending join request notification:", error);
+    throw error;
+  }
+}
+
+// Department Join Request Handler
+async function handleDepartmentJoinRequest(communityId, departmentId) {
+  // Store the department info for the modal
+  window.currentDepartmentRequest = { communityId, departmentId };
+  
+  // Show the department join request modal
+  const modal = document.getElementById('departmentJoinRequestModal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+// Handle department join request confirmation
+async function confirmDepartmentJoinRequest() {
+  if (joinRequestLoading) return;
+  
+  const { communityId, departmentId } = window.currentDepartmentRequest || {};
+  if (!communityId || !departmentId) {
+    showToast('Error: Invalid department request data', 3000);
+    return;
+  }
+  
+  joinRequestLoading = true;
+  
+  // Update modal button state
+  const confirmBtn = document.getElementById('departmentJoinRequestModalConfirm');
+  const errorDiv = document.getElementById('departmentJoinRequestError');
+  
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Requesting...';
+  }
+  
+  if (errorDiv) {
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+  }
+  
+  try {
+    await sendUserPendingDepartmentRequest(communityId, departmentId, userId);
+    await sendJoinDepartmentRequestNotification(communityId, departmentId, window.dbUser);
+    
+    // Close modal and show success
+    closeDepartmentJoinRequestModal();
+    showToast('Department join request sent!', 2500);
+    
+    // Update UI to show pending state
+    updateDepartmentJoinButton(departmentId, 'Pending');
+  } catch (error) {
+    console.error("Error sending department join request:", error);
+    
+    if (errorDiv) {
+      errorDiv.textContent = error.message || 'Failed to send department join request.';
+      errorDiv.style.display = 'block';
+    }
+    
+    showToast('Error: ' + (error.message || 'Failed to send department join request.'), 3000);
+  } finally {
+    joinRequestLoading = false;
+    
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Request to Join';
+    }
+  }
+}
+
+// Close department join request modal
+function closeDepartmentJoinRequestModal() {
+  const modal = document.getElementById('departmentJoinRequestModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  
+  // Clear stored department request data
+  window.currentDepartmentRequest = null;
+  
+  // Reset error display
+  const errorDiv = document.getElementById('departmentJoinRequestError');
+  if (errorDiv) {
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
+  }
+}
+
+// Helper function to update department join button state
+function updateDepartmentJoinButton(departmentId, status) {
+  const joinButton = document.querySelector(`[data-department-id="${departmentId}"].department-join-btn`);
+  
+  if (joinButton) {
+    if (status === 'Pending') {
+      joinButton.disabled = true;
+      joinButton.textContent = '✓ Requested';
+      joinButton.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+      joinButton.classList.add('bg-green-600', 'cursor-not-allowed');
+      joinButton.removeAttribute('onclick');
+      
+      // Remove any existing status text first
+      const existingStatusText = joinButton.parentNode.parentNode.querySelector('.request-status-text');
+      if (existingStatusText) {
+        existingStatusText.remove();
+      }
+      
+      // Add a small tooltip or status text
+      const statusText = document.createElement('div');
+      statusText.className = 'request-status-text text-xs text-green-400 text-center absolute bottom-0 left-4 right-4 z-30';
+      statusText.textContent = 'Request sent to administrators';
+      
+      // Insert the status text as a sibling to the button container (at the card level)
+      joinButton.parentNode.parentNode.appendChild(statusText);
+    } else if (status === 'Loading') {
+      joinButton.disabled = true;
+      joinButton.textContent = 'Checking...';
+      joinButton.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+      joinButton.classList.add('bg-gray-500', 'cursor-not-allowed');
+      joinButton.removeAttribute('onclick');
+    } else if (status === 'Ready') {
+      joinButton.disabled = false;
+      joinButton.textContent = 'Request Access';
+      joinButton.classList.remove('bg-gray-500', 'cursor-not-allowed');
+      joinButton.classList.add('bg-purple-600', 'hover:bg-purple-700');
+      joinButton.setAttribute('onclick', `event.stopPropagation(); handleDepartmentJoinRequest('${window.communityId}', '${departmentId}')`);
+      
+      // Remove any existing status text
+      const existingStatusText = joinButton.parentNode.parentNode.querySelector('.request-status-text');
+      if (existingStatusText) {
+        existingStatusText.remove();
+      }
+    }
+  }
+}
+
+  // Check user's department status on page load
+  async function checkUserDepartmentStatus() {
+    if (!window.userId || !window.communityId) {
+      return;
+    }
+    
+    try {
+      // First, set all department join buttons to loading state
+      const allJoinButtons = document.querySelectorAll('.department-join-btn');
+      allJoinButtons.forEach(button => {
+        const departmentId = button.getAttribute('data-department-id');
+        if (departmentId) {
+          updateDepartmentJoinButton(departmentId, 'Loading');
+        }
+      });
+      
+      // Fetch community details to check department member status
+      const response = await fetch(`${API_URL}/api/v1/community/${window.communityId}`);
+      if (!response.ok) {
+        // Set all buttons back to ready state if fetch fails
+        allJoinButtons.forEach(button => {
+          const departmentId = button.getAttribute('data-department-id');
+          if (departmentId) {
+            updateDepartmentJoinButton(departmentId, 'Ready');
+          }
+        });
+        return;
+      }
+      
+      const community = await response.json();
+      const departments = community.community?.departments || [];
+      
+      // Check each department for pending requests
+      departments.forEach(department => {
+        const members = department.members || [];
+        const userMember = members.find(member => member.userID === window.userId);
+        
+        if (userMember && userMember.status === 'pending') {
+          updateDepartmentJoinButton(department._id, 'Pending');
+        } else {
+          // User hasn't requested this department yet, set to ready
+          updateDepartmentJoinButton(department._id, 'Ready');
+        }
+      });
+      
+    } catch (error) {
+      // Set all buttons back to ready state if there's an error
+      const allJoinButtons = document.querySelectorAll('.department-join-btn');
+      allJoinButtons.forEach(button => {
+        const departmentId = button.getAttribute('data-department-id');
+        if (departmentId) {
+          updateDepartmentJoinButton(departmentId, 'Ready');
+        }
+      });
+    }
+  }
+  
+  // Expose department join request function globally
+  window.handleDepartmentJoinRequest = handleDepartmentJoinRequest;
+  window.confirmDepartmentJoinRequest = confirmDepartmentJoinRequest;
+  window.closeDepartmentJoinRequestModal = closeDepartmentJoinRequestModal;
+  
+  // Add event listeners for department join request modal
+  document.addEventListener('DOMContentLoaded', function() {
+    const modalClose = document.getElementById('departmentJoinRequestModalClose');
+    const modalCancel = document.getElementById('departmentJoinRequestModalCancel');
+    const modalConfirm = document.getElementById('departmentJoinRequestModalConfirm');
+    
+    if (modalClose) modalClose.onclick = closeDepartmentJoinRequestModal;
+    if (modalCancel) modalCancel.onclick = closeDepartmentJoinRequestModal;
+    if (modalConfirm) modalConfirm.onclick = confirmDepartmentJoinRequest;
+    
+    // Check user's department status on page load
+    checkUserDepartmentStatus();
+  });
+  
+  // Modal functions
+  window.closePrivateDepartmentModal = function() {
+    const modal = document.getElementById('privateDepartmentModal');
+    if (modal) modal.style.display = 'none';
+  };
+  
+  window.closeMemberOnlyModal = function() {
+    const modal = document.getElementById('memberOnlyModal');
+    if (modal) modal.style.display = 'none';
+  };
+  
+  window.showComingSoon = function() {
+    alert('This feature is coming soon!');
+  }; 
