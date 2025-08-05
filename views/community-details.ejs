@@ -930,7 +930,13 @@
                         <span class="bg-black bg-opacity-60 text-white text-lg px-4 py-2 rounded">Members Only</span>
                       <% } %>
                     </div>
-                    <% if (!isMemberApproved && !isMemberPending) { %>
+                    <% if (isMemberApproved) { %>
+                      <div class="absolute bottom-4 left-4 right-4 z-20">
+                        <button onclick="event.stopPropagation(); openPrivateDepartmentModal()" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-semibold transition text-sm">
+                          Request Access
+                        </button>
+                      </div>
+                    <% } else if (!isMemberPending) { %>
                       <div class="absolute bottom-4 left-4 right-4 z-20">
                         <button onclick="event.stopPropagation(); openRequestJoinModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold transition text-sm">
                           Request to Join
@@ -1286,6 +1292,26 @@
                   </button>
                 <% } %>
               <% } %>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Private Department Modal -->
+        <div id="privateDepartmentModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+          <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+            <button onclick="closePrivateDepartmentModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+            <div style="text-align:center; margin-bottom:1.5rem;">
+              <i class="fa fa-tools" style="font-size:3rem; color:#8b5cf6; margin-bottom:1rem;"></i>
+              <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Under Construction</h3>
+            </div>
+            <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+              <p style="font-size:1.125rem;">Department access requests are currently under construction.</p>
+              <p style="font-size:1.125rem; margin-top:0.5rem; color:#8b5cf6;">You can request to join departments from the mobile app.</p>
+            </div>
+            <div style="margin-top:2rem; text-align:center;">
+              <button onclick="closePrivateDepartmentModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-full font-semibold shadow transition text-xl">
+                Got it
+              </button>
             </div>
           </div>
         </div>
@@ -1982,6 +2008,14 @@ function openMemberOnlyModal() {
 
 function closeMemberOnlyModal() {
   document.getElementById('memberOnlyModal').style.display = 'none';
+}
+
+function openPrivateDepartmentModal() {
+  document.getElementById('privateDepartmentModal').style.display = 'flex';
+}
+
+function closePrivateDepartmentModal() {
+  document.getElementById('privateDepartmentModal').style.display = 'none';
 }
 
 function copyCommunityUrl() {
