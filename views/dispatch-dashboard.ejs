@@ -88,6 +88,37 @@
   .status-select {
     background-color: transparent;
   }
+  
+  /* License management styles */
+  .license-item {
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+  }
+  
+  .license-item:hover {
+    border-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.05);
+  }
+  
+  .license-item.selected-license {
+    border-color: #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+  }
+  
+  .license-actions {
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+  }
+  
+  .license-actions .btn {
+    margin-right: 5px;
+    margin-bottom: 5px;
+  }
+  
+  .license-actions .btn:last-child {
+    margin-right: 0;
+  }
   /* notification styles */
   .notification-badge {
     position: absolute;
