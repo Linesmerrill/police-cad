@@ -1675,8 +1675,8 @@ $(document).ready(function () {
             <button class="btn btn-warning btn-sm mr-1" onclick="handleLicenseAction('${item._id}', 'revoke')" title="Revoke License">
               <i class="fa fa-ban"></i> Revoke
             </button>
-            <button class="btn btn-success btn-sm" onclick="handleLicenseAction('${item._id}', 'reset')" title="Reset to Valid">
-              <i class="fa fa-check"></i> Reset
+            <button class="btn btn-success btn-sm" onclick="handleLicenseAction('${item._id}', 'reset')" title="Reinstate to Valid">
+              <i class="fa fa-check"></i> Reinstate
             </button>
           `;
         } else if (currentStatus === 'revoked') {
@@ -1684,8 +1684,8 @@ $(document).ready(function () {
             <button class="btn btn-warning btn-sm mr-1" onclick="handleLicenseAction('${item._id}', 'suspend')" title="Suspend License">
               <i class="fa fa-pause"></i> Suspend
             </button>
-            <button class="btn btn-success btn-sm" onclick="handleLicenseAction('${item._id}', 'reset')" title="Reset to Valid">
-              <i class="fa fa-check"></i> Reset
+            <button class="btn btn-success btn-sm" onclick="handleLicenseAction('${item._id}', 'reset')" title="Reinstate to Valid">
+              <i class="fa fa-check"></i> Reinstate
             </button>
           `;
         } else {
@@ -1805,7 +1805,7 @@ $(document).ready(function () {
         break;
       case 'reset':
         newStatus = 'Valid';
-        confirmMessage = 'Are you sure you want to reset this license to valid status?';
+        confirmMessage = 'Are you sure you want to reinstate this license to valid status?';
         break;
       default:
         console.error('Invalid license action:', action);
