@@ -1818,7 +1818,8 @@
         });
       }
       
-      function submitLeaveCommunity() {
+      // Make submitLeaveCommunity globally available
+      window.submitLeaveCommunity = function() {
         const userId = '<%= user && user._doc ? user._doc._id : "" %>';
         const communityId = '<%= community._id %>';
         const errorDiv = document.getElementById('leaveCommunityError');
