@@ -145,12 +145,43 @@
             }
           } else {
             // Error - show error message
-            errorText.textContent = data.message || "Failed to join community. Please try again.";
+            let errorMessageText = data.message || "Failed to join community. Please try again.";
+            
+            // Provide more specific error messages based on status code
+            if (response.status === 400) {
+              errorMessageText = data.message || "Invalid invite code. Please check the link and try again.";
+            } else if (response.status === 401) {
+              errorMessageText = "Your session has expired. Please log in again.";
+            } else if (response.status === 403) {
+              errorMessageText = data.message || "You are banned from this community.";
+            } else if (response.status === 404) {
+              errorMessageText = "Community not found or invite code is invalid.";
+            } else if (response.status === 409) {
+              errorMessageText = data.message || "You are already a member of this community.";
+            } else if (response.status === 422) {
+              errorMessageText = data.message || "Invalid request. Please check your information and try again.";
+            } else if (response.status === 429) {
+              errorMessageText = "Too many requests. Please wait a moment and try again.";
+            } else if (response.status >= 500) {
+              errorMessageText = "Server error. Please try again later.";
+            }
+            
+            errorText.textContent = errorMessageText;
             errorMessage.classList.remove("hidden");
           }
         } catch (error) {
           console.error("Error joining community:", error);
-          errorText.textContent = "Network error. Please try again.";
+          
+          // Handle different types of errors with specific messages
+          let errorMessageText = "Network error. Please try again.";
+          
+          if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            errorMessageText = "Unable to connect to server. Please check your internet connection and try again.";
+          } else if (error.message) {
+            errorMessageText = error.message;
+          }
+          
+          errorText.textContent = errorMessageText;
           errorMessage.classList.remove("hidden");
         } finally {
           // Reset button state

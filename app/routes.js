@@ -898,6 +898,13 @@ module.exports = function (app, passport, server) {
   app.post("/community/join", authCheck, async function (req, res) {
     try {
       const { inviteCode } = req.body;
+      
+      // Log the request for debugging
+      if (process.env.NODE_ENV === "development") {
+        console.log("Joining community with invite code:", inviteCode);
+        console.log("User ID:", req.user._id);
+      }
+      
       const apiUrl = `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/join`;
       const response = await axios.post(
         apiUrl,
@@ -928,25 +935,75 @@ module.exports = function (app, passport, server) {
         }
       }
     } catch (error) {
-      if (process.env.NODE_ENV === "development")
-        console.error("Error joining community:", error);
-      const errorMessage = error.response?.status === 403 
-        ? "You are banned from this community."
-        : "Failed to join community. Please try again.";
+      // Enhanced error logging for debugging
+      console.error("Error joining community:", {
+        error: error.message,
+        code: error.code,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method,
+        userId: req.user?._id,
+        inviteCode: req.body?.inviteCode
+      });
+      
+      // Determine specific error message based on the error type
+      let errorMessage = "Failed to join community. Please try again.";
+      let statusCode = 500;
+      
+      if (error.response) {
+        // API responded with error status
+        statusCode = error.response.status;
+        const apiError = error.response.data;
+        
+        switch (statusCode) {
+          case 400:
+            errorMessage = apiError.message || "Invalid invite code. Please check the link and try again.";
+            break;
+          case 401:
+            errorMessage = "Your session has expired. Please log in again.";
+            break;
+          case 403:
+            errorMessage = apiError.message || "You are banned from this community.";
+            break;
+          case 404:
+            errorMessage = "Community not found or invite code is invalid.";
+            break;
+          case 409:
+            errorMessage = apiError.message || "You are already a member of this community.";
+            break;
+          case 422:
+            errorMessage = apiError.message || "Invalid request. Please check your information and try again.";
+            break;
+          case 429:
+            errorMessage = "Too many requests. Please wait a moment and try again.";
+            break;
+          case 500:
+            errorMessage = "Server error. Please try again later.";
+            break;
+          default:
+            errorMessage = apiError.message || "Failed to join community. Please try again.";
+        }
+      } else if (error.code === 'ECONNABORTED') {
+        errorMessage = "Request timed out. Please check your connection and try again.";
+        statusCode = 408;
+      } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        errorMessage = "Unable to connect to server. Please check your internet connection and try again.";
+        statusCode = 503;
+      } else if (error.message) {
+        errorMessage = `Connection error: ${error.message}`;
+      }
       
       if (req.headers['content-type'] === 'application/json') {
-        return res.status(error.response?.status || 500).json({
+        return res.status(statusCode).json({
           success: false,
-          message: errorMessage
+          message: errorMessage,
+          errorCode: error.code || null,
+          statusCode: statusCode
         });
       } else {
-        if (error.response?.status === 403) {
-          return res.status(403).render("error", {
-            message: errorMessage,
-            redirect: `/invite/${req.body.inviteCode}`,
-          });
-        }
-        return res.status(500).render("error", {
+        return res.status(statusCode).render("error", {
           message: errorMessage,
           redirect: `/invite/${req.body.inviteCode}`,
         });
