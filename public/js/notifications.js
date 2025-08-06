@@ -164,9 +164,31 @@ function renderNotifications() {
 }
 
 function updateNotificationCount(unseenCount) {
-  const $count = $("#notification-count");
-  $count.text(unseenCount > 0 ? unseenCount : "");
+  const $count = $("#notificationBadge");
+  if (unseenCount > 0) {
+    if (unseenCount > 99) {
+      $count.text("99+");
+    } else {
+      $count.text(unseenCount);
+    }
+  } else {
+    $count.text("0");
+  }
   $count.toggleClass("show", unseenCount > 0);
+}
+
+function fetchNotificationCount() {
+  const userId = dbUser._id;
+  $.ajax({
+    url: `${API_URL}/api/v2/users/${userId}/notifications?limit=1&page=0`,
+    method: "GET",
+    success: function (data) {
+      updateNotificationCount(data.unseenCount || 0);
+    },
+    error: function (xhr) {
+      console.error("Error fetching notification count:", xhr.responseText);
+    },
+  });
 }
 
 let notificationLoading = {};
@@ -499,6 +521,6 @@ $(document).ready(function () {
 
   connectWebSocket();
 
-  // Fetch notifications on page load
-  fetchNotifications(0);
+  // Fetch notification count on page load
+  fetchNotificationCount();
 });

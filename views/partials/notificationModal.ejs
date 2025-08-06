@@ -1,72 +1,69 @@
 <div
   id="notificationModal"
-  class="modal fade"
-  tabindex="-1"
-  role="dialog"
-  aria-hidden="true"
+  class="heroui-modal"
+  style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;"
 >
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; position:relative; border:1px solid #35385a;">
+    <button
+      id="notificationModalClose"
+      aria-label="Close"
+      style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"
+    >
+      <i class="fa fa-times"></i>
+    </button>
+    
+    <h3 style="color:#fff; margin:0 0 1.5rem 0; font-size:1.5rem; font-weight:600;">
+      <i class="fa fa-bell" style="margin-right:0.5rem; color:#667eea;"></i>
+      Notifications
+    </h3>
+    
+    <div
+      id="notification-error"
+      style="display:none; background:#f56565; color:#fff; border-radius:8px; padding:1rem; margin-bottom:1.5rem; border:1px solid #e53e3e;"
+    >
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong>Error!</strong> <span id="notification-error-message"></span>
         <button
           type="button"
-          class="close"
-          data-dismiss="modal"
-          aria-label="Close"
+          onclick="document.getElementById('notification-error').style.display='none'"
+          style="background:none; border:none; color:#fff; font-size:1.2rem; cursor:pointer;"
         >
-          <span aria-hidden="true">×</span>
-        </button>
-        <h4 class="modal-title">Notifications</h4>
-      </div>
-      <div class="modal-body">
-        <div
-          id="notification-error"
-          class="alert alert-danger alert-dismissible"
-          role="alert"
-          style="display: none"
-        >
-          <button
-            type="button"
-            class="close"
-            data-dismiss="alert"
-            aria-label="Close"
-          >
-            <span aria-hidden="true">×</span>
-          </button>
-          <strong>Error!</strong> <span id="notification-error-message"></span>
-        </div>
-        <div
-          id="notification-loading"
-          class="text-align-center"
-          style="width: 100%"
-        >
-          <div class="lds-facebook">
-            <div></div>
-            <div></div>
-            <div></div>
-          </div>
-        </div>
-        <div id="notification-list" style="display: none"></div>
-        <div id="no-notifications" class="text-center" style="display: none">
-          <p style="font-style: italic; font-size: 14px">
-            No notifications found.
-          </p>
-        </div>
-        <div
-          id="notification-load-more"
-          class="text-center"
-          style="margin-top: 10px; display: none"
-        >
-          <button class="btn btn-primary" onclick="loadMoreNotifications()">
-            Load More
-          </button>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">
-          Close
+          <i class="fa fa-times"></i>
         </button>
       </div>
+    </div>
+    
+    <div
+      id="notification-loading"
+      style="display:flex; justify-content:center; align-items:center; padding:3rem;"
+    >
+      <div style="color:#a0aec0; font-style:italic;">Loading notifications...</div>
+    </div>
+    
+    <div id="notification-list" style="display:none; max-height:60vh; overflow-y:auto;"></div>
+    
+    <div id="no-notifications" style="display:none; text-align:center; padding:3rem; color:#a0aec0;">
+      <i class="fa fa-bell-slash" style="font-size:3rem; margin-bottom:1rem; opacity:0.5;"></i>
+      <p style="font-style:italic; font-size:1.1rem; margin:0;">No notifications found.</p>
+    </div>
+    
+    <div
+      id="notification-load-more"
+      style="display:none; text-align:center; margin-top:1.5rem;"
+    >
+      <button onclick="loadMoreNotifications()" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:all 0.2s;">
+        Load More
+      </button>
+    </div>
+    
+    <div style="margin-top:2rem; text-align:center;">
+      <button
+        id="notificationModalCancel"
+        type="button"
+        style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;"
+      >
+        Close
+      </button>
     </div>
   </div>
 </div>

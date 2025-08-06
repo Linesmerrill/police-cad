@@ -14,6 +14,7 @@ var Call = require("../app/models/calls");
 var Medication = require("../app/models/medication");
 var Condition = require("../app/models/medicalCondition");
 var MedicalReport = require("../app/models/medicalReport");
+var Announcement = require("../app/models/announcement");
 var ObjectId = require("mongodb").ObjectID;
 var nodemailer = require("nodemailer");
 var nodemailerSendgrid = require("nodemailer-sendgrid");
@@ -39,6 +40,16 @@ var { promisify } = require("util");
 var readFile = promisify(fs.readFile);
 
 const redirect = process.env.CLIENT_REDIRECT;
+
+// Utility functions for base64-url encoding/decoding (used for department and now community IDs)
+function encodeId(id) {
+  return Buffer.from(id, 'utf8').toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function decodeId(encoded) {
+  let base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) base64 += '=';
+  return Buffer.from(base64, 'base64').toString('utf8');
+}
 
 module.exports = function (app, passport, server) {
   app.get("/", function (req, res) {
@@ -76,12 +87,83 @@ module.exports = function (app, passport, server) {
     res.render("about-us");
   });
 
+  app.get("/community/:hash", async function (req, res) {
+    try {
+      const hash = req.params.hash;
+      const communityId = decodeId(hash);
+      
+      // Validate that the decoded communityId is a valid MongoDB ObjectId
+      if (!/^[a-fA-F0-9]{24}$/.test(communityId)) {
+        return res.status(404).render("error", {
+          message: "Community not found or an error occurred.",
+          redirect: "/communities",
+        });
+      }
+      // Fetch community details from API
+      const apiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}`;
+      const response = await axios.get(apiUrl, config);
+      const community = response.data || {};
+
+      // Fetch paginated departments (6 per page, page 1 by default)
+      const userId = req.user && req.user._doc ? req.user._doc._id : (req.user && req.user._id ? req.user._id : null);
+      const page = parseInt(req.query.deptPage, 10) || 1;
+      let departments = [];
+      let totalCount = 0;
+      let totalPages = 1;
+      // Determine if user is a member of the community
+      let isMemberApproved = false;
+      if (req.user && req.user._doc && req.user._doc.user && Array.isArray(req.user._doc.user.communities) && community && community._id) {
+        req.user._doc.user.communities.forEach(function(c) {
+          if (String(c.communityId) === String(community._id) && c.status === 'approved') {
+            isMemberApproved = true;
+          }
+        });
+      }
+      if (community && community._id && userId && isMemberApproved) {
+        // Use v1 route to get all departments for members
+        const deptsApiUrl = `${policeCadApiUrl}/api/v1/community/${community._id}/departments`;
+        const deptsResponse = await axios.get(deptsApiUrl, config);
+        const allDepartments = deptsResponse.data.departments || [];
+        totalCount = allDepartments.length;
+        totalPages = Math.max(1, Math.ceil(totalCount / 6));
+        const startIdx = (page - 1) * 6;
+        const endIdx = startIdx + 6;
+        departments = allDepartments.slice(startIdx, endIdx);
+      } else if (community && community._id && userId) {
+        // Fallback to v2 paginated for non-members
+        const deptsApiUrl = `${policeCadApiUrl}/api/v2/community/${community._id}/departments?userId=${userId}&page=${page}&limit=6`;
+        const deptsResponse = await axios.get(deptsApiUrl, config);
+        departments = deptsResponse.data.data || [];
+        totalCount = deptsResponse.data.totalCount || 0;
+        totalPages = Math.max(1, Math.ceil(totalCount / 6));
+      }
+      res.render("community-details", {
+        user: req.user,
+        community,
+        departments,
+        query: req.query,
+        deptPagination: {
+          totalCount,
+          currentPage: page,
+          totalPages
+        },
+        referer: encodeURIComponent(`/community/${hash}`),
+        redirect: encodeURIComponent(redirect),
+      });
+    } catch (error) {
+      return res.status(404).render("error", {
+        message: "Community not found or an error occurred.",
+        redirect: "/communities",
+      });
+    }
+  });
+
   app.get("/faq", function (req, res) {
     res.render("faq");
   });
 
   app.get("/login", function (req, res) {
-    const redirect = req.query.redirect || "/community-dashboard";
+    const redirect = req.query.redirect || "/communities";
     res.render("login", { redirect: encodeURIComponent(redirect) });
   });
 
@@ -153,7 +235,7 @@ module.exports = function (app, passport, server) {
 
   app.get("/login-civ", authCheck, function (req, res) {
     // if (req.isAuthenticated()) {
-    const redirect = req.session.redirect || "/community-dashboard";
+    const redirect = req.session.redirect || "/communities";
     delete req.session.redirect; // Clear after use
     return res.redirect(redirect);
     // }
@@ -169,7 +251,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/login-community", authCheck, function (req, res) {
-    return res.redirect("/community-dashboard");
+    return res.redirect("/communities");
   });
 
   app.get("/login-dispatch", authCheck, function (req, res) {
@@ -178,7 +260,7 @@ module.exports = function (app, passport, server) {
 
   app.get("/signup-civ", function (req, res) {
     if (req.isAuthenticated()) {
-      return res.redirect("/community-dashboard");
+      return res.redirect("/communities");
     }
     // Validate and fallback for API URL
     let apiUrl = process.env.POLICE_CAD_API_URL;
@@ -201,7 +283,7 @@ module.exports = function (app, passport, server) {
   });
 
   app.get("/signup-community", authCheck, function (req, res) {
-    return res.redirect("/community-dashboard");
+    return res.redirect("/communities");
   });
 
   app.get("/signup-dispatch", authCheck, function (req, res) {
@@ -223,7 +305,7 @@ module.exports = function (app, passport, server) {
    *   Users can 'copy' the community code or 'edit' the community name.
    *   Also community admins can 'kick' members from their community.
    */
-  app.get("/communities", authCheck, function (req, res) {
+  app.get("/communities", function (req, res) {
     req.app.locals.specialContext = null;
     return res.render("communities", {
       members: null,
@@ -352,28 +434,49 @@ module.exports = function (app, passport, server) {
         if (!communityId) {
           return res.status(403).render("error", {
             message: "No active community found. Please select a community first.",
-            redirect: "/community-dashboard",
+            redirect: "/communities",
           });
         }
         
-        // Check if user has access to this department by fetching user's departments
-        const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
-        
+        // --- ADMIN CHECK USING COMMUNITY ROLES API ---
+        let isAdmin = false;
         try {
-          const userDepartmentsResponse = await axios.get(apiUrl, config);
-          
-          const userDepartments = userDepartmentsResponse.data.data || [];
-          const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
-          
-          if (!userHasAccess) {
-            return res.status(403).render("error", {
-              message: "You don't have access to this department. Please contact the department administrator.",
-              redirect: "/departments",
-            });
+          const rolesApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/roles`;
+          const rolesResponse = await axios.get(rolesApiUrl, config);
+          const roles = rolesResponse.data || [];
+          roles.forEach(role => {
+            if (Array.isArray(role.members) && role.members.includes(String(req.user._id))) {
+              if (Array.isArray(role.permissions)) {
+                role.permissions.forEach(perm => {
+                  if (perm.name === 'administrator' && perm.enabled === true) {
+                    isAdmin = true;
+                  }
+                });
+              }
+            }
+          });
+        } catch (err) {
+          console.error('Error fetching community roles:', err.message);
+        }
+        // --- END ADMIN CHECK ---
+        
+        if (!isAdmin) {
+          // Check if user has access to this department by fetching user's departments
+          const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
+          try {
+            const userDepartmentsResponse = await axios.get(apiUrl, config);
+            const userDepartments = userDepartmentsResponse.data.data || [];
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+            if (!userHasAccess) {
+              return res.status(403).render("error", {
+                message: "You don't have access to this department. Please contact the department administrator.",
+                redirect: "/departments",
+              });
+            }
+          } catch (apiError) {
+            console.error('API Error:', apiError.message);
+            // Allow access if API is not available - this is a fallback
           }
-        } catch (apiError) {
-          console.error('API Error:', apiError.message);
-          // Allow access if API is not available - this is a fallback
         }
       }
       
@@ -391,80 +494,135 @@ module.exports = function (app, passport, server) {
       console.error('🚨 Error in civ-dashboard route:', error);
       return res.status(500).render("error", {
         message: "An error occurred while loading the dashboard. Please try again.",
-        redirect: "/community-dashboard",
+        redirect: "/communities",
       });
     }
   });
 
-  app.get("/ems-dashboard", authCheck, function (req, res) {
-    var context = req.app.locals.specialContext;
-    req.app.locals.specialContext = null;
-    axios
-      .get(
-        `${policeCadApiUrl}/api/v1/emsVehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
-        config
-      )
-      .then(function (dbEmsVehicles) {
-        if (!exists(dbEmsVehicles.data)) {
-          return res.render("ems-dashboard", {
-            user: req.user,
-            vehicles: null,
-            calls: null,
-            context: context,
-            referer: encodeURIComponent("/ems-dashboard"),
-            redirect: encodeURIComponent(redirect),
+  app.get("/ems-dashboard", authCheck, async function (req, res) {
+    try {
+      var context = req.app.locals.specialContext;
+      req.app.locals.specialContext = null;
+      
+      // Get department info from query parameters
+      const departmentName = req.query.dept || null;
+      const encodedDeptId = req.query.d || null;
+      
+      // Decode the department ID if present
+      let departmentId = null;
+      if (encodedDeptId) {
+        try {
+          // Reverse the encoding: restore base64 padding and decode
+          let base64 = encodedDeptId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          
+          // Add padding back
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          
+          departmentId = Buffer.from(base64, 'base64').toString('utf8');
+        } catch (e) {
+          console.error('Failed to decode department ID:', e);
+          departmentId = null;
+        }
+      }
+      
+      // If a specific department is requested, verify user access
+      if (departmentId && departmentName) {
+        const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
+        
+        if (!communityId) {
+          return res.status(403).render("error", {
+            message: "No active community found. Please select a community first.",
+            redirect: "/communities",
           });
-        } else {
-          axios
-            .get(
-              `${policeCadApiUrl}/api/v1/calls/community/${req.user.user.activeCommunity}?status=true`,
-              config
-            )
-            .then(function (dbCalls) {
-              if (!exists(dbCalls.data)) {
-                return res.render("ems-dashboard", {
-                  user: req.user,
-                  vehicles: dbEmsVehicles.data,
-                  calls: null,
-                  context: context,
-                  referer: encodeURIComponent("/ems-dashboard"),
-                  redirect: encodeURIComponent(redirect),
-                });
-              } else {
-                return res.render("ems-dashboard", {
-                  user: req.user,
-                  vehicles: dbEmsVehicles.data,
-                  calls: dbCalls.data,
-                  context: context,
-                  referer: encodeURIComponent("/ems-dashboard"),
-                  redirect: encodeURIComponent(redirect),
+        }
+        
+        // --- ADMIN CHECK USING COMMUNITY ROLES API ---
+        let isAdmin = false;
+        try {
+          const rolesApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/roles`;
+          const rolesResponse = await axios.get(rolesApiUrl, config);
+          const roles = rolesResponse.data || [];
+          roles.forEach(role => {
+            if (Array.isArray(role.members) && role.members.includes(String(req.user._id))) {
+              if (Array.isArray(role.permissions)) {
+                role.permissions.forEach(perm => {
+                  if (perm.name === 'administrator' && perm.enabled === true) {
+                    isAdmin = true;
+                  }
                 });
               }
-            })
-            .catch((err) => {
-              console.error(err);
-              return res.render("ems-dashboard", {
-                user: req.user,
-                vehicles: dbEmsVehicles.data,
-                calls: null,
-                context: context,
-                referer: encodeURIComponent("/ems-dashboard"),
-                redirect: encodeURIComponent(redirect),
-              });
-            });
+            }
+          });
+        } catch (err) {
+          console.error('Error fetching community roles:', err.message);
         }
-      })
-      .catch((err) => {
-        console.error(err);
-        return res.render("ems-dashboard", {
-          user: req.user,
-          vehicles: null,
-          calls: null,
-          context: context,
-          referer: encodeURIComponent("/ems-dashboard"),
-          redirect: encodeURIComponent(redirect),
-        });
+        // --- END ADMIN CHECK ---
+        
+        if (!isAdmin) {
+          // Check if user has access to this department by fetching user's departments
+          const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
+          try {
+            const userDepartmentsResponse = await axios.get(apiUrl, config);
+            const userDepartments = userDepartmentsResponse.data.data || [];
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+            if (!userHasAccess) {
+              return res.status(403).render("error", {
+                message: "You don't have access to this department. Please contact the department administrator.",
+                redirect: "/departments",
+              });
+            }
+          } catch (apiError) {
+            console.error('API Error:', apiError.message);
+            // Allow access if API is not available - this is a fallback
+          }
+        }
+      }
+      
+      // Fetch EMS vehicles and calls
+      let dbEmsVehicles = null;
+      let dbCalls = null;
+      
+      try {
+        const vehiclesResponse = await axios.get(
+          `${policeCadApiUrl}/api/v1/emsVehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
+          config
+        );
+        dbEmsVehicles = vehiclesResponse.data;
+      } catch (err) {
+        console.error('Error fetching EMS vehicles:', err);
+      }
+      
+      try {
+        const callsResponse = await axios.get(
+          `${policeCadApiUrl}/api/v1/calls/community/${req.user.user.activeCommunity}?status=true`,
+          config
+        );
+        dbCalls = callsResponse.data;
+      } catch (err) {
+        console.error('Error fetching calls:', err);
+      }
+      
+      res.render("ems-dashboard", {
+        user: req.user,
+        vehicles: exists(dbEmsVehicles) ? dbEmsVehicles : null,
+        calls: exists(dbCalls) ? dbCalls : null,
+        context: context,
+        referer: encodeURIComponent("/ems-dashboard"),
+        redirect: encodeURIComponent(redirect),
+        departmentId: departmentId || req.session.departmentId || null,
+        departmentName: departmentName,
       });
+    } catch (error) {
+      console.error('🚨 Error in ems-dashboard route:', error);
+      return res.status(500).render("error", {
+        message: "An error occurred while loading the dashboard. Please try again.",
+        redirect: "/communities",
+      });
+    }
   });
 
   app.get("/profile", authCheck, function (req, res) {
@@ -499,32 +657,206 @@ module.exports = function (app, passport, server) {
     });
   });
 
-  app.get("/police-dashboard", authCheck, function (req, res) {
-    var context = req.app.locals.specialContext;
-    req.app.locals.specialContext = null;
-    const departmentId = req.session.departmentId || null;
-    res.render("police-dashboard", {
-      user: req.user,
-      referer: encodeURIComponent("/police-dashboard"),
-      redirect: encodeURIComponent(redirect),
-      context: null,
-      departmentId,
-      apiUrl: policeCadApiUrl,
-    });
+  app.get("/police-dashboard", authCheck, async function (req, res) {
+    try {
+      var context = req.app.locals.specialContext;
+      req.app.locals.specialContext = null;
+      
+      // Get department info from query parameters
+      const departmentName = req.query.dept || null;
+      const encodedDeptId = req.query.d || null;
+      
+      // Decode the department ID if present
+      let departmentId = null;
+      if (encodedDeptId) {
+        try {
+          // Reverse the encoding: restore base64 padding and decode
+          let base64 = encodedDeptId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          
+          // Add padding back
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          
+          departmentId = Buffer.from(base64, 'base64').toString('utf8');
+        } catch (e) {
+          console.error('Failed to decode department ID:', e);
+          departmentId = null;
+        }
+      }
+      
+      // If a specific department is requested, verify user access
+      if (departmentId && departmentName) {
+        const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
+        
+        if (!communityId) {
+          return res.status(403).render("error", {
+            message: "No active community found. Please select a community first.",
+            redirect: "/communities",
+          });
+        }
+        
+        // --- ADMIN CHECK USING COMMUNITY ROLES API ---
+        let isAdmin = false;
+        try {
+          const rolesApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/roles`;
+          const rolesResponse = await axios.get(rolesApiUrl, config);
+          const roles = rolesResponse.data || [];
+          roles.forEach(role => {
+            if (Array.isArray(role.members) && role.members.includes(String(req.user._id))) {
+              if (Array.isArray(role.permissions)) {
+                role.permissions.forEach(perm => {
+                  if (perm.name === 'administrator' && perm.enabled === true) {
+                    isAdmin = true;
+                  }
+                });
+              }
+            }
+          });
+        } catch (err) {
+          console.error('Error fetching community roles:', err.message);
+        }
+        // --- END ADMIN CHECK ---
+        
+        if (!isAdmin) {
+          // Check if user has access to this department by fetching user's departments
+          const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
+          try {
+            const userDepartmentsResponse = await axios.get(apiUrl, config);
+            const userDepartments = userDepartmentsResponse.data.data || [];
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+            if (!userHasAccess) {
+              return res.status(403).render("error", {
+                message: "You don't have access to this department. Please contact the department administrator.",
+                redirect: "/departments",
+              });
+            }
+          } catch (apiError) {
+            console.error('API Error:', apiError.message);
+            // Allow access if API is not available - this is a fallback
+          }
+        }
+      }
+      
+      res.render("police-dashboard", {
+        user: req.user,
+        referer: encodeURIComponent("/police-dashboard"),
+        redirect: encodeURIComponent(redirect),
+        context: null,
+        departmentId: departmentId || req.session.departmentId || null,
+        departmentName: departmentName,
+        apiUrl: policeCadApiUrl,
+      });
+    } catch (error) {
+      console.error('🚨 Error in police-dashboard route:', error);
+      return res.status(500).render("error", {
+        message: "An error occurred while loading the dashboard. Please try again.",
+        redirect: "/communities",
+      });
+    }
   });
 
-  app.get("/dispatch-dashboard", authCheck, function (req, res) {
-    var context = req.app.locals.specialContext;
-    req.app.locals.specialContext = null;
-    const departmentId = req.session.departmentId || null;
-    res.render("dispatch-dashboard", {
-      user: req.user,
-      referer: encodeURIComponent("/dispatch-dashboard"),
-      redirect: encodeURIComponent(redirect),
-      context: null,
-      departmentId,
-      apiUrl: policeCadApiUrl,
-    });
+  app.get("/dispatch-dashboard", authCheck, async function (req, res) {
+    try {
+      var context = req.app.locals.specialContext;
+      req.app.locals.specialContext = null;
+      
+      // Get department info from query parameters
+      const departmentName = req.query.dept || null;
+      const encodedDeptId = req.query.d || null;
+      
+      // Decode the department ID if present
+      let departmentId = null;
+      if (encodedDeptId) {
+        try {
+          // Reverse the encoding: restore base64 padding and decode
+          let base64 = encodedDeptId
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          
+          // Add padding back
+          while (base64.length % 4) {
+            base64 += '=';
+          }
+          
+          departmentId = Buffer.from(base64, 'base64').toString('utf8');
+        } catch (e) {
+          console.error('Failed to decode department ID:', e);
+          departmentId = null;
+        }
+      }
+      
+      // If a specific department is requested, verify user access
+      if (departmentId && departmentName) {
+        const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
+        
+        if (!communityId) {
+          return res.status(403).render("error", {
+            message: "No active community found. Please select a community first.",
+            redirect: "/communities",
+          });
+        }
+        
+        // --- ADMIN CHECK USING COMMUNITY ROLES API ---
+        let isAdmin = false;
+        try {
+          const rolesApiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}/roles`;
+          const rolesResponse = await axios.get(rolesApiUrl, config);
+          const roles = rolesResponse.data || [];
+          roles.forEach(role => {
+            if (Array.isArray(role.members) && role.members.includes(String(req.user._id))) {
+              if (Array.isArray(role.permissions)) {
+                role.permissions.forEach(perm => {
+                  if (perm.name === 'administrator' && perm.enabled === true) {
+                    isAdmin = true;
+                  }
+                });
+              }
+            }
+          });
+        } catch (err) {
+          console.error('Error fetching community roles:', err.message);
+        }
+        // --- END ADMIN CHECK ---
+        
+        if (!isAdmin) {
+          // Check if user has access to this department by fetching user's departments
+          const apiUrl = `${policeCadApiUrl}/api/v2/community/${communityId}/departments?userId=${req.user._id}&page=1&limit=100`;
+          try {
+            const userDepartmentsResponse = await axios.get(apiUrl, config);
+            const userDepartments = userDepartmentsResponse.data.data || [];
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+            if (!userHasAccess) {
+              return res.status(403).render("error", {
+                message: "You don't have access to this department. Please contact the department administrator.",
+                redirect: "/departments",
+              });
+            }
+          } catch (apiError) {
+            console.error('API Error:', apiError.message);
+            // Allow access if API is not available - this is a fallback
+          }
+        }
+      }
+      
+      res.render("dispatch-dashboard", {
+        user: req.user,
+        referer: encodeURIComponent("/dispatch-dashboard"),
+        redirect: encodeURIComponent(redirect),
+        context: null,
+        departmentId: departmentId || req.session.departmentId || null,
+        departmentName: departmentName,
+        apiUrl: policeCadApiUrl,
+      });
+    } catch (error) {
+      console.error('🚨 Error in dispatch-dashboard route:', error);
+      return res.status(500).render("error", {
+        message: "An error occurred while loading the dashboard. Please try again.",
+        redirect: "/communities",
+      });
+    }
   });
 
   app.get("/invite/:code", authCheck, async function (req, res) {
@@ -547,6 +879,7 @@ module.exports = function (app, passport, server) {
         user: req.user,
         inviteCode: code,
         communityName: inviteData.communityName,
+        redirect: req.originalUrl,
       });
     } catch (error) {
       console.error("Error validating invite code:", error);
@@ -565,6 +898,7 @@ module.exports = function (app, passport, server) {
   app.post("/community/join", authCheck, async function (req, res) {
     try {
       const { inviteCode } = req.body;
+      
       const apiUrl = `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/join`;
       const response = await axios.post(
         apiUrl,
@@ -574,22 +908,116 @@ module.exports = function (app, passport, server) {
         },
         { timeout: 5000 }
       );
+      // Handle successful response from the API
       if (response.data.status === "joined") {
-        return res.redirect("/community-dashboard?success=true");
+        // Get the community ID from the response
+        const communityId = response.data.communityId || response.data.community?._id;
+        
+        // Check if this is a JSON request
+        if (req.headers['content-type'] === 'application/json') {
+          return res.json({
+            success: true,
+            communityId: communityId ? encodeId(communityId) : null,
+            message: "Successfully joined community"
+          });
+        } else {
+          // Handle regular form submission
+          if (communityId) {
+            return res.redirect(`/community/${encodeId(communityId)}`);
+          } else {
+            return res.redirect("/communities?success=true");
+          }
+        }
+      } else {
+        // API didn't return expected status - this shouldn't happen with the current backend
+        console.error("Unexpected API response:", response.data);
+        
+        if (req.headers['content-type'] === 'application/json') {
+          return res.status(500).json({
+            success: false,
+            message: "Unexpected response from server. Please try again."
+          });
+        } else {
+          return res.status(500).render("error", {
+            message: "Unexpected response from server. Please try again.",
+            redirect: `/invite/${req.body.inviteCode}`,
+          });
+        }
       }
     } catch (error) {
-      if (process.env.NODE_ENV === "development")
-        console.error("Error joining community:", error);
-      if (error.response?.status === 403) {
-        return res.status(403).render("error", {
-          message: "You are banned from this community.",
+      // Enhanced error logging for debugging
+      console.error("Error joining community:", {
+        error: error.message,
+        code: error.code,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method,
+        userId: req.user?._id,
+        inviteCode: req.body?.inviteCode
+      });
+      
+      // Determine specific error message based on the error type
+      let errorMessage = "Failed to join community. Please try again.";
+      let statusCode = 500;
+      
+      if (error.response) {
+        // API responded with error status
+        statusCode = error.response.status;
+        const apiError = error.response.data;
+        
+        switch (statusCode) {
+          case 400:
+            errorMessage = apiError.message || "Invalid invite code. Please check the link and try again.";
+            break;
+          case 401:
+            errorMessage = "Your session has expired. Please log in again.";
+            break;
+          case 403:
+            errorMessage = apiError.message || "You are banned from this community.";
+            break;
+          case 404:
+            errorMessage = "Community not found or invite code is invalid.";
+            break;
+          case 409:
+            errorMessage = apiError.message || "You are already a member of this community.";
+            break;
+          case 422:
+            errorMessage = apiError.message || "Invalid request. Please check your information and try again.";
+            break;
+          case 429:
+            errorMessage = "Too many requests. Please wait a moment and try again.";
+            break;
+          case 500:
+            errorMessage = "Server error. Please try again later.";
+            break;
+          default:
+            errorMessage = apiError.message || "Failed to join community. Please try again.";
+        }
+      } else if (error.code === 'ECONNABORTED') {
+        errorMessage = "Request timed out. Please check your connection and try again.";
+        statusCode = 408;
+      } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
+        errorMessage = "Unable to connect to server. Please check your internet connection and try again.";
+        statusCode = 503;
+      } else if (error.message) {
+        errorMessage = `Connection error: ${error.message}`;
+      }
+      
+      if (req.headers['content-type'] === 'application/json') {
+        return res.status(statusCode).json({
+          success: false,
+          message: errorMessage,
+          errorCode: error.code || null,
+          statusCode: statusCode
+        });
+      } else {
+        return res.status(statusCode).render("error", {
+          message: errorMessage,
           redirect: `/invite/${req.body.inviteCode}`,
         });
       }
-      return res.status(500).render("error", {
-        message: "Failed to join community. Please try again.",
-        redirect: `/invite/${req.body.inviteCode}`,
-      });
     }
   });
 
@@ -611,11 +1039,11 @@ module.exports = function (app, passport, server) {
 
     if (!departmentId || departmentId === "undefined") {
       req.app.locals.specialContext = "errorNoDepartment";
-      return res.redirect(redirect || "/community-dashboard");
+      return res.redirect(redirect || "/communities");
     }
     if (!communityId) {
       req.app.locals.specialContext = "errorNoCommunity";
-      return res.redirect(redirect || "/community-dashboard");
+      return res.redirect(redirect || "/communities");
     }
 
     // Validate department belongs to community
@@ -629,7 +1057,7 @@ module.exports = function (app, passport, server) {
         if (error || response.statusCode !== 200) {
           console.error("Error validating department:", error || body);
           req.app.locals.specialContext = "errorInvalidDepartment";
-          return res.redirect(redirect || "/community-dashboard");
+          return res.redirect(redirect || "/communities");
         }
 
         try {
@@ -639,7 +1067,7 @@ module.exports = function (app, passport, server) {
           );
           if (!department) {
             req.app.locals.specialContext = "errorInvalidDepartment";
-            return res.redirect(redirect || "/community-dashboard");
+            return res.redirect(redirect || "/communities");
           }
 
           req.session.departmentId = departmentId;
@@ -647,7 +1075,7 @@ module.exports = function (app, passport, server) {
         } catch (err) {
           console.error("Error parsing departments:", err);
           req.app.locals.specialContext = "errorInvalidDepartment";
-          return res.redirect(redirect || "/community-dashboard");
+          return res.redirect(redirect || "/communities");
         }
       }
     );
@@ -1455,7 +1883,7 @@ module.exports = function (app, passport, server) {
     }),
     function (req, res, next) {
       console.log("Session redirect value:", req.session.redirect);
-      const redirect = req.session.redirect || "/community-dashboard";
+      const redirect = req.session.redirect || "/communities";
       delete req.session.redirect; // Clear the session redirect after use
       res.redirect(redirect);
     }
@@ -1482,7 +1910,7 @@ module.exports = function (app, passport, server) {
   app.post(
     "/login-community",
     passport.authenticate("login", {
-      successRedirect: "/community-dashboard",
+      successRedirect: "/communities",
       failureRedirect: "/login-community",
       failureFlash: true,
     })
@@ -1500,7 +1928,7 @@ module.exports = function (app, passport, server) {
   app.post(
     "/signup-civ",
     passport.authenticate("signup", {
-      successRedirect: "/community-dashboard",
+      successRedirect: "/communities",
       failureRedirect: "/signup-civ",
       failureFlash: true,
     })
@@ -1527,7 +1955,7 @@ module.exports = function (app, passport, server) {
   app.post(
     "/signup-community",
     passport.authenticate("signup", {
-      successRedirect: "/community-dashboard",
+      successRedirect: "/communities",
       failureRedirect: "/signup-community",
       failureFlash: true,
     })
@@ -5131,6 +5559,370 @@ module.exports = function (app, passport, server) {
         });
     });
   }); //end of sockets
+
+  // ===========================================
+  // ANNOUNCEMENT API ROUTES
+  // ===========================================
+
+  // Get all announcements for a community
+  app.get("/api/v1/community/:communityId/announcements", authCheck, async function (req, res) {
+    try {
+      const { communityId } = req.params;
+      const { type, page = 1, limit = 10 } = req.query;
+      
+      if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+      const query = { community: communityId, isActive: true };
+      
+      if (type && ['main', 'session', 'training'].includes(type)) {
+        query.type = type;
+      }
+
+      const announcements = await Announcement.find(query)
+        .sort({ isPinned: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate('creator', 'username profilePicture')
+        .populate('reactions.user', 'username profilePicture')
+        .populate('comments.user', 'username profilePicture');
+
+      const total = await Announcement.countDocuments(query);
+
+      res.json({
+        announcements,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      res.status(500).json({ error: "Failed to fetch announcements" });
+    }
+  });
+
+  // Get a specific announcement
+  app.get("/api/v1/announcement/:announcementId", authCheck, async function (req, res) {
+    try {
+      const { announcementId } = req.params;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      const announcement = await Announcement.findById(announcementId)
+        .populate('creator', 'username profilePicture')
+        .populate('reactions.user', 'username profilePicture')
+        .populate('comments.user', 'username profilePicture');
+
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      // Increment view count
+      await announcement.incrementViewCount();
+
+      res.json({ announcement });
+    } catch (error) {
+      console.error('Error fetching announcement:', error);
+      res.status(500).json({ error: "Failed to fetch announcement" });
+    }
+  });
+
+  // Create a new announcement
+  app.post("/api/v1/community/:communityId/announcements", authCheck, async function (req, res) {
+    try {
+      const { communityId } = req.params;
+      const { title, content, type, priority, startTime, endTime } = req.body;
+      
+      if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+
+      // Validate required fields
+      if (!title || !content || !type) {
+        return res.status(400).json({ error: "Title, content, and type are required" });
+      }
+
+      if (!['main', 'session', 'training'].includes(type)) {
+        return res.status(400).json({ error: "Invalid announcement type" });
+      }
+
+      if (priority && !['low', 'medium', 'high', 'urgent'].includes(priority)) {
+        return res.status(400).json({ error: "Invalid priority level" });
+      }
+
+      // Check if user has permission to create announcements
+      // This would typically check community roles/permissions
+      // For now, we'll allow any authenticated user who is a member
+
+      const announcement = new Announcement({
+        community: communityId,
+        creator: req.user._id,
+        title: title.trim(),
+        content: content.trim(),
+        type,
+        priority: priority || 'medium',
+        startTime: startTime ? new Date(startTime) : null,
+        endTime: endTime ? new Date(endTime) : null
+      });
+
+      await announcement.save();
+      await announcement.populate('creator', 'username profilePicture');
+
+      res.status(201).json({ announcement });
+    } catch (error) {
+      console.error('Error creating announcement:', error);
+      res.status(500).json({ error: "Failed to create announcement" });
+    }
+  });
+
+  // Update an announcement
+  app.put("/api/v1/announcement/:announcementId", authCheck, async function (req, res) {
+    try {
+      const { announcementId } = req.params;
+      const { title, content, type, priority, isActive, isPinned, startTime, endTime } = req.body;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      // Check if user is the creator or has admin permissions
+      if (announcement.creator.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: "Not authorized to edit this announcement" });
+      }
+
+      // Update fields
+      if (title !== undefined) announcement.title = title.trim();
+      if (content !== undefined) announcement.content = content.trim();
+      if (type !== undefined && ['main', 'session', 'training'].includes(type)) {
+        announcement.type = type;
+      }
+      if (priority !== undefined && ['low', 'medium', 'high', 'urgent'].includes(priority)) {
+        announcement.priority = priority;
+      }
+      if (isActive !== undefined) announcement.isActive = isActive;
+      if (isPinned !== undefined) announcement.isPinned = isPinned;
+      if (startTime !== undefined) announcement.startTime = startTime ? new Date(startTime) : null;
+      if (endTime !== undefined) announcement.endTime = endTime ? new Date(endTime) : null;
+
+      await announcement.save();
+      await announcement.populate('creator', 'username profilePicture');
+
+      res.json({ announcement });
+    } catch (error) {
+      console.error('Error updating announcement:', error);
+      res.status(500).json({ error: "Failed to update announcement" });
+    }
+  });
+
+  // Delete an announcement
+  app.delete("/api/v1/announcement/:announcementId", authCheck, async function (req, res) {
+    try {
+      const { announcementId } = req.params;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      // Check if user is the creator or has admin permissions
+      if (announcement.creator.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ error: "Not authorized to delete this announcement" });
+      }
+
+      await announcement.remove();
+      res.json({ message: "Announcement deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+      res.status(500).json({ error: "Failed to delete announcement" });
+    }
+  });
+
+  // Toggle reaction to an announcement
+  app.post("/api/v1/announcement/:announcementId/reactions", authCheck, async function (req, res) {
+    try {
+      const { announcementId } = req.params;
+      const { emoji } = req.body;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      if (!emoji) {
+        return res.status(400).json({ error: "Emoji is required" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      // Check if user already has this reaction
+      const existingReaction = announcement.reactions.find(
+        r => r.user.toString() === req.user._id.toString() && r.emoji === emoji
+      );
+
+      let action;
+      if (existingReaction) {
+        // Remove the reaction
+        await announcement.removeReaction(req.user._id, emoji);
+        action = 'removed';
+      } else {
+        // Add the reaction
+        await announcement.addReaction(req.user._id, emoji);
+        action = 'added';
+      }
+
+      await announcement.populate('reactions.user', 'username profilePicture');
+
+      res.json({ 
+        success: true,
+        action: action,
+        announcement 
+      });
+    } catch (error) {
+      console.error('Error toggling reaction:', error);
+      res.status(500).json({ error: "Failed to toggle reaction" });
+    }
+  });
+
+  // Remove reaction from an announcement
+  app.delete("/api/v1/announcement/:announcementId/reactions", authCheck, async function (req, res) {
+    try {
+      const { announcementId } = req.params;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      await announcement.removeReaction(req.user._id);
+      await announcement.populate('reactions.user', 'username profilePicture');
+
+      res.json({ announcement });
+    } catch (error) {
+      console.error('Error removing reaction:', error);
+      res.status(500).json({ error: "Failed to remove reaction" });
+    }
+  });
+
+  // Add comment to an announcement
+  app.post("/api/v1/announcement/:announcementId/comments", authCheck, async function (req, res) {
+    try {
+      const { announcementId } = req.params;
+      const { content } = req.body;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ error: "Comment content is required" });
+      }
+
+      if (content.trim().length > 1000) {
+        return res.status(400).json({ error: "Comment too long (max 1000 characters)" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      await announcement.addComment(req.user._id, content.trim());
+      await announcement.populate('comments.user', 'username profilePicture');
+
+      res.json({ announcement });
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      res.status(500).json({ error: "Failed to add comment" });
+    }
+  });
+
+  // Update a comment
+  app.put("/api/v1/announcement/:announcementId/comments/:commentId", authCheck, async function (req, res) {
+    try {
+      const { announcementId, commentId } = req.params;
+      const { content } = req.body;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ error: "Comment content is required" });
+      }
+
+      if (content.trim().length > 1000) {
+        return res.status(400).json({ error: "Comment too long (max 1000 characters)" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      await announcement.editComment(commentId, req.user._id, content.trim());
+      await announcement.populate('comments.user', 'username profilePicture');
+
+      res.json({ announcement });
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      res.status(500).json({ error: "Failed to update comment" });
+    }
+  });
+
+  // Delete a comment
+  app.delete("/api/v1/announcement/:announcementId/comments/:commentId", authCheck, async function (req, res) {
+    try {
+      const { announcementId, commentId } = req.params;
+      
+      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
+        return res.status(400).json({ error: "Invalid announcement ID" });
+      }
+
+      const announcement = await Announcement.findById(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ error: "Announcement not found" });
+      }
+
+      await announcement.deleteComment(commentId, req.user._id);
+      await announcement.populate('comments.user', 'username profilePicture');
+
+      res.json({ announcement });
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      res.status(500).json({ error: "Failed to delete comment" });
+    }
+  });
+
+  // ===========================================
+  // END ANNOUNCEMENT API ROUTES
+  // ===========================================
+
+  // Move this to the very end
+  app.get("*", function (req, res) {
+    res.render("page-not-found");
+  });
 }; //end of routes
 
 function auth(req, res, next) {

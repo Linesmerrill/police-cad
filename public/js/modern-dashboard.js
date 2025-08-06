@@ -55,6 +55,12 @@ $(document).ready(function() {
     // Setup custom checkboxes
     setupCustomCheckboxes();
     
+    // Initialize notification count
+    fetchNotificationCount();
+    
+    // Set up periodic refresh of notification count (every 30 seconds)
+    setInterval(fetchNotificationCount, 30000);
+    
     // Prevent form submission and handle edit button click
     $('#editFirearmForm').submit(function(e) {
         e.preventDefault();
@@ -2215,6 +2221,35 @@ function closeNotificationMenuModal() {
         modal.style.display = 'none';
         document.body.classList.remove('modal-open');
     }
+}
+
+// Notification Count Functions
+function updateNotificationCount(unseenCount) {
+    const $count = $("#notification-count");
+    if (unseenCount > 0) {
+        if (unseenCount > 99) {
+            $count.text("99+");
+        } else {
+            $count.text(unseenCount);
+        }
+        $count.css("display", "inline-block");
+    } else {
+        $count.css("display", "none");
+    }
+}
+
+function fetchNotificationCount() {
+    const userId = dbUser._id;
+    $.ajax({
+        url: `${API_URL}/api/v2/users/${userId}/notifications?limit=1&page=0`,
+        method: "GET",
+        success: function (data) {
+            updateNotificationCount(data.unseenCount || 0);
+        },
+        error: function (xhr) {
+            console.error("Error fetching notification count:", xhr.responseText);
+        },
+    });
 }
 
 // Account Modal Functions

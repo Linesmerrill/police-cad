@@ -1414,7 +1414,7 @@ $(document).ready(function () {
   // License pagination variables
   let licensePage = 1;
   let licenseTotal = 0;
-  let licenseLimit = 3;
+  let licenseLimit = 10;
 
   // Function to load firearms
   function loadFirearms(page = 1) {
@@ -1557,13 +1557,13 @@ $(document).ready(function () {
   }
 
   // Function to load licenses
-  function loadLicenses(page = 1) {
+  function loadLicenses(page = 1, forceRefresh = false) {
     const civilianId = currentItem?._id;
     if (!civilianId) return;
     
-    // Check if we have cached data for this civilian and page
+    // Check if we have cached data for this civilian and page (unless forcing refresh)
     const cacheKey = page - 1; // Convert to 0-based index for cache
-    if (civilianCache.civilianId === civilianId && civilianCache.licenses[cacheKey]) {
+    if (!forceRefresh && civilianCache.civilianId === civilianId && civilianCache.licenses[cacheKey]) {
       displayLicenses(civilianCache.licenses[cacheKey], civilianCache.licenseTotal, page);
       return;
     }
@@ -1665,8 +1665,43 @@ $(document).ready(function () {
         if (isExpiredStatus) {
           expiredPill = `<span class="badge badge-expired ml-2" style="display:inline-block;margin-top:0.25rem;">Expired</span>`;
         }
+        
+        // Determine which action buttons to show based on current status
+        let actionButtons = '';
+        const currentStatus = license.status ? license.status.toLowerCase() : 'valid';
+        
+        if (currentStatus === 'suspended') {
+          actionButtons = `
+            <button class="btn btn-warning btn-sm mr-1" onclick="handleLicenseAction('${item._id}', 'revoke')" title="Revoke License">
+              <i class="fa fa-ban"></i> Revoke
+            </button>
+            <button class="btn btn-success btn-sm" onclick="handleLicenseAction('${item._id}', 'reset')" title="Reinstate to Valid">
+              <i class="fa fa-check"></i> Reinstate
+            </button>
+          `;
+        } else if (currentStatus === 'revoked') {
+          actionButtons = `
+            <button class="btn btn-warning btn-sm mr-1" onclick="handleLicenseAction('${item._id}', 'suspend')" title="Suspend License">
+              <i class="fa fa-pause"></i> Suspend
+            </button>
+            <button class="btn btn-success btn-sm" onclick="handleLicenseAction('${item._id}', 'reset')" title="Reinstate to Valid">
+              <i class="fa fa-check"></i> Reinstate
+            </button>
+          `;
+        } else {
+          // Valid/Approved status
+          actionButtons = `
+            <button class="btn btn-warning btn-sm mr-1" onclick="handleLicenseAction('${item._id}', 'suspend')" title="Suspend License">
+              <i class="fa fa-pause"></i> Suspend
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="handleLicenseAction('${item._id}', 'revoke')" title="Revoke License">
+              <i class="fa fa-ban"></i> Revoke
+            </button>
+          `;
+        }
+        
         licensesHtml += `
-          <div class="details-item">
+          <div class="details-item license-item" data-license-id="${item._id}" onclick="selectLicense('${item._id}')" style="cursor: pointer;">
             <div class="d-flex justify-content-between align-items-start">
               <span>${license.type || 'N/A'}</span>
               <div class="text-right">
@@ -1677,6 +1712,9 @@ $(document).ready(function () {
             <p class="text-gray mb-0">Expires: ${license.expirationDate || 'N/A'}</p>
             <p class="text-gray mb-0">Notes: ${license.notes || 'N/A'}</p>
             <p class="text-gray mb-0">Created: ${new Date(license.createdAt).toLocaleDateString()}</p>
+            <div class="license-actions mt-2" onclick="event.stopPropagation();">
+              ${actionButtons}
+            </div>
           </div>
         `;
       });
@@ -1703,6 +1741,130 @@ $(document).ready(function () {
 
 
 
+  /**
+   * License Management Functions
+   * 
+   * These functions provide interactive license management capabilities:
+   * - selectLicense(licenseId): Highlights a selected license and shows a notification
+   * - handleLicenseAction(licenseId, action): Performs license status updates
+   * 
+   * Available actions:
+   * - 'suspend': Changes status to 'Suspended'
+   * - 'revoke': Changes status to 'Revoked' 
+   * - 'reset': Changes status to 'Approved'
+   * 
+   * Usage:
+   * 1. Click on any license item to select it
+   * 2. Use the action buttons (Suspend, Revoke, Reset) to change status
+   * 3. Confirm the action when prompted
+   * 4. The license list will automatically refresh after successful updates
+   */
+  
+  // License selection and action functions
+  function selectLicense(licenseId) {
+    // Remove highlight from all license items
+    $('.license-item').removeClass('selected-license');
+    // Add highlight to selected license
+    $(`.license-item[data-license-id="${licenseId}"]`).addClass('selected-license');
+    
+    // Show a brief tooltip or notification that the license is selected
+    const licenseItem = $(`.license-item[data-license-id="${licenseId}"]`);
+    const licenseType = licenseItem.find('span').first().text();
+    const currentStatus = licenseItem.find('.text-success, .text-danger').text();
+    
+    // Create a temporary notification
+    const notification = $(`
+      <div class="alert alert-info alert-dismissible" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <strong>License Selected:</strong> ${licenseType}<br>
+        <strong>Current Status:</strong> ${currentStatus}<br>
+        <small>Use the action buttons below to modify the license status.</small>
+      </div>
+    `);
+    
+    $('body').append(notification);
+    
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+      notification.fadeOut(() => notification.remove());
+    }, 3000);
+  }
+
+  function handleLicenseAction(licenseId, action) {
+    let newStatus = '';
+    let confirmMessage = '';
+    
+    switch (action) {
+      case 'suspend':
+        newStatus = 'Suspended';
+        confirmMessage = 'Are you sure you want to suspend this license?';
+        break;
+      case 'revoke':
+        newStatus = 'Revoked';
+        confirmMessage = 'Are you sure you want to revoke this license?';
+        break;
+      case 'reset':
+        newStatus = 'Valid';
+        confirmMessage = 'Are you sure you want to reinstate this license to valid status?';
+        break;
+      default:
+        console.error('Invalid license action:', action);
+        return;
+    }
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+    
+    // Show loading state
+    const licenseItem = $(`.license-item[data-license-id="${licenseId}"]`);
+    const originalContent = licenseItem.find('.license-actions').html();
+    licenseItem.find('.license-actions').html('<i class="fa fa-spinner fa-spin"></i> Updating...');
+    
+    // Disable all action buttons during update
+    licenseItem.find('.license-actions .btn').prop('disabled', true);
+    
+    // Use the external API for license updates
+    $.ajax({
+      url: `${API_URL}/api/v1/license/${licenseId}`,
+      method: 'PUT',
+      data: JSON.stringify({ status: newStatus }),
+      contentType: 'application/json',
+      success: function(response) {
+        // Show success message
+        licenseItem.find('.license-actions').html('<i class="fa fa-check text-success"></i> Updated successfully');
+        
+        // Clear the cache to force a fresh reload
+        civilianCache.licenses = {};
+        civilianCache.licenseTotal = 0;
+        
+        // Refresh the license list after a short delay
+        setTimeout(() => {
+          loadLicenses(1, true); // Force refresh first page
+        }, 2000); // Increased delay to ensure API has time to process
+      },
+      error: function(xhr) {
+        console.error('Error updating license:', xhr.responseText);
+        // Restore original content and show error
+        licenseItem.find('.license-actions').html(originalContent);
+        licenseItem.find('.license-actions .btn').prop('disabled', false);
+        
+        let errorMessage = 'Failed to update license';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMessage += ': ' + xhr.responseJSON.message;
+        } else if (xhr.status === 404) {
+          errorMessage += ': License not found';
+        } else if (xhr.status === 403) {
+          errorMessage += ': Permission denied';
+        } else if (xhr.status >= 500) {
+          errorMessage += ': Server error';
+        }
+        
+        alert(errorMessage);
+      }
+    });
+  }
+
   // Expose showDetailsModal and goBack globally
   window.showDetailsModal = showDetailsModal;
   window.fetchArrestReports = fetchArrestReports;
@@ -1716,4 +1878,6 @@ $(document).ready(function () {
   window.loadVehicles = loadVehicles;
   window.loadFirearms = loadFirearms;
   window.loadLicenses = loadLicenses;
+  window.selectLicense = selectLicense;
+  window.handleLicenseAction = handleLicenseAction;
 });

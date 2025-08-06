@@ -1,4 +1,7 @@
 var dotenv = require("dotenv");
+// Load environment variables file into process FIRST
+dotenv.config();
+
 var express = require("express");
 var cookieParser = require("cookie-parser");
 var session = require("express-session");
@@ -15,8 +18,6 @@ const rateLimit = require("express-rate-limit");
 var newBaseURL = process.env.NEW_BASE_URL || "http://localhost:8080";
 var redirectStatus = parseInt(process.env.REDIRECT_STATUS || 302);
 var oldBaseURL = process.env.OLD_BASE_URL;
-// Load environment variables file into process.
-dotenv.config();
 
 const app = express();
 
