@@ -126,6 +126,56 @@
       return window.openOwnerCannotLeaveModal.apply(this, arguments);
     }
 
+    // Define submitLeaveCommunity function globally
+    window.submitLeaveCommunity = function() {
+      const userId = '<%= user && user._doc ? user._doc._id : "" %>';
+      const communityId = '<%= community._id %>';
+      const errorDiv = document.getElementById('leaveCommunityError');
+      errorDiv.style.display = 'none';
+      errorDiv.textContent = '';
+
+      // Show loading state (optional)
+      const leaveBtn = document.getElementById('leaveCommunityModalConfirm');
+      if (leaveBtn) {
+        leaveBtn.disabled = true;
+        leaveBtn.textContent = 'Leaving...';
+      }
+
+      fetch(`${window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>'}/api/v1/user/${userId}/remove-community`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ communityId }),
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(
+              `Failed to remove user from community.\n\nMessage: ${data.message}.\nCode: ${response.status}`
+            );
+          }
+          return response.json();
+        })
+        .then(() => {
+          localStorage.setItem('leftCommunityToast', '1');
+          window.location.href = "/communities";
+        })
+        .catch((error) => {
+          errorDiv.style.display = 'block';
+          errorDiv.textContent = error.message || "An error occurred.";
+          if (leaveBtn) {
+            leaveBtn.disabled = false;
+            leaveBtn.textContent = 'Leave Community';
+          }
+        });
+    };
+
+    // Shim for legacy/global handler
+    function submitLeaveCommunity() {
+      return window.submitLeaveCommunity.apply(this, arguments);
+    }
+
     window.loadCommunitySettings = function() {
       // This function can be used to load any additional settings data
       
