@@ -2909,7 +2909,7 @@ window.expandTemplateCard = function(idx) {
       <button id="leaveCommunityModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
         Cancel
       </button>
-      <button id="leaveCommunityModalConfirm" type="button" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+      <button id="leaveCommunityModalConfirm" type="button" onclick="submitLeaveCommunity()" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
         Leave Community
       </button>
     </div>
@@ -3742,13 +3742,7 @@ async function deleteEditEvent() {
             }
           });
           
-          // Set up leave community confirm handler
-          const leaveCommunityModalConfirm = document.getElementById('leaveCommunityModalConfirm');
-          if (leaveCommunityModalConfirm) {
-            leaveCommunityModalConfirm.onclick = function() {
-              submitLeaveCommunity();
-            };
-          }
+
 
           // Set up community image upload handler
           const communityImageUpload = document.getElementById('communityImageUpload');
