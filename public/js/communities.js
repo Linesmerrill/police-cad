@@ -655,7 +655,7 @@ const CommunityCard = ({ community, isActive, actionText, onAction }) => (
         <div className="absolute top-3 left-3">
           {(() => {
             const plan = community?.subscription?.plan;
-            console.log('Community:', community?.name, 'Plan:', plan, 'Subscription:', community?.subscription, 'Promotional:', community?.promotionalText);
+    
             
             if (plan === "elite") {
               return (
@@ -1428,7 +1428,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
       const plan = dbUser?.user?.subscription?.plan || "free";
       setUserPlan(plan);
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      
       // Set default values on error
       setOwnedCommunityCount(0);
       setUserPlan("free");
@@ -1580,7 +1580,7 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
       }, 1000);
       
     } catch (error) {
-      console.error("Error creating community:", error);
+      
       setError("Failed to create community. Please try again.");
       
       // Show error toast
@@ -1889,7 +1889,7 @@ const App = () => {
         setEliteCommunities(communities);
         setEliteTotalCount(response.data.totalCount || 0);
       } catch (error) {
-        console.error("Error fetching elite communities:", error);
+
         setEliteCommunities([]);
         setEliteTotalCount(0);
       } finally {
@@ -1928,7 +1928,7 @@ const App = () => {
         }));
         setUserCommunities(mappedCommunities);
       } catch (error) {
-        console.error("Error fetching user communities:", error);
+
         setUserCommunities([]);
         setUserTotalCount(0);
       } finally {
@@ -1967,7 +1967,7 @@ const App = () => {
         setRecommendedCommunities(communities);
         setRecommendedTotalCount(response.data.totalCount || 0);
       } catch (error) {
-        console.error("Error fetching discover communities:", error);
+
         setRecommendedCommunities([]);
         setRecommendedTotalCount(0);
       } finally {
@@ -1999,7 +1999,7 @@ const App = () => {
         setAllCommunities(communities);
         setAllCommunitiesTotalCount(response.data.totalCount || 0);
       } catch (error) {
-        console.error("Error fetching browse communities:", error);
+
         setAllCommunities([]);
         setAllCommunitiesTotalCount(0);
       } finally {
@@ -2040,7 +2040,7 @@ const App = () => {
       setEliteCommunities(communities);
       setElitePage(page);
     } catch (error) {
-      console.error("Error fetching elite communities page:", error);
+      
       setEliteCommunities([]);
     } finally {
       setIsEliteLoading(false);
@@ -2070,7 +2070,7 @@ const App = () => {
       setUserCommunities(mappedCommunities);
       setUserPage(page);
     } catch (error) {
-      console.error("Error fetching user communities:", error);
+      
       setUserCommunities([]);
       setUserTotalCount(0);
     } finally {
@@ -2101,7 +2101,7 @@ const App = () => {
       setRecommendedCommunities(communities);
       setRecommendedPage(page);
     } catch (error) {
-      console.error("Error fetching discover communities page:", error);
+      
       setRecommendedCommunities([]);
     } finally {
       setIsRecommendedLoading(false);
@@ -2130,7 +2130,7 @@ const App = () => {
       setAllCommunitiesTotalCount(response.data.totalCount || 0);
       setAllCommunitiesPage(page);
     } catch (error) {
-      console.error("Error fetching browse communities page:", error);
+      
       setAllCommunities([]);
       setAllCommunitiesTotalCount(0);
     } finally {
