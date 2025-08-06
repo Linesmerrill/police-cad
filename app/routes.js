@@ -899,12 +899,6 @@ module.exports = function (app, passport, server) {
     try {
       const { inviteCode } = req.body;
       
-      // Log the request for debugging
-      if (process.env.NODE_ENV === "development") {
-        console.log("Joining community with invite code:", inviteCode);
-        console.log("User ID:", req.user._id);
-      }
-      
       const apiUrl = `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/join`;
       const response = await axios.post(
         apiUrl,
@@ -914,6 +908,7 @@ module.exports = function (app, passport, server) {
         },
         { timeout: 5000 }
       );
+      // Handle successful response from the API
       if (response.data.status === "joined") {
         // Get the community ID from the response
         const communityId = response.data.communityId || response.data.community?._id;
@@ -932,6 +927,21 @@ module.exports = function (app, passport, server) {
           } else {
             return res.redirect("/communities?success=true");
           }
+        }
+      } else {
+        // API didn't return expected status - this shouldn't happen with the current backend
+        console.error("Unexpected API response:", response.data);
+        
+        if (req.headers['content-type'] === 'application/json') {
+          return res.status(500).json({
+            success: false,
+            message: "Unexpected response from server. Please try again."
+          });
+        } else {
+          return res.status(500).render("error", {
+            message: "Unexpected response from server. Please try again.",
+            redirect: `/invite/${req.body.inviteCode}`,
+          });
         }
       }
     } catch (error) {
