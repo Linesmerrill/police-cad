@@ -46,15 +46,13 @@
     <!-- Main Content -->
     <main class="flex items-center justify-center flex-1">
       <div class="overlay p-6 rounded-lg max-w-md w-full mx-4">
-        <% if (process.env.NODE_ENV === 'development') { %>
         <script type="text/javascript">
           // Pass server-side variables to JavaScript
           var dbUser = <%- JSON.stringify(user) || 'null' %>;
           var inviteCode = <%- JSON.stringify(inviteCode) || 'null' %>;
           var communityName = <%- JSON.stringify(communityName) || 'null' %>;
-            var redirect = <%- JSON.stringify(redirect) || 'null' %>;
+          var redirect = <%- JSON.stringify(redirect) || 'null' %>;
         </script>
-        <% } %>
         <h1 class="text-4xl font-extrabold mb-4 text-center text-blue-400">
           Invite to <%= communityName %>
         </h1>
