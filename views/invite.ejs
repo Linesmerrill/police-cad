@@ -33,6 +33,21 @@
       .hidden {
         display: none;
       }
+      
+      /* Loading state styles */
+      .spinner {
+        display: inline-block;
+      }
+      
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        background-color: #4a5568 !important;
+      }
+      
+      button:disabled:hover {
+        background-color: #4a5568 !important;
+      }
     </style>
   </head>
   <body class="bg-invite text-white flex flex-col min-h-screen">
@@ -69,7 +84,7 @@
             class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300"
             aria-label="Join Community"
           >
-            <span class="spinner hidden">Loading...</span>
+            <span class="spinner hidden">⏳ Loading...</span>
             <span class="text">Join Community</span>
           </button>
         </div>
@@ -112,6 +127,9 @@
         text.classList.add("hidden");
         errorMessage.classList.add("hidden");
         button.disabled = true;
+        
+        // Force a reflow to ensure the changes are visible
+        button.offsetHeight;
         
         try {
           const response = await fetch("/community/join", {
