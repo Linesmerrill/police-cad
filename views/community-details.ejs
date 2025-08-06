@@ -1827,7 +1827,7 @@
         errorDiv.textContent = '';
 
         // Show loading state (optional)
-        const leaveBtn = document.querySelector('#leaveCommunityModal button[onclick="submitLeaveCommunity()"]');
+        const leaveBtn = document.getElementById('leaveCommunityModalConfirm');
         if (leaveBtn) {
           leaveBtn.disabled = true;
           leaveBtn.textContent = 'Leaving...';
