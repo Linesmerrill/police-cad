@@ -172,6 +172,193 @@
       .input-group .form-control {
         border-radius: 8px 0 0 8px;
       }
+      
+      /* Activity Tracking Styles */
+      .stat-card {
+        background: #11131a;
+        border: 1px solid #2a2d45;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 1rem;
+      }
+      
+      .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #667eea;
+        margin-bottom: 0.5rem;
+      }
+      
+      .stat-label {
+        color: #9aa0b4;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+      }
+      
+      .timeline-filters {
+        margin-bottom: 1.5rem;
+      }
+      
+      .timeline-filters .btn {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      
+      .timeline-filters .btn.active {
+        background: #667eea;
+        border-color: #667eea;
+      }
+      
+      .chart-container {
+        background: #11131a;
+        border: 1px solid #2a2d45;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        min-height: 200px;
+      }
+      
+      .chart-bars {
+        display: flex;
+        align-items: end;
+        justify-content: space-around;
+        height: 150px;
+        padding: 1rem 0;
+      }
+      
+      .chart-bar {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 4px 4px 0 0;
+        min-width: 30px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .bar-label {
+        position: absolute;
+        bottom: -25px;
+        font-size: 0.8rem;
+        color: #9aa0b4;
+        transform: rotate(-45deg);
+        white-space: nowrap;
+      }
+      
+      .activity-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 1rem;
+        border-bottom: 1px solid #2a2d45;
+      }
+      
+      .activity-item:last-child {
+        border-bottom: none;
+      }
+      
+      .activity-icon {
+        margin-right: 1rem;
+        font-size: 1.2rem;
+        margin-top: 0.2rem;
+      }
+      
+      .activity-content {
+        flex: 1;
+      }
+      
+      .activity-title {
+        color: #e5e7eb;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+      
+      .activity-time {
+        color: #9aa0b4;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+      }
+      
+      .activity-details {
+        color: #9aa0b4;
+        font-size: 0.9rem;
+        font-style: italic;
+      }
+      
+      .text-success { color: #10b981 !important; }
+      .text-warning { color: #f59e0b !important; }
+      .text-info { color: #3b82f6 !important; }
+      .text-primary { color: #667eea !important; }
+      .text-secondary { color: #9aa0b4 !important; }
+      .text-muted { color: #6b7280 !important; }
+      
+      /* Role Management Styles */
+      .role-management h6 {
+        color: #e5e7eb;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+      }
+      
+      .current-roles {
+        margin-bottom: 1rem;
+      }
+      
+      .role-checkboxes {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      
+      .role-checkbox {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: background-color 0.2s;
+      }
+      
+      .role-checkbox:hover {
+        background: #2a2d45;
+      }
+      
+      .role-checkbox input[type="checkbox"] {
+        margin-right: 0.75rem;
+        transform: scale(1.2);
+      }
+      
+      .role-checkbox span {
+        color: #e5e7eb;
+        font-weight: 500;
+      }
+      
+      .role-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+      }
+      
+      /* Admin Actions Container */
+      .admin-actions-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: stretch;
+      }
+      
+      .admin-actions-container .btn {
+        flex: 1;
+        min-width: 140px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+      }
+      
+      .admin-actions-container .btn i {
+        flex-shrink: 0;
+      }
     </style>
   </head>
   <body>
@@ -228,6 +415,11 @@
                 <i class="fas fa-building" style="margin-right: 8px;"></i>Communities
               </a>
             </li>
+            <li role="presentation" id="admin-management-tab">
+              <a href="#admin-management-tab-content" data-toggle="tab">
+                <i class="fas fa-shield-alt" style="margin-right: 8px;"></i>Admin Management
+              </a>
+            </li>
           </ul>
           
           <div class="tab-content">
@@ -261,6 +453,26 @@
                 </div>
               </div>
               <div id="communityResults"></div>
+            </div>
+            
+            <!-- Admin Management Tab -->
+            <div role="tabpanel" class="tab-pane" id="admin-management-tab-content">
+              <div class="row">
+                <div class="col-md-8">
+                  <input type="text" id="adminSearch" class="form-control search-input" 
+                         placeholder="Search admins by email..." />
+                </div>
+                <div class="col-md-4">
+                  <button type="button" id="searchAdminsBtn" class="btn btn-gradient btn-block">
+                    <i class="fas fa-search" style="margin-right: 8px;"></i>Search Admins
+                  </button>
+                </div>
+              </div>
+              <div id="adminResults">
+                <div class="loading" style="text-align: center; padding: 2rem; color: #9aa0b4;">
+                  <i class="fas fa-spinner fa-spin"></i> Loading all admins...
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -404,12 +616,597 @@
       </div>
     </div>
 
+    <!-- Admin Details Modal -->
+    <div class="modal fade" id="adminDetailsModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
+          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
+              <span>&times;</span>
+            </button>
+            <h4 class="modal-title" id="adminDetailsModalTitle">Admin Details</h4>
+          </div>
+          <div class="modal-body" id="adminDetailsModalBody">
+            <!-- Admin details will be loaded here -->
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #2a2d45;">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Role Management Modal -->
+    <div class="modal fade" id="roleManagementModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
+          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
+              <span>&times;</span>
+            </button>
+            <h4 class="modal-title" id="roleManagementModalTitle">Manage Admin Roles</h4>
+          </div>
+          <div class="modal-body" id="roleManagementModalBody">
+            <!-- Role management interface will be loaded here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
     <script>
       // Global API configuration
       const API_BASE = '<%= process.env.POLICE_CAD_API_URL || "/api" %>';
       const API_TOKEN = '<%= process.env.POLICE_CAD_API_TOKEN || "" %>';
+      
+      // Check current user role and show admin management tab if owner
+      $(document).ready(function() {
+        // Check if current user is owner (you can modify this logic based on your backend)
+        const currentUserEmail = '<%= admin && admin.email ? admin.email : "" %>';
+        const currentUserRoles = '<%= admin && admin.roles ? JSON.stringify(admin.roles) : (admin && admin.role ? JSON.stringify([admin.role]) : "[]") %>';
+        
+        // Parse roles array
+        let roles = [];
+        try {
+          roles = JSON.parse(currentUserRoles);
+        } catch (e) {
+          roles = [];
+        }
+        
+        // Show admin management tab if user has owner role
+        if (roles.includes('owner')) {
+          $('#admin-management-tab').show();
+        }
+        
+        // Load all admins when admin management tab is clicked
+        $('a[href="#admin-management-tab-content"]').on('click', function() {
+          loadAllAdmins();
+        });
+        
+        // Event delegation for admin action buttons
+        $(document).on('click', '.admin-action-btn', function() {
+          const action = $(this).data('action');
+          const adminId = $(this).data('admin-id');
+          const email = $(this).data('email');
+          const roles = $(this).data('roles');
+          
+          switch(action) {
+            case 'view-details':
+              viewAdminDetails(adminId);
+              break;
+            case 'change-role':
+              changeAdminRole(adminId, roles);
+              break;
+            case 'send-reset':
+              sendAdminReset(email);
+              break;
+            case 'delete-admin':
+              deleteAdmin(adminId, email);
+              break;
+            case 'view-activity':
+              viewAdminActivity(adminId, email);
+              break;
+          }
+        });
+      });
+      
+      // Admin Management Functions
+      function loadAllAdmins() {
+        $('#adminResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading all admins...</div>');
+        
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/admins`,
+          method: 'GET',
+          headers: { 'Authorization': API_TOKEN },
+          success: function(data) {
+            displayAdminResults(data.admins || []);
+          },
+          error: function(xhr) {
+            $('#adminResults').html('<div class="loading">Failed to load admins</div>');
+            showInfoModal('Error', `Error loading admins: ${xhr.responseJSON?.error || 'Unknown error'}`);
+          }
+        });
+      }
+      
+      // Search Admins
+      $('#searchAdminsBtn').click(function() {
+        const query = $('#adminSearch').val().trim();
+        if (!query) {
+          // If no search term, load all admins
+          loadAllAdmins();
+          return;
+        }
+        searchAdmins(query);
+      });
+      
+      $('#adminSearch').keypress(function(e) {
+        if (e.which === 13) {
+          $('#searchAdminsBtn').click();
+        }
+      });
+      
+      function searchAdmins(query) {
+        $('#adminResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching admins...</div>');
+        
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/search/admins`,
+          method: 'POST',
+          headers: { 'Authorization': API_TOKEN },
+          data: JSON.stringify({ query: query }),
+          contentType: 'application/json',
+          success: function(data) {
+            displayAdminResults(data.admins || []);
+          },
+          error: function(xhr) {
+            $('#adminResults').html('<div class="loading">No admins found</div>');
+            showInfoModal('Search Error', `Error searching admins: ${xhr.responseJSON?.error || 'Unknown error'}`);
+          }
+        });
+      }
+      
+      function displayAdminResults(admins) {
+        if (admins.length === 0) {
+          $('#adminResults').html('<div class="loading">No admins found</div>');
+          return;
+        }
+        
+        let html = '';
+        admins.forEach(admin => {
+          const adminId = admin.id || admin._id || 'unknown';
+          const adminRoles = Array.isArray(admin.roles) ? admin.roles : (admin.role ? [admin.role] : ['admin']);
+          const adminEmail = admin.email || 'Unknown';
+          const adminCreatedAt = admin.createdAt ? new Date(admin.createdAt).toLocaleDateString() : 'Unknown';
+          
+          // Display roles as comma-separated list
+          const rolesDisplay = adminRoles.join(', ');
+          
+          html += `
+            <div class="result-card">
+              <div class="result-header">
+                <div>
+                  <h5 class="result-title">${adminEmail}</h5>
+                  <p class="result-subtitle">Roles: ${rolesDisplay} | Created: ${adminCreatedAt}</p>
+                </div>
+                <div class="action-buttons">
+                  <button class="btn btn-secondary btn-sm admin-action-btn" data-action="view-details" data-admin-id="${adminId}">
+                    <i class="fas fa-eye"></i> View Details
+                  </button>
+                  <button class="btn btn-secondary btn-sm admin-action-btn" data-action="change-role" data-admin-id="${adminId}" data-roles='${JSON.stringify(adminRoles)}'>
+                    <i class="fas fa-user-edit"></i> Change Roles
+                  </button>
+                  <button class="btn btn-secondary btn-sm admin-action-btn" data-action="send-reset" data-email="${adminEmail}">
+                    <i class="fas fa-envelope"></i> Send Reset
+                  </button>
+                  <button class="btn btn-danger btn-sm admin-action-btn" data-action="delete-admin" data-admin-id="${adminId}" data-email="${adminEmail}">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </div>
+              </div>
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="info-label">Status</div>
+                  <div class="info-value">
+                    <span class="status-badge ${admin.active ? 'status-active' : 'status-inactive'}">
+                      ${admin.active ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Created By</div>
+                  <div class="info-value">${admin.createdBy || 'System'}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Last Login</div>
+                  <div class="info-value">${admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleDateString() : 'Never'}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        $('#adminResults').html(html);
+      }
+      
+      function viewAdminDetails(adminId) {
+        console.log('Loading admin details for ID:', adminId);
+        $('#adminDetailsModalTitle').text('Loading Admin Details...');
+        $('#adminDetailsModalBody').html('<div class="loading">Loading...</div>');
+        $('#adminDetailsModal').modal('show');
+        
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/admins/${adminId}`,
+          method: 'GET',
+          headers: { 'Authorization': API_TOKEN },
+          success: function(data) {
+            console.log('Admin details response:', data);
+            if (data.admin) {
+              displayAdminDetails(data.admin);
+            } else {
+              console.error('No admin data in response:', data);
+              $('#adminDetailsModalBody').html('<div class="loading">Invalid admin data received</div>');
+            }
+          },
+          error: function(xhr) {
+            console.error('Error loading admin details:', xhr);
+            $('#adminDetailsModalBody').html('<div class="loading">Failed to load admin details</div>');
+            showInfoModal('Error', `Error loading admin: ${xhr.responseJSON?.error || 'Unknown error'}`);
+          }
+        });
+      }
+      
+      function displayAdminDetails(admin) {
+        console.log('Displaying admin details:', admin);
+        
+        // Add null checks and defaults
+        const email = admin.email || 'Unknown';
+        const roles = Array.isArray(admin.roles) ? admin.roles : (admin.role ? [admin.role] : ['admin']);
+        const isActive = admin.active !== undefined ? admin.active : true;
+        const createdAt = admin.createdAt ? new Date(admin.createdAt).toLocaleDateString() : 'Unknown';
+        const createdBy = admin.createdBy || 'System';
+        const lastLoginAt = admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleDateString() : 'Never';
+        const adminId = admin.id || admin._id || 'unknown';
+        
+        console.log('Processed admin data:', { email, roles, isActive, createdAt, createdBy, lastLoginAt, adminId });
+        
+        // Check if user has owner role
+        const hasOwnerRole = roles.includes('owner');
+        const hasAdminRole = roles.includes('admin');
+        
+        $('#adminDetailsModalTitle').text(`Admin: ${email}`);
+        $('#adminDetailsModalBody').html(`
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Email</div>
+              <div class="info-value">${email}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Roles</div>
+              <div class="info-value">
+                ${roles.map(role => `
+                  <span class="status-badge ${role === 'owner' ? 'status-active' : 'status-pending'}" style="margin-right: 0.5rem;">
+                    ${role.charAt(0).toUpperCase() + role.slice(1)}
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Status</div>
+              <div class="info-value">
+                <span class="status-badge ${isActive ? 'status-active' : 'status-inactive'}">
+                  ${isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Created</div>
+              <div class="info-value">${createdAt}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Created By</div>
+              <div class="info-value">${createdBy}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Last Login</div>
+              <div class="info-value">${lastLoginAt}</div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 2rem;">
+            <h5>Actions</h5>
+            <div class="admin-actions-container">
+              <button class="btn btn-secondary admin-action-btn" data-action="change-role" data-admin-id="${adminId}" data-roles='${JSON.stringify(roles)}'>
+                <i class="fas fa-user-edit"></i> Change Roles
+              </button>
+              <button class="btn btn-secondary admin-action-btn" data-action="send-reset" data-email="${email}">
+                <i class="fas fa-envelope"></i> Send Password Reset
+              </button>
+              <button class="btn btn-secondary admin-action-btn" data-action="view-activity" data-admin-id="${adminId}" data-email="${email}">
+                <i class="fas fa-chart-line"></i> View Activity
+              </button>
+              <button class="btn btn-danger admin-action-btn" data-action="delete-admin" data-admin-id="${adminId}" data-email="${email}">
+                <i class="fas fa-trash"></i> Delete Admin
+              </button>
+            </div>
+          </div>
+        `);
+      }
+      
+      function viewAdminActivity(adminId, adminEmail) {
+        $('#adminDetailsModalTitle').text(`Admin Activity: ${adminEmail}`);
+        $('#adminDetailsModalBody').html('<div class="loading">Loading activity data...</div>');
+        
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/admins/${adminId}/activity`,
+          method: 'GET',
+          headers: { 'Authorization': API_TOKEN },
+          success: function(data) {
+            displayAdminActivity(data.activity);
+          },
+          error: function(xhr) {
+            $('#adminDetailsModalBody').html('<div class="loading">Failed to load activity data</div>');
+            showInfoModal('Error', `Error loading activity: ${xhr.responseJSON?.error || 'Unknown error'}`);
+          }
+        });
+      }
+      
+      function displayAdminActivity(activity) {
+        const html = `
+          <div class="activity-overview">
+            <div class="row">
+              <div class="col-md-3">
+                <div class="stat-card">
+                  <div class="stat-number">${activity.totalLogins || 0}</div>
+                  <div class="stat-label">Total Logins</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-card">
+                  <div class="stat-number">${activity.passwordResets || 0}</div>
+                  <div class="stat-label">Password Resets</div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-number">${activity.tempPasswords || 0}</div>
+                <div class="stat-label">Temp Passwords</div>
+              </div>
+              <div class="col-md-3">
+                <div class="stat-card">
+                  <div class="stat-number">${activity.avgSessionTime || '0m'}</div>
+                  <div class="stat-label">Avg Session</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 2rem;">
+            <h5>Activity Timeline</h5>
+            <div class="timeline-filters">
+              <button class="btn btn-sm btn-secondary active" onclick="filterActivity('1d')">1 Day</button>
+              <button class="btn btn-sm btn-secondary" onclick="filterActivity('7d')">7 Days</button>
+              <button class="btn btn-sm btn-secondary" onclick="filterActivity('30d')">30 Days</button>
+              <button class="btn btn-sm btn-secondary" onclick="filterActivity('1m')">1 Month</button>
+              <button class="btn btn-sm btn-secondary" onclick="filterActivity('3m')">3 Months</button>
+              <button class="btn btn-sm btn-secondary" onclick="filterActivity('6m')">6 Months</button>
+              <button class="btn btn-sm btn-secondary" onclick="filterActivity('1y')">1 Year</button>
+              <button class="btn btn-sm btn-secondary" onclick="filterActivity('all')">All Time</button>
+            </div>
+            
+            <div class="activity-chart" id="activityChart">
+              <!-- Chart will be rendered here -->
+            </div>
+            
+            <div class="recent-activity">
+              <h6>Recent Activity</h6>
+              ${generateRecentActivityList(activity.recentActivity || [])}
+            </div>
+          </div>
+        `;
+        
+        $('#adminDetailsModalBody').html(html);
+        
+        // Render the chart
+        renderActivityChart(activity);
+      }
+      
+      function generateRecentActivityList(activities) {
+        if (activities.length === 0) {
+          return '<p>No recent activity</p>';
+        }
+        
+        let html = '';
+        activities.forEach(activity => {
+          const icon = getActivityIcon(activity.type);
+          const timeAgo = getTimeAgo(activity.timestamp);
+          
+          html += `
+            <div class="activity-item">
+              <div class="activity-icon">${icon}</div>
+              <div class="activity-content">
+                <div class="activity-title">${activity.title}</div>
+                <div class="activity-time">${timeAgo}</div>
+                ${activity.details ? `<div class="activity-details">${activity.details}</div>` : ''}
+              </div>
+            </div>
+          `;
+        });
+        
+        return html;
+      }
+      
+      function getActivityIcon(type) {
+        const icons = {
+          'login': '<i class="fas fa-sign-in-alt text-success"></i>',
+          'logout': '<i class="fas fa-sign-out-alt text-warning"></i>',
+          'password_reset': '<i class="fas fa-key text-info"></i>',
+          'temp_password': '<i class="fas fa-temp-password text-warning"></i>',
+          'role_change': '<i class="fas fa-user-edit text-primary"></i>',
+          'admin_action': '<i class="fas fa-shield-alt text-secondary"></i>'
+        };
+        return icons[type] || '<i class="fas fa-circle text-muted"></i>';
+      }
+      
+      function getTimeAgo(timestamp) {
+        const now = new Date();
+        const time = new Date(timestamp);
+        const diffMs = now - time;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+        return time.toLocaleDateString();
+      }
+      
+      function renderActivityChart(activity) {
+        // Simple chart using HTML/CSS for now
+        // You can integrate Chart.js or D3.js for better charts later
+        const chartData = activity.chartData || [];
+        const chartHtml = `
+          <div class="chart-container">
+            <div class="chart-bars">
+              ${chartData.map(day => `
+                <div class="chart-bar" style="height: ${Math.max(day.value * 2, 10)}px;" title="${day.date}: ${day.value} logins">
+                  <div class="bar-label">${day.date}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        
+        $('#activityChart').html(chartHtml);
+      }
+      
+      function filterActivity(timeframe) {
+        // Update active filter button
+        $('.timeline-filters .btn').removeClass('active');
+        $(`button[onclick*="filterActivity('${timeframe}')"]`).addClass('active');
+        
+        // Reload activity data with new timeframe
+        const adminId = $('#adminDetailsModal').data('currentAdminId');
+        if (adminId) {
+          viewAdminActivity(adminId, $('#adminDetailsModalTitle').text().replace('Admin Activity: ', ''));
+        }
+      }
+      
+      function changeAdminRole(adminId, currentRoles) {
+        // Parse current roles if it's a JSON string
+        let roles = currentRoles;
+        if (typeof currentRoles === 'string') {
+          try {
+            roles = JSON.parse(currentRoles);
+          } catch (e) {
+            roles = [currentRoles];
+          }
+        }
+        
+        // Create role management modal
+        const rolesHtml = `
+          <div class="role-management">
+            <h6>Current Roles:</h6>
+            <div class="current-roles">
+              ${roles.map(role => `
+                <span class="status-badge ${role === 'owner' ? 'status-active' : 'status-pending'}" style="margin-right: 0.5rem;">
+                  ${role.charAt(0).toUpperCase() + role.slice(1)}
+                </span>
+              `).join('')}
+            </div>
+            
+            <h6 style="margin-top: 1rem;">Manage Roles:</h6>
+            <div class="role-checkboxes">
+              <label class="role-checkbox">
+                <input type="checkbox" id="role-admin" ${roles.includes('admin') ? 'checked' : ''}>
+                <span>Admin</span>
+              </label>
+              <label class="role-checkbox">
+                <input type="checkbox" id="role-owner" ${roles.includes('owner') ? 'checked' : ''}>
+                <span>Owner</span>
+              </label>
+            </div>
+            
+            <div class="role-actions" style="margin-top: 1rem;">
+              <button class="btn btn-primary btn-sm" onclick="saveAdminRoles('${adminId}')">
+                <i class="fas fa-save"></i> Save Changes
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="$('#roleManagementModal').modal('hide')">
+                Cancel
+              </button>
+            </div>
+          </div>
+        `;
+        
+        // Show role management modal
+        $('#roleManagementModalTitle').text('Manage Admin Roles');
+        $('#roleManagementModalBody').html(rolesHtml);
+        $('#roleManagementModal').modal('show');
+      }
+      
+      function saveAdminRoles(adminId) {
+        const newRoles = [];
+        if ($('#role-admin').is(':checked')) newRoles.push('admin');
+        if ($('#role-owner').is(':checked')) newRoles.push('owner');
+        
+        if (newRoles.length === 0) {
+          showInfoModal('Error', 'Admin must have at least one role');
+          return;
+        }
+        
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/admins/${adminId}/roles`,
+          method: 'PUT',
+          headers: { 'Authorization': API_TOKEN },
+          contentType: 'application/json',
+          data: JSON.stringify({ roles: newRoles }),
+          success: function(data) {
+            showInfoModal('Success', 'Admin roles updated successfully');
+            $('#roleManagementModal').modal('hide');
+            // Refresh admin list
+            loadAllAdmins();
+          },
+          error: function(xhr) {
+            showInfoModal('Error', `Failed to update roles: ${xhr.responseJSON?.error || 'Unknown error'}`);
+          }
+        });
+      }
+      
+      function sendAdminReset(email) {
+        showConfirmModal('Send Password Reset', `Send password reset email to ${email}?`, function() {
+          $.ajax({
+            url: `${API_BASE}/api/v1/admin/send-reset-email`,
+            method: 'POST',
+            headers: { 'Authorization': API_TOKEN },
+            contentType: 'application/json',
+            data: JSON.stringify({ email: email }),
+            success: function(data) {
+              showInfoModal('Success', 'Password reset email sent successfully');
+            },
+            error: function(xhr) {
+              showInfoModal('Error', `Failed to send reset email: ${xhr.responseJSON?.error || 'Unknown error'}`);
+            }
+          });
+        });
+      }
+      
+      function deleteAdmin(adminId, adminEmail) {
+        showConfirmModal('Delete Admin', `Are you sure you want to delete admin ${adminEmail}? This action cannot be undone.`, function() {
+          $.ajax({
+            url: `${API_BASE}/api/v1/admin/admins/${adminId}`,
+            method: 'DELETE',
+            headers: { 'Authorization': API_TOKEN },
+            success: function(data) {
+              showInfoModal('Success', 'Admin deleted successfully');
+              // Close modal and refresh list
+              $('#adminDetailsModal').modal('hide');
+              loadAllAdmins();
+            },
+            error: function(xhr) {
+              showInfoModal('Error', `Failed to delete admin: ${xhr.responseJSON?.error || 'Unknown error'}`);
+            }
+          });
+        });
+      }
       
       // Modal helper functions
       function showConfirmModal(title, message, onConfirm) {
