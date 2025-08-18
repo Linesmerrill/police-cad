@@ -610,6 +610,21 @@
       }
       
       function displayUserDetails(user) {
+        // Convert MongoDB ObjectId to creation date
+        const createdAt = user._id ? new Date(parseInt(user._id.toString().substring(0, 8), 16) * 1000) : new Date(user.createdAt);
+        
+        // Handle password reset status
+        let resetStatus = 'No reset requested';
+        if (user.resetPasswordExpires) {
+          const resetDate = new Date(user.resetPasswordExpires);
+          const now = new Date();
+          if (resetDate > now) {
+            resetStatus = `Reset requested on ${resetDate.toLocaleDateString()} (expires ${resetDate.toLocaleString()})`;
+          } else {
+            resetStatus = `Reset requested on ${resetDate.toLocaleDateString()} (EXPIRED)`;
+          }
+        }
+        
         $('#userModalTitle').text(`User: ${user.email || user.username}`);
         $('#userModalBody').html(`
           <div class="info-grid">
@@ -631,11 +646,11 @@
             </div>
             <div class="info-item">
               <div class="info-label">Created</div>
-              <div class="info-value">${new Date(user.createdAt).toLocaleDateString()}</div>
+              <div class="info-value">${createdAt.toLocaleDateString()}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Password Reset Status</div>
-              <div class="info-value">${user.resetPasswordExpires ? 'Reset requested on ' + new Date(user.resetPasswordExpires).toLocaleDateString() : 'No reset requested'}</div>
+              <div class="info-value">${resetStatus}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Communities</div>
@@ -645,9 +660,10 @@
           
           <div style="margin-top: 2rem;">
             <h5>Communities</h5>
-            ${user.communities ? user.communities.map(c => `
+            ${user.communities && user.communities.length > 0 ? user.communities.map(c => `
               <div style="background: #11131a; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; border: 1px solid #2a2d45;">
                 <strong>${c.name}</strong> - ${c.role || 'Member'}
+                ${c.department ? `<br><small>Department: ${c.department}</small>` : ''}
               </div>
             `).join('') : '<p>No communities</p>'}
           </div>
