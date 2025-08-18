@@ -53,12 +53,12 @@
                 </div>
               <% } %>
 
-              <form action="/admin/forgot-password" method="post" autocomplete="off" novalidate>
+              <form id="forgotForm" action="/admin/forgot-password" method="post" autocomplete="off" novalidate>
                 <div class="form-group">
                   <label for="adminEmail">Admin Email</label>
                   <input id="adminEmail" type="email" name="email" class="form-control" placeholder="you@example.com" required />
                 </div>
-                <button type="submit" class="btn btn-gradient btn-block btn-lg" style="border-radius:10px;">Send Reset Link</button>
+                <button type="submit" id="submitBtn" class="btn btn-gradient btn-block btn-lg" style="border-radius:10px;">Send Reset Link</button>
               </form>
               <div class="text-center" style="margin-top:1rem;">
                 <a href="/admin" class="muted">Back to Admin Login</a>
@@ -72,6 +72,14 @@
     <% include footer %>
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
+    <script>
+      document.getElementById('forgotForm').addEventListener('submit', function() {
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending...';
+        submitBtn.style.opacity = '0.6';
+      });
+    </script>
   </body>
  </html>
 
