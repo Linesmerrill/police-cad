@@ -203,6 +203,120 @@ module.exports = function (app, passport, server) {
     res.render("contact-us");
   });
 
+  // Admin login page (GET) and login handler (POST)
+  app.get("/admin", function (req, res) {
+    // If already authenticated as admin, go straight to console
+    if (req.session && req.session.adminToken) {
+      return res.redirect("/admin/console");
+    }
+    const error = req.query.error || req.flash("adminError");
+    const success = req.query.success || null;
+    // Only pass error if it's a non-empty string
+    const errorToPass = (error && error.length > 0) ? error : null;
+    res.render("admin-login", { error: errorToPass, success });
+  });
+
+  app.post("/admin", async function (req, res) {
+    try {
+      const email = (req.body && req.body.email) || "";
+      const password = (req.body && req.body.password) || "";
+      if (!email || !password) {
+        return res.redirect("/admin?error=" + encodeURIComponent("Email and password required"));
+      }
+      const apiUrl = `${policeCadApiUrl}/api/v1/admin/login`;
+      const response = await axios.post(apiUrl, { email, password });
+      const data = response && response.data ? response.data : {};
+
+      // Persist minimal admin session
+      req.session.adminToken = data.token || null;
+      req.session.admin = data.admin || { email };
+
+      return res.redirect("/admin/console");
+    } catch (err) {
+      const message =
+        (err && err.response && err.response.data && (err.response.data.error || err.response.data.message)) ||
+        (err && err.message) ||
+        "Invalid credentials";
+      return res.redirect("/admin?error=" + encodeURIComponent(message));
+    }
+  });
+
+  function requireAdminSession(req, res, next) {
+    if (!req.session || !req.session.adminToken) {
+      return res.redirect("/admin");
+    }
+    return next();
+  }
+
+  // Placeholder Admin Console (guarded)
+  app.get("/admin/console", requireAdminSession, function (req, res) {
+    res.render("admin-console", { admin: req.session.admin });
+  });
+
+  app.post("/admin/logout", function (req, res) {
+    if (req.session) {
+      delete req.session.adminToken;
+      delete req.session.admin;
+    }
+    return res.redirect("/admin");
+  });
+
+  // Admin forgot/reset password pages
+  app.get("/admin/forgot-password", function(req, res) {
+    const error = req.query.error || null;
+    const success = req.query.success || null;
+    res.render("admin-forgot", { error, success });
+  });
+
+  app.post("/admin/forgot-password", async function(req, res) {
+    try {
+      const email = (req.body && req.body.email) || "";
+      if (!email) {
+        return res.redirect("/admin/forgot-password?error=" + encodeURIComponent("Email required"));
+      }
+      const apiUrl = `${policeCadApiUrl}/api/v1/admin/forgot-password`;
+      await axios.post(apiUrl, { email });
+      return res.redirect("/admin/forgot-password?success=" + encodeURIComponent("If that admin email exists, a reset link has been sent."));
+    } catch (err) {
+      const message =
+        (err && err.response && err.response.data && (err.response.data.error || err.response.data.message)) ||
+        (err && err.message) ||
+        "Unable to send reset link";
+      return res.redirect("/admin/forgot-password?error=" + encodeURIComponent(message));
+    }
+  });
+
+  app.get("/admin/reset-password", function(req, res) {
+    const token = req.query.token || "";
+    const error = req.query.error || null;
+    const success = req.query.success || null;
+    res.render("admin-reset", { token, error, success });
+  });
+
+  app.post("/admin/reset-password", async function(req, res) {
+    try {
+      const token = (req.body && req.body.token) || "";
+      const password = (req.body && req.body.password) || "";
+      const confirm = (req.body && req.body.confirm) || "";
+      if (!token) {
+        return res.redirect("/admin/reset-password?error=" + encodeURIComponent("Missing token"));
+      }
+      if (!password || password !== confirm) {
+        return res.redirect("/admin/reset-password?token=" + encodeURIComponent(token) + "&error=" + encodeURIComponent("Passwords do not match"));
+      }
+      const apiUrl = `${policeCadApiUrl}/api/v1/admin/reset-password`;
+      await axios.post(apiUrl, { token, password });
+      return res.redirect("/admin?success=" + encodeURIComponent("Password updated. Please sign in."));
+    } catch (err) {
+      const token = (req.body && req.body.token) || "";
+      const message =
+        (err && err.response && err.response.data && (err.response.data.error || err.response.data.message)) ||
+        (err && err.message) ||
+        "Unable to reset password";
+      return res.redirect("/admin/reset-password?token=" + encodeURIComponent(token) + "&error=" + encodeURIComponent(message));
+    }
+  });
+
   app.get("/penal-code", function (req, res) {
     res.render("penal-code");
   });
