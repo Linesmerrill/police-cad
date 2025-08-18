@@ -163,6 +163,15 @@
         border: none;
       }
       .search-tabs .tab-content { padding-top: 1rem; }
+      
+      .input-group-btn .btn {
+        border-radius: 0 8px 8px 0;
+        border-left: none;
+      }
+      
+      .input-group .form-control {
+        border-radius: 8px 0 0 8px;
+      }
     </style>
   </head>
   <body>
@@ -200,6 +209,12 @@
           <i class="fas fa-search" style="margin-right: 12px; color: #667eea;"></i>
           Admin Search & Management
         </h2>
+        
+        <div class="admin-actions" style="margin-bottom: 1.5rem; text-align: right;">
+          <button class="btn btn-gradient" onclick="showAddAdminModal()">
+            <i class="fas fa-plus" style="margin-right: 8px;"></i>Add Admin
+          </button>
+        </div>
         
         <div class="search-tabs">
           <ul class="nav nav-tabs" role="tablist">
@@ -328,6 +343,62 @@
           </div>
           <div class="modal-footer" style="border-top: 1px solid #2a2d45;">
             <button type="button" class="btn btn-gradient" data-dismiss="modal">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Admin Modal -->
+    <div class="modal fade" id="addAdminModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
+          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
+              <span>&times;</span>
+            </button>
+            <h4 class="modal-title">Add New Admin</h4>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="newAdminEmail" style="color: #e5e7eb; margin-bottom: 0.5rem;">Email Address</label>
+              <input type="email" id="newAdminEmail" class="form-control" 
+                     placeholder="Enter email address" 
+                     style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;">
+            </div>
+            <div class="form-group">
+              <label for="adminRole" style="color: #e5e7eb; margin-bottom: 0.5rem;">Admin Role</label>
+              <select id="adminRole" class="form-control" 
+                      style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;">
+                <option value="admin">Admin</option>
+                <option value="owner">Owner</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #2a2d45;">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-gradient" onclick="addNewAdmin()">
+              <i class="fas fa-plus" style="margin-right: 8px;"></i>Add Admin
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Reset Link Modal -->
+    <div class="modal fade" id="adminResetLinkModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
+          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
+              <span>&times;</span>
+            </button>
+            <h4 class="modal-title">Admin Account Created</h4>
+          </div>
+          <div class="modal-body" id="adminResetLinkBody">
+            <!-- Reset link and options will be loaded here -->
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #2a2d45;">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
           </div>
         </div>
       </div>
@@ -813,6 +884,259 @@
       function viewCommunityRoles(communityId) {
         // Implementation for viewing community roles
         alert('Community roles view - to be implemented');
+      }
+      
+      // Admin Management Functions
+      function showAddAdminModal() {
+        $('#newAdminEmail').val('');
+        $('#adminRole').val('admin');
+        
+        // Clear any previous error messages
+        $('#addAdminModal .alert').remove();
+        
+        $('#addAdminModal').modal('show');
+      }
+      
+      function addNewAdmin() {
+        const email = $('#newAdminEmail').val().trim();
+        const role = $('#adminRole').val();
+        
+        if (!email) {
+          showInfoModal('Error', 'Please enter an email address');
+          return;
+        }
+        
+        if (!email.includes('@')) {
+          showInfoModal('Error', 'Please enter a valid email address');
+          return;
+        }
+        
+        // Show loading state
+        const addButton = $('#addAdminModal .btn-gradient');
+        const originalText = addButton.html();
+        addButton.html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+        addButton.prop('disabled', true);
+        
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/users`,
+          method: 'POST',
+          headers: { 'Authorization': API_TOKEN },
+          data: JSON.stringify({ 
+            email: email, 
+            role: role 
+          }),
+          contentType: 'application/json',
+          success: function(data) {
+            $('#addAdminModal').modal('hide');
+            showAdminResetLink(data.resetLink, email, role);
+          },
+          error: function(xhr) {
+            // Show error message in the current modal instead of opening a new one
+            let errorMessage = 'Unknown error';
+            let errorCode = '';
+            let isDuplicateUser = false;
+            
+            // Try to get the error message and code from the response
+            if (xhr.responseJSON) {
+              errorMessage = xhr.responseJSON.error || 'Unknown error';
+              errorCode = xhr.responseJSON.code || '';
+              isDuplicateUser = errorCode === 'DUPLICATE_USER';
+            } else if (xhr.responseText) {
+              // Fallback to response text if JSON parsing failed
+              try {
+                const response = JSON.parse(xhr.responseText);
+                if (response.error) {
+                  errorMessage = response.error;
+                  errorCode = response.code || '';
+                  isDuplicateUser = errorCode === 'DUPLICATE_USER';
+                }
+              } catch (e) {
+                // If we can't parse JSON, use the raw response text
+                errorMessage = xhr.responseText || 'Unknown error';
+              }
+            }
+            
+            let errorHtml = `
+              <div class="alert alert-danger" style="background: #ef4444; color: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>
+                ${errorMessage}
+              </div>
+            `;
+            
+            // If it's a duplicate user, add a button to send them a new reset password
+            if (isDuplicateUser) {
+              const email = $('#newAdminEmail').val().trim();
+              errorHtml += `
+                <div class="alert alert-info" style="background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                  <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+                  This admin already exists. You can send them a new password reset link.
+                  <div style="margin-top: 1rem;">
+                    <button class="btn btn-secondary" onclick="sendExistingAdminReset('${email}')">
+                      <i class="fas fa-envelope" style="margin-right: 8px;"></i>Send New Reset Password
+                    </button>
+                  </div>
+                </div>
+              `;
+            }
+            
+            // Insert error message at the top of the modal body
+            $('#addAdminModal .modal-body').prepend(errorHtml);
+          },
+          complete: function() {
+            // Restore button state
+            addButton.html(originalText);
+            addButton.prop('disabled', false);
+          }
+        });
+      }
+      
+      function showAdminResetLink(resetLink, email, role) {
+        $('#adminResetLinkBody').html(`
+          <div class="alert alert-success" style="background: #10b981; color: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+            <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
+            Admin account created successfully for <strong>${email}</strong> with role <strong>${role}</strong>
+          </div>
+          
+          <div class="form-group">
+            <label style="color: #e5e7eb; margin-bottom: 0.5rem;">Set Password Link</label>
+            <div class="input-group">
+              <input type="text" class="form-control" value="${resetLink}" readonly 
+                     style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;">
+              <div class="input-group-btn">
+                <button class="btn btn-gradient" onclick="copyToClipboard('${resetLink}', event)">
+                  <i class="fas fa-copy"></i> Copy
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label style="color: #e5e7eb; margin-bottom: 0.5rem;">Send Set Password Email</label>
+            <button class="btn btn-secondary btn-block" onclick="sendAdminResetEmail('${email}')">
+              <i class="fas fa-envelope" style="margin-right: 8px;"></i>Send Set Password Email to ${email}
+            </button>
+          </div>
+          
+          <div class="alert alert-info" style="background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 1rem;">
+            <i class="fas fa-info-circle" style="margin-right: 8px;"></i>
+            The new admin can use this link to create their password and then login to the admin console.
+          </div>
+        `);
+        
+        $('#adminResetLinkModal').modal('show');
+      }
+      
+      function sendAdminResetEmail(email) {
+        const button = $(`button[onclick*="sendAdminResetEmail('${email}')"]`);
+        const originalText = button.html();
+        button.html('<i class="fas fa-spinner fa-spin"></i> Sending...');
+        button.prop('disabled', true);
+        
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/send-reset-email`,
+          method: 'POST',
+          headers: { 'Authorization': API_TOKEN },
+          data: JSON.stringify({ email: email }),
+          contentType: 'application/json',
+          success: function(data) {
+            // Show success message in the current modal instead of opening a new one
+            const successHtml = `
+              <div class="alert alert-success" style="background: #10b981; color: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
+                Password reset email sent successfully to ${email}
+              </div>
+            `;
+            
+            // Insert success message at the top of the modal body
+            $('#adminResetLinkBody').prepend(successHtml);
+            
+            // Disable the send email button since it was sent
+            button.prop('disabled', true);
+            button.html('<i class="fas fa-check"></i> Email Sent');
+            button.removeClass('btn-secondary').addClass('btn-success');
+          },
+          error: function(xhr) {
+            // Show error message in the current modal
+            const errorHtml = `
+              <div class="alert alert-danger" style="background: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>
+                Failed to send email: ${xhr.responseJSON?.error || 'Unknown error'}
+            </div>
+            `;
+            
+            // Insert error message at the top of the modal body
+            $('#adminResetLinkBody').prepend(errorHtml);
+          },
+          complete: function() {
+            // Only restore button if there was an error
+            if (button.hasClass('btn-success')) {
+              return; // Button was successfully sent, don't change it
+            }
+            button.html(originalText);
+            button.prop('disabled', false);
+          }
+        });
+      }
+      
+      function sendExistingAdminReset(email) {
+        // Show loading state
+        const button = $(`button[onclick*="sendExistingAdminReset('${email}')"]`);
+        const originalText = button.html();
+        button.html('<i class="fas fa-spinner fa-spin"></i> Sending...');
+        button.prop('disabled', true);
+        
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/send-reset-email`,
+          method: 'POST',
+          headers: { 'Authorization': API_TOKEN },
+          data: JSON.stringify({ email: email }),
+          contentType: 'application/json',
+          success: function(data) {
+            // Replace the error and info alerts with success message
+            $('#addAdminModal .alert').remove();
+            
+            const successHtml = `
+              <div class="alert alert-success" style="background: #10b981; color: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
+                New password reset email sent successfully to ${email}
+              </div>
+            `;
+            
+            $('#addAdminModal .modal-body').prepend(successHtml);
+            
+            // Disable the send button and change its text
+            button.prop('disabled', true);
+            button.html('<i class="fas fa-check"></i> Email Sent');
+            button.removeClass('btn-secondary').addClass('btn-success');
+            
+            // Clear the email input since we successfully sent the reset
+            $('#newAdminEmail').val('');
+          },
+          error: function(xhr) {
+            // Show error message
+            let errorMessage = 'Unknown error';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+              errorMessage = xhr.responseJSON.error;
+            }
+            
+            const errorHtml = `
+              <div class="alert alert-danger" style="background: #ef4444; color: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <i class="fas fa-exclamation-circle" style="margin-right: 8px;"></i>
+                Failed to send reset email: ${errorMessage}
+              </div>
+            `;
+            
+            $('#addAdminModal .modal-body').prepend(errorHtml);
+          },
+          complete: function() {
+            // Only restore button if there was an error
+            if (button.hasClass('btn-success')) {
+              return; // Button was successfully sent, don't change it
+            }
+            button.html(originalText);
+            button.prop('disabled', false);
+          }
+        });
       }
     </script>
   </body>
