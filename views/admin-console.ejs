@@ -660,9 +660,9 @@
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
     <script>
-      // Global API configuration
-      const API_BASE = '<%= process.env.POLICE_CAD_API_URL || "/api" %>';
-      const API_TOKEN = '<%= process.env.POLICE_CAD_API_TOKEN || "" %>';
+      // Global API configuration - using Go backend API
+      const API_BASE = '<%= POLICE_CAD_API_URL %>';
+      const API_TOKEN = '<%= POLICE_CAD_API_TOKEN %>';
       
       // Check current user role and show admin management tab if owner
       $(document).ready(function() {
@@ -723,7 +723,7 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/admins`,
           method: 'GET',
-          headers: { 'Authorization': API_TOKEN },
+
           success: function(data) {
             displayAdminResults(data.admins || []);
           },
@@ -757,7 +757,6 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/search/admins`,
           method: 'POST',
-          headers: { 'Authorization': API_TOKEN },
           data: JSON.stringify({ query: query }),
           contentType: 'application/json',
           success: function(data) {
@@ -841,7 +840,7 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/admins/${adminId}`,
           method: 'GET',
-          headers: { 'Authorization': API_TOKEN },
+
           success: function(data) {
             console.log('Admin details response:', data);
             if (data.admin) {
@@ -943,7 +942,7 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/admins/${adminId}/activity`,
           method: 'GET',
-          headers: { 'Authorization': API_TOKEN },
+
           success: function(data) {
             displayAdminActivity(data.activity);
           },
@@ -1202,7 +1201,7 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/admins/${adminId}/roles`,
           method: 'PUT',
-          headers: { 'Authorization': API_TOKEN },
+
           contentType: 'application/json',
           data: JSON.stringify({ roles: newRoles }),
           success: function(data) {
@@ -1224,7 +1223,7 @@
           $.ajax({
             url: `${API_BASE}/api/v1/admin/send-reset-email`,
             method: 'POST',
-            headers: { 'Authorization': API_TOKEN },
+  
             contentType: 'application/json',
             data: JSON.stringify({ email: email }),
             success: function(data) {
@@ -1243,7 +1242,7 @@
           $.ajax({
             url: `${API_BASE}/api/v1/admin/admins/${adminId}`,
             method: 'DELETE',
-            headers: { 'Authorization': API_TOKEN },
+  
             success: function(data) {
               showInfoModal('Success', 'Admin deleted successfully');
               // Track this action
@@ -1277,7 +1276,7 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/activity/log`,
           method: 'POST',
-          headers: { 'Authorization': API_TOKEN },
+
           contentType: 'application/json',
           data: JSON.stringify(activityData),
           success: function(data) {
@@ -1410,7 +1409,7 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/search/users`,
           method: 'POST',
-          headers: { 'Authorization': API_TOKEN },
+
           data: JSON.stringify({ query: query }),
           contentType: 'application/json',
           success: function(data) {
@@ -1509,7 +1508,7 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/search/communities`,
           method: 'POST',
-          headers: { 'Authorization': API_TOKEN },
+
           data: JSON.stringify({ query: query }),
           contentType: 'application/json',
           success: function(data) {
@@ -1586,7 +1585,7 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/users/${userId}`,
           method: 'GET',
-          headers: { 'Authorization': API_TOKEN },
+
           success: function(data) {
             displayUserDetails(data.user);
           },
@@ -1740,7 +1739,7 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/communities/${communityId}`,
           method: 'GET',
-          headers: { 'Authorization': API_TOKEN },
+
           success: function(data) {
             displayCommunityDetails(data.community);
           },
@@ -1840,7 +1839,6 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/users`,
           method: 'POST',
-          headers: { 'Authorization': API_TOKEN },
           data: JSON.stringify({ 
             email: email, 
             role: role 
@@ -1955,7 +1953,7 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/send-reset-email`,
           method: 'POST',
-          headers: { 'Authorization': API_TOKEN },
+
           data: JSON.stringify({ email: email }),
           contentType: 'application/json',
           success: function(data) {
@@ -2008,7 +2006,7 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/send-reset-email`,
           method: 'POST',
-          headers: { 'Authorization': API_TOKEN },
+
           data: JSON.stringify({ email: email }),
           contentType: 'application/json',
           success: function(data) {
