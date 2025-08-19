@@ -971,8 +971,8 @@
               </div>
               <div class="col-md-3">
                 <div class="stat-card">
-                  <div class="stat-number">${activity.tempPasswords || 0}</div>
-                  <div class="stat-label">Temp Passwords</div>
+                  <div class="stat-number">${activity.passwordResetsInitiated || 0}</div>
+                  <div class="stat-label">Password Resets Initiated</div>
                 </div>
               </div>
               <div class="col-md-3">
@@ -1053,9 +1053,10 @@
           'login': '<i class="fas fa-sign-in-alt text-success"></i>',
           'logout': '<i class="fas fa-sign-out-alt text-warning"></i>',
           'password_reset': '<i class="fas fa-key text-info"></i>',
-          'temp_password': '<i class="fas fa-temp-password text-warning"></i>',
+          'password_reset_initiated': '<i class="fas fa-envelope text-info"></i>',
           'role_change': '<i class="fas fa-user-edit text-primary"></i>',
-          'admin_action': '<i class="fas fa-shield-alt text-secondary"></i>'
+          'admin_action': '<i class="fas fa-shield-alt text-secondary"></i>',
+          'user_reset_initiated': '<i class="fas fa-envelope text-info"></i>'
         };
         return icons[type] || '<i class="fas fa-circle text-muted"></i>';
       }
@@ -1292,13 +1293,13 @@
           'login': 'Admin logged in',
           'logout': 'Admin logged out',
           'password_reset': 'Password reset requested',
-          'temp_password': 'Temporary password created',
+          'password_reset_initiated': 'Password reset initiated',
           'role_change': 'Admin roles modified',
           'admin_action': 'Admin action performed',
           'user_search': 'User search performed',
           'community_search': 'Community search performed',
           'user_reset': 'User password reset sent',
-          'user_temp_password': 'User temporary password created'
+          'user_reset_initiated': 'User password reset initiated'
         };
         return titles[actionType] || 'Action performed';
       }
@@ -1443,8 +1444,8 @@
                   <button class="btn btn-secondary btn-sm" onclick="sendUserReset('${user.email}')">
                     <i class="fas fa-key"></i> Reset Password
                   </button>
-                  <button class="btn btn-secondary btn-sm" onclick="createTempPassword('${user.id}')">
-                    <i class="fas fa-temp-password"></i> Temp Password
+                  <button class="btn btn-secondary btn-sm" onclick="initiateUserPasswordReset('${user.id}', '${user.email}')">
+                    <i class="fas fa-key"></i> Reset Password
                   </button>
                 </div>
               </div>
@@ -1678,36 +1679,35 @@
         );
       }
       
-      function createTempPassword(userId) {
+      function initiateUserPasswordReset(userId, userEmail) {
         showConfirmModal(
-          'Create Temporary Password',
-          'Are you sure you want to create a temporary password for this user? This will replace their current password.',
+          'Initiate User Password Reset',
+          `This will send a password reset email to <strong>${userEmail}</strong>. The user must complete the reset themselves using the link in their email.<br><br><strong>Note:</strong> You will not see the reset link or password. This is for security.`,
           function() {
             // Find and update the button to show loading state
-            const tempButton = $(`button[onclick*="createTempPassword('${userId}')"]`);
-            const originalText = tempButton.html();
-            tempButton.html('<i class="fas fa-spinner fa-spin"></i> Creating...');
-            tempButton.prop('disabled', true);
+            const resetButton = $(`button[onclick*="initiateUserPasswordReset('${userId}', '${userEmail}')"]`);
+            const originalText = resetButton.html();
+            resetButton.html('<i class="fas fa-spinner fa-spin"></i> Sending...');
+            resetButton.prop('disabled', true);
             
             // Store button reference for use in callbacks
-            const buttonRef = tempButton;
+            const buttonRef = resetButton;
             const textRef = originalText;
             
             $.ajax({
-              url: `${API_BASE}/api/v1/admin/users/${userId}/temp-password`,
+              url: `${API_BASE}/api/v1/admin/users/${userId}/initiate-reset`,
               method: 'POST',
               headers: { 'Authorization': API_TOKEN },
               success: function(data) {
-                const expiresAt = data.expiresAt ? new Date(data.expiresAt).toLocaleString() : new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleString();
                 showInfoModal(
-                  'Temporary Password Created', 
-                  `Temporary password created successfully!<br><br><strong>Password:</strong> ${data.tempPassword} <button class="btn btn-sm" onclick="copyToClipboard('${data.tempPassword}', event)" style="margin-left: 8px; padding: 4px 12px; font-size: 12px; background: #4f46e5; color: white; border: 1px solid #4f46e5; border-radius: 6px;"><i class="fas fa-copy"></i> Copy</button><br><strong>Expires:</strong> ${expiresAt}`
+                  'Password Reset Initiated', 
+                  `Password reset email sent successfully to <strong>${userEmail}</strong>!<br><br>The user will receive an email with a secure reset link. They must complete the password reset themselves.<br><br><strong>Security Note:</strong> You cannot see the reset link or new password.`
                 );
                 // Track this action
-                trackAdminAction('user_temp_password', `Created temporary password for user ID: ${userId}`);
+                trackAdminAction('user_reset_initiated', `Initiated password reset for user: ${userEmail}`);
               },
               error: function(xhr) {
-                showInfoModal('Error', `Failed to create temporary password: ${xhr.responseJSON?.error || 'Unknown error'}`);
+                showInfoModal('Error', `Failed to initiate password reset: ${xhr.responseJSON?.error || 'Unknown error'}`);
               },
               complete: function() {
                 // Restore button to original state
