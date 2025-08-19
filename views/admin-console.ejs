@@ -1461,7 +1461,20 @@
                 </div>
                 <div class="info-item">
                   <div class="info-label">Password Reset Status</div>
-                  <div class="info-value">${user.resetPasswordExpires ? 'Reset requested on ' + new Date(user.resetPasswordExpires).toLocaleDateString() : 'No reset requested'}</div>
+                  <div class="info-value">
+                    ${(() => {
+                      if (user.resetPasswordExpires) {
+                        const resetDate = new Date(user.resetPasswordExpires);
+                        const now = new Date();
+                        if (resetDate > now) {
+                          return `Reset requested on ${resetDate.toLocaleDateString()} (expires ${resetDate.toLocaleString()})`;
+                        } else {
+                          return `Reset requested on ${resetDate.toLocaleDateString()} (EXPIRED)`;
+                        }
+                      }
+                      return 'No reset requested';
+                    })()}
+                  </div>
                 </div>
               </div>
             </div>
