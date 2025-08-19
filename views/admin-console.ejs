@@ -401,7 +401,7 @@
           Admin Search & Management
         </h2>
         
-        <div class="admin-actions" style="margin-bottom: 1.5rem; text-align: right;">
+        <div class="admin-actions" style="margin-bottom: 1.5rem; text-align: right;" id="add-admin-section" style="display: none;">
           <button class="btn btn-gradient" onclick="showAddAdminModal()">
             <i class="fas fa-plus" style="margin-right: 8px;"></i>Add Admin
           </button>
@@ -678,9 +678,10 @@
           roles = [];
         }
         
-        // Show admin management tab if user has owner role
+        // Show admin management tab and add admin button if user has owner role
         if (roles.includes('owner')) {
           $('#admin-management-tab').show();
+          $('#add-admin-section').show();
         }
         
         // Load all admins when admin management tab is clicked
