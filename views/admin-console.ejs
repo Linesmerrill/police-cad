@@ -5,6 +5,10 @@
     <meta charset="utf-8">
     <title>LPC - Admin Console</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/images/admin-favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/admin-favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/admin-favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/admin-apple-touch-icon.png">
     <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -966,8 +970,10 @@
                 </div>
               </div>
               <div class="col-md-3">
-                <div class="stat-number">${activity.tempPasswords || 0}</div>
-                <div class="stat-label">Temp Passwords</div>
+                <div class="stat-card">
+                  <div class="stat-number">${activity.tempPasswords || 0}</div>
+                  <div class="stat-label">Temp Passwords</div>
+                </div>
               </div>
               <div class="col-md-3">
                 <div class="stat-card">
@@ -999,6 +1005,12 @@
               <h6>Recent Activity</h6>
               ${generateRecentActivityList(activity.recentActivity || [])}
             </div>
+            
+            <div style="margin-top: 1rem; text-align: center;">
+              <button class="btn btn-primary btn-sm" onclick="refreshActivityData()">
+                <i class="fas fa-sync-alt"></i> Refresh Activity
+              </button>
+            </div>
           </div>
         `;
         
@@ -1006,6 +1018,9 @@
         
         // Render the chart
         renderActivityChart(activity);
+        
+        // Set up auto-refresh every 30 seconds
+        startActivityAutoRefresh();
       }
       
       function generateRecentActivityList(activities) {
@@ -1091,6 +1106,35 @@
         }
       }
       
+      function refreshActivityData() {
+        const adminId = $('#adminDetailsModal').data('currentAdminId');
+        const adminEmail = $('#adminDetailsModalTitle').text().replace('Admin Activity: ', '');
+        if (adminId) {
+          viewAdminActivity(adminId, adminEmail);
+        }
+      }
+      
+      let activityRefreshInterval = null;
+      
+      function startActivityAutoRefresh() {
+        // Clear any existing interval
+        if (activityRefreshInterval) {
+          clearInterval(activityRefreshInterval);
+        }
+        
+        // Set up new interval - refresh every 30 seconds
+        activityRefreshInterval = setInterval(() => {
+          refreshActivityData();
+        }, 30000); // 30 seconds
+      }
+      
+      function stopActivityAutoRefresh() {
+        if (activityRefreshInterval) {
+          clearInterval(activityRefreshInterval);
+          activityRefreshInterval = null;
+        }
+      }
+      
       function changeAdminRole(adminId, currentRoles) {
         // Parse current roles if it's a JSON string
         let roles = currentRoles;
@@ -1162,6 +1206,8 @@
           success: function(data) {
             showInfoModal('Success', 'Admin roles updated successfully');
             $('#roleManagementModal').modal('hide');
+            // Track this action
+            trackAdminAction('role_change', `Changed roles to: ${newRoles.join(', ')}`);
             // Refresh admin list
             loadAllAdmins();
           },
@@ -1181,6 +1227,7 @@
             data: JSON.stringify({ email: email }),
             success: function(data) {
               showInfoModal('Success', 'Password reset email sent successfully');
+              trackAdminAction('admin_action', `Sent password reset to ${email}`);
             },
             error: function(xhr) {
               showInfoModal('Error', `Failed to send reset email: ${xhr.responseJSON?.error || 'Unknown error'}`);
@@ -1197,6 +1244,8 @@
             headers: { 'Authorization': API_TOKEN },
             success: function(data) {
               showInfoModal('Success', 'Admin deleted successfully');
+              // Track this action
+              trackAdminAction('admin_action', `Deleted admin ${adminEmail}`);
               // Close modal and refresh list
               $('#adminDetailsModal').modal('hide');
               loadAllAdmins();
@@ -1206,6 +1255,58 @@
             }
           });
         });
+      }
+      
+      // Activity Tracking Functions
+      function trackAdminAction(actionType, description) {
+        const currentAdminId = getCurrentAdminId();
+        if (!currentAdminId) return;
+        
+        const activityData = {
+          adminId: currentAdminId,
+          type: actionType,
+          title: getActionTitle(actionType),
+          details: description,
+          timestamp: new Date().toISOString(),
+          ip: '127.0.0.1' // You can get real IP from backend
+        };
+        
+        // Send to backend to log the activity
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/activity/log`,
+          method: 'POST',
+          headers: { 'Authorization': API_TOKEN },
+          contentType: 'application/json',
+          data: JSON.stringify(activityData),
+          success: function(data) {
+            console.log('Activity logged:', actionType);
+          },
+          error: function(xhr) {
+            console.error('Failed to log activity:', xhr);
+          }
+        });
+      }
+      
+      function getActionTitle(actionType) {
+        const titles = {
+          'login': 'Admin logged in',
+          'logout': 'Admin logged out',
+          'password_reset': 'Password reset requested',
+          'temp_password': 'Temporary password created',
+          'role_change': 'Admin roles modified',
+          'admin_action': 'Admin action performed',
+          'user_search': 'User search performed',
+          'community_search': 'Community search performed',
+          'user_reset': 'User password reset sent',
+          'user_temp_password': 'User temporary password created'
+        };
+        return titles[actionType] || 'Action performed';
+      }
+      
+      function getCurrentAdminId() {
+        // Get current admin ID from session or page data
+        // You'll need to pass this from your backend
+        return '<%= admin && (admin.id || admin._id) ? (admin.id || admin._id) : "" %>';
       }
       
       // Modal helper functions
@@ -1301,6 +1402,9 @@
       function searchUsers(query) {
         $('#userResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching users...</div>');
         
+        // Track search activity
+        trackAdminAction('user_search', `Searched for users with query: "${query}"`);
+        
         $.ajax({
           url: `${API_BASE}/api/v1/admin/search/users`,
           method: 'POST',
@@ -1386,6 +1490,9 @@
       
       function searchCommunities(query) {
         $('#communityResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching communities...</div>');
+        
+        // Track search activity
+        trackAdminAction('community_search', `Searched for communities with query: "${query}"`);
         
         $.ajax({
           url: `${API_BASE}/api/v1/admin/search/communities`,
@@ -1555,6 +1662,8 @@
               data: { email: userEmail },
               success: function(data) {
                 showInfoModal('Success', 'Password reset email sent successfully to the user.');
+                // Track this action
+                trackAdminAction('user_reset', `Sent password reset to user: ${userEmail}`);
               },
               error: function(xhr) {
                 showInfoModal('Error', `Failed to send password reset email: ${xhr.responseText || 'Unknown error'}`);
@@ -1594,6 +1703,8 @@
                   'Temporary Password Created', 
                   `Temporary password created successfully!<br><br><strong>Password:</strong> ${data.tempPassword} <button class="btn btn-sm" onclick="copyToClipboard('${data.tempPassword}', event)" style="margin-left: 8px; padding: 4px 12px; font-size: 12px; background: #4f46e5; color: white; border: 1px solid #4f46e5; border-radius: 6px;"><i class="fas fa-copy"></i> Copy</button><br><strong>Expires:</strong> ${expiresAt}`
                 );
+                // Track this action
+                trackAdminAction('user_temp_password', `Created temporary password for user ID: ${userId}`);
               },
               error: function(xhr) {
                 showInfoModal('Error', `Failed to create temporary password: ${xhr.responseJSON?.error || 'Unknown error'}`);
