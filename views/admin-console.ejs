@@ -1691,20 +1691,21 @@
             const buttonRef = resetButton;
             const textRef = originalText;
             
+            // Use the existing forgot-password route directly
             $.ajax({
-              url: `${API_BASE}/api/v1/admin/users/${userId}/initiate-reset`,
+              url: '/forgot-password',
               method: 'POST',
-              headers: { 'Authorization': API_TOKEN },
+              data: { email: userEmail },
               success: function(data) {
                 showInfoModal(
                   'Password Reset Initiated', 
                   `Password reset email sent successfully to <strong>${userEmail}</strong>!<br><br>The user will receive an email with a secure reset link. They must complete the password reset themselves.<br><br><strong>Security Note:</strong> You cannot see the reset link or new password.`
                 );
-                // Track this action
+                // Track this action for the logged-in admin
                 trackAdminAction('user_reset_initiated', `Initiated password reset for user: ${userEmail}`);
               },
               error: function(xhr) {
-                showInfoModal('Error', `Failed to initiate password reset: ${xhr.responseJSON?.error || 'Unknown error'}`);
+                showInfoModal('Error', `Failed to initiate password reset: ${xhr.responseText || 'Unknown error'}`);
               },
               complete: function() {
                 // Restore button to original state
