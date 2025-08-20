@@ -664,6 +664,19 @@
       const API_BASE = '<%= POLICE_CAD_API_URL %>';
       const API_TOKEN = '<%= POLICE_CAD_API_TOKEN %>';
       
+      // Show success/error messages on page load
+      $(document).ready(function() {
+        var successMessage = '<%= success || "" %>';
+        var errorMessage = '<%= error || "" %>';
+        
+        if (successMessage) {
+          showToast('success', successMessage);
+        }
+        if (errorMessage) {
+          showToast('error', errorMessage);
+        }
+      });
+      
       // Check current user role and show admin management tab if owner
       $(document).ready(function() {
         // Check if current user is owner (you can modify this logic based on your backend)
@@ -1325,6 +1338,35 @@
         $('#infoModalTitle').text(title);
         $('#infoModalBody').html(message);
         $('#infoModal').modal('show');
+      }
+      
+      // Toast notification function
+      function showToast(type, message) {
+        // Remove any existing toasts
+        $('.toast-notification').remove();
+        
+        const toastClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+        
+        const toast = $(`
+          <div class="toast-notification alert ${toastClass} alert-dismissible fade show" 
+               style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            <i class="fas ${iconClass}"></i>
+            <span style="margin-left: 8px;">${message}</span>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        `);
+        
+        $('body').append(toast);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(function() {
+          toast.fadeOut(function() {
+            $(this).remove();
+          });
+        }, 5000);
       }
       
       function copyToClipboard(text, event) {
