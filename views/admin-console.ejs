@@ -2069,9 +2069,6 @@
       }
       
       function displayUserDetails(user) {
-        // Debug: Log the user data to see what we're receiving
-        console.log('User data received:', user);
-        
         // Convert MongoDB ObjectId to creation date
         const createdAt = user._id ? new Date(parseInt(user._id.toString().substring(0, 8), 16) * 1000) : new Date(user.createdAt);
         
@@ -2185,15 +2182,11 @@
           return;
         }
         
-        console.log('Searching for community:', communityName);
-        
         // Close the user modal
         $('#userModal').modal('hide');
         
         // Wait a moment for modal to close, then switch tabs
         setTimeout(() => {
-          console.log('Switching to communities tab...');
-          
           // Switch to Communities tab using the href approach
           $('a[href="#communities-tab"]').tab('show');
           
