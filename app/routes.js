@@ -296,6 +296,15 @@ module.exports = function (app, passport, server) {
     return res.redirect("/admin");
   });
 
+  // Add GET route for logout to handle direct navigation
+  app.get("/admin/logout", function (req, res) {
+    if (req.session) {
+      delete req.session.adminToken;
+      delete req.session.admin;
+    }
+    return res.redirect("/admin");
+  });
+
   // Admin forgot/reset password pages
   app.get("/admin/forgot-password", function(req, res) {
     const error = req.query.error || null;
