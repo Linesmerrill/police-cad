@@ -183,6 +183,7 @@
       .status-inactive { background: #ef4444; color: #fff; }
       .status-pending { background: #f59e0b; color: #fff; }
       .status-muted { background: #6b7280; color: #fff; }
+.status-warning { background: #f59e0b; color: #fff; }
       
       /* Owner button specific styling */
       .owner-search-button {
@@ -2189,7 +2190,7 @@
                 </div>
                 <div class="info-item">
                   <div class="info-label">Departments</div>
-                  <div class="info-value">${community.departments?.length || 0}</div>
+                  <div class="info-value">${community.departmentCount || 0}</div>
                 </div>
               </div>
             </div>
@@ -2610,13 +2611,82 @@
               <div class="info-value">${community.departments?.length || 0}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Last Updated</div>
-              <div class="info-value">${community.updatedAt ? new Date(community.updatedAt).toLocaleDateString() : 'Never'}</div>
+              <div class="info-label">Subscription</div>
+              <div class="info-value">
+                ${(() => {
+                  if (community.subscription && community.subscription.active) {
+                    const plan = community.subscription.plan || 'Unknown';
+                    const expirationDate = community.subscription.expirationDate ? new Date(community.subscription.expirationDate).toLocaleDateString() : 'Unknown';
+                    const purchaseDate = community.subscription.purchaseDate ? new Date(community.subscription.purchaseDate).toLocaleDateString() : 'Unknown';
+                    const isAnnual = community.subscription.isAnnual;
+                    const durationText = isAnnual ? 'Annual' : `${community.subscription.durationMonths || 1} Month${community.subscription.durationMonths > 1 ? 's' : ''}`;
+                    
+                    // Enhanced plan display with better formatting
+                    const planDisplay = plan === 'elite' ? 'Elite' : 
+                                     plan === 'premium' ? 'Premium' : 
+                                     plan === 'standard' ? 'Standard' : 
+                                     plan === 'basic' ? 'Basic' : 
+                                     plan.charAt(0).toUpperCase() + plan.slice(1);
+                    
+                    // Check if subscription is expiring soon (within 30 days)
+                    const expDate = new Date(community.subscription.expirationDate);
+                    const now = new Date();
+                    const daysUntilExpiry = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
+                    const isExpiringSoon = daysUntilExpiry <= 30 && daysUntilExpiry > 0;
+                    const isExpired = daysUntilExpiry <= 0;
+                    
+                    // Dynamic status badge color based on expiry
+                    const statusClass = isExpired ? 'status-inactive' : isExpiringSoon ? 'status-warning' : 'status-active';
+                    const statusText = isExpired ? 'Expired' : isExpiringSoon ? 'Expiring Soon' : 'Active';
+                    
+                    return `
+                      <span class="status-badge ${statusClass}" style="margin-bottom: 0.5rem; display: block;">${statusText}</span>
+                      <div style="font-size: 0.9rem; color: #9aa0b4;">
+                        <div><strong>Plan:</strong> ${planDisplay}</div>
+                        <div><strong>Duration:</strong> ${durationText}</div>
+                        <div><strong>Started:</strong> ${purchaseDate}</div>
+                        <div><strong>Expires:</strong> ${expirationDate}</div>
+                        ${isExpiringSoon ? `<div style="color: #f59e0b; font-weight: bold;">⚠️ Expires in ${daysUntilExpiry} day${daysUntilExpiry > 1 ? 's' : ''}</div>` : ''}
+                        ${isExpired ? `<div style="color: #ef4444; font-weight: bold;">❌ Subscription expired</div>` : ''}
+                      </div>
+                    `;
+                  } else if (community.subscription && !community.subscription.active) {
+                    // Subscription exists but is inactive
+                    const plan = community.subscription.plan || 'Unknown';
+                    const planDisplay = plan === 'elite' ? 'Elite' : 
+                                     plan === 'premium' ? 'Premium' : 
+                                     plan === 'standard' ? 'Standard' : 
+                                     plan === 'basic' ? 'Basic' : 
+                                     plan.charAt(0).toUpperCase() + plan.slice(1);
+                    
+                    // Check if it's expired or just inactive
+                    const expDate = community.subscription.expirationDate ? new Date(community.subscription.expirationDate) : null;
+                    const now = new Date();
+                    const isExpired = expDate && expDate < now;
+                    const daysSinceExpiry = expDate ? Math.ceil((now - expDate) / (1000 * 60 * 60 * 24)) : null;
+                    
+                    return `
+                      <span class="status-badge status-inactive" style="margin-bottom: 0.5rem; display: block;">Inactive</span>
+                      <div style="font-size: 0.9rem; color: #9aa0b4;">
+                        <div><strong>Plan:</strong> ${planDisplay}</div>
+                        <div><strong>Status:</strong> ${isExpired ? 'Expired' : 'Cancelled'}</div>
+                        ${isExpired && daysSinceExpiry ? `<div style="color: #9ca3af;">Expired ${daysSinceExpiry} day${daysSinceExpiry > 1 ? 's' : ''} ago</div>` : ''}
+                        ${expDate ? `<div><strong>Expired:</strong> ${expDate.toLocaleDateString()}</div>` : ''}
+                      </div>
+                    `;
+                  } else {
+                    // No subscription data
+                    return `
+                      <span class="status-badge status-muted">No Subscription</span>
+                    `;
+                  }
+                })()}
+              </div>
             </div>
           </div>
           
           <div style="margin-top: 2rem;">
-            <h5>Departments (${community.departments?.length || 0})</h5>
+            <h5>Departments (${community.departmentCount || 0})</h5>
             ${(() => {
               const departments = community.departments || [];
               const departmentsCount = departments.length;
@@ -3064,6 +3134,8 @@
           }
         });
       }
+      
+
     </script>
   </body>
  </html>
