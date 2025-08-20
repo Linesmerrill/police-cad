@@ -161,6 +161,109 @@
         overflow-wrap: break-word;
         word-wrap: break-word;
       }
+      
+      /* Recent Searches Styling - Hero UI Pro Theme */
+      .recent-searches-section {
+        margin: 1.5rem 0;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        border: 1px solid #475569;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+      
+      .recent-searches-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #475569;
+      }
+      
+      .recent-searches-title {
+        color: #e2e8f0;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      
+      .recent-searches-title i {
+        color: #8b5cf6;
+      }
+      
+      .recent-searches-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+      
+      .recent-search-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border: 1px solid #334155;
+        border-radius: 8px;
+        color: #cbd5e1;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        max-width: 300px;
+      }
+      
+      .recent-search-item:hover {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        border-color: #475569;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+      }
+      
+      .recent-search-item .search-text {
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .recent-search-item .search-type {
+        background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+        color: white;
+          padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      
+      .recent-search-item .remove-btn {
+        background: none;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+      }
+      
+      .recent-search-item .remove-btn:hover {
+        background: #475569;
+        color: #e2e8f0;
+      }
+      
+      .recent-search-item .remove-btn i {
+        font-size: 0.75rem;
+      }
       .info-label { color: #9aa0b4; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.25rem; }
       .info-value { 
         color: #e5e7eb; 
@@ -513,6 +616,22 @@
                   </button>
                 </div>
               </div>
+              
+              <!-- Recent Searches Section -->
+              <div class="recent-searches-section" id="recentSearchesSection" style="display: none;">
+                <div class="recent-searches-header">
+                  <h6 class="recent-searches-title">
+                    <i class="fas fa-history"></i> Recent Searches
+                  </h6>
+                  <button class="btn btn-link btn-sm text-muted" onclick="clearAllRecentSearches('users')">
+                    Clear All
+                  </button>
+                </div>
+                <div class="recent-searches-list" id="recentSearchesList">
+                  <!-- Recent search items will be populated here -->
+                </div>
+              </div>
+              
               <div id="userResults"></div>
             </div>
             
@@ -529,6 +648,22 @@
                   </button>
                 </div>
               </div>
+              
+              <!-- Recent Searches Section -->
+              <div class="recent-searches-section" id="recentSearchesSectionCommunities" style="display: none;">
+                <div class="recent-searches-header">
+                  <h6 class="recent-searches-title">
+                    <i class="fas fa-history"></i> Recent Searches
+                  </h6>
+                  <button class="btn btn-link btn-sm text-muted" onclick="clearAllRecentSearches('communities')">
+                    Clear All
+                  </button>
+                </div>
+                <div class="recent-searches-list" id="recentSearchesListCommunities">
+                  <!-- Recent search items will be populated here -->
+                </div>
+              </div>
+              
               <div id="communityResults"></div>
             </div>
             
@@ -967,6 +1102,9 @@
             }
           }
         }
+        
+        // Initialize recent searches UI
+        updateRecentSearchesUI();
       });
       
       // Admin Management Functions
@@ -1988,6 +2126,123 @@
             showInfoModal('Search Error', `Error searching users: ${xhr.responseJSON?.error || 'Unknown error'}`);
           }
         });
+        
+        // Add to recent searches
+        addToRecentSearches(query, 'users');
+      }
+      
+      // Recent Searches Management Functions
+      function addToRecentSearches(query, type) {
+        if (!query || !query.trim()) return;
+        
+        const searchItem = {
+          query: query.trim(),
+          type: type,
+          timestamp: Date.now()
+        };
+        
+        // Get existing searches from localStorage
+        let recentSearches = JSON.parse(localStorage.getItem('adminRecentSearches') || '[]');
+        
+        // Remove duplicate if exists
+        recentSearches = recentSearches.filter(item => 
+          !(item.query.toLowerCase() === query.toLowerCase() && item.type === type)
+        );
+        
+        // Add new search to beginning
+        recentSearches.unshift(searchItem);
+        
+        // Keep only last 10 searches
+        if (recentSearches.length > 10) {
+          recentSearches = recentSearches.slice(0, 10);
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('adminRecentSearches', JSON.stringify(recentSearches));
+        
+        // Update UI
+        updateRecentSearchesUI();
+      }
+      
+      function updateRecentSearchesUI() {
+        const recentSearches = JSON.parse(localStorage.getItem('adminRecentSearches') || '[]');
+        
+        // Update Users tab recent searches
+        updateTabRecentSearches('users', recentSearches.filter(item => item.type === 'users'));
+        
+        // Update Communities tab recent searches
+        updateTabRecentSearches('communities', recentSearches.filter(item => item.type === 'communities'));
+      }
+      
+      function updateTabRecentSearches(tabType, searches) {
+        const sectionId = tabType === 'users' ? 'recentSearchesSection' : 'recentSearchesSectionCommunities';
+        const listId = tabType === 'users' ? 'recentSearchesList' : 'recentSearchesListCommunities';
+        
+        const section = $(`#${sectionId}`);
+        const list = $(`#${listId}`);
+        
+        if (searches.length === 0) {
+          section.hide();
+          return;
+        }
+        
+        section.show();
+        
+        let html = '';
+        searches.forEach(search => {
+          html += `
+            <div class="recent-search-item" onclick="performRecentSearch('${search.query}', '${search.type}')">
+              <span class="search-text">${search.query}</span>
+              <span class="search-type">${search.type === 'users' ? 'Users' : 'Communities'}</span>
+              <button class="remove-btn" onclick="removeRecentSearch('${search.query}', '${search.type}', event)">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          `;
+        });
+        
+        list.html(html);
+      }
+      
+      function performRecentSearch(query, type) {
+        if (type === 'users') {
+          // Switch to Users tab
+          $('a[href="#users-tab"]').tab('show');
+          // Set search input value
+          $('#userSearch').val(query);
+          // Perform search
+          searchUsers(query, 0);
+        } else if (type === 'communities') {
+          // Switch to Communities tab
+          $('a[href="#communities-tab"]').tab('show');
+          // Set search input value
+          $('#communitySearch').val(query);
+          // Perform search
+          searchCommunities(query, 0);
+        }
+      }
+      
+      function removeRecentSearch(query, type, event) {
+        event.stopPropagation(); // Prevent triggering the search
+        
+        let recentSearches = JSON.parse(localStorage.getItem('adminRecentSearches') || '[]');
+        recentSearches = recentSearches.filter(item => 
+          !(item.query.toLowerCase() === query.toLowerCase() && item.type === type)
+        );
+        
+        localStorage.setItem('adminRecentSearches', JSON.stringify(recentSearches));
+        updateRecentSearchesUI();
+      }
+      
+      function clearAllRecentSearches(tabType) {
+        if (!tabType) return; // Safety check
+        
+        // Clear only specific tab type
+        let recentSearches = JSON.parse(localStorage.getItem('adminRecentSearches') || '[]');
+        recentSearches = recentSearches.filter(item => item.type !== tabType);
+        localStorage.setItem('adminRecentSearches', JSON.stringify(recentSearches));
+        
+        updateRecentSearchesUI();
       }
       
       function displayUserResults(users) {
@@ -2140,6 +2395,9 @@
             showInfoModal('Search Error', `Error searching communities: ${xhr.responseJSON?.error || 'Unknown error'}`);
           }
         });
+        
+        // Add to recent searches
+        addToRecentSearches(query, 'communities');
       }
       
       function displayCommunityResults(communities) {
