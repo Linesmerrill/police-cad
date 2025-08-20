@@ -2069,6 +2069,9 @@
       }
       
       function displayUserDetails(user) {
+        // Debug: Log the user data to see what we're receiving
+        console.log('User data received:', user);
+        
         // Convert MongoDB ObjectId to creation date
         const createdAt = user._id ? new Date(parseInt(user._id.toString().substring(0, 8), 16) * 1000) : new Date(user.createdAt);
         
@@ -2083,6 +2086,10 @@
             resetStatus = `Reset requested on ${resetDate.toLocaleDateString()} (EXPIRED)`;
           }
         }
+        
+        // Safely handle communities data
+        const communities = user.communities || [];
+        const communitiesCount = user.communitiesCount || 0;
         
         $('#userModalTitle').text(`User: ${user.email || user.username}`);
         $('#userModalBody').html(`
@@ -2113,18 +2120,26 @@
             </div>
             <div class="info-item">
               <div class="info-label">Communities</div>
-              <div class="info-value">${user.communities?.length || 0}</div>
+              <div class="info-value">${communitiesCount}</div>
             </div>
           </div>
           
           <div style="margin-top: 2rem;">
-            <h5>Communities</h5>
-            ${user.communities && user.communities.length > 0 ? user.communities.map(c => `
-              <div style="background: #11131a; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; border: 1px solid #2a2d45;">
-                <strong>${c.name}</strong> - ${c.role || 'Member'}
-                ${c.department ? `<br><small>Department: ${c.department}</small>` : ''}
+            <h5 style="color: #9aa0b4; margin-bottom: 1rem;">Communities</h5>
+            ${communities && communities.length > 0 ? communities.map(c => `
+              <div style="display: flex; justify-content: space-between; align-items: center; background: #2a2d45; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; border: 1px solid #2a2d45;">
+                <div>
+                  <strong style="color: #ffffff;">${c.name || 'Unnamed Community'}</strong>
+                  <span class="status-badge ${c.status === 'approved' ? 'status-active' : c.status === 'pending' ? 'status-pending' : 'status-inactive'}" style="margin-left: 0.5rem;">${c.status?.toUpperCase() || 'UNKNOWN'}</span>
+                  ${c.role ? `<span style="color: #9aa0b4; margin-left: 0.5rem;">(${c.role})</span>` : ''}
+                  ${c.department ? `<span style="color: #9aa0b4; margin-left: 0.5rem;">[${c.department}]</span>` : ''}
+                  ${c.joinedAt ? `<br><small style="color: #9aa0b4;">Joined: ${new Date(c.joinedAt).toLocaleDateString()}</small>` : ''}
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="searchCommunityByName('${c.name || ''}')" style="margin-left: 0.5rem;">
+                  <i class="fas fa-search"></i> View
+                </button>
               </div>
-            `).join('') : '<p>No communities</p>'}
+            `).join('') : '<p style="color: #9aa0b4;">No communities</p>'}
           </div>
         `);
       }
@@ -2160,6 +2175,41 @@
             });
           }
         );
+      }
+      
+      // Function to search for a community by name and switch to communities tab
+      function searchCommunityByName(communityName) {
+        // Validate community name
+        if (!communityName || communityName.trim() === '') {
+          showInfoModal('Invalid Community', 'Cannot search for empty community name.');
+          return;
+        }
+        
+        console.log('Searching for community:', communityName);
+        
+        // Close the user modal
+        $('#userModal').modal('hide');
+        
+        // Wait a moment for modal to close, then switch tabs
+        setTimeout(() => {
+          console.log('Switching to communities tab...');
+          
+          // Switch to Communities tab using the href approach
+          $('a[href="#communities-tab"]').tab('show');
+          
+          // Also ensure the tab content is visible
+          $('.tab-content .tab-pane').removeClass('active');
+          $('#communities-tab').addClass('active');
+          
+          // Set the search input value
+          $('#communitySearch').val(communityName);
+          
+          // Trigger the search
+          searchCommunities(communityName);
+          
+          // Track this action
+          trackAdminAction('community_search', `Searched for community from user details: "${communityName}"`);
+        }, 300);
       }
       
       function initiateUserPasswordReset(userId, userEmail) {
