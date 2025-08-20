@@ -1031,17 +1031,41 @@
       }
       
       function viewAdminActivity(adminId, adminEmail) {
+        // Check if user has permission to view admin activity
+        if (!roles.includes('owner')) {
+          showInfoModal('Error', 'Access denied. Owner privileges required to view admin activity.');
+          return;
+        }
+        
+        // Set the modal data for the current admin
+        $('#adminDetailsModal').data('currentAdminId', adminId);
+        
         $('#adminDetailsModalTitle').text(`Admin Activity: ${adminEmail}`);
         $('#adminDetailsModalBody').html('<div class="loading">Loading activity data...</div>');
         
+        // Show the modal first
+        $('#adminDetailsModal').modal('show');
+        
         $.ajax({
           url: `${API_BASE}/api/v1/admin/admins/${adminId}/activity`,
-          method: 'GET',
-
+          method: 'POST',
+          data: JSON.stringify({
+            currentUser: {
+              email: currentUserEmail,
+              roles: roles
+            }
+          }),
+          contentType: 'application/json',
           success: function(data) {
-            displayAdminActivity(data.activity);
+            console.log('Activity data received:', data);
+            if (data.activity) {
+              displayAdminActivity(data.activity);
+            } else {
+              $('#adminDetailsModalBody').html('<div class="loading">No activity data available</div>');
+            }
           },
           error: function(xhr) {
+            console.error('Failed to load activity data:', xhr);
             $('#adminDetailsModalBody').html('<div class="loading">Failed to load activity data</div>');
             showInfoModal('Error', `Error loading activity: ${xhr.responseJSON?.error || 'Unknown error'}`);
           }
@@ -1049,6 +1073,20 @@
       }
       
       function displayAdminActivity(activity) {
+        console.log('Displaying admin activity:', activity);
+        
+        // If no activity data, show a message
+        if (!activity || Object.keys(activity).length === 0) {
+          $('#adminDetailsModalBody').html(`
+            <div class="text-center" style="padding: 2rem;">
+              <i class="fas fa-info-circle" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i>
+              <h5>No Activity Data Available</h5>
+              <p style="color: #9aa0b4;">This admin user doesn't have any recorded activity yet.</p>
+            </div>
+          `);
+          return;
+        }
+        
         const html = `
           <div class="activity-overview">
             <div class="row">
@@ -1119,8 +1157,10 @@
       }
       
       function generateRecentActivityList(activities) {
-        if (activities.length === 0) {
-          return '<p>No recent activity</p>';
+        console.log('Generating recent activity list:', activities);
+        
+        if (!activities || activities.length === 0) {
+          return '<p style="color: #9aa0b4; text-align: center; padding: 1rem;">No recent activity recorded</p>';
         }
         
         let html = '';
@@ -1172,9 +1212,22 @@
       }
       
       function renderActivityChart(activity) {
+        console.log('Rendering activity chart:', activity);
+        
         // Simple chart using HTML/CSS for now
         // You can integrate Chart.js or D3.js for better charts later
         const chartData = activity.chartData || [];
+        
+        if (!chartData || chartData.length === 0) {
+          $('#activityChart').html(`
+            <div class="text-center" style="padding: 2rem; color: #9aa0b4;">
+              <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+              <p>No chart data available</p>
+            </div>
+          `);
+          return;
+        }
+        
         const chartHtml = `
           <div class="chart-container">
             <div class="chart-bars">
