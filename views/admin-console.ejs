@@ -221,20 +221,24 @@
         padding: 1.5rem;
         margin-bottom: 1.5rem;
         min-height: 200px;
+        overflow: hidden;
       }
       
       .chart-bars {
         display: flex;
         align-items: end;
-        justify-content: space-around;
+        justify-content: space-between;
         height: 150px;
         padding: 1rem 0;
+        gap: 8px;
       }
       
       .chart-bar {
         background: linear-gradient(135deg, #667eea, #764ba2);
         border-radius: 4px 4px 0 0;
-        min-width: 30px;
+        flex: 1;
+        min-width: 20px;
+        max-width: 40px;
         position: relative;
         display: flex;
         flex-direction: column;
@@ -244,10 +248,13 @@
       .bar-label {
         position: absolute;
         bottom: -25px;
-        font-size: 0.8rem;
+        font-size: 0.7rem;
         color: #9aa0b4;
         transform: rotate(-45deg);
         white-space: nowrap;
+        max-width: 60px;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       
       .activity-item {
@@ -831,6 +838,40 @@
               break;
           }
         });
+        
+        // Event delegation for timeline filter buttons
+        $(document).on('click', '.timeline-filters .btn', function() {
+          console.log('Timeline filter button clicked:', $(this).data('timeframe'));
+          console.log('Button element:', this);
+          console.log('Button data-timeframe:', $(this).data('timeframe'));
+          
+          const clickedButton = $(this);
+          const timeframe = clickedButton.data('timeframe');
+          
+          // Remove active class from all buttons
+          $('.timeline-filters .btn').removeClass('active');
+          console.log('Removed active class from all buttons');
+          
+          // Add active class to clicked button
+          clickedButton.addClass('active');
+          console.log('Added active class to clicked button');
+          
+          // Use setTimeout to ensure DOM update happens
+          setTimeout(() => {
+            // Verify the state change
+            console.log('Active button after update:', $('.timeline-filters .btn.active').data('timeframe'));
+            console.log('Clicked button classes:', clickedButton.attr('class'));
+            
+            // Double-check that our button is still active
+            if (!$('.timeline-filters .btn.active').is(clickedButton)) {
+              console.log('Button state mismatch detected, forcing active state');
+              $('.timeline-filters .btn').removeClass('active');
+              clickedButton.addClass('active');
+            }
+          }, 10);
+          
+          filterActivity(timeframe);
+        });
       });
       
       // Admin Management Functions
@@ -1082,109 +1123,51 @@
         $('#adminDetailsModal').data('currentAdminId', adminId);
         
         $('#adminDetailsModalTitle').text(`Admin Activity: ${adminEmail}`);
-        $('#adminDetailsModalBody').html('<div class="loading">Loading activity data...</div>');
         
         // Show the modal first
         $('#adminDetailsModal').modal('show');
         
-        $.ajax({
-          url: `${API_BASE}/api/v1/admin/admins/${adminId}/activity`,
-          method: 'POST',
-          data: JSON.stringify({
-            currentUser: {
-              email: currentUserEmail,
-              roles: roles
-            }
-          }),
-          contentType: 'application/json',
-          success: function(data) {
-            console.log('Activity data received:', data);
-            console.log('Activity object:', data.activity);
-            console.log('Activity keys:', data.activity ? Object.keys(data.activity) : 'No activity object');
-            
-            if (data.activity && Object.keys(data.activity).length > 0) {
-              displayAdminActivity(data.activity);
-            } else {
-              $('#adminDetailsModalBody').html(`
-                <div class="text-center" style="padding: 2rem;">
-                  <i class="fas fa-info-circle" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i>
-                  <h5>No Activity Data Available</h5>
-                  <p style="color: #9aa0b4;">This admin user doesn't have any recorded activity yet.</p>
-                  <p style="color: #9aa0b4; font-size: 0.9rem;">Activity data will appear here once actions are performed.</p>
-                </div>
-              `);
-            }
-          },
-          error: function(xhr) {
-            console.error('Failed to load activity data:', xhr);
-            $('#adminDetailsModalBody').html('<div class="loading">Failed to load activity data</div>');
-            showInfoModal('Error', `Error loading activity: ${xhr.responseJSON?.error || 'Unknown error'}`);
-          }
-        });
+        // Generate the initial HTML structure first
+        displayAdminActivity({});
+        
+        // Then load initial activity with default timeframe (7 days)
+        viewAdminActivityWithTimeframe(adminId, '7d');
       }
       
       function displayAdminActivity(activity) {
         console.log('Displaying admin activity:', activity);
         
-        // If no activity data, show a message
-        if (!activity || Object.keys(activity).length === 0) {
-          $('#adminDetailsModalBody').html(`
-            <div class="text-center" style="padding: 2rem;">
-              <i class="fas fa-info-circle" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i>
-              <h5>No Activity Data Available</h5>
-              <p style="color: #9aa0b4;">This admin user doesn't have any recorded activity yet.</p>
-            </div>
-          `);
-          return;
-        }
+        // Always create the HTML structure, even for empty data
+        // This ensures the component IDs exist for future updates
         
-        // For testing: if we have minimal data, create sample data
-        const enhancedActivity = {
-          totalLogins: activity.totalLogins || 0,
-          passwordResets: activity.passwordResets || 0,
-          passwordResetsInitiated: activity.passwordResetsInitiated || 0,
-          avgSessionTime: activity.avgSessionTime || '0m',
-          chartData: activity.chartData || [
-            { date: 'Jan 20', value: 3 },
-            { date: 'Jan 19', value: 2 },
-            { date: 'Jan 18', value: 1 }
-          ],
-          recentActivity: activity.recentActivity || [
-            {
-              type: 'login',
-              title: 'Admin logged in',
-              timestamp: new Date().toISOString(),
-              details: 'Login from admin console'
-            }
-          ]
-        };
-        
-        console.log('Enhanced activity data:', enhancedActivity);
+        // Get current active timeframe to preserve button state
+        const currentActiveTimeframe = $('.timeline-filters .btn.active').data('timeframe') || '7d';
+        console.log('Setting up HTML structure with timeframe:', currentActiveTimeframe);
         
         const html = `
-          <div class="activity-overview">
+          <div class="activity-overview" id="activityMetrics">
             <div class="row">
               <div class="col-md-3">
                 <div class="stat-card">
-                  <div class="stat-number">${enhancedActivity.totalLogins}</div>
+                  <div class="stat-number">0</div>
                   <div class="stat-label">Total Logins</div>
                 </div>
               </div>
               <div class="col-md-3">
                 <div class="stat-card">
-                  <div class="stat-number">${enhancedActivity.passwordResets}</div>
+                  <div class="stat-number">0</div>
                   <div class="stat-label">Password Resets</div>
                 </div>
               </div>
               <div class="col-md-3">
                 <div class="stat-card">
-                  <div class="stat-number">${enhancedActivity.passwordResetsInitiated}</div>
+                  <div class="stat-number">0</div>
                   <div class="stat-label">Password Resets Initiated</div>
                 </div>
               </div>
               <div class="col-md-3">
                 <div class="stat-card">
-                  <div class="stat-number">${enhancedActivity.avgSessionTime}</div>
+                  <div class="stat-number">0m</div>
                   <div class="stat-label">Avg Session</div>
                 </div>
               </div>
@@ -1194,23 +1177,44 @@
           <div style="margin-top: 2rem;">
             <h5>Activity Timeline</h5>
             <div class="timeline-filters">
-              <button class="btn btn-sm btn-secondary active" onclick="filterActivity('1d')">1 Day</button>
-              <button class="btn btn-sm btn-secondary" onclick="filterActivity('7d')">7 Days</button>
-              <button class="btn btn-sm btn-secondary" onclick="filterActivity('30d')">30 Days</button>
-              <button class="btn btn-sm btn-secondary" onclick="filterActivity('1m')">1 Month</button>
-              <button class="btn btn-sm btn-secondary" onclick="filterActivity('3m')">3 Months</button>
-              <button class="btn btn-sm btn-secondary" onclick="filterActivity('6m')">6 Months</button>
-              <button class="btn btn-sm btn-secondary" onclick="filterActivity('1y')">1 Year</button>
-              <button class="btn btn-sm btn-secondary" onclick="filterActivity('all')">All Time</button>
+              <button class="btn btn-sm btn-secondary ${currentActiveTimeframe === '1d' ? 'active' : ''}" data-timeframe="1d">1 Day</button>
+              <button class="btn btn-sm btn-secondary ${currentActiveTimeframe === '7d' ? 'active' : ''}" data-timeframe="7d">7 Days</button>
+              <button class="btn btn-sm btn-secondary ${currentActiveTimeframe === '30d' ? 'active' : ''}" data-timeframe="30d">30 Days</button>
+              <button class="btn btn-sm btn-secondary ${currentActiveTimeframe === '1m' ? 'active' : ''}" data-timeframe="1m">1 Month</button>
+              <button class="btn btn-sm btn-secondary ${currentActiveTimeframe === '3m' ? 'active' : ''}" data-timeframe="3m">3 Months</button>
+              <button class="btn btn-sm btn-secondary ${currentActiveTimeframe === '6m' ? 'active' : ''}" data-timeframe="6m">6 Months</button>
+              <button class="btn btn-sm btn-secondary ${currentActiveTimeframe === '1y' ? 'active' : ''}" data-timeframe="1y">1 Year</button>
+              <button class="btn btn-sm btn-secondary ${currentActiveTimeframe === 'all' ? 'active' : ''}" data-timeframe="all">All Time</button>
             </div>
             
             <div class="activity-chart" id="activityChart">
-              <!-- Chart will be rendered here -->
+              <div class="text-center" style="padding: 2rem; color: #9aa0b4;">
+                <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                <p>Loading chart data...</p>
+              </div>
             </div>
             
             <div class="recent-activity">
               <h6>Recent Activity</h6>
-              ${generateRecentActivityList(enhancedActivity.recentActivity)}
+              <div id="activityList">
+                <div class="text-center" style="padding: 1rem; color: #9aa0b4;">
+                  <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+                  <p>Loading activity data...</p>
+                </div>
+              </div>
+              
+              <!-- Pagination Controls -->
+              <div class="activity-pagination" style="margin-top: 1rem; text-align: center;">
+                <button class="btn btn-sm btn-secondary" id="prevPage" onclick="changeActivityPage(-1)" disabled>
+                  <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <span id="pageInfo" style="margin: 0 1rem; color: #9aa0b4;">
+                  Page 1 of 1
+                </span>
+                <button class="btn btn-sm btn-secondary" id="nextPage" onclick="changeActivityPage(1)" disabled>
+                  Next <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
             </div>
             
             <div style="margin-top: 1rem; text-align: center;">
@@ -1226,22 +1230,38 @@
         
         $('#adminDetailsModalBody').html(html);
         
-        // Render the chart
-        renderActivityChart(enhancedActivity);
-        
-        // Disable auto-refresh for now (causes modal to reappear)
-        // startActivityAutoRefresh();
+        // Note: Click handlers are set up using event delegation in the document ready function
+        // Data will be loaded via updateActivityComponents() after this
       }
       
-      function generateRecentActivityList(activities) {
+      // Global variables for activity pagination
+      let currentActivityPage = 0;
+      let activitiesPerPage = 5;
+      let allActivities = [];
+      
+      function generateRecentActivityList(activities, startIndex = 0, count = 5) {
         console.log('Generating recent activity list:', activities);
         
         if (!activities || activities.length === 0) {
           return '<p style="color: #9aa0b4; text-align: center; padding: 1rem;">No recent activity recorded</p>';
         }
         
+        // Sort activities by timestamp (newest first)
+        const sortedActivities = [...activities].sort((a, b) => {
+          const dateA = new Date(a.timestamp);
+          const dateB = new Date(b.timestamp);
+          return dateB - dateA; // Newest first
+        });
+        
+        // Store sorted activities globally for pagination
+        allActivities = sortedActivities;
+        
+        // Calculate pagination
+        const endIndex = Math.min(startIndex + count, sortedActivities.length);
+        const pageActivities = sortedActivities.slice(startIndex, endIndex);
+        
         let html = '';
-        activities.forEach(activity => {
+        pageActivities.forEach(activity => {
           const icon = getActivityIcon(activity.type);
           const timeAgo = getTimeAgo(activity.timestamp);
           
@@ -1258,6 +1278,29 @@
         });
         
         return html;
+      }
+      
+      function changeActivityPage(direction) {
+        const totalPages = Math.ceil(allActivities.length / activitiesPerPage);
+        currentActivityPage += direction;
+        
+        // Clamp to valid range
+        currentActivityPage = Math.max(0, Math.min(currentActivityPage, totalPages - 1));
+        
+        // Update the activity list
+        const startIndex = currentActivityPage * activitiesPerPage;
+        $('#activityList').html(generateRecentActivityList(allActivities, startIndex, activitiesPerPage));
+        
+        // Update pagination controls
+        updatePaginationControls();
+      }
+      
+      function updatePaginationControls() {
+        const totalPages = Math.ceil(allActivities.length / activitiesPerPage);
+        
+        $('#prevPage').prop('disabled', currentActivityPage === 0);
+        $('#nextPage').prop('disabled', currentActivityPage >= totalPages - 1);
+        $('#pageInfo').text(`Page ${currentActivityPage + 1} of ${totalPages}`);
       }
       
       function getActivityIcon(type) {
@@ -1321,22 +1364,128 @@
       }
       
       function filterActivity(timeframe) {
+        console.log('Filtering activity for timeframe:', timeframe);
+        
         // Update active filter button
         $('.timeline-filters .btn').removeClass('active');
-        $(`button[onclick*="filterActivity('${timeframe}')"]`).addClass('active');
+        $(`.timeline-filters .btn[data-timeframe="${timeframe}"]`).addClass('active');
         
-        // Reload activity data with new timeframe
+        console.log('Active button updated for timeframe:', timeframe);
+        console.log('Current active button:', $('.timeline-filters .btn.active').data('timeframe'));
+        
+        // Call backend with new timeframe
         const adminId = $('#adminDetailsModal').data('currentAdminId');
         if (adminId) {
-          viewAdminActivity(adminId, $('#adminDetailsModalTitle').text().replace('Admin Activity: ', ''));
+          viewAdminActivityWithTimeframe(adminId, timeframe);
         }
+      }
+      
+      function viewAdminActivityWithTimeframe(adminId, timeframe) {
+        console.log('Fetching activity data for timeframe:', timeframe);
+        
+        // Show loading state for individual components instead of entire modal
+        $('#activityMetrics').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>');
+        $('#activityChart').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading chart...</div>');
+        $('#activityList').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading activities...</div>');
+        
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/admins/${adminId}/activity`,
+          method: 'POST',
+          data: JSON.stringify({
+            currentUser: {
+              email: currentUserEmail,
+              roles: roles
+            },
+            timeframe: timeframe
+          }),
+          contentType: 'application/json',
+          success: function(data) {
+            console.log('Filtered activity data received:', data);
+            if (data.activity) {
+              updateActivityComponents(data.activity);
+            } else {
+              $('#activityMetrics').html('<div class="text-center" style="padding: 1rem; color: #9aa0b4;">No data available for this timeframe</div>');
+              $('#activityChart').html('<div class="text-center" style="padding: 1rem; color: #9aa0b4;">No chart data available</div>');
+              $('#activityList').html('<div class="text-center" style="padding: 1rem; color: #9aa0b4;">No activities available</div>');
+            }
+          },
+          error: function(xhr) {
+            console.error('Failed to filter activity:', xhr);
+            $('#activityMetrics').html('<div class="text-center" style="padding: 1rem; color: #e53e3e;">Failed to load metrics</div>');
+            $('#activityChart').html('<div class="text-center" style="padding: 1rem; color: #e53e3e;">Failed to load chart</div>');
+            $('#activityList').html('<div class="text-center" style="padding: 1rem; color: #e53e3e;">Failed to load activities</div>');
+            showInfoModal('Error', `Error loading filtered activity: ${xhr.responseJSON?.error || 'Unknown error'}`);
+          }
+        });
+      }
+      
+      function updateActivityComponents(activity) {
+        console.log('Updating activity components:', activity);
+        
+        // Update metrics section
+        updateActivityMetrics(activity);
+        
+        // Update chart section
+        renderActivityChart(activity);
+        
+        // Update recent activity section
+        updateRecentActivity(activity);
+      }
+      
+      function updateActivityMetrics(activity) {
+        const metricsHtml = `
+          <div class="row">
+            <div class="col-md-3">
+              <div class="stat-card">
+                <div class="stat-number">${activity.totalLogins || 0}</div>
+                <div class="stat-label">Total Logins</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card">
+                <div class="stat-number">${activity.passwordResets || 0}</div>
+                <div class="stat-label">Password Resets</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card">
+                <div class="stat-number">${activity.passwordResetsInitiated || 0}</div>
+                <div class="stat-label">Password Resets Initiated</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="stat-card">
+                <div class="stat-number">${activity.avgSessionTime || '0m'}</div>
+                <div class="stat-label">Avg Session</div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        $('#activityMetrics').html(metricsHtml);
+      }
+      
+      function updateRecentActivity(activity) {
+        const recentActivity = activity.recentActivity || [];
+        const activityListHtml = generateRecentActivityList(recentActivity, 0, 5);
+        $('#activityList').html(activityListHtml);
+        
+        // Update pagination info
+        const totalPages = Math.ceil(recentActivity.length / 5);
+        $('#pageInfo').text(`Page 1 of ${totalPages}`);
+        $('#prevPage').prop('disabled', true);
+        $('#nextPage').prop('disabled', totalPages <= 1);
+        
+        // Reset pagination state
+        currentActivityPage = 0;
+        allActivities = recentActivity;
       }
       
       function refreshActivityData() {
         const adminId = $('#adminDetailsModal').data('currentAdminId');
-        const adminEmail = $('#adminDetailsModalTitle').text().replace('Admin Activity: ', '');
+        const currentTimeframe = $('.timeline-filters .btn.active').data('timeframe') || '7d';
         if (adminId) {
-          viewAdminActivity(adminId, adminEmail);
+          viewAdminActivityWithTimeframe(adminId, currentTimeframe);
         }
       }
       
