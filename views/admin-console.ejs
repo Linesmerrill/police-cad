@@ -13,8 +13,24 @@
     <link rel="stylesheet" href="/static/css/styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
-      body { 
+      html, body { 
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0b1220 100%);
+        background-attachment: fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+      
+      /* Ensure background covers overscroll areas */
+      html {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0b1220 100%);
+        background-attachment: fixed;
+        background-size: cover;
+      }
+      
+      body { 
         color: #e5e7eb;
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
       }
@@ -243,6 +259,12 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+      }
+      
+      .chart-bar-empty {
+        background: transparent !important;
+        border: 1px solid #374151;
+        border-bottom: none;
       }
       
       .bar-label {
@@ -1105,7 +1127,7 @@
         displayAdminActivity({});
         
         // Then load initial activity with default timeframe (7 days)
-        viewAdminActivityWithTimeframe(adminId, '7d');
+        viewAdminActivityWithTimeframe(adminId, '7d', currentActivityPage, activityPageSize);
       }
       
       function displayAdminActivity(activity) {
@@ -1174,26 +1196,12 @@
                 </div>
               </div>
               
-              <!-- Pagination Controls -->
-              <div class="activity-pagination" style="margin-top: 1rem; text-align: center;">
-                <button class="btn btn-sm btn-secondary" id="prevPage" onclick="changeActivityPage(-1)" disabled>
-                  <i class="fas fa-chevron-left"></i> Previous
-                </button>
-                <span id="pageInfo" style="margin: 0 1rem; color: #9aa0b4;">
-                  Page 1 of 1
-                </span>
-                <button class="btn btn-sm btn-secondary" id="nextPage" onclick="changeActivityPage(1)" disabled>
-                  Next <i class="fas fa-chevron-right"></i>
-                </button>
-              </div>
+
             </div>
             
             <div style="margin-top: 1rem; text-align: center;">
-              <button class="btn btn-primary btn-sm" onclick="refreshActivityData()" style="margin-right: 0.5rem;">
+              <button class="btn btn-primary btn-sm" onclick="refreshActivityData()">
                 <i class="fas fa-sync-alt"></i> Refresh Activity
-              </button>
-              <button class="btn btn-secondary btn-sm" onclick="closeActivityModal()">
-                <i class="fas fa-times"></i> Close
               </button>
             </div>
           </div>
@@ -1205,9 +1213,11 @@
         // Data will be loaded via updateActivityComponents() after this
       }
       
-      // Global variables for activity pagination
-      let currentActivityPage = 0;
-      let activitiesPerPage = 5;
+      // Global variables for activity pagination (updated for backend pagination)
+      let currentActivityPage = 1;
+      let activityPageSize = 5;
+      let totalActivityPages = 1;
+      let totalActivityRecords = 0;
       let allActivities = [];
       
       // Global variables for search pagination
@@ -1257,27 +1267,26 @@
       }
       
       function changeActivityPage(direction) {
-        const totalPages = Math.ceil(allActivities.length / activitiesPerPage);
-        currentActivityPage += direction;
+        const newPage = currentActivityPage + direction;
         
         // Clamp to valid range
-        currentActivityPage = Math.max(0, Math.min(currentActivityPage, totalPages - 1));
+        if (newPage < 1 || newPage > totalActivityPages) {
+          return;
+        }
         
-        // Update the activity list
-        const startIndex = currentActivityPage * activitiesPerPage;
-        $('#activityList').html(generateRecentActivityList(allActivities, startIndex, activitiesPerPage));
+        currentActivityPage = newPage;
         
-        // Update pagination controls
-        updatePaginationControls();
+        // Get current admin ID and timeframe
+        const adminId = $('#adminDetailsModal').data('currentAdminId');
+        const currentTimeframe = $('.timeline-filters .btn.active').data('timeframe') || '7d';
+        
+        if (adminId) {
+          // Reload activity data for the new page
+          viewAdminActivityWithTimeframe(adminId, currentTimeframe, currentActivityPage, activityPageSize);
+        }
       }
       
-      function updatePaginationControls() {
-        const totalPages = Math.ceil(allActivities.length / activitiesPerPage);
-        
-        $('#prevPage').prop('disabled', currentActivityPage === 0);
-        $('#nextPage').prop('disabled', currentActivityPage >= totalPages - 1);
-        $('#pageInfo').text(`Page ${currentActivityPage + 1} of ${totalPages}`);
-      }
+      // Old pagination function removed - replaced with updateActivityPaginationControls
       
       function getActivityIcon(type) {
         const icons = {
@@ -1286,8 +1295,15 @@
           'password_reset': '<i class="fas fa-key text-info"></i>',
           'password_reset_initiated': '<i class="fas fa-envelope text-info"></i>',
           'role_change': '<i class="fas fa-user-edit text-primary"></i>',
-          'admin_action': '<i class="fas fa-shield-alt text-secondary"></i>',
-          'user_reset_initiated': '<i class="fas fa-envelope text-info"></i>'
+          'admin_action': '<i class="fas fa-cog" style="color: #667eea;"></i>',
+          'user_reset_initiated': '<i class="fas fa-envelope text-info"></i>',
+          'user_search': '<i class="fas fa-search" style="color: #8b5cf6;"></i>',
+          'community_search': '<i class="fas fa-search" style="color: #8b5cf6;"></i>',
+          'user_reactivate': '<i class="fas fa-user-check text-success"></i>',
+          'admin_creation': '<i class="fas fa-user-plus text-primary"></i>',
+          'admin_deletion': '<i class="fas fa-user-minus text-danger"></i>',
+          'admin_reset_existing': '<i class="fas fa-envelope text-info"></i>',
+          'admin_reset_email': '<i class="fas fa-envelope text-info"></i>'
         };
         return icons[type] || '<i class="fas fa-circle text-muted"></i>';
       }
@@ -1322,13 +1338,32 @@
           return;
         }
         
+        // Check if all values are 0 (no activity)
+        const hasAnyActivity = chartData.some(day => day.value > 0);
+        
+        if (!hasAnyActivity) {
+          $('#activityChart').html(`
+            <div class="text-center" style="padding: 2rem; color: #9aa0b4;">
+              <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+              <p>No activity recorded for this timeframe</p>
+            </div>
+          `);
+          return;
+        }
+        
         const chartHtml = `
           <div class="chart-container">
             <div class="chart-bars">
               ${chartData.map(day => `
-                <div class="chart-bar" style="height: ${Math.max(day.value * 2, 10)}px;" title="${day.date}: ${day.value} activities">
-                  <div class="bar-label">${day.date}</div>
-                </div>
+                ${day.value > 0 ? `
+                  <div class="chart-bar" style="height: ${day.value * 2}px;" title="${day.date}: ${day.value} activities">
+                    <div class="bar-label">${day.date}</div>
+                  </div>
+                ` : `
+                  <div class="chart-bar chart-bar-empty" title="${day.date}: ${day.value} activities">
+                    <div class="bar-label">${day.date}</div>
+                  </div>
+                `}
               `).join('')}
             </div>
           </div>
@@ -1342,14 +1377,17 @@
         $('.timeline-filters .btn').removeClass('active');
         $(`.timeline-filters .btn[data-timeframe="${timeframe}"]`).addClass('active');
         
+        // Reset pagination to first page when changing timeframe
+        currentActivityPage = 1;
+        
         // Call backend with new timeframe
         const adminId = $('#adminDetailsModal').data('currentAdminId');
         if (adminId) {
-          viewAdminActivityWithTimeframe(adminId, timeframe);
+          viewAdminActivityWithTimeframe(adminId, timeframe, currentActivityPage, activityPageSize);
         }
       }
       
-      function viewAdminActivityWithTimeframe(adminId, timeframe) {
+      function viewAdminActivityWithTimeframe(adminId, timeframe, page = 1, limit = 10) {
         // Show loading state for individual components instead of entire modal
         $('#activityMetrics').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>');
         $('#activityChart').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading chart...</div>');
@@ -1363,11 +1401,21 @@
               email: currentUserEmail,
               roles: roles
             },
-            timeframe: timeframe
+            timeframe: timeframe,
+            page: page,
+            limit: limit
           }),
           contentType: 'application/json',
           success: function(data) {
             if (data.activity) {
+              // Extract pagination info from backend response
+              if (data.activity.pagination) {
+                currentActivityPage = data.activity.pagination.currentPage || 1;
+                totalActivityPages = data.activity.pagination.totalPages || 1;
+                totalActivityRecords = data.activity.pagination.totalRecords || 0;
+                activityPageSize = data.activity.pagination.limit || 5;
+              }
+              
               updateActivityComponents(data.activity);
             } else {
               $('#activityMetrics').html('<div class="text-center" style="padding: 1rem; color: #9aa0b4;">No data available for this timeframe</div>');
@@ -1378,7 +1426,7 @@
           error: function(xhr) {
             $('#activityMetrics').html('<div class="text-center" style="padding: 1rem; color: #e53e3e;">Failed to load metrics</div>');
             $('#activityChart').html('<div class="text-center" style="padding: 1rem; color: #e53e3e;">Failed to load chart</div>');
-            $('#activityList').html('<div class="text-center" style="padding: 1rem; color: #e53e3e;">Failed to load activities</div>');
+            $('#activityList').html('<div class="text-center" style="padding: 1rem; color: e53e3e;">Failed to load activities</div>');
             showInfoModal('Error', `Error loading filtered activity: ${xhr.responseJSON?.error || 'Unknown error'}`);
           }
         });
@@ -1393,14 +1441,21 @@
         
         // Update recent activity section
         updateRecentActivity(activity);
+        
+        // Update pagination controls (only once)
+        updateActivityPaginationControls();
       }
       
       function updateActivityMetrics(activity) {
+        // Calculate total logins from recent activity if not provided
+        const totalLogins = activity.totalLogins || 
+          (activity.recentActivity ? activity.recentActivity.filter(a => a.type === 'login').length : 0);
+        
         const metricsHtml = `
           <div class="row">
             <div class="col-md-3">
               <div class="stat-card">
-                <div class="stat-number">${activity.totalLogins || 0}</div>
+                <div class="stat-number">${totalLogins}</div>
                 <div class="stat-label">Total Logins</div>
               </div>
             </div>
@@ -1430,25 +1485,52 @@
       
       function updateRecentActivity(activity) {
         const recentActivity = activity.recentActivity || [];
-        const activityListHtml = generateRecentActivityList(recentActivity, 0, 5);
+        const activityListHtml = generateRecentActivityList(recentActivity, 0, recentActivity.length);
         $('#activityList').html(activityListHtml);
         
-        // Update pagination info
-        const totalPages = Math.ceil(recentActivity.length / 5);
-        $('#pageInfo').text(`Page 1 of ${totalPages}`);
-        $('#prevPage').prop('disabled', true);
-        $('#nextPage').prop('disabled', totalPages <= 1);
-        
-        // Reset pagination state
-        currentActivityPage = 0;
+        // Store activities for pagination
         allActivities = recentActivity;
+      }
+      
+      function updateActivityPaginationControls() {
+        // Remove any existing activity pagination controls first
+        $('.pagination-container').remove();
+        
+        // Only show pagination if there are multiple pages
+        if (totalActivityPages <= 1) {
+          return;
+        }
+        
+        // Create pagination controls HTML
+        const startRecord = (currentActivityPage - 1) * activityPageSize + 1;
+        const endRecord = Math.min(currentActivityPage * activityPageSize, totalActivityRecords);
+        
+        const paginationHtml = `
+          <div class="pagination-container" style="margin-top: 2rem; text-align: center; padding: 1rem; border-top: 1px solid #2a2d45;">
+            <div class="pagination-info" style="margin-bottom: 1rem; color: #9aa0b4;">
+              Showing ${startRecord}-${endRecord} of ${totalActivityRecords} activities
+            </div>
+            <div class="pagination-controls">
+              <button class="btn btn-secondary btn-sm" onclick="changeActivityPage(-1)" style="margin-right: 0.5rem;" ${currentActivityPage <= 1 ? 'disabled' : ''}>
+                <i class="fas fa-chevron-left"></i> Previous
+              </button>
+              <span style="margin: 0 1rem; color: #9aa0b4;">Page ${currentActivityPage} of ${totalActivityPages}</span>
+              <button class="btn btn-secondary btn-sm" onclick="changeActivityPage(1)" style="margin-left: 0.5rem;" ${currentActivityPage >= totalActivityPages ? 'disabled' : ''}>
+                Next <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        
+        // Add pagination controls after the activity list
+        $('#activityList').after(paginationHtml);
       }
       
       function refreshActivityData() {
         const adminId = $('#adminDetailsModal').data('currentAdminId');
         const currentTimeframe = $('.timeline-filters .btn.active').data('timeframe') || '7d';
         if (adminId) {
-          viewAdminActivityWithTimeframe(adminId, currentTimeframe);
+          viewAdminActivityWithTimeframe(adminId, currentTimeframe, currentActivityPage, activityPageSize);
         }
       }
       
