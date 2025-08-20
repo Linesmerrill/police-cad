@@ -877,6 +877,20 @@
           
           filterActivity(timeframe);
         });
+        
+        // Auto-search on page load if there's a query
+        const userQuery = $('#userSearch').val().trim();
+        if (userQuery) {
+          currentUserPage = 0;
+          searchUsers(userQuery, 0);
+        }
+        
+        // Auto-search communities on page load if there's a query
+        const communityQuery = $('#communitySearch').val().trim();
+        if (communityQuery) {
+          currentCommunityPage = 0;
+          searchCommunities(communityQuery, 0);
+        }
       });
       
       // Admin Management Functions
@@ -1226,6 +1240,14 @@
       let resultsPerPage = 5;
       let allUsers = [];
       let allCommunities = [];
+      
+      // User pagination variables
+      let totalUserPages = 1;
+      let totalUserRecords = 0;
+      
+      // Community pagination variables
+      let totalCommunityPages = 1;
+      let totalCommunityRecords = 0;
       
       function generateRecentActivityList(activities, startIndex = 0, count = 5) {
         if (!activities || activities.length === 0) {
@@ -1839,7 +1861,9 @@
           showInfoModal('Search Required', 'Please enter a search term to find users.');
           return;
         }
-        searchUsers(query);
+        // Reset pagination for new search
+        currentUserPage = 0;
+        searchUsers(query, 0);
       });
       
       $('#userSearch').keypress(function(e) {
@@ -1848,7 +1872,7 @@
         }
       });
       
-      function searchUsers(query) {
+      function searchUsers(query, page = 0) {
         $('#userResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching users...</div>');
         
         // Track search activity
@@ -1857,11 +1881,24 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/search/users`,
           method: 'POST',
-
-          data: JSON.stringify({ query: query }),
+          data: JSON.stringify({ 
+            query: query,
+            page: page,
+            limit: resultsPerPage
+          }),
           contentType: 'application/json',
           success: function(data) {
-            displayUserResults(data.users || []);
+            if (data.users && data.pagination) {
+              // Store pagination info
+              currentUserPage = data.pagination.currentPage || 0;
+              totalUserPages = data.pagination.totalPages || 1;
+              totalUserRecords = data.pagination.totalRecords || 0;
+              
+              displayUserResultsPage(data.users, currentUserPage, totalUserRecords, totalUserPages);
+            } else {
+              // Fallback for old backend response
+              displayUserResults(data.users || []);
+            }
             // Log the user search action
             logAdminAction('user_search', 'User search performed', `Searched for users with query: "${query}"`);
           },
@@ -1873,6 +1910,7 @@
       }
       
       function displayUserResults(users) {
+        // Fallback function for old backend responses
         if (users.length === 0) {
           $('#userResults').html('<div class="loading">No users found</div>');
           return;
@@ -1883,16 +1921,17 @@
         currentUserPage = 0;
         
         // Display first page
-        displayUserResultsPage(0);
+        displayUserResultsPage(users, 0, users.length, Math.ceil(users.length / resultsPerPage));
       }
       
-      function displayUserResultsPage(page) {
-        const startIndex = page * resultsPerPage;
-        const endIndex = Math.min(startIndex + resultsPerPage, allUsers.length);
-        const pageUsers = allUsers.slice(startIndex, endIndex);
+      function displayUserResultsPage(users, currentPage, totalRecords, totalPages) {
+        if (!users || users.length === 0) {
+          $('#userResults').html('<div class="loading">No users found</div>');
+          return;
+        }
         
         let html = '';
-        pageUsers.forEach(user => {
+        users.forEach(user => {
           html += `
             <div class="result-card">
               <div class="result-header">
@@ -1948,21 +1987,25 @@
         });
         
         // Add pagination controls
-        html += generatePaginationControls('user', allUsers.length, page);
+        html += generatePaginationControls('user', totalRecords, currentPage);
         
         $('#userResults').html(html);
       }
       
       // User pagination functions
       function changeUserPage(direction) {
-        const totalPages = Math.ceil(allUsers.length / resultsPerPage);
-        currentUserPage += direction;
+        const newPage = currentUserPage + direction;
         
         // Clamp to valid range
-        currentUserPage = Math.max(0, Math.min(currentUserPage, totalPages - 1));
+        if (newPage < 0 || newPage >= totalUserPages) {
+          return;
+        }
         
-        // Display the new page
-        displayUserResultsPage(currentUserPage);
+        // Get current search query and search for new page
+        const currentQuery = $('#userSearch').val().trim();
+        if (currentQuery) {
+          searchUsers(currentQuery, newPage);
+        }
       }
       
       // Search Communities
@@ -1972,7 +2015,9 @@
           showInfoModal('Search Required', 'Please enter a search term to find communities.');
           return;
         }
-        searchCommunities(query);
+        // Reset pagination for new search
+        currentCommunityPage = 0;
+        searchCommunities(query, 0);
       });
       
       $('#communitySearch').keypress(function(e) {
@@ -1981,7 +2026,7 @@
         }
       });
       
-      function searchCommunities(query) {
+      function searchCommunities(query, page = 0) {
         $('#communityResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching communities...</div>');
         
         // Track search activity
@@ -1990,11 +2035,24 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/search/communities`,
           method: 'POST',
-
-          data: JSON.stringify({ query: query }),
+          data: JSON.stringify({ 
+            query: query,
+            page: page,
+            limit: resultsPerPage
+          }),
           contentType: 'application/json',
           success: function(data) {
-            displayCommunityResults(data.communities || []);
+            if (data.communities && data.pagination) {
+              // Store pagination info
+              currentCommunityPage = data.pagination.currentPage || 0;
+              totalCommunityPages = data.pagination.totalPages || 1;
+              totalCommunityRecords = data.pagination.totalRecords || 0;
+              
+              displayCommunityResultsPage(data.communities, currentCommunityPage, totalCommunityRecords, totalCommunityPages);
+            } else {
+              // Fallback for old backend response
+              displayCommunityResults(data.communities || []);
+            }
           },
           error: function(xhr) {
             $('#communityResults').html('<div class="loading">No communities found</div>');
@@ -2004,6 +2062,7 @@
       }
       
       function displayCommunityResults(communities) {
+        // Fallback function for old backend responses
         if (communities.length === 0) {
           $('#communityResults').html('<div class="loading">No communities found</div>');
           return;
@@ -2014,16 +2073,17 @@
         currentCommunityPage = 0;
         
         // Display first page
-        displayCommunityResultsPage(0);
+        displayCommunityResultsPage(communities, 0, communities.length, Math.ceil(communities.length / resultsPerPage));
       }
       
-      function displayCommunityResultsPage(page) {
-        const startIndex = page * resultsPerPage;
-        const endIndex = Math.min(startIndex + resultsPerPage, allCommunities.length);
-        const pageCommunities = allCommunities.slice(startIndex, endIndex);
+      function displayCommunityResultsPage(communities, currentPage, totalRecords, totalPages) {
+        if (!communities || communities.length === 0) {
+          $('#communityResults').html('<div class="loading">No communities found</div>');
+          return;
+        }
         
         let html = '';
-        pageCommunities.forEach(community => {
+        communities.forEach(community => {
           html += `
             <div class="result-card">
               <div class="result-header">
@@ -2070,21 +2130,25 @@
         });
         
         // Add pagination controls
-        html += generatePaginationControls('community', allCommunities.length, page);
+        html += generatePaginationControls('community', totalRecords, currentPage);
         
         $('#communityResults').html(html);
       }
       
       // Community pagination functions
       function changeCommunityPage(direction) {
-        const totalPages = Math.ceil(allCommunities.length / resultsPerPage);
-        currentCommunityPage += direction;
+        const newPage = currentCommunityPage + direction;
         
         // Clamp to valid range
-        currentCommunityPage = Math.max(0, Math.min(currentCommunityPage, totalPages - 1));
+        if (newPage < 0 || newPage >= totalCommunityPages) {
+          return;
+        }
         
-        // Display the new page
-        displayCommunityResultsPage(currentCommunityPage);
+        // Get current search query and search for new page
+        const currentQuery = $('#communitySearch').val().trim();
+        if (currentQuery) {
+          searchCommunities(currentQuery, newPage);
+        }
       }
       
       // Generate pagination controls for search results
@@ -2296,7 +2360,7 @@
                 // Refresh the user results to show updated status
                 const currentQuery = $('#userSearch').val().trim();
                 if (currentQuery) {
-                  searchUsers(currentQuery);
+                  searchUsers(currentQuery, currentUserPage);
                 }
               },
               error: function(xhr, status, error) {
@@ -2350,7 +2414,7 @@
           $('#communitySearch').val(communityName);
           
           // Trigger the search
-          searchCommunities(communityName);
+          searchCommunities(communityName, 0);
           
           // Track this action
           trackAdminAction('community_search', `Searched for community from user details: "${communityName}"`);
