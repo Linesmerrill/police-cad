@@ -143,15 +143,34 @@
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 1rem;
         margin: 1rem 0;
+        width: 100%;
+        overflow: hidden;
       }
       .info-item {
         background: #11131a;
         padding: 1rem;
         border-radius: 8px;
         border: 1px solid #2a2d45;
+        min-width: 0; /* Allows grid items to shrink below content size */
+        overflow: hidden;
+      }
+      
+      /* Specific styling for owner info item */
+      .owner-info-item {
+        word-break: break-all;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
       }
       .info-label { color: #9aa0b4; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.25rem; }
-      .info-value { color: #e5e7eb; font-weight: 500; }
+      .info-value { 
+        color: #e5e7eb; 
+        font-weight: 500; 
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        max-width: 100%;
+        white-space: normal;
+        overflow: hidden;
+      }
       .status-badge {
         display: inline-block;
         padding: 0.25rem 0.75rem;
@@ -163,6 +182,32 @@
       .status-active { background: #10b981; color: #fff; }
       .status-inactive { background: #ef4444; color: #fff; }
       .status-pending { background: #f59e0b; color: #fff; }
+      .status-muted { background: #6b7280; color: #fff; }
+      
+      /* Owner button specific styling */
+      .owner-search-button {
+        color: #667eea !important;
+        text-decoration: none !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        max-width: 100% !important;
+        white-space: normal !important;
+        text-align: left !important;
+        display: inline-block !important;
+        width: 100% !important;
+      }
+      
+      /* Modal overflow handling */
+      .modal-content {
+        overflow: hidden;
+        width: 100%;
+      }
+      
+      .modal-body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+      }
+      
       .loading { text-align: center; padding: 2rem; color: #9aa0b4; }
       .error { background: #dc2626; color: #fff; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
       .success { background: #059669; color: #fff; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
@@ -1249,6 +1294,11 @@
       let totalCommunityPages = 1;
       let totalCommunityRecords = 0;
       
+      // Departments pagination variables
+      let currentDepartmentsPage = 0;
+      let currentCommunityId = null;
+      let currentCommunityDepartments = [];
+      
       function generateRecentActivityList(activities, startIndex = 0, count = 5) {
         if (!activities || activities.length === 0) {
           return '<p style="color: #9aa0b4; text-align: center; padding: 1rem;">No recent activity recorded</p>';
@@ -2106,23 +2156,40 @@
               <div class="info-grid">
                 <div class="info-item">
                   <div class="info-label">Owner</div>
-                  <div class="info-value">${community.owner?.email || 'Unknown'}</div>
+                  <div class="info-value">
+                    ${(() => {
+                      if (community.owner) {
+                        if (community.owner.username && community.owner.email) {
+                          return `${community.owner.username} (${community.owner.email})`;
+                        } else if (community.owner.username) {
+                          return community.owner.username;
+                        } else if (community.owner.email) {
+                          return community.owner.email;
+                        }
+                      }
+                      return 'Unknown';
+                    })()}
+                  </div>
                 </div>
                 <div class="info-item">
                   <div class="info-label">Members</div>
                   <div class="info-value">${community.memberCount || 0}</div>
                 </div>
                 <div class="info-item">
-                  <div class="info-label">Status</div>
+                  <div class="info-label">Visibility</div>
                   <div class="info-value">
-                    <span class="status-badge ${community.active ? 'status-active' : 'status-inactive'}">
-                      ${community.active ? 'Active' : 'Inactive'}
+                    <span class="status-badge ${getVisibilityStatusClass(community.visibility)}">
+                      ${getVisibilityDisplayText(community.visibility)}
                     </span>
                   </div>
                 </div>
                 <div class="info-item">
                   <div class="info-label">Created</div>
                   <div class="info-value">${new Date(community.createdAt).toLocaleDateString()}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Departments</div>
+                  <div class="info-value">${community.departments?.length || 0}</div>
                 </div>
               </div>
             </div>
@@ -2484,21 +2551,49 @@
       
       function displayCommunityDetails(community) {
         $('#communityModalTitle').text(`Community: ${community.name}`);
+        
+        // Store current community data for pagination
+        currentCommunityId = community.id;
+        currentCommunityDepartments = community.departments || [];
+        currentDepartmentsPage = 0;
+        
         $('#communityModalBody').html(`
           <div class="info-grid">
             <div class="info-item">
               <div class="info-label">Name</div>
               <div class="info-value">${community.name}</div>
             </div>
-            <div class="info-item">
+            <div class="info-item owner-info-item">
               <div class="info-label">Owner</div>
-              <div class="info-value">${community.owner?.email || 'Unknown'}</div>
+              <div class="info-value">
+                ${(() => {
+                  let ownerDisplay = 'Unknown';
+                  let ownerEmail = '';
+                  if (community.owner) {
+                    if (community.owner.username && community.owner.email) {
+                      ownerDisplay = `${community.owner.username} (${community.owner.email})`;
+                      ownerEmail = community.owner.email;
+                    } else if (community.owner.username) {
+                      ownerDisplay = community.owner.username;
+                      ownerEmail = community.owner.email || '';
+                    } else if (community.owner.email) {
+                      ownerDisplay = community.owner.email;
+                      ownerEmail = community.owner.email;
+                    }
+                  }
+                  return ownerEmail ? `
+                    <button class="btn btn-link btn-sm p-0 owner-search-button" onclick="searchUserByEmail('${ownerEmail}')">
+                      <i class="fas fa-search"></i> ${ownerDisplay}
+                    </button>
+                  ` : ownerDisplay;
+                })()}
+              </div>
             </div>
             <div class="info-item">
-              <div class="info-label">Status</div>
+              <div class="info-label">Visibility</div>
               <div class="info-value">
-                <span class="status-badge ${community.active ? 'status-active' : 'status-inactive'}">
-                  ${community.active ? 'Active' : 'Inactive'}
+                <span class="status-badge ${getVisibilityStatusClass(community.visibility)}">
+                  ${getVisibilityDisplayText(community.visibility)}
                 </span>
               </div>
             </div>
@@ -2514,15 +2609,28 @@
               <div class="info-label">Departments</div>
               <div class="info-value">${community.departments?.length || 0}</div>
             </div>
+            <div class="info-item">
+              <div class="info-label">Last Updated</div>
+              <div class="info-value">${community.updatedAt ? new Date(community.updatedAt).toLocaleDateString() : 'Never'}</div>
+            </div>
           </div>
           
           <div style="margin-top: 2rem;">
-            <h5>Departments</h5>
-            ${community.departments ? community.departments.map(d => `
-              <div style="background: #11131a; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; border: 1px solid #2a2d45;">
-                <strong>${d.name}</strong> - ${d.memberCount || 0} members
-              </div>
-            `).join('') : '<p>No departments</p>'}
+            <h5>Departments (${community.departments?.length || 0})</h5>
+            ${(() => {
+              const departments = community.departments || [];
+              const departmentsCount = departments.length;
+              if (departmentsCount > 0) {
+                return `
+                  <div id="departmentsList">
+                    ${generateDepartmentsList(departments, 0, 5)}
+                  </div>
+                  ${departmentsCount > 5 ? generateDepartmentsPagination(departmentsCount, 0) : ''}
+                `;
+              } else {
+                return '<p style="color: #9aa0b4; text-align: center;">No departments</p>';
+              }
+            })()}
           </div>
         `);
       }
@@ -2535,6 +2643,149 @@
       function viewCommunityRoles(communityId) {
         // Implementation for viewing community roles
         alert('Community roles view - to be implemented');
+      }
+      
+      // Helper functions for departments pagination
+      function generateDepartmentsList(departments, startIndex, count) {
+        const endIndex = Math.min(startIndex + count, departments.length);
+        const pageDepartments = departments.slice(startIndex, endIndex);
+        
+        let html = '';
+        pageDepartments.forEach(dept => {
+          html += `
+            <div style="background: #11131a; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; border: 1px solid #2a2d45;">
+              <strong>${dept.name || 'Unnamed Department'}</strong> - ${dept.memberCount || 0} members
+            </div>
+          `;
+        });
+        
+        return html;
+      }
+      
+      function generateDepartmentsPagination(totalDepartments, currentPage) {
+        const departmentsPerPage = 5;
+        const totalPages = Math.ceil(totalDepartments / departmentsPerPage);
+        
+        if (totalPages <= 1) {
+          return '';
+        }
+        
+        const startResult = currentPage * departmentsPerPage + 1;
+        const endResult = Math.min((currentPage + 1) * departmentsPerPage, totalDepartments);
+        
+        let html = `
+          <div class="departments-pagination" style="margin-top: 1rem; text-align: center; padding: 1rem; border-top: 1px solid #2a2d45;">
+            <div class="pagination-info" style="margin-bottom: 1rem; color: #9aa0b4;">
+              Showing ${startResult}-${endResult} of ${totalDepartments} departments
+            </div>
+            <div class="pagination-controls">
+        `;
+        
+        // Previous button
+        if (currentPage > 0) {
+          html += `<button class="btn btn-secondary btn-sm" onclick="changeDepartmentsPage(-1)" style="margin-right: 0.5rem;">
+            <i class="fas fa-chevron-left"></i> Previous
+          </button>`;
+        } else {
+          html += `<button class="btn btn-secondary btn-sm" disabled style="margin-right: 0.5rem;">
+            <i class="fas fa-chevron-left"></i> Previous
+          </button>`;
+        }
+        
+        // Page info
+        html += `<span style="margin: 0 1rem; color: #9aa0b4;">Page ${currentPage + 1} of ${totalPages}</span>`;
+        
+        // Next button
+        if (currentPage < totalPages - 1) {
+          html += `<button class="btn btn-secondary btn-sm" onclick="changeDepartmentsPage(1)" style="margin-left: 0.5rem;">
+            Next <i class="fas fa-chevron-right"></i>
+          </button>`;
+        } else {
+          html += `<button class="btn btn-secondary btn-sm" disabled style="margin-left: 0.5rem;">
+            Next <i class="fas fa-chevron-right"></i>
+          </button>`;
+        }
+        
+        html += `
+            </div>
+          </div>
+        `;
+        
+        return html;
+      }
+      
+
+      
+      function changeDepartmentsPage(direction) {
+        const newPage = currentDepartmentsPage + direction;
+        const totalPages = Math.ceil(currentCommunityDepartments.length / 5);
+        
+        if (newPage < 0 || newPage >= totalPages) {
+          return;
+        }
+        
+        currentDepartmentsPage = newPage;
+        
+        // Update departments list
+        $('#departmentsList').html(generateDepartmentsList(currentCommunityDepartments, currentDepartmentsPage, 5));
+        
+        // Update pagination controls
+        const totalDepartments = currentCommunityDepartments.length;
+        $('.departments-pagination').replaceWith(generateDepartmentsPagination(totalDepartments, currentDepartmentsPage));
+      }
+      
+      // Helper functions for visibility display
+      function getVisibilityStatusClass(visibility) {
+        switch(visibility) {
+          case 'public':
+            return 'status-active';
+          case 'private':
+            return 'status-inactive';
+          default:
+            return 'status-muted';
+        }
+      }
+      
+      function getVisibilityDisplayText(visibility) {
+        switch(visibility) {
+          case 'public':
+            return 'Public';
+          case 'private':
+            return 'Private';
+          default:
+            return 'Unknown';
+        }
+      }
+      
+      // Function to search for a user by email and switch to users tab
+      function searchUserByEmail(userEmail) {
+        // Validate email
+        if (!userEmail || userEmail.trim() === '') {
+          showInfoModal('Invalid Email', 'Cannot search for empty email address.');
+          return;
+        }
+        
+        // Close the community modal
+        $('#communityModal').modal('hide');
+        
+        // Wait a moment for modal to close, then switch tabs
+        setTimeout(() => {
+          // Switch to Users tab
+          $('a[href="#users-tab"]').tab('show');
+          
+          // Also ensure the tab content is visible
+          $('.tab-content .tab-pane').removeClass('active');
+          $('#users-tab').addClass('active');
+          
+          // Set the search input value
+          $('#userSearch').val(userEmail);
+          
+          // Trigger the search
+          searchUsers(userEmail, 0);
+          
+          // Track this action
+          trackAdminAction('user_search', `Searched for user from community details: "${userEmail}"`);
+        }, 300);
       }
       
       // Admin Management Functions
