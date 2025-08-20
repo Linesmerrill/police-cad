@@ -465,7 +465,7 @@
             </div>
             
             <!-- Admin Management Tab -->
-            <div role="tabpanel" class="tab-pane" id="admin-management-tab-content" style="display: none;">
+            <div role="tabpanel" class="tab-pane" id="admin-management-tab-content">
               <div class="row">
                 <div class="col-md-8">
                   <input type="text" id="adminSearch" class="form-control search-input" 
@@ -785,13 +785,36 @@
         // Update UI based on user roles
         updateUIForUserRoles();
         
-        // Load all admins when admin management tab is clicked
-        $('a[href="#admin-management-tab-content"]').on('click', function() {
-          // Show the tab content first
-          $('#admin-management-tab-content').show();
+        // Load all admins when admin management tab is shown (using Bootstrap's shown.bs.tab event)
+        $('a[href="#admin-management-tab-content"]').on('shown.bs.tab', function() {
+          // Clear any existing results from other tabs
+          clearTabResults('admin');
+          
           // Then load the admins
           loadAllAdmins();
         });
+        
+        // Clear results when switching tabs
+        $('a[href="#users-tab"]').on('click', function() {
+          clearTabResults('users');
+        });
+        
+        $('a[href="#communities-tab"]').on('click', function() {
+          clearTabResults('communities');
+        });
+        
+        // Function to clear results from other tabs
+        function clearTabResults(activeTab) {
+          if (activeTab !== 'users') {
+            $('#userResults').html('');
+          }
+          if (activeTab !== 'communities') {
+            $('#communityResults').html('');
+          }
+          if (activeTab !== 'admin') {
+            $('#adminResults').html('');
+          }
+        }
         
         // Event delegation for admin action buttons
         $(document).on('click', '.admin-action-btn', function() {
