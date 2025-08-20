@@ -1820,14 +1820,17 @@
                   <button class="btn btn-secondary btn-sm" onclick="initiateUserPasswordReset('${user.id}', '${user.email}')">
                     <i class="fas fa-key"></i> Reset Password
                   </button>
+                  ${user.isDeactivated ? `<button class="btn btn-success btn-sm" onclick="reactivateUserAccount('${user.id}', '${user.email}')">
+                    <i class="fas fa-user-check"></i> Reactivate Account
+                  </button>` : ''}
                 </div>
               </div>
               <div class="info-grid">
                 <div class="info-item">
                   <div class="info-label">Status</div>
                   <div class="info-value">
-                    <span class="status-badge ${user.active ? 'status-active' : 'status-inactive'}">
-                      ${user.active ? 'Active' : 'Inactive'}
+                    <span class="status-badge ${user.isDeactivated ? 'status-inactive' : 'status-active'}">
+                      ${user.isDeactivated ? 'Deactivated' : 'Active'}
                     </span>
                   </div>
                 </div>
@@ -2168,6 +2171,68 @@
                 // Restore button to original state
                 resetButton.html(originalText);
                 resetButton.prop('disabled', false);
+              }
+            });
+          }
+        );
+      }
+      
+      // Function to reactivate a user account
+      function reactivateUserAccount(userId, userEmail) {
+        showConfirmModal(
+          'Reactivate User Account',
+          `Are you sure you want to reactivate the account for <strong>${userEmail}</strong>?<br><br>This will allow the user to log in again.`,
+          function() {
+            // Find and update the button to show loading state
+            const reactivateButton = $(`button[onclick*="reactivateUserAccount('${userId}', '${userEmail}')"]`);
+            const originalText = reactivateButton.html();
+            reactivateButton.html('<i class="fas fa-spinner fa-spin"></i> Reactivating...');
+            reactivateButton.prop('disabled', true);
+            
+            $.ajax({
+              url: `${API_BASE}/api/v1/admin/users/${userId}/reactivate`,
+              method: 'POST',
+              data: JSON.stringify({ 
+                currentUser: {
+                  email: currentUserEmail,
+                  roles: roles
+                }
+              }),
+              contentType: 'application/json',
+              timeout: 10000, // 10 second timeout
+              success: function(data) {
+                showInfoModal('Success', `Account reactivated successfully for <strong>${userEmail}</strong>!`);
+                
+                // Track this action
+                trackAdminAction('user_reactivate', `Reactivated account for user: ${userEmail}`);
+                
+                // Refresh the user results to show updated status
+                const currentQuery = $('#userSearch').val().trim();
+                if (currentQuery) {
+                  searchUsers(currentQuery);
+                }
+              },
+              error: function(xhr, status, error) {
+                let errorMessage = 'Unknown error occurred';
+                
+                if (status === 'timeout') {
+                  errorMessage = 'Request timed out. The backend may not be responding.';
+                } else if (xhr.status === 404) {
+                  errorMessage = 'Reactivate endpoint not found. Backend may not be implemented yet.';
+                } else if (xhr.status === 403) {
+                  errorMessage = 'Permission denied. You may not have admin privileges.';
+                } else if (xhr.responseJSON?.error) {
+                  errorMessage = xhr.responseJSON.error;
+                } else if (xhr.statusText) {
+                  errorMessage = `${xhr.status}: ${xhr.statusText}`;
+                }
+                
+                showInfoModal('Reactivation Failed', `Failed to reactivate account: ${errorMessage}`);
+              },
+              complete: function() {
+                // Restore button to original state
+                reactivateButton.html(originalText);
+                reactivateButton.prop('disabled', false);
               }
             });
           }
