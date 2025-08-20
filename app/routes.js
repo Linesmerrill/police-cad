@@ -262,7 +262,6 @@ module.exports = function (app, passport, server) {
 
       return res.redirect("/admin/console");
     } catch (err) {
-      console.error("Admin login error:", err);
       const message = "Authentication failed. Please try again.";
       return res.redirect("/admin?error=" + encodeURIComponent(message));
     }
@@ -322,12 +321,10 @@ module.exports = function (app, passport, server) {
         // Don't reveal if email exists or not for security
         return res.redirect("/admin/forgot-password?success=" + encodeURIComponent("If that admin email exists, a reset link has been sent."));
       } catch (apiError) {
-        console.error("Go backend API error:", apiError.response?.data || apiError.message);
         // Don't reveal if email exists or not for security
         return res.redirect("/admin/forgot-password?success=" + encodeURIComponent("If that admin email exists, a reset link has been sent."));
       }
     } catch (err) {
-      console.error("Admin forgot password error:", err);
       const message = "Unable to send reset link. Please try again.";
       return res.redirect("/admin/forgot-password?error=" + encodeURIComponent(message));
     }
@@ -357,10 +354,6 @@ module.exports = function (app, passport, server) {
       // Call Go backend API to reset password
       const axios = require("axios");
       try {
-        console.log("Sending password reset request to Go backend:");
-        console.log("URL:", `${process.env.POLICE_CAD_API_URL}/api/v1/admin/reset-password`);
-        console.log("Data:", { token: token, password: password });
-        
         const response = await axios.post(`${process.env.POLICE_CAD_API_URL}/api/v1/admin/reset-password`, {
           token: token,
           password: password
@@ -371,17 +364,11 @@ module.exports = function (app, passport, server) {
           }
         });
         
-        console.log("Go backend response:", response.data);
         return res.redirect("/admin/console?success=" + encodeURIComponent("Password updated successfully!"));
       } catch (apiError) {
-        console.error("Go backend API error details:");
-        console.error("Status:", apiError.response?.status);
-        console.error("Data:", apiError.response?.data);
-        console.error("Message:", apiError.message);
         return res.redirect("/admin/reset-password?error=" + encodeURIComponent("Failed to reset password. Please try again."));
       }
     } catch (err) {
-      console.error("Admin reset password error:", err);
       const message = "Unable to reset password. Please try again.";
       return res.redirect("/admin/reset-password?error=" + encodeURIComponent(message));
     }

@@ -687,12 +687,8 @@
       
       // Function to update UI based on current user roles
       function updateUIForUserRoles() {
-        console.log('Updating UI for user roles:', roles);
-        console.log('Current user email:', currentUserEmail);
-        
         // Safety check - if no user data, hide everything
         if (!currentUserEmail || !roles || roles.length === 0) {
-          console.log('No user data available, hiding admin management');
           $('#admin-management-tab').hide();
           $('#add-admin-section').hide();
           $('#adminResults').html('');
@@ -701,11 +697,9 @@
         }
         
         if (roles.includes('owner')) {
-          console.log('User has owner role, showing admin management');
           $('#admin-management-tab').show();
           $('#add-admin-section').show();
         } else {
-          console.log('User does not have owner role, hiding admin management');
           $('#admin-management-tab').hide();
           $('#add-admin-section').hide();
           $('#admin-management-tab-content').hide();
@@ -732,7 +726,6 @@
           // Then proceed with actual logout
           window.location.href = '/admin/logout';
         } catch (error) {
-          console.error('Failed to track logout:', error);
           // Still logout even if tracking fails
           window.location.href = '/admin/logout';
         }
@@ -759,10 +752,8 @@
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
           }
-          
-          console.log('Admin action logged successfully:', type);
         } catch (error) {
-          console.error('Failed to log admin action:', error);
+          // Silently handle logging errors to avoid console noise
         }
       }
       
@@ -771,13 +762,6 @@
         // Check if current user is owner (you can modify this logic based on your backend)
         currentUserEmail = '<%= admin && admin.email ? admin.email : "" %>';
         const currentUserRoles = '<%= admin && admin.roles ? JSON.stringify(admin.roles) : (admin && admin.role ? JSON.stringify([admin.role]) : "[]") %>';
-        
-        // Debug: log what's being rendered from the backend
-        console.log('Raw admin data from backend:');
-        console.log('admin.email:', '<%= admin && admin.email ? admin.email : "undefined" %>');
-        console.log('admin.role:', '<%= admin && admin.role ? admin.role : "undefined" %>');
-        console.log('admin.roles:', '<%= admin && admin.roles ? JSON.stringify(admin.roles) : "undefined" %>');
-        console.log('admin object:', '<%= admin ? JSON.stringify(admin) : "null" %>');
         
         // Parse roles array - handle HTML entity encoding
         try {
@@ -789,16 +773,12 @@
             .replace(/&lt;/g, '<')   // Replace &lt; with <
             .replace(/&gt;/g, '>');  // Replace &gt; with >
           
-          console.log('Decoded roles string:', decodedRoles);
           roles = JSON.parse(decodedRoles);
         } catch (e) {
-          console.error('Error parsing roles:', e);
-          console.log('Failed to parse roles string:', currentUserRoles);
           // Fallback to single role if available
           const fallbackRole = '<%= admin && admin.role ? admin.role : "" %>';
           if (fallbackRole) {
             roles = [fallbackRole];
-            console.log('Using fallback role:', fallbackRole);
           }
         }
         
@@ -841,34 +821,14 @@
         
         // Event delegation for timeline filter buttons
         $(document).on('click', '.timeline-filters .btn', function() {
-          console.log('Timeline filter button clicked:', $(this).data('timeframe'));
-          console.log('Button element:', this);
-          console.log('Button data-timeframe:', $(this).data('timeframe'));
-          
           const clickedButton = $(this);
           const timeframe = clickedButton.data('timeframe');
           
           // Remove active class from all buttons
           $('.timeline-filters .btn').removeClass('active');
-          console.log('Removed active class from all buttons');
           
           // Add active class to clicked button
           clickedButton.addClass('active');
-          console.log('Added active class to clicked button');
-          
-          // Use setTimeout to ensure DOM update happens
-          setTimeout(() => {
-            // Verify the state change
-            console.log('Active button after update:', $('.timeline-filters .btn.active').data('timeframe'));
-            console.log('Clicked button classes:', clickedButton.attr('class'));
-            
-            // Double-check that our button is still active
-            if (!$('.timeline-filters .btn.active').is(clickedButton)) {
-              console.log('Button state mismatch detected, forcing active state');
-              $('.timeline-filters .btn').removeClass('active');
-              clickedButton.addClass('active');
-            }
-          }, 10);
           
           filterActivity(timeframe);
         });
@@ -878,7 +838,6 @@
       function loadAllAdmins() {
         // Check if user has permission to view admins
         if (!roles.includes('owner')) {
-          console.log('User does not have permission to view admins');
           $('#adminResults').html('<div class="loading">Access denied. Owner privileges required.</div>');
           return;
         }
@@ -1009,7 +968,6 @@
       }
       
       function viewAdminDetails(adminId) {
-        console.log('Loading admin details for ID:', adminId);
         $('#adminDetailsModalTitle').text('Loading Admin Details...');
         $('#adminDetailsModalBody').html('<div class="loading">Loading...</div>');
         $('#adminDetailsModal').modal('show');
@@ -1019,16 +977,13 @@
           method: 'GET',
 
           success: function(data) {
-            console.log('Admin details response:', data);
             if (data.admin) {
               displayAdminDetails(data.admin);
             } else {
-              console.error('No admin data in response:', data);
               $('#adminDetailsModalBody').html('<div class="loading">Invalid admin data received</div>');
             }
           },
           error: function(xhr) {
-            console.error('Error loading admin details:', xhr);
             $('#adminDetailsModalBody').html('<div class="loading">Failed to load admin details</div>');
             showInfoModal('Error', `Error loading admin: ${xhr.responseJSON?.error || 'Unknown error'}`);
           }
@@ -1036,8 +991,6 @@
       }
       
       function displayAdminDetails(admin) {
-        console.log('Displaying admin details:', admin);
-        
         // Add null checks and defaults
         const email = admin.email || 'Unknown';
         const roles = Array.isArray(admin.roles) ? admin.roles : (admin.role ? [admin.role] : ['admin']);
@@ -1046,8 +999,6 @@
         const createdBy = admin.createdBy || 'System';
         const lastLoginAt = admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleDateString() : 'Never';
         const adminId = admin.id || admin._id || 'unknown';
-        
-        console.log('Processed admin data:', { email, roles, isActive, createdAt, createdBy, lastLoginAt, adminId });
         
         // Check if user has owner role
         const hasOwnerRole = roles.includes('owner');
@@ -1135,14 +1086,11 @@
       }
       
       function displayAdminActivity(activity) {
-        console.log('Displaying admin activity:', activity);
-        
         // Always create the HTML structure, even for empty data
         // This ensures the component IDs exist for future updates
         
         // Get current active timeframe to preserve button state
         const currentActiveTimeframe = $('.timeline-filters .btn.active').data('timeframe') || '7d';
-        console.log('Setting up HTML structure with timeframe:', currentActiveTimeframe);
         
         const html = `
           <div class="activity-overview" id="activityMetrics">
@@ -1240,8 +1188,6 @@
       let allActivities = [];
       
       function generateRecentActivityList(activities, startIndex = 0, count = 5) {
-        console.log('Generating recent activity list:', activities);
-        
         if (!activities || activities.length === 0) {
           return '<p style="color: #9aa0b4; text-align: center; padding: 1rem;">No recent activity recorded</p>';
         }
@@ -1332,8 +1278,6 @@
       }
       
       function renderActivityChart(activity) {
-        console.log('Rendering activity chart:', activity);
-        
         // Simple chart using HTML/CSS for now
         // You can integrate Chart.js or D3.js for better charts later
         const chartData = activity.chartData || [];
@@ -1364,14 +1308,9 @@
       }
       
       function filterActivity(timeframe) {
-        console.log('Filtering activity for timeframe:', timeframe);
-        
         // Update active filter button
         $('.timeline-filters .btn').removeClass('active');
         $(`.timeline-filters .btn[data-timeframe="${timeframe}"]`).addClass('active');
-        
-        console.log('Active button updated for timeframe:', timeframe);
-        console.log('Current active button:', $('.timeline-filters .btn.active').data('timeframe'));
         
         // Call backend with new timeframe
         const adminId = $('#adminDetailsModal').data('currentAdminId');
@@ -1381,8 +1320,6 @@
       }
       
       function viewAdminActivityWithTimeframe(adminId, timeframe) {
-        console.log('Fetching activity data for timeframe:', timeframe);
-        
         // Show loading state for individual components instead of entire modal
         $('#activityMetrics').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>');
         $('#activityChart').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading chart...</div>');
@@ -1400,17 +1337,15 @@
           }),
           contentType: 'application/json',
           success: function(data) {
-            console.log('Filtered activity data received:', data);
             if (data.activity) {
               updateActivityComponents(data.activity);
             } else {
               $('#activityMetrics').html('<div class="text-center" style="padding: 1rem; color: #9aa0b4;">No data available for this timeframe</div>');
-              $('#activityChart').html('<div class="text-center" style="padding: 1rem; color: #9aa0b4;">No chart data available</div>');
-              $('#activityList').html('<div class="text-center" style="padding: 1rem; color: #9aa0b4;">No activities available</div>');
+              $('#activityChart').html('<div class="text-center" style="padding: 1rem; color: #e53e3e;">No chart data available</div>');
+              $('#activityList').html('<div class="text-center" style="padding: 1rem; color: #e53e3e;">No activities available</div>');
             }
           },
           error: function(xhr) {
-            console.error('Failed to filter activity:', xhr);
             $('#activityMetrics').html('<div class="text-center" style="padding: 1rem; color: #e53e3e;">Failed to load metrics</div>');
             $('#activityChart').html('<div class="text-center" style="padding: 1rem; color: #e53e3e;">Failed to load chart</div>');
             $('#activityList').html('<div class="text-center" style="padding: 1rem; color: #e53e3e;">Failed to load activities</div>');
@@ -1420,8 +1355,6 @@
       }
       
       function updateActivityComponents(activity) {
-        console.log('Updating activity components:', activity);
-        
         // Update metrics section
         updateActivityMetrics(activity);
         
@@ -1658,10 +1591,10 @@
           contentType: 'application/json',
           data: JSON.stringify(activityData),
           success: function(data) {
-            console.log('Activity logged:', actionType);
+            // Activity logged successfully
           },
           error: function(xhr) {
-            console.error('Failed to log activity:', xhr);
+            // Silently handle logging errors
           }
         });
       }
@@ -1743,7 +1676,6 @@
               button.style.borderColor = '#4f46e5';
             }, 2000);
           }).catch(function(err) {
-            console.error('Failed to copy: ', err);
             fallbackCopyToClipboard(text, event);
           });
         } else {
@@ -1777,7 +1709,7 @@
             button.style.borderColor = '#4f46e5';
           }, 2000);
         } catch (err) {
-          console.error('Fallback copy failed: ', err);
+          // Silently handle copy errors
         }
         
         document.body.removeChild(textArea);
@@ -2243,16 +2175,7 @@
         addButton.html('<i class="fas fa-spinner fa-spin"></i> Adding...');
         addButton.prop('disabled', true);
         
-        console.log('Making API call to create admin user:');
-        console.log('URL:', `${API_BASE}/api/v1/admin/users`);
-        console.log('Data:', { 
-          email: email, 
-          role: role,
-          currentUser: {
-            email: currentUserEmail,
-            roles: roles
-          }
-        });
+
         
         $.ajax({
           url: `${API_BASE}/api/v1/admin/users`,
