@@ -401,7 +401,7 @@
           Admin Search & Management
         </h2>
         
-        <div class="admin-actions" style="margin-bottom: 1.5rem; text-align: right;" id="add-admin-section" style="display: none;">
+        <div class="admin-actions" style="margin-bottom: 1.5rem; text-align: right; display: none;" id="add-admin-section">
           <button class="btn btn-gradient" onclick="showAddAdminModal()">
             <i class="fas fa-plus" style="margin-right: 8px;"></i>Add Admin
           </button>
@@ -419,7 +419,7 @@
                 <i class="fas fa-building" style="margin-right: 8px;"></i>Communities
               </a>
             </li>
-            <li role="presentation" id="admin-management-tab">
+            <li role="presentation" id="admin-management-tab" style="display: none;">
               <a href="#admin-management-tab-content" data-toggle="tab">
                 <i class="fas fa-shield-alt" style="margin-right: 8px;"></i>Admin Management
               </a>
@@ -460,7 +460,7 @@
             </div>
             
             <!-- Admin Management Tab -->
-            <div role="tabpanel" class="tab-pane" id="admin-management-tab-content">
+            <div role="tabpanel" class="tab-pane" id="admin-management-tab-content" style="display: none;">
               <div class="row">
                 <div class="col-md-8">
                   <input type="text" id="adminSearch" class="form-control search-input" 
@@ -662,7 +662,6 @@
     <script>
       // Global API configuration - using Go backend API
       const API_BASE = '<%= POLICE_CAD_API_URL %>';
-      const API_TOKEN = '<%= POLICE_CAD_API_TOKEN %>';
       
       // Show success/error messages on page load
       $(document).ready(function() {
@@ -677,28 +676,92 @@
         }
       });
       
+      // Global variables for current user info
+      let currentUserEmail = '';
+      let roles = [];
+      
+      // Function to update UI based on current user roles
+      function updateUIForUserRoles() {
+        console.log('Updating UI for user roles:', roles);
+        console.log('Current user email:', currentUserEmail);
+        
+        // Safety check - if no user data, hide everything
+        if (!currentUserEmail || !roles || roles.length === 0) {
+          console.log('No user data available, hiding admin management');
+          $('#admin-management-tab').hide();
+          $('#add-admin-section').hide();
+          $('#adminResults').html('');
+          $('#userResults').html('');
+          return;
+        }
+        
+        if (roles.includes('owner')) {
+          console.log('User has owner role, showing admin management');
+          $('#admin-management-tab').show();
+          $('#add-admin-section').show();
+        } else {
+          console.log('User does not have owner role, hiding admin management');
+          $('#admin-management-tab').hide();
+          $('#add-admin-section').hide();
+          $('#admin-management-tab-content').hide();
+          
+          // Clear any admin data that might be displayed
+          $('#adminResults').html('');
+          $('#userResults').html('');
+        }
+      }
+      
+      // Function to clear user data (call this on logout)
+      function clearUserData() {
+        currentUserEmail = '';
+        roles = [];
+        updateUIForUserRoles();
+      }
+      
       // Check current user role and show admin management tab if owner
       $(document).ready(function() {
         // Check if current user is owner (you can modify this logic based on your backend)
-        const currentUserEmail = '<%= admin && admin.email ? admin.email : "" %>';
+        currentUserEmail = '<%= admin && admin.email ? admin.email : "" %>';
         const currentUserRoles = '<%= admin && admin.roles ? JSON.stringify(admin.roles) : (admin && admin.role ? JSON.stringify([admin.role]) : "[]") %>';
         
-        // Parse roles array
-        let roles = [];
+        // Debug: log what's being rendered from the backend
+        console.log('Raw admin data from backend:');
+        console.log('admin.email:', '<%= admin && admin.email ? admin.email : "undefined" %>');
+        console.log('admin.role:', '<%= admin && admin.role ? admin.role : "undefined" %>');
+        console.log('admin.roles:', '<%= admin && admin.roles ? JSON.stringify(admin.roles) : "undefined" %>');
+        console.log('admin object:', '<%= admin ? JSON.stringify(admin) : "null" %>');
+        
+        // Parse roles array - handle HTML entity encoding
         try {
-          roles = JSON.parse(currentUserRoles);
+          // First decode HTML entities, then parse JSON
+          const decodedRoles = currentUserRoles
+            .replace(/&#34;/g, '"')  // Replace &#34; with "
+            .replace(/&quot;/g, '"') // Replace &quot; with "
+            .replace(/&amp;/g, '&')  // Replace &amp; with &
+            .replace(/&lt;/g, '<')   // Replace &lt; with <
+            .replace(/&gt;/g, '>');  // Replace &gt; with >
+          
+          console.log('Decoded roles string:', decodedRoles);
+          roles = JSON.parse(decodedRoles);
         } catch (e) {
-          roles = [];
+          console.error('Error parsing roles:', e);
+          console.log('Failed to parse roles string:', currentUserRoles);
+          // Fallback to single role if available
+          const fallbackRole = '<%= admin && admin.role ? admin.role : "" %>';
+          if (fallbackRole) {
+            roles = [fallbackRole];
+            console.log('Using fallback role:', fallbackRole);
+          }
         }
         
-        // Show admin management tab and add admin button if user has owner role
-        if (roles.includes('owner')) {
-          $('#admin-management-tab').show();
-          $('#add-admin-section').show();
-        }
+        // Update UI based on user roles
+        updateUIForUserRoles();
         
         // Load all admins when admin management tab is clicked
         $('a[href="#admin-management-tab-content"]').on('click', function() {
+          // Show the tab content first
+          $('#admin-management-tab-content').show();
+          // Then load the admins
           loadAllAdmins();
         });
         
@@ -731,12 +794,25 @@
       
       // Admin Management Functions
       function loadAllAdmins() {
+        // Check if user has permission to view admins
+        if (!roles.includes('owner')) {
+          console.log('User does not have permission to view admins');
+          $('#adminResults').html('<div class="loading">Access denied. Owner privileges required.</div>');
+          return;
+        }
+        
         $('#adminResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading all admins...</div>');
         
         $.ajax({
           url: `${API_BASE}/api/v1/admin/admins`,
-          method: 'GET',
-
+          method: 'POST',
+          data: JSON.stringify({
+            currentUser: {
+              email: currentUserEmail,
+              roles: roles
+            }
+          }),
+          contentType: 'application/json',
           success: function(data) {
             displayAdminResults(data.admins || []);
           },
@@ -770,7 +846,13 @@
         $.ajax({
           url: `${API_BASE}/api/v1/admin/search/admins`,
           method: 'POST',
-          data: JSON.stringify({ query: query }),
+          data: JSON.stringify({ 
+            query: query,
+            currentUser: {
+              email: currentUserEmail,
+              roles: roles
+            }
+          }),
           contentType: 'application/json',
           success: function(data) {
             displayAdminResults(data.admins || []);
@@ -1851,6 +1933,12 @@
       }
       
       function addNewAdmin() {
+        // Check if user has permission to create admins
+        if (!roles.includes('owner')) {
+          showInfoModal('Error', 'Access denied. Owner privileges required to create admin users.');
+          return;
+        }
+        
         const email = $('#newAdminEmail').val().trim();
         const role = $('#adminRole').val();
         
@@ -1870,12 +1958,31 @@
         addButton.html('<i class="fas fa-spinner fa-spin"></i> Adding...');
         addButton.prop('disabled', true);
         
+        console.log('Making API call to create admin user:');
+        console.log('URL:', `${API_BASE}/api/v1/admin/users`);
+        console.log('Data:', { 
+          email: email, 
+          role: role,
+          currentUser: {
+            email: currentUserEmail,
+            roles: roles
+          }
+        });
+        
         $.ajax({
           url: `${API_BASE}/api/v1/admin/users`,
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
           data: JSON.stringify({ 
             email: email, 
-            role: role 
+            role: role,
+            // Send current user's credentials for permission check
+            currentUser: {
+              email: currentUserEmail,
+              roles: roles
+            }
           }),
           contentType: 'application/json',
           success: function(data) {
