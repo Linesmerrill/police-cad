@@ -1210,6 +1210,13 @@
       let activitiesPerPage = 5;
       let allActivities = [];
       
+      // Global variables for search pagination
+      let currentUserPage = 0;
+      let currentCommunityPage = 0;
+      let resultsPerPage = 5;
+      let allUsers = [];
+      let allCommunities = [];
+      
       function generateRecentActivityList(activities, startIndex = 0, count = 5) {
         if (!activities || activities.length === 0) {
           return '<p style="color: #9aa0b4; text-align: center; padding: 1rem;">No recent activity recorded</p>';
@@ -1784,8 +1791,21 @@
           return;
         }
         
+        // Store all users globally for pagination
+        allUsers = users;
+        currentUserPage = 0;
+        
+        // Display first page
+        displayUserResultsPage(0);
+      }
+      
+      function displayUserResultsPage(page) {
+        const startIndex = page * resultsPerPage;
+        const endIndex = Math.min(startIndex + resultsPerPage, allUsers.length);
+        const pageUsers = allUsers.slice(startIndex, endIndex);
+        
         let html = '';
-        users.forEach(user => {
+        pageUsers.forEach(user => {
           html += `
             <div class="result-card">
               <div class="result-header">
@@ -1836,7 +1856,23 @@
             </div>
           `;
         });
+        
+        // Add pagination controls
+        html += generatePaginationControls('user', allUsers.length, page);
+        
         $('#userResults').html(html);
+      }
+      
+      // User pagination functions
+      function changeUserPage(direction) {
+        const totalPages = Math.ceil(allUsers.length / resultsPerPage);
+        currentUserPage += direction;
+        
+        // Clamp to valid range
+        currentUserPage = Math.max(0, Math.min(currentUserPage, totalPages - 1));
+        
+        // Display the new page
+        displayUserResultsPage(currentUserPage);
       }
       
       // Search Communities
@@ -1883,8 +1919,21 @@
           return;
         }
         
+        // Store all communities globally for pagination
+        allCommunities = communities;
+        currentCommunityPage = 0;
+        
+        // Display first page
+        displayCommunityResultsPage(0);
+      }
+      
+      function displayCommunityResultsPage(page) {
+        const startIndex = page * resultsPerPage;
+        const endIndex = Math.min(startIndex + resultsPerPage, allCommunities.length);
+        const pageCommunities = allCommunities.slice(startIndex, endIndex);
+        
         let html = '';
-        communities.forEach(community => {
+        pageCommunities.forEach(community => {
           html += `
             <div class="result-card">
               <div class="result-header">
@@ -1894,7 +1943,7 @@
                 </div>
                 <div class="action-buttons">
                   <button class="btn btn-secondary btn-sm" onclick="viewCommunityDetails('${community.id}')">
-                    <i class="eye"></i> View Details
+                    <i class="fas fa-eye"></i> View Details
                   </button>
                   <button class="btn btn-secondary btn-sm" onclick="viewCommunityMembers('${community.id}')">
                     <i class="fas fa-users"></i> Members
@@ -1929,7 +1978,75 @@
             </div>
           `;
         });
+        
+        // Add pagination controls
+        html += generatePaginationControls('community', allCommunities.length, page);
+        
         $('#communityResults').html(html);
+      }
+      
+      // Community pagination functions
+      function changeCommunityPage(direction) {
+        const totalPages = Math.ceil(allCommunities.length / resultsPerPage);
+        currentCommunityPage += direction;
+        
+        // Clamp to valid range
+        currentCommunityPage = Math.max(0, Math.min(currentCommunityPage, totalPages - 1));
+        
+        // Display the new page
+        displayCommunityResultsPage(currentCommunityPage);
+      }
+      
+      // Generate pagination controls for search results
+      function generatePaginationControls(type, totalResults, currentPage) {
+        const totalPages = Math.ceil(totalResults / resultsPerPage);
+        
+        if (totalPages <= 1) {
+          return '';
+        }
+        
+        const startResult = currentPage * resultsPerPage + 1;
+        const endResult = Math.min((currentPage + 1) * resultsPerPage, totalResults);
+        
+        let html = `
+          <div class="pagination-container" style="margin-top: 2rem; text-align: center; padding: 1rem; border-top: 1px solid #2a2d45;">
+            <div class="pagination-info" style="margin-bottom: 1rem; color: #9aa0b4;">
+              Showing ${startResult}-${endResult} of ${totalResults} results
+            </div>
+            <div class="pagination-controls">
+        `;
+        
+        // Previous button
+        if (currentPage > 0) {
+          html += `<button class="btn btn-secondary btn-sm" onclick="change${type.charAt(0).toUpperCase() + type.slice(1)}Page(-1)" style="margin-right: 0.5rem;">
+            <i class="fas fa-chevron-left"></i> Previous
+          </button>`;
+        } else {
+          html += `<button class="btn btn-secondary btn-sm" disabled style="margin-right: 0.5rem;">
+            <i class="fas fa-chevron-left"></i> Previous
+          </button>`;
+        }
+        
+        // Page info
+        html += `<span style="margin: 0 1rem; color: #9aa0b4;">Page ${currentPage + 1} of ${totalPages}</span>`;
+        
+        // Next button
+        if (currentPage < totalPages - 1) {
+          html += `<button class="btn btn-secondary btn-sm" onclick="change${type.charAt(0).toUpperCase() + type.slice(1)}Page(1)" style="margin-left: 0.5rem;">
+            Next <i class="fas fa-chevron-right"></i>
+          </button>`;
+        } else {
+          html += `<button class="btn btn-secondary btn-sm" disabled style="margin-left: 0.5rem;">
+            Next <i class="fas fa-chevron-right"></i>
+          </button>`;
+        }
+        
+        html += `
+            </div>
+          </div>
+        `;
+        
+        return html;
       }
       
       // User Actions
