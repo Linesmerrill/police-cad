@@ -1640,7 +1640,12 @@
           'user_search': 'User search performed',
           'community_search': 'Community search performed',
           'user_reset': 'User password reset sent',
-          'user_reset_initiated': 'User password reset initiated'
+          'user_reset_initiated': 'User password reset initiated',
+          'user_reactivate': 'User account reactivated',
+          'admin_creation': 'Admin user created',
+          'admin_deletion': 'Admin user deleted',
+          'admin_reset_existing': 'Password reset sent to existing admin',
+          'admin_reset_email': 'Password reset email sent to admin'
         };
         return titles[actionType] || 'Action performed';
       }
@@ -2572,6 +2577,9 @@
             button.prop('disabled', true);
             button.html('<i class="fas fa-check"></i> Email Sent');
             button.removeClass('btn-secondary').addClass('btn-success');
+            
+            // Track this action
+            trackAdminAction('admin_reset_email', `Sent password reset email to admin: ${email}`);
           },
           error: function(xhr) {
             // Show error message in the current modal
@@ -2629,6 +2637,9 @@
             
             // Clear the email input since we successfully sent the reset
             $('#newAdminEmail').val('');
+            
+            // Track this action
+            trackAdminAction('admin_reset_existing', `Sent reset email to existing admin: ${email}`);
           },
           error: function(xhr) {
             // Show error message
