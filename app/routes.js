@@ -299,8 +299,34 @@ module.exports = function (app, passport, server) {
     res.render("admin-forgot", { error, success });
   });
 
-  // Note: Admin password reset is now handled by Go backend API
-  // Use /api/v1/admin/send-reset-email endpoint instead
+  // Admin forgot password - calls Go backend API
+  app.post("/admin/forgot-password", async function(req, res) {
+    try {
+      const email = (req.body && req.body.email) || "";
+      if (!email) {
+        return res.redirect("/admin/forgot-password?error=" + encodeURIComponent("Email required"));
+      }
+      
+      // Call Go backend API to send reset email
+      const axios = require("axios");
+      try {
+        await axios.post(`${process.env.POLICE_CAD_API_URL}/api/v1/admin/forgot-password`, {
+          email: email
+        });
+        
+        // Don't reveal if email exists or not for security
+        return res.redirect("/admin/forgot-password?success=" + encodeURIComponent("If that admin email exists, a reset link has been sent."));
+      } catch (apiError) {
+        console.error("Go backend API error:", apiError.response?.data || apiError.message);
+        // Don't reveal if email exists or not for security
+        return res.redirect("/admin/forgot-password?success=" + encodeURIComponent("If that admin email exists, a reset link has been sent."));
+      }
+    } catch (err) {
+      console.error("Admin forgot password error:", err);
+      const message = "Unable to send reset link. Please try again.";
+      return res.redirect("/admin/forgot-password?error=" + encodeURIComponent(message));
+    }
+  });
 
   app.get("/admin/reset-password", function(req, res) {
     const token = req.query.token || "";
@@ -309,8 +335,39 @@ module.exports = function (app, passport, server) {
     res.render("admin-reset", { token, error, success });
   });
 
-  // Note: Admin password reset is now handled by Go backend API
-  // The reset-password page will handle the UI, but actual reset logic is in Go backend
+  // Admin password reset - calls Go backend API
+  app.post("/admin/reset-password", async function(req, res) {
+    try {
+      const token = (req.body && req.body.token) || "";
+      const password = (req.body && req.body.password) || "";
+      const confirm = (req.body && req.body.confirm) || "";
+      
+      if (!token) {
+        return res.redirect("/admin/reset-password?error=" + encodeURIComponent("Missing token"));
+      }
+      if (!password || password !== confirm) {
+        return res.redirect("/admin/reset-password?token=" + encodeURIComponent(token) + "&error=" + encodeURIComponent("Passwords do not match"));
+      }
+
+      // Call Go backend API to reset password
+      const axios = require("axios");
+      try {
+        await axios.post(`${process.env.POLICE_CAD_API_URL}/api/v1/admin/reset-password`, {
+          token: token,
+          password: password
+        });
+        
+        return res.redirect("/admin?success=" + encodeURIComponent("Password updated successfully. Please sign in."));
+      } catch (apiError) {
+        console.error("Go backend API error:", apiError.response?.data || apiError.message);
+        return res.redirect("/admin/reset-password?error=" + encodeURIComponent("Failed to reset password. Please try again."));
+      }
+    } catch (err) {
+      console.error("Admin reset password error:", err);
+      const message = "Unable to reset password. Please try again.";
+      return res.redirect("/admin/reset-password?error=" + encodeURIComponent(message));
+    }
+  });
 
 
 
