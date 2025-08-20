@@ -858,17 +858,24 @@
           // Clear any existing results from other tabs
           clearTabResults('admin');
           
+          // Update URL hash for better navigation
+          window.location.hash = 'admin-management-tab-content';
+          
           // Then load the admins
           loadAllAdmins();
         });
         
-        // Clear results when switching tabs
+        // Clear results when switching tabs and update URL hash
         $('a[href="#users-tab"]').on('click', function() {
           clearTabResults('users');
+          // Update URL hash for better navigation
+          window.location.hash = 'users-tab';
         });
         
         $('a[href="#communities-tab"]').on('click', function() {
           clearTabResults('communities');
+          // Update URL hash for better navigation
+          window.location.hash = 'communities-tab';
         });
         
         // Function to clear results from other tabs
@@ -936,6 +943,29 @@
         if (communityQuery) {
           currentCommunityPage = 0;
           searchCommunities(communityQuery, 0);
+        }
+        
+        // Handle URL hash for tab selection
+        const hash = window.location.hash;
+        if (hash) {
+          // Remove the # from the hash
+          const tabId = hash.substring(1);
+          
+          // Check if the tab exists and activate it
+          const tabElement = $(`a[href="#${tabId}"]`);
+          if (tabElement.length > 0) {
+            // Activate the tab
+            tabElement.tab('show');
+            
+            // If it's the communities tab, trigger a search if there's a query
+            if (tabId === 'communities-tab') {
+              const communityQuery = $('#communitySearch').val().trim();
+              if (communityQuery) {
+                currentCommunityPage = 0;
+                searchCommunities(communityQuery, 0);
+              }
+            }
+          }
         }
       });
       
@@ -2145,12 +2175,6 @@
                 <div class="action-buttons">
                   <button class="btn btn-secondary btn-sm" onclick="viewCommunityDetails('${community.id}')">
                     <i class="fas fa-eye"></i> View Details
-                  </button>
-                  <button class="btn btn-secondary btn-sm" onclick="viewCommunityMembers('${community.id}')">
-                    <i class="fas fa-users"></i> Members
-                  </button>
-                  <button class="btn btn-secondary btn-sm" onclick="viewCommunityRoles('${community.id}')">
-                    <i class="fas fa-user-tag"></i> Roles
                   </button>
                 </div>
               </div>
