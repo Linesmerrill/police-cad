@@ -7,26 +7,10 @@ document.addEventListener("DOMContentLoaded", function () {
     return; // Don't show the modal if the user is not on a mobile device
   }
 
-  // Check session storage for dismissal count and expiration
-  let dismissCount =
-    parseInt(sessionStorage.getItem("appPromptDismissCount")) || 0;
-  let dismissExpiration = sessionStorage.getItem("appPromptDismissExpiration");
-
-  // Check if the modal should be shown (not dismissed 3 times or expiration has passed)
-  const now = new Date().getTime();
-  if (
-    dismissCount >= 3 &&
-    dismissExpiration &&
-    now < parseInt(dismissExpiration)
-  ) {
-    return; // Don't show the modal if it's within the 2-week cooldown
-  }
-
-  // Reset dismissal count if the 2-week period has expired
-  if (dismissExpiration && now >= parseInt(dismissExpiration)) {
-    dismissCount = 0;
-    sessionStorage.setItem("appPromptDismissCount", dismissCount);
-    sessionStorage.removeItem("appPromptDismissExpiration");
+  // Check if the user has already dismissed the banner permanently
+  const hasDismissed = localStorage.getItem("appPromptDismissed");
+  if (hasDismissed === "true") {
+    return; // Don't show the banner if user has dismissed it
   }
 
   // Create the modal container
@@ -59,15 +43,8 @@ document.addEventListener("DOMContentLoaded", function () {
   closeButton.textContent = "×";
   closeButton.onclick = function () {
     modal.remove();
-    dismissCount++;
-    sessionStorage.setItem("appPromptDismissCount", dismissCount);
-
-    // If dismissed 3 times, set a 2-week expiration
-    if (dismissCount >= 3) {
-      const twoWeeks = 14 * 24 * 60 * 60 * 1000; // 2 weeks in milliseconds
-      const expirationTime = now + twoWeeks;
-      sessionStorage.setItem("appPromptDismissExpiration", expirationTime);
-    }
+    // Set permanent dismissal flag in localStorage
+    localStorage.setItem("appPromptDismissed", "true");
   };
   content.appendChild(closeButton);
 
@@ -100,6 +77,15 @@ document.addEventListener("DOMContentLoaded", function () {
   description.style.fontSize = "0.8rem";
   description.textContent = "Get our mobile app for a better experience";
   textContainer.appendChild(description);
+
+  // Add "Don't show again" hint
+  const hint = document.createElement("p");
+  hint.style.margin = "0";
+  hint.style.color = "#6b7280";
+  hint.style.fontSize = "0.7rem";
+  hint.style.fontStyle = "italic";
+  hint.textContent = "Tap × to dismiss permanently";
+  textContainer.appendChild(hint);
 
   content.appendChild(textContainer);
 
