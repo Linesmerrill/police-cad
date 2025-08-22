@@ -4898,7 +4898,7 @@
                           columnNumber: 13,
                         },
                       },
-                      "Need direct support? Shoot us an email and we will get back to you as soon as possible.",
+                      "Need direct support? Open an Assistance Ticket.",
                       /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                         "br",
                         {
@@ -4948,7 +4948,7 @@
             children: {
               a: {
                 className: "button",
-                href: "mailto:support@linespolice-cad.com",
+                href: "https://discord.gg/Y9ytW2ZMp4",
                 children:
                   /*#__PURE__*/ react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(
                     "span",
@@ -4970,7 +4970,7 @@
                           columnNumber: 13,
                         },
                       },
-                      "Email"
+                      "Open Ticket"
                     )
                   ),
                 target: "_blank",
