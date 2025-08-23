@@ -764,10 +764,34 @@ module.exports = function (app, passport, server) {
         }
       }
       
-
+      // Fetch EMS vehicles and calls
+      let dbEmsVehicles = null;
+      let dbCalls = null;
+      
+      try {
+        const vehiclesResponse = await axios.get(
+          `${policeCadApiUrl}/api/v1/emsVehicles/user/${req.session.passport.user}?active_community_id=${req.user.user.activeCommunity}`,
+          config
+        );
+        dbEmsVehicles = vehiclesResponse.data;
+      } catch (err) {
+        console.error('Error fetching EMS vehicles:', err);
+      }
+      
+      try {
+        const callsResponse = await axios.get(
+          `${policeCadApiUrl}/api/v1/calls/community/${req.user.user.activeCommunity}?status=true`,
+          config
+        );
+        dbCalls = callsResponse.data;
+      } catch (err) {
+        console.error('Error fetching calls:', err);
+      }
       
       res.render("ems-dashboard", {
         user: req.user,
+        vehicles: exists(dbEmsVehicles) ? dbEmsVehicles : null,
+        calls: exists(dbCalls) ? dbCalls : null,
         context: context,
         referer: encodeURIComponent("/ems-dashboard"),
         redirect: encodeURIComponent(redirect),

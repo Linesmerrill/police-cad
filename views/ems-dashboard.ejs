@@ -1242,6 +1242,17 @@
         </div>
 
       </section>
+      
+      <!-- Active Calls Section -->
+      <section style='background-image: url("/static/images/blue-clouds.jpg"); padding:0'>
+        <hr class="margin-top-2" style="width: 88%;max-width: 100rem;">
+        <div class="container">
+          <div id="assigned-call-container" class="col-lg-10 col-lg-offset-1 margin-top-2">
+            <!-- Calls will be loaded here dynamically -->
+          </div>
+        </div>
+      </section>
+      
       <div class="google-ad"></div>
       <% include footer %>
 </div>
@@ -2340,10 +2351,122 @@
     </div>
   </div>
 
+  <!-- Call Detail Modal -->
+  <div id="callDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="update-call-form" class="form-horizontal" onsubmit="event.preventDefault(); handleUpdateCall();">
+            <fieldset>
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-label="Close">X</button>
+              <h4>Call Details</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Read-only fields -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdAtCallDetail">Created At:</label>
+                <div class="col-md-4">
+                  <h5 id="createdAtCallDetail"></h5>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="updatedAtCallDetail">Updated At:</label>
+                <div class="col-md-4">
+                  <h5 id="updatedAtCallDetail"></h5>
+                </div>
+              </div>
+
+              <!-- Editable fields -->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="callTitleDetail">Title:</label>
+                <div class="col-md-8">
+                  <input id="callTitleDetail" name="title" type="text" placeholder="Title"
+                    class="form-control input-md" maxlength="100" required>
+                </div>
+              </div>
+
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="callDetailsDetail">Details:</label>
+                <div class="col-md-8">
+                  <textarea id="callDetailsDetail" name="details" rows="4" maxlength="500"
+                    placeholder="Details" class="form-control input-md" required></textarea>
+                </div>
+              </div>
+
+              <!-- Dynamic department list -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="callDepartmentsDetail">Departments:</label>
+                <div class="col-md-8" id="callDepartmentsDetail"></div>
+              </div>
+
+              <!-- Dynamic assigned to list -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="callAssignedToDetail">Assigned To:</label>
+                <div class="col-md-8" id="callAssignedToDetail"></div>
+              </div>
+
+                          <!-- Call notes display -->
+            <div class="form-group">
+              <label class="col-md-4 control-label" for="callNotesDetail">
+                Call Notes 
+                <a href="#" onclick="toggleAddNoteSection()" style="margin-left: 8px; color: #17a2b8;">
+                  <i class="fa fa-plus" id="addNoteIcon"></i>
+                </a>
+              </label>
+              <div class="col-md-8 col-md-offset-2" id="callNotesDetail" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+            
+            <!-- Add new call note (collapsible) -->
+            <div class="form-group" id="addNoteSection" style="display: none;">
+              <label class="col-md-4 control-label" for="newCallNote">Add Note:</label>
+              <div class="col-md-8">
+                <textarea id="newCallNote" name="newCallNote" rows="3" maxlength="500" 
+                  placeholder="Enter your note here..." class="form-control input-md"></textarea>
+              </div>
+            </div>
+            
+            <!-- Add Note Button (collapsible) -->
+            <div class="form-group" id="addNoteButtonSection" style="display: none;">
+              <label class="col-md-4 control-label" for="addCallNote"></label>
+              <div class="col-md-8 text-center">
+                <button id="addCallNote" type="button" class="btn btn-success" onclick="handleAddCallNote()">Add Note</button>
+              </div>
+            </div>
+
+              <!-- Hidden input for callId -->
+              <input id="callIdDetail" type="hidden" name="callId" value="">
+
+              <!-- Update Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="updateCall"></label>
+                <div class="col-md-4 text-align-center">
+                  <button id="updateCall" type="submit" class="btn btn-info">Update</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+          <form id="delete-call-form" onsubmit="event.preventDefault(); handleDeleteCall();">
+            <fieldset>
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="deleteCall"></label>
+                <div class="col-md-4 text-align-center">
+                  <button id="deleteCall" type="submit" class="btn btn-danger">Delete</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Initialize global variables for EMS Dashboard -->
   <script type="text/javascript">
     // all global router vars declared here to reduce duplication
     var dbUser = <%-JSON.stringify(user)%>;
+    var dbVehicles = <%-JSON.stringify(vehicles)%>;
     var POLICE_CAD_API_URL = '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     var API_URL = POLICE_CAD_API_URL; // For notifications.js compatibility
   </script>

@@ -75,6 +75,11 @@ $(function () {
     loadEmsVehicles();
   }
   
+  // Load assigned calls on page load
+  if (typeof loadAssignedCalls === 'function') {
+    loadAssignedCalls();
+  }
+  
   // Event handlers for delete confirmation modals
   $('#confirmDeletePersonaBtn').on('click', function() {
     confirmDeleteEmsPersona();
@@ -89,6 +94,14 @@ $(function () {
     if (e.key === 'Enter' || e.keyCode === 13) {
       e.preventDefault();
       searchMedicalByName();
+    }
+  });
+  
+  // Add keyboard event listener for call notes
+  $('#newCallNote').on('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleAddCallNote();
     }
   });
   
@@ -4165,4 +4178,431 @@ function setupNotificationModal() {
       }
     });
   }
+}
+
+// AJAX function to load assigned calls
+function loadAssignedCalls() {
+  const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+  if (!communityId) return;
+  
+  // Get the current department ID from the URL query parameters or global variable
+  const urlParams = new URLSearchParams(window.location.search);
+  const encodedDeptId = urlParams.get('d');
+  let currentDepartmentId = null;
+  
+  if (encodedDeptId) {
+    try {
+      // Decode the department ID using browser-compatible atob
+      let base64 = encodedDeptId
+        .replace(/-/g, '+')
+        .replace(/_/g, '/');
+      
+      // Add padding back
+      while (base64.length % 4) {
+        base64 += '=';
+      }
+      
+      // Use atob for browser compatibility instead of Buffer
+      const decoded = atob(base64);
+      currentDepartmentId = decoded;
+      
+      // Debug logging to see what we're working with
+      console.log('🔍 Decoded department ID:', currentDepartmentId);
+      console.log('🔍 Original encoded ID:', encodedDeptId);
+    } catch (e) {
+      console.error('Failed to decode department ID:', e);
+      currentDepartmentId = null;
+    }
+  }
+  
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/calls/community/${communityId}?status=true`,
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${dbUser.token || ''}`
+    },
+    success: function(data) {
+      const $container = $('#assigned-call-container');
+      $container.find('a').remove();
+      $container.find('span').remove();
+      // Get department name for display
+      const urlParams = new URLSearchParams(window.location.search);
+      const departmentName = urlParams.get('dept') || 'Current Department';
+      
+      $container.append(`
+        <span>
+          <h4>
+            ${departmentName} Open Calls 
+            <i class="fa fa-info-circle" 
+               data-toggle="tooltip" 
+               data-placement="top" 
+               title="These are only the calls assigned to your current department. Other calls in the community are not shown here." 
+               style="color: #17a2b8; cursor: help; margin-left: 8px;"></i>
+          </h4>
+          <h5>Click for details</h5>
+        </span>
+      `);
+      
+      // Initialize tooltips
+      $('[data-toggle="tooltip"]').tooltip();
+      
+      if (data && data.length > 0) {
+        // Filter calls to only show those assigned to the current department
+        console.log('🔍 Current department ID:', currentDepartmentId);
+        console.log('🔍 Total calls received:', data.length);
+        
+        const filteredCalls = data.filter(call => {
+          if (!currentDepartmentId) {
+            console.log('❌ No current department ID, filtering out call:', call._id);
+            return false;
+          }
+          
+          const callDepartments = call?.call?.departments || [];
+          const isMatch = callDepartments.includes(currentDepartmentId);
+          
+          console.log(`🔍 Call ${call._id}: departments [${callDepartments.join(', ')}] matches current department ${currentDepartmentId}: ${isMatch}`);
+          
+          return isMatch;
+        });
+        
+        console.log('🔍 Filtered calls count:', filteredCalls.length);
+        
+        if (filteredCalls.length > 0) {
+          filteredCalls.forEach(call => {
+            const is911Call = (call?.call?.title?.startsWith('911:') || call?.call?.details?.startsWith('911:'));
+            const alertClass = is911Call ? 'alert-danger' : 'alert-success';
+            $container.append(
+              `<a id="${call._id}" href="javascript:void(0)" onclick="event.stopPropagation(); populateCallDetails('${call._id}');">
+                <div class="alert ${alertClass} alert-dismissible show" role="alert">
+                  Opened: <span id="${call._id}-createdAt" style="text-transform:capitalize">
+                    <time>${call?.call?.createdAt || 'N/A'}</time> | Description: <span id="${call._id}-description">${call?.call?.title || 'N/A'} | ${call?.call?.details || 'N/A'}</span>
+                  </span>
+                </div>
+              </a>`
+            );
+          });
+        } else {
+          const urlParams = new URLSearchParams(window.location.search);
+          const departmentName = urlParams.get('dept') || 'your department';
+          $container.append(`<p class="text-center" style="font-style: italic; font-size: 14px">No open calls assigned to ${departmentName} at this time.</p>`);
+        }
+      } else {
+        $container.append('<p class="text-center" style="font-style: italic; font-size: 14px">No open calls at this time.</p>');
+      }
+    },
+    error: function(xhr) {
+      console.error('Error loading assigned calls:', xhr.responseText);
+      const $container = $('#assigned-call-container');
+      $container.find('a').remove();
+      $container.find('span').remove();
+      $container.append('<p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading calls, try refreshing the page...</p>');
+    }
+  });
+}
+
+// Populate call details in modal
+function populateCallDetails(callId) {
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/call/${callId}`,
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${dbUser.token || ''}`
+    },
+    success: function(call) {
+      $('#callIdDetail').val(call._id);
+      $('#createdAtCallDetail').text(call?.call?.createdAt ? new Date(call.call.createdAt).toLocaleString() : 'N/A');
+      $('#updatedAtCallDetail').text(call?.call?.updatedAt ? new Date(call.call.updatedAt).toLocaleString() : 'N/A');
+      $('#callTitleDetail').val(call?.call?.title || '');
+      $('#callDetailsDetail').val(call?.call?.details || '');
+
+      // Format call notes
+      const callNotes = call?.call?.callNotes || [];
+      $('#callNotesDetail').empty();
+      if (callNotes.length > 0) {
+        callNotes.forEach(note => {
+          const isUserNote = note.createdBy === dbUser.user?.username;
+          const noteActions = isUserNote ? 
+            `<div class="note-actions" style="margin-top: 8px;">
+              <button class="btn btn-xs btn-info" onclick="handleEditCallNote('${note._id}', '${note.note?.replace(/'/g, "\\'")}')">
+                <i class="fa fa-edit"></i> Edit
+              </button>
+              <button class="btn btn-xs btn-danger" onclick="handleDeleteCallNote('${note._id}')" style="margin-left: 5px;">
+                <i class="fa fa-trash"></i> Delete
+              </button>
+            </div>` : '';
+          
+          $('#callNotesDetail').append(
+            `<div class="note-item" style="border-bottom: 1px solid #ddd; padding: 10px 0; margin-bottom: 10px;">
+              <p><strong>Note:</strong> ${note.note || 'N/A'}</p>
+              <p><small><strong>Created By:</strong> ${note.createdBy || 'Unknown'} | 
+              <strong>Created At:</strong> ${note.createdAt ? new Date(note.createdAt).toLocaleString() : 'N/A'}</small></p>
+              ${noteActions}
+            </div>`
+          );
+        });
+      } else {
+        $('#callNotesDetail').text('No notes available');
+      }
+
+      // Fetch departments
+      const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+      $.ajax({
+        url: `${POLICE_CAD_API_URL}/api/v1/community/${communityId}/departments`,
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${dbUser.token || ''}`
+        }
+      }).done(function(data) {
+        const departments = data.departments || [];
+        const departmentIds = call?.call?.departments || [];
+        const departmentNames = departmentIds
+          .map(id => {
+            const dept = departments.find(d => d._id === id);
+            return dept ? dept.name : null;
+          })
+          .filter(name => name);
+        $('#callDepartmentsDetail').empty();
+        if (departmentNames.length > 0) {
+          departmentNames.forEach(name => {
+            $('#callDepartmentsDetail').append(
+              `<span class="badge badge-primary">${name}</span>`
+            );
+          });
+        } else {
+          $('#callDepartmentsDetail').text('None');
+        }
+      }).fail(function(xhr) {
+        console.error('Error fetching departments:', xhr.responseText);
+        $('#callDepartmentsDetail').text('Error loading departments');
+      });
+
+      // Fetch assigned users
+      const userIds = call?.call?.assignedTo || [];
+      if (userIds.length > 0) {
+        const userRequests = userIds.map(userId =>
+          $.ajax({
+            url: `${POLICE_CAD_API_URL}/api/v1/user/${userId}`,
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${dbUser.token || ''}`
+            }
+          })
+        );
+        $.when.apply($, userRequests).then(function() {
+          const responses = userRequests.length === 1 ? [arguments] : Array.from(arguments);
+          const users = responses.map((response, index) => ({
+            userId: userIds[index],
+            username: response[0]?.user?.username || 'Unknown'
+          }));
+          $('#callAssignedToDetail').empty();
+          const validUsers = users.filter(user => user.username !== 'Unknown');
+          if (validUsers.length > 0) {
+            validUsers.forEach(user => {
+              $('#callAssignedToDetail').append(
+                `<span class="badge badge-primary">${user.username}</span>`
+              );
+            });
+          } else {
+            $('#callAssignedToDetail').text('None');
+          }
+          $('#callDetailModal').modal('show');
+        }, function(xhr) {
+          console.error('Error fetching users:', xhr.responseText);
+          $('#callAssignedToDetail').text('Error loading users');
+          $('#callDetailModal').modal('show');
+        });
+      } else {
+        $('#callAssignedToDetail').text('None');
+        $('#callDetailModal').modal('show');
+      }
+    },
+    error: function(xhr) {
+      console.error('Error fetching call details:', xhr.responseText);
+      alert('Failed to load call details: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+// Handle call update
+function handleUpdateCall() {
+  const callId = $('#callIdDetail').val();
+  const title = $('#callTitleDetail').val();
+  const details = $('#callDetailsDetail').val();
+  
+  if (!title || !details) {
+    alert('Please fill in all required fields');
+    return;
+  }
+  
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/call/${callId}`,
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${dbUser.token || ''}`
+    },
+    data: JSON.stringify({
+      title: title,
+      details: details
+    }),
+    success: function(data) {
+      $('#callDetailModal').modal('hide');
+      showToast('Call updated successfully', 'success');
+      loadAssignedCalls(); // Refresh call list
+    },
+    error: function(xhr) {
+      console.error('Error updating call:', xhr.responseText);
+      alert('Failed to update call: ' + (xhr.responseJSON?.message || 'Unknown error'));
+    }
+  });
+}
+
+// Handle call deletion
+function handleDeleteCall() {
+  const callId = $('#callIdDetail').val();
+  
+  if (confirm('Are you sure you want to delete this call? This action cannot be undone.')) {
+    $.ajax({
+      url: `${POLICE_CAD_API_URL}/api/v1/call/${callId}`,
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${dbUser.token || ''}`
+      },
+      success: function(data) {
+        $('#callDetailModal').modal('hide');
+        showToast('Call deleted successfully', 'success');
+        loadAssignedCalls(); // Refresh call list
+      },
+      error: function(xhr) {
+        console.error('Error deleting call:', xhr.responseText);
+        alert('Failed to delete call: ' + (xhr.responseJSON?.message || 'Unknown error'));
+      }
+    });
+  }
+}
+
+// Toggle the add note section
+function toggleAddNoteSection() {
+  const addNoteSection = $('#addNoteSection');
+  const addNoteButtonSection = $('#addNoteButtonSection');
+  const addNoteIcon = $('#addNoteIcon');
+  
+  if (addNoteSection.is(':visible')) {
+    addNoteSection.hide();
+    addNoteButtonSection.hide();
+    addNoteIcon.removeClass('fa-minus').addClass('fa-plus');
+  } else {
+    addNoteSection.show();
+    addNoteButtonSection.show();
+    addNoteIcon.removeClass('fa-plus').addClass('fa-minus');
+    $('#newCallNote').focus();
+  }
+}
+
+// Handle adding a new call note
+function handleAddCallNote() {
+  const callId = $('#callIdDetail').val();
+  const noteText = $('#newCallNote').val().trim();
+  
+  if (!noteText) {
+    showToast('Please enter a note before submitting', 'warning');
+    return;
+  }
+  
+  // Show loading state
+  const addNoteBtn = $('#addCallNote');
+  const originalText = addNoteBtn.text();
+  addNoteBtn.prop('disabled', true).text('Adding...');
+  
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/call/${callId}/note`,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${dbUser.token || ''}`
+    },
+    data: JSON.stringify({
+      note: noteText,
+      createdBy: dbUser.user?.username || 'Unknown'
+    }),
+    success: function(data) {
+      // Clear the note input
+      $('#newCallNote').val('');
+      
+      // Show success message
+      showToast('Note added successfully', 'success');
+      
+      // Hide the add note section
+      toggleAddNoteSection();
+      
+      // Refresh the call details to show the new note
+      populateCallDetails(callId);
+      
+      // Reset button state
+      addNoteBtn.prop('disabled', false).text(originalText);
+    },
+    error: function(xhr) {
+      console.error('Error adding call note:', xhr.responseText);
+      showToast('Failed to add note: ' + (xhr.responseJSON?.message || 'Unknown error'), 'danger');
+      
+      // Reset button state
+      addNoteBtn.prop('disabled', false).text(originalText);
+    }
+  });
+}
+
+// Handle editing a call note
+function handleEditCallNote(noteId, currentText) {
+  const newText = prompt('Edit your note:', currentText);
+  
+  if (newText === null || newText.trim() === '') {
+    return; // User cancelled or entered empty text
+  }
+  
+  const callId = $('#callIdDetail').val();
+  
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/call/${callId}/note/${noteId}`,
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${dbUser.token || ''}`
+    },
+    data: JSON.stringify({
+      note: newText.trim()
+    }),
+    success: function(data) {
+      showToast('Note updated successfully', 'success');
+      populateCallDetails(callId); // Refresh to show updated note
+    },
+    error: function(xhr) {
+      console.error('Error updating call note:', xhr.responseText);
+      showToast('Failed to update note: ' + (xhr.responseJSON?.message || 'Unknown error'), 'danger');
+    }
+  });
+}
+
+// Handle deleting a call note
+function handleDeleteCallNote(noteId) {
+  if (!confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
+    return;
+  }
+  
+  const callId = $('#callIdDetail').val();
+  
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/call/${callId}/note/${noteId}`,
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${dbUser.token || ''}`
+    },
+    success: function(data) {
+      showToast('Note deleted successfully', 'success');
+      populateCallDetails(callId); // Refresh to show updated notes
+    },
+    error: function(xhr) {
+      console.error('Error deleting call note:', xhr.responseText);
+      showToast('Failed to delete note: ' + (xhr.responseJSON?.message || 'Unknown error'), 'danger');
+    }
+  });
 }
