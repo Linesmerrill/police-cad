@@ -461,31 +461,10 @@
     }
 
     function goToDepartment(departmentId, dashboardUrl, departmentName) {
-      // For civilian departments, navigate directly with parameters
-      if (dashboardUrl === '/civ-dashboard') {
-        const encodedDeptId = encodeDepartmentId(departmentId);
-        const url = `${dashboardUrl}?dept=${encodeURIComponent(departmentName)}&d=${encodedDeptId}`;
-        window.location.href = url;
-        return;
-      }
-      
-      // For other departments, use the form submission method
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = '/select-department';
-      form.style.display = 'none';
-      const deptInput = document.createElement('input');
-      deptInput.type = 'hidden';
-      deptInput.name = 'departmentId';
-      deptInput.value = departmentId;
-      const redirectInput = document.createElement('input');
-      redirectInput.type = 'hidden';
-      redirectInput.name = 'redirect';
-      redirectInput.value = dashboardUrl;
-      form.appendChild(deptInput);
-      form.appendChild(redirectInput);
-      document.body.appendChild(form);
-      form.submit();
+      // For all departments, navigate directly with parameters
+      const encodedDeptId = encodeDepartmentId(departmentId);
+      const url = `${dashboardUrl}?dept=${encodeURIComponent(departmentName)}&d=${encodedDeptId}`;
+      window.location.href = url;
     }
 
     function fillAccountDetails() {

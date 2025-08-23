@@ -42,11 +42,8 @@ function fetchAndRenderModernDepartments() {
 
         let icon = "fa-building";
         let action = "#";
-        let redirect = "";
-        const useForm = ["police", "fire", "ems", "dispatch"].includes(
-          template.toLowerCase()
-        );
-        const isDisabled = ["fire", "ems"].includes(template.toLowerCase());
+        const useForm = false; // All departments now use direct navigation with query parameters
+        const isDisabled = [].includes(template.toLowerCase());
 
         // Map icons and routes
         switch (template.toLowerCase()) {
@@ -61,23 +58,31 @@ function fetchAndRenderModernDepartments() {
             break;
           case "police":
             icon = "fa-shield";
-            action = "/select-department";
-            redirect = "/police-dashboard";
+            action = "/police-dashboard";
+            // Add department name as query parameter for police departments
+            const encodedPoliceDeptId = encodeDepartmentId(departmentId);
+            action += `?dept=${encodeURIComponent(name)}&d=${encodedPoliceDeptId}`;
             break;
           case "dispatch":
             icon = "fa-headset";
-            action = "/select-department";
-            redirect = "/dispatch-dashboard";
+            action = "/dispatch-dashboard";
+            // Add department name as query parameter for dispatch departments
+            const encodedDispatchDeptId = encodeDepartmentId(departmentId);
+            action += `?dept=${encodeURIComponent(name)}&d=${encodedDispatchDeptId}`;
             break;
           case "fire":
             icon = "fa-fire-extinguisher";
-            action = "#"; // Disabled, no action
-            redirect = "";
+            action = "/ems-dashboard";
+            // Add department name as query parameter for fire departments
+            const encodedFireDeptId = encodeDepartmentId(departmentId);
+            action += `?dept=${encodeURIComponent(name)}&d=${encodedFireDeptId}`;
             break;
           case "ems":
             icon = "fa-medkit";
-            action = "#"; // Disabled, no action
-            redirect = "";
+            action = "/ems-dashboard";
+            // Add department name as query parameter for EMS departments
+            const encodedEmsDeptId = encodeDepartmentId(departmentId);
+            action += `?dept=${encodeURIComponent(name)}&d=${encodedEmsDeptId}`;
             break;
         }
 

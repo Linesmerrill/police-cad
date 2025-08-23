@@ -1,103 +1,2359 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <% include ad-header %>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Page Not Found | LPC</title>
-    <link rel="stylesheet" href="/styles.css" />
-    <!-- Department Background System -->
-    <link rel="stylesheet" href="/static/css/department-backgrounds.css">
-    <style>
-      body {
-        margin: 0;
-        font-family: "Helvetica Neue", sans-serif;
-        background: #0f172a;
-        color: #fff;
-        text-align: center;
-        background-image: url("https://zos.alipayobjects.com/rmsportal/hzPBTkqtFpLlWCi.jpg");
-        background-size: cover;
-        background-position: center;
-      }
+<html>
 
-      .overlay {
-        background: rgba(0, 0, 0, 0.7); /* Dark transparent box */
-        padding: 60px 30px;
-        max-width: auto;
-        margin: 100px auto;
-        /* border-radius: 16px; */
+<head>
+  <% include ad-header %>
+  <title>LPC - Fire/EMS Dashboard</title>
+  <meta charset="utf-8">
+  <meta name="description"
+    content="Lines Roleplay Police CAD. Built to facilitate the needs of roleplay police and civilians." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="generator" content="Codeply">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap.min.css" />
+  <link rel="stylesheet" href="/static/css/animate.min.css" />
+  <link rel="stylesheet" href="/static/css/ionicons.min.css" />
+  <link rel="stylesheet" href="/static/css/tail.select-dark.min.css" />
+  <link rel="stylesheet" href="static/css/style.css">
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <!-- Department Background System -->
+  <link rel="stylesheet" href="/static/css/department-backgrounds.css">
+  <script type="module" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule="" src="https://unpkg.com/ionicons@5.1.2/dist/ionicons/ionicons.js"></script>
+  <link rel="shortcut icon" type="image/ico" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700,800,900" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Signika:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://code.iconify.design/1/1.0.3/iconify.min.js"></script>
+  <script type="text/javascript" src="static/js/tail.select.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+  <script src="/static/js/jquery.min.js"></script>
+  <script src="/static/js/jquery.easing.min.js"></script>
+  <script src="/static/js/wow.js"></script>
+  <script src="/static/js/popper.js"></script>
+      <script src="/static/js/main.js"></script>
+    <script src="/static/js/notepad.js"></script>
+    <script src="/static/js/notifications.js"></script>
+    <script src="/static/js/departments.js"></script>
+    <script src="/static/js/ems-dashboard.js"></script>
+    <script src="/static/js/department-backgrounds.js"></script>
+  <script src="/static/js/bootstrap.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <!-- To hide google translate header bar on each page -->
+  <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
+  <style type='text/css'> body {position: static !important; top:0px !important;}</style>
+  <style>
+    #persona-table tbody tr {
+      cursor: pointer;
+    }
+    #persona-table tbody tr:hover {
+      background-color: #3b82f6;
+    }
+    #vehicle-table tbody tr {
+      cursor: pointer;
+    }
+    #vehicle-table tbody tr:hover {
+      background-color: #3b82f6;
+    }
+    .rotate {
+      transition: transform 0.3s ease;
+    }
+    .rotate.expanded {
+      transform: rotate(90deg);
+    }
+    
+    /* Medical Database Styles */
+    .list-group-item-action {
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .list-group-item-action:hover {
+      background-color: #f8f9fa;
+      border-left: 4px solid #007bff;
+    }
+    
+    .list-group-item-action h6 {
+      margin-bottom: 0.5rem;
+    }
+    
+    .list-group-item-action small {
+      color: #6c757d;
+    }
+    
+    .lds-facebook {
+      display: inline-block;
+      position: relative;
+      width: 80px;
+      height: 80px;
+    }
+    
+    .lds-facebook div {
+      display: inline-block;
+      position: absolute;
+      left: 8px;
+      width: 16px;
+      background: #007bff;
+      animation: lds-facebook 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
+    }
+    
+    .lds-facebook div:nth-child(1) {
+      left: 8px;
+      animation-delay: -0.24s;
+    }
+    
+    .lds-facebook div:nth-child(2) {
+      left: 32px;
+      animation-delay: -0.12s;
+    }
+    
+    .lds-facebook div:nth-child(3) {
+      left: 56px;
+      animation-delay: 0;
+    }
+    
+    @keyframes lds-facebook {
+      0% {
+        top: 8px;
+        height: 64px;
       }
+      50%, 100% {
+        top: 24px;
+        height: 32px;
+      }
+    }
+    
+    .text-align-center {
+      text-align: center;
+    }
+    
+    .margin-bottom-1 {
+      margin-bottom: 0.5rem;
+    }
+    
+    .margin-bottom-2 {
+      margin-bottom: 1rem;
+    }
+    
+    .margin-top-2 {
+      margin-top: 1rem;
+    }
+    
+    .margin-right-1 {
+      margin-right: 0.5rem;
+    }
+    
+    .disabled-color {
+      background-color: #e9ecef !important;
+      color: #6c757d !important;
+    }
+    
+    .capitalize {
+      text-transform: capitalize;
+    }
+    
+    .text-danger {
+      color: #dc3545 !important;
+    }
+    
+    .text-success {
+      color: #28a745 !important;
+    }
+    
+    .text-muted {
+      color: #6c757d !important;
+    }
+    
+    .text-center {
+      text-align: center !important;
+    }
+    
+    .d-flex {
+      display: flex !important;
+    }
+    
+    .w-100 {
+      width: 100% !important;
+    }
+    
+    .justify-content-between {
+      justify-content: space-between !important;
+    }
+    
+    .mb-1 {
+      margin-bottom: 0.25rem !important;
+    }
+    
+    .mb-2 {
+      margin-bottom: 0.5rem !important;
+    }
+    
+    .btn-block {
+      display: block;
+      width: 100%;
+    }
+    
+    .modal-lg {
+      max-width: 800px;
+    }
+    
+    /* Dark theme for medical database modal */
+    #medicalDatabaseModal .modal-content {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      border: 1px solid #404040;
+    }
+    
+    #medicalDatabaseModal .modal-header {
+      background-color: #2d2d2d;
+      border-bottom: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #medicalDatabaseModal .modal-header .close {
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: bold;
+      opacity: 0.9;
+      text-shadow: none;
+      margin-top: -5px;
+      line-height: 1;
+    }
+    
+    #medicalDatabaseModal .modal-header .close:hover {
+      opacity: 1;
+      color: #ff6b6b;
+    }
+    
+    #medicalDatabaseModal .modal-title {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .modal-body {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      padding: 20px;
+    }
+    
+    /* Form controls with proper contrast */
+    #medicalDatabaseModal .form-control {
+      background-color: #2d2d2d;
+      border: 1px solid #404040;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .form-control:focus {
+      background-color: #2d2d2d;
+      border-color: #4a9eff;
+      color: #ffffff;
+      box-shadow: 0 0 0 0.2rem rgba(74, 158, 255, 0.25);
+    }
+    
+    #medicalDatabaseModal .form-control::placeholder {
+      color: #b0b0b0;
+    }
+    
+    /* Labels with high contrast */
+    #medicalDatabaseModal label {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    /* Buttons with proper contrast */
+    #medicalDatabaseModal .btn-primary {
+      background-color: #4a9eff;
+      border-color: #4a9eff;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .btn-primary:hover {
+      background-color: #3a8eef;
+      border-color: #3a8eef;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .btn-info {
+      background-color: #17a2b8;
+      border-color: #17a2b8;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .btn-info:hover {
+      background-color: #138496;
+      border-color: #117a8b;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .btn-success {
+      background-color: #28a745;
+      border-color: #28a745;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .btn-success:hover {
+      background-color: #218838;
+      border-color: #1e7e34;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .btn-warning {
+      background-color: #ffc107;
+      border-color: #ffc107;
+      color: #212529;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .btn-warning:hover {
+      background-color: #e0a800;
+      border-color: #d39e00;
+      color: #212529;
+    }
+    
+    #medicalDatabaseModal .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+      color: #ffffff;
+    }
+    
+    /* Panels with proper contrast */
+    #medicalDatabaseModal .panel {
+      background-color: #2d2d2d;
+      border: 1px solid #404040;
+    }
+    
+    #medicalDatabaseModal .panel-heading {
+      background-color: #1a1a1a;
+      border-bottom: 1px solid #404040;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .panel-title {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .panel-body {
+      background-color: #2d2d2d;
+      color: #ffffff;
+    }
+    
+    /* Panel info styling with better contrast */
+    #medicalDatabaseModal .panel-info > .panel-heading {
+      background-color: #0c5460;
+      border-color: #0c5460;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .panel-info > .panel-body {
+      background-color: #2d2d2d;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .panel-info strong {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .panel-info span {
+      color: #e6f3ff;
+    }
+    
+    /* List items with proper contrast */
+    #medicalDatabaseModal .list-group-item {
+      background-color: #2d2d2d;
+      border: 1px solid #404040;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .list-group-item:hover {
+      background-color: #404040;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .list-group-item h6 {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .list-group-item small {
+      color: #e6f3ff;
+    }
+    
+    /* Navigation tabs with proper contrast */
+    #medicalDatabaseModal .nav-tabs {
+      border-bottom: 1px solid #404040;
+    }
+    
+    #medicalDatabaseModal .nav-tabs > li > a {
+      background-color: #2d2d2d;
+      border: 1px solid #404040;
+      color: #e6f3ff;
+    }
+    
+    #medicalDatabaseModal .nav-tabs > li.active > a,
+    #medicalDatabaseModal .nav-tabs > li.active > a:focus,
+    #medicalDatabaseModal .nav-tabs > li.active > a:hover {
+      background-color: #1a1a1a;
+      border: 1px solid #404040;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    /* View content styling */
+    #medicalDatabaseModal .view-content {
+      min-height: 300px;
+    }
+    
+    /* Headings with proper contrast */
+    #medicalDatabaseModal h4, #medicalDatabaseModal h5, #medicalDatabaseModal h6 {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    /* Horizontal rules with better visibility */
+    #medicalDatabaseModal hr {
+      border-color: #404040;
+      background-color: #404040;
+    }
+    
+    /* Alerts with proper contrast */
+    #medicalDatabaseModal .alert {
+      background-color: #2d2d2d;
+      border: 1px solid #404040;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .alert-warning {
+      background-color: #3d2d1a;
+      border-color: #8a6d3b;
+      color: #fcf8e3;
+    }
+    
+    #medicalDatabaseModal .alert-info {
+      background-color: #1a3d2d;
+      border-color: #3b8a6d;
+      color: #d1ecf1;
+    }
+    
+    #medicalDatabaseModal .alert-danger {
+      background-color: #3d1a1a;
+      border-color: #8a3b3b;
+      color: #f2dede;
+    }
+    
+    /* Text utilities for better contrast */
+    #medicalDatabaseModal .text-muted {
+      color: #b0b0b0 !important;
+    }
+    
+    #medicalDatabaseModal .text-center {
+      text-align: center;
+    }
+    
+    /* Modal backdrop styling */
+    .modal-backdrop {
+      background-color: rgba(0, 0, 0, 0.8);
+    }
+    
+    .modal-backdrop.show {
+      opacity: 0.8;
+    }
+    
+    /* Table styling for medical reports */
+    #medicalDatabaseModal .table {
+      background-color: #2d2d2d;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .table > thead > tr > th {
+      background-color: #1a1a1a;
+      border-bottom: 1px solid #404040;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .table > tbody > tr > td {
+      border-top: 1px solid #404040;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .table-striped > tbody > tr:nth-of-type(odd) {
+      background-color: #333333;
+    }
+    
+    #medicalDatabaseModal .table-hover > tbody > tr:hover {
+      background-color: #404040;
+      color: #ffffff;
+    }
+    
+    /* Badge styling for medical reports */
+    #medicalDatabaseModal .badge {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    
+    #medicalDatabaseModal .badge-success {
+      background-color: #28a745;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .badge-warning {
+      background-color: #ffc107;
+      color: #212529;
+    }
+    
+    #medicalDatabaseModal .badge-danger {
+      background-color: #dc3545;
+      color: #ffffff;
+    }
+    
+    #medicalDatabaseModal .badge-info {
+      background-color: #17a2b8;
+      color: #ffffff;
+    }
+    
+    /* Button styling for action buttons */
+    #medicalDatabaseModal .btn-sm {
+      padding: 4px 8px;
+      font-size: 12px;
+      margin: 2px;
+    }
+    
+    /* Table responsive styling */
+    #medicalDatabaseModal .table-responsive {
+      border: 1px solid #404040;
+      border-radius: 4px;
+    }
+    
+    /* Patient Information Panel Styling */
+    #createReportModal .panel-info {
+      background-color: #1e3a5f;
+      border-color: #4a9eff;
+    }
+    
+    #createReportModal .panel-info > .panel-heading {
+      background-color: #2980b9;
+      border-color: #4a9eff;
+      color: #ffffff;
+    }
+    
+    #createReportModal .panel-info > .panel-body {
+      background-color: #1e3a5f;
+      color: #ffffff;
+      padding: 15px;
+    }
+    
+    #createReportModal .panel-info strong {
+      color: #4a9eff;
+      font-weight: 600;
+    }
+    
+    #createReportModal .panel-info span {
+      color: #ffffff;
+      margin-left: 5px;
+    }
+    
+    /* Toast Styling */
+    .toast {
+      display: none;
+      opacity: 1;
+      margin-bottom: 15px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      border-radius: 10px;
+      min-width: 300px;
+      max-width: 400px;
+      font-size: 16px;
+    }
+    
+    .toast.bg-success {
+      background-color: #28a745 !important;
+    }
+    
+    .toast.bg-danger {
+      background-color: #dc3545 !important;
+    }
+    
+    .toast-body {
+      padding: 16px 20px;
+      font-weight: 600;
+      flex-grow: 1;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+    
+    .btn-close-toast {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 18px;
+      padding: 8px 12px;
+      margin-right: 8px;
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    }
+    
+    .btn-close-toast:hover {
+      opacity: 1;
+    }
+    
+    .btn-close-toast:focus {
+      outline: none;
+      box-shadow: none;
+    }
+    
+    #toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+    }
+    
+    /* Table responsive styling */
+    #medicalDatabaseModal .table-responsive {
+      border: 1px solid #404040;
+      border-radius: 4px;
+    }
+    
+    /* Force medical reports content to be visible */
+    #medicalDatabaseModal #medicalReportsContent {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      height: auto !important;
+      overflow: visible !important;
+      position: relative !important;
+      z-index: 1 !important;
+    }
+    
+    /* Ensure tab content is visible */
+    #medicalDatabaseModal .tab-pane.active {
+      display: block !important;
+      visibility: visible !important;
+    }
+    
+    #medicalDatabaseModal #reports-content {
+      display: block !important;
+      visibility: visible !important;
+    }
+    
+    /* Bootstrap 3 tab fixes */
+    #medicalDatabaseModal .tab-content > .tab-pane {
+      display: block;
+      height: auto;
+      overflow: visible;
+    }
+    
+    #medicalDatabaseModal .tab-content > .tab-pane.active {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    /* Override any Bootstrap 3 fade transitions */
+    #medicalDatabaseModal .tab-pane.fade {
+      opacity: 1 !important;
+      transition: none !important;
+    }
+    
+    #medicalDatabaseModal .tab-pane.fade.in {
+      opacity: 1 !important;
+    }
+    
+    /* Ensure inactive tab panes are completely hidden */
+    #medicalDatabaseModal .tab-pane:not(.active) {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      position: absolute !important;
+      left: -9999px !important;
+    }
+    
+    /* Recent searches dropdown styling */
+    .recent-searches-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #2d2d2d;
+      border: 1px solid #404040;
+      border-top: none;
+      border-radius: 0 0 5px 5px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      z-index: 1050;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .recent-searches-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #404040;
+      font-weight: 600;
+      color: #ffffff;
+    }
+    
+    .recent-searches-header .btn-link {
+      color: #ff6b6b !important;
+      text-decoration: none;
+      padding: 2px 8px;
+    }
+    
+    .recent-searches-header .btn-link:hover {
+      color: #ff5252 !important;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: 3px;
+    }
+    
+    .recent-searches-list {
+      padding: 0;
+    }
+    
+    .recent-search-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+      border-bottom: 1px solid #404040;
+      transition: background-color 0.2s;
+    }
+    
+    .recent-search-item:last-child {
+      border-bottom: none;
+    }
+    
+    .recent-search-item:hover {
+      background: #404040;
+    }
+    
+    .recent-search-term {
+      flex: 1;
+      color: #ffffff;
+      cursor: pointer;
+      font-weight: 500;
+      padding: 5px 0;
+    }
+    
+    .recent-search-term:hover {
+      color: #4fc3f7;
+    }
+    
+    .recent-search-date {
+      color: #b0b0b0;
+      margin: 0 15px;
+      font-size: 12px;
+    }
+    
+    .recent-search-item .btn-link {
+      color: #ff6b6b !important;
+      text-decoration: none;
+      padding: 2px 6px;
+      margin: 0;
+      min-width: auto;
+    }
+    
+    .recent-search-item .btn-link:hover {
+      color: #ff5252 !important;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: 3px;
+    }
+    
+    /* Position the search field container relatively for dropdown positioning */
+    #searchView .form-group {
+      position: relative;
+    }
+    
+    /* Utility classes for button spacing */
+    .margin-left-1 {
+      margin-left: 0.5rem !important;
+    }
+    
+    .margin-top-2 {
+      margin-top: 1rem !important;
+    }
+    
+    /* Delete Confirmation Modal Styling */
+    #deleteConfirmModal .modal-content {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      border: 1px solid #404040;
+    }
+    
+    #deleteConfirmModal .modal-header {
+      background-color: #2d2d2d;
+      border-bottom: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #deleteConfirmModal .modal-header .close {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: bold;
+      opacity: 0.9;
+      text-shadow: none;
+      margin-top: -5px;
+      line-height: 1;
+    }
+    
+    #deleteConfirmModal .modal-header .close:hover {
+      opacity: 1;
+      color: #ff6b6b;
+    }
+    
+    #deleteConfirmModal .modal-title {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    #deleteConfirmModal .modal-body {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      padding: 20px;
+    }
+    
+    #deleteConfirmModal .modal-footer {
+      background-color: #1a1a1a;
+      border-top: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #deleteConfirmModal .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      color: #ffffff;
+    }
+    
+    #deleteConfirmModal .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    #deleteConfirmModal .btn-danger {
+      background-color: #dc3545;
+      border-color: #dc3545;
+      color: #ffffff;
+    }
+    
+    #deleteConfirmModal .btn-danger:hover {
+      background-color: #c82333;
+      border-color: #bd2130;
+    }
+    
+    .margin-left-1 { margin-left: 0.5rem !important; }
+    .margin-top-2 { margin-top: 1rem !important; }
+    .margin-bottom-2 { margin-bottom: 1rem !important; }
+    
+    /* Accordion Styling */
+    .civilian-accordion-item {
+      margin-bottom: 10px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .civilian-header {
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      border: none;
+      border-radius: 8px;
+    }
+    
+    .civilian-header:hover {
+      background-color: #2d2d2d !important;
+    }
+    
+    .civilian-accordion-content {
+      background-color: #1a1a1a;
+      border: 1px solid #404040;
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+    }
+    
+    .accordion-body {
+      padding: 20px;
+    }
+    
+    .accordion-icon {
+      transition: transform 0.3s ease;
+      font-size: 16px;
+      color: #6c757d;
+    }
+    
+    .accordion-icon.fa-chevron-up {
+      transform: rotate(180deg);
+    }
+    
+    /* Remove the old medical information section styling */
+    #medicalDetails {
+      display: none !important;
+    }
+    
+    /* Medications Delete Confirmation Modal Styling */
+    #deleteMedicationConfirmModal .modal-content {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      border: 1px solid #404040;
+    }
+    
+    #deleteMedicationConfirmModal .modal-header {
+      background-color: #2d2d2d;
+      border-bottom: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #deleteMedicationConfirmModal .modal-header .close {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: bold;
+      opacity: 0.9;
+      text-shadow: none;
+      margin-top: -5px;
+      line-height: 1;
+    }
+    
+    #deleteMedicationConfirmModal .modal-header .close:hover {
+      opacity: 1;
+      color: #ff6b6b;
+    }
+    
+    #deleteMedicationConfirmModal .modal-title {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    #deleteMedicationConfirmModal .modal-body {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      padding: 20px;
+    }
+    
+    #deleteMedicationConfirmModal .modal-footer {
+      background-color: #1a1a1a;
+      border-top: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #deleteMedicationConfirmModal .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      color: #ffffff;
+    }
+    
+    #deleteMedicationConfirmModal .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    #deleteMedicationConfirmModal .btn-danger {
+      background-color: #dc3545;
+      border-color: #dc3545;
+      color: #ffffff;
+    }
+    
+    #deleteMedicationConfirmModal .btn-danger:hover {
+      background-color: #c82333;
+      border-color: #bd2130;
+    }
+    
+    /* Declare Alive and Pronounce Dead Confirmation Modals Styling */
+    #declareAliveConfirmModal .modal-content,
+    #pronounceDeadConfirmModal .modal-content {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      border: 1px solid #404040;
+    }
+    
+    #declareAliveConfirmModal .modal-header,
+    #pronounceDeadConfirmModal .modal-header {
+      background-color: #2d2d2d;
+      border-bottom: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #declareAliveConfirmModal .modal-header .close,
+    #pronounceDeadConfirmModal .modal-header .close {
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: bold;
+      opacity: 0.9;
+      text-shadow: none;
+      margin-top: -5px;
+      line-height: 1;
+    }
+    
+    #declareAliveConfirmModal .modal-header .close:hover,
+    #pronounceDeadConfirmModal .modal-header .close:hover {
+      opacity: 1;
+      color: #ff6b6b;
+    }
+    
+    #declareAliveConfirmModal .modal-title,
+    #pronounceDeadConfirmModal .modal-title {
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    #declareAliveConfirmModal .modal-body,
+    #pronounceDeadConfirmModal .modal-body {
+      background-color: #1a1a1a;
+      color: #ffffff;
+      padding: 20px;
+    }
+    
+    #declareAliveConfirmModal .modal-footer,
+    #pronounceDeadConfirmModal .modal-footer {
+      background-color: #1a1a1a;
+      border-top: 1px solid #404040;
+      padding: 15px 20px;
+    }
+    
+    #declareAliveConfirmModal .btn-secondary,
+    #pronounceDeadConfirmModal .btn-secondary {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      color: #ffffff;
+    }
+    
+    #declareAliveConfirmModal .btn-secondary:hover,
+    #pronounceDeadConfirmModal .btn-secondary:hover {
+      background-color: #5a6268;
+      border-color: #545b62;
+    }
+    
+    #declareAliveConfirmModal .btn-success {
+      background-color: #28a745;
+      border-color: #28a745;
+      color: #ffffff;
+    }
+    
+    #declareAliveConfirmModal .btn-success:hover {
+      background-color: #218838;
+      border-color: #1e7e34;
+    }
+    
+    #pronounceDeadConfirmModal .btn-warning {
+      background-color: #ffc107;
+      border-color: #ffc107;
+      color: #212529;
+    }
+    
+    #pronounceDeadConfirmModal .btn-warning:hover {
+      background-color: #e0a800;
+      border-color: #d39e00;
+    }
+    
+    .margin-left-1 { margin-left: 0.5rem !important; }
+    
+    /* Ensure delete confirmation modals appear on top */
+    #deleteConfirmModal,
+    #deleteMedicationConfirmModal,
+    #pronounceDeadConfirmModal,
+    #declareAliveConfirmModal {
+      z-index: 9999 !important;
+    }
+    
+    #deleteConfirmModal .modal-backdrop,
+    #deleteMedicationConfirmModal .modal-backdrop,
+    #pronounceDeadConfirmModal .modal-backdrop,
+    #declareAliveConfirmModal .modal-backdrop {
+      z-index: 9998 !important;
+    }
+  </style>
+</head>
+<body>
 
-      h1 {
-        font-size: 3rem;
-        margin-bottom: 0.5rem;
-      }
+  <div class="wrapper d-flex align-items-stretch">
+    <nav id="sidebar" style="z-index: 9;">
+      <div class="img bg-wrap text-center py-4" style="background-image: linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.4)),url(/static/images/fire-ems-corner-bg.jpg);">
+        <div class="user-logo">
+          <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()">
+            <div class="img profile-picture"></div>
+          </a>
+          <h3>
+            <%=user.user.username%>
+          </h3>
+          <h5>
+            <%=user.user.callSign%>
+          </h5>
+          <h5>Logged in as: Fire/EMS</h5>
+        </div>
+      </div>
+      <ul class="list-unstyled components mb-5">
+        <li>
+          <a href="/"><span class="fa fa-home mr-3"></span> <img style="display: inline; margin-top: -9px; vertical-align: text-top;" src="/static/images/favicon-32x32.png"></img> Lines Police CAD</a>
+        </li>
+        <li class="background-color-222">
+          <a type="button" data-toggle="collapse" data-target="#toggleSearch" aria-expanded="true"
+            aria-controls="toggleSearch" onclick="toggleCaret()"> Search <i class="fa fa-caret-right pull-right rotate"
+              style="margin-top: 0.3em;"></i></a>
+        </li>
+        <div class="collapse in" id="toggleSearch">
+          <li>
+                                  <a data-toggle="modal" href="#medicalDatabaseModal"><span class="fa fa-database ml-3 mr-3"></span> Medical
+                        Database</a>
+          </li>
+          <li>
+            <a data-toggle="modal" href="#newCivModal"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Persona</a>
+          </li>
+          <li>
+            <a data-toggle="modal" href="#newVehicleModal"><span class="fa fa-car ml-3 mr-3"></span> Add New Vehicle</a>
+          </li>
+        </div>
+        <li class="background-color-222">
+          <a type="button" data-toggle="collapse" data-target="#toggleUtilities" aria-expanded="false"
+            aria-controls="toggleUtilities" onclick="toggleCaret()"> Utilities <i
+              class="fa fa-caret-right pull-right rotate" style="margin-top: 0.3em;"></i></a>
+        </li>
+        <div class="collapse in" id="toggleUtilities">
+          <li>
+            <a data-toggle="modal" href="#10codesModal"><span class="fa fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
+          </li>
+          <li>
+            <a data-toggle="modal" href="#notepadModal"><span class="fa fa-clipboard ml-3 mr-3"></span> Notepad</a>
+          </li>
+          <li>
+            <a href="/map-interactive"><span class="fa fa-map ml-3 mr-3"></span> Map <i
+                class="fa fa-external-link-alt"></i></a>
+          </li>
+        </div>
+        <% include departments-sidebar %>
+        <% include community-sidebar %>
+        <% include other-sidebar %>
+      </ul>
 
-      p {
-        font-size: 1.2rem;
-        margin-bottom: 2rem;
-      }
+    </nav>
 
-      a.button {
-        display: inline-block;
-        margin: 10px;
-        padding: 12px 24px;
-        border-radius: 8px;
-        background: #4ade80;
-        color: #000;
-        font-weight: 600;
-        text-decoration: none;
-        transition: background 0.3s;
-      }
+    <div id="content" class="">
+      <nav id="topNav" class="topNav" style="z-index: 8; margin-bottom: 0; position: fixed;">
+        <div class="container-fluid" style="height: 70px;">
+          <div class="custom-menu" style="position: absolute; top: 10px;">
+            <button type="button" id="sidebarCollapse" class="btn btn-primary btn-lg"
+              style="z-index: 9;color: white;background: transparent;border-radius: unset;padding-right: 2em; border: transparent;">
+              <i class="fa fa-bars" aria-hidden="true" style="z-index: 9; font-size: 1.5em;"></i>
+            </button>
+          </div>
+          <div class="navbar-header" style="position: absolute; left: 85px;">
+            <h1 class="cursive">
+              <a href="#" id="ems-nav-link" data-community-id="<%= user.user.lastAccessedCommunity?.communityID || '' %>"><i class="fa fa-star"></i> EMS</a>
+              <span style="font-size: 0.8em; margin-left: 10px; color: #ccc;">
+                | <a href="/community-dashboard" style="color: #ccc; text-decoration: none;">Lines Police CAD</a>
+              </span>
+            </h1>
+          </div>
+        </div>
+      </nav>
 
-      a.button:hover {
-        background: #22c55e;
-      }
+      <header id="second" style='background-image: url("/static/images/ems-bkground.jpg");'>
+        <div class="header-content">
+          <div class="inner">
+            <h1 class="cursive">
+              <a href="#" id="ems-header-link" data-community-id="<%= user.user.lastAccessedCommunity?.communityID || '' %>">EMS</a>
+              <span style="font-size: 0.8em; margin-left: 10px; color: #ccc;">
+                | <a href="/community-dashboard" style="color: #ccc; text-decoration: none;">Lines Police CAD</a>
+              </span>
+            </h1>
 
-      a.back-link {
-        display: block;
-        margin-top: 30px;
-        color: #ccc;
-        text-decoration: underline;
-      }
+            <!-- imports the community specific alerts -->
+            <% include community-alerts %>
 
-      .info {
-        font-size: 0.95rem;
-        color: #cbd5e1;
-        margin-top: 20px;
-        line-height: 1.6;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="overlay">
-      <h1>Heads up 👋</h1>
-      <p>
-        This page is currently not available on our website.<br />But you can
-        find it in our new mobile app!
-      </p>
-      <a
-        class="button"
-        href="https://apps.apple.com/us/app/lpc-app/id6503307483"
-        target="_blank"
-        >Get it on iOS</a
-      >
-      <a
-        class="button"
-        href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp"
-        target="_blank"
-        >Get it on Android</a
-      >
-      <a class="back-link" href="/">Back to Homepage</a>
-      <div class="info">
-        We're uplifting the entire user experience, and the mobile app already
-        contains all the new features and improvements.<br />
-        We're actively working on bringing those same updates to the website —
-        so stay tuned!<br />
-        Thanks for your patience while we rebuild.
+            <div class="col-lg-10 col-lg-offset-1 text-center">
+                              <button data-toggle="modal" href="#medicalDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Medical
+                  Database</button>
+              <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg margin-top-2">Add New
+                Persona</button>
+              <button data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-lg margin-top-2">Add New
+                Vehicle</button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <section style='background-image: url("/static/images/blue-clouds.jpg");'>
+        <div class="container">
+
+          <!--Table for Personas  -->
+          <div class="col-md-12 col-md-offset-0.75">
+            <div class="margin-bottom-1">
+              <span id="active-bolos margin-right-1" style="font-size: 18px;">Personnel:</span> <button data-toggle="modal"
+                href="#newCivModal" class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Persona</button>
+            </div>
+            <div id="issue-loading-personnel-alert" style="display:none">
+              <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading personnel, try refreshing the page...</p>
+            </div>
+            <div id="persona-table-div">
+              <table id="persona-table" class="table table-hover table-bordered">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Location</th>
+                    <th>Station</th>
+                    <th>Callsign</th>
+                  </tr>
+                </thead>
+                <tbody id="persona-body">
+                  <!-- populated by JavaScript API -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!--Table for Vehicles  -->
+          <div class="col-md-12 col-md-offset-0.75 margin-top-2">
+            <div class="margin-bottom-1">
+              <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button
+                data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-md pull-right margin-bottom-1">Add
+                New Vehicle</button>
+            </div>
+            <table id="vehicle-table" class="table table-hover table-bordered">
+              <thead>
+                <tr>
+                  <th>Plate</th>
+                  <th>Model</th>
+                  <th>Engine #</th>
+                  <th>Color</th>
+                </tr>
+              </thead>
+              <tbody id="vehicle-body">
+                <!-- populated by JavaScript API -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+      <div class="google-ad"></div>
+      <% include footer %>
+</div>
+  </div>
+
+  <!-- Include all the modals and scripts -->
+  <% include account-management %>
+          <% include partials/notificationModal %>
+    
+    <!-- Delete Confirmation Modal for Medical Reports -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true" style="z-index: 9999;">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Delete</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete this medical report? This action cannot be undone.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" onclick="confirmDeleteMedicalReport()">Delete</button>
+          </div>
+        </div>
       </div>
     </div>
-    <!-- Department Background System -->
-    <script src="/static/js/department-backgrounds.js"></script>
-  </body>
+    
+    <!-- Delete Confirmation Modal for Medications -->
+    <div class="modal fade" id="deleteMedicationConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteMedicationConfirmModalLabel" aria-hidden="true" style="z-index: 9999;">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteMedicationConfirmModalLabel">Confirm Delete</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete this medication? This action cannot be undone.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteMedicationBtn">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Pronounce Dead Confirmation Modal -->
+    <div class="modal fade" id="pronounceDeadConfirmModal" tabindex="-1" role="dialog" aria-labelledby="pronounceDeadConfirmModalLabel" aria-hidden="true" style="z-index: 9999;">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="pronounceDeadConfirmModalLabel">Confirm Pronounce Dead</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to pronounce this person as deceased? This action will mark them as deceased in the system.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" onclick="executeDeceasedStatusChange()">Pronounce Dead</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Declare Alive Confirmation Modal -->
+    <div class="modal fade" id="declareAliveConfirmModal" tabindex="-1" role="dialog" aria-labelledby="declareAliveConfirmModalLabel" aria-hidden="true" style="z-index: 9999;">
+      <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="declareAliveConfirmModalLabel">Confirm Declare Alive</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to declare this person as alive? This action will mark them as alive in the system.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-success" onclick="executeDeceasedStatusChange()">Declare Alive</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <% include 10-codes %>
+    <% include notepad %>
+
+  <!-- EMS Dashboard Modals -->
+  <div id="galleryModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-body">
+          <img src="" id="galleryImage" class="img-responsive" />
+          <p>
+            <br />
+            <button class="btn btn-primary btn-lg center-block" data-dismiss="modal" aria-hidden="true">Close <i
+                class="ion-android-close"></i></button>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Call Detail Modal - Temporarily Hidden for Rework
+  <div id="callDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="update-call-form" class="form-horizontal" action="/" method="get">
+            <fieldset>
+              
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
+              <h4>Call Details</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Created At:</label>
+                <div class="col-md-4">
+                  <h5 id="createdAtCallDetail"></h5>
+                </div>
+              </div>
+
+              
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Updated At:</label>
+                <div class="col-md-4">
+                  <h5 id="updatedAtCallDetail"></h5>
+                </div>
+              </div>
+
+              
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Classifier:</label>
+                <div class="col-md-4">
+                  <h4 id="classifier"></h4>
+                </div>
+              </div>
+
+              
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createdBy">Engines:</label>
+                <div class="col-md-8 margin-left-neg-2">
+                  <h5 id="engines"></h5>
+                </div>
+              </div>
+
+              
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="description">Description:</label>
+                <div class="col-md-4">
+                  <h5 id="descriptionCallDetail" style="text-transform:capitalize"></h5>
+                </div>
+              </div>
+
+              
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="callNotes">Call Notes:</label>
+                <div class="col-md-8 col-md-offset-2">
+                  <textarea id="callNotesDetail" name="callNotes" type="text" rows="4" maxlength="500"
+                    placeholder="call notes" class="form-control input-md" disabled></textarea>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  -->
+
+  <div id="newCivModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" onsubmit="return false;">
+            <fieldset>
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
+              <h4>Add a New Persona</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Text input-->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="first-name">First Name</label>
+                <div class="col-md-4">
+                  <input id="first-name" name="emsFirstName" type="text" placeholder="first name"
+                    class="form-control input-md" data-trigger="first-name-popover"
+                    data-content="* First name cannot contain spaces." required="">
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="last-name">Last Name</label>
+                <div class="col-md-4">
+                  <input id="last-name" name="emsLastName" type="text" placeholder="last name"
+                    class="form-control input-md" data-trigger="last-name-popover"
+                    data-content="* Last name cannot contain spaces." required="">
+                </div>
+              </div>
+
+              <!-- Select Basic -->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="department">Department</label>
+                <div class="col-md-4">
+                  <select id="department" name="department" class="form-control">
+                    <option value="Fire">Fire</option>
+                    <option value="EMS">EMS</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="assignment-area">Assignment Area</label>
+                <div class="col-md-4">
+                  <input id="assignment-area" name="assignmentArea" type="text" placeholder="assignment area"
+                    maxlength="50" class="form-control input-md" required>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="station">Station</label>
+                <div class="col-md-4">
+                  <input id="station" name="station" type="number" placeholder="station # (optional)" maxlength="5"
+                    class="form-control input-md">
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="call-sign">Call Sign</label>
+                <div class="col-md-4">
+                  <input id="call-sign" name="callSign" type="text" placeholder="call sign (optional)" maxlength="10"
+                    class="form-control input-md">
+                </div>
+              </div>
+
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submit-new-ems"></label>
+                <div class="col-md-4">
+                  <input type="hidden" name="userID" value="<%= user._id %>">
+                  <input type="hidden" id="activeCommunityID" name="activeCommunityID" ,
+                    value="<%=user.user.activeCommunity%>">
+                  <button id="submit-new-ems" class="btn btn-primary" type="button" onclick="createNewEms()">Create</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newVehicleModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="newVehicleForm">
+            <!-- Form Header -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4 class="mb-0">Add a New Vehicle</h4>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+            </div>
+            
+            <hr class="mb-4">
+
+            <!-- Plate Number -->
+            <div class="form-group mb-3">
+              <label for="new-vehicle-plate" class="form-label">Plate Number <span class="text-danger">*</span></label>
+              <input id="new-vehicle-plate" name="plate" type="text" maxlength="8" 
+                     placeholder="Enter plate number" class="form-control" required>
+            </div>
+
+            <!-- Model -->
+            <div class="form-group mb-3">
+              <label for="new-vehicle-model" class="form-label">Model <span class="text-danger">*</span></label>
+              <select class="form-control" name="model" id="new-vehicle-model" required>
+                <option value="">Select a model...</option>
+                <option value="FireTruck">FireTruck</option>
+                <option value="Fire Dept. Vehicle">Fire Dept. Vehicle</option>
+                <option value="Fire Dept. Chief Vehicle">Fire Dept. Chief Vehicle</option>
+                <option value="Ambulance">Ambulance</option>
+                <option value="Medical Dept. Vehicle">Medical Dept. Vehicle</option>
+                <option value="Medical Dept. Chief Vehicle">Medical Dept. Chief Vehicle</option>
+                <option value="LifeGuard Patrol Vehicle">LifeGuard Patrol Vehicle</option>
+                <option value="LifeGuard Boat">LifeGuard Boat</option>
+              </select>
+            </div>
+
+            <!-- Engine Number -->
+            <div class="form-group mb-3">
+              <label for="new-vehicle-engineNumber" class="form-label">Engine Number <span class="text-danger">*</span></label>
+              <input id="new-vehicle-engineNumber" name="engineNumber" type="text" maxlength="10" 
+                     placeholder="Enter engine number" class="form-control" required>
+            </div>
+
+            <!-- Color -->
+            <div class="form-group mb-3">
+              <label for="new-vehicle-color" class="form-label">Color</label>
+              <input id="new-vehicle-color" name="color" type="text" 
+                     placeholder="Enter color (optional)" class="form-control">
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-group text-center mt-4">
+              <button id="createVehicleBtn" type="button" class="btn btn-primary btn-lg px-4" onclick="createEmsVehicle()">
+                Create Vehicle
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medical Database Modal with Dynamic Content -->
+  <div id="medicalDatabaseModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <!-- Dynamic Modal Header -->
+        <div class="modal-header">
+          <h4 id="modalTitle" class="modal-title">Medical Database Search</h4>
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        </div>
+        
+        <!-- Dynamic Modal Body -->
+        <div id="modalBody" class="modal-body">
+          <!-- Search View -->
+          <div id="searchView" class="view-content">
+            <div id="personNotFound" class="alert alert-warning" style="display:none">
+              <strong>Not Found!</strong> Person not found in medical database.
+            </div>
+            <div id="nameRequired" class="alert alert-warning" style="display:none">
+              <strong>Name is Required!</strong> Please enter a name to search.
+            </div>
+            
+            <fieldset>
+              <div class="">
+                <!-- Form Name -->
+                <hr style="width: 88%;max-width: 100rem;">
+
+                <!-- Single name input field -->
+                <div id="medical-input-area" class="form-group">
+                  <div class="col-md-12">
+                    <div class="col-md-8">
+                      <label class="col-md-12" for="medical-search-name">Search by Name</label>
+                      <input id="medical-search-name" name="searchName" type="text" placeholder="Enter first name, last name, or full name"
+                        class="form-control input-md" required>
+                    </div>
+                    <div class="col-md-4">
+                      <br>
+                      <input type="hidden" id="activeCommunityID" name="activeCommunityID" ,
+                        value="<%=user.user.activeCommunity%>">
+                      <button type="submit" class="btn btn-info btn-block" onclick="searchMedicalByName()">Search</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Search Results -->
+              <div id="medicalSearchResults" class="col-md-12 margin-top-2" style="display:none;">
+                <h5>Search Results:</h5>
+                <div id="civiliansList" class="list-group">
+                  <!-- Civilians will be populated here -->
+                </div>
+              </div>
+
+
+            </fieldset>
+          </div>
+
+          <!-- Create Report View -->
+          <div id="createReportView" class="view-content" style="display:none;">
+            <h5>Create Medical Report</h5>
+            <p class="text-muted"><small>Fields marked with <span class="text-danger">*</span> are required</small></p>
+            <hr>
+            
+            <!-- Patient Information Panel -->
+            <div class="panel panel-info margin-bottom-2">
+              <div class="panel-heading">
+                <h6 class="panel-title">Patient Information</h6>
+              </div>
+              <div class="panel-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <strong>Name:</strong> <span id="display-patient-name">-</span>
+                  </div>
+                  <div class="col-md-4">
+                    <strong>Date of Birth:</strong> <span id="display-patient-dob">-</span>
+                  </div>
+                  <div class="col-md-4">
+                    <strong>License #:</strong> <span id="display-patient-license">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Create Report Form -->
+            <form id="createReportForm">
+              <input type="hidden" id="new-report-civilianID" name="civilianID">
+              <input type="hidden" id="new-report-name" name="name">
+              <input type="hidden" id="new-report-dateOfBirth" name="dateOfBirth">
+              <input type="hidden" id="new-report-license" name="license">
+              <input type="hidden" id="new-report-reportingEmsID" name="reportingEmsID">
+              <input type="hidden" id="new-report-userID" name="userID">
+              <input type="hidden" id="new-report-activeCommunityID" name="activeCommunityID">
+              
+              <div class="form-group">
+                <label for="new-report-date">Date: <span class="text-danger">*</span></label>
+                <input type="date" id="new-report-date" name="date" class="form-control" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="new-report-details">Details: <span class="text-danger">*</span></label>
+                <textarea id="new-report-details" name="details" class="form-control" rows="4" placeholder="Enter medical report details..." required></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label for="new-report-hospitalized">Hospitalized: <span class="text-danger">*</span></label>
+                <select id="new-report-hospitalized" name="hospitalized" class="form-control" required>
+                  <option value="">Select...</option>
+                  <option value="yes">Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </div>
+              
+
+              
+              <!-- Error Display -->
+              <div id="create-report-errors" class="alert alert-danger" style="display:none;"></div>
+              
+              <div class="text-center">
+                <button type="button" class="btn btn-secondary margin-right-1" onclick="showSearchView()">
+                  <i class="fa fa-arrow-left"></i> Back to Search
+                </button>
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa fa-save"></i> Create Report
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Add Medication View -->
+          <div id="addMedicationView" class="view-content" style="display:none;">
+            <h5>Add Medication</h5>
+            <hr>
+            
+            <!-- Patient Information Panel -->
+            <div class="panel panel-info margin-bottom-2">
+              <div class="panel-heading">
+                <h6 class="panel-title">Patient Information</h6>
+              </div>
+              <div class="panel-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <strong>Name:</strong> <span id="med-name">-</span>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>Start Date:</strong> <span id="medicationStartDate">-</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add Medication Form -->
+            <form id="addMedicationForm">
+              <input type="hidden" id="med-civilianID" name="civilianID">
+              <input type="hidden" id="med-name-hidden" name="name">
+              <input type="hidden" id="med-activeCommunityID" name="activeCommunityID">
+              <input type="hidden" id="med-userID" name="userID">
+              <input type="hidden" id="med-firstName" name="firstName">
+              <input type="hidden" id="med-lastName" name="lastName">
+              <input type="hidden" id="med-dateOfBirth" name="dateOfBirth">
+              
+              <div class="form-group">
+                <label for="med-startDate">Start Date: <span class="text-danger">*</span></label>
+                <input type="date" id="med-startDate" name="startDate" class="form-control" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="med-medicationName">Medication Name: <span class="text-danger">*</span></label>
+                <input type="text" id="med-medicationName" name="medicationName" class="form-control" placeholder="Enter medication name..." required>
+              </div>
+              
+              <div class="form-group">
+                <label for="med-dosage">Dosage: <span class="text-danger">*</span></label>
+                <input type="text" id="med-dosage" name="dosage" class="form-control" placeholder="e.g., 100mg" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="med-frequency">Frequency: <span class="text-danger">*</span></label>
+                <input type="text" id="med-frequency" name="frequency" class="form-control" placeholder="e.g., daily, twice daily, mon,friday" required>
+              </div>
+              
+              <div class="text-center">
+                <button type="button" class="btn btn-secondary margin-right-1" onclick="showSearchView()">
+                  <i class="fa fa-arrow-left"></i> Back to Search
+                </button>
+                <button type="submit" class="btn btn-success">
+                  <i class="fa fa-plus"></i> Add Medication
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewEms" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form action="/deleteEms" method="POST">
+            <fieldset>
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
+              <h4>Details about your Persona</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+              <div id="issue-loading-persona-details-alert" style="display:none">
+                <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading persona details, try refreshing the page...</p>
+              </div>
+              <div id="persona-details-loading" class="text-align-center">
+                <div class="lds-facebook"><div></div><div></div><div></div></div>
+              </div>
+              <div id="persona-details-div" style="display:none">
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="first-name">First Name:</label>
+                  <label id="firstNameView" class="col-md-5"></label>
+                </div>
+
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="last-name">Last Name:</label>
+                  <label id="lastNameView" class="col-md-5"></label>
+                </div>
+
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="department">Department:</label>
+                  <label id="departmentView" class="col-md-5"></label>
+                </div>
+
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="assignment-area">Assignment Area:</label>
+                  <label id="assignmentAreaView" class="col-md-5"></label>
+                </div>
+
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="station">Station:</label>
+                  <label id="stationView" class="col-md-5"></label>
+                </div>
+
+                <div class="col-md-9">
+                  <label class="col-md-4 control-label margin-bottom-1" for="call-sign">Call Sign:</label>
+                  <label id="callSignView" class="col-md-5"></label>
+                </div>
+
+                <div class="col-md-12 text-align-center">
+                  <button id="removeEms" type="submit" name="removeEms" class="btn btn-danger">Delete Persona</button>
+                </div>
+            </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="viewVeh" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+            <fieldset>
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
+              <h4>Details about your Vehicle</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Text input-->
+              <div class="col-md-7">
+                <label class="col-md-4 margin-bottom-1" for="first-name">Plate:</label>
+                <label class="col-md-5" id="plateView">plate here</label>
+                <input id="plateVeh" type="text" value="" style="display:none">
+              </div>
+
+              <!-- Text input-->
+              <div class="col-md-7">
+                <label class="col-md-4 margin-bottom-1" for="last-name">Model:</label>
+                <label class="col-md-8" id="modelView">model here</label>
+                <input id="modelVeh" type="text" value="" style="display:none">
+              </div>
+
+              <!-- Text input-->
+              <div class="col-md-7">
+                <label class="col-md-4 margin-bottom-1" for="engineNumber">Engine #:</label>
+                <label class="col-md-8" id="engineNumView">engine number here</label>
+                <input id="engineNumVeh" type="text" value="" style="display:none">
+              </div>
+
+              <!-- Text input-->
+              <div class="col-md-7">
+                <label class="col-md-4 margin-bottom-1" for="color">Color:</label>
+                <label class="col-md-5" id="colorView">color here</label>
+              </div>
+
+              <!-- Text input-->
+              <div class="col-md-7">
+                <label class="col-md-4 margin-bottom-1" for="ro">RO:</label>
+                <label class="col-md-8" id="roView">ro here</label>
+                <input id="roVeh" type="text" value="" style="display:none">
+              </div>
+
+              <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+                <!-- Text input-->
+                <div class="col-md-7">
+                  <label class="col-md-4 margin-bottom-1" for="statusDispatch">Status:</label>
+                  <label class="col-md-5" id="statusDispatch">status here</label>
+                </div>
+
+                <!-- Text input-->
+                <div class="col-md-7">
+                  <label class="col-md-4 margin-bottom-1" for="statusDispatchSetBy">Set By:</label>
+                  <label class="col-md-8" id="statusDispatchSetBy">status set by here</label>
+                </div>
+              <% } %>
+
+              <div class="col-md-12">
+                <hr style="width: 88%;max-width: 100rem;">
+              </div>
+
+              <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
+                <div class="col-md-12 text-align-center margin-bottom-1">
+                  <button name="action" value="update" class="btn btn-primary margin-bottom-1"
+                    title="In Service" onclick="updateStatus('10-8')">10-8</button>
+                  <button name="action" value="update" class="btn btn-primary margin-bottom-1" title="Busy"
+                    onclick="updateStatus('10-6')">10-6</button>
+                  <button name="action" value="update" class="btn btn-primary margin-bottom-1"
+                    title="Out of Service" onclick="updateStatus('10-7')">10-7</button>
+                  <button name="action" value="update" class="btn btn-primary margin-bottom-1"
+                    title="Arrived on Scene" onclick="updateStatus('10-23')">10-23</button>
+                  <button name="action" value="update" class="btn btn-primary margin-bottom-1"
+                    title="In Route" onclick="updateStatus('10-97')">10-97</button>
+                </div>
+                <div class="col-md-12 text-align-center margin-bottom-2">
+                  <button name="status" value="10-42" class="btn btn-warning btn-md"
+                    title="Log out of CAD" onclick="updateStatus('10-42')">10-42</button>
+                  <button name="action" value="update" class="btn btn-success btn-md" title="Log in to CAD"
+                    onclick="updateStatus('10-41')">10-41</button>
+                </div>
+              <% } %>
+              
+
+              <div class="col-md-12 text-align-center">
+                <input id="vehicle-id" type="hidden" name="vehicleID" value="">
+                <button onclick="deleteEmsVeh()" type="submit" name="action" value="delete" class="btn btn-danger">Delete Vehicle</button>
+              </div>
+            </fieldset>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <div id="addMedicationModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form id="addMedicationForm" class="form-horizontal" action="/create-medication" method="post">
+            <fieldset>
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal" aria-hidden="true">X</button>
+              <h4>Add New Medication</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <h5>Patient Info:</h5>
+
+              <!-- Text input-->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="med-civilianID">Drivers License #</label>
+                <div class="col-md-6">
+                  <input id="med-civilianID" name="civilianID" type="text"
+                    class="form-control input-md disabled-color" required readonly="readonly">
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="med-name">Name</label>
+                <div class="col-md-6">
+                  <input id="med-name" name="name" type="text"
+                    class="form-control input-md disabled-color capitalize" required readonly="readonly">
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="med-dateOfBirth">Date of Birth</label>
+                <div class="col-md-6">
+                  <input id="med-dateOfBirth" name="dateOfBirth" type="date" max="2999-12-31" min="1900-01-01"
+                    class="form-control input-md disabled-color" required readonly="readonly">
+                </div>
+              </div>
+
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <h5>Medication Information:</h5>
+
+              <!-- Text input-->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="medicationName">Medication Name</label>
+                <div class="col-md-6">
+                  <input id="medicationName" name="name" type="text" placeholder="e.g., Aspirin, Insulin"
+                    class="form-control input-md" required>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="medicationDosage">Dosage</label>
+                <div class="col-md-6">
+                  <input id="medicationDosage" name="dosage" type="text" placeholder="e.g., 100mg, 2 tablets"
+                    class="form-control input-md" required>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="medicationFrequency">Frequency</label>
+                <div class="col-md-6">
+                  <input id="medicationFrequency" name="frequency" type="text" placeholder="e.g., Twice daily, Every 8 hours"
+                    class="form-control input-md" required>
+                </div>
+              </div>
+
+              <!-- Text input-->
+              <div class="form-group required">
+                <label class="col-md-4 control-label" for="medicationStartDate">Start Date</label>
+                <div class="col-md-6">
+                  <input id="medicationStartDate" name="startDate" type="date" max="2999-12-31" min="1900-01-01"
+                    class="form-control input-md" required>
+                </div>
+              </div>
+
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="submit-new-medication"></label>
+                <div class="col-md-4 text-center">
+                  <input type="hidden" name="userID" value="<%= user._id %>">
+                  <input type="hidden" id="med-activeCommunityID" name="activeCommunityID" ,
+                    value="<%=user.user.activeCommunity%>">
+                  <button id="submit-new-medication" class="btn btn-success">Add Medication</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="joinCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/joinEmsCommunity" method="post">
+            <fieldset>
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
+              <h4>Join an Existing Community</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="communityCode">Community Code:</label>
+                <div class="col-md-4">
+                  <input id="communityCode" name="communityCode" style="text-transform: uppercase;" type="text"
+                    placeholder="Example: YRFGHHP" class="form-control input-md" minlength="7" maxlength="7" required>
+                </div>
+              </div>
+
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="joinCommunity"></label>
+                <div class="col-md-4 text-align-center">
+                  <input type="hidden" name="route" value="ems-dashboard">
+                  <button id="joinCommunity" value="<%= user._id %>" name="userID" class="btn btn-primary">Join</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="leaveActiveCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/leaveEmsActiveCommunity" method="post">
+            <fieldset>
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
+              <h4>Leave Active Community</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <p>NOTE: All personnel and vehicles that were created in this community will no longer
+                show up when searching after you leave.
+              </p>
+              <p>Are you sure you want to leave this community?</p>
+
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="leaveActiveCommunity"></label>
+                <div class="col-md-4 text-align-center">
+                  <input type="hidden" name="route" value="ems-dashboard">
+                  <button id="leaveActiveCommunity" value="<%= user._id %>" name="userID"
+                    class="btn btn-danger">Leave</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="createCommunityModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <form class="form-horizontal" action="/createEmsCommunity" method="post">
+            <fieldset>
+              <!-- Form Name -->
+              <button class="btn btn-primary btn-md float-right" type="button" data-dismiss="modal"
+                aria-hidden="true">X</button>
+              <h4>Create a New Community</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+
+              <!-- Text input-->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="communityName">Community Name:</label>
+                <div class="col-md-4">
+                  <input id="communityName" name="communityName" style="text-transform: capitalize;" type="text"
+                    placeholder="Community Name" class="form-control input-md" maxlength="25" required>
+                </div>
+              </div>
+
+              <!-- Button -->
+              <div class="form-group">
+                <label class="col-md-4 control-label" for="createCommunity"></label>
+                <div class="col-md-4 text-align-center">
+                  <input type="hidden" name="route" value="ems-dashboard">
+                  <button id="createCommunity" value="<%= user._id %>" name="userID"
+                    class="btn btn-primary">Create</button>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container for Notifications -->
+  <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    <!-- Toasts will be dynamically added here -->
+  </div>
+
+  <!--scripts loaded here -->
+  <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+  <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
+  <script src="/static/js/bootstrap.min.js"></script>
+  <script src="/static/js/jquery.easing.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
+  <script src="/static/js/wow.js"></script>
+  <script src="/static/js/scripts.js"></script>
+  <script src="/static/js/main.js"></script>
+  <script>if (window.module) module = window.module;</script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+  <!-- EMS Personas Modals -->
+
+  <!-- View Persona Modal -->
+  <div class="modal fade" id="viewPersonaModal" tabindex="-1" role="dialog" aria-labelledby="viewPersonaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="viewPersonaModalLabel">Personnel Details</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Content will be loaded dynamically -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Persona Modal -->
+  <div class="modal fade" id="editPersonaModal" tabindex="-1" role="dialog" aria-labelledby="editPersonaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editPersonaModalLabel">Edit Personnel</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="editPersonaForm">
+            <input type="hidden" id="edit-persona-id">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="edit-persona-firstName">First Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="edit-persona-firstName" required>
+                </div>
+                <div class="form-group">
+                  <label for="edit-persona-lastName">Last Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="edit-persona-lastName" required>
+                </div>
+                <div class="form-group">
+                  <label for="edit-persona-department">Department <span class="text-danger">*</span></label>
+                  <select class="form-control" id="edit-persona-department" required>
+                    <option value="EMS">EMS</option>
+                    <option value="Fire">Fire</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="edit-persona-assignmentArea">Assignment Area <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="edit-persona-assignmentArea" maxlength="50" required>
+                </div>
+                <div class="form-group">
+                  <label for="edit-persona-station">Station</label>
+                  <input type="text" class="form-control" id="edit-persona-station" maxlength="5">
+                </div>
+                <div class="form-group">
+                  <label for="edit-persona-callSign">Call Sign</label>
+                  <input type="text" class="form-control" id="edit-persona-callSign" maxlength="10">
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="updatePersonaBtn" onclick="updateEmsPersona()">Update Personnel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Persona Confirmation Modal -->
+  <div class="modal fade" id="deletePersonaConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deletePersonaConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deletePersonaConfirmModalLabel">Confirm Delete</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete this personnel? This action cannot be undone.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeletePersonaBtn">Delete Personnel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMS Vehicles Modals -->
+
+  <!-- View Vehicle Modal -->
+  <div class="modal fade" id="viewVehicleModal" tabindex="-1" role="dialog" aria-labelledby="viewVehicleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="viewVehicleModalLabel">Vehicle Details</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Content will be loaded dynamically -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Vehicle Modal -->
+  <div class="modal fade" id="editVehicleModal" tabindex="-1" role="dialog" aria-labelledby="editVehicleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editVehicleModalLabel">Edit Vehicle</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="editVehicleForm">
+            <input type="hidden" id="edit-vehicle-id">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="edit-vehicle-plate">Plate Number <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="edit-vehicle-plate" maxlength="8" required>
+                </div>
+                <div class="form-group">
+                  <label for="edit-vehicle-model">Model <span class="text-danger">*</span></label>
+                  <select class="form-control" id="edit-vehicle-model" required>
+                    <option value="FireTruck">FireTruck</option>
+                    <option value="Fire Dept. Vehicle">Fire Dept. Vehicle</option>
+                    <option value="Fire Dept. Chief Vehicle">Fire Dept. Chief Vehicle</option>
+                    <option value="Ambulance">Ambulance</option>
+                    <option value="Medical Dept. Vehicle">Medical Dept. Vehicle</option>
+                    <option value="Medical Dept. Chief Vehicle">Medical Dept. Chief Vehicle</option>
+                    <option value="LifeGuard Patrol Vehicle">LifeGuard Patrol Vehicle</option>
+                    <option value="LifeGuard Boat">LifeGuard Boat</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="edit-vehicle-engineNumber">Engine Number <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="edit-vehicle-engineNumber" maxlength="10" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="edit-vehicle-color">Color</label>
+                  <input type="text" class="form-control" id="edit-vehicle-color">
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="updateVehicleBtn" onclick="updateEmsVehicle()">Update Vehicle</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Vehicle Confirmation Modal -->
+  <div class="modal fade" id="deleteVehicleConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteVehicleConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteVehicleConfirmModalLabel">Confirm Delete</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete this vehicle? This action cannot be undone.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteVehicleBtn">Delete Vehicle</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Initialize global variables for EMS Dashboard -->
+  <script type="text/javascript">
+    // all global router vars declared here to reduce duplication
+    var dbUser = <%-JSON.stringify(user)%>;
+    var POLICE_CAD_API_URL = '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    var API_URL = POLICE_CAD_API_URL; // For notifications.js compatibility
+  </script>
+</body>
+
 </html>
+<!--  added for google translate -->
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+}
+</script>
+

@@ -30,13 +30,18 @@ function fetchAndRenderDepartments() {
         const useForm = ["police", "fire", "ems", "dispatch"].includes(
           template.toLowerCase()
         );
-        const isDisabled = ["fire", "ems"].includes(template.toLowerCase());
+        const isDisabled = [].includes(template.toLowerCase());
 
         // Map icons and routes
         switch (template.toLowerCase()) {
           case "civilian":
             icon = "fa-user";
             action = "/civ-dashboard";
+            // Add department name as query parameter for civilian departments
+            if (action !== "#") {
+              const encodedDeptId = encodeDepartmentId(departmentId);
+              action += `?dept=${encodeURIComponent(name)}&d=${encodedDeptId}`;
+            }
             break;
           case "police":
             icon = "fa-shield";
@@ -50,13 +55,13 @@ function fetchAndRenderDepartments() {
             break;
           case "fire":
             icon = "fa-fire-extinguisher";
-            action = "#"; // Disabled, no action
-            redirect = "";
+            action = "/select-department";
+            redirect = "/ems-dashboard";
             break;
           case "ems":
             icon = "fa-medkit";
-            action = "#"; // Disabled, no action
-            redirect = "";
+            action = "/select-department";
+            redirect = "/ems-dashboard";
             break;
         }
 
@@ -120,4 +125,14 @@ function fetchAndRenderDepartments() {
       );
     },
   });
+}
+
+// Encode department ID for URL parameters
+function encodeDepartmentId(departmentId) {
+  // Simple reversible encoding: convert to base64 and replace some characters
+  const base64 = btoa(departmentId);
+  return base64
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
 }

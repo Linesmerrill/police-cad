@@ -286,8 +286,14 @@ $(document).ready(function () {
                 if (dept && dept?.template?.name) {
                     const deptName = dept?.template?.name?.toLowerCase();
                     let dashboardUrl = '';
+                    
                     if (deptName.includes('civilian')) {
-                        dashboardUrl = `/civ-dashboard`;
+                        // For civilian departments, use query parameters like the departments sidebar
+                        const encodedDeptId = encodeDepartmentId(dept._id);
+                        dashboardUrl = `/civ-dashboard?dept=${encodeURIComponent(dept.name)}&d=${encodedDeptId}`;
+                        // Navigate directly for civilian departments
+                        window.location.href = dashboardUrl;
+                        return;
                     } else if (deptName.includes('police')) {
                         dashboardUrl = `/police-dashboard`;
                     } else if (deptName.includes('fire') || deptName.includes('ems')) {
@@ -295,8 +301,9 @@ $(document).ready(function () {
                     } else if (deptName.includes('dispatch')) {
                         dashboardUrl = `/dispatch-dashboard`;
                     }
+                    
                     if (dashboardUrl) {
-                        // Submit form to /select-department to set departmentId
+                        // Submit form to /select-department to set departmentId for non-civilian departments
                         const form = document.createElement('form');
                         form.method = 'POST';
                         form.action = '/select-department';
@@ -890,5 +897,15 @@ function fillAccountDetails() {
     $('#accountEmail').val(dbUser.user.email);
     $('#accountUsername').val(dbUser.user.username);
     $('#accountCallSign').val(dbUser.user.callSign);
+}
+
+// Encode department ID for URL parameters
+function encodeDepartmentId(departmentId) {
+    // Simple reversible encoding: convert to base64 and replace some characters
+    const base64 = btoa(departmentId);
+    return base64
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=/g, '');
 }
 </script>
