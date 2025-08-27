@@ -1716,7 +1716,7 @@
           -->
 
           <!-- Fine Settings -->
-          <div id="fineSettingsCard" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
+          <div id="fineSettingsCard" onclick="openFineSettingsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
             <div style="text-align:center;">
               <i class="fa fa-dollar-sign" style="font-size:2rem; color:#10b981; margin-bottom:0.5rem;"></i>
               <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Fine Settings</h5>
@@ -2154,9 +2154,9 @@ function openCommunitySettings() {
   showSettingsError('Community Settings page coming soon...');
 }
 
-function openFineSettings() {
-  showSettingsError('Fine Settings page coming soon...');
-}
+      function openFineSettings() {
+        openFineSettingsModal();
+      }
 
 function openMembersManagement() {
   showSettingsError('Members Management page coming soon...');
@@ -4107,6 +4107,537 @@ async function deleteEditEvent() {
           preview.style.display = 'none';
         }
       }
+
+      // Fine Settings Modal Functions
+      function openFineSettingsModal() {
+        document.getElementById('fineSettingsModal').style.display = 'flex';
+        
+        // Show loading state immediately
+        document.getElementById('fineSettingsLoading').style.display = 'flex';
+        
+        // Always refresh data when opening modal to show latest information
+        refreshFineSettings();
+        
+        // Add event listener for currency change
+        document.getElementById('fineCurrency').addEventListener('change', handleCurrencyChange);
+      }
+
+      function closeFineSettingsModal() {
+        document.getElementById('fineSettingsModal').style.display = 'none';
+      }
+
+      function loadFineSettings() {
+        // Get current fine settings from the page data
+        const communityData = <%- JSON.stringify(community || {}) %>;
+        const fines = communityData.community?.fines || { categories: [], currency: 'USD' };
+        
+        // Set currency
+        const currency = fines.currency || 'USD';
+        if (currency && !['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CHF', 'CNY', 'INR', 'BRL', 'MXN', 'KRW', 'RUB', 'ZAR', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF'].includes(currency)) {
+          // Custom currency
+          document.getElementById('fineCurrency').value = 'custom';
+          document.getElementById('customCurrency').value = currency;
+          document.getElementById('customCurrency').style.display = 'block';
+        } else {
+          document.getElementById('fineCurrency').value = currency;
+          document.getElementById('customCurrency').style.display = 'none';
+        }
+        
+        // Load categories
+        renderFineCategories(fines.categories || []);
+        
+        // Hide loading state
+        document.getElementById('fineSettingsLoading').style.display = 'none';
+      }
+
+      function refreshFineSettings() {
+        // Refresh community data from server and then load fine settings
+        const communityId = '<%= community._id %>';
+        const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+        
+        fetch(`${apiUrl}/api/v1/community/${communityId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.community && data.community.fines) {
+              // Update the page data with fresh information
+              window.currentCommunityData = data.community;
+              
+              // Reload fine settings with fresh data
+              const fines = data.community.fines;
+              const currency = fines.currency || 'USD';
+              if (currency && !['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'JPY', 'CHF', 'CNY', 'INR', 'BRL', 'MXN', 'KRW', 'RUB', 'ZAR', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF'].includes(currency)) {
+                document.getElementById('fineCurrency').value = 'custom';
+                document.getElementById('customCurrency').value = currency;
+                document.getElementById('customCurrency').style.display = 'block';
+              } else {
+                document.getElementById('fineCurrency').value = currency;
+                document.getElementById('customCurrency').style.display = 'none';
+              }
+              renderFineCategories(fines.categories || []);
+            }
+            
+            // Hide loading state after data is loaded
+            document.getElementById('fineSettingsLoading').style.display = 'none';
+          })
+          .catch(err => {
+            console.error('Error refreshing community data:', err);
+            // Fallback to current page data
+            loadFineSettings();
+            
+            // Hide loading state even on error
+            document.getElementById('fineSettingsLoading').style.display = 'none';
+          });
+      }
+
+      // Handle currency selection change
+      function handleCurrencyChange() {
+        const currencySelect = document.getElementById('fineCurrency');
+        const customCurrencyInput = document.getElementById('customCurrency');
+        
+        if (currencySelect.value === 'custom') {
+          customCurrencyInput.style.display = 'block';
+          customCurrencyInput.focus();
+        } else {
+          customCurrencyInput.style.display = 'none';
+          customCurrencyInput.value = '';
+        }
+      }
+
+      // Reset to default fines
+      function resetToDefaultFines() {
+        showCustomConfirm(
+          'Reset to Default Fines',
+          'Are you sure you want to reset all fines to default? This will replace all current categories and fines with the default set.',
+          () => {
+            const defaultFines = {
+              currency: "USD",
+              categories: [
+                {
+                  name: "Traffic Citations",
+                  fines: [
+                    { name: "Speeding", amount: 150 },
+                    { name: "Parking Violation", amount: 50 },
+                    { name: "Running a Stop Sign", amount: 100 },
+                    { name: "Expired Registration", amount: 75 },
+                  ],
+                },
+                {
+                  name: "Misdemeanors",
+                  fines: [
+                    { name: "Public Intoxication", amount: 200 },
+                    { name: "Disorderly Conduct", amount: 250 },
+                    { name: "Petty Theft", amount: 300 },
+                  ],
+                },
+                {
+                  name: "Felonies",
+                  fines: [
+                    { name: "Assault", amount: 1000 },
+                    { name: "Burglary", amount: 1500 },
+                    { name: "Drug Possession", amount: 1200 },
+                  ],
+                },
+                {
+                  name: "Other",
+                  fines: [{ name: "Other Violation", amount: 100 }],
+                },
+              ],
+            };
+            
+            // Set currency to USD
+            document.getElementById('fineCurrency').value = 'USD';
+            document.getElementById('customCurrency').style.display = 'none';
+            document.getElementById('customCurrency').value = '';
+            
+            // Render default categories
+            renderFineCategories(defaultFines.categories);
+            
+            showToast('Fines reset to default successfully!', 3000, 'success');
+          }
+        );
+      }
+
+      function renderFineCategories(categories) {
+        const container = document.getElementById('fineCategoriesContainer');
+        container.innerHTML = '';
+        
+        if (categories.length === 0) {
+          container.innerHTML = '<div style="text-align:center; color:#a0aec0; padding:2rem;">No fine categories configured yet. Click "Add Category" to get started.</div>';
+          return;
+        }
+        
+        categories.forEach((category, categoryIndex) => {
+          const categoryDiv = document.createElement('div');
+          categoryDiv.className = 'fine-category';
+          categoryDiv.dataset.categoryIndex = categoryIndex;
+          categoryDiv.style.cssText = 'margin-bottom:1.5rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;';
+          categoryDiv.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+              <input type="text" class="category-name" value="${category.name}" placeholder="Category Name" 
+                     style="background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.5rem; font-size:1rem; flex:1; margin-right:1rem;">
+              <button onclick="removeFineCategory(this)" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer;">
+                <i class="fa fa-trash"></i>
+              </button>
+            </div>
+            <div class="fines-container" style="margin-bottom:1rem;">
+              ${renderFines(category.fines || [], categoryIndex)}
+            </div>
+            <button onclick="addFine(this)" style="background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer; font-size:0.875rem;">
+              <i class="fa fa-plus" style="margin-right:0.5rem;"></i>
+              Add Fine
+            </button>
+          `;
+          container.appendChild(categoryDiv);
+        });
+      }
+
+      function renderFines(fines, categoryIndex) {
+        if (fines.length === 0) {
+          return '<div class="no-fines-message" style="text-align:center; color:#a0aec0; padding:1rem;">No fines configured for this category.</div>';
+        }
+        
+        return fines.map((fine, fineIndex) => `
+          <div class="fine-item" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
+            <input type="text" class="fine-name" value="${fine.name}" placeholder="Fine Name" 
+                   style="background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.5rem; font-size:0.875rem; flex:1;">
+            <input type="number" class="fine-amount" value="${fine.amount}" placeholder="Amount" min="0" step="0.01"
+                   style="background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.5rem; font-size:0.875rem; width:120px;">
+            <button onclick="removeFine(this)" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.75rem;">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+        `).join('');
+      }
+
+      function addFineCategory() {
+        const container = document.getElementById('fineCategoriesContainer');
+        const categoryDiv = document.createElement('div');
+        const categoryIndex = container.children.length;
+        
+        categoryDiv.className = 'fine-category';
+        categoryDiv.dataset.categoryIndex = categoryIndex;
+        categoryDiv.style.cssText = 'margin-bottom:1.5rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;';
+        categoryDiv.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <input type="text" class="category-name" placeholder="Category Name" 
+                   style="background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.5rem; font-size:1rem; flex:1; margin-right:1rem;">
+            <button onclick="removeFineCategory(this)" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer;">
+              <i class="fa fa-trash"></i>
+            </button>
+          </div>
+          <div class="fines-container" style="margin-bottom:1rem;">
+            <div class="no-fines-message" style="text-align:center; color:#a0aec0; padding:1rem;">No fines configured for this category.</div>
+          </div>
+          <button onclick="addFine(this)" style="background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer; font-size:0.875rem;">
+            <i class="fa fa-plus" style="margin-right:0.5rem;"></i>
+            Add Fine
+          </button>
+        `;
+        container.appendChild(categoryDiv);
+      }
+
+      function removeFineCategory(button) {
+        showCustomConfirm(
+          'Remove Category',
+          'Are you sure you want to remove this category and all its fines?',
+          () => {
+            const categoryDiv = button.closest('.fine-category');
+            if (categoryDiv) {
+              categoryDiv.remove();
+            }
+          }
+        );
+      }
+
+      function addFine(button) {
+        const categoryDiv = button.closest('.fine-category');
+        const finesContainer = categoryDiv.querySelector('.fines-container');
+        const fineDiv = document.createElement('div');
+        
+        fineDiv.className = 'fine-item';
+        fineDiv.style.cssText = 'display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;';
+        fineDiv.innerHTML = `
+          <input type="text" class="fine-name" placeholder="Fine Name" 
+                 style="background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.5rem; font-size:0.875rem; flex:1;">
+          <input type="number" class="fine-amount" placeholder="Amount" min="0" step="0.01"
+                 style="background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; padding:0.5rem; font-size:0.875rem; width:120px;">
+          <button onclick="removeFine(this)" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.75rem;">
+            <i class="fa fa-times"></i>
+          </button>
+        `;
+        finesContainer.appendChild(fineDiv);
+        
+        // Hide the "No fines configured" message if it exists
+        const noFinesMessage = finesContainer.querySelector('.no-fines-message');
+        if (noFinesMessage) {
+          noFinesMessage.style.display = 'none';
+        }
+      }
+
+      function removeFine(button) {
+        const fineItem = button.closest('.fine-item');
+        const fineName = fineItem.querySelector('.fine-name').value || 'this fine';
+        
+        showCustomConfirm(
+          'Remove Fine',
+          `Are you sure you want to remove "${fineName}"?`,
+          () => {
+            const finesContainer = button.closest('.fines-container');
+            
+            if (fineItem) {
+              fineItem.remove();
+              
+              // Check if this was the last fine and show "No fines configured" message
+              const remainingFines = finesContainer.querySelectorAll('.fine-item');
+              if (remainingFines.length === 0) {
+                // Show the "No fines configured" message again
+                const noFinesMessage = finesContainer.querySelector('.no-fines-message');
+                if (noFinesMessage) {
+                  noFinesMessage.style.display = 'block';
+                } else {
+                  // Create the message if it doesn't exist
+                  const messageDiv = document.createElement('div');
+                  messageDiv.className = 'no-fines-message';
+                  messageDiv.style.cssText = 'text-align:center; color:#a0aec0; padding:1rem;';
+                  messageDiv.textContent = 'No fines configured for this category.';
+                  finesContainer.appendChild(messageDiv);
+                }
+              }
+            }
+          }
+        );
+      }
+
+      function updateCategoryName(categoryIndex, name) {
+        // This will be handled when saving
+      }
+
+      function updateFineName(categoryIndex, fineIndex, name) {
+        // This will be handled when saving
+      }
+
+      function updateFineAmount(categoryIndex, fineIndex, amount) {
+        // This will be handled when saving
+      }
+
+      function saveFineSettings() {
+        let currency = document.getElementById('fineCurrency').value;
+        
+        // Handle custom currency
+        if (currency === 'custom') {
+          const customCurrency = document.getElementById('customCurrency').value.trim();
+          if (!customCurrency) {
+            showToast('Please enter a custom currency value', 3000, 'error');
+            return;
+          }
+          currency = customCurrency;
+        }
+        
+        const categories = [];
+        
+        // Collect all category data using class selectors
+        const categoryDivs = document.querySelectorAll('#fineCategoriesContainer .fine-category');
+        categoryDivs.forEach(categoryDiv => {
+          const categoryNameInput = categoryDiv.querySelector('.category-name');
+          if (categoryNameInput) {
+            const categoryName = categoryNameInput.value.trim();
+            if (categoryName) {
+              const fines = [];
+              const fineItems = categoryDiv.querySelectorAll('.fine-item');
+              
+              fineItems.forEach(fineItem => {
+                const fineNameInput = fineItem.querySelector('.fine-name');
+                const fineAmountInput = fineItem.querySelector('.fine-amount');
+                
+                if (fineNameInput && fineAmountInput) {
+                  const fineName = fineNameInput.value.trim();
+                  const fineAmount = parseFloat(fineAmountInput.value);
+                  
+                  if (fineName && !isNaN(fineAmount)) {
+                    fines.push({
+                      name: fineName,
+                      amount: fineAmount
+                    });
+                  }
+                }
+              });
+              
+              categories.push({
+                name: categoryName,
+                fines: fines
+              });
+            }
+          }
+        });
+        
+        const fineSettings = {
+          categories: categories,
+          currency: currency
+        };
+        
+        // Send to API
+        const communityId = '<%= community._id %>';
+        const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+        
+        fetch(`${apiUrl}/api/v1/community/${communityId}/fines`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fineSettings)
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success || (data.message && data.message.toLowerCase().includes('successfully'))) {
+            showToast('Fine settings updated successfully!', 3000, 'success');
+            // Close modal after successful save
+            closeFineSettingsModal();
+          } else {
+            throw new Error(data.message || 'Failed to update fine settings');
+          }
+        })
+        .catch(err => {
+          showToast('Error updating fine settings: ' + err.message, 3000, 'error');
+        });
+      }
+
+      // Custom Confirmation Modal Functions
+      function showCustomConfirm(title, message, onConfirm) {
+        // Set modal content
+        document.getElementById('confirmTitle').textContent = title;
+        document.getElementById('confirmMessage').textContent = message;
+        
+        // Set up confirm button action
+        const confirmBtn = document.getElementById('confirmActionBtn');
+        confirmBtn.onclick = () => {
+          hideCustomConfirm();
+          if (onConfirm && typeof onConfirm === 'function') {
+            onConfirm();
+          }
+        };
+        
+        // Show modal
+        document.getElementById('customConfirmModal').style.display = 'flex';
+      }
+
+      function hideCustomConfirm() {
+        document.getElementById('customConfirmModal').style.display = 'none';
+      }
     </script>
+
+    <!-- Fine Settings Modal -->
+    <div id="fineSettingsModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center; overflow-y:auto;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:900px; width:95%; max-height:90vh; position:relative; border:1px solid #35385a; overflow-y:auto;">
+        <style>
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        </style>
+        <button onclick="closeFineSettingsModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7; z-index:10;"><i class="fa fa-times"></i></button>
+        
+        <!-- Header -->
+        <div style="text-align:center; margin-bottom:2rem; padding-bottom:1rem; border-bottom:1px solid #35385a;">
+          <i class="fa fa-dollar-sign" style="font-size:3rem; color:#10b981; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.75rem; font-weight:600;">Fine Settings</h3>
+          <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:1rem;">Configure community fines and penalties</p>
+        </div>
+
+        <!-- Currency Selection -->
+        <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
+          <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem;">
+            <i class="fa fa-coins" style="color:#10b981;"></i>
+            Currency
+          </label>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <select id="fineCurrency" onchange="handleCurrencyChange()" style="padding:0.5rem 1rem; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; font-size:1rem; width:200px;">
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="CAD">CAD (C$)</option>
+              <option value="AUD">AUD (A$)</option>
+              <option value="JPY">JPY (¥)</option>
+              <option value="CHF">CHF (Fr)</option>
+              <option value="CNY">CNY (¥)</option>
+              <option value="INR">INR (₹)</option>
+              <option value="BRL">BRL (R$)</option>
+              <option value="MXN">MXN ($)</option>
+              <option value="KRW">KRW (₩)</option>
+              <option value="RUB">RUB (₽)</option>
+              <option value="ZAR">ZAR (R)</option>
+              <option value="SEK">SEK (kr)</option>
+              <option value="NOK">NOK (kr)</option>
+              <option value="DKK">DKK (kr)</option>
+              <option value="PLN">PLN (zł)</option>
+              <option value="CZK">CZK (Kč)</option>
+              <option value="HUF">HUF (Ft)</option>
+              <option value="custom">Custom Currency</option>
+            </select>
+            <input type="text" id="customCurrency" placeholder="Enter custom currency (e.g., BTC, ETH)" 
+                   style="padding:0.5rem 1rem; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; font-size:1rem; width:250px; display:none;">
+          </div>
+        </div>
+
+        <!-- Fine Categories -->
+        <div id="fineCategoriesContainer" style="margin-bottom:2rem;">
+          <!-- Categories will be dynamically loaded here -->
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="fineSettingsLoading" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(30,32,44,0.9); border-radius:16px; display:flex; align-items:center; justify-content:center; z-index:20;">
+          <div style="text-align:center;">
+            <div class="loading-spinner" style="width:60px; height:60px; border:4px solid #4a5568; border-top:4px solid #10b981; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+            <p style="color:#fff; margin:0; font-size:1rem;">Loading fine settings...</p>
+          </div>
+        </div>
+
+        <!-- Add Category Button -->
+        <div style="margin-bottom:2rem; text-align:center;">
+          <button onclick="addFineCategory()" style="background:#10b981; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem; margin-right:1rem;">
+            <i class="fa fa-plus" style="margin-right:0.5rem;"></i>
+            Add Category
+          </button>
+          <button onclick="resetToDefaultFines()" style="background:#f59e0b; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+            <i class="fa fa-undo" style="margin-right:0.5rem;"></i>
+            Reset to Default
+          </button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display:flex; gap:1rem; justify-content:center; padding-top:1rem; border-top:1px solid #35385a;">
+          <button onclick="closeFineSettingsModal()" style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+            Cancel
+          </button>
+          <button onclick="saveFineSettings()" style="background:#10b981; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+            <i class="fa fa-save" style="margin-right:0.5rem;"></i>
+            Save Settings
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="customConfirmModal" class="heroui-modal" style="display:none; position:fixed; z-index:4000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.75); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:95%; border:1px solid #35385a; text-align:center;">
+        <!-- Icon -->
+        <div style="margin-bottom:1.5rem;">
+          <i class="fa fa-exclamation-triangle" style="font-size:3rem; color:#f59e0b;"></i>
+        </div>
+        
+        <!-- Title -->
+        <h3 id="confirmTitle" style="color:#fff; margin:0 0 1rem 0; font-size:1.5rem; font-weight:600;">Confirm Action</h3>
+        
+        <!-- Message -->
+        <p id="confirmMessage" style="color:#a0aec0; margin:0 0 2rem 0; font-size:1rem; line-height:1.5;">Are you sure you want to proceed with this action?</p>
+        
+        <!-- Action Buttons -->
+        <div style="display:flex; gap:1rem; justify-content:center;">
+          <button onclick="hideCustomConfirm()" style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+            Cancel
+          </button>
+          <button id="confirmActionBtn" style="background:#ef4444; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
