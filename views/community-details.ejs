@@ -4122,7 +4122,29 @@ async function deleteEditEvent() {
         document.getElementById('fineCurrency').addEventListener('change', handleCurrencyChange);
       }
 
+      function attemptCloseFineSettingsModal() {
+        // Check if there are unsaved changes
+        if (hasUnsavedChanges()) {
+          showCustomConfirm(
+            'Unsaved Changes',
+            'You have unsaved changes. Do you want to save before closing or discard your changes?',
+            () => {
+              // User chose to save - save and then close
+              saveFineSettings();
+            },
+            () => {
+              // User chose to discard - just close without saving
+              document.getElementById('fineSettingsModal').style.display = 'none';
+            }
+          );
+        } else {
+          // No changes - close immediately
+          document.getElementById('fineSettingsModal').style.display = 'none';
+        }
+      }
+
       function closeFineSettingsModal() {
+        // Direct close without checking for changes (used internally)
         document.getElementById('fineSettingsModal').style.display = 'none';
       }
 
@@ -4142,6 +4164,10 @@ async function deleteEditEvent() {
           document.getElementById('fineCurrency').value = currency;
           document.getElementById('customCurrency').style.display = 'none';
         }
+        
+        // Store original data for search functionality
+        window.originalFineCategories = fines.categories || [];
+        window.originalCurrency = fines.currency || 'USD';
         
         // Load categories
         renderFineCategories(fines.categories || []);
@@ -4173,6 +4199,10 @@ async function deleteEditEvent() {
                 document.getElementById('fineCurrency').value = currency;
                 document.getElementById('customCurrency').style.display = 'none';
               }
+              // Store original data for search functionality
+              window.originalFineCategories = fines.categories || [];
+              window.originalCurrency = fines.currency || 'USD';
+              
               renderFineCategories(fines.categories || []);
             }
             
@@ -4248,6 +4278,10 @@ async function deleteEditEvent() {
             document.getElementById('fineCurrency').value = 'USD';
             document.getElementById('customCurrency').style.display = 'none';
             document.getElementById('customCurrency').value = '';
+            
+            // Store original data for search functionality
+            window.originalFineCategories = defaultFines.categories;
+            window.originalCurrency = defaultFines.currency;
             
             // Render default categories
             renderFineCategories(defaultFines.categories);
@@ -4488,6 +4522,11 @@ async function deleteEditEvent() {
         .then(data => {
           if (data.success || (data.message && data.message.toLowerCase().includes('successfully'))) {
             showToast('Fine settings updated successfully!', 3000, 'success');
+            
+            // Update the original data to reflect the saved state
+            window.originalFineCategories = getCurrentCategoriesFromDOM();
+            window.originalCurrency = currency;
+            
             // Close modal after successful save
             closeFineSettingsModal();
           } else {
@@ -4500,19 +4539,58 @@ async function deleteEditEvent() {
       }
 
       // Custom Confirmation Modal Functions
-      function showCustomConfirm(title, message, onConfirm) {
+      function showCustomConfirm(title, message, onConfirm, onDiscard = null) {
         // Set modal content
         document.getElementById('confirmTitle').textContent = title;
         document.getElementById('confirmMessage').textContent = message;
         
         // Set up confirm button action
         const confirmBtn = document.getElementById('confirmActionBtn');
-        confirmBtn.onclick = () => {
-          hideCustomConfirm();
-          if (onConfirm && typeof onConfirm === 'function') {
-            onConfirm();
+        
+        if (onDiscard) {
+          // Two-button mode (Save/Discard)
+          confirmBtn.textContent = 'Save & Close';
+          confirmBtn.style.background = '#10b981'; // Green for save
+          confirmBtn.onclick = () => {
+            hideCustomConfirm();
+            if (onConfirm && typeof onConfirm === 'function') {
+              onConfirm();
+            }
+          };
+          
+          // Update cancel button to be "Discard"
+          const cancelBtn = document.querySelector('#customConfirmModal button[onclick="hideCustomConfirm()"]');
+          if (cancelBtn) {
+            cancelBtn.textContent = 'Discard Changes';
+            cancelBtn.style.background = '#ef4444'; // Red for discard
+            cancelBtn.onclick = () => {
+              hideCustomConfirm();
+              if (onDiscard && typeof onDiscard === 'function') {
+                onDiscard();
+              }
+            };
           }
-        };
+        } else {
+          // Single button mode (original behavior)
+          confirmBtn.textContent = 'Confirm';
+          confirmBtn.style.background = '#ef4444'; // Red for confirm
+          confirmBtn.onclick = () => {
+            hideCustomConfirm();
+            if (onConfirm && typeof onConfirm === 'function') {
+              onConfirm();
+            }
+          };
+          
+          // Reset cancel button to original
+          const cancelBtn = document.querySelector('#customConfirmModal button[onclick="hideCustomConfirm()"]');
+          if (cancelBtn) {
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.style.background = '#6b7280'; // Gray for cancel
+            cancelBtn.onclick = () => {
+              hideCustomConfirm();
+            };
+          }
+        }
         
         // Show modal
         document.getElementById('customConfirmModal').style.display = 'flex';
@@ -4520,6 +4598,262 @@ async function deleteEditEvent() {
 
       function hideCustomConfirm() {
         document.getElementById('customConfirmModal').style.display = 'none';
+      }
+
+      // Search functionality for fines
+      function searchFines(searchTerm) {
+        const searchLower = searchTerm.toLowerCase().trim();
+        const clearBtn = document.getElementById('clearSearchBtn');
+        
+        // Show/hide clear button based on search content
+        if (searchTerm !== '') {
+          clearBtn.style.display = 'block';
+        } else {
+          clearBtn.style.display = 'none';
+        }
+        
+        if (searchTerm === '') {
+          // Show all categories if search is empty - restore from original + any new additions
+          restoreFullCategoriesList();
+          
+          // Remove search results count
+          const existingCount = document.querySelector('.search-results-count');
+          if (existingCount) {
+            existingCount.remove();
+          }
+          return;
+        }
+        
+        // Get current categories from the DOM (includes unsaved changes)
+        const currentCategories = getCurrentCategoriesFromDOM();
+        
+        // Filter categories and fines based on search term
+        const filteredCategories = currentCategories.map(category => {
+          // Check if category name matches
+          const categoryMatches = category.name.toLowerCase().includes(searchLower);
+          
+          // Filter fines within this category
+          const filteredFines = category.fines.filter(fine => {
+            const fineNameMatches = fine.name.toLowerCase().includes(searchLower);
+            const amountMatches = fine.amount.toString().includes(searchLower);
+            return fineNameMatches || amountMatches;
+          });
+          
+          // Return category if it matches or has matching fines
+          if (categoryMatches || filteredFines.length > 0) {
+            return {
+              ...category,
+              // If category name matches, show ALL fines in that category
+              // If only fine matches, show only matching fines
+              fines: categoryMatches ? category.fines : filteredFines
+            };
+          }
+          return null;
+        }).filter(Boolean); // Remove null categories
+        
+        // Render filtered results
+        renderFineCategories(filteredCategories);
+        
+        // Show search results count
+        const totalResults = filteredCategories.reduce((sum, cat) => sum + cat.fines.length, 0);
+        if (searchTerm !== '') {
+          showSearchResultsCount(totalResults, filteredCategories.length);
+        }
+      }
+
+      // Restore full categories list (original + new additions)
+      function restoreFullCategoriesList() {
+        // Get the original categories from server
+        const originalCategories = window.originalFineCategories || [];
+        
+        // Get any new categories that were added but not saved
+        const newCategories = getNewCategoriesOnly();
+        
+        // Combine original and new categories
+        const fullCategories = [...originalCategories, ...newCategories];
+        
+        // Render the full list
+        renderFineCategories(fullCategories);
+      }
+
+      // Get only the new categories that weren't in the original data
+      function getNewCategoriesOnly() {
+        const newCategories = [];
+        const categoryDivs = document.querySelectorAll('#fineCategoriesContainer .fine-category');
+        
+        categoryDivs.forEach(categoryDiv => {
+          const categoryNameInput = categoryDiv.querySelector('.category-name');
+          if (categoryNameInput) {
+            const categoryName = categoryNameInput.value.trim();
+            if (categoryName) {
+              // Check if this category exists in original data
+              const existsInOriginal = window.originalFineCategories?.some(cat => cat.name === categoryName);
+              
+              if (!existsInOriginal) {
+                // This is a new category
+                const fines = [];
+                const fineItems = categoryDivs.querySelectorAll('.fine-item');
+                
+                fineItems.forEach(fineItem => {
+                  const fineNameInput = fineItem.querySelector('.fine-name');
+                  const fineAmountInput = fineItem.querySelector('.fine-amount');
+                  
+                  if (fineNameInput && fineAmountInput) {
+                    const fineName = fineNameInput.value.trim();
+                    const fineAmount = parseFloat(fineAmountInput.value);
+                    
+                    if (fineName && !isNaN(fineAmount)) {
+                      fines.push({
+                        name: fineName,
+                        amount: fineAmount
+                      });
+                    }
+                  }
+                });
+                
+                newCategories.push({
+                  name: categoryName,
+                  fines: fines
+                });
+              }
+            }
+          }
+        });
+        
+        return newCategories;
+      }
+
+      // Check if there are unsaved changes
+      function hasUnsavedChanges() {
+        if (!window.originalFineCategories) return false;
+        
+        // Get current state from DOM
+        const currentCategories = getCurrentCategoriesFromDOM();
+        
+        // Check if number of categories changed
+        if (currentCategories.length !== window.originalFineCategories.length) {
+          return true;
+        }
+        
+        // Check each category for changes
+        for (let i = 0; i < currentCategories.length; i++) {
+          const current = currentCategories[i];
+          const original = window.originalFineCategories[i];
+          
+          // If category name changed
+          if (original && current.name !== original.name) {
+            return true;
+          }
+          
+          // If number of fines changed
+          if (original && current.fines.length !== original.fines.length) {
+            return true;
+          }
+          
+          // Check each fine for changes
+          if (original) {
+            for (let j = 0; j < current.fines.length; j++) {
+              const currentFine = current.fines[j];
+              const originalFine = original.fines[j];
+              
+              if (!originalFine || 
+                  currentFine.name !== originalFine.name || 
+                  currentFine.amount !== originalFine.amount) {
+                return true;
+              }
+            }
+          }
+        }
+        
+        // Check if currency changed
+        const currentCurrency = document.getElementById('fineCurrency').value;
+        if (currentCurrency === 'custom') {
+          const customCurrency = document.getElementById('customCurrency').value;
+          if (customCurrency !== (window.originalCurrency || 'USD')) {
+            return true;
+          }
+        } else if (currentCurrency !== (window.originalCurrency || 'USD')) {
+          return true;
+        }
+        
+        return false;
+      }
+
+      // Get current categories from DOM (includes unsaved changes)
+      function getCurrentCategoriesFromDOM() {
+        const categories = [];
+        const categoryDivs = document.querySelectorAll('#fineCategoriesContainer .fine-category');
+        
+        categoryDivs.forEach(categoryDiv => {
+          const categoryNameInput = categoryDiv.querySelector('.category-name');
+          if (categoryNameInput) {
+            const categoryName = categoryNameInput.value.trim();
+            if (categoryName) {
+              const fines = [];
+              const fineItems = categoryDiv.querySelectorAll('.fine-item');
+              
+              fineItems.forEach(fineItem => {
+                const fineNameInput = fineItem.querySelector('.fine-name');
+                const fineAmountInput = fineItem.querySelector('.fine-amount');
+                
+                if (fineNameInput && fineAmountInput) {
+                  const fineName = fineNameInput.value.trim();
+                  const fineAmount = parseFloat(fineAmountInput.value);
+                  
+                  if (fineName && !isNaN(fineAmount)) {
+                    fines.push({
+                      name: fineName,
+                      amount: fineAmount
+                    });
+                  }
+                }
+              });
+              
+              categories.push({
+                name: categoryName,
+                fines: fines
+              });
+            }
+          }
+        });
+        
+        return categories;
+      }
+
+      function showSearchResultsCount(fineCount, categoryCount) {
+        // Remove existing count display
+        const existingCount = document.querySelector('.search-results-count');
+        if (existingCount) {
+          existingCount.remove();
+        }
+        
+        // Add count display below search bar
+        const searchBar = document.getElementById('fineSearchInput').parentElement;
+        const countDiv = document.createElement('div');
+        countDiv.className = 'search-results-count';
+        countDiv.style.cssText = 'margin-top:0.5rem; color:#a0aec0; font-size:0.875rem; text-align:center;';
+        countDiv.textContent = `Found ${fineCount} fines in ${categoryCount} categories`;
+        searchBar.appendChild(countDiv);
+      }
+
+      function clearSearch() {
+        const searchInput = document.getElementById('fineSearchInput');
+        const clearBtn = document.getElementById('clearSearchBtn');
+        
+        // Clear search input
+        searchInput.value = '';
+        
+        // Hide clear button
+        clearBtn.style.display = 'none';
+        
+        // Remove search results count
+        const existingCount = document.querySelector('.search-results-count');
+        if (existingCount) {
+          existingCount.remove();
+        }
+        
+        // Restore full categories list
+        restoreFullCategoriesList();
       }
     </script>
 
@@ -4532,7 +4866,7 @@ async function deleteEditEvent() {
             100% { transform: rotate(360deg); }
           }
         </style>
-        <button onclick="closeFineSettingsModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7; z-index:10;"><i class="fa fa-times"></i></button>
+        <button onclick="attemptCloseFineSettingsModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7; z-index:10;"><i class="fa fa-times"></i></button>
         
         <!-- Header -->
         <div style="text-align:center; margin-bottom:2rem; padding-bottom:1rem; border-bottom:1px solid #35385a;">
@@ -4576,6 +4910,22 @@ async function deleteEditEvent() {
           </div>
         </div>
 
+        <!-- Search Bar -->
+        <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
+          <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem;">
+            <i class="fa fa-search" style="color:#3b82f6;"></i>
+            Search Fines & Categories
+          </label>
+          <div style="position:relative;">
+            <input type="text" id="fineSearchInput" placeholder="Search by category name, fine name, or amount..." 
+                   style="width:100%; padding:0.75rem 1rem; padding-right:3rem; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; font-size:1rem; box-sizing:border-box;"
+                   oninput="searchFines(this.value)">
+            <button id="clearSearchBtn" onclick="clearSearch()" style="position:absolute; right:0.5rem; top:50%; transform:translateY(-50%); background:none; border:none; color:#a0aec0; cursor:pointer; padding:0.5rem; display:none; line-height:1; display:flex; align-items:center; justify-content:center; width:24px; height:24px; z-index:5;">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+        </div>
+
         <!-- Fine Categories -->
         <div id="fineCategoriesContainer" style="margin-bottom:2rem;">
           <!-- Categories will be dynamically loaded here -->
@@ -4603,7 +4953,7 @@ async function deleteEditEvent() {
 
         <!-- Action Buttons -->
         <div style="display:flex; gap:1rem; justify-content:center; padding-top:1rem; border-top:1px solid #35385a;">
-          <button onclick="closeFineSettingsModal()" style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+          <button onclick="attemptCloseFineSettingsModal()" style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
             Cancel
           </button>
           <button onclick="saveFineSettings()" style="background:#10b981; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
