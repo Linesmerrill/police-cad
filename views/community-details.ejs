@@ -185,6 +185,126 @@
         const currentImageSrc = '<%= community.community.imageLink || community.community.image || "/static/images/default-logo.png" %>';
         communityImage.src = currentImageSrc;
       }
+      
+      // Initialize privacy and platform selections
+      window.selectedPrivacy = '<%= (community && community.community && community.community.visibility) || "public" %>';
+      
+
+      
+      // Initialize with existing tags from database or empty array if none exist
+      // The backend will provide the tags data
+      window.selectedPlatforms = []; // Will be updated by backend
+      
+      // No default selection since tags are optional
+      
+      // Update button states to reflect current values
+      if (window.selectedPrivacy === 'private') {
+        const privateBtn = document.getElementById('privacyPrivate');
+        const publicBtn = document.getElementById('privacyPublic');
+        if (privateBtn && publicBtn) {
+          privateBtn.style.background = '#3b82f6';
+          publicBtn.style.background = 'transparent';
+        }
+      } else {
+        const privateBtn = document.getElementById('privacyPrivate');
+        const publicBtn = document.getElementById('privacyPublic');
+        if (privateBtn && publicBtn) {
+          publicBtn.style.background = '#3b82f6';
+          privateBtn.style.background = 'transparent';
+        }
+      }
+      
+      // Load existing tags and update button states
+      if (typeof window.loadExistingTags === 'function') {
+        window.loadExistingTags();
+      }
+    };
+
+    // Privacy and Platform management functions
+    window.setPrivacy = function(privacy) {
+      // Update button styles
+      const publicBtn = document.getElementById('privacyPublic');
+      const privateBtn = document.getElementById('privacyPrivate');
+      
+      if (privacy === 'public') {
+        publicBtn.style.background = '#3b82f6';
+        privateBtn.style.background = 'transparent';
+      } else {
+        publicBtn.style.background = 'transparent';
+        privateBtn.style.background = '#3b82f6';
+      }
+      
+      // Store the selected privacy value
+      window.selectedPrivacy = privacy;
+    };
+
+    window.togglePlatform = function(platform) {
+      // Map platform values to correct button IDs
+      const platformIdMap = { 'xbox': 'platformXbox', 'playstation': 'platformPlayStation', 'pc': 'platformPC' };
+      const buttonId = platformIdMap[platform];
+      
+      if (!buttonId) {
+        console.error('Unknown platform:', platform);
+        return;
+      }
+      
+      const platformBtn = document.getElementById(buttonId);
+      if (!platformBtn) {
+        console.error('Button not found:', buttonId);
+        return;
+      }
+      
+      const isSelected = platformBtn.style.background === 'rgb(59, 130, 246)' || 
+                        platformBtn.style.background === '#3b82f6';
+      
+      if (isSelected) {
+        platformBtn.style.background = 'transparent';
+        // Remove from selected platforms
+        if (!window.selectedPlatforms) window.selectedPlatforms = [];
+        // Map platform values to proper capitalization
+        const platformMap = { 'xbox': 'Xbox', 'playstation': 'PlayStation', 'pc': 'PC' };
+        const capitalizedPlatform = platformMap[platform] || platform;
+        window.selectedPlatforms = window.selectedPlatforms.filter(p => p !== capitalizedPlatform);
+      } else {
+        platformBtn.style.background = '#3b82f6';
+        // Add to selected platforms
+        if (!window.selectedPlatforms) window.selectedPlatforms = [];
+        // Map platform values to proper capitalization
+        const platformMap = { 'xbox': 'Xbox', 'playstation': 'PlayStation', 'pc': 'PC' };
+        const capitalizedPlatform = platformMap[platform] || platform;
+        if (!window.selectedPlatforms.includes(capitalizedPlatform)) {
+          window.selectedPlatforms.push(capitalizedPlatform);
+        }
+      }
+    };
+
+    // Function to load existing tags and update button states
+    window.loadExistingTags = function() {
+      // Get existing tags from the page data
+      const existingTagsElement = document.querySelector('[data-existing-tags]');
+      if (existingTagsElement) {
+        try {
+          const existingTags = JSON.parse(existingTagsElement.dataset.existingTags);
+          if (Array.isArray(existingTags) && existingTags.length > 0) {
+            window.selectedPlatforms = existingTags;
+            
+            // Update button states based on existing tags
+            existingTags.forEach(tag => {
+              // Map tag values to button IDs
+              const tagMap = { 'Xbox': 'platformXbox', 'PlayStation': 'platformPlayStation', 'PC': 'platformPC' };
+              const buttonId = tagMap[tag];
+              if (buttonId) {
+                const button = document.getElementById(buttonId);
+                if (button) {
+                  button.style.background = '#3b82f6';
+                }
+              }
+            });
+          }
+        } catch (error) {
+          // Silently handle parsing errors
+        }
+      }
     };
 
     window.saveCommunityProfile = function() {
@@ -212,7 +332,9 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: communityName,
-          description: communityDescription
+          description: communityDescription,
+          visibility: window.selectedPrivacy || '<%= (community && community.community && community.community.visibility) || "public" %>',
+          tags: window.selectedPlatforms || []
         })
       })
       .then(res => res.json())
@@ -1487,6 +1609,9 @@
 
         <!-- Community Profile Section -->
         <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
+          <!-- Hidden element to store existing tags data -->
+          <div data-existing-tags='<%= JSON.stringify(community && community.community && community.community.tags ? community.community.tags : []) %>' style="display:none;"></div>
+          
           <h4 style="color:#fff; margin:0 0 1rem 0; font-size:1.25rem; font-weight:600; display:flex; align-items:center;">
             <i class="fa fa-image" style="margin-right:0.5rem; color:#3b82f6;"></i>
             Community Profile
@@ -1528,6 +1653,47 @@
           <textarea id="communityDescription" placeholder="Community description..." 
                     style="width:100%; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:8px; padding:0.75rem; font-size:1rem; min-height:80px; resize:vertical;"><%= community.community.description || '' %></textarea>
           
+          <!-- Privacy Settings -->
+          <div style="margin-top:1.5rem;">
+            <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem;">
+              <i class="fa fa-shield-alt" style="color:#3b82f6;"></i>
+              Community Privacy
+            </label>
+            <div style="display:flex; gap:0.5rem;">
+              <button type="button" id="privacyPublic" onclick="setPrivacy('public')" 
+                      style="padding:0.5rem 1rem; border:2px solid #3b82f6; border-radius:6px; background:<%= (!(community && community.community && community.community.visibility) || (community && community.community && community.community.visibility === 'public')) ? '#3b82f6' : 'transparent' %>; color:#fff; font-weight:500; cursor:pointer; transition:all 0.2s; hover:background:#1e40af; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                Public
+              </button>
+              <button type="button" id="privacyPrivate" onclick="setPrivacy('private')" 
+                      style="padding:0.5rem 1rem; border:2px solid #3b82f6; border-radius:6px; background:<%= (community && community.community && community.community.visibility === 'private') ? '#3b82f6' : 'transparent' %>; color:#fff; font-weight:500; cursor:pointer; transition:all 0.2s; hover:background:#1e40af; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                Private
+              </button>
+            </div>
+          </div>
+          
+          <!-- Platform Tags -->
+          <div style="margin-top:1.5rem;">
+            <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem;">
+              <i class="fa fa-gamepad" style="color:#3b82f6;"></i>
+              Platform Tags
+              <span style="color:#a0aec0; font-size:0.75rem; font-weight:400;">(optional)</span>
+            </label>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button type="button" id="platformXbox" onclick="togglePlatform('xbox')" 
+                      style="padding:0.5rem 1rem; border:2px solid #3b82f6; border-radius:6px; background:transparent; color:#fff; font-weight:500; cursor:pointer; transition:all 0.2s; hover:background:#1e40af; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                Xbox
+              </button>
+              <button type="button" id="platformPlayStation" onclick="togglePlatform('playstation')" 
+                      style="padding:0.5rem 1rem; border:2px solid #3b82f6; border-radius:6px; background:transparent; color:#fff; font-weight:500; cursor:pointer; transition:all 0.2s; hover:background:#1e40af; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                PlayStation
+              </button>
+              <button type="button" id="platformPC" onclick="togglePlatform('pc')" 
+                      style="padding:0.5rem 1rem; border:2px solid #3b82f6; border-radius:6px; background:transparent; color:#fff; font-weight:500; cursor:pointer; transition:all 0.2s; hover:background:#1e40af; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                PC
+              </button>
+            </div>
+          </div>
+          
           <div style="margin-top:1rem; text-align:right;">
             <button id="saveProfileBtn" onclick="saveCommunityProfile()" 
                     style="background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
@@ -1539,6 +1705,7 @@
         <!-- Settings Navigation -->
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:2rem;">
           <!-- Community Settings -->
+          <!-- Temporarily disabled - may be enabled in the future
           <div id="communitySettingsCard" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
             <div style="text-align:center;">
               <i class="fa fa-cog" style="font-size:2rem; color:#3b82f6; margin-bottom:0.5rem;"></i>
@@ -1546,6 +1713,7 @@
               <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">General configuration</p>
             </div>
           </div>
+          -->
 
           <!-- Fine Settings -->
           <div id="fineSettingsCard" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
@@ -1945,7 +2113,9 @@ function saveCommunityProfile() {
     },
     body: JSON.stringify({
       name: name.trim(),
-      description: description.trim()
+      description: description.trim(),
+      visibility: window.selectedPrivacy || '<%= (community && community.community && community.community.visibility) || "public" %>',
+      tags: window.selectedPlatforms || []
     })
   })
   .then(res => {
