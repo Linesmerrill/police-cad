@@ -894,8 +894,8 @@
           <h3 class="text-2xl font-semibold mb-6 text-center">Community Actions</h3>
           <div class="flex justify-center space-x-6">
             <% if (isMemberApproved) { %>
-              <!-- Promote - Anyone can do, no permission check needed -->
-              <button onclick="openPromoteModal()" class="flex flex-col items-center p-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+              <!-- Promote - Coming soon -->
+              <button onclick="showComingSoonModal('Promote Community', 'This feature will allow you to promote your community to reach more members. Coming soon!')" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
                 <i class="fa-solid fa-bullhorn w-8 h-8 mb-3 text-2xl"></i>
                 <span class="text-lg font-medium">Promote</span>
               </button>
@@ -953,20 +953,14 @@
                   });
                 }
               %>
-              <% if (canManageMembers) { %>
-                <button onclick="openInviteModal()" class="flex flex-col items-center p-6 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-                  <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
-                  <span class="text-lg font-medium">Invite</span>
-                </button>
-              <% } else { %>
-                <button onclick="openNoInvitePermissionModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors text-lg" style="pointer-events:auto;">
-                  <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
-                  <span class="text-lg font-medium">Invite</span>
-                </button>
-              <% } %>
+              <!-- Invite - Coming soon -->
+              <button onclick="showComingSoonModal('Invite Members', 'This feature will allow you to invite new members to your community. Coming soon!')" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
+                <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
+                <span class="text-lg font-medium">Invite</span>
+              </button>
             <% } else { %>
               <!-- Non-members see disabled buttons with member-only modal -->
-              <button onclick="openMemberOnlyModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
+              <button onclick="showComingSoonModal('Promote Community', 'This feature will allow you to promote your community to reach more members. Coming soon!')" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
                 <i class="fa-solid fa-bullhorn w-8 h-8 mb-3 text-2xl"></i>
                 <span class="text-lg font-medium">Promote</span>
               </button>
@@ -976,7 +970,7 @@
                 <span class="text-lg font-medium">Settings</span>
               </button>
               
-              <button onclick="openMemberOnlyModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
+              <button onclick="showComingSoonModal('Invite Members', 'This feature will allow you to invite new members to your community. Coming soon!')" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
                 <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
                 <span class="text-lg font-medium">Invite</span>
               </button>
