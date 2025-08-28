@@ -1721,15 +1721,51 @@
           </div>
 
           <!-- Roles Management -->
-          <div id="rolesManagementCard" onclick="openRolesModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
-            <div style="text-align:center;">
-                          <div style="margin-bottom:0.5rem;">
-              <i class="fa fa-users-cog" style="font-size:2rem; color:#8b5cf6;"></i>
+          <%
+            // Permission logic for managing roles
+            let canManageRoles = false;
+            if (userId && community.community && Array.isArray(community.community.roles)) {
+              community.community.roles.forEach(function(role) {
+                if (Array.isArray(role.members) && role.members.includes(userId)) {
+                  if (Array.isArray(role.permissions)) {
+                    role.permissions.forEach(function(perm) {
+                      if (
+                        (perm.name === "administrator" && perm.enabled === true) ||
+                        (perm.name === "manage roles" && perm.enabled === true)
+                      ) {
+                        canManageRoles = true;
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          %>
+          
+          <% if (canManageRoles) { %>
+            <!-- User has permission to manage roles -->
+            <div id="rolesManagementCard" onclick="openRolesModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
+              <div style="text-align:center;">
+                <div style="margin-bottom:0.5rem;">
+                  <i class="fa fa-users-cog" style="font-size:2rem; color:#8b5cf6;"></i>
+                </div>
+                <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Roles</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage roles & permissions</p>
+              </div>
             </div>
-              <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Roles</h5>
-              <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage roles & permissions</p>
+          <% } else { %>
+            <!-- User doesn't have permission to manage roles -->
+            <div id="rolesManagementCard" onclick="showNoRolesPermissionModal()" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
+              <div style="text-align:center;">
+                <div style="margin-bottom:0.5rem;">
+                  <i class="fa fa-users-cog" style="font-size:2rem; color:#6b7280;"></i>
+                </div>
+                <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">Roles</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage roles & permissions</p>
+                <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.75rem; font-style:italic;">Permission Required</p>
+              </div>
             </div>
-          </div>
+          <% } %>
 
           <!-- Bans Management -->
           <div id="bansManagementCard" onclick="showComingSoonAlert('Bans Management')" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
@@ -2968,6 +3004,15 @@ function clearPermissionsSearch() {
   searchInput.value = '';
   clearBtn.style.display = 'none';
   renderPermissionsList(); // Re-render without search filter
+}
+
+// No Roles Permission Modal
+function showNoRolesPermissionModal() {
+  showCustomModal(
+    'Permission Required',
+    'You do not have permission to view Roles. Request the manage roles permission from your community administrator.',
+    'info'
+  );
 }
 
 // Head Admin info modal function
