@@ -79,7 +79,6 @@
             // Then navigate directly to the dashboard with department parameters
             window.location.href = dashboardUrl;
           }).catch(error => {
-            console.error('Error setting last accessed community:', error);
             // Continue with navigation even if setting last accessed community fails
             window.location.href = dashboardUrl;
           });
@@ -88,7 +87,6 @@
           window.location.href = dashboardUrl;
         }
       } else {
-        console.error('No matching dashboard for department:', departmentName);
         alert('Unknown department type: ' + departmentName);
       }
     }
@@ -244,13 +242,11 @@
       const buttonId = platformIdMap[platform];
       
       if (!buttonId) {
-        console.error('Unknown platform:', platform);
         return;
       }
       
       const platformBtn = document.getElementById(buttonId);
       if (!platformBtn) {
-        console.error('Button not found:', buttonId);
         return;
       }
       
@@ -466,14 +462,9 @@
                 // Update the image in the overview section
                 const overviewImage = document.getElementById('community-overview-image');
                 if (overviewImage) {
-                  console.log('🖼️ Current image src:', overviewImage.src);
-                  console.log('🖼️ New image src:', cloudinaryData.secure_url);
-                  
                   // Update the image directly since we now have a unique URL
                   overviewImage.src = cloudinaryData.secure_url;
                   overviewImage.alt = 'Community Image - Updated ' + new Date().toLocaleTimeString();
-                  
-                  console.log('🖼️ Image updated to new URL');
                 }
                 
                 showToast('Community image updated successfully!', 2500, 'success');
@@ -1725,29 +1716,32 @@
           </div>
 
           <!-- Members Management -->
-          <div id="membersManagementCard" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
+          <div id="membersManagementCard" onclick="openMembersModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
             <div style="text-align:center;">
-              <i class="fa fa-users" style="font-size:2rem; color:#f59e0b; margin-bottom:0.5rem;"></i>
+              <div id="membersCardIcon" style="margin-bottom:0.5rem;">
+                <i class="fa fa-users" style="font-size:2rem; color:#f59e0b;"></i>
+              </div>
               <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Members</h5>
               <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage community members</p>
             </div>
           </div>
 
           <!-- Roles Management -->
-          <div id="rolesManagementCard" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
+          <div id="rolesManagementCard" onclick="showComingSoonAlert('Roles Management')" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
             <div style="text-align:center;">
-              <i class="fa fa-user-shield" style="font-size:2rem; color:#8b5cf6; margin-bottom:0.5rem;"></i>
-              <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Roles</h5>
-              <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage roles & permissions</p>
+              <i class="fa fa-user-shield" style="font-size:2rem; color:#6b7280; margin-bottom:0.5rem;"></i>
+              <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">Roles</h5>
+              <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage roles & permissions</p>
             </div>
           </div>
 
           <!-- Bans Management -->
-          <div id="bansManagementCard" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
+          <div id="bansManagementCard" onclick="showComingSoonAlert('Bans Management')" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
             <div style="text-align:center;">
-              <i class="fa fa-ban" style="font-size:2rem; color:#ef4444; margin-bottom:0.5rem;"></i>
-              <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Bans</h5>
+              <i class="fa fa-ban" style="font-size:2rem; color:#6b7280; margin-bottom:0.5rem;"></i>
+              <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">Bans</h5>
               <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage banned users</p>
+              <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.75rem; font-style:italic;">Coming Soon</p>
             </div>
           </div>
         </div>
@@ -1960,7 +1954,6 @@
               }
             })
             .catch(error => {
-              console.error('Error uploading image:', error);
               const img = document.getElementById('communityProfileImage');
               img.src = originalSrc;
               img.style.opacity = '1';
@@ -2031,7 +2024,6 @@
           }
         })
         .catch(error => {
-          console.error('Error submitting join request:', error);
           showToast('Error submitting join request: ' + error.message, 3000, 'error');
         });
       }
@@ -2139,7 +2131,6 @@ function saveCommunityProfile() {
     }
   })
   .catch(error => {
-    console.error('Error updating profile:', error);
     showToast('Failed to update community profile. Please try again.', 3000, 'error');
   })
   .finally(() => {
@@ -2158,9 +2149,9 @@ function openCommunitySettings() {
         openFineSettingsModal();
       }
 
-function openMembersManagement() {
-  showSettingsError('Members Management page coming soon...');
-}
+      function openMembersManagement() {
+        openMembersModal();
+      }
 
 function openRolesManagement() {
   showSettingsError('Roles Management page coming soon...');
@@ -2201,7 +2192,6 @@ function confirmDeleteCommunity() {
     }
   })
   .catch(error => {
-    console.error('Error deleting community:', error);
     showSettingsError('Failed to delete community. Please try again.');
   });
 }
@@ -2311,6 +2301,48 @@ function showToast(message, duration = 2500) {
   setTimeout(() => {
     toast.style.display = 'none';
   }, duration);
+}
+
+function showComingSoonModal(title, message) {
+  // Create modal HTML if it doesn't exist
+  let modal = document.getElementById('comingSoonModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'comingSoonModal';
+    modal.className = 'heroui-modal';
+    modal.style.cssText = 'display:flex; position:fixed; z-index:6000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;';
+    
+    modal.innerHTML = `
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:400px; width:90%; position:relative; border:1px solid #35385a;">
+        <button onclick="closeComingSoonModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-clock" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">${title}</h3>
+        </div>
+        <p style="color:#a0aec0; text-align:center; margin-bottom:2rem; line-height:1.6;">${message}</p>
+        <div style="text-align:center;">
+          <button onclick="closeComingSoonModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-semibold">Got it!</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  } else {
+    // Update existing modal content
+    const titleElement = modal.querySelector('h3');
+    const messageElement = modal.querySelector('p');
+    if (titleElement) titleElement.textContent = title;
+    if (messageElement) messageElement.textContent = message;
+  }
+  
+  modal.style.display = 'flex';
+}
+
+function closeComingSoonModal() {
+  const modal = document.getElementById('comingSoonModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
 }
 
 if (localStorage.getItem('leftCommunityToast')) {
@@ -2615,7 +2647,6 @@ function fetchCommunityMembers(page = 1, append = false) {
       isLoadingMore = false;
     })
     .catch(error => {
-      console.error('Error fetching community members:', error);
       isLoadingMore = false;
       
       if (typeof showToast === 'function') {
@@ -2755,7 +2786,6 @@ function finishCreateDepartment(skipMembers = false) {
       }
     })
     .catch(err => {
-      console.error('[CreateDept] Failed to create department:', err);
       document.getElementById('createDeptStep3Error').textContent = err.message || 'Failed to create department.';
       document.getElementById('createDeptStep3Error').style.display = 'block';
     });
@@ -4210,7 +4240,6 @@ async function deleteEditEvent() {
             document.getElementById('fineSettingsLoading').style.display = 'none';
           })
           .catch(err => {
-            console.error('Error refreshing community data:', err);
             // Fallback to current page data
             loadFineSettings();
             
@@ -4855,6 +4884,815 @@ async function deleteEditEvent() {
         // Restore full categories list
         restoreFullCategoriesList();
       }
+
+      // Members Modal Functions
+      let communityMembersData = [];
+      let communityMembersPage = 1;
+      let communityMembersLimit = 20;
+      let communityMembersTotal = 0;
+      let communityFilteredMembers = [];
+      let communityCurrentSearchTerm = '';
+
+      function openMembersModal() {
+        // Show loading state on the card
+        showMembersCardLoading();
+        
+        // Ensure the modal exists (create if needed)
+        const modal = ensureMembersModalExists();
+        
+        if (!modal) {
+          hideMembersCardLoading();
+          showToast('Error: Could not create members modal', 3000, 'error');
+          return;
+        }
+        
+        // Modal exists, display it
+        modal.style.display = 'flex';
+        
+        // Wait for all required elements to be available before loading members
+        waitForMembersElements(() => {
+          loadMembers();
+        });
+      }
+
+      function closeMembersModal() {
+        const modal = document.getElementById('membersModal');
+        if (!modal) {
+          return;
+        }
+        
+        modal.style.display = 'none';
+        // Reset search
+        const searchInput = document.getElementById('memberSearchInput');
+        if (searchInput) {
+          searchInput.value = '';
+        }
+        communityCurrentSearchTerm = '';
+        communityFilteredMembers = [];
+        
+        // Ensure card loading state is reset
+        hideMembersCardLoading();
+      }
+
+      function closeMemberActionsModal() {
+        const modal = document.getElementById('memberActionsModal');
+        if (!modal) {
+          return;
+        }
+        
+        modal.style.display = 'none';
+      }
+
+      async function loadMembers(page = 1) {
+        const loadingDiv = document.getElementById('membersLoading');
+        const listContainer = document.getElementById('membersListContainer');
+        const paginationDiv = document.getElementById('membersPagination');
+        
+        // Safety check - ensure required elements exist (loadingDiv is optional)
+        if (!listContainer || !paginationDiv) {
+          return;
+        }
+        
+        try {
+          // Show loading if element exists
+          if (loadingDiv) {
+            loadingDiv.style.display = 'block';
+          }
+          listContainer.innerHTML = '';
+          paginationDiv.style.display = 'none';
+          
+          const communityId = '<%= community._id %>';
+          const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+          
+          const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/members?limit=${communityMembersLimit}&page=${page}`);
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch members: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          communityMembersData = data.members || [];
+          communityMembersTotal = data.totalUsers || 0;
+          communityMembersPage = page;
+          
+          // Apply current search filter if exists
+          if (communityCurrentSearchTerm) {
+            communityFilteredMembers = communityMembersData.filter(member => 
+              member.user?.username?.toLowerCase().includes(communityCurrentSearchTerm.toLowerCase()) ||
+              member.user?.email?.toLowerCase().includes(communityCurrentSearchTerm.toLowerCase()) ||
+              getMemberRole(member)?.toLowerCase().includes(communityCurrentSearchTerm.toLowerCase())
+            );
+          } else {
+            communityFilteredMembers = [...communityMembersData];
+          }
+          
+          renderMembersList();
+          updatePagination();
+          
+          // Hide pagination loading state after new page is loaded
+          hidePaginationLoading();
+          
+        } catch (error) {
+          listContainer.innerHTML = `
+            <div style="color:#ef4444; text-align:center; padding:2rem;">
+              <i class="fa fa-exclamation-triangle" style="font-size:2rem; margin-bottom:1rem;"></i>
+              <p>Failed to load members: ${error.message}</p>
+            </div>
+          `;
+          
+          // Hide pagination loading state on error
+          hidePaginationLoading();
+        } finally {
+          // Hide loading if element exists
+          if (loadingDiv) {
+            loadingDiv.style.display = 'none';
+          }
+          // Hide the card loading state when members are loaded (success or error)
+          hideMembersCardLoading();
+        }
+      }
+
+      function renderMembersList() {
+        const listContainer = document.getElementById('membersListContainer');
+        
+        // Safety check - ensure the container exists
+        if (!listContainer) {
+          return;
+        }
+        
+        if (communityFilteredMembers.length === 0) {
+          listContainer.innerHTML = `
+            <div style="text-align:center; padding:2rem; color:#a0aec0;">
+              <i class="fa fa-users" style="font-size:2rem; margin-bottom:1rem;"></i>
+              <p>${communityCurrentSearchTerm ? 'No members found matching your search.' : 'No members found.'}</p>
+            </div>
+          `;
+          return;
+        }
+        
+        const membersHtml = communityFilteredMembers.map(member => `
+          <div class="member-item" style="background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:1rem; margin-bottom:0.75rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;" onclick="openMemberActions('${member._id}')">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="flex:1;">
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                  <div style="width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#4a5568;">
+                    ${member.user?.profilePicture ? 
+                      `<img src="${member.user.profilePicture}" alt="${member.user.username || 'User'}" style="width:100%; height:100%; object-fit:cover;">` : 
+                      `<i class="fa fa-user" style="color:#a0aec0; font-size:1.25rem;"></i>`
+                    }
+                  </div>
+                  <div>
+                    <h4 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">
+                      ${member.user?.username || 'Unknown User'}
+                      ${member._id === '<%= community.community.ownerID %>' ? ' <i class="fa fa-crown" style="color:#f59e0b; font-size:0.75rem;"></i>' : ''}
+                    </h4>
+                    ${member.user?.callSign ? `<p style="color:#a0aec0; margin:0; font-size:0.75rem;">Call Sign: ${member.user.callSign}</p>` : ''}
+                  </div>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div style="color:#10b981; font-size:0.875rem; font-weight:500; margin-bottom:0.25rem;">
+                  ${getMemberRole(member) || 'Member'}
+                </div>
+                <div style="color:#a0aec0; font-size:0.75rem;">
+                  Member since ${getMemberJoinDate(member)}
+                </div>
+                ${member.user?.isOnline ? '<div style="color:#10b981; font-size:0.75rem;"><i class="fa fa-circle"></i> Online</div>' : ''}
+              </div>
+            </div>
+          </div>
+        `).join('');
+        
+        listContainer.innerHTML = membersHtml;
+      }
+
+      function updatePagination() {
+        const paginationDiv = document.getElementById('membersPagination');
+        const pageInfo = document.getElementById('pageInfo');
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+        
+        // Safety check - ensure all required elements exist
+        if (!paginationDiv || !pageInfo || !prevBtn || !nextBtn) {
+          return;
+        }
+        
+        const totalPages = Math.ceil(communityMembersTotal / communityMembersLimit);
+        
+        if (totalPages <= 1) {
+          paginationDiv.style.display = 'none';
+          return;
+        }
+        
+        paginationDiv.style.display = 'flex';
+        pageInfo.textContent = `Page ${communityMembersPage} of ${totalPages}`;
+        
+        prevBtn.disabled = communityMembersPage <= 1;
+        prevBtn.style.opacity = communityMembersPage <= 1 ? '0.5' : '1';
+        prevBtn.style.cursor = communityMembersPage <= 1 ? 'not-allowed' : 'pointer';
+        
+        nextBtn.disabled = communityMembersPage >= totalPages;
+        nextBtn.style.opacity = communityMembersPage >= totalPages ? '0.5' : '1';
+        nextBtn.style.cursor = communityMembersPage >= totalPages ? 'not-allowed' : 'pointer';
+      }
+
+      function changeMembersPage(direction) {
+        const newPage = communityMembersPage + direction;
+        const totalPages = Math.ceil(communityMembersTotal / communityMembersLimit);
+        
+        if (newPage >= 1 && newPage <= totalPages) {
+          // Show pagination loading state
+          showPaginationLoading();
+          loadMembers(newPage);
+        }
+      }
+
+      function searchMembers(searchTerm) {
+        communityCurrentSearchTerm = searchTerm;
+        
+        if (!searchTerm.trim()) {
+          communityFilteredMembers = [...communityMembersData];
+        } else {
+          const searchLower = searchTerm.toLowerCase();
+          communityFilteredMembers = communityMembersData.filter(member => 
+            member.user?.username?.toLowerCase().includes(searchLower) ||
+            member.user?.email?.toLowerCase().includes(searchLower) ||
+            getMemberRole(member)?.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        renderMembersList();
+      }
+
+      function openMemberActions(memberId) {
+        const member = communityFilteredMembers.find(m => m._id === memberId);
+        if (!member) return;
+        
+        // Check user permissions
+        const canManageMembers = checkManageMembersPermission();
+        const isOwner = checkIsOwner();
+        
+        // Get required DOM elements
+        const titleElement = document.getElementById('memberActionsTitle');
+        const infoElement = document.getElementById('memberActionsInfo');
+        const actionsContainer = document.getElementById('memberActionsButtons');
+        const modal = document.getElementById('memberActionsModal');
+        
+        // Safety check - ensure all required elements exist
+        if (!titleElement || !infoElement || !actionsContainer || !modal) {
+          showToast('Error: Member actions modal not found', 3000, 'error');
+          return;
+        }
+        
+        // Populate member info
+        titleElement.textContent = `Actions for ${member.user?.username || 'Unknown User'}`;
+        infoElement.innerHTML = `
+          <div style="text-align:left; background:#2d3748; padding:1rem; border-radius:8px; border:1px solid #4a5568;">
+            <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+              <div style="width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#4a5568;">
+                ${member.user?.profilePicture ? 
+                  `<img src="${member.user.profilePicture}" alt="${member.user.username || 'User'}" style="width:100%; height:100%; object-fit:cover;">` : 
+                  `<i class="fa fa-user" style="color:#a0aec0; font-size:2rem;"></i>`
+                }
+              </div>
+              <div>
+                <h4 style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">${member.user?.username || 'Unknown User'}</h4>
+                ${member.user?.callSign ? `<p style="color:#a0aec0; margin:0; font-size:1rem;">Call Sign: ${member.user.callSign}</p>` : ''}
+              </div>
+            </div>
+            <div style="border-top:1px solid #4a5568; padding-top:1rem;">
+              <p><strong>Role:</strong> ${getMemberRole(member) || 'Member'}</p>
+              <p><strong>Status:</strong> ${member.user?.isOnline ? '<span style="color:#10b981;">Online</span>' : '<span style="color:#6b7280;">Offline</span>'}</p>
+              <p><strong>Member since:</strong> ${getMemberJoinDate(member)}</p>
+              ${member.user?.dispatchStatus ? `<p><strong>Dispatch Status:</strong> ${member.user.dispatchStatus}</p>` : ''}
+            </div>
+          </div>
+        `;
+        
+        // Populate action buttons based on permissions
+        actionsContainer.innerHTML = '';
+        
+        if (canManageMembers || isOwner) {
+          // Don't allow actions on yourself
+          if (member._id !== '<%= user._doc._id %>') {
+            actionsContainer.innerHTML = `
+              <button onclick="kickMember('${member._id}')" style="background:#f59e0b; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+                <i class="fa fa-user-times" style="margin-right:0.5rem;"></i>
+                Kick Member
+              </button>
+              <button onclick="banMember('${member._id}')" style="background:#ef4444; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+                <i class="fa fa-ban" style="margin-right:0.5rem;"></i>
+                Ban Member
+              </button>
+              ${isOwner ? `
+                <button onclick="showComingSoonModal('Transfer Ownership', 'This feature will allow you to transfer community ownership to another member. Coming soon!')" style="background:#6b7280; color:#a0aec0; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:not-allowed; font-size:1rem; opacity:0.7;">
+                  <i class="fa fa-crown" style="margin-right:0.5rem;"></i>
+                  Transfer Ownership
+                </button>
+              ` : ''}
+            `;
+          } else {
+            actionsContainer.innerHTML = `
+              <div style="color:#a0aec0; font-style:italic; padding:1rem;">
+                You cannot perform actions on yourself.
+              </div>
+            `;
+          }
+        } else {
+          actionsContainer.innerHTML = `
+            <div style="color:#a0aec0; font-style:italic; padding:1rem;">
+              You don't have permission to manage members.
+            </div>
+          `;
+        }
+        
+        modal.style.display = 'flex';
+      }
+
+      function checkManageMembersPermission() {
+        // Check if user has manage members permission
+        const userRoles = <%- JSON.stringify(community.community.roles || []) %>;
+        const userId = '<%= user._doc._id %>';
+        
+        for (const role of userRoles) {
+          if (role.members && role.members.includes(userId)) {
+            for (const perm of role.permissions || []) {
+              if (perm.name === 'manage members' && perm.enabled) {
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
+
+      function checkIsOwner() {
+        return '<%= user._doc._id %>' === '<%= community.community.ownerID %>';
+      }
+
+      function formatDate(dateString) {
+        if (!dateString) return 'Unknown';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Unknown';
+        
+        return date.toLocaleDateString('en-US', {
+          month: 'numeric',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
+
+      function getJoinDateFromObjectId(objectId) {
+        if (!objectId || typeof objectId !== 'string') return 'Unknown';
+        
+        try {
+          // MongoDB ObjectId contains a timestamp in the first 4 bytes
+          // Convert the first 8 hex characters to decimal, then to milliseconds
+          const timestamp = parseInt(objectId.substring(0, 8), 16);
+          const date = new Date(timestamp * 1000); // Convert to milliseconds
+          
+          if (isNaN(date.getTime())) return 'Unknown';
+          
+          return date.toLocaleDateString('en-US', {
+            month: 'numeric',
+            day: 'numeric',
+            year: 'numeric'
+          });
+        } catch (error) {
+          return 'Unknown';
+        }
+      }
+
+      function getMemberJoinDate(member) {
+        // Get the current community ID
+        const currentCommunityId = '<%= community._id %>';
+        
+        // Find the community entry that matches the current community
+        if (member.user?.communities && Array.isArray(member.user.communities)) {
+          const communityEntry = member.user.communities.find(comm => comm.communityId === currentCommunityId);
+          
+          if (communityEntry && communityEntry._id) {
+            // Use the community join ObjectId to get the actual join date
+            return getJoinDateFromObjectId(communityEntry._id);
+          }
+        }
+        
+        // Fallback: Show when they joined the platform if no community join info
+        if (member.user?.createdAt) {
+          return formatDate(member.user.createdAt);
+        }
+        
+        return 'Unknown';
+      }
+
+      function getMemberRole(member) {
+        // Check if user is the community owner
+        if (member._id === '<%= community.community.ownerID %>') {
+          return 'Owner';
+        }
+        
+        // Check if user has any roles in the community
+        const userRoles = <%- JSON.stringify(community.community.roles || []) %>;
+        for (const role of userRoles) {
+          if (role.members && role.members.includes(member._id)) {
+            return role.name || 'Member';
+          }
+        }
+        
+        return 'Member';
+      }
+
+      // Member action functions
+      async function kickMember(memberId) {
+        showCustomConfirm(
+          'Kick Member',
+          'Are you sure you want to kick this member from the community? They will be removed but can rejoin if invited.',
+          () => {
+            performKickMember(memberId);
+          }
+        );
+      }
+
+      async function performKickMember(memberId) {
+        // Show loading state in the member actions modal
+        const actionsContainer = document.getElementById('memberActionsButtons');
+        if (actionsContainer) {
+          actionsContainer.innerHTML = `
+            <div style="text-align:center; padding:2rem;">
+              <div class="loading-spinner" style="width:60px; height:60px; border:4px solid #4a5568; border-top:4px solid #f59e0b; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+              <p style="color:#a0aec0; font-size:1.125rem;">Kicking member...</p>
+              <p style="color:#6b7280; font-size:0.875rem;">This may take a moment</p>
+            </div>
+          `;
+        }
+
+        try {
+          const communityId = '<%= community._id %>';
+          const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+          
+          const response = await fetch(`${apiUrl}/api/v1/user/${memberId}/remove-community`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ communityId }),
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.message || `Failed to kick member: ${response.status}`);
+          }
+
+          const data = await response.json();
+          
+          showToast('Member kicked successfully!', 3000, 'success');
+          closeMemberActionsModal();
+          
+          // Refresh the members list to reflect the change
+          // If we're on a page that might now be empty, go back to page 1
+          if (communityMembersPage > 1 && communityFilteredMembers.length === 1) {
+            loadMembers(1);
+          } else {
+            loadMembers(communityMembersPage);
+          }
+          
+        } catch (error) {
+          showToast(`Failed to kick member: ${error.message}`, 3000, 'error');
+          
+          // Restore the action buttons on error
+          if (actionsContainer) {
+            const member = communityFilteredMembers.find(m => m._id === memberId);
+            if (member) {
+              openMemberActions(memberId); // This will restore the buttons
+            }
+          }
+        }
+      }
+
+      async function banMember(memberId) {
+        showCustomConfirm(
+          'Ban Member',
+          'Are you sure you want to ban this member from the community? They will be permanently banned and cannot rejoin.',
+          () => {
+            performBanMember(memberId);
+          }
+        );
+      }
+
+      async function performBanMember(memberId) {
+        // Show loading state in the member actions modal
+        const actionsContainer = document.getElementById('memberActionsButtons');
+        if (actionsContainer) {
+          actionsContainer.innerHTML = `
+            <div style="text-align:center; padding:2rem;">
+              <div class="loading-spinner" style="width:60px; height:60px; border:4px solid #4a5568; border-top:4px solid #ef4444; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+              <p style="color:#a0aec0; font-size:1.125rem;">Banning member...</p>
+              <p style="color:#6b7280; font-size:0.875rem;">This may take a moment</p>
+            </div>
+          `;
+        }
+
+        try {
+          const communityId = '<%= community._id %>';
+          const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+          
+          const response = await fetch(`${apiUrl}/api/v1/user/${memberId}/ban-community`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ communityId }),
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.message || `Failed to ban member: ${response.status}`);
+          }
+
+          const data = await response.json();
+          
+          showToast('Member banned successfully!', 3000, 'success');
+          closeMemberActionsModal();
+          
+          // Refresh the members list to reflect the change
+          // If we're on a page that might now be empty, go back to page 1
+          if (communityMembersPage > 1 && communityFilteredMembers.length === 1) {
+            loadMembers(1);
+          } else {
+            loadMembers(communityMembersPage);
+          }
+          
+        } catch (error) {
+          showToast(`Failed to ban member: ${error.message}`, 3000, 'error');
+          
+          // Restore the action buttons on error
+          if (actionsContainer) {
+            const member = communityFilteredMembers.find(m => m._id === memberId);
+            if (member) {
+              openMemberActions(memberId); // This will restore the buttons
+            }
+          }
+        }
+      }
+
+      function transferOwnership(memberId) {
+        showCustomConfirm(
+          'Transfer Ownership',
+          'Are you sure you want to transfer community ownership to this member? This action cannot be undone.',
+          () => {
+            // TODO: Implement ownership transfer
+            showToast('Ownership transfer functionality coming soon!', 3000, 'info');
+            closeMemberActionsModal();
+          }
+        );
+      }
+
+      function showComingSoonAlert(featureName) {
+        showToast(`${featureName} is coming soon!`, 3000, 'info');
+      }
+
+      function showMembersCardLoading() {
+        const cardIcon = document.getElementById('membersCardIcon');
+        if (cardIcon) {
+          cardIcon.innerHTML = '<div class="loading-spinner" style="width:32px; height:32px; border:3px solid #4a5568; border-top:3px solid #f59e0b; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto;"></div>';
+        }
+        
+        // Disable the card click while loading
+        const card = document.getElementById('membersManagementCard');
+        if (card) {
+          card.style.pointerEvents = 'none';
+          card.style.opacity = '0.7';
+        }
+      }
+
+      function hideMembersCardLoading() {
+        const cardIcon = document.getElementById('membersCardIcon');
+        if (cardIcon) {
+          cardIcon.innerHTML = '<i class="fa fa-users" style="font-size:2rem; color:#f59e0b;"></i>';
+        }
+        
+        // Re-enable the card click
+        const card = document.getElementById('membersManagementCard');
+        if (card) {
+          card.style.pointerEvents = 'auto';
+          card.style.opacity = '1';
+        }
+      }
+
+      function showPaginationLoading() {
+        let paginationLoading = document.getElementById('paginationLoading');
+        const membersList = document.getElementById('membersListContainer');
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+        
+        // If paginationLoading doesn't exist, create it
+        if (!paginationLoading && membersList) {
+          const paginationLoadingHTML = `
+            <div id="paginationLoading" style="display:none; text-align:center; padding:2rem;">
+              <div class="loading-spinner" style="width:40px; height:40px; border:3px solid #4a5568; border-top:3px solid #f59e0b; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+              <p style="color:#a0aec0; font-size:0.875rem;">Loading page...</p>
+            </div>
+          `;
+          membersList.insertAdjacentHTML('beforeend', paginationLoadingHTML);
+          paginationLoading = document.getElementById('paginationLoading');
+        }
+        
+        if (paginationLoading && membersList) {
+          // Hide the current members list
+          const memberItems = membersList.querySelectorAll('.member-item');
+          memberItems.forEach(item => item.style.opacity = '0.3');
+          
+          // Show pagination loading
+          paginationLoading.style.display = 'block';
+          
+          // Disable pagination buttons while loading
+          if (prevBtn) prevBtn.disabled = true;
+          if (nextBtn) nextBtn.disabled = true;
+        }
+      }
+
+      function hidePaginationLoading() {
+        const paginationLoading = document.getElementById('paginationLoading');
+        const membersList = document.getElementById('membersListContainer');
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+        
+        if (paginationLoading && membersList) {
+          // Hide pagination loading
+          paginationLoading.style.display = 'none';
+          
+          // Restore member items opacity
+          const memberItems = membersList.querySelectorAll('.member-item');
+          memberItems.forEach(item => item.style.opacity = '1');
+          
+          // Re-enable pagination buttons
+          if (prevBtn) prevBtn.disabled = false;
+          if (nextBtn) nextBtn.disabled = false;
+        } else {
+          // Even if paginationLoading doesn't exist, still restore member opacity and button states
+          if (membersList) {
+            const memberItems = membersList.querySelectorAll('.member-item');
+            memberItems.forEach(item => item.style.opacity = '1');
+          }
+          if (prevBtn) prevBtn.disabled = false;
+          if (nextBtn) nextBtn.disabled = false;
+        }
+      }
+
+      function ensureMembersModalExists() {
+        let modal = document.getElementById('membersModal');
+        if (!modal) {
+  
+          // Create the modal dynamically
+          const modalHTML = `
+            <div id="membersModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center; overflow-y:auto;">
+              <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:1000px; width:95%; max-height:90vh; position:relative; border:1px solid #35385a; overflow-y:auto;">
+                <button onclick="closeMembersModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7; z-index:10;"><i class="fa fa-times"></i></button>
+                
+                <!-- Header -->
+                <div style="text-align:center; margin-bottom:2rem; padding-bottom:1rem; border-bottom:1px solid #35385a;">
+                  <i class="fa fa-users" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
+                  <h3 style="color:#fff; margin:0; font-size:1.75rem; font-weight:600;">Community Members</h3>
+                  <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:1rem;">Manage and view community members</p>
+                </div>
+
+                <!-- Search Bar -->
+                <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
+                  <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem; display:flex; align-items:center; gap:0.5rem;">
+                    <i class="fa fa-search" style="color:#3b82f6;"></i>
+                    Search Members
+                  </label>
+                  <input type="text" id="memberSearchInput" placeholder="Search by username, email, or role..." 
+                         style="width:100%; padding:0.75rem 1rem; background:#1e2028; color:#fff; border:1px solid #4a5568; border-radius:6px; font-size:1rem; box-sizing:border-box;"
+                         oninput="searchMembers(this.value)">
+                </div>
+
+                <!-- Members List -->
+                <div id="membersListContainer" style="margin-bottom:2rem;">
+                  <!-- Loading state -->
+                  <div id="membersLoading" style="text-align:center; padding:2rem;">
+                    <div class="loading-spinner" style="width:60px; height:60px; border:4px solid #4a5568; border-top:4px solid #f59e0b; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+                    <p style="color:#a0aec0;">Loading members...</p>
+                  </div>
+                  
+                  <!-- Pagination Loading State -->
+                  <div id="paginationLoading" style="display:none; text-align:center; padding:2rem;">
+                    <div class="loading-spinner" style="width:40px; height:40px; border:3px solid #4a5568; border-top:3px solid #f59e0b; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+                    <p style="color:#a0aec0; font-size:0.875rem;">Loading page...</p>
+                  </div>
+                </div>
+
+                <!-- Pagination -->
+                <div id="membersPagination" style="display:none; text-align:center; margin-bottom:2rem;">
+                  <div style="display:flex; gap:0.5rem; justify-content:center; align-items:center;">
+                    <button id="prevPageBtn" onclick="changeMembersPage(-1)" style="background:#4a5568; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer; font-size:0.875rem;">
+                      <i class="fa fa-chevron-left"></i> Previous
+                    </button>
+                    <span id="pageInfo" style="color:#a0aec0; font-size:0.875rem; padding:0 1rem;">
+                      Page 1 of 1
+                    </span>
+                    <button id="nextPageBtn" onclick="changeMembersPage(1)" style="background:#4a5568; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer; font-size:0.875rem;">
+                      Next <i class="fa fa-chevron-right"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="display:flex; gap:1rem; justify-content:center; padding-top:1rem; border-top:1px solid #35385a;">
+                  <button onclick="closeMembersModal()" style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+          
+                    document.body.insertAdjacentHTML('beforeend', modalHTML);
+          
+          // Wait a moment for the DOM to update, then verify all elements exist
+          setTimeout(() => {
+            const loadingDiv = document.getElementById('membersLoading');
+            const paginationLoading = document.getElementById('paginationLoading');
+            const listContainer = document.getElementById('membersListContainer');
+            
+            // If loading div is missing, recreate it
+            if (!loadingDiv && listContainer) {
+              const loadingHTML = `
+                <div id="membersLoading" style="text-align:center; padding:2rem;">
+                  <div class="loading-spinner" style="width:60px; height:60px; border:4px solid #4a5568; border-top:4px solid #f59e0b; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+                  <p style="color:#a0aec0;">Loading members...</p>
+                </div>
+              `;
+              listContainer.innerHTML = loadingHTML;
+            }
+            
+            // If pagination loading div is missing, recreate it
+            if (!paginationLoading && listContainer) {
+              const paginationLoadingHTML = `
+                <div id="paginationLoading" style="display:none; text-align:center; padding:2rem;">
+                  <div class="loading-spinner" style="width:40px; height:40px; border:3px solid #4a5568; border-top:3px solid #f59e0b; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+                  <p style="color:#a0aec0; font-size:0.875rem;">Loading page...</p>
+              </div>
+            `;
+              listContainer.insertAdjacentHTML('beforeend', paginationLoadingHTML);
+            }
+          }, 50);
+          
+          return document.getElementById('membersModal');
+        }
+        return modal;
+      }
+
+      function waitForMembersElements(callback, maxAttempts = 10) {
+        let attempts = 0;
+        
+        const checkElements = () => {
+          attempts++;
+          
+          const loadingDiv = document.getElementById('membersLoading');
+          const listContainer = document.getElementById('membersListContainer');
+          const paginationDiv = document.getElementById('membersPagination');
+          
+          // If loadingDiv is missing, try to recreate it
+          if (!loadingDiv && listContainer) {
+            const loadingHTML = `
+              <div id="membersLoading" style="text-align:center; padding:2rem;">
+                <div class="loading-spinner" style="width:60px; height:60px; border:4px solid #4a5568; border-top:4px solid #f59e0b; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+                <p style="color:#a0aec0;">Loading members...</p>
+              </div>
+            `;
+            listContainer.innerHTML = loadingHTML;
+          }
+          
+          // If paginationLoading is missing, try to recreate it
+          const paginationLoading = document.getElementById('paginationLoading');
+          if (!paginationLoading && listContainer) {
+            const paginationLoadingHTML = `
+              <div id="paginationLoading" style="display:none; text-align:center; padding:2rem;">
+                <div class="loading-spinner" style="width:40px; height:40px; border:3px solid #4a5568; border-top:3px solid #f59e0b; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+                <p style="color:#a0aec0; font-size:0.875rem;">Loading page...</p>
+                </div>
+            `;
+            listContainer.insertAdjacentHTML('beforeend', paginationLoadingHTML);
+          }
+          
+          // Check again after potential recreation
+          const newLoadingDiv = document.getElementById('membersLoading');
+          const newPaginationLoading = document.getElementById('paginationLoading');
+          
+          if (newLoadingDiv && listContainer && paginationDiv && newPaginationLoading) {
+            callback();
+          } else if (attempts >= maxAttempts) {
+            hideMembersCardLoading();
+            showToast('Error: Could not initialize members modal properly', 3000, 'error');
+          } else {
+            setTimeout(checkElements, 100);
+          }
+        };
+        
+        checkElements();
+      }
     </script>
 
     <!-- Fine Settings Modal -->
@@ -4965,7 +5803,7 @@ async function deleteEditEvent() {
     </div>
 
     <!-- Custom Confirmation Modal -->
-    <div id="customConfirmModal" class="heroui-modal" style="display:none; position:fixed; z-index:4000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.75); align-items:center; justify-content:center;">
+    <div id="customConfirmModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.75); align-items:center; justify-content:center;">
       <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:95%; border:1px solid #35385a; text-align:center;">
         <!-- Icon -->
         <div style="margin-bottom:1.5rem;">
@@ -4987,6 +5825,36 @@ async function deleteEditEvent() {
             Confirm
           </button>
         </div>
+      </div>
+    </div>
+
+
+
+    <!-- Member Actions Modal -->
+    <div id="memberActionsModal" class="heroui-modal" style="display:none; position:fixed; z-index:4000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.75); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:95%; border:1px solid #35385a; text-align:center;">
+        <!-- Icon -->
+        <div style="margin-bottom:1.5rem;">
+          <i class="fa fa-user-cog" style="font-size:3rem; color:#f59e0b;"></i>
+        </div>
+        
+        <!-- Title -->
+        <h3 id="memberActionsTitle" style="color:#fff; margin:0 0 1rem 0; font-size:1.5rem; font-weight:600;">Member Actions</h3>
+        
+        <!-- Member Info -->
+        <div id="memberActionsInfo" style="color:#a0aec0; margin:0 0 2rem 0; font-size:1rem; line-height:1.5;">
+          <!-- Member details will be populated here -->
+        </div>
+        
+        <!-- Action Buttons -->
+        <div id="memberActionsButtons" style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:2rem;">
+          <!-- Action buttons will be populated here based on permissions -->
+        </div>
+        
+        <!-- Close Button -->
+        <button onclick="closeMemberActionsModal()" style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+          Close
+        </button>
       </div>
     </div>
   </body>
