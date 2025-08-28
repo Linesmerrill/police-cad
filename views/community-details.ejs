@@ -5211,14 +5211,19 @@ async function deleteEditEvent() {
       }
 
       function checkManageMembersPermission() {
-        // Check if user has manage members permission
+        // Check if user has manage members permission OR administrator permission
         const userRoles = <%- JSON.stringify(community.community.roles || []) %>;
         const userId = '<%= user._doc._id %>';
         
         for (const role of userRoles) {
           if (role.members && role.members.includes(userId)) {
             for (const perm of role.permissions || []) {
-              if (perm.name === 'manage members' && perm.enabled) {
+              // Check for "manage members" permission enabled
+              if (perm.name === 'manage members' && perm.enabled === true) {
+                return true;
+              }
+              // Check for "administrator" permission enabled
+              if (perm.name === 'administrator' && perm.enabled === true) {
                 return true;
               }
             }
