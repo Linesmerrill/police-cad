@@ -746,7 +746,7 @@
           <p class="text-gray-300 mb-4 text-xl"><%= community.community.promotionalText %></p>
           <p class="text-gray-400 mb-4 text-lg"><%= community.community.promotionalDescription %></p>
           <p id="community-overview-description" class="text-gray-400 mb-4 text-lg"><%= community.community.description %></p>
-          <p class="text-gray-400 mb-4 text-xl font-medium"><%= community.community.membersCount %> Members</p>
+          <p class="text-gray-400 mb-4 text-xl font-medium"><%= community.community.membersCount === 1 ? '1 Member' : community.community.membersCount + ' Members' %></p>
           <div class="flex flex-wrap justify-center gap-4 mb-4">
             <% if (community.community.links && community.community.links.length) { %>
               <% community.community.links.forEach(function(link) { %>
@@ -764,8 +764,8 @@
                 <i class="fa fa-users text-white text-lg md:text-2xl"></i>
               </div>
               <div>
-                <div class="text-xl md:text-3xl font-bold text-white"><%= community.community.membersCount %></div>
-                <div class="text-gray-400 text-sm md:text-lg">Total Members</div>
+                        <div class="text-xl md:text-3xl font-bold text-white"><%= community.community.membersCount %></div>
+        <div class="text-gray-400 text-sm md:text-lg">Total <%= community.community.membersCount === 1 ? 'Member' : 'Members' %></div>
               </div>
             </div>
           </div>
@@ -1721,11 +1721,13 @@
           </div>
 
           <!-- Roles Management -->
-          <div id="rolesManagementCard" onclick="showComingSoonAlert('Roles Management')" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
+          <div id="rolesManagementCard" onclick="openRolesModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
             <div style="text-align:center;">
-              <i class="fa fa-user-shield" style="font-size:2rem; color:#6b7280; margin-bottom:0.5rem;"></i>
-              <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">Roles</h5>
-              <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage roles & permissions</p>
+                          <div style="margin-bottom:0.5rem;">
+              <i class="fa fa-users-cog" style="font-size:2rem; color:#8b5cf6;"></i>
+            </div>
+              <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Roles</h5>
+              <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage roles & permissions</p>
             </div>
           </div>
 
@@ -2148,8 +2150,1226 @@ function openCommunitySettings() {
       }
 
 function openRolesManagement() {
-  showSettingsError('Roles Management page coming soon...');
+  openRolesModal();
 }
+
+// Roles Management Functions
+let rolesData = [];
+let filteredRoles = [];
+let currentRole = null;
+
+function openRolesModal() {
+  document.getElementById('rolesModal').style.display = 'flex';
+  loadRoles();
+}
+
+function refreshRolesModal() {
+  // Show loading state
+  const rolesList = document.getElementById('rolesList');
+  const originalContent = rolesList.innerHTML;
+  rolesList.innerHTML = `
+    <div style="text-align:center; padding:2rem; color:#a0aec0;">
+      <i class="fa fa-spinner fa-spin" style="font-size:2rem; margin-bottom:1rem;"></i>
+      <p>Refreshing roles...</p>
+    </div>
+  `;
+  
+  // Reload roles data
+  loadRoles();
+}
+
+function closeRolesModal() {
+  document.getElementById('rolesModal').style.display = 'none';
+  // Reset data
+  rolesData = [];
+  filteredRoles = [];
+  currentRole = null;
+}
+
+async function loadRoles() {
+  const loadingDiv = document.getElementById('rolesLoading');
+  const listContainer = document.getElementById('rolesListContainer');
+  const emptyState = document.getElementById('rolesEmptyState');
+  const rolesCount = document.getElementById('rolesCount');
+  
+  try {
+    loadingDiv.style.display = 'block';
+    listContainer.style.display = 'none';
+    emptyState.style.display = 'none';
+    
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles`);
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to fetch roles: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    rolesData = Array.isArray(data) ? data : (data.roles || []);
+    filteredRoles = [...rolesData];
+    
+    // Update count
+    rolesCount.textContent = rolesData.length;
+    document.getElementById('rolesCountText').textContent = rolesData.length === 1 ? 'role' : 'roles';
+    
+    // Render roles
+    renderRolesList();
+    
+  } catch (error) {
+    showToast(`Failed to load roles: ${error.message}`, 3000, 'error');
+    emptyState.style.display = 'block';
+  } finally {
+    loadingDiv.style.display = 'none';
+  }
+}
+
+function renderRolesList() {
+  const listContainer = document.getElementById('rolesListContainer');
+  const emptyState = document.getElementById('rolesEmptyState');
+  const rolesList = document.getElementById('rolesList');
+  
+  if (filteredRoles.length === 0) {
+    listContainer.style.display = 'none';
+    emptyState.style.display = 'block';
+    return;
+  }
+  
+  listContainer.style.display = 'block';
+  emptyState.style.display = 'none';
+  
+  rolesList.innerHTML = filteredRoles.map(role => {
+    // Check if this is a head admin role
+    const isHeadAdmin = (role.permissions || []).some(p => 
+      p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
+    );
+    
+    return `
+      <div class="role-card" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;" onclick="openRoleDetails('${role._id}')">
+        <div style="text-align:center; position:relative;">
+          ${isHeadAdmin ? `
+            <div style="position:absolute; top:-0.5rem; right:-0.5rem; background:#1e3a8a; border:2px solid #3b82f6; border-radius:50%; width:2rem; height:2rem; display:flex; align-items:center; justify-content:center;">
+              <i class="fa fa-lock" style="color:#60a5fa; font-size:0.75rem;"></i>
+            </div>
+          ` : ''}
+          <div style="margin-bottom:0.5rem;">
+            <i class="fa fa-user-shield" style="font-size:2rem; color:#8b5cf6;"></i>
+          </div>
+          <h5 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">${role.name}</h5>
+          <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">${formatCount(role.members ? role.members.length : 0, 'member', 'members')}</p>
+          ${isHeadAdmin ? `
+            <div style="margin-top:0.5rem;">
+              <span style="background:#1e3a8a; color:#60a5fa; padding:0.25rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:500;">Head Admin</span>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function searchRoles(query) {
+  if (!query.trim()) {
+    filteredRoles = [...rolesData];
+  } else {
+    filteredRoles = rolesData.filter(role => 
+      role.name.toLowerCase().includes(query.toLowerCase())
+    );
+  }
+  renderRolesList();
+}
+
+function clearRolesSearch() {
+  const searchInput = document.getElementById('rolesSearchInput');
+  const clearBtn = document.getElementById('rolesSearchClear');
+  
+  searchInput.value = '';
+  clearBtn.style.display = 'none';
+  searchRoles('');
+}
+
+// Create Role Functions
+function openCreateRoleModal() {
+  document.getElementById('createRoleModal').style.display = 'flex';
+  document.getElementById('newRoleName').value = '';
+  document.getElementById('createRoleError').style.display = 'none';
+}
+
+function closeCreateRoleModal() {
+  document.getElementById('createRoleModal').style.display = 'none';
+  
+  // Reset modal state
+  document.getElementById('createRoleStep1').style.display = 'block';
+  document.getElementById('createRoleStep2').style.display = 'none';
+  
+  // Reset form and data
+  document.getElementById('newRoleName').value = '';
+  document.getElementById('createRoleError').style.display = 'none';
+  
+  // Reset role creation data
+  newRoleData = { name: '', members: [] };
+  createRoleMembersData = [];
+  createRoleCurrentPage = 1;
+  createRoleSearchQuery = '';
+  selectedMembersData.clear(); // Clear stored member data
+  
+  // Clear selected members display
+  updateSelectedMembersDisplay();
+}
+
+// Helper function for proper singular/plural formatting
+function formatCount(count, singular, plural) {
+  return count === 1 ? `${count} ${singular}` : `${count} ${plural}`;
+}
+
+// Global variables for role creation flow
+let newRoleData = {
+  name: '',
+  members: []
+};
+let createRoleMembersData = [];
+let createRoleCurrentPage = 1;
+let createRoleSearchQuery = '';
+let selectedMembersData = new Map(); // Store member data by ID for better display
+
+async function createRole() {
+  const roleName = document.getElementById('newRoleName').value.trim();
+  const errorDiv = document.getElementById('createRoleError');
+  
+  if (!roleName) {
+    errorDiv.textContent = 'Role name is required';
+    errorDiv.style.display = 'block';
+    return;
+  }
+  
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name: roleName }),
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to create role: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    newRoleData.name = roleName;
+    newRoleData._id = data._id || data.id;
+    
+    // Go to step 2
+    goToStep2();
+    
+  } catch (error) {
+    errorDiv.textContent = `Failed to create role: ${error.message}`;
+    errorDiv.style.display = 'block';
+  }
+}
+
+async function goToStep2() {
+  const roleName = document.getElementById('newRoleName').value.trim();
+  
+  if (!roleName) {
+    showToast('Please enter a role name', 3000, 'error');
+    return;
+  }
+  
+  try {
+    // Show loading state
+    const nextBtn = document.getElementById('createRoleBtn');
+    if (!nextBtn) {
+      throw new Error('Button not found');
+    }
+    const originalText = nextBtn.innerHTML;
+    nextBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Creating Role...';
+    nextBtn.disabled = true;
+    
+    // Create the role first
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name: roleName })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create role');
+    }
+    
+    const createdRole = await response.json();
+    console.log('Role creation response:', createdRole); // Debug log
+    
+    // Store role data and proceed to step 2
+    newRoleData = {
+      _id: createdRole.role_id, // Store the actual role ID from response
+      name: roleName,
+      members: []
+    };
+    
+    console.log('Stored role data:', newRoleData); // Debug log
+    
+    document.getElementById('createRoleStep1').style.display = 'none';
+    document.getElementById('createRoleStep2').style.display = 'block';
+    
+    // Load community members for selection
+    loadCreateRoleMembers();
+    
+  } catch (error) {
+    console.error('Error creating role:', error);
+    showToast(`Failed to create role: ${error.message}`, 3000, 'error');
+    
+    // Reset button state
+    const nextBtn = document.getElementById('createRoleBtn');
+    if (nextBtn) {
+      nextBtn.innerHTML = originalText;
+      nextBtn.disabled = false;
+    }
+  }
+}
+
+function goBackToStep1() {
+  document.getElementById('createRoleStep2').style.display = 'none';
+  document.getElementById('createRoleStep1').style.display = 'block';
+  
+  // Reset step 2 data
+  newRoleData.members = [];
+  createRoleMembersData = [];
+  createRoleCurrentPage = 1;
+  createRoleSearchQuery = '';
+  selectedMembersData.clear(); // Clear stored member data
+  updateSelectedMembersDisplay();
+}
+
+async function loadCreateRoleMembers() {
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/members?page=${createRoleCurrentPage}&limit=20`);
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to fetch members: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    createRoleMembersData = data.members || [];
+    
+    renderCreateRoleMembersList();
+    renderCreateRolePagination(data);
+    
+  } catch (error) {
+    showToast(`Failed to load members: ${error.message}`, 3000, 'error');
+  }
+}
+
+function renderCreateRoleMembersList() {
+  const membersList = document.getElementById('createRoleMembersList');
+  
+  if (createRoleMembersData.length === 0) {
+    membersList.innerHTML = `
+      <div style="text-align:center; padding:2rem; color:#a0aec0;">
+        <i class="fa fa-users" style="font-size:2rem; margin-bottom:1rem; opacity:0.5;"></i>
+        <p>No members found</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Filter members based on search query
+  const filteredMembers = createRoleSearchQuery ? 
+    createRoleMembersData.filter(member => 
+      (member.user?.username || '').toLowerCase().includes(createRoleSearchQuery.toLowerCase()) ||
+      (member.user?.email || '').toLowerCase().includes(createRoleSearchQuery.toLowerCase())
+    ) : createRoleMembersData;
+  
+  membersList.innerHTML = filteredMembers.map(member => {
+    const memberId = member._id;
+    const username = member.user?.username || member.user?.email || memberId;
+    const profilePicture = member.user?.profilePicture;
+    const isSelected = newRoleData.members.includes(memberId);
+    
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; margin-bottom:1rem;">
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <div style="width:40px; height:40px; border-radius:50%; background:#4a5568; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+            ${profilePicture ? 
+              `<img src="${profilePicture}" alt="${username}" style="width:100%; height:100%; object-fit:cover;">` : 
+              `<i class="fa fa-user" style="color:#a0aec0;"></i>`
+            }
+          </div>
+          <span style="color:#fff; font-weight:500;">${username}</span>
+        </div>
+        <button onclick="toggleMemberSelection('${memberId}')" style="background:${isSelected ? '#10b981' : '#4a5568'}; color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:500; cursor:pointer;">
+          ${isSelected ? '<i class="fa fa-check"></i>' : '<i class="fa fa-plus"></i>'}
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCreateRolePagination(data) {
+  const paginationDiv = document.getElementById('createRolePagination');
+  const totalPages = Math.ceil((data.totalUsers || 0) / 20);
+  
+  if (totalPages <= 1) {
+    paginationDiv.style.display = 'none';
+    return;
+  }
+  
+  paginationDiv.style.display = 'block';
+  paginationDiv.innerHTML = `
+    <div style="display:flex; gap:0.5rem; justify-content:center; align-items:center;">
+      <button onclick="changeCreateRolePage(${createRoleCurrentPage - 1})" ${createRoleCurrentPage <= 1 ? 'disabled' : ''} style="background:#4a5568; color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:500; cursor:pointer; ${createRoleCurrentPage <= 1 ? 'opacity:0.5; cursor:not-allowed;' : ''}">
+        <i class="fa fa-chevron-left"></i> Previous
+      </button>
+      <span style="color:#a0aec0; padding:0 1rem;">Page ${createRoleCurrentPage} of ${totalPages}</span>
+      <button onclick="changeCreateRolePage(${createRoleCurrentPage + 1})" ${createRoleCurrentPage >= totalPages ? 'disabled' : ''} style="background:#4a5568; color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:500; cursor:pointer; ${createRoleCurrentPage >= totalPages ? 'opacity:0.5; cursor:not-allowed;' : ''}">
+        Next <i class="fa fa-chevron-right"></i>
+      </button>
+    </div>
+  `;
+}
+
+function changeCreateRolePage(page) {
+  if (page < 1) return;
+  createRoleCurrentPage = page;
+  loadCreateRoleMembers();
+}
+
+function toggleMemberSelection(memberId) {
+  const index = newRoleData.members.indexOf(memberId);
+  
+  if (index > -1) {
+    // Remove member
+    newRoleData.members.splice(index, 1);
+    selectedMembersData.delete(memberId); // Remove from stored data
+  } else {
+    // Add member (check limit)
+    if (newRoleData.members.length >= 30) {
+      showToast('You can only select up to 30 members at a time', 3000, 'error');
+      return;
+    }
+    newRoleData.members.push(memberId);
+    
+    // Store member data for display
+    const member = createRoleMembersData.find(m => m._id === memberId);
+    if (member) {
+      selectedMembersData.set(memberId, {
+        username: member.user?.username || member.user?.email || 'Unknown User',
+        email: member.user?.email || '',
+        profilePicture: member.user?.profilePicture || ''
+      });
+    }
+  }
+  
+  updateSelectedMembersDisplay();
+  renderCreateRoleMembersList(); // Refresh the list to update button states
+}
+
+function getStoredMemberData(memberId) {
+  return selectedMembersData.get(memberId);
+}
+
+function updateSelectedMembersDisplay() {
+  const displayDiv = document.getElementById('selectedMembersDisplay');
+  const countSpan = document.getElementById('selectedCount');
+  const listDiv = document.getElementById('selectedMembersList');
+  const finishBtn = document.getElementById('finishCreateRole');
+  
+  if (newRoleData.members.length === 0) {
+    displayDiv.style.display = 'none';
+    finishBtn.disabled = true;
+    finishBtn.style.opacity = '0.5';
+    return;
+  }
+  
+  displayDiv.style.display = 'block';
+  countSpan.textContent = newRoleData.members.length;
+  
+  // Render selected members list
+  listDiv.innerHTML = newRoleData.members.map(memberId => {
+    // Get stored member data (this should always have the username)
+    const storedMember = getStoredMemberData(memberId);
+    let username = 'Unknown User';
+    
+    if (storedMember) {
+      username = storedMember.username;
+    } else {
+      // Fallback - try to get from current page data
+      const member = createRoleMembersData.find(m => m._id === memberId);
+      if (member) {
+        username = member.user?.username || member.user?.email || 'Unknown User';
+        // Store this data for future use
+        selectedMembersData.set(memberId, {
+          username: username,
+          email: member.user?.email || '',
+          profilePicture: member.user?.profilePicture || ''
+        });
+      } else {
+        // Last resort - show truncated ID
+        username = `User ${memberId.slice(-6)}`;
+      }
+    }
+    
+    return `
+      <div style="display:flex; align-items:center; gap:0.5rem; background:#4a5568; padding:0.25rem 0.5rem; border-radius:6px; color:#fff; font-size:0.875rem;">
+        <span>${username}</span>
+        <button onclick="toggleMemberSelection('${memberId}')" style="background:none; border:none; color:#a0aec0; cursor:pointer; padding:0; font-size:0.75rem;">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+    `;
+  }).join('');
+  
+  // Enable finish button
+  finishBtn.disabled = false;
+  finishBtn.style.opacity = '1';
+}
+
+function skipAddMembers() {
+  // Close modal and show success message
+  showToast('Role created successfully!', 3000, 'success');
+  closeCreateRoleModal();
+  loadRoles(); // Refresh the roles list
+}
+
+async function finishCreateRole() {
+  if (newRoleData.members.length === 0) {
+    showToast('Please select at least one member', 3000, 'error');
+    return;
+  }
+  
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    // Add all selected members to the role
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${newRoleData._id}/members`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newRoleData.members), // Send array directly, not wrapped in object
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to add members: ${response.status}`);
+    }
+    
+    showToast('Role created successfully with members!', 3000, 'success');
+    closeCreateRoleModal();
+    refreshRolesModal(); // Refresh the roles modal to show new role
+    
+  } catch (error) {
+    showToast(`Failed to add members: ${error.message}`, 3000, 'error');
+  }
+}
+
+// Role Details Functions
+function openRoleDetails(roleId) {
+  currentRole = rolesData.find(role => role._id === roleId);
+  if (!currentRole) return;
+  
+  // Check if this is a head admin role
+  const isHeadAdmin = (currentRole.permissions || []).some(p => 
+    p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
+  );
+  
+  document.getElementById('roleDetailsTitle').textContent = currentRole.name;
+  document.getElementById('editRoleName').value = currentRole.name;
+  document.getElementById('saveRoleNameBtn').style.display = 'none';
+  
+  // Disable delete button for Head Admin role
+  const deleteBtn = document.getElementById('deleteRoleBtn');
+  if (isHeadAdmin) {
+    deleteBtn.style.background = '#6b7280';
+    deleteBtn.style.cursor = 'not-allowed';
+    deleteBtn.onclick = () => showHeadAdminInfoModal('Cannot Delete Role', 'This role cannot be deleted as it is the Head Admin role. This role has full access and cannot be removed.');
+  } else {
+    deleteBtn.style.background = '#ef4444';
+    deleteBtn.style.cursor = 'pointer';
+    deleteBtn.onclick = () => deleteRoleConfirm();
+  }
+  
+  document.getElementById('roleDetailsModal').style.display = 'flex';
+}
+
+function closeRoleDetailsModal() {
+  document.getElementById('roleDetailsModal').style.display = 'none';
+  currentRole = null;
+}
+
+function saveRoleName() {
+  const newName = document.getElementById('editRoleName').value.trim();
+  if (!newName || !currentRole) return;
+  
+  updateRoleName(currentRole._id, newName);
+}
+
+async function updateRoleName(roleId, newName) {
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${roleId}/name`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name: newName }),
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to update role name: ${response.status}`);
+    }
+    
+    showToast('Role name updated successfully!', 3000, 'success');
+    currentRole.name = newName;
+    document.getElementById('roleDetailsTitle').textContent = newName;
+    document.getElementById('saveRoleNameBtn').style.display = 'none';
+    
+    // Refresh the main roles list
+    loadRoles();
+    
+  } catch (error) {
+    showToast(`Failed to update role name: ${error.message}`, 3000, 'error');
+  }
+}
+
+function deleteRoleConfirm() {
+  showCustomConfirm(
+    'Delete Role',
+    `Are you sure you want to delete the role "${currentRole.name}"? This action cannot be undone.`,
+    () => deleteRole(currentRole._id)
+  );
+}
+
+async function deleteRole(roleId) {
+  // Check if this is a head admin role - prevent API call
+  const isHeadAdmin = (currentRole.permissions || []).some(p => 
+    p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
+  );
+  
+  if (isHeadAdmin) {
+    showToast('Head Admin role cannot be deleted', 3000, 'error');
+    return;
+  }
+  
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${roleId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to delete role: ${response.status}`);
+    }
+    
+    showToast('Role deleted successfully!', 3000, 'success');
+    closeRoleDetailsModal();
+    loadRoles(); // Refresh the list
+    
+  } catch (error) {
+    showToast(`Failed to delete role: ${error.message}`, 3000, 'error');
+  }
+}
+
+// Role Permissions Functions
+function openRolePermissionsModal() {
+  if (!currentRole) return;
+  
+  // Check if this is a head admin role
+  const isHeadAdmin = (currentRole.permissions || []).some(p => 
+    p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
+  );
+  
+  document.getElementById('rolePermissionsSubtitle').textContent = `Manage permissions for ${currentRole.name}`;
+  renderPermissionsList();
+  
+  // Disable save button for Head Admin role
+  const saveBtn = document.getElementById('savePermissionsBtn');
+  if (isHeadAdmin) {
+    saveBtn.style.background = '#6b7280';
+    saveBtn.style.cursor = 'not-allowed';
+    saveBtn.onclick = () => showHeadAdminInfoModal('Cannot Modify Permissions', 'Permissions cannot be modified for the Head Admin role. This role has full access and all permissions are automatically enabled.');
+  } else {
+    saveBtn.style.background = '#8b5cf6';
+    saveBtn.style.cursor = 'pointer';
+    saveBtn.onclick = () => saveRolePermissions();
+  }
+  
+  document.getElementById('rolePermissionsModal').style.display = 'flex';
+}
+
+function closeRolePermissionsModal() {
+  document.getElementById('rolePermissionsModal').style.display = 'none';
+}
+
+function renderPermissionsList() {
+  const permissionsList = document.getElementById('permissionsList');
+  
+  // Filter permissions based on role type and search
+  let filteredPermissions = currentRole.permissions || [];
+  
+  // Check if this is a head admin role (has administrator permission with "Head Admin" description)
+  const isHeadAdmin = filteredPermissions.some(p => 
+    p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
+  );
+  
+  // Filter out permissions based on role type
+  if (isHeadAdmin) {
+    // For head admin, only show the head admin permission and hide regular admin
+    filteredPermissions = filteredPermissions.filter(p => 
+      !(p.name === 'administrator' && p.description !== 'Head Admin')
+    );
+  } else {
+    // For other roles, hide the head admin permission
+    filteredPermissions = filteredPermissions.filter(p => 
+      !(p.name === 'administrator' && p.description === 'Head Admin')
+    );
+  }
+  
+  // Apply search filter if exists
+  const searchQuery = document.getElementById('permissionsSearchInput')?.value || '';
+  if (searchQuery.trim()) {
+    filteredPermissions = filteredPermissions.filter(p => 
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
+  
+  // Group permissions into categories
+  const generalPermissions = filteredPermissions.filter(p => 
+    p.name.includes('manage community') || p.name.includes('manage departments')
+  );
+  
+  const advancedPermissions = filteredPermissions.filter(p => 
+    p.name === 'administrator' || p.name.includes('manage roles') || p.name.includes('manage members') || p.name.includes('manage bans')
+  );
+  
+  let html = '';
+  
+
+  
+  // Render General Community Settings
+  if (generalPermissions.length > 0) {
+    html += `
+      <div style="margin-bottom:2rem;">
+        <h4 style="color:#fff; margin:0 0 1rem 0; font-size:1.125rem; font-weight:600; border-bottom:1px solid #4a5568; padding-bottom:0.5rem;">
+          General Community Settings
+        </h4>
+        ${generalPermissions.map(permission => renderPermissionItem(permission, isHeadAdmin)).join('')}
+      </div>
+    `;
+  }
+  
+  // Render Advanced Permissions
+  if (advancedPermissions.length > 0) {
+    html += `
+      <div style="margin-bottom:2rem;">
+        <h4 style="color:#fff; margin:0 0 1rem 0; font-size:1.125rem; font-weight:600; border-bottom:1px solid #4a5568; padding-bottom:0.5rem;">
+          Advanced Permissions
+        </h4>
+        ${advancedPermissions.map(permission => renderPermissionItem(permission, isHeadAdmin)).join('')}
+      </div>
+    `;
+  }
+  
+  permissionsList.innerHTML = html;
+}
+
+function renderPermissionItem(permission, isHeadAdmin) {
+  // Capitalize permission name for display
+  const displayName = permission.name.split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ');
+  
+  // For Head Admin role, show all permissions as enabled (even if they're not in backend)
+  const displayEnabled = isHeadAdmin ? true : permission.enabled;
+  
+  // Check if this permission should be disabled
+  const isDisabled = isHeadAdmin && permission.name === 'administrator' && permission.description === 'Head Admin';
+  
+  // For head admin, all permissions are disabled (cannot be changed)
+  const shouldDisable = isHeadAdmin;
+  
+  return `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; margin-bottom:1rem;">
+      <div style="flex:1; margin-right:1rem;">
+        <h4 style="color:#fff; margin:0 0 0.5rem 0; font-size:1rem; font-weight:600;">${displayName}</h4>
+        <p style="color:#a0aec0; margin:0; font-size:0.875rem; max-width:66%;">${permission.description}</p>
+      </div>
+      <label style="position:relative; display:inline-block; width:50px; height:24px; cursor:${isDisabled || shouldDisable ? 'not-allowed' : 'pointer'};" onclick="${!isDisabled && !shouldDisable ? `togglePermission('${permission._id}', ${!displayEnabled})` : ''}">
+        <input type="checkbox" 
+               ${displayEnabled ? 'checked' : ''} 
+               onchange="togglePermission('${permission._id}', this.checked)"
+               ${isDisabled || shouldDisable ? 'disabled' : ''}
+               style="opacity:0; width:0; height:0;">
+        <span style="position:absolute; top:0; left:0; right:0; bottom:0; background-color:${displayEnabled ? '#8b5cf6' : '#4a5568'}; transition:0.3s; border-radius:24px; opacity:${isDisabled || shouldDisable ? '0.5' : '1'};">
+          <span style="position:absolute; height:18px; width:18px; left:${displayEnabled ? '26px' : '3px'}; top:3px; border-radius:50%; background-color:white; transition:0.3s; box-shadow:0 2px 4px rgba(0,0,0,0.2);"></span>
+        </span>
+      </label>
+    </div>
+  `;
+}
+
+function togglePermission(permissionId, enabled) {
+  console.log('togglePermission called:', permissionId, enabled); // Debug log
+  
+  // Update the local state immediately for better UX
+  const permission = currentRole.permissions.find(p => p._id === permissionId);
+  if (permission) {
+    permission.enabled = enabled;
+    console.log('Permission updated:', permission.name, 'enabled:', permission.enabled); // Debug log
+    
+    // If this is the head admin permission being enabled, update other permissions
+    if (permission.name === 'administrator' && permission.description === 'Head Admin' && enabled) {
+      // Disable all other permissions for head admin
+      currentRole.permissions.forEach(p => {
+        if (p._id !== permissionId) {
+          p.enabled = false;
+        }
+      });
+    }
+    
+    // Always re-render to show updated state
+    renderPermissionsList();
+  } else {
+    console.log('Permission not found:', permissionId); // Debug log
+  }
+}
+
+function clearPermissionsSearch() {
+  const searchInput = document.getElementById('permissionsSearchInput');
+  const clearBtn = document.getElementById('permissionsSearchClear');
+  
+  searchInput.value = '';
+  clearBtn.style.display = 'none';
+  renderPermissionsList(); // Re-render without search filter
+}
+
+// Head Admin info modal function
+function showHeadAdminInfoModal(title, message) {
+  // Create modal if it doesn't exist
+  let modal = document.getElementById('headAdminInfoModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'headAdminInfoModal';
+    modal.className = 'heroui-modal';
+    modal.style.cssText = 'display:flex; position:fixed; z-index:10000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;';
+    
+    modal.innerHTML = `
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+        <button onclick="closeHeadAdminInfoModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div style="text-align:center; margin-bottom:2rem;">
+          <i class="fa fa-shield-alt" style="font-size:3rem; color:#1e3a8a; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">${title}</h3>
+        </div>
+        
+        <div style="background:#1e3a8a; border:1px solid #3b82f6; border-radius:8px; padding:1.5rem; margin-bottom:2rem;">
+          <div style="display:flex; align-items:flex-start; gap:0.75rem;">
+            <i class="fa fa-info-circle" style="color:#60a5fa; font-size:1.25rem; margin-top:0.125rem;"></i>
+            <div>
+              <h4 style="color:#fff; margin:0 0 0.5rem 0; font-size:1rem; font-weight:600;">Head Admin Role</h4>
+              <p style="color:#93c5fd; margin:0; line-height:1.6;">${message}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div style="text-align:center;">
+          <button onclick="closeHeadAdminInfoModal()" style="background:#3b82f6; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer;">Got it!</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+  } else {
+    // Update existing modal content
+    const titleElement = modal.querySelector('h3');
+    const messageElement = modal.querySelector('p');
+    if (titleElement) titleElement.textContent = title;
+    if (messageElement) messageElement.textContent = message;
+  }
+  
+  modal.style.display = 'flex';
+}
+
+function closeHeadAdminInfoModal() {
+  const modal = document.getElementById('headAdminInfoModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+
+async function saveRolePermissions() {
+  // Check if this is a head admin role - prevent API call
+  const isHeadAdmin = (currentRole.permissions || []).some(p => 
+    p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
+  );
+  
+  if (isHeadAdmin) {
+    showToast('Permissions cannot be modified for Head Admin role', 3000, 'error');
+    return;
+  }
+  
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${currentRole._id}/permissions`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ permissions: currentRole.permissions }),
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to update permissions: ${response.status}`);
+    }
+    
+    showToast('Permissions updated successfully!', 3000, 'success');
+    closeRolePermissionsModal();
+    
+  } catch (error) {
+    showToast(`Failed to update permissions: ${error.message}`, 3000, 'error');
+  }
+}
+
+// Role Members Functions
+function openRoleMembersModal() {
+  if (!currentRole) return;
+  
+  // Check if this is a head admin role
+  const isHeadAdmin = (currentRole.permissions || []).some(p => 
+    p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
+  );
+  
+  document.getElementById('roleMembersTitle').textContent = `Members of ${currentRole.name}`;
+  loadRoleMembers();
+  
+  // Disable add member button for Head Admin role
+  const addBtn = document.getElementById('addMemberBtn');
+  if (isHeadAdmin) {
+    addBtn.style.background = '#6b7280';
+    addBtn.style.cursor = 'not-allowed';
+    addBtn.onclick = () => showHeadAdminInfoModal('Cannot Add Members', 'There can only be a single Head Admin. If you want to add someone else, you need to transfer ownership of the community or create a new role with admin permissions.');
+  } else {
+    addBtn.style.background = '#10b981';
+    addBtn.style.cursor = 'pointer';
+    addBtn.onclick = () => addMemberToRole();
+  }
+  
+  document.getElementById('roleMembersModal').style.display = 'flex';
+}
+
+function closeRoleMembersModal() {
+  document.getElementById('roleMembersModal').style.display = 'none';
+}
+
+async function loadRoleMembers() {
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v2/community/${communityId}/roles/${currentRole._id}/members?page=1&limit=100`);
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.Response?.Message || data.message || `Failed to fetch role members: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    currentRole.membersData = data.members || [];
+    currentRole.pagination = data.pagination || {};
+    
+    renderRoleMembersList();
+    populateAddMemberSelect();
+    
+  } catch (error) {
+    showToast(`Failed to load role members: ${error.message}`, 3000, 'error');
+    // Fallback to showing just IDs if API fails
+    renderRoleMembersList();
+    populateAddMemberSelect();
+  }
+}
+
+function renderRoleMembersList() {
+  const membersList = document.getElementById('roleMembersList');
+  
+
+  
+  // Use the new membersData if available, otherwise fallback to old members array
+  const members = currentRole.membersData || currentRole.members || [];
+  
+  if (members.length === 0) {
+    membersList.innerHTML = `
+      <div style="text-align:center; padding:2rem; color:#a0aec0;">
+        <i class="fa fa-users" style="font-size:2rem; margin-bottom:1rem; opacity:0.5;"></i>
+        <p>No members in this role</p>
+      </div>
+    `;
+    return;
+  }
+  
+  membersList.innerHTML = members.map(member => {
+    // Handle both new member objects and old member IDs
+    const memberId = member.id || member;
+    const username = member.username || memberId;
+    const profilePicture = member.profilePicture;
+    const callSign = member.callSign;
+    const isVerified = member.isVerified;
+    
+    // Check if this is the Head Admin role (same logic as openRoleMembersModal)
+    const isHeadAdminRole = (currentRole.permissions || []).some(p => 
+      p.name === 'administrator' && p.description === 'Head Admin' && p.enabled
+    );
+    
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; margin-bottom:1rem;">
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <div style="width:40px; height:40px; border-radius:50%; background:#4a5568; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+            ${profilePicture ? 
+              `<img src="${profilePicture}" alt="${username}" style="width:100%; height:100%; object-fit:cover;">` : 
+              `<i class="fa fa-user" style="color:#a0aec0;"></i>`
+            }
+          </div>
+          <div>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <span style="color:#fff; font-weight:500;">${username}</span>
+              ${isVerified ? `<i class="fa fa-check-circle" style="color:#3b82f6; font-size:0.875rem;"></i>` : ''}
+            </div>
+            ${callSign ? `<div style="color:#a0aec0; font-size:0.875rem;">${callSign}</div>` : ''}
+          </div>
+        </div>
+        ${isHeadAdminRole ? 
+          `<button onclick="showHeadAdminInfoModal('Cannot Remove Head Admin', 'You cannot remove the Head Admin from this role. To change the Head Admin, you must transfer ownership of the community to another member.')" style="background:#6b7280; color:#a0aec0; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:500; cursor:not-allowed; opacity:0.7;">
+            <i class="fa fa-times"></i>
+          </button>` :
+          `<button onclick="removeMemberFromRole('${memberId}')" style="background:#ef4444; color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:500; cursor:pointer;">
+            <i class="fa fa-times"></i>
+          </button>`
+        }
+      </div>
+    `;
+  }).join('');
+}
+
+async function populateAddMemberSelect() {
+  const select = document.getElementById('addMemberSelect');
+  
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    // Fetch community members to populate the dropdown
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/members?page=1&limit=100`);
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to fetch community members: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    const communityMembers = data.members || [];
+    
+    // Filter out members who are already in this role
+    const currentMemberIds = (currentRole.membersData || currentRole.members || []).map(m => m.id || m);
+    const availableMembers = communityMembers.filter(member => 
+      !currentMemberIds.includes(member._id)
+    );
+    
+    // Populate dropdown
+    select.innerHTML = `
+      <option value="">Select a member to add...</option>
+      ${availableMembers.map(member => `
+        <option value="${member._id}">${member.user?.username || member.user?.email || member._id}</option>
+      `).join('')}
+    `;
+    
+  } catch (error) {
+    console.error('Failed to populate member select:', error);
+    select.innerHTML = '<option value="">Failed to load members</option>';
+  }
+}
+
+async function addMemberToRole() {
+  const select = document.getElementById('addMemberSelect');
+  const memberId = select.value;
+  
+  if (!memberId) {
+    showToast('Please select a member to add', 3000, 'error');
+    return;
+  }
+  
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    // Get current members and add the new one
+    const currentMembers = (currentRole.membersData || currentRole.members || []).map(m => m.id || m);
+    const updatedMembers = [...currentMembers, memberId];
+    
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${currentRole._id}/members`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedMembers), // Send array directly, not wrapped in object
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to add member: ${response.status}`);
+    }
+    
+    showToast('Member added to role successfully!', 3000, 'success');
+    select.value = '';
+    
+    // Refresh the roles modal to update member counts
+    refreshRolesModal();
+    
+    // Refresh the members list
+    await loadRoleMembers();
+    
+  } catch (error) {
+    showToast(`Failed to add member: ${error.message}`, 3000, 'error');
+  }
+}
+
+function removeMemberFromRole(memberId) {
+  showCustomConfirm(
+    'Remove Member',
+    `Are you sure you want to remove this member from the ${currentRole.name} role?`,
+    () => performRemoveMemberFromRole(memberId)
+  );
+}
+
+async function performRemoveMemberFromRole(memberId) {
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/roles/${currentRole._id}/members/${memberId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to remove member: ${response.status}`);
+    }
+    
+    showToast('Member removed from role successfully!', 3000, 'success');
+    
+    // Refresh the roles modal to update member counts
+    refreshRolesModal();
+    
+    // Refresh the members list and dropdown
+    await loadRoleMembers();
+    await populateAddMemberSelect();
+    
+  } catch (error) {
+    showToast(`Failed to remove member: ${error.message}`, 3000, 'error');
+  }
+}
+
+// Event Listeners and Form Handlers
+document.addEventListener('DOMContentLoaded', function() {
+  // Roles search input
+  const rolesSearchInput = document.getElementById('rolesSearchInput');
+  if (rolesSearchInput) {
+    rolesSearchInput.addEventListener('input', function(e) {
+      const query = e.target.value;
+      const clearBtn = document.getElementById('rolesSearchClear');
+      
+      if (query.trim()) {
+        clearBtn.style.display = 'block';
+        searchRoles(query);
+      } else {
+        clearBtn.style.display = 'none';
+        searchRoles('');
+      }
+    });
+  }
+  
+  // Create role form
+  const createRoleForm = document.getElementById('createRoleForm');
+  if (createRoleForm) {
+    createRoleForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      createRole();
+    });
+  }
+  
+  // Role name editing
+  const editRoleName = document.getElementById('editRoleName');
+  if (editRoleName) {
+    editRoleName.addEventListener('input', function() {
+      const saveBtn = document.getElementById('saveRoleNameBtn');
+      if (this.value.trim() !== currentRole?.name) {
+        saveBtn.style.display = 'inline-block';
+      } else {
+        saveBtn.style.display = 'none';
+      }
+    });
+  }
+  
+  // Permissions search input
+  const permissionsSearchInput = document.getElementById('permissionsSearchInput');
+  if (permissionsSearchInput) {
+    permissionsSearchInput.addEventListener('input', function(e) {
+      const query = e.target.value;
+      const clearBtn = document.getElementById('permissionsSearchClear');
+      
+      if (query.trim()) {
+        clearBtn.style.display = 'block';
+      } else {
+        clearBtn.style.display = 'none';
+      }
+      
+      // Re-render permissions with search filter
+      if (currentRole) {
+        renderPermissionsList();
+      }
+    });
+  }
+  
+  // Member search input for role creation
+  const memberSearchInput = document.getElementById('memberSearchInput');
+  if (memberSearchInput) {
+    memberSearchInput.addEventListener('input', function(e) {
+      createRoleSearchQuery = e.target.value;
+      renderCreateRoleMembersList();
+    });
+  }
+});
 
 function openBansManagement() {
   showSettingsError('Bans Management page coming soon...');
@@ -2359,6 +3579,260 @@ function openNoEventPermissionModal() {
     <i class="fa fa-plus mr-2"></i> Create Department
   </button>
 <% } %>
+
+<!-- HeroUI Pro Roles Management Modal -->
+<div id="rolesModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:900px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+    <button onclick="closeRolesModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    
+    <div style="text-align:center; margin-bottom:2rem;">
+      <i class="fa fa-users-cog" style="font-size:3rem; color:#8b5cf6; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Roles Management</h3>
+      <p style="color:#a0aec0; margin:0.5rem 0 0 0;">Manage community roles and permissions</p>
+    </div>
+
+    <!-- Header with search and create button -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; gap:1rem;">
+      <div style="flex:1; max-width:400px;">
+        <div style="position:relative;">
+          <input type="text" id="rolesSearchInput" placeholder="Search roles..." style="width:100%; padding:0.75rem 1rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+          <button onclick="clearRolesSearch()" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:#a0aec0; cursor:pointer; display:none;" id="rolesSearchClear">
+            <i class="fa fa-times"></i>
+          </button>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:1rem;">
+        <div style="color:#a0aec0; font-size:0.875rem;">
+          <span id="rolesCount">0</span> <span id="rolesCountText">roles</span>
+        </div>
+        <button onclick="openCreateRoleModal()" style="background:#10b981; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.2s; hover:background:#059669;">
+          <i class="fa fa-plus" style="margin-right:0.5rem;"></i>
+          Create Role
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading state -->
+    <div id="rolesLoading" style="text-align:center; padding:2rem;">
+      <div class="loading-spinner" style="width:60px; height:60px; border:4px solid #4a5568; border-top:4px solid #f59e0b; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+      <p style="color:#a0aec0;">Loading roles...</p>
+    </div>
+
+    <!-- Roles list -->
+    <div id="rolesListContainer" style="display:none;">
+      <div id="rolesList" style="display:grid; gap:1rem; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));">
+        <!-- Roles will be populated here -->
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="rolesEmptyState" style="display:none; text-align:center; padding:3rem;">
+      <i class="fa fa-users-cog" style="font-size:4rem; color:#4a5568; margin-bottom:1rem;"></i>
+      <h4 style="color:#a0aec0; margin:0; font-size:1.25rem; font-weight:600;">No roles found</h4>
+      <p style="color:#6b7280; margin:0.5rem 0 0 0;">Create your first role to get started</p>
+    </div>
+  </div>
+</div>
+
+<!-- Create Role Modal -->
+<div id="createRoleModal" class="heroui-modal" style="display:none; position:fixed; z-index:4000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+    
+    <!-- Step 1: Create Role -->
+    <div id="createRoleStep1" style="display:block;">
+      <button onclick="closeCreateRoleModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+      
+      <div style="text-align:center; margin-bottom:2rem;">
+        <i class="fa fa-plus-circle" style="font-size:3rem; color:#10b981; margin-bottom:1rem;"></i>
+        <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Step 1 of 2: Create a new role</h3>
+      </div>
+
+      <p style="color:#a0aec0; margin-bottom:1.5rem; text-align:center;">Give this role a unique name. You can always change this later.</p>
+
+      <form id="createRoleForm">
+        <div style="margin-bottom:1.5rem;">
+          <label style="display:block; color:#e2e8f0; margin-bottom:0.5rem; font-weight:500;">Role Name</label>
+          <input type="text" id="newRoleName" required style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;" placeholder="Enter role name">
+          <p style="color:#718096; font-size:0.875rem; margin-top:0.5rem;">e.g. admin, moderator, member, etc</p>
+        </div>
+        
+        <div id="createRoleError" style="color:#ef4444; margin-bottom:1rem; display:none;"></div>
+        
+        <div style="display:flex; gap:1rem; justify-content:flex-end;">
+          <button type="button" onclick="closeCreateRoleModal()" style="background:#6b7280; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer;">Cancel</button>
+          <button type="button" id="createRoleBtn" onclick="goToStep2()" style="background:#10b981; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer;">Create</button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Step 2: Add Members -->
+    <div id="createRoleStep2" style="display:none;">
+      <button onclick="closeCreateRoleModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+      
+      <div style="text-align:center; margin-bottom:2rem;">
+        <i class="fa fa-users" style="font-size:3rem; color:#10b981; margin-bottom:1rem;"></i>
+        <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Step 2 of 2: Add Members</h3>
+      </div>
+      
+      <p style="color:#a0aec0; margin-bottom:1.5rem; text-align:center;">Assign this role to your members. Members can have multiple roles. You can select up to 30 at a time.</p>
+      
+      <!-- Search Box -->
+      <div style="margin-bottom:1.5rem;">
+        <input type="text" id="memberSearchInput" placeholder="Search members..." style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+      </div>
+      
+      <!-- Selected Members Display -->
+      <div id="selectedMembersDisplay" style="margin-bottom:1.5rem; display:none;">
+        <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+          <span style="color:#a0aec0; font-size:0.875rem;">Selected:</span>
+          <span id="selectedCount" style="color:#10b981; font-weight:500;">0</span>
+          <span style="color:#a0aec0; font-size:0.875rem;">/ 30</span>
+        </div>
+        <div id="selectedMembersList" style="display:flex; gap:0.5rem; flex-wrap:wrap; max-height:80px; overflow-y:auto; padding:0.5rem; background:#2d3748; border-radius:8px; border:1px solid #4a5568;">
+          <!-- Selected members will be displayed here -->
+        </div>
+      </div>
+      
+      <!-- Members List -->
+      <div id="createRoleMembersList" style="margin-bottom:2rem; max-height:300px; overflow-y:auto;">
+        <!-- Members will be loaded here -->
+      </div>
+      
+      <!-- Pagination -->
+      <div id="createRolePagination" style="display:none; text-align:center; margin-bottom:2rem;">
+        <!-- Pagination controls will be here -->
+      </div>
+      
+      <div style="display:flex; gap:1rem; justify-content:space-between;">
+        <button type="button" onclick="goBackToStep1()" style="background:#4a5568; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer;">Back</button>
+        <div style="display:flex; gap:1rem;">
+          <button type="button" onclick="skipAddMembers()" style="background:#6b7280; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer;">Skip this step</button>
+          <button type="button" id="finishCreateRole" onclick="finishCreateRole()" disabled style="background:#10b981; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer; opacity:0.5;">Finish</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Role Details Modal -->
+<div id="roleDetailsModal" class="heroui-modal" style="display:none; position:fixed; z-index:4000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:800px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+    <button onclick="closeRoleDetailsModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    
+    <div style="text-align:center; margin-bottom:2rem;">
+      <i class="fa fa-user-shield" style="font-size:3rem; color:#8b5cf6; margin-bottom:1rem;"></i>
+      <h3 id="roleDetailsTitle" style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Role Details</h3>
+    </div>
+
+    <!-- Role name editing -->
+    <div style="margin-bottom:2rem; text-align:center;">
+      <div style="display:flex; align-items:center; justify-content:center; gap:1rem;">
+        <input type="text" id="editRoleName" style="padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1.25rem; font-weight:600; text-align:center; min-width:200px;">
+        <button onclick="saveRoleName()" style="background:#3b82f6; color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:500; cursor:pointer; display:none;" id="saveRoleNameBtn">
+          <i class="fa fa-check"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Cards for Permissions and Members -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-bottom:2rem;">
+      <!-- Permissions Card -->
+      <div style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#8b5cf6;" onclick="openRolePermissionsModal()">
+        <div style="text-align:center;">
+          <div style="margin-bottom:0.5rem;">
+            <i class="fa fa-shield-alt" style="font-size:2rem; color:#8b5cf6;"></i>
+          </div>
+          <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Permissions</h5>
+          <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage role permissions</p>
+        </div>
+      </div>
+
+      <!-- Members Card -->
+      <div style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#10b981;" onclick="openRoleMembersModal()">
+        <div style="text-align:center;">
+          <div style="margin-bottom:0.5rem;">
+            <i class="fa fa-users" style="font-size:2rem; color:#10b981;"></i>
+          </div>
+          <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Members</h5>
+          <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage role members</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Role Button -->
+    <div style="text-align:center;">
+      <button id="deleteRoleBtn" onclick="deleteRoleConfirm()" style="background:#ef4444; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer; transition:all 0.2s; hover:background:#dc2626;">
+        <i class="fa fa-trash" style="margin-right:0.5rem;"></i>
+        Delete Role
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Role Permissions Modal -->
+<div id="rolePermissionsModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:700px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+    <button onclick="closeRolePermissionsModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    
+    <div style="text-align:center; margin-bottom:2rem;">
+      <i class="fa fa-shield-alt" style="font-size:3rem; color:#8b5cf6; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Role Permissions</h3>
+      <p id="rolePermissionsSubtitle" style="color:#a0aec0; margin:0.5rem 0 0 0;">Manage permissions for this role</p>
+    </div>
+
+    <!-- Search Bar -->
+    <div style="margin-bottom:2rem;">
+      <div style="position:relative;">
+        <input type="text" id="permissionsSearchInput" placeholder="Search permissions..." style="width:100%; padding:0.75rem 1rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+        <button onclick="clearPermissionsSearch()" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:#a0aec0; cursor:pointer; display:none;" id="permissionsSearchClear">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="permissionsList" style="margin-bottom:2rem;">
+      <!-- Permissions will be populated here -->
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:1rem;">
+      <button onclick="closeRolePermissionsModal()" style="background:#6b7280; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer;">Cancel</button>
+      <button id="savePermissionsBtn" onclick="saveRolePermissions()" style="background:#8b5cf6; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer;">Save Permissions</button>
+    </div>
+  </div>
+</div>
+
+<!-- Role Members Modal -->
+<div id="roleMembersModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:800px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+    <button onclick="closeRoleMembersModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    
+    <div style="text-align:center; margin-bottom:2rem;">
+      <i class="fa fa-users" style="font-size:3rem; color:#10b981; margin-bottom:1rem;"></i>
+      <h3 id="roleMembersTitle" style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Role Members</h3>
+      <p style="color:#a0aec0; margin:0.5rem 0 0 0;">Manage members for this role</p>
+    </div>
+
+    <!-- Add Member Section -->
+    <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:8px; border:1px solid #4a5568;">
+      <h4 style="color:#fff; margin:0 0 1rem 0; font-size:1.125rem; font-weight:600;">Add Member</h4>
+      <div style="display:flex; gap:1rem; align-items:center;">
+        <select id="addMemberSelect" style="flex:1; padding:0.75rem; background:#1e2028; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+          <option value="">Select a member to add...</option>
+        </select>
+        <button id="addMemberBtn" onclick="addMemberToRole()" style="background:#10b981; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer;">Add</button>
+      </div>
+    </div>
+
+    <!-- Members List -->
+    <div id="roleMembersList" style="margin-bottom:2rem;">
+      <!-- Members will be populated here -->
+    </div>
+
+    <div style="display:flex; justify-content:flex-end;">
+      <button onclick="closeRoleMembersModal()" style="background:#6b7280; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer;">Close</button>
+    </div>
+  </div>
+</div>
 
 <!-- HeroUI Pro Create Department Modals (Step 1: Basic Info) -->
 <div id="createDepartmentStep1Modal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
@@ -2710,7 +4184,7 @@ function renderMemberList() {
     memberList.appendChild(loadMoreDiv);
   }
   
-  selectedMembersCount.textContent = `${createDeptMembers.length} member${createDeptMembers.length === 1 ? '' : 's'} selected`;
+          selectedMembersCount.textContent = `${createDeptMembers.length} ${createDeptMembers.length === 1 ? 'member' : 'members'} selected`;
 }
 
 function toggleCreateDeptMember(memberId) {

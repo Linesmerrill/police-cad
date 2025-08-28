@@ -3009,7 +3009,7 @@
         pageDepartments.forEach(dept => {
           html += `
             <div style="background: #11131a; padding: 1rem; border-radius: 8px; margin: 0.5rem 0; border: 1px solid #2a2d45;">
-              <strong>${dept.name || 'Unnamed Department'}</strong> - ${dept.memberCount || 0} members
+              <strong>${dept.name || 'Unnamed Department'}</strong> - ${dept.memberCount || 0} ${(dept.memberCount || 0) === 1 ? 'member' : 'members'}
             </div>
           `;
         });
