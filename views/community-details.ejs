@@ -3056,6 +3056,10 @@ function showNoRolesPermissionModal() {
 let bansData = [];
 let filteredBans = [];
 
+// Member Management Global Variables
+let selectedMemberId = null;
+let selectedMemberUsername = null;
+
 function openBansModal() {
   document.getElementById('bansModal').style.display = 'flex';
   loadBans();
@@ -3197,6 +3201,146 @@ function showNoBansPermissionModal() {
     'You do not have permission to view Bans. Request the manage bans permission from your community administrator.',
     'info'
   );
+}
+
+async function transferOwnership() {
+  // Use the globally stored selected member info
+  if (!selectedMemberId || !selectedMemberUsername) {
+    showToast('No member selected for ownership transfer', 3000, 'error');
+    return;
+  }
+  
+  // Show custom transfer ownership confirmation modal
+  showTransferOwnershipModal(selectedMemberUsername, selectedMemberId);
+}
+
+function showTransferOwnershipModal(username, newOwnerId) {
+  // Create and show a custom transfer ownership confirmation modal
+  const modal = document.createElement('div');
+  modal.id = 'transferOwnershipModal';
+  modal.style.cssText = `
+    position: fixed;
+    z-index: 5000;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(30,32,44,0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  modal.innerHTML = `
+    <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:95%; position:relative; border:1px solid #35385a;">
+      <div style="text-align:center; margin-bottom:2rem;">
+        <i class="fa fa-exclamation-triangle" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
+        <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Transfer Community Ownership</h3>
+        <p style="color:#a0aec0; margin:0.5rem 0 0 0;">Are you sure you want to transfer ownership of this community to ${username}? This action cannot be undone and you will lose all administrative privileges.</p>
+      </div>
+      
+      <div style="display:flex; gap:1rem; justify-content:center;">
+        <button onclick="closeTransferOwnershipModal()" style="background:#6b7280; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer; transition:all 0.2s; hover:background:#4b5563;">
+          Cancel
+        </button>
+        <button onclick="confirmTransferOwnership('${newOwnerId}')" style="background:#8b5cf6; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer; transition:all 0.2s; hover:background:#7c3aed;">
+          Transfer Ownership
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+function closeTransferOwnershipModal() {
+  const modal = document.getElementById('transferOwnershipModal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+function showTransferOwnershipLoading() {
+  // Create and show a loading overlay for the entire page
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.id = 'transferOwnershipLoadingOverlay';
+  loadingOverlay.style.cssText = `
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(30,32,44,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  loadingOverlay.innerHTML = `
+    <div style="text-align:center; color:#fff;">
+      <div class="loading-spinner" style="width:80px; height:80px; border:6px solid #4a5568; border-top:6px solid #8b5cf6; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 2rem;"></div>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Transferring Ownership</h3>
+      <p style="color:#a0aec0; margin:1rem 0 0 0; font-size:1.125rem;">Please wait while we process your request...</p>
+    </div>
+  `;
+  
+  document.body.appendChild(loadingOverlay);
+}
+
+function hideTransferOwnershipLoading() {
+  const loadingOverlay = document.getElementById('transferOwnershipLoadingOverlay');
+  if (loadingOverlay) {
+    loadingOverlay.remove();
+  }
+}
+
+async function confirmTransferOwnership(newOwnerId) {
+  try {
+    // Close the transfer ownership modal first
+    closeTransferOwnershipModal();
+    
+    // Close the member actions modal
+    closeMemberActionsModal();
+    
+    // Show loading overlay for the entire page
+    showTransferOwnershipLoading();
+    
+    const communityId = '<%= community._id %>';
+    const currentUserId = '<%= user._doc._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v2/community/${communityId}/transfer-ownership`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        currentUserId: currentUserId,
+        newOwnerId: newOwnerId
+      }),
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to transfer ownership: ${response.status}`);
+    }
+    
+    // Hide loading overlay
+    hideTransferOwnershipLoading();
+    
+    showToast('Community ownership transferred successfully!', 3000, 'success');
+    
+    // Refresh the page to reflect the new ownership
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+    
+  } catch (error) {
+    // Hide loading overlay on error
+    hideTransferOwnershipLoading();
+    showToast(`Failed to transfer ownership: ${error.message}`, 3000, 'error');
+  }
 }
 
 function showUnbanConfirmModal(username, userId) {
@@ -6781,6 +6925,10 @@ async function deleteEditEvent() {
         }
         
         modal.style.display = 'none';
+        
+        // Clear the selected member info when modal is closed
+        selectedMemberId = null;
+        selectedMemberUsername = null;
       }
 
       async function loadMembers(page = 1) {
@@ -6969,6 +7117,10 @@ async function deleteEditEvent() {
         const member = communityFilteredMembers.find(m => m._id === memberId);
         if (!member) return;
         
+        // Store selected member info globally for other functions to use
+        selectedMemberId = member.userId || member.user.userId || member._id;
+        selectedMemberUsername = member.user.username;
+        
         // Check user permissions
         const canManageMembers = checkManageMembersPermission();
         const isOwner = checkIsOwner();
@@ -7026,7 +7178,7 @@ async function deleteEditEvent() {
                 Ban Member
               </button>
               ${isOwner ? `
-                <button onclick="showComingSoonModal('Transfer Ownership', 'This feature will allow you to transfer community ownership to another member. Coming soon!')" style="background:#6b7280; color:#a0aec0; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:not-allowed; font-size:1rem; opacity:0.7;">
+                <button onclick="transferOwnership()" style="background:#8b5cf6; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem; transition:all 0.2s; hover:background:#7c3aed;">
                   <i class="fa fa-crown" style="margin-right:0.5rem;"></i>
                   Transfer Ownership
                 </button>
@@ -7281,17 +7433,7 @@ async function deleteEditEvent() {
         }
       }
 
-      function transferOwnership(memberId) {
-        showCustomConfirm(
-          'Transfer Ownership',
-          'Are you sure you want to transfer community ownership to this member? This action cannot be undone.',
-          () => {
-            // TODO: Implement ownership transfer
-            showToast('Ownership transfer functionality coming soon!', 3000, 'info');
-            closeMemberActionsModal();
-          }
-        );
-      }
+
 
       function showComingSoonAlert(featureName) {
         showToast(`${featureName} is coming soon!`, 3000, 'info');
