@@ -1768,14 +1768,51 @@
           <% } %>
 
           <!-- Bans Management -->
-          <div id="bansManagementCard" onclick="showComingSoonAlert('Bans Management')" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
-            <div style="text-align:center;">
-              <i class="fa fa-ban" style="font-size:2rem; color:#6b7280; margin-bottom:0.5rem;"></i>
-              <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">Bans</h5>
-              <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage banned users</p>
-              <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.75rem; font-style:italic;">Coming Soon</p>
+          <%
+            // Permission logic for managing bans
+            let canManageBans = false;
+            if (userId && community.community && Array.isArray(community.community.roles)) {
+              community.community.roles.forEach(function(role) {
+                if (Array.isArray(role.members) && role.members.includes(userId)) {
+                  if (Array.isArray(role.permissions)) {
+                    role.permissions.forEach(function(perm) {
+                      if (
+                        (perm.name === "administrator" && perm.enabled === true) ||
+                        (perm.name === "manage bans" && perm.enabled === true)
+                      ) {
+                        canManageBans = true;
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          %>
+          
+          <% if (canManageBans) { %>
+            <!-- User has permission to manage bans -->
+            <div id="bansManagementCard" onclick="openBansModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#ef4444;">
+              <div style="text-align:center;">
+                <div style="margin-bottom:0.5rem;">
+                  <i class="fa fa-ban" style="font-size:2rem; color:#ef4444;"></i>
+                </div>
+                <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Bans</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage banned users</p>
+              </div>
             </div>
-          </div>
+          <% } else { %>
+            <!-- User doesn't have permission to manage bans -->
+            <div id="bansManagementCard" onclick="showNoBansPermissionModal()" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
+              <div style="text-align:center;">
+                <div style="margin-bottom:0.5rem;">
+                  <i class="fa fa-ban" style="font-size:2rem; color:#6b7280;"></i>
+                </div>
+                <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">Bans</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage banned users</p>
+                <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.75rem; font-style:italic;">Permission Required</p>
+              </div>
+            </div>
+          <% } %>
         </div>
 
         <!-- Action Buttons -->
@@ -3015,6 +3052,230 @@ function showNoRolesPermissionModal() {
   );
 }
 
+// Bans Management Functions
+let bansData = [];
+let filteredBans = [];
+
+function openBansModal() {
+  document.getElementById('bansModal').style.display = 'flex';
+  loadBans();
+}
+
+function closeBansModal() {
+  document.getElementById('bansModal').style.display = 'none';
+  bansData = [];
+  filteredBans = [];
+}
+
+async function loadBans() {
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v2/community/${communityId}/banned-users`);
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to fetch banned users: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Handle new v2 API response structure
+    if (data.bannedUsers && Array.isArray(data.bannedUsers)) {
+      bansData = data.bannedUsers;
+      filteredBans = [...bansData];
+      
+      // Update count with proper singular/plural
+      const bansCount = document.getElementById('bansCount');
+      const bansCountText = document.getElementById('bansCountText');
+      const totalCount = data.pagination?.totalCount || bansData.length;
+      bansCount.textContent = totalCount;
+      bansCountText.textContent = totalCount === 1 ? 'banned user' : 'banned users';
+    } else {
+      bansData = [];
+      filteredBans = [];
+      
+      const bansCount = document.getElementById('bansCount');
+      const bansCountText = document.getElementById('bansCountText');
+      bansCount.textContent = '0';
+      bansCountText.textContent = 'banned users';
+    }
+    
+    // Render bans
+    renderBansList();
+    
+  } catch (error) {
+    showToast(`Failed to load banned users: ${error.message}`, 3000, 'error');
+  }
+}
+
+function renderBansList() {
+  const loadingDiv = document.getElementById('bansLoading');
+  const listContainer = document.getElementById('bansListContainer');
+  const emptyState = document.getElementById('bansEmptyState');
+  const bansList = document.getElementById('bansList');
+  
+  // Hide loading
+  loadingDiv.style.display = 'none';
+  
+  if (filteredBans.length === 0) {
+    emptyState.style.display = 'block';
+    listContainer.style.display = 'none';
+    return;
+  }
+  
+  emptyState.style.display = 'none';
+  listContainer.style.display = 'block';
+  
+  bansList.innerHTML = filteredBans.map(bannedUser => {
+    const username = bannedUser.username || 'Unknown User';
+    const callSign = bannedUser.callSign || '';
+    const profilePicture = bannedUser.profilePicture;
+    const isVerified = bannedUser.isVerified;
+    
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; margin-bottom:1rem;">
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <div style="width:50px; height:50px; border-radius:50%; background:#4a5568; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+            ${profilePicture ? 
+              `<img src="${profilePicture}" alt="${username}" style="width:100%; height:100%; object-fit:cover;">` : 
+              `<i class="fa fa-user" style="color:#a0aec0; font-size:1.5rem;"></i>`
+            }
+          </div>
+          <div>
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+              <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">${username}</h4>
+              ${isVerified ? `<i class="fa fa-check-circle" style="color:#3b82f6; font-size:1rem;"></i>` : ''}
+            </div>
+            ${callSign ? `<p style="color:#a0aec0; margin:0; font-size:0.875rem;">Call Sign: ${callSign}</p>` : ''}
+          </div>
+        </div>
+        <button onclick="unbanUser('${bannedUser.id}')" style="background:#10b981; color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:500; cursor:pointer; transition:all 0.2s; hover:background:#059669;">
+          <i class="fa fa-user-check" style="margin-right:0.5rem;"></i>
+          Unban
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+function searchBans(query) {
+  if (!query.trim()) {
+    filteredBans = [...bansData];
+  } else {
+    const searchLower = query.toLowerCase();
+    filteredBans = bansData.filter(bannedUser => 
+      (bannedUser.username || '').toLowerCase().includes(searchLower) ||
+      (bannedUser.callSign || '').toLowerCase().includes(searchLower)
+    );
+  }
+  renderBansList();
+}
+
+function clearBansSearch() {
+  const searchInput = document.getElementById('bansSearchInput');
+  const clearBtn = document.getElementById('bansSearchClear');
+  
+  searchInput.value = '';
+  clearBtn.style.display = 'none';
+  searchBans('');
+}
+
+function unbanUser(userId) {
+  // Find the user details for the confirmation message
+  const bannedUser = bansData.find(user => user.id === userId);
+  const username = bannedUser ? bannedUser.username : 'this user';
+  
+  // Show the custom unban confirmation modal
+  showUnbanConfirmModal(username, userId);
+}
+
+function showNoBansPermissionModal() {
+  showCustomModal(
+    'Permission Required',
+    'You do not have permission to view Bans. Request the manage bans permission from your community administrator.',
+    'info'
+  );
+}
+
+function showUnbanConfirmModal(username, userId) {
+  // Create and show a custom unban confirmation modal
+  const modal = document.createElement('div');
+  modal.id = 'unbanConfirmModal';
+  modal.style.cssText = `
+    position: fixed;
+    z-index: 5000;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(30,32,44,0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+  
+  modal.innerHTML = `
+    <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:95%; position:relative; border:1px solid #35385a;">
+      <div style="text-align:center; margin-bottom:2rem;">
+        <i class="fa fa-exclamation-triangle" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
+        <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Confirm Unban</h3>
+        <p style="color:#a0aec0; margin:0.5rem 0 0 0;">Are you sure you want to unban ${username}? They will need to re-request to join to gain access.</p>
+      </div>
+      
+      <div style="display:flex; gap:1rem; justify-content:center;">
+        <button onclick="closeUnbanConfirmModal()" style="background:#6b7280; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer; transition:all 0.2s; hover:background:#4b5563;">
+          Cancel
+        </button>
+        <button onclick="confirmUnbanUser('${userId}')" style="background:#10b981; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer; transition:all 0.2s; hover:background:#059669;">
+          Unban User
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+}
+
+function closeUnbanConfirmModal() {
+  const modal = document.getElementById('unbanConfirmModal');
+  if (modal) {
+    modal.remove();
+  }
+}
+
+async function confirmUnbanUser(userId) {
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/user/${userId}/unban-community`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ communityId }),
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to unban user: ${response.status}`);
+    }
+    
+    showToast('User unbanned successfully!', 3000, 'success');
+    
+    // Close the modal
+    closeUnbanConfirmModal();
+    
+    // Refresh the bans list
+    await loadBans();
+    
+  } catch (error) {
+    showToast(`Failed to unban user: ${error.message}`, 3000, 'error');
+  }
+}
+
 // Head Admin info modal function
 function showHeadAdminInfoModal(title, message) {
   // Create modal if it doesn't exist
@@ -3412,6 +3673,23 @@ document.addEventListener('DOMContentLoaded', function() {
     memberSearchInput.addEventListener('input', function(e) {
       createRoleSearchQuery = e.target.value;
       renderCreateRoleMembersList();
+    });
+  }
+  
+  // Bans search input
+  const bansSearchInput = document.getElementById('bansSearchInput');
+  if (bansSearchInput) {
+    bansSearchInput.addEventListener('input', function(e) {
+      const query = e.target.value;
+      const clearBtn = document.getElementById('bansSearchClear');
+      
+      if (query.trim()) {
+        clearBtn.style.display = 'block';
+        searchBans(query);
+      } else {
+        clearBtn.style.display = 'none';
+        searchBans('');
+      }
     });
   }
 });
@@ -3842,6 +4120,55 @@ function openNoEventPermissionModal() {
     <div style="display:flex; justify-content:flex-end; gap:1rem;">
       <button onclick="closeRolePermissionsModal()" style="background:#6b7280; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer;">Cancel</button>
       <button id="savePermissionsBtn" onclick="saveRolePermissions()" style="background:#8b5cf6; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer;">Save Permissions</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bans Management Modal -->
+<div id="bansModal" class="heroui-modal" style="display:none; position:fixed; z-index:4000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:800px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+    <button onclick="closeBansModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    
+    <div style="text-align:center; margin-bottom:2rem;">
+      <i class="fa fa-ban" style="font-size:3rem; color:#ef4444; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Banned Users</h3>
+      <p style="color:#a0aec0; margin:0.5rem 0 0 0;">Manage users banned from this community</p>
+    </div>
+    
+    <!-- Search Box -->
+    <div style="margin-bottom:1.5rem;">
+      <div style="position:relative;">
+        <input type="text" id="bansSearchInput" placeholder="Search banned users..." style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem; padding-right:3rem;">
+        <button id="bansSearchClear" onclick="clearBansSearch()" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:#a0aec0; cursor:pointer; display:none; font-size:1.125rem;">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Bans Count -->
+    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
+      <div style="color:#a0aec0; font-size:0.875rem;">
+        <span id="bansCount">0</span> <span id="bansCountText">banned users</span>
+      </div>
+    </div>
+    
+    <!-- Loading State -->
+    <div id="bansLoading" style="text-align:center; padding:2rem; color:#a0aec0;">
+      <i class="fa fa-spinner fa-spin" style="font-size:2rem; margin-bottom:1rem;"></i>
+      <p>Loading banned users...</p>
+    </div>
+    
+    <!-- Empty State -->
+    <div id="bansEmptyState" style="text-align:center; padding:2rem; color:#a0aec0; display:none;">
+      <i class="fa fa-ban" style="font-size:2rem; margin-bottom:1rem; opacity:0.5;"></i>
+      <p>No banned users found</p>
+    </div>
+    
+    <!-- Bans List Container -->
+    <div id="bansListContainer" style="display:none;">
+      <div id="bansList">
+        <!-- Banned users will be loaded here -->
+      </div>
     </div>
   </div>
 </div>
