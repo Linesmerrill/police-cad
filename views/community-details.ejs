@@ -1690,13 +1690,47 @@
         <!-- Settings Navigation -->
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:2rem;">
           <!-- General Settings -->
-          <div id="generalSettingsCard" onclick="openGeneralSettingsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
-            <div style="text-align:center;">
-              <i class="fa fa-cogs" style="font-size:2rem; color:#3b82f6; margin-bottom:0.5rem;"></i>
-              <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">General Settings</h5>
-              <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Configure community options</p>
+          <%
+            // Permission logic for managing general community settings
+            let canManageGeneralSettings = false;
+            if (userId && community.community && Array.isArray(community.community.roles)) {
+              community.community.roles.forEach(function(role) {
+                if (Array.isArray(role.members) && role.members.includes(userId)) {
+                  if (Array.isArray(role.permissions)) {
+                    role.permissions.forEach(function(perm) {
+                      if (
+                        (perm.name === "administrator" && perm.enabled === true) ||
+                        (perm.name === "manage community settings" && perm.enabled === true)
+                      ) {
+                        canManageGeneralSettings = true;
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          %>
+          
+          <% if (canManageGeneralSettings) { %>
+            <!-- User has permission to manage general settings -->
+            <div id="generalSettingsCard" onclick="openGeneralSettingsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
+              <div style="text-align:center;">
+                <i class="fa fa-cogs" style="font-size:2rem; color:#3b82f6; margin-bottom:0.5rem;"></i>
+                <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">General Settings</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Configure community options</p>
+              </div>
             </div>
-          </div>
+          <% } else { %>
+            <!-- User doesn't have permission to manage general settings -->
+            <div id="generalSettingsCard" onclick="showNoGeneralSettingsPermissionModal()" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
+              <div style="text-align:center;">
+                <i class="fa fa-cogs" style="font-size:2rem; color:#6b7280; margin-bottom:0.5rem;"></i>
+                <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">General Settings</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Configure community options</p>
+                <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.75rem; font-style:italic;">Permission Required</p>
+              </div>
+            </div>
+          <% } %>
 
           <!-- Fine Settings -->
           <div id="fineSettingsCard" onclick="openFineSettingsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
@@ -1914,7 +1948,7 @@
             <i class="fa fa-users" style="font-size:1.5rem; color:#10b981;"></i>
             <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">Civilian Creation Limits</h4>
           </div>
-          <p style="color:#a0aec0; margin-bottom:1rem; font-size:0.875rem;">Control how many civilians each user can create per department</p>
+          <p style="color:#a0aec0; margin-bottom:1rem; font-size:0.875rem;">Control how many civilians each user can create in this community</p>
           
           <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
             <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
@@ -1925,11 +1959,11 @@
           
           <div id="civilianLimitsOptions" style="display:none; padding:1rem; background:#1a202c; border-radius:8px; border:1px solid #4a5568;">
             <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem;">
-              Maximum civilians per department per user:
+              Maximum civilians per user in this community:
             </label>
             <input type="number" id="maxCiviliansPerDept" min="1" max="100" value="5" 
                    style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:1rem;">
-            <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.75rem;">Set to 1-100. Users will be limited to creating this many civilians per department.</p>
+            <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.75rem;">Set to 1-100. Users will be limited to creating this many civilians in this community.</p>
           </div>
         </div>
         
@@ -3124,6 +3158,15 @@ function showNoRolesPermissionModal() {
   showCustomModal(
     'Permission Required',
     'You do not have permission to view Roles. Request the manage roles permission from your community administrator.',
+    'info'
+  );
+}
+
+// No General Settings Permission Modal
+function showNoGeneralSettingsPermissionModal() {
+  showCustomModal(
+    'Permission Required',
+    'You do not have permission to view General Settings. Request the manage community settings permission from your community administrator.',
     'info'
   );
 }
