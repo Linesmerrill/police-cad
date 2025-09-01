@@ -1799,6 +1799,45 @@
             </div>
           <% } %>
 
+          <!-- Civilian Approvals Management -->
+          <%
+            // Permission logic for managing civilian approvals
+            let canManageCivilianApprovals = false;
+            if (userId && community.community && Array.isArray(community.community.roles)) {
+              community.community.roles.forEach(function(role) {
+                if (Array.isArray(role.members) && role.members.includes(userId)) {
+                  if (Array.isArray(role.permissions)) {
+                    role.permissions.forEach(function(perm) {
+                      if (
+                        (perm.name === "administrator" && perm.enabled === true) ||
+                        (perm.name === "manage members" && perm.enabled === true)
+                      ) {
+                        canManageCivilianApprovals = true;
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          %>
+          
+          <% if (canManageCivilianApprovals && community.community.civilianApprovalSystemEnabled) { %>
+            <!-- User has permission to manage civilian approvals -->
+            <div id="civilianApprovalsManagementCard" onclick="openCivilianApprovalsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#ed8936;">
+              <div style="text-align:center;">
+                <div style="margin-bottom:0.5rem; position:relative;">
+                  <i class="fa fa-user-check" style="font-size:2rem; color:#ed8936;"></i>
+                  <!-- Notification Badge -->
+                  <div id="civApprovalsBadge" style="position:absolute; top:-8px; right:-8px; background:#ef4444; color:#fff; border-radius:50%; width:24px; height:24px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:600; border:2px solid #2d3748; display:none;">
+                    <span id="civApprovalsCountBadge">0</span>
+                  </div>
+                </div>
+                <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Civilian Approvals</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Review pending civilian profiles</p>
+              </div>
+            </div>
+          <% } %>
+
           <!-- Bans Management -->
           <%
             // Permission logic for managing bans
@@ -1990,7 +2029,7 @@
           <div id="civilianApprovalInfo" style="display:none; padding:1rem; background:#1a202c; border-radius:8px; border:1px solid #4a5568;">
             <p style="color:#a0aec0; margin:0; font-size:0.875rem;">
               <i class="fa fa-info-circle" style="color:#3b82f6; margin-right:0.5rem;"></i>
-              When enabled, newly created civilians will have "pending" status and require approval from community administrators before appearing in the community.
+              When enabled, newly created civilians will have "requested_review" status and require approval from community administrators before appearing in the community.
             </p>
           </div>
         </div>
@@ -3355,6 +3394,371 @@ function showNoBansPermissionModal() {
   );
 }
 
+// Civilian Approvals Management Functions
+let civilianApprovalsData = [];
+let filteredCivilianApprovals = [];
+let currentApprovalsPage = 0;
+let approvalsPagination = {
+  currentPage: 0,
+  limit: 10,
+  totalCount: 0,
+  totalPages: 0,
+  hasNext: false,
+  hasPrev: false
+};
+
+// Function to update the notification badge count
+async function updateCivilianApprovalsBadge() {
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/civilian/pending-approvals?communityId=${communityId}&page=0&limit=1`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      const pendingCount = data.pagination?.totalCount || 0;
+      
+      const badge = document.getElementById('civApprovalsBadge');
+      const countSpan = document.getElementById('civApprovalsCountBadge');
+      
+      if (pendingCount > 0) {
+        badge.style.display = 'flex';
+        countSpan.textContent = pendingCount > 99 ? '99+' : pendingCount;
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  } catch (error) {
+    console.error('Failed to update civilian approvals badge:', error);
+  }
+}
+
+function openCivilianApprovalsModal() {
+  document.getElementById('civilianApprovalsModal').style.display = 'flex';
+  loadCivilianApprovals();
+}
+
+function closeCivilianApprovalsModal() {
+  document.getElementById('civilianApprovalsModal').style.display = 'none';
+  civilianApprovalsData = [];
+  filteredCivilianApprovals = [];
+}
+
+async function loadCivilianApprovals(page = 0) {
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/civilian/pending-approvals?communityId=${communityId}&page=${page}&limit=10`);
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to fetch pending approvals: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.data && Array.isArray(data.data)) {
+      civilianApprovalsData = data.data;
+      filteredCivilianApprovals = [...civilianApprovalsData];
+      
+      // Update pagination info
+      if (data.pagination) {
+        approvalsPagination = data.pagination;
+        currentApprovalsPage = data.pagination.currentPage;
+      }
+      
+      // Update count with proper singular/plural
+      const approvalsCount = document.getElementById('civilianApprovalsCount');
+      const approvalsCountText = document.getElementById('civilianApprovalsCountText');
+      const totalCount = approvalsPagination.totalCount || civilianApprovalsData.length;
+      approvalsCount.textContent = totalCount;
+      approvalsCountText.textContent = totalCount === 1 ? 'awaiting review' : 'awaiting review';
+    } else {
+      civilianApprovalsData = [];
+      filteredCivilianApprovals = [];
+      approvalsPagination = {
+        currentPage: 0,
+        limit: 10,
+        totalCount: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false
+      };
+      currentApprovalsPage = 0;
+      
+      const approvalsCount = document.getElementById('civilianApprovalsCount');
+      const approvalsCountText = document.getElementById('civilianApprovalsCountText');
+      approvalsCount.textContent = '0';
+      approvalsCountText.textContent = 'awaiting review';
+    }
+    
+    // Render approvals
+    renderCivilianApprovalsList();
+    
+  } catch (error) {
+    showToast(`Failed to load review requests: ${error.message}`, 3000, 'error');
+  }
+}
+
+function renderCivilianApprovalsList() {
+  const loadingDiv = document.getElementById('civilianApprovalsLoading');
+  const listContainer = document.getElementById('civilianApprovalsListContainer');
+  const emptyState = document.getElementById('civilianApprovalsEmptyState');
+  const approvalsList = document.getElementById('civilianApprovalsList');
+  const paginationDiv = document.getElementById('civilianApprovalsPagination');
+  
+  // Hide loading
+  loadingDiv.style.display = 'none';
+  
+  if (filteredCivilianApprovals.length === 0) {
+    emptyState.style.display = 'block';
+    listContainer.style.display = 'none';
+    paginationDiv.style.display = 'none';
+    return;
+  }
+  
+  emptyState.style.display = 'none';
+  listContainer.style.display = 'block';
+  
+  // Show pagination if there are multiple pages
+  if (approvalsPagination.totalPages > 1) {
+    paginationDiv.style.display = 'block';
+    
+    // Update pagination info
+    document.getElementById('civApprovalsCurrentPage').textContent = approvalsPagination.currentPage + 1;
+    document.getElementById('civApprovalsTotalPages').textContent = approvalsPagination.totalPages;
+    
+    // Update button states
+    document.getElementById('civApprovalsPrevBtn').disabled = !approvalsPagination.hasPrev;
+    document.getElementById('civApprovalsNextBtn').disabled = !approvalsPagination.hasNext;
+    
+    // Update button styles based on disabled state
+    const prevBtn = document.getElementById('civApprovalsPrevBtn');
+    const nextBtn = document.getElementById('civApprovalsNextBtn');
+    
+    if (approvalsPagination.hasPrev) {
+      prevBtn.style.background = '#4a5568';
+      prevBtn.style.cursor = 'pointer';
+    } else {
+      prevBtn.style.background = '#2d3748';
+      prevBtn.style.cursor = 'not-allowed';
+      prevBtn.style.opacity = '0.6';
+    }
+    
+    if (approvalsPagination.hasNext) {
+      nextBtn.style.background = '#3b82f6';
+      nextBtn.style.cursor = 'pointer';
+    } else {
+      nextBtn.style.background = '#2d3748';
+      nextBtn.style.cursor = 'not-allowed';
+      nextBtn.style.opacity = '0.6';
+    }
+  } else {
+    paginationDiv.style.display = 'none';
+  }
+  
+  approvalsList.innerHTML = filteredCivilianApprovals.map(civ => {
+    const civData = civ.civilian ? civ.civilian : civ;
+    const fullName = civData.name || 'Unnamed Civilian';
+    const age = civData.birthday ? getAge(civData.birthday) : 'N/A';
+    const gender = civData.gender || 'N/A';
+    const address = civData.address || 'N/A';
+    
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; margin-bottom:1rem;">
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <div style="width:50px; height:50px; border-radius:50%; background:#3b82f6; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+            <i class="fa fa-user" style="color:#fff; font-size:1.5rem;"></i>
+          </div>
+          <div>
+            <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">${fullName}</h4>
+            <p style="color:#a0aec0; margin:0.25rem 0 0 0; font-size:0.875rem;">Age: ${age} | Gender: ${gender}</p>
+            <p style="color:#a0aec0; margin:0.25rem 0 0 0; font-size:0.875rem;">Address: ${address}</p>
+          </div>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+          <button onclick="approveCivilian('${civ._id}')" style="background:#10b981; color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:500; cursor:pointer; font-size:0.875rem;">
+            <i class="fa fa-check"></i> Approve
+          </button>
+          <button onclick="denyCivilian('${civ._id}')" style="background:#ef4444; color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:500; cursor:pointer; font-size:0.875rem;">
+            <i class="fa fa-times"></i> Deny
+          </button>
+          <button onclick="requireEditsCivilian('${civ._id}')" style="background:#f59e0b; color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-weight:500; cursor:pointer; font-size:0.875rem;">
+            <i class="fa fa-edit"></i> Edit
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function searchCivilianApprovals(query) {
+  const clearBtn = document.getElementById('civilianApprovalsSearchClear');
+  
+  if (!query.trim()) {
+    filteredCivilianApprovals = [...civilianApprovalsData];
+    clearBtn.style.display = 'none';
+  } else {
+    const lowerQuery = query.toLowerCase();
+    filteredCivilianApprovals = civilianApprovalsData.filter(civ => {
+      const civData = civ.civilian ? civ.civilian : civ;
+      const name = civData.name || '';
+      const address = civData.address || '';
+      return name.toLowerCase().includes(lowerQuery) || address.toLowerCase().includes(lowerQuery);
+    });
+    clearBtn.style.display = 'block';
+  }
+  
+  renderCivilianApprovalsList();
+}
+
+function clearCivilianApprovalsSearch() {
+  const searchInput = document.getElementById('civilianApprovalsSearchInput');
+  const clearBtn = document.getElementById('civilianApprovalsSearchClear');
+  
+  searchInput.value = '';
+  clearBtn.style.display = 'none';
+  
+  filteredCivilianApprovals = [...civilianApprovalsData];
+  renderCivilianApprovalsList();
+}
+
+function loadCivilianApprovalsPage(direction) {
+  let newPage = currentApprovalsPage;
+  
+  if (direction === 'next' && approvalsPagination.hasNext) {
+    newPage = currentApprovalsPage + 1;
+  } else if (direction === 'prev' && approvalsPagination.hasPrev) {
+    newPage = currentApprovalsPage - 1;
+  }
+  
+  if (newPage !== currentApprovalsPage) {
+    loadCivilianApprovals(newPage);
+  }
+}
+
+async function approveCivilian(civId) {
+  try {
+    const communityId = '<%= community._id %>';
+    const adminId = '<%= userId %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/civilian/admin-approval`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+      },
+      body: JSON.stringify({
+        civilianId: civId,
+        communityId: communityId,
+        adminId: adminId,
+        action: 'approve',
+        notes: 'Civilian profile approved by community administrator'
+      })
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to approve civilian: ${response.status}`);
+    }
+    
+    showToast('Civilian approved successfully!', 3000, 'success');
+    loadCivilianApprovals(); // Refresh the list
+    updateCivilianApprovalsBadge(); // Update the badge count
+    
+  } catch (error) {
+    showToast(`Failed to approve civilian: ${error.message}`, 3000, 'error');
+  }
+}
+
+async function denyCivilian(civId) {
+  try {
+    const communityId = '<%= community._id %>';
+    const adminId = '<%= userId %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/civilian/admin-approval`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+      },
+      body: JSON.stringify({
+        civilianId: civId,
+        communityId: communityId,
+        adminId: adminId,
+        action: 'deny',
+        notes: 'Civilian profile denied by community administrator'
+      })
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to deny civilian: ${error.message}`);
+    }
+    
+    showToast('Civilian denied successfully!', 3000, 'success');
+    loadCivilianApprovals(); // Refresh the list
+    updateCivilianApprovalsBadge(); // Update the badge count
+    
+  } catch (error) {
+    showToast(`Failed to deny civilian: ${error.message}`, 3000, 'error');
+  }
+}
+
+async function requireEditsCivilian(civId) {
+  try {
+    const communityId = '<%= community._id %>';
+    const adminId = '<%= userId %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+    
+    const response = await fetch(`${apiUrl}/api/v1/civilian/admin-approval`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('jwt_token')}`
+      },
+      body: JSON.stringify({
+        civilianId: civId,
+        communityId: communityId,
+        adminId: adminId,
+        action: 'require_edits',
+        notes: 'Civilian profile requires additional information before approval'
+      })
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || `Failed to require edits: ${response.status}`);
+    }
+    
+    showToast('Edit request sent successfully!', 3000, 'success');
+    loadCivilianApprovals(); // Refresh the list
+    updateCivilianApprovalsBadge(); // Update the badge count
+    
+  } catch (error) {
+    showToast(`Failed to require edits: ${error.message}`, 3000, 'error');
+  }
+}
+
+// Helper function to calculate age
+function getAge(birthday) {
+  if (!birthday) return 'N/A';
+  const birthDate = new Date(birthday);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  
+  return age;
+}
+
 async function transferOwnership() {
   // Use the globally stored selected member info
   if (!selectedMemberId || !selectedMemberUsername) {
@@ -3988,6 +4392,23 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+  
+  // Civilian Approvals search input
+  const civilianApprovalsSearchInput = document.getElementById('civilianApprovalsSearchInput');
+  if (civilianApprovalsSearchInput) {
+    civilianApprovalsSearchInput.addEventListener('input', function(e) {
+      const query = e.target.value;
+      const clearBtn = document.getElementById('civilianApprovalsSearchClear');
+      
+      if (query.trim()) {
+        clearBtn.style.display = 'block';
+        searchCivilianApprovals(query);
+      } else {
+        clearBtn.style.display = 'none';
+        searchCivilianApprovals('');
+      }
+    });
+  }
 });
 
 function openBansManagement() {
@@ -4464,6 +4885,70 @@ function openNoEventPermissionModal() {
     <div id="bansListContainer" style="display:none;">
       <div id="bansList">
         <!-- Banned users will be loaded here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Civilian Approvals Management Modal -->
+<div id="civilianApprovalsModal" class="heroui-modal" style="display:none; position:fixed; z-index:4000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:1000px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+    <button onclick="closeCivilianApprovalsModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    
+    <div style="text-align:center; margin-bottom:2rem;">
+      <i class="fa fa-user-check" style="font-size:3rem; color:#ed8936; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Civilian Approvals</h3>
+      <p style="color:#a0aec0; margin:0.5rem 0 0 0;">Review and manage civilian profile review requests</p>
+    </div>
+    
+    <!-- Search Box -->
+    <div style="margin-bottom:1.5rem;">
+      <div style="position:relative;">
+        <input type="text" id="civilianApprovalsSearchInput" placeholder="Search civilians awaiting review..." style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem; padding-right:3rem;" oninput="searchCivilianApprovals(this.value)">
+        <button id="civilianApprovalsSearchClear" onclick="clearCivilianApprovalsSearch()" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:#a0aec0; cursor:pointer; display:none; font-size:1.125rem;">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Approvals Count -->
+    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
+      <div style="color:#a0aec0; font-size:0.875rem;">
+        <span id="civilianApprovalsCount">0</span> <span id="civilianApprovalsCountText">awaiting review</span>
+      </div>
+    </div>
+    
+    <!-- Loading State -->
+    <div id="civilianApprovalsLoading" style="text-align:center; padding:2rem; color:#a0aec0;">
+      <i class="fa fa-spinner fa-spin" style="font-size:2rem; margin-bottom:1rem;"></i>
+                      <p>Loading review requests...</p>
+    </div>
+    
+    <!-- Empty State -->
+    <div id="civilianApprovalsEmptyState" style="text-align:center; padding:2rem; color:#a0aec0; display:none;">
+      <i class="fa fa-check-circle" style="font-size:2rem; margin-bottom:1rem; opacity:0.5; color:#10b981;"></i>
+                      <p>No civilian review requests</p>
+    </div>
+    
+    <!-- Approvals List Container -->
+    <div id="civilianApprovalsListContainer" style="display:none;">
+      <div id="civilianApprovalsList">
+        <!-- Civilian review requests will be loaded here -->
+      </div>
+      
+      <!-- Pagination Controls -->
+      <div id="civilianApprovalsPagination" style="display:none; margin-top:2rem; text-align:center;">
+        <div style="display:flex; justify-content:center; gap:1rem; align-items:center;">
+          <button id="civApprovalsPrevBtn" onclick="loadCivilianApprovalsPage('prev')" style="background:#4a5568; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer; font-size:1rem;">
+            <i class="fa fa-chevron-left"></i> Previous
+          </button>
+          <span id="civApprovalsPageInfo" style="color:#a0aec0; font-size:0.875rem;">
+            Page <span id="civApprovalsCurrentPage">1</span> of <span id="civApprovalsTotalPages">1</span>
+          </span>
+          <button id="civApprovalsNextBtn" onclick="loadCivilianApprovalsPage('next')" style="background:#3b82f6; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer; font-size:1rem;">
+            Next <i class="fa fa-chevron-right"></i>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -8222,5 +8707,17 @@ async function deleteEditEvent() {
         </button>
       </div>
     </div>
+    
+    <!-- Initialize civilian approvals badge on page load -->
+    <script>
+      // Update the badge count when the page loads
+      document.addEventListener('DOMContentLoaded', function() {
+        // Only update badge if civilian approval system is enabled
+        if (document.getElementById('civApprovalsCard') && 
+            document.getElementById('civApprovalsCard').style.display !== 'none') {
+          updateCivilianApprovalsBadge();
+        }
+      });
+    </script>
   </body>
 </html>

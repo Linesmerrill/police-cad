@@ -85,6 +85,62 @@
       }
     }
     
+    /* Approval Badge Styles */
+    .approval-badge {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      z-index: 10;
+    }
+    
+    .approval-badge.pending {
+      background-color: #ed8936;
+      color: white;
+    }
+    
+    .approval-badge.no-status {
+      background-color: #ed8936;
+      color: white;
+    }
+    
+    .approval-badge.requested-review {
+      background-color: #3b82f6;
+      color: white;
+    }
+    
+    .approval-badge.approved {
+      background-color: #48bb78;
+      color: white;
+    }
+    
+    .civ-card {
+      position: relative;
+    }
+    
+    .civ-card.pending-approval {
+      border: 2px solid #ed8936;
+      opacity: 0.8;
+    }
+    
+    .civ-card.no-status {
+      border: 2px solid #ed8936;
+    }
+    
+    .civ-card.requested-review {
+      border: 2px solid #3b82f6;
+    }
+    
+    .civ-card.approved {
+      border: 2px solid #48bb78;
+    }
+    
     /* Pagination Button Styling */
     .pagination-container {
       display: flex;
@@ -1228,7 +1284,18 @@
           <button onclick="openNewCivModal()" class="btn-primary">
             <i class="fa fa-plus"></i> Add New Civilian
           </button>
-                    </div>
+        </div>
+        
+        <!-- Civilian Approval Notice -->
+        <div id="civApprovalNotice" class="approval-notice" style="display:none; background:linear-gradient(135deg,#ed8936 0%,#f6ad55 100%); color:#fff; padding:1rem; border-radius:8px; margin-bottom:1.5rem; border-left:4px solid #dd6b20;">
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <i class="fa fa-info-circle" style="font-size:1.2rem;"></i>
+            <div>
+              <strong>Civilians in this community require approval</strong>
+              <p style="margin:0.25rem 0 0 0; font-size:0.9rem; opacity:0.9;">Any civilians shown as awaiting review need to be sent for approval before they will appear in CAD searches and other systems.</p>
+            </div>
+          </div>
+        </div>
         <!-- Loading State -->
         <div id="civilians-loading" class="loading-spinner">
           <div class="spinner"></div>
@@ -1410,6 +1477,18 @@
             </div>
             <div style="flex:2 1 320px; min-width:260px;">
               <div style="font-size:1.2rem; font-weight:600; color:#f7fafc; margin-bottom:0.7rem;">Details about your Civilian</div>
+              
+                              <!-- Dynamic Approval Warning -->
+                <div id="civPendingWarning" class="pending-warning" style="display:none; background:linear-gradient(135deg,#ed8936 0%,#f6ad55 100%); color:#fff; padding:1rem; border-radius:8px; margin-bottom:1.5rem; border-left:4px solid #c05621;">
+                  <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <i class="fa fa-exclamation-triangle" style="font-size:1.2rem; color:#fff;"></i>
+                    <div>
+                      <strong id="civWarningTitle">Review Required</strong>
+                      <p id="civWarningMessage" style="margin:0.25rem 0 0 0; opacity:0.9; font-size:0.9rem;">This civilian is awaiting review and needs approval before appearing in CAD searches. You can send for approval by scrolling to the bottom of this form.</p>
+                    </div>
+                  </div>
+                </div>
+              
               <div style="display:flex; gap:1.2rem; flex-wrap:wrap;">
                 <div style="flex:1 1 180px; min-width:160px; margin-bottom:1rem;">
                   <label for="civName" style="color:#e0e7ff; font-weight:500;">Name*</label>
@@ -1512,6 +1591,7 @@
                 </div>
               </div>
               <div style="display:flex; gap:0.75rem; margin-top:1.5rem; justify-content:flex-end;">
+                <button class="btn btn-warning" id="civDetailsSendApprovalBtn" style="background:#ed8936; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; display:none;"><i class="fa fa-paper-plane"></i> Send for Approval</button>
                 <button class="btn btn-danger" id="civDetailsDeleteBtn" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500;">Delete</button>
                 <button class="btn btn-primary" id="civDetailsEditBtn" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500;">Update Civilian</button>
                 <button class="btn btn-secondary" id="civDetailsModalClose2" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500;">Close</button>

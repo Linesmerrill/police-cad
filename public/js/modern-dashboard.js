@@ -23,8 +23,14 @@ const linkedFirearmsPerPage = 8;
 
 // Initialize dashboard when document is ready
 $(document).ready(function() {
-    // Load initial data
-    loadCivilians();
+    // Load initial data - load community data first, then civilians
+    loadCommunityData().then(() => {
+        loadCivilians();
+    }).catch(() => {
+        // Load civilians even if community data fails
+        loadCivilians();
+    });
+    
     loadVehicles();
     loadFirearms();
     loadLicenses();
@@ -417,6 +423,39 @@ function searchAllSections(searchTerm) {
     });
 }
 
+// Load community data to check approval settings
+function loadCommunityData() {
+    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+    if (!communityId) return Promise.resolve();
+    
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            url: `${API_URL}/api/v1/community/${communityId}`,
+            method: 'GET',
+            success: function(data) {
+                window.currentCommunityData = data.community;
+                // Show/hide approval notice based on community settings
+                const approvalNotice = document.getElementById('civApprovalNotice');
+                if (approvalNotice && data.community?.civilianApprovalSystemEnabled) {
+                    approvalNotice.style.display = 'block';
+                } else if (approvalNotice) {
+                    approvalNotice.style.display = 'none';
+                }
+                
+                // Re-render civilians if they're already loaded to show approval indicators
+                if (lastRenderedCivilians && lastRenderedCivilians.length > 0) {
+                    renderCivilians(lastRenderedCivilians);
+                }
+                resolve(data.community);
+            },
+            error: function(xhr) {
+                console.error('❌ Error loading community data:', xhr);
+                reject(xhr);
+            }
+        });
+    });
+}
+
 // Load Civilians
 function loadCivilians() {
     $('#civilians-loading').show();
@@ -471,6 +510,36 @@ function renderCivilians(civilians) {
     civilians.forEach((civ, index) => {
         const civData = civ.civilian ? civ.civilian : civ;
         const fullName = civData.name || 'Unnamed Civilian';
+        
+        // Check approval status and community settings
+        const approvalStatus = civData.approvalStatus;
+        const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+        
+        // Determine if we should show approval indicators
+        let approvalIndicator = '';
+        let cardClass = 'card civ-card';
+        
+        // Check if community has civilian approval system enabled
+        if (communityId && window.currentCommunityData?.civilianApprovalSystemEnabled) {
+            if (!civData.approvalStatus) {
+                // No status field - needs action (yellow)
+                approvalIndicator = '<div class="approval-badge no-status" title="Action Required"><i class="fa fa-exclamation-triangle"></i></div>';
+                cardClass += ' no-status';
+            } else if (approvalStatus === 'requested_review') {
+                // Actively being reviewed (blue)
+                approvalIndicator = '<div class="approval-badge requested-review" title="Requested Review"><i class="fa fa-clock"></i></div>';
+                cardClass += ' requested-review';
+            } else if (approvalStatus === 'approved') {
+                // Approved (green)
+                approvalIndicator = '<div class="approval-badge approved" title="Approved"><i class="fa fa-check-circle"></i></div>';
+                cardClass += ' approved';
+            } else if (approvalStatus === 'pending') {
+                // Legacy pending status (orange)
+                approvalIndicator = '<div class="approval-badge pending" title="Pending Approval"><i class="fa fa-clock"></i></div>';
+                cardClass += ' pending-approval';
+            }
+        }
+        
         // Avatar logic
         let avatarHtml = '';
         if (civData.image && civData.image.startsWith('https://')) {
@@ -481,7 +550,7 @@ function renderCivilians(civilians) {
         }
         // Use a data attribute to store the index for event delegation
         const card = `
-            <div class="card civ-card" data-civ-index="${index}">
+            <div class="${cardClass}" data-civ-index="${index}">
                 <div class="card-header">
                     <div class="card-avatar">
                         ${avatarHtml}
@@ -490,6 +559,7 @@ function renderCivilians(civilians) {
                         <div class="card-title" style="font-size:1.25rem;font-weight:700;color:#f7fafc;margin-bottom:0.25rem;">${fullName}</div>
                         <p class="card-subtitle">Age: ${getAge(civData.birthday)}</p>
                     </div>
+                    ${approvalIndicator}
                 </div>
                 <div class="card-content">
                     <p><strong>Gender:</strong> ${civData.gender || 'N/A'}</p>
@@ -1032,6 +1102,37 @@ function updateCivModern(civId) {
     });
 }
 
+// Send civilian for approval
+function sendCivilianForApproval(civId) {
+    if (!confirm('Are you sure you want to send this civilian for approval? This will notify community administrators.')) {
+        return;
+    }
+    
+    // Use the backend API following the existing pattern
+    const requestData = {
+        civilianId: civId,
+        communityId: dbUser?.user?.lastAccessedCommunity?.communityID,
+        userId: dbUser._id,
+        action: 'send_for_approval'
+    };
+    
+    $.ajax({
+        url: `${API_URL}/api/v1/civilian/approval`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(requestData),
+        success: function(response) {
+            showToast('Civilian sent for approval successfully!');
+            closeCivDetailsModal();
+            loadCivilians(); // Refresh the list to show updated status
+        },
+        error: function(xhr) {
+            console.error('❌ Error sending civilian for approval:', xhr);
+            showToast('Failed to send civilian for approval. Please try again.');
+        }
+    });
+}
+
 // Wire up Update Civilian button in modal
 $(document).ready(function() {
     $('#civDetailsEditBtn').off('click').on('click', function(e) {
@@ -1040,6 +1141,17 @@ $(document).ready(function() {
         const civId = $('#civIdHidden').val();
         if (civId) {
             updateCivModern(civId);
+        } else {
+            showToast('No civilian selected.');
+        }
+    });
+    
+    // Wire up Send for Approval button
+    $('#civDetailsSendApprovalBtn').off('click').on('click', function(e) {
+        e.preventDefault();
+        const civId = $('#civIdHidden').val();
+        if (civId) {
+            sendCivilianForApproval(civId);
         } else {
             showToast('No civilian selected.');
         }
@@ -1165,6 +1277,49 @@ function openCivDetailsModal(civ) {
             civModal.scrollTop = 0;
         }
     }, 100);
+    
+    // Show/hide approval button and warning based on civilian status and community settings
+    const approvalBtn = document.getElementById('civDetailsSendApprovalBtn');
+    const pendingWarning = document.getElementById('civPendingWarning');
+    const warningTitle = document.getElementById('civWarningTitle');
+    const warningMessage = document.getElementById('civWarningMessage');
+    const approvalStatus = civData.approvalStatus;
+    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+    
+    if (communityId && window.currentCommunityData?.civilianApprovalSystemEnabled) {
+        if (!civData.approvalStatus || approvalStatus === 'requested_review') {
+            // Show approval button and warning for civilians that need action or are being reviewed
+            if (approvalBtn) approvalBtn.style.display = 'inline-block';
+            if (pendingWarning) {
+                pendingWarning.style.display = 'block';
+                
+                // Set dynamic warning message based on status
+                if (!civData.approvalStatus) {
+                    // No status - needs action
+                    warningTitle.textContent = 'Action Required';
+                    warningMessage.textContent = 'This civilian has no approval status and needs to be sent for review before appearing in CAD searches. You can send for approval by scrolling to the bottom of this form.';
+                    // Change background to orange for no status
+                    pendingWarning.style.background = 'linear-gradient(135deg,#ed8936 0%,#f6ad55 100%)';
+                    pendingWarning.style.borderLeftColor = '#c05621';
+                } else if (approvalStatus === 'requested_review') {
+                    // Being reviewed
+                    warningTitle.textContent = 'Review in Progress';
+                    warningMessage.textContent = 'This civilian is currently being reviewed by community administrators. You will be notified once the review is complete.';
+                    // Change background to blue for requested_review
+                    pendingWarning.style.background = 'linear-gradient(135deg,#3b82f6 0%,#60a5fa 100%)';
+                    pendingWarning.style.borderLeftColor = '#2563eb';
+                }
+            }
+        } else {
+            // Hide approval button and warning for approved civilians
+            if (approvalBtn) approvalBtn.style.display = 'none';
+            if (pendingWarning) pendingWarning.style.display = 'none';
+        }
+    } else {
+        // Hide both if approval system is not enabled
+        if (approvalBtn) approvalBtn.style.display = 'none';
+        if (pendingWarning) pendingWarning.style.display = 'none';
+    }
     // Height/Weight prefill logic for details modal
     // Height
     if (civData.heightClassification === 'Imperial') {
@@ -1649,7 +1804,7 @@ function createNewCiv() {
         veteran: $('#veteran').is(':checked'),
         onParole: $('#onParole').is(':checked'),
         onProbation: $('#onProbation').is(':checked'),
-        approvalStatus: 'pending',
+        approvalStatus: 'requested_review',
         userID: dbUser._id,
         activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID
     };
