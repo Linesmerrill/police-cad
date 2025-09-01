@@ -35,6 +35,9 @@ $(document).ready(function() {
     // Load departments
     fetchAndRenderModernDepartments();
     
+    // Check civilian creation limits and update UI accordingly
+    checkCivilianCreationLimitsOnLoad();
+    
     // Setup search functionality
     setupSearch();
     
@@ -105,6 +108,12 @@ $(document).ready(function() {
                     showToast('Civilian deleted successfully!');
                     closeCivDetailsModal();
                     loadCivilians();
+                    
+                    // Update civilian creation button state after deleting civilian
+                    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+                    if (communityId) {
+                        updateCivilianCreationButtonState(communityId, null); // Will fetch current limit
+                    }
                 },
                 error: function(xhr) {
                     showToast('Failed to delete civilian: ' + (xhr.responseJSON?.message || 'Unknown error'));
@@ -1325,9 +1334,293 @@ function closeCivDetailsModal() {
 
 // --- New Civilian Creation Functions ---
 
-// Open the new civilian modal
+// Check civilian creation limits before opening modal
 function openNewCivModal() {
-    $('#newCivModal').modal('show');
+    // Check if civilian creation limits are enabled for this community
+    checkCivilianCreationLimits();
+}
+
+// Check civilian creation limits
+function checkCivilianCreationLimits() {
+    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+    
+    if (!communityId) {
+        showToast('Error: No active community found');
+        return;
+    }
+    
+    // Fetch community settings to check limits
+    $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}`,
+        method: 'GET',
+        success: function(data) {
+            if (data.community && data.community.civilianCreationLimitsEnabled) {
+                // Limits are enabled, check current count
+                checkCurrentCivilianCount(communityId, data.community.civilianCreationLimit);
+            } else {
+                // No limits, allow creation
+                $('#newCivModal').modal('show');
+            }
+        },
+        error: function(xhr) {
+            console.error('Error fetching community settings:', xhr);
+            // If we can't fetch settings, allow creation as fallback
+            $('#newCivModal').modal('show');
+        }
+    });
+}
+
+// Check current civilian count for the user's department
+function checkCurrentCivilianCount(communityId, limit) {
+    const userId = dbUser._id;
+    
+    // Get user's current department from the community
+    $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}`,
+        method: 'GET',
+        success: function(data) {
+            if (data.community && data.community.departments) {
+                // Find the department the user is in
+                const userDepartment = findUserDepartment(data.community.departments, userId);
+                
+                // Count total civilians for this user (not per department)
+                countUserCivilians(userId, limit);
+            } else {
+                showToast('Error: Could not load department information');
+            }
+        },
+        error: function(xhr) {
+            console.error('Error fetching community departments:', xhr);
+            showToast('Error: Could not load department information');
+        }
+    });
+}
+
+// Find which department the user belongs to
+function findUserDepartment(departments, userId) {
+    for (const dept of departments) {
+        if (dept.members && Array.isArray(dept.members)) {
+            const member = dept.members.find(m => m.userID === userId);
+            if (member && member.status === 'approved') {
+                return dept;
+            }
+        }
+    }
+    return null;
+}
+
+// Count civilians for a user (total, not per department)
+function countUserCivilians(userId, limit) {
+    console.log('🔍 Counting total civilians for user:', userId, 'with limit:', limit);
+    
+    $.ajax({
+        url: `${API_URL}/api/v1/civilians/user/${userId}?active_community_id=${dbUser.user.lastAccessedCommunity.communityID}`,
+        method: 'GET',
+        success: function(data) {
+            let civilianCount = 0;
+            
+            console.log('📊 Raw civilian data received:', data);
+            
+            if (data && Array.isArray(data)) {
+                // Count ALL civilians for this user (total count, not per department)
+                civilianCount = data.length;
+                console.log('🔍 Total civilians found for user:', civilianCount);
+            }
+            
+            console.log('✅ Final civilian count for user:', civilianCount);
+            
+            if (civilianCount >= limit) {
+                // User has reached their limit
+                console.log('🚫 User has reached limit:', civilianCount, '>=', limit);
+                showCivilianLimitWarning(limit, civilianCount);
+            } else {
+                // User can create more civilians
+                console.log('✅ User can create more civilians:', civilianCount, '<', limit);
+                $('#newCivModal').modal('show');
+            }
+        },
+        error: function(xhr) {
+            console.error('❌ Error counting civilians:', xhr);
+            // If we can't count, allow creation as fallback
+            $('#newCivModal').modal('show');
+        }
+    });
+}
+
+// Show warning modal when user has reached their limit
+function showCivilianLimitWarning(limit, currentCount) {
+    // Create and show a custom warning modal
+    const warningHtml = `
+        <div class="modal fade" id="civilianLimitWarningModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; border-radius: 16px;">
+                    <div class="modal-header" style="border-bottom: 1px solid #35385a; padding: 1.5rem;">
+                        <div class="d-flex align-items-center">
+                            <i class="fa fa-exclamation-triangle" style="color: #f59e0b; font-size: 1.5rem; margin-right: 1rem;"></i>
+                            <h5 class="modal-title" style="color: #fff; margin: 0;">Community Limit Reached</h5>
+                        </div>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff; background: none; border: none; font-size: 1.5rem;">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" style="padding: 1.5rem; color: #a0aec0;">
+                        <p>You have reached your limit of ${currentCount} out of ${limit} for this community.</p>
+                        <div style="background: #2d3748; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
+                            <p style="margin: 0; color: #fff;"><strong>Current Count:</strong> ${currentCount} civilian${currentCount !== 1 ? 's' : ''}</p>
+                            <p style="margin: 0; color: #fff;"><strong>Community Limit:</strong> ${limit} civilian${limit !== 1 ? 's' : ''}</p>
+                        </div>
+                        <p>This is a community setting set by the community owner. If you have questions, reach out to them directly.</p>
+                    </div>
+                    <div class="modal-footer" style="border-top: 1px solid #35385a; padding: 1.5rem;">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" style="background: #6b7280; border: none; border-radius: 8px; padding: 0.75rem 1.5rem;">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if it exists
+    $('#civilianLimitWarningModal').remove();
+    
+    // Add modal to body and show it
+    $('body').append(warningHtml);
+    $('#civilianLimitWarningModal').modal('show');
+    
+    // Clean up modal when hidden
+    $('#civilianLimitWarningModal').on('hidden.bs.modal', function() {
+        $(this).remove();
+    });
+}
+
+// Check civilian creation limits when page loads and update UI
+function checkCivilianCreationLimitsOnLoad() {
+    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+    
+    if (!communityId) {
+        return; // No active community, can't check limits
+    }
+    
+    // Fetch community settings to check limits
+    $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}`,
+        method: 'GET',
+        success: function(data) {
+            if (data.community && data.community.civilianCreationLimitsEnabled) {
+                // Limits are enabled, check current count and update UI
+                updateCivilianCreationButtonState(communityId, data.community.civilianCreationLimit);
+            }
+        },
+        error: function(xhr) {
+            console.error('Error fetching community settings on load:', xhr);
+        }
+    });
+}
+
+// Update the civilian creation button state based on current limits
+function updateCivilianCreationButtonState(communityId, limit) {
+    const userId = dbUser._id;
+    
+    // If no limit provided, fetch it from community settings
+    if (limit === null) {
+        $.ajax({
+            url: `${API_URL}/api/v1/community/${communityId}`,
+            method: 'GET',
+            success: function(data) {
+                if (data.community && data.community.civilianCreationLimitsEnabled) {
+                    updateCivilianCreationButtonState(communityId, data.community.civilianCreationLimit);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error fetching community settings:', xhr);
+            }
+        });
+        return;
+    }
+    
+    // Get user's current department from the community
+    $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}`,
+        method: 'GET',
+        success: function(data) {
+            if (data.community && data.community.departments) {
+                // Find the department the user is in
+                const userDepartment = findUserDepartment(data.community.departments, userId);
+                
+                // Count total civilians for this user (not per department)
+                $.ajax({
+                    url: `${API_URL}/api/v1/civilians/user/${userId}?active_community_id=${communityId}`,
+                    method: 'GET',
+                    success: function(civResponse) {
+                        let civilianCount = 0;
+                        
+                        if (civResponse && Array.isArray(civResponse)) {
+                            // Count ALL civilians for this user (total count, not per department)
+                            civilianCount = civResponse.length;
+                        }
+                        
+                        // Update all "Add New Civilian" buttons
+                        updateCivilianCreationButtons(civilianCount, limit);
+                    },
+                    error: function(xhr) {
+                        console.error('Error counting civilians on load:', xhr);
+                    }
+                });
+            }
+        },
+        error: function(xhr) {
+            console.error('Error fetching community departments on load:', xhr);
+        }
+    });
+}
+
+// Update all civilian creation buttons based on current count vs limit
+function updateCivilianCreationButtons(currentCount, limit) {
+    // Find all buttons that call openNewCivModal
+    const buttons = document.querySelectorAll('[onclick*="openNewCivModal"]');
+    
+    buttons.forEach((button, index) => {
+        
+        if (currentCount >= limit) {
+            // User has reached their limit
+            button.disabled = false; // Keep enabled so click events work
+            button.style.opacity = '0.6';
+            button.style.cursor = 'not-allowed';
+            
+            // Add tooltip or update text to show limit reached
+            const originalText = button.innerHTML;
+            button.innerHTML = `<i class="fa fa-ban"></i> Limit Reached (${currentCount}/${limit})`;
+            button.title = `You have reached your limit of ${limit} civilian${limit !== 1 ? 's' : ''} total`;
+            
+            // Store original text for potential restoration
+            button.setAttribute('data-original-text', originalText);
+            
+            // Add click handler to show warning modal when limit reached button is clicked
+            button.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showCivilianLimitWarning(limit, currentCount);
+            };
+        } else {
+            // User can still create civilians
+            button.disabled = false;
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+            
+            // Restore original text if it was changed
+            const originalText = button.getAttribute('data-original-text');
+            if (originalText) {
+                button.innerHTML = originalText;
+                button.removeAttribute('data-original-text');
+            }
+            
+            // Remove the warning modal click handler and restore original onclick
+            button.onclick = null;
+            
+            button.title = `Create new civilian (${currentCount}/${limit} used)`;
+        }
+    });
 }
 
 // Toggle input visibility for height/weight units
@@ -1390,6 +1683,12 @@ function createNewCiv() {
             
             // Reload civilians to show the new one
             loadCivilians();
+            
+            // Update civilian creation button state after creating new civilian
+            const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+            if (communityId) {
+                updateCivilianCreationButtonState(communityId, null); // Will fetch current limit
+            }
             
             // Reset button
             $('#submitNewCiv').prop('disabled', false).html('<i class="fa fa-plus"></i> Create Civilian');
