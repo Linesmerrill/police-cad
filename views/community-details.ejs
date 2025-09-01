@@ -1962,7 +1962,12 @@
               Maximum civilians per user in this community:
             </label>
             <input type="number" id="maxCiviliansPerDept" min="1" max="100" value="5" 
-                   style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:1rem;">
+                   style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:1rem; transition: border-color 0.2s ease;"
+                   oninput="validateMaxCiviliansInput(this)">
+            <div id="maxCiviliansError" style="display:none; color:#ef4444; margin:0.5rem 0 0 0; font-size:0.75rem; font-weight:500;">
+              <i class="fa fa-exclamation-circle" style="margin-right:0.25rem;"></i>
+              <span id="maxCiviliansErrorText"></span>
+            </div>
             <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.75rem;">Set to 1-100. Users will be limited to creating this many civilians in this community.</p>
           </div>
         </div>
@@ -3169,6 +3174,34 @@ function showNoGeneralSettingsPermissionModal() {
     'You do not have permission to view General Settings. Request the manage community settings permission from your community administrator.',
     'info'
   );
+}
+
+// Validate maximum civilians input
+function validateMaxCiviliansInput(input) {
+  const value = parseInt(input.value);
+  const errorDiv = document.getElementById('maxCiviliansError');
+  const errorText = document.getElementById('maxCiviliansErrorText');
+  
+  // Reset styling
+  input.style.borderColor = '#4a5568';
+  
+  // Check if value is valid
+  if (isNaN(value) || value < 1 || value > 100) {
+    // Show error
+    input.style.borderColor = '#ef4444';
+    errorDiv.style.display = 'block';
+    
+    if (isNaN(value) || value === '') {
+      errorText.textContent = 'Please enter a valid number';
+    } else if (value < 1) {
+      errorText.textContent = 'Value must be at least 1';
+    } else if (value > 100) {
+      errorText.textContent = 'Value cannot exceed 100';
+    }
+  } else {
+    // Hide error
+    errorDiv.style.display = 'none';
+  }
 }
 
 // Bans Management Functions
@@ -6405,6 +6438,16 @@ async function deleteEditEvent() {
         const enableLimits = document.getElementById('enableCivilianLimits').checked;
         const maxCivilians = enableLimits ? parseInt(document.getElementById('maxCiviliansPerDept').value) : 5;
         const enableApproval = document.getElementById('enableCivilianApproval').checked;
+        
+        // Validate civilian limits if enabled
+        if (enableLimits) {
+          if (isNaN(maxCivilians) || maxCivilians < 1 || maxCivilians > 100) {
+            // Show error and prevent saving
+            validateMaxCiviliansInput(document.getElementById('maxCiviliansPerDept'));
+            showSettingsError('Please fix the validation errors before saving.');
+            return;
+          }
+        }
         
         // Use the actual field names that match the backend community model
         const updateData = {
