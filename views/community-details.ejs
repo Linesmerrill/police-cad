@@ -1689,16 +1689,14 @@
 
         <!-- Settings Navigation -->
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:2rem;">
-          <!-- Community Settings -->
-          <!-- Temporarily disabled - may be enabled in the future
-          <div id="communitySettingsCard" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
+          <!-- General Settings -->
+          <div id="generalSettingsCard" onclick="openGeneralSettingsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
             <div style="text-align:center;">
-              <i class="fa fa-cog" style="font-size:2rem; color:#3b82f6; margin-bottom:0.5rem;"></i>
-              <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Community Settings</h5>
-              <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">General configuration</p>
+              <i class="fa fa-cogs" style="font-size:2rem; color:#3b82f6; margin-bottom:0.5rem;"></i>
+              <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">General Settings</h5>
+              <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Configure community options</p>
             </div>
           </div>
-          -->
 
           <!-- Fine Settings -->
           <div id="fineSettingsCard" onclick="openFineSettingsModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
@@ -1895,6 +1893,84 @@
           <button id="inviteModalCancel" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
             Close
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- General Settings Modal -->
+    <div id="generalSettingsModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+        <button onclick="closeGeneralSettingsModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-cogs" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">General Settings</h3>
+          <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:1rem;">Configure community options and preferences</p>
+        </div>
+        
+        <!-- Civilian Creation Limits Section -->
+        <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+            <i class="fa fa-users" style="font-size:1.5rem; color:#10b981;"></i>
+            <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">Civilian Creation Limits</h4>
+          </div>
+          <p style="color:#a0aec0; margin-bottom:1rem; font-size:0.875rem;">Control how many civilians each user can create per department</p>
+          
+          <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
+              <input type="checkbox" id="enableCivilianLimits" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;">
+              Enable civilian creation limits
+            </label>
+          </div>
+          
+          <div id="civilianLimitsOptions" style="display:none; padding:1rem; background:#1a202c; border-radius:8px; border:1px solid #4a5568;">
+            <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem;">
+              Maximum civilians per department per user:
+            </label>
+            <input type="number" id="maxCiviliansPerDept" min="1" max="100" value="5" 
+                   style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:1rem;">
+            <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.75rem;">Set to 1-100. Users will be limited to creating this many civilians per department.</p>
+          </div>
+        </div>
+        
+        <!-- Civilian Approval Section -->
+        <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+            <i class="fa fa-check-circle" style="font-size:1.5rem; color:#f59e0b;"></i>
+            <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">Civilian Approval System</h4>
+          </div>
+          <p style="color:#a0aec0; margin-bottom:1rem; font-size:0.875rem;">Require approval before civilians appear in the community</p>
+          
+          <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
+              <input type="checkbox" id="enableCivilianApproval" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;">
+              Enable civilian approval system
+            </label>
+          </div>
+          
+          <div id="civilianApprovalInfo" style="display:none; padding:1rem; background:#1a202c; border-radius:8px; border:1px solid #4a5568;">
+            <p style="color:#a0aec0; margin:0; font-size:0.875rem;">
+              <i class="fa fa-info-circle" style="color:#3b82f6; margin-right:0.5rem;"></i>
+              When enabled, newly created civilians will have "pending" status and require approval from community administrators before appearing in the community.
+            </p>
+          </div>
+        </div>
+        
+        <div style="margin-top:2rem; display:flex; gap:1rem; justify-content:center;">
+          <button onclick="closeGeneralSettingsModal()" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
+            Cancel
+          </button>
+          <button onclick="saveGeneralSettings()" type="button" style="background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
+            Save Settings
+          </button>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="generalSettingsLoading" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(30,32,44,0.9); border-radius:16px; display:flex; align-items:center; justify-content:center; z-index:20;">
+          <div style="text-align:center;">
+            <div class="loading-spinner" style="width:60px; height:60px; border:4px solid #4a5568; border-top:4px solid #3b82f6; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+            <p style="color:#fff; margin:0; font-size:1rem;">Loading general settings...</p>
+          </div>
         </div>
       </div>
     </div>
@@ -5924,12 +6000,16 @@ async function deleteEditEvent() {
             const accountModal = document.getElementById('accountModal');
             const notificationModal = document.getElementById('notificationModal');
             const deactivateModal = document.getElementById('deactivateAccountModal');
+            const generalSettingsModal = document.getElementById('generalSettingsModal');
             
             if (event.target === accountModal && (!deactivateModal || deactivateModal.style.display === 'none')) {
               accountModal.style.display = 'none';
             }
             if (event.target === notificationModal) {
               notificationModal.style.display = 'none';
+            }
+            if (event.target === generalSettingsModal) {
+              generalSettingsModal.style.display = 'none';
             }
           });
           
@@ -5963,7 +6043,8 @@ async function deleteEditEvent() {
             { id: 'noEventPermissionModalCancel', modalId: 'noEventPermissionModal' },
             { id: 'noAnnouncementPermissionModalClose', modalId: 'noAnnouncementPermissionModal' },
             { id: 'noAnnouncementPermissionModalCancel', modalId: 'noAnnouncementPermissionModal' },
-            { id: 'deleteCommunityModalClose', modalId: 'deleteCommunityModal' }
+            { id: 'deleteCommunityModalClose', modalId: 'deleteCommunityModal' },
+            { id: 'generalSettingsModalClose', modalId: 'generalSettingsModal' }
           ];
           
           modalCloseHandlers.forEach(handler => {
@@ -6026,6 +6107,13 @@ async function deleteEditEvent() {
           if (bansManagementCard) {
             bansManagementCard.addEventListener('click', function() {
               openBansManagement();
+            });
+          }
+
+          const generalSettingsCard = document.getElementById('generalSettingsCard');
+          if (generalSettingsCard) {
+            generalSettingsCard.addEventListener('click', function() {
+              openGeneralSettingsModal();
             });
           }
 
@@ -6120,6 +6208,210 @@ async function deleteEditEvent() {
           preview.src = '';
           preview.style.display = 'none';
         }
+      }
+
+      // General Settings Modal Functions
+      function openGeneralSettingsModal() {
+        document.getElementById('generalSettingsModal').style.display = 'flex';
+        
+        // Show loading state immediately
+        document.getElementById('generalSettingsLoading').style.display = 'flex';
+        
+        // Always refresh data when opening modal to show latest information
+        refreshGeneralSettings();
+        
+        // Set up event listeners
+        setupGeneralSettingsEventListeners();
+      }
+
+      function closeGeneralSettingsModal() {
+        document.getElementById('generalSettingsModal').style.display = 'none';
+      }
+
+      function loadGeneralSettings() {
+        // Get current general settings from the page data
+        const communityData = <%- JSON.stringify(community || {}) %>;
+        
+        // Set civilian creation limits - use the actual field names from community JSON
+        const enableLimits = communityData.community?.civilianCreationLimitsEnabled || false;
+        
+        const enableLimitsElement = document.getElementById('enableCivilianLimits');
+        if (enableLimitsElement) {
+          enableLimitsElement.checked = enableLimits;
+        }
+        
+        toggleCivilianLimitsOptions(enableLimits);
+        
+        if (enableLimits) {
+          const maxCivilians = communityData.community?.civilianCreationLimit || 5;
+          
+          const maxCiviliansElement = document.getElementById('maxCiviliansPerDept');
+          if (maxCiviliansElement) {
+            maxCiviliansElement.value = maxCivilians;
+          }
+        }
+        
+        // Set civilian approval system - use the actual field names from community JSON
+        const enableApproval = communityData.community?.civilianApprovalSystemEnabled || false;
+        
+        const enableApprovalElement = document.getElementById('enableCivilianApproval');
+        if (enableApprovalElement) {
+          enableApprovalElement.checked = enableApproval;
+        }
+        
+        toggleCivilianApprovalInfo(enableApproval);
+        
+        // Hide loading state
+        document.getElementById('generalSettingsLoading').style.display = 'none';
+      }
+
+      function refreshGeneralSettings() {
+        // Refresh community data from server and then load general settings
+        const communityId = '<%= community._id %>';
+        const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+        
+        fetch(`${apiUrl}/api/v1/community/${communityId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.community) {
+              // Update the page data with fresh information
+              window.currentCommunityData = data.community;
+              
+              // Reload general settings with fresh data
+              loadGeneralSettingsFromData(data.community);
+            } else {
+              console.error('Failed to refresh community data');
+              // Fallback to loading from page data
+              loadGeneralSettings();
+            }
+          })
+          .catch(error => {
+            console.error('Error refreshing general settings:', error);
+            // Fallback to loading from page data
+            loadGeneralSettings();
+          });
+      }
+
+      function loadGeneralSettingsFromData(communityData) {
+        // Set civilian creation limits - use the actual field names from community JSON
+        const enableLimits = communityData?.civilianCreationLimitsEnabled || false;
+        
+        const enableLimitsElement = document.getElementById('enableCivilianLimits');
+        if (enableLimitsElement) {
+          enableLimitsElement.checked = enableLimits;
+        }
+        
+        toggleCivilianLimitsOptions(enableLimits);
+        
+        if (enableLimits) {
+          const maxCivilians = communityData?.civilianCreationLimit || 5;
+          
+          const maxCiviliansElement = document.getElementById('maxCiviliansPerDept');
+          if (maxCiviliansElement) {
+            maxCiviliansElement.value = maxCivilians;
+          }
+        }
+        
+        // Set civilian approval system - use the actual field names from community JSON
+        const enableApproval = communityData?.civilianApprovalSystemEnabled || false;
+        
+        const enableApprovalElement = document.getElementById('enableCivilianApproval');
+        if (enableApprovalElement) {
+          enableApprovalElement.checked = enableApproval;
+        }
+        
+        toggleCivilianApprovalInfo(enableApproval);
+        
+        // Hide loading state
+        document.getElementById('generalSettingsLoading').style.display = 'none';
+      }
+
+      function setupGeneralSettingsEventListeners() {
+        // Civilian limits toggle
+        const enableLimitsCheckbox = document.getElementById('enableCivilianLimits');
+        enableLimitsCheckbox.addEventListener('change', function() {
+          toggleCivilianLimitsOptions(this.checked);
+        });
+        
+        // Civilian approval toggle
+        const enableApprovalCheckbox = document.getElementById('enableCivilianApproval');
+        enableApprovalCheckbox.addEventListener('change', function() {
+          toggleCivilianApprovalInfo(this.checked);
+        });
+      }
+
+      function toggleCivilianLimitsOptions(show) {
+        const optionsDiv = document.getElementById('civilianLimitsOptions');
+        if (show) {
+          optionsDiv.style.display = 'block';
+        } else {
+          optionsDiv.style.display = 'none';
+        }
+      }
+
+      function toggleCivilianApprovalInfo(show) {
+        const infoDiv = document.getElementById('civilianApprovalInfo');
+        if (show) {
+          infoDiv.style.display = 'block';
+        } else {
+          infoDiv.style.display = 'none';
+        }
+      }
+
+      function saveGeneralSettings() {
+        const enableLimits = document.getElementById('enableCivilianLimits').checked;
+        const maxCivilians = enableLimits ? parseInt(document.getElementById('maxCiviliansPerDept').value) : 5;
+        const enableApproval = document.getElementById('enableCivilianApproval').checked;
+        
+        // Use the actual field names that match the backend community model
+        const updateData = {
+          civilianCreationLimitsEnabled: enableLimits,
+          civilianCreationLimit: maxCivilians,
+          civilianApprovalSystemEnabled: enableApproval
+        };
+        
+        // Save to server - use the same route as saveCommunityProfile
+        const communityId = '<%= community._id %>';
+        const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+        
+        fetch(`${apiUrl}/api/v1/community/${communityId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(updateData)
+        })
+        .then(res => {
+          if (res.ok) {
+            // Show success message
+            showSettingsSuccess('General settings saved successfully!');
+            closeGeneralSettingsModal();
+          } else {
+            throw new Error('Failed to save general settings');
+          }
+        })
+        .catch(error => {
+          console.error('Error saving general settings:', error);
+          showSettingsError('Failed to save general settings. Please try again.');
+        });
+      }
+
+      function showSettingsSuccess(message) {
+        const successDiv = document.getElementById('settingsSuccess');
+        successDiv.textContent = message;
+        successDiv.style.display = 'block';
+        setTimeout(() => {
+          successDiv.style.display = 'none';
+        }, 3000);
+      }
+
+      function showSettingsError(message) {
+        const errorDiv = document.getElementById('settingsError');
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        setTimeout(() => {
+          errorDiv.style.display = 'none';
+        }, 5000);
       }
 
       // Fine Settings Modal Functions
