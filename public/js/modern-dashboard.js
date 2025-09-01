@@ -1290,6 +1290,20 @@ function openCivDetailsModal(civ) {
         renderCivRecordsTabs(civData);
       }
     });
+
+    // Medical tab click handler
+    $(document).on('click', '.heroui-tab[data-tab="medical"]', function() {
+      setTimeout(function() {
+        renderCivMedicalTabs();
+      }, 50);
+    });
+
+    // Also render medical when modal is opened and Medical tab is already active
+    $('#civDetailsModal').on('show', function() {
+      if ($('.heroui-tab[data-tab="medical"]').hasClass('active')) {
+        renderCivMedicalTabs();
+      }
+    });
 } 
 
 // Close civilian details modal
@@ -3486,13 +3500,202 @@ function fetchArrestReportsForCiv(civId, cb) {
   });
 }
 
+// --- Medical Tab Functions ---
+let cachedMedications = [];
+let cachedMedicationsCount = 0;
+let cachedMedicalReports = [];
+let cachedMedicalReportsCount = 0;
+
+function renderCivMedicalTabs() {
+  const civId = $('#civIdHidden').val();
+  const civ = lastRenderedCivilians.find(c => (c._id === civId || (c.civilian && c.civilian._id === civId)));
+  const civData = civ?.civilian || civ || {};
+
+  // Fetch medications and medical reports
+  fetchMedicationsForCiv(civId, function() {
+    fetchMedicalReportsForCiv(civId, function() {
+      renderMedicalTabContent(civData);
+    });
+  });
+}
+
+function fetchMedicationsForCiv(civId, cb) {
+  $.ajax({
+    url: `${API_URL}/api/v1/medications?civilian_id=${civId}&active_community_id=${dbUser?.user?.lastAccessedCommunity?.communityID}`,
+    method: 'GET',
+    success: function(data) {
+      cachedMedications = (data.medications || []).map(m => m.medication || m);
+      cachedMedicationsCount = data.pagination?.totalRecords || cachedMedications.length;
+      if (typeof cb === 'function') cb();
+    },
+    error: function() {
+      cachedMedications = [];
+      cachedMedicationsCount = 0;
+      if (typeof cb === 'function') cb();
+    }
+  });
+}
+
+function fetchMedicalReportsForCiv(civId, cb) {
+  $.ajax({
+    url: `${API_URL}/api/v1/medical-reports?civilian_id=${civId}&active_community_id=${dbUser?.user?.lastAccessedCommunity?.communityID}`,
+    method: 'GET',
+    success: function(data) {
+      cachedMedicalReports = (data.medicalReports || []).map(r => r.report || r);
+      cachedMedicalReportsCount = data.pagination?.totalRecords || cachedMedicalReports.length;
+      if (typeof cb === 'function') cb();
+    },
+    error: function() {
+      cachedMedicalReports = [];
+      cachedMedicalReportsCount = 0;
+      if (typeof cb === 'function') cb();
+    }
+  });
+}
+
+function renderMedicalTabContent(civData) {
+  // 1. Header with Add buttons
+  const headerHtml = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+      <h3 style="color:#f7fafc;font-size:1.5rem;font-weight:600;margin:0;">Medical</h3>
+      <div style="display:flex;gap:1rem;">
+        <button class="heroui-add-btn" onclick="openAddMedicationModal()" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:0.5rem;">
+          <i class="fa fa-plus"></i> Add Medication
+        </button>
+        <button class="heroui-add-btn" onclick="openAddMedicalReportModal()" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:0.5rem;">
+          <i class="fa fa-plus"></i> Add Medical Report
+        </button>
+      </div>
+    </div>`;
+
+  // 2. Metrics section
+  const metricsHtml = `
+    <div class="heroui-metrics-row" style="display:flex;gap:1rem;margin-bottom:1.5rem;">
+      <div class="heroui-metric-card" style="flex:1;background:#23263a;border-radius:12px;padding:1.25rem;display:flex;flex-direction:column;align-items:center;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);">
+        <div style="font-size:2rem;font-weight:700;color:#10b981;">${cachedMedicationsCount}</div>
+        <div style="color:#a0aec0;font-size:1.1rem;">Medications</div>
+      </div>
+      <div class="heroui-metric-card" style="flex:1;background:#23263a;border-radius:12px;padding:1.25rem;display:flex;flex-direction:column;align-items:center;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);">
+        <div style="font-size:2rem;font-weight:700;color:#f59e0b;">${cachedMedicalReportsCount}</div>
+        <div style="color:#a0aec0;font-size:1.1rem;">Medical Reports</div>
+      </div>
+    </div>`;
+
+  // 2. Toggles
+  const activeStyle = 'background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);font-weight:600;font-size:1.1rem;padding:0.75rem 1rem;border-radius:8px 8px 0 0;flex:1;transition:all 0.2s;outline:none;';
+  const inactiveStyle = 'background:#23263a;color:#fff;border:1.5px solid #35385a;box-shadow:none;font-weight:600;font-size:1.1rem;padding:0.75rem 1rem;border-radius:8px 8px 0 0;flex:1;transition:all 0.2s;outline:none;';
+  const togglesHtml = `
+    <div class="heroui-toggle-row" style="display:flex;gap:1rem;margin-bottom:1.25rem;">
+      <button class="medical-toggle-btn" id="medicalToggleMedications" style="${activeStyle}" data-type="Medication">Medications</button>
+      <button class="medical-toggle-btn" id="medicalToggleReports" style="${inactiveStyle}" data-type="MedicalReport">Medical Reports</button>
+    </div>`;
+
+  // 3. Content area
+  const contentHtml = `<div id="medicalContentArea"></div>`;
+
+  $('#civMedicalTabContent').html(headerHtml + metricsHtml + togglesHtml + contentHtml);
+
+  renderMedicalEntries('Medication');
+}
+
+function renderMedicalEntries(type) {
+  let html = '';
+  if (type === 'Medication') {
+    if (cachedMedications.length === 0) {
+      html = `<div style="color:#a0aec0;text-align:center;padding:2rem 0;">No medications found.</div>`;
+    } else {
+      html = cachedMedications.map(medication => `
+        <div class="heroui-medical-card" style="background:#23263a;border-radius:10px;padding:1rem;margin-bottom:1.25rem;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);display:flex;justify-content:space-between;align-items:flex-start;">
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:1.1rem;color:#10b981;">${medication.name || 'Unknown Medication'}</div>
+            <div style="font-size:0.95rem;color:#a0aec0;margin-top:0.25rem;">
+              <strong>Dosage:</strong> ${medication.dosage || 'N/A'} | 
+              <strong>Frequency:</strong> ${medication.frequency || 'N/A'}
+            </div>
+            <div style="font-size:0.95rem;color:#a0aec0;margin-top:0.25rem;">
+              <strong>Start Date:</strong> ${medication.startDate ? new Date(medication.startDate).toLocaleDateString() : 'N/A'}
+            </div>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-left:1rem;">
+            <button class="heroui-edit-btn" data-type="medication" data-id="${medication._id}" title="Edit" style="background:none;border:none;color:#667eea;font-size:1.2rem;cursor:pointer;"><i class="fa fa-edit"></i></button>
+            <button class="heroui-trash-btn" data-type="medication" data-id="${medication._id}" title="Delete" style="background:none;border:none;color:#ef4444;font-size:1.2rem;cursor:pointer;"><i class="fa fa-trash"></i></button>
+          </div>
+        </div>
+      `).join('');
+    }
+  } else if (type === 'MedicalReport') {
+    if (cachedMedicalReports.length === 0) {
+      html = `<div style="color:#a0aec0;text-align:center;padding:2rem 0;">No medical reports found.</div>`;
+    } else {
+      html = cachedMedicalReports.map(report => `
+        <div class="heroui-medical-card" style="background:#23263a;border-radius:10px;padding:1rem;margin-bottom:1.25rem;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);display:flex;justify-content:space-between;align-items:flex-start;">
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:1.1rem;color:#f59e0b;">Medical Report</div>
+            <div style="font-size:0.95rem;color:#a0aec0;margin-top:0.25rem;">
+              <strong>Date:</strong> ${report.reportDate ? new Date(report.reportDate).toLocaleDateString() : 'N/A'} | 
+              <strong>Time:</strong> ${report.reportTime || 'N/A'}
+            </div>
+            <div style="font-size:0.95rem;color:#a0aec0;margin-top:0.25rem;">
+              <strong>Hospitalized:</strong> ${report.hospitalized || 'N/A'} | 
+              <strong>Deceased:</strong> ${report.deceased ? 'Yes' : 'No'}
+            </div>
+            <div style="font-size:0.95rem;color:#a0aec0;margin-top:0.5rem;">
+              <strong>Details:</strong> ${report.details || 'No details provided'}
+            </div>
+          </div>
+          <div style="display:flex;gap:0.5rem;margin-left:1rem;">
+            <button class="heroui-edit-btn" data-type="medicalReport" data-id="${report._id}" title="Edit" style="background:none;border:none;color:#667eea;font-size:1.2rem;cursor:pointer;"><i class="fa fa-edit"></i></button>
+            <button class="heroui-trash-btn" data-type="medicalReport" data-id="${report._id}" title="Delete" style="background:none;border:none;color:#ef4444;font-size:1.2rem;cursor:pointer;"><i class="fa fa-trash"></i></button>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+  $('#medicalContentArea').html(html);
+}
+
+// Medical toggle logic
+$(document).on('click', '.medical-toggle-btn', function() {
+  const activeStyle = 'background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;box-shadow:0 2px 8px 0 rgba(30,32,44,0.10);font-weight:600;font-size:1.1rem;padding:0.75rem 1rem;border-radius:8px 8px 0 0;flex:1;transition:all 0.2s;outline:none;';
+  const inactiveStyle = 'background:#23263a;color:#fff;border:1.5px solid #35385a;box-shadow:none;font-weight:600;font-size:1.1rem;padding:0.75rem 1rem;border-radius:8px 8px 0 0;flex:1;transition:all 0.2s;outline:none;';
+  $('.medical-toggle-btn').attr('style', inactiveStyle);
+  $(this).attr('style', activeStyle);
+  const type = $(this).data('type');
+  renderMedicalEntries(type);
+});
+
 // Delete logic
 $(document).on('click', '.heroui-trash-btn', function() {
   const type = $(this).data('type');
   const id = $(this).data('id');
   const civId = $('#civIdHidden').val();
   if (!confirm('Are you sure you want to delete this record? This action cannot be undone.')) return;
-  if (type === 'criminal') {
+  
+  if (type === 'medication') {
+    $.ajax({
+      url: `${API_URL}/api/v1/medications/${id}`,
+      method: 'DELETE',
+      success: function() {
+        showToast('Medication deleted successfully');
+        renderCivMedicalTabs(); // Refresh the medical tab
+      },
+      error: function() {
+        showToast('Error deleting medication', 'error');
+      }
+    });
+  } else if (type === 'medicalReport') {
+    $.ajax({
+      url: `${API_URL}/api/v1/medical-reports/${id}`,
+      method: 'DELETE',
+      success: function() {
+        showToast('Medical report deleted successfully');
+        renderCivMedicalTabs(); // Refresh the medical tab
+      },
+      error: function() {
+        showToast('Error deleting medical report', 'error');
+      }
+    });
+  } else if (type === 'criminal') {
     $.ajax({
       url: `${API_URL}/api/v1/civilian/${civId}/criminal-history/${id}`,
       method: 'DELETE',
@@ -3524,6 +3727,381 @@ $(document).on('click', '.heroui-trash-btn', function() {
     });
   }
 });
+
+// Edit logic for medical items
+$(document).on('click', '.heroui-edit-btn', function() {
+  const type = $(this).data('type');
+  const id = $(this).data('id');
+  
+  if (type === 'medication') {
+    const medication = cachedMedications.find(m => m._id === id);
+    if (medication) {
+      openEditMedicationModal(medication);
+    }
+  } else if (type === 'medicalReport') {
+    const report = cachedMedicalReports.find(r => r._id === id);
+    if (report) {
+      openEditMedicalReportModal(report);
+    }
+  }
+});
+
+function openEditMedicationModal(medication) {
+  // Create modal HTML
+  const modalHtml = `
+    <div id="editMedicationModal" class="heroui-modal" style="display:flex; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:500px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2rem; position:relative;">
+        <div style="text-align:right;margin-bottom:1.5rem;">
+          <button class="heroui-modal-close" onclick="closeEditMedicationModal()" style="font-size:2rem;background:none;border:none;color:#fff;cursor:pointer;">&times;</button>
+        </div>
+        <h3 style="color:#f7fafc;margin-bottom:1.5rem;">Edit Medication</h3>
+        <form id="editMedicationForm">
+          <input type="hidden" id="editMedicationId" value="${medication._id}">
+          <div style="margin-bottom:1rem;">
+            <label for="editMedicationName" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Medication Name*</label>
+            <input id="editMedicationName" type="text" class="heroui-input" value="${medication.name || ''}" required style="width:100%;">
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label for="editMedicationDosage" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Dosage</label>
+            <input id="editMedicationDosage" type="text" class="heroui-input" value="${medication.dosage || ''}" style="width:100%;">
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label for="editMedicationFrequency" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Frequency</label>
+            <input id="editMedicationFrequency" type="text" class="heroui-input" value="${medication.frequency || ''}" style="width:100%;">
+          </div>
+          <div style="margin-bottom:1.5rem;">
+            <label for="editMedicationStartDate" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Start Date</label>
+            <input id="editMedicationStartDate" type="date" class="heroui-input" value="${medication.startDate || ''}" style="width:100%;">
+          </div>
+          <div style="display:flex;gap:1rem;justify-content:flex-end;">
+            <button type="button" onclick="closeEditMedicationModal()" style="background:#4a5568;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;">Cancel</button>
+            <button type="submit" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;">Update Medication</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  // Add modal to body
+  $('body').append(modalHtml);
+  
+  // Handle form submission
+  $('#editMedicationForm').on('submit', function(e) {
+    e.preventDefault();
+    updateMedication();
+  });
+}
+
+function closeEditMedicationModal() {
+  $('#editMedicationModal').remove();
+}
+
+function updateMedication() {
+  const id = $('#editMedicationId').val();
+  const formData = {
+    medication: {
+      name: $('#editMedicationName').val().trim(),
+      dosage: $('#editMedicationDosage').val().trim(),
+      frequency: $('#editMedicationFrequency').val().trim(),
+      startDate: $('#editMedicationStartDate').val(),
+      civilianID: $('#civIdHidden').val(),
+      activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID,
+      userID: dbUser._id,
+      firstName: dbUser.firstName,
+      lastName: dbUser.lastName,
+      dateOfBirth: dbUser.dateOfBirth
+    }
+  };
+  
+  $.ajax({
+    url: `${API_URL}/api/v1/medications/${id}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify(formData),
+    success: function() {
+      showToast('Medication updated successfully');
+      closeEditMedicationModal();
+      renderCivMedicalTabs(); // Refresh the medical tab
+    },
+    error: function() {
+      showToast('Error updating medication', 'error');
+    }
+  });
+}
+
+function openEditMedicalReportModal(report) {
+  // Create modal HTML
+  const modalHtml = `
+    <div id="editMedicalReportModal" class="heroui-modal" style="display:flex; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:500px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2rem; position:relative;">
+        <div style="text-align:right;margin-bottom:1.5rem;">
+          <button class="heroui-modal-close" onclick="closeEditMedicalReportModal()" style="font-size:2rem;background:none;border:none;color:#fff;cursor:pointer;">&times;</button>
+        </div>
+        <h3 style="color:#f7fafc;margin-bottom:1.5rem;">Edit Medical Report</h3>
+        <form id="editMedicalReportForm">
+          <input type="hidden" id="editMedicalReportId" value="${report._id}">
+          <div style="margin-bottom:1rem;">
+            <label for="editMedicalReportDate" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Report Date*</label>
+            <input id="editMedicalReportDate" type="date" class="heroui-input" value="${report.reportDate || ''}" required style="width:100%;">
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label for="editMedicalReportTime" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Report Time</label>
+            <input id="editMedicalReportTime" type="time" class="heroui-input" value="${report.reportTime || ''}" style="width:100%;">
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label for="editMedicalReportHospitalized" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Hospitalized</label>
+            <select id="editMedicalReportHospitalized" class="heroui-input" style="width:100%;">
+              <option value="Yes" ${report.hospitalized === 'Yes' ? 'selected' : ''}>Yes</option>
+              <option value="No" ${report.hospitalized === 'No' ? 'selected' : ''}>No</option>
+              <option value="Unknown" ${report.hospitalized === 'Unknown' ? 'selected' : ''}>Unknown</option>
+            </select>
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label for="editMedicalReportDeceased" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Deceased</label>
+            <select id="editMedicalReportDeceased" class="heroui-input" style="width:100%;">
+              <option value="false" ${!report.deceased ? 'selected' : ''}>No</option>
+              <option value="true" ${report.deceased ? 'selected' : ''}>Yes</option>
+            </select>
+          </div>
+          <div style="margin-bottom:1.5rem;">
+            <label for="editMedicalReportDetails" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Details</label>
+            <textarea id="editMedicalReportDetails" class="heroui-input" rows="4" style="width:100%;resize:vertical;">${report.details || ''}</textarea>
+          </div>
+          <div style="display:flex;gap:1rem;justify-content:flex-end;">
+            <button type="button" onclick="closeEditMedicalReportModal()" style="background:#4a5568;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;">Cancel</button>
+            <button type="submit" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;">Update Report</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  // Add modal to body
+  $('body').append(modalHtml);
+  
+  // Handle form submission
+  $('#editMedicalReportForm').on('submit', function(e) {
+    e.preventDefault();
+    updateMedicalReport();
+  });
+}
+
+function closeEditMedicalReportModal() {
+  $('#editMedicalReportModal').remove();
+}
+
+function updateMedicalReport() {
+  const id = $('#editMedicalReportId').val();
+  const formData = {
+    report: {
+      date: $('#editMedicalReportDate').val(),
+      details: $('#editMedicalReportDetails').val().trim(),
+      civilianID: $('#civIdHidden').val(),
+      reportingEmsID: dbUser._id,
+      hospitalized: $('#editMedicalReportHospitalized').val() === 'Yes',
+      deceased: $('#editMedicalReportDeceased').val() === 'true',
+      activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID,
+      userID: dbUser._id,
+      name: dbUser.firstName + ' ' + dbUser.lastName,
+      dateOfBirth: dbUser.dateOfBirth
+    }
+  };
+  
+  $.ajax({
+    url: `${API_URL}/api/v1/medical-reports/${id}`,
+    method: 'PUT',
+    contentType: 'application/json',
+    data: JSON.stringify(formData),
+    success: function() {
+      showToast('Medical report updated successfully');
+      closeEditMedicalReportModal();
+      renderCivMedicalTabs(); // Refresh the medical tab
+    },
+    error: function() {
+      showToast('Error updating medical report', 'error');
+    }
+  });
+}
+
+// Add new medication modal
+function openAddMedicationModal() {
+  // Create modal HTML
+  const modalHtml = `
+    <div id="addMedicationModal" class="heroui-modal" style="display:flex; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:500px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2rem; position:relative;">
+        <div style="text-align:right;margin-bottom:1.5rem;">
+          <button class="heroui-modal-close" onclick="closeAddMedicationModal()" style="font-size:2rem;background:none;border:none;color:#fff;cursor:pointer;">&times;</button>
+        </div>
+        <h3 style="color:#f7fafc;margin-bottom:1.5rem;">Add New Medication</h3>
+        <form id="addMedicationForm">
+          <div style="margin-bottom:1rem;">
+            <label for="addMedicationName" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Medication Name*</label>
+            <input id="addMedicationName" type="text" class="heroui-input" required style="width:100%;">
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label for="addMedicationDosage" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Dosage</label>
+            <input id="addMedicationDosage" type="text" class="heroui-input" style="width:100%;">
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label for="addMedicationFrequency" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Frequency</label>
+            <input id="addMedicationFrequency" type="text" class="heroui-input" style="width:100%;">
+          </div>
+          <div style="margin-bottom:1.5rem;">
+            <label for="addMedicationStartDate" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Start Date</label>
+            <input id="addMedicationStartDate" type="date" class="heroui-input" style="width:100%;">
+          </div>
+          <div style="display:flex;gap:1rem;justify-content:flex-end;">
+            <button type="button" onclick="closeAddMedicationModal()" style="background:#4a5568;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;">Cancel</button>
+            <button type="submit" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;">Add Medication</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  // Add modal to body
+  $('body').append(modalHtml);
+  
+  // Handle form submission
+  $('#addMedicationForm').on('submit', function(e) {
+    e.preventDefault();
+    addMedication();
+  });
+}
+
+function closeAddMedicationModal() {
+  $('#addMedicationModal').remove();
+}
+
+function addMedication() {
+  const formData = {
+    medication: {
+      name: $('#addMedicationName').val().trim(),
+      dosage: $('#addMedicationDosage').val().trim(),
+      frequency: $('#addMedicationFrequency').val().trim(),
+      startDate: $('#addMedicationStartDate').val(),
+      civilianID: $('#civIdHidden').val(),
+      activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID,
+      userID: dbUser._id,
+      firstName: dbUser.firstName,
+      lastName: dbUser.lastName,
+      dateOfBirth: dbUser.dateOfBirth
+    }
+  };
+  
+  $.ajax({
+    url: `${API_URL}/api/v1/medications`,
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(formData),
+    success: function() {
+      showToast('Medication added successfully');
+      closeAddMedicationModal();
+      renderCivMedicalTabs(); // Refresh the medical tab
+    },
+    error: function() {
+      showToast('Error adding medication', 'error');
+    }
+  });
+}
+
+// Add new medical report modal
+function openAddMedicalReportModal() {
+  // Get current date and time
+  const now = new Date();
+  const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD format
+  const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+  
+  // Create modal HTML
+  const modalHtml = `
+    <div id="addMedicalReportModal" class="heroui-modal" style="display:flex; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:500px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2rem; position:relative;">
+        <div style="text-align:right;margin-bottom:1.5rem;">
+          <button class="heroui-modal-close" onclick="closeAddMedicalReportModal()" style="font-size:2rem;background:none;border:none;color:#fff;cursor:pointer;">&times;</button>
+        </div>
+        <h3 style="color:#f7fafc;margin-bottom:1.5rem;">Add New Medical Report</h3>
+        <form id="addMedicalReportForm">
+          <div style="margin-bottom:1rem;">
+            <label for="addMedicalReportDate" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Report Date*</label>
+            <input id="addMedicalReportDate" type="date" class="heroui-input" value="${currentDate}" required style="width:100%;">
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label for="addMedicalReportTime" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Report Time</label>
+            <input id="addMedicalReportTime" type="time" class="heroui-input" value="${currentTime}" style="width:100%;">
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label for="addMedicalReportHospitalized" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Hospitalized</label>
+            <select id="addMedicalReportHospitalized" class="heroui-input" style="width:100%;">
+              <option value="Yes">Yes</option>
+              <option value="No" selected>No</option>
+              <option value="Unknown">Unknown</option>
+            </select>
+          </div>
+          <div style="margin-bottom:1rem;">
+            <label for="addMedicalReportDeceased" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Deceased</label>
+            <select id="addMedicalReportDeceased" class="heroui-input" style="width:100%;">
+              <option value="false" selected>No</option>
+              <option value="true">Yes</option>
+            </select>
+          </div>
+          <div style="margin-bottom:1.5rem;">
+            <label for="addMedicalReportDetails" style="color:#e0e7ff;font-weight:500;display:block;margin-bottom:0.5rem;">Details</label>
+            <textarea id="addMedicalReportDetails" class="heroui-input" rows="4" style="width:100%;resize:vertical;"></textarea>
+          </div>
+          <div style="display:flex;gap:1rem;justify-content:flex-end;">
+            <button type="button" onclick="closeAddMedicalReportModal()" style="background:#4a5568;color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;">Cancel</button>
+            <button type="submit" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;">Add Report</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+  
+  // Add modal to body
+  $('body').append(modalHtml);
+  
+  // Handle form submission
+  $('#addMedicalReportForm').on('submit', function(e) {
+    e.preventDefault();
+    addMedicalReport();
+  });
+}
+
+function closeAddMedicalReportModal() {
+  $('#addMedicalReportModal').remove();
+}
+
+function addMedicalReport() {
+  const formData = {
+    report: {
+      date: $('#addMedicalReportDate').val(),
+      details: $('#addMedicalReportDetails').val().trim(),
+      civilianID: $('#civIdHidden').val(),
+      reportingEmsID: dbUser._id,
+      hospitalized: $('#addMedicalReportHospitalized').val() === 'Yes',
+      deceased: $('#addMedicalReportDeceased').val() === 'true',
+      activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID,
+      userID: dbUser._id,
+      name: dbUser.firstName + ' ' + dbUser.lastName,
+      dateOfBirth: dbUser.dateOfBirth
+    }
+  };
+  
+  $.ajax({
+    url: `${API_URL}/api/v1/medical-reports`,
+    method: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(formData),
+    success: function() {
+      showToast('Medical report added successfully');
+      closeAddMedicalReportModal();
+      renderCivMedicalTabs(); // Refresh the medical tab
+    },
+    error: function() {
+      showToast('Error adding medical report', 'error');
+    }
+  });
+}
 
 // When Records tab is shown, render the new tab
 $(document).on('click', '.heroui-tab[data-tab="records"]', function() {
