@@ -2187,14 +2187,7 @@
           }
         });
       });
-      // Avatar upload logic
-      var avatar = document.getElementById('civAvatarUpload');
-      var fileInput = document.getElementById('civImageInput');
-      if (avatar && fileInput) {
-        avatar.addEventListener('click', function() {
-          fileInput.click();
-        });
-      }
+      // Avatar upload logic - moved to new photo upload functionality below
     });
     // All modal functions are now handled by modern-dashboard.js
 
@@ -3545,22 +3538,9 @@
   }
   </script>
 
-  <!-- Coming Soon Modal -->
-  <div id="comingSoonModal" class="heroui-modal" style="display:none; position:fixed; z-index:2200; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-    <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:340px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2rem 1.5rem 1.5rem 1.5rem; position:relative; text-align:center;">
-      <button aria-label="Close" onclick="closeComingSoonModal()" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-      <div style="font-size:2.5rem; color:#f093fb; margin-bottom:1rem;"><i class="fa fa-hammer"></i></div>
-      <div style="font-size:1.3rem; font-weight:700; color:#f7fafc; margin-bottom:0.5rem;">Coming Soon</div>
-      <div style="color:#a0aec0; font-size:1rem;">Photo uploads are still under construction.<br>Check back soon!</div>
-    </div>
-  </div>
+  <!-- Coming Soon Modal - Removed since photo upload is now implemented -->
   <script>
-  function openComingSoonModal() {
-    document.getElementById('comingSoonModal').style.display = 'flex';
-  }
-  function closeComingSoonModal() {
-    document.getElementById('comingSoonModal').style.display = 'none';
-  }
+  // Coming Soon modal functions removed - photo upload is now implemented
   
   // Rejected Civilian Functions
   function resubmitCivilianForApproval(civIdOrIndex) {
@@ -4022,9 +4002,8 @@
       }
     };
     
-    // Intercept all file input clicks for image uploads
+    // Intercept all file input clicks for image uploads (except civilian)
     var fileInputs = [
-      document.getElementById('civImageInput'),
       document.getElementById('vehImageInput'),
       document.getElementById('newVehImageInput'),
       document.getElementById('firearmImageInput'),
@@ -4034,15 +4013,14 @@
       if (input) {
         input.addEventListener('click', function(e) {
           e.preventDefault();
-          openComingSoonModal();
+          // openComingSoonModal(); // Removed since modal is removed
           return false;
         });
       }
     });
     
-    // Intercept all upload container clicks for image uploads
+    // Intercept all upload container clicks for image uploads (except civilian avatar)
     var uploadContainers = [
-      document.getElementById('civAvatarUpload'),
       document.getElementById('vehImageUpload'),
       document.getElementById('newVehImageUpload'),
       document.getElementById('firearmImageUpload'),
@@ -4052,7 +4030,7 @@
       if (container) {
         container.addEventListener('click', function(e) {
           e.preventDefault();
-          openComingSoonModal();
+          // openComingSoonModal(); // Removed since modal is removed
           return false;
         });
       }
@@ -4063,7 +4041,7 @@
     if (accountPic) {
       accountPic.addEventListener('click', function(e) {
         e.preventDefault();
-        openComingSoonModal();
+        // openComingSoonModal(); // Removed since modal is removed
         return false;
       });
     }
@@ -4216,6 +4194,121 @@
       photoPreview.querySelector('i').style.display = 'block';
       photoRemove.style.display = 'none';
       photoStatus.textContent = '';
+    }
+  });
+
+  // Civilian Details Photo Upload Functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const civAvatarUpload = document.getElementById('civAvatarUpload');
+    const civImageInput = document.getElementById('civImageInput');
+    const civAvatarImg = document.getElementById('civAvatarImg');
+    const civAvatarInitials = document.getElementById('civAvatarInitials');
+
+    // Click handler for avatar upload - only attach if not already attached
+    if (civAvatarUpload && !civAvatarUpload.hasAttribute('data-photo-upload-attached')) {
+      civAvatarUpload.setAttribute('data-photo-upload-attached', 'true');
+      civAvatarUpload.addEventListener('click', function(e) {
+        console.log('Avatar upload clicked - opening file picker');
+        // Try different methods to trigger file picker
+        if (civImageInput) {
+          // Make sure the input is enabled and visible
+          civImageInput.style.display = 'block';
+          civImageInput.style.position = 'absolute';
+          civImageInput.style.left = '-9999px';
+          civImageInput.disabled = false;
+          
+          // Focus and click
+          civImageInput.focus();
+          civImageInput.click();
+          
+          // Hide it again after a short delay
+          setTimeout(() => {
+            civImageInput.style.display = 'none';
+          }, 100);
+        }
+      });
+    }
+
+    // File input change handler
+    if (civImageInput) {
+      civImageInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+          handleCivPhotoUpload(file);
+        }
+      });
+    }
+
+    // Function to handle civilian photo upload
+    async function handleCivPhotoUpload(file) {
+      try {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          showToast('Please select a valid image file', 'error');
+          return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('Image must be less than 5MB', 'error');
+          return;
+        }
+
+        // Show preview immediately
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          civAvatarImg.src = e.target.result;
+          civAvatarImg.style.display = 'block';
+          civAvatarInitials.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+
+        // Show uploading status
+        showToast('Uploading photo...', 'info');
+
+        // Get current civilian ID
+        const civId = document.getElementById('civIdHidden').value;
+        if (!civId) {
+          showToast('No civilian selected', 'error');
+          return;
+        }
+
+        // Upload to Cloudinary
+        const imageUrl = await uploadToCloudinary(file, 'civilians', `civilian_${civId}_${Date.now()}`);
+        
+        // Update civilian with new photo
+        await updateCivilianPhoto(civId, imageUrl);
+        
+        // Show success status
+        showToast('Photo updated successfully!', 'success');
+        
+      } catch (error) {
+        console.error('Photo upload error:', error);
+        showToast('Upload failed: ' + error.message, 'error');
+        
+        // Reset preview on error
+        civAvatarImg.style.display = 'none';
+        civAvatarInitials.style.display = 'block';
+      }
+    }
+
+    // Function to update civilian photo via API
+    async function updateCivilianPhoto(civId, imageUrl) {
+      const response = await fetch(`${window.API_URL}/api/v1/civilian/${civId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: imageUrl
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update civilian photo');
+      }
+
+      return response.json();
     }
   });
   </script>
