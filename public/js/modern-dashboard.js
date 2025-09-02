@@ -1852,6 +1852,7 @@ function createNewCiv() {
         veteran: $('#veteran').is(':checked'),
         onParole: $('#onParole').is(':checked'),
         onProbation: $('#onProbation').is(':checked'),
+        image: $('#newCivPhotoUrl').val() || undefined,
         approvalStatus: 'requested_review',
         userID: dbUser._id,
         activeCommunityID: dbUser?.user?.lastAccessedCommunity?.communityID

@@ -2257,6 +2257,15 @@
   <script src="/static/js/civ-dashboard.js"></script>
   <script src="/static/js/notifications.js"></script>
   <script src="/static/js/modern-dashboard.js"></script>
+  <script src="/static/js/cloudinary-upload.js"></script>
+  
+  <!-- Cloudinary Configuration -->
+  <script>
+    // Set Cloudinary environment variables for photo uploads
+    window.CLOUDINARY_CLOUD_NAME = '<%= process.env.CLOUDINARY_CLOUD_NAME %>';
+    window.CLOUDINARY_API_KEY = '<%= process.env.CLOUDINARY_API_KEY %>';
+    window.CLOUDINARY_UPLOAD_PRESET = '<%= process.env.CLOUDINARY_UPLOAD_PRESET %>';
+  </script>
   <script src="/static/js/department-backgrounds.js"></script>
   <script src="/static/js/modern-departments.js"></script>
   <script src="/static/js/ads.js"></script>
@@ -2414,6 +2423,32 @@
 
               <h5 style="color: #f7fafc; margin-bottom: 1rem;"><i class="fa fa-user"></i> Basic Details</h5>
 
+              <!-- Profile Photo Upload -->
+              <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="col-md-4 control-label" style="color: #e0e7ff; font-weight: 500;">Profile Photo</label>
+                <div class="col-md-8">
+                  <div style="display: flex; align-items: center; gap: 1rem;">
+                    <!-- Photo Preview -->
+                    <div id="newCivPhotoPreview" style="width: 80px; height: 80px; border-radius: 50%; background: #1e2028; border: 2px solid #35385a; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+                      <i class="fa fa-user" style="font-size: 2rem; color: #a0aec0;"></i>
+                      <img id="newCivPhotoImg" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                    </div>
+                    
+                    <!-- Upload Controls -->
+                    <div style="flex: 1;">
+                      <input type="file" id="newCivPhotoInput" accept="image/*" style="display: none;">
+                      <button type="button" id="newCivPhotoBtn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.9rem; font-weight: 500; cursor: pointer; margin-right: 0.5rem;">
+                        <i class="fa fa-camera"></i> Choose Photo
+                      </button>
+                      <button type="button" id="newCivPhotoRemove" style="background: #f56565; color: #fff; border: none; border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.9rem; font-weight: 500; cursor: pointer; display: none;">
+                        <i class="fa fa-trash"></i> Remove
+                      </button>
+                      <div id="newCivPhotoStatus" style="margin-top: 0.5rem; font-size: 0.8rem; color: #a0aec0;"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Name -->
               <div class="form-group required" style="margin-bottom: 1.5rem;">
                 <label class="col-md-4 control-label" for="civ-first-name" style="color: #e0e7ff; font-weight: 500;">Civilian Name*</label>
@@ -2557,13 +2592,14 @@
                 </div>
               </div>
 
-              <hr style="width: 88%; max-width: 100rem; border-color: #35385a; margin: 2rem 0;">
+
 
               <!-- Hidden inputs -->
               <input type="hidden" name="route" value="civ-dashboard">
               <input id="ageAmount" type="hidden" name="ageView" value="">
               <input id="newCivUserID" type="hidden" name="userID" value="<%= user._id %>">
               <input id="new-civ-activeCommunityID-new-civ" type="hidden" name="activeCommunityID" value="<%= user.user.lastAccessedCommunity?.communityID %>">
+              <input type="hidden" id="newCivPhotoUrl" name="image" value="">
 
               <!-- Submit Button -->
               <div class="form-group" style="margin-top: 2rem;">
@@ -4088,6 +4124,100 @@
       }
     }
   }
+
+  // New Civilian Photo Upload Functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const photoInput = document.getElementById('newCivPhotoInput');
+    const photoBtn = document.getElementById('newCivPhotoBtn');
+    const photoRemove = document.getElementById('newCivPhotoRemove');
+    const photoPreview = document.getElementById('newCivPhotoPreview');
+    const photoImg = document.getElementById('newCivPhotoImg');
+    const photoStatus = document.getElementById('newCivPhotoStatus');
+    const photoUrlInput = document.getElementById('newCivPhotoUrl');
+
+    // Click handler for choose photo button
+    photoBtn.addEventListener('click', function() {
+      photoInput.click();
+    });
+
+    // File input change handler
+    photoInput.addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (file) {
+        handleNewCivPhotoUpload(file);
+      }
+    });
+
+    // Remove photo handler
+    photoRemove.addEventListener('click', function() {
+      removeNewCivPhoto();
+    });
+
+    // Function to handle photo upload
+    async function handleNewCivPhotoUpload(file) {
+      try {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          photoStatus.textContent = 'Please select a valid image file';
+          photoStatus.style.color = '#f56565';
+          return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          photoStatus.textContent = 'Image must be less than 5MB';
+          photoStatus.style.color = '#f56565';
+          return;
+        }
+
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          photoImg.src = e.target.result;
+          photoImg.style.display = 'block';
+          photoPreview.querySelector('i').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+
+        // Show uploading status
+        photoStatus.textContent = 'Uploading...';
+        photoStatus.style.color = '#3b82f6';
+
+        // Upload to Cloudinary
+        const imageUrl = await uploadToCloudinary(file, 'civilians', `new_civilian_${Date.now()}`);
+        
+        // Store the URL in hidden input
+        photoUrlInput.value = imageUrl;
+        
+        // Show success status
+        photoStatus.textContent = 'Photo uploaded successfully';
+        photoStatus.style.color = '#10b981';
+        
+        // Show remove button
+        photoRemove.style.display = 'inline-block';
+        
+      } catch (error) {
+        console.error('Photo upload error:', error);
+        photoStatus.textContent = 'Upload failed: ' + error.message;
+        photoStatus.style.color = '#f56565';
+        
+        // Reset preview
+        photoImg.style.display = 'none';
+        photoPreview.querySelector('i').style.display = 'block';
+      }
+    }
+
+    // Function to remove photo
+    function removeNewCivPhoto() {
+      photoInput.value = '';
+      photoUrlInput.value = '';
+      photoImg.src = '';
+      photoImg.style.display = 'none';
+      photoPreview.querySelector('i').style.display = 'block';
+      photoRemove.style.display = 'none';
+      photoStatus.textContent = '';
+    }
+  });
   </script>
 
 
