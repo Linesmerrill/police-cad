@@ -3691,8 +3691,11 @@ function renderCivilianApprovalsList() {
     return `
       <div onclick="openCivilianDetailsModal('${civ._id}')" style="display:flex; justify-content:space-between; align-items:center; padding:1rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; margin-bottom:1rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='#374151'" onmouseout="this.style.background='#2d3748'">
         <div style="display:flex; align-items:center; gap:1rem;">
-          <div style="width:50px; height:50px; border-radius:50%; background:#3b82f6; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-            <i class="fa fa-user" style="color:#fff; font-size:1.5rem;"></i>
+          <div style="width:50px; height:50px; border-radius:50%; background:#3b82f6; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;">
+            ${civData.image ? 
+              `<img src="${civData.image}" alt="${fullName}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" />` : 
+              `<i class="fa fa-user" style="color:#fff; font-size:1.5rem;"></i>`
+            }
           </div>
           <div>
             <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">${fullName}</h4>
