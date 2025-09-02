@@ -4208,7 +4208,6 @@
     if (civAvatarUpload && !civAvatarUpload.hasAttribute('data-photo-upload-attached')) {
       civAvatarUpload.setAttribute('data-photo-upload-attached', 'true');
       civAvatarUpload.addEventListener('click', function(e) {
-        console.log('Avatar upload clicked - opening file picker');
         // Try different methods to trigger file picker
         if (civImageInput) {
           // Make sure the input is enabled and visible
