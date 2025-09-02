@@ -1492,15 +1492,22 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
     }));
   };
 
-  const handleImageUpload = (event) => {
+  const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
-      // For now, we'll use a placeholder. In production, you'd upload to a service
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setFormData(prev => ({ ...prev, imageLink: e.target.result }));
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Show loading state
+        setFormData(prev => ({ ...prev, imageLink: 'uploading...' }));
+        
+        // Use the same Cloudinary upload approach as community-details
+        const imageUrl = await uploadToCloudinary(file, 'communities', `community_${Date.now()}`);
+        
+        setFormData(prev => ({ ...prev, imageLink: imageUrl }));
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        setFormData(prev => ({ ...prev, imageLink: '' }));
+        // You could show a toast notification here
+      }
     }
   };
 

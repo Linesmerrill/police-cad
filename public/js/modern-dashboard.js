@@ -1287,8 +1287,8 @@ function openCivDetailsModal(civ) {
     const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
     
     if (communityId && window.currentCommunityData?.civilianApprovalSystemEnabled) {
-        if (!civData.approvalStatus || approvalStatus === 'requested_review') {
-            // Show approval button and warning for civilians that need action or are being reviewed
+        if (!civData.approvalStatus || approvalStatus === 'requested_review' || approvalStatus === 'approved') {
+            // Show approval button and warning for civilians that need action, are being reviewed, or are approved
             if (approvalBtn) approvalBtn.style.display = 'inline-block';
             if (pendingWarning) {
                 pendingWarning.style.display = 'block';
@@ -1308,10 +1308,16 @@ function openCivDetailsModal(civ) {
                     // Change background to blue for requested_review
                     pendingWarning.style.background = 'linear-gradient(135deg,#3b82f6 0%,#60a5fa 100%)';
                     pendingWarning.style.borderLeftColor = '#2563eb';
+                } else if (approvalStatus === 'approved') {
+                    // Approved - show green warning
+                    warningTitle.textContent = 'Civilian Approved';
+                    warningMessage.textContent = 'This civilian is approved. Any changes will require re-approval. Use "Send for Approval" to submit changes.';
+                    pendingWarning.style.background = 'linear-gradient(135deg,#10b981 0%,#34d399 100%)';
+                    pendingWarning.style.borderLeftColor = '#059669';
                 }
             }
         } else {
-            // Hide approval button and warning for approved civilians
+            // Hide approval button and warning for other statuses (handled by resubmit logic)
             if (approvalBtn) approvalBtn.style.display = 'none';
             if (pendingWarning) pendingWarning.style.display = 'none';
         }
@@ -1320,6 +1326,48 @@ function openCivDetailsModal(civ) {
         if (approvalBtn) approvalBtn.style.display = 'none';
         if (pendingWarning) pendingWarning.style.display = 'none';
     }
+    
+    // Handle resubmit button for requires_edits, rejected, or denied civilians
+    const resubmitBtn = document.getElementById('civDetailsResubmitBtn');
+    if (resubmitBtn && communityId && window.currentCommunityData?.civilianApprovalSystemEnabled) {
+        if (approvalStatus === 'requires_edits' || approvalStatus === 'require_edits' || approvalStatus === 'pending' || approvalStatus === 'rejected' || approvalStatus === 'denied') {
+            // Show resubmit button and warning
+            resubmitBtn.style.display = 'inline-block';
+            if (pendingWarning) {
+                pendingWarning.style.display = 'block';
+                
+                if (approvalStatus === 'requires_edits' || approvalStatus === 'require_edits' || approvalStatus === 'pending') {
+                    // Require edits - show orange warning
+                    warningTitle.textContent = 'Edits Required';
+                    warningMessage.textContent = 'This civilian requires edits before approval. Please make the necessary changes and resubmit for approval.';
+                    pendingWarning.style.background = 'linear-gradient(135deg,#ed8936 0%,#f6ad55 100%)';
+                    pendingWarning.style.borderLeftColor = '#c05621';
+                } else if (approvalStatus === 'rejected' || approvalStatus === 'denied') {
+                    // Rejected - show red warning
+                    warningTitle.textContent = 'Civilian Rejected';
+                    warningMessage.textContent = 'This civilian was rejected. Please make the necessary changes and resubmit for approval.';
+                    pendingWarning.style.background = 'linear-gradient(135deg,#f56565 0%,#fc8181 100%)';
+                    pendingWarning.style.borderLeftColor = '#e53e3e';
+                }
+            }
+        } else {
+            // Hide resubmit button for other statuses
+            resubmitBtn.style.display = 'none';
+        }
+    }
+    
+    // Handle Update Civilian button visibility based on approval status
+    const updateBtn = document.getElementById('civDetailsEditBtn');
+    if (updateBtn && communityId && window.currentCommunityData?.civilianApprovalSystemEnabled) {
+        if (approvalStatus === 'approved') {
+            // Approved civilian - hide update button to prevent changes
+            updateBtn.style.display = 'none';
+        } else {
+            // Not approved - show update button
+            updateBtn.style.display = 'inline-block';
+        }
+    }
+    
     // Height/Weight prefill logic for details modal
     // Height
     if (civData.heightClassification === 'Imperial') {
@@ -1566,7 +1614,7 @@ function findUserDepartment(departments, userId) {
 
 // Count civilians for a user (total, not per department)
 function countUserCivilians(userId, limit) {
-    console.log('🔍 Counting total civilians for user:', userId, 'with limit:', limit);
+
     
     $.ajax({
         url: `${API_URL}/api/v1/civilians/user/${userId}?active_community_id=${dbUser.user.lastAccessedCommunity.communityID}`,
@@ -1574,23 +1622,23 @@ function countUserCivilians(userId, limit) {
         success: function(data) {
             let civilianCount = 0;
             
-            console.log('📊 Raw civilian data received:', data);
+
             
             if (data && Array.isArray(data)) {
                 // Count ALL civilians for this user (total count, not per department)
                 civilianCount = data.length;
-                console.log('🔍 Total civilians found for user:', civilianCount);
+
             }
             
-            console.log('✅ Final civilian count for user:', civilianCount);
+
             
             if (civilianCount >= limit) {
                 // User has reached their limit
-                console.log('🚫 User has reached limit:', civilianCount, '>=', limit);
+
                 showCivilianLimitWarning(limit, civilianCount);
             } else {
                 // User can create more civilians
-                console.log('✅ User can create more civilians:', civilianCount, '<', limit);
+
                 $('#newCivModal').modal('show');
             }
         },
@@ -4012,7 +4060,7 @@ function renderMedicalTabContent(civData) {
   // 1. Header with Add buttons
   const headerHtml = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
-      <h3 style="color:#f7fafc;font-size:1.5rem;font-weight:600;margin:0;">Medical</h3>
+      
       <div style="display:flex;gap:1rem;">
         <button class="heroui-add-btn" onclick="openAddMedicationModal()" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;padding:0.75rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:0.5rem;">
           <i class="fa fa-plus"></i> Add Medication

@@ -100,6 +100,51 @@
       z-index: 10;
     }
     
+    /* Rejected Civilian Styles */
+    .civilian-card.rejected {
+      border: 2px solid #f56565 !important;
+      box-shadow: 0 0 0 1px rgba(245, 101, 101, 0.2), 0 4px 12px rgba(245, 101, 101, 0.1) !important;
+    }
+    
+    .civilian-card.rejected .approval-badge {
+      background: #f56565;
+      color: white;
+    }
+    
+    /* Require Edits Civilian Styles */
+    .civilian-card.require-edits {
+      border: 2px solid #ed8936 !important;
+      box-shadow: 0 0 0 1px rgba(237, 137, 54, 0.2), 0 4px 12px rgba(237, 137, 54, 0.1) !important;
+    }
+    
+    .civilian-card.require-edits .approval-badge {
+      background: #ed8936;
+      color: white;
+    }
+    
+    /* Resubmit Button Styles */
+    .resubmit-btn {
+      background: linear-gradient(135deg, #f56565 0%, #ed4545 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 0.5rem;
+    }
+    
+    .resubmit-btn:hover {
+      background: linear-gradient(135deg, #ed4545 0%, #dc2626 100%);
+      transform: translateY(-1px);
+    }
+    
+    .resubmit-btn i {
+      margin-right: 0.25rem;
+    }
+    
     .approval-badge.pending {
       background-color: #ed8936;
       color: white;
@@ -1592,6 +1637,7 @@
               </div>
               <div style="display:flex; gap:0.75rem; margin-top:1.5rem; justify-content:flex-end;">
                 <button class="btn btn-warning" id="civDetailsSendApprovalBtn" style="background:#ed8936; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; display:none;"><i class="fa fa-paper-plane"></i> Send for Approval</button>
+                <button class="btn btn-warning" id="civDetailsResubmitBtn" style="background:#ed8936; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; display:none;"><i class="fa fa-redo"></i> Resubmit for Approval</button>
                 <button class="btn btn-danger" id="civDetailsDeleteBtn" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500;">Delete</button>
                 <button class="btn btn-primary" id="civDetailsEditBtn" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500;">Update Civilian</button>
                 <button class="btn btn-secondary" id="civDetailsModalClose2" type="button" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500;">Close</button>
@@ -3038,7 +3084,7 @@
               <!-- Email -->
               <div style="margin-bottom:1.5rem;">
                 <label for="accountEmail" style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.5rem;">Email Address</label>
-                <input id="accountEmail" name="accountEmail" type="email" class="heroui-input" style="width:100%; height:44px; background:#1e2028; color:#f7fafc; border:1.5px solid #35385a; border-radius:8px; font-size:1rem; font-weight:500; padding-left:1rem; padding-right:1rem;" readonly>
+                <input id="accountEmail_2" name="accountEmail" type="email" class="heroui-input" style="width:100%; height:44px; background:#1e2028; color:#f7fafc; border:1.5px solid #35385a; border-radius:8px; font-size:1rem; font-weight:500; padding-left:1rem; padding-right:1rem;" readonly>
               </div>
             </div>
             
@@ -3052,11 +3098,11 @@
               <!-- Username -->
               <div style="margin-bottom:1.5rem;">
                 <label for="accountUsername" style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.5rem;">Username <span style="color:#a0aec0; font-size:0.9rem;">(Max 20 characters)</span></label>
-                <input id="accountUsername" name="accountUsername" type="text" class="heroui-input" style="width:100%; height:44px; background:#1e2028; color:#f7fafc; border:1.5px solid #35385a; border-radius:8px; font-size:1rem; font-weight:500; padding-left:1rem; padding-right:1rem;" maxlength="20" autocomplete="off" required>
+                <input id="accountUsername_2" name="accountUsername" type="text" class="heroui-input" style="width:100%; height:44px; background:#1e2028; color:#f7fafc; border:1.5px solid #35385a; border-radius:8px; font-size:1rem; font-weight:500; padding-left:1rem; padding-right:1rem;" maxlength="20" autocomplete="off" required>
                 <div id="updateUsernameBtns" style="display:none; margin-top:1rem;">
                   <input type="hidden" name="userID" value="<%= user._id %>">
                   <input type="hidden" name="page" value="/civ-dashboard">
-                  <button id="updateUsername" value="updateUsername" name="action" style="background:#667eea; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; margin-right:0.5rem;">Update Username</button>
+                  <button id="updateUsername_2" value="updateUsername" name="action" style="background:#667eea; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; margin-right:0.5rem;">Update Username</button>
                   <button type="button" onclick="cancelUsername()" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500;">Cancel</button>
                 </div>
               </div>
@@ -3064,10 +3110,10 @@
               <!-- Call Sign -->
               <div style="margin-bottom:1.5rem;">
                 <label for="accountCallSign" style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.5rem;">Call Sign <span style="color:#a0aec0; font-size:0.9rem;">(Max 10 characters)</span></label>
-                <input id="accountCallSign" name="accountCallSign" type="text" class="heroui-input" style="width:100%; height:44px; background:#1e2028; color:#f7fafc; border:1.5px solid #35385a; border-radius:8px; font-size:1rem; font-weight:500; padding-left:1rem; padding-right:1rem;" maxlength="10" autocomplete="off" required>
+                <input id="accountCallSign_2" name="accountCallSign" type="text" class="heroui-input" style="width:100%; height:44px; background:#1e2028; color:#f7fafc; border:1.5px solid #35385a; border-radius:8px; font-size:1rem; font-weight:500; padding-left:1rem; padding-right:1rem;" maxlength="10" autocomplete="off" required>
                 <div id="updateCallSignBtns" style="display:none; margin-top:1rem;">
                   <input type="hidden" name="page" value="/civ-dashboard">
-                  <button id="updateCallSign" value="updateCallSign" name="action" style="background:#667eea; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; margin-right:0.5rem;">Update Call Sign</button>
+                  <button id="updateCallSign_2" value="updateCallSign" name="action" style="background:#667eea; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; margin-right:0.5rem;">Update Call Sign</button>
                   <button type="button" onclick="cancelCallSign()" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500;">Cancel</button>
                 </div>
               </div>
@@ -3098,7 +3144,7 @@
             
             <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
               <img alt="discord" style="width:40px; height:40px;" src="./static/images/discord-icon.svg">
-              <input id="link" type="text" name="discordToken" value="<%= user.user.discordLoginToken %>" style="display:none;">
+              <input id="link_2" type="text" name="discordToken" value="<%= user.user.discordLoginToken %>" style="display:none;">
               
               <% if (user.user.discordConnected) { %>
                 <div style="display:flex; align-items:center; gap:0.5rem; color:#48bb78;">
@@ -3167,7 +3213,7 @@
              
              <div style="display:flex; align-items:center; gap:1rem;">
                <label style="display:flex; align-items:center; gap:0.5rem; color:#e0e7ff; cursor:pointer;">
-                 <input id="panic-button-check-sound" type="checkbox" name="enableSound" style="width:18px; height:18px; accent-color:#667eea;">
+                 <input id="panic-button-check-sound_2" type="checkbox" name="enableSound" style="width:18px; height:18px; accent-color:#667eea;">
                  Enable Sound
                </label>
              </div>
@@ -3185,7 +3231,7 @@
              
              <div style="display:flex; align-items:center; gap:1rem;">
                <label style="color:#e0e7ff; font-weight:500;">Volume Level:</label>
-               <input type="range" id="alert-volume-slider" min="0" max="100" style="flex:1; height:6px; background:#35385a; border-radius:3px; outline:none; accent-color:#667eea;">
+               <input type="range" id="alert-volume-slider_2" min="0" max="100" style="flex:1; height:6px; background:#35385a; border-radius:3px; outline:none; accent-color:#667eea;">
                <span id="volume-display" style="color:#a0aec0; font-weight:500; min-width:40px; text-align:center;">50</span>
              </div>
            </div>
@@ -3479,9 +3525,466 @@
   function closeComingSoonModal() {
     document.getElementById('comingSoonModal').style.display = 'none';
   }
+  
+  // Rejected Civilian Functions
+  function resubmitCivilianForApproval(civIdOrIndex) {
+    if (civIdOrIndex === undefined || civIdOrIndex === null) {
+      alert('No civilian ID provided');
+      return;
+    }
+    
+    // Show confirmation
+    if (!confirm('Are you sure you want to resubmit this civilian for approval?')) {
+      return;
+    }
+    
+    // Try to get civilian ID - could be the actual ID or an index
+    let civilianId = civIdOrIndex;
+    
+    // If it looks like an index (number), try to get the actual ID from the card
+    if (!isNaN(civIdOrIndex)) {
+      const container = document.getElementById('personas-thumbnail');
+      const card = container.querySelector(`[data-civ-index="${civIdOrIndex}"]`);
+      if (card && card.dataset.civilianId) {
+        civilianId = card.dataset.civilianId;
+      }
+    }
+    
+    // Make API call to resubmit - use same API as regular approval
+    const requestData = {
+      civilianId: civilianId,
+      communityId: dbUser?.user?.lastAccessedCommunity?.communityID,
+      userId: dbUser._id,
+      action: 'send_for_approval'
+    };
+    
+    fetch(`${API_URL}/api/v1/civilian/approval`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData)
+    })
+    .then(response => {
+      if (response.ok) {
+        return response.json().then(data => {
+          alert('Civilian resubmitted for approval successfully!');
+          // Close the modal
+          document.getElementById('civDetailsModal').style.display = 'none';
+          // Refresh the page or update the UI
+          window.location.reload();
+        });
+      } else {
+        return response.json().then(data => {
+          alert('Error resubmitting civilian: ' + (data.message || 'Unknown error'));
+        });
+      }
+    })
+    .catch(error => {
+      console.error('Error resubmitting civilian:', error);
+      alert('Error resubmitting civilian. Please try again.');
+    });
+  }
+  
+  // Function to add styling and resubmit button to civilian cards based on status
+  function updateCivilianCardForStatus(civilianCard, civilianData) {
+    if (!civilianCard || !civilianData) return;
+    
+    // Check if civilian is rejected
+    if (civilianData.approvalStatus === 'rejected' || civilianData.approvalStatus === 'denied') {
+      // Add rejected class
+      civilianCard.classList.add('rejected');
+      
+      // Update or add approval badge
+      let badge = civilianCard.querySelector('.approval-badge');
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.className = 'approval-badge';
+        civilianCard.appendChild(badge);
+      }
+      badge.innerHTML = '<i class="fa fa-times"></i>';
+      badge.style.background = '#f56565';
+      badge.style.color = 'white';
+      
+      // Add resubmit button if it doesn't exist
+      let resubmitBtn = civilianCard.querySelector('.resubmit-btn');
+      if (!resubmitBtn) {
+        resubmitBtn = document.createElement('button');
+        resubmitBtn.className = 'resubmit-btn';
+        resubmitBtn.innerHTML = '<i class="fa fa-redo"></i> Resubmit for Approval';
+        resubmitBtn.onclick = () => resubmitCivilianForApproval(civilianData._id);
+        
+        // Find a good place to insert the button (typically in the card body)
+        const cardBody = civilianCard.querySelector('.card-body') || civilianCard;
+        cardBody.appendChild(resubmitBtn);
+      }
+    }
+    // Check if civilian requires edits
+    else if (civilianData.approvalStatus === 'requires_edits' || civilianData.approvalStatus === 'require_edits' || civilianData.approvalStatus === 'pending') {
+      // Add require-edits class
+      civilianCard.classList.add('require-edits');
+      
+      // Update or add approval badge
+      let badge = civilianCard.querySelector('.approval-badge');
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.className = 'approval-badge';
+        civilianCard.appendChild(badge);
+      }
+      badge.innerHTML = '<i class="fa fa-edit"></i>';
+      badge.style.background = '#ed8936';
+      badge.style.color = 'white';
+      
+      // Add resubmit button if it doesn't exist
+      let resubmitBtn = civilianCard.querySelector('.resubmit-btn');
+      if (!resubmitBtn) {
+        resubmitBtn = document.createElement('button');
+        resubmitBtn.className = 'resubmit-btn';
+        resubmitBtn.innerHTML = '<i class="fa fa-redo"></i> Resubmit for Approval';
+        resubmitBtn.onclick = () => resubmitCivilianForApproval(civilianData._id);
+        
+        // Find a good place to insert the button (typically in the card body)
+        const cardBody = civilianCard.querySelector('.card-body') || civilianCard;
+        cardBody.appendChild(resubmitBtn);
+      }
+    }
+  }
+  
+  // Function to scan and update all existing civilian cards
+  function updateAllCivilianCards() {
+    const container = document.getElementById('personas-thumbnail');
+    if (!container) return;
+    
+    const cards = container.querySelectorAll('.civ-card');
+    cards.forEach(card => {
+      // Check if this card needs require_edits styling
+      updateCardForRequireEdits(card);
+    });
+  }
+  
+  // Function to update a card for require_edits status
+  function updateCardForRequireEdits(card) {
+    // Check if card has no status classes and no approval badge
+    const hasStatusClass = card.classList.contains('approved') || 
+                          card.classList.contains('requested-review') || 
+                          card.classList.contains('no-status') ||
+                          card.classList.contains('rejected') ||
+                          card.classList.contains('require-edits');
+    
+    const hasApprovalBadge = card.querySelector('.approval-badge');
+    
+    // If no status class and no approval badge, this is likely a require_edits civilian
+    if (!hasStatusClass && !hasApprovalBadge) {
+      // Add require-edits class
+      card.classList.add('require-edits');
+      
+      // Add approval badge
+      const cardHeader = card.querySelector('.card-header');
+      if (cardHeader) {
+        const badge = document.createElement('div');
+        badge.className = 'approval-badge require-edits';
+        badge.title = 'Requires Edits';
+        badge.setAttribute('data-original-title', 'Requires Edits');
+        badge.innerHTML = '<i class="fa fa-edit"></i>';
+        cardHeader.appendChild(badge);
+      }
+      
+      // Add click handler to the card to trigger button check when modal opens
+      card.addEventListener('click', function() {
+        setTimeout(function() {
+          checkCurrentCivilianForResubmit();
+        }, 500);
+      });
+      
+      // Note: Resubmit button will be shown in the civilian details modal instead
+    }
+  }
+  
+  // Function to extract civilian data from a card element
+  function extractCivilianDataFromCard(card) {
+    // Try to get data from various sources
+    const civilianId = card.dataset.civilianId || card.getAttribute('data-civilian-id');
+    
+    // If we have civilian data in window object, use it
+    if (civilianId && window.civilianData && window.civilianData[civilianId]) {
+      return window.civilianData[civilianId];
+    }
+    
+    // Try to extract from card content or attributes
+    // Look for approval status in data attributes
+    const approvalStatus = card.dataset.approvalStatus || card.getAttribute('data-approval-status');
+    
+    if (approvalStatus) {
+      return {
+        _id: civilianId,
+        approvalStatus: approvalStatus
+      };
+    }
+    
+    return null;
+  }
+  
+  // Function to update the civilian details modal buttons based on status
+  function updateCivilianDetailsModalButtons(civilianData) {
+    const sendApprovalBtn = document.getElementById('civDetailsSendApprovalBtn');
+    const resubmitBtn = document.getElementById('civDetailsResubmitBtn');
+    const warningDiv = document.getElementById('civPendingWarning');
+    const warningTitle = document.getElementById('civWarningTitle');
+    const warningMessage = document.getElementById('civWarningMessage');
+    
+    // Hide both buttons and warning by default
+    sendApprovalBtn.style.display = 'none';
+    resubmitBtn.style.display = 'none';
+    warningDiv.style.display = 'none';
+    
+    // Show appropriate button and warning based on approval status - copy the exact logic from Send for Approval
+    if (!civilianData.approvalStatus || civilianData.approvalStatus === 'no_status') {
+      // No status - show send for approval button and warning
+      sendApprovalBtn.style.display = 'inline-block';
+      warningDiv.style.display = 'block';
+      warningTitle.textContent = 'Review Required';
+      warningMessage.textContent = 'This civilian is awaiting review and needs approval before appearing in CAD searches. You can send for approval by scrolling to the bottom of this form.';
+    } else if (civilianData.approvalStatus === 'requires_edits' || civilianData.approvalStatus === 'require_edits' || civilianData.approvalStatus === 'pending') {
+      // Require edits - show resubmit button and warning
+      resubmitBtn.style.display = 'inline-block';
+      warningDiv.style.display = 'block';
+      warningTitle.textContent = 'Edits Required';
+      warningMessage.textContent = 'This civilian requires edits before approval. Please make the necessary changes and resubmit for approval.';
+    } else if (civilianData.approvalStatus === 'rejected' || civilianData.approvalStatus === 'denied') {
+      // Rejected - show resubmit button and warning
+      resubmitBtn.style.display = 'inline-block';
+      warningDiv.style.display = 'block';
+      warningTitle.textContent = 'Civilian Rejected';
+      warningMessage.textContent = 'This civilian was rejected. Please make the necessary changes and resubmit for approval.';
+    }
+    // If approved, show neither button nor warning
+  }
+  
+  // Function to detect when civilian details modal is opened and update buttons
+  function observeCivilianDetailsModal() {
+    const modal = document.getElementById('civDetailsModal');
+    if (!modal) return;
+    
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+          const display = modal.style.display;
+          if (display === 'flex' || display === 'block') {
+            // Modal is being shown, check the civilian data
+            setTimeout(checkAndUpdateModalButtons, 100); // Small delay to ensure modal is fully loaded
+          }
+        }
+      });
+    });
+    
+    observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
+  }
+  
+  // Function to check and update modal buttons
+  function checkAndUpdateModalButtons() {
+    const civId = document.getElementById('civIdHidden').value;
+
+    
+    // Try to find civilian data from the cards
+    const container = document.getElementById('personas-thumbnail');
+    if (container) {
+      const cards = container.querySelectorAll('.civ-card');
+
+      
+      cards.forEach(card => {
+        const cardIndex = card.dataset.civIndex;
+
+        
+        if (cardIndex === civId || card.dataset.civilianId === civId) {
+          
+          
+          // Found the card, check its status
+          const civilianData = extractCivilianDataFromCard(card) || {};
+          
+          // Check if card has require_edits class
+          if (card.classList.contains('require-edits')) {
+            civilianData.approvalStatus = 'requires_edits';
+
+          } else if (card.classList.contains('rejected')) {
+            civilianData.approvalStatus = 'rejected';
+
+          } else if (card.classList.contains('approved')) {
+            civilianData.approvalStatus = 'approved';
+
+          } else if (card.classList.contains('requested-review')) {
+            civilianData.approvalStatus = 'requested_review';
+
+          } else if (card.classList.contains('no-status')) {
+            civilianData.approvalStatus = 'no_status';
+
+          } else {
+            // Check if card has no status classes and no approval badge - this is requires_edits
+            const hasApprovalBadge = card.querySelector('.approval-badge');
+            if (!hasApprovalBadge) {
+              civilianData.approvalStatus = 'requires_edits';
+
+            }
+          }
+          
+
+          updateCivilianDetailsModalButtons(civilianData);
+        }
+      });
+    }
+  }
+  
+  // Observer to watch for new civilian cards and update them
+  function observeCivilianCards() {
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        mutation.addedNodes.forEach(function(node) {
+          if (node.nodeType === 1) { // Element node
+            // Check if this is a civilian card or contains civilian cards
+            const cards = node.classList && node.classList.contains('civ-card') 
+              ? [node] 
+              : node.querySelectorAll ? node.querySelectorAll('.civ-card') : [];
+              
+            cards.forEach(card => {
+              updateCardForRequireEdits(card);
+            });
+          }
+        });
+      });
+    });
+    
+    const container = document.getElementById('personas-thumbnail');
+    if (container) {
+      observer.observe(container, { childList: true, subtree: true });
+      
+      // Also update existing cards immediately
+      setTimeout(updateAllCivilianCards, 1000);
+    }
+  }
   document.addEventListener('DOMContentLoaded', function() {
     // Initialize profile pictures
     initializeProfilePictures();
+    
+    // Initialize civilian card observer for rejected status
+    observeCivilianCards();
+    
+    // Initialize civilian details modal observer
+    observeCivilianDetailsModal();
+    
+    // Run immediately to catch existing cards
+    setTimeout(updateAllCivilianCards, 500);
+    
+    // Also run periodic checks to catch any cards that might be missed
+    setInterval(updateAllCivilianCards, 3000);
+    
+    // Add click handler for resubmit button
+    document.getElementById('civDetailsResubmitBtn').addEventListener('click', function() {
+      const civId = document.getElementById('civIdHidden').value;
+      resubmitCivilianForApproval(civId);
+    });
+    
+    // Add a manual trigger for testing - can be called from console
+    window.testModalButtons = function() {
+
+      checkAndUpdateModalButtons();
+    };
+    
+    // Add a function to manually set civilian data and update buttons
+    window.setCivilianDataAndUpdateButtons = function(civilianData) {
+
+      updateCivilianDetailsModalButtons(civilianData);
+    };
+    
+    // Function to check if current civilian needs resubmit button
+    window.checkCurrentCivilianForResubmit = function() {
+      // Get the civilian ID from the hidden field
+      const civId = document.getElementById('civIdHidden').value;
+
+      
+      // Find the civilian card with this ID
+      const container = document.getElementById('personas-thumbnail');
+      if (container) {
+        const cards = container.querySelectorAll('.civ-card');
+        cards.forEach(card => {
+          const cardIndex = card.dataset.civIndex;
+          if (cardIndex === civId) {
+            
+            
+            // Check if this card has require-edits class or no approval badge
+            if (card.classList.contains('require-edits') || !card.querySelector('.approval-badge')) {
+
+              showResubmitButton();
+            }
+          }
+        });
+      }
+    };
+    
+    // Simple function to show resubmit button - copy the exact logic from Send for Approval
+    window.showResubmitButton = function() {
+      const resubmitBtn = document.getElementById('civDetailsResubmitBtn');
+      const sendApprovalBtn = document.getElementById('civDetailsSendApprovalBtn');
+      const warningDiv = document.getElementById('civPendingWarning');
+      const warningTitle = document.getElementById('civWarningTitle');
+      const warningMessage = document.getElementById('civWarningMessage');
+      
+      // Hide send approval button
+      sendApprovalBtn.style.display = 'none';
+      // Show resubmit button and warning
+      resubmitBtn.style.display = 'inline-block';
+      warningDiv.style.display = 'block';
+      warningTitle.textContent = 'Edits Required';
+      warningMessage.textContent = 'This civilian requires edits before approval. Please make the necessary changes and resubmit for approval.';
+    };
+    
+    // Global function to check and update modal buttons - can be called from anywhere
+    window.checkCivilianModalButtons = function() {
+
+      
+      // Get the civilian ID from the hidden input
+      const civId = document.getElementById('civIdHidden').value;
+
+      
+      if (!civId) {
+
+        return;
+      }
+      
+      // Try to find the civilian data from the cards
+      const container = document.getElementById('personas-thumbnail');
+      if (container) {
+        const cards = container.querySelectorAll('.civ-card');
+        let found = false;
+        
+        cards.forEach(card => {
+          const cardIndex = card.dataset.civIndex;
+          if (cardIndex === civId || card.dataset.civilianId === civId) {
+
+            found = true;
+            
+            // Check if this card has require_edits styling
+            if (card.classList.contains('require-edits')) {
+
+              updateCivilianDetailsModalButtons({approvalStatus: 'requires_edits'});
+            } else {
+
+              // Check other statuses
+              if (card.classList.contains('approved')) {
+                updateCivilianDetailsModalButtons({approvalStatus: 'approved'});
+              } else if (card.classList.contains('rejected')) {
+                updateCivilianDetailsModalButtons({approvalStatus: 'rejected'});
+              } else {
+                // Default to showing send for approval
+                updateCivilianDetailsModalButtons({approvalStatus: 'no_status'});
+              }
+            }
+          }
+        });
+        
+        if (!found) {
+
+        }
+      }
+    };
     
     // Intercept all file input clicks for image uploads
     var fileInputs = [
