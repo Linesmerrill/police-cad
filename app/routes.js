@@ -2051,6 +2051,15 @@ module.exports = function (app, passport, server) {
     );
   });
 
+  // Set session redirect for login flow
+  app.post("/set-redirect", function (req, res) {
+    const { redirect } = req.body;
+    if (redirect) {
+      req.session.redirect = redirect;
+    }
+    res.json({ success: true });
+  });
+
   // Be sure to place all GET requests above this catchall
   app.get("*", function (req, res) {
     res.render("page-not-found");
