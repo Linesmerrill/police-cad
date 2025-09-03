@@ -96,6 +96,21 @@
       }
     }
 
+    // Add robust click handler for department cards
+    document.addEventListener('click', function(event) {
+      // Find the closest department card element
+      const deptCard = event.target.closest('[data-dept-id]');
+      if (deptCard && !event.target.closest('button')) {
+        const deptId = deptCard.getAttribute('data-dept-id');
+        const deptName = deptCard.getAttribute('data-dept-name');
+        const templateName = deptCard.getAttribute('data-template-name');
+        
+        if (deptId && deptName && templateName) {
+          navigateToDepartment(deptId, deptName, templateName);
+        }
+      }
+    });
+
     // Define settings functions globally to prevent reference errors
     window.openSettingsModal = function() {
       document.getElementById('settingsModal').style.display = 'flex';
@@ -1063,13 +1078,13 @@
                 }
               %>
                 <div class="relative block bg-gray-800 rounded-lg shadow hover:shadow-lg transition p-6 border border-gray-700 <%= canAccess ? 'hover:border-blue-500 cursor-pointer' : 'opacity-70 cursor-not-allowed' %>"
-                  <%- canAccess && dashboardUrl ? `onclick="navigateToDepartment('${dept._id}', '${dept.name.replace(/'/g, "\\'")}', '${templateName.replace(/'/g, "\\'")}')"` : '' %>>
+                  <%- canAccess && dashboardUrl ? `onclick="navigateToDepartment('${dept._id}', '${dept.name.replace(/'/g, "\\'")}', '${templateName.replace(/'/g, "\\'")}')" data-dept-id="${dept._id}" data-dept-name="${dept.name.replace(/'/g, "\\'")}" data-template-name="${templateName.replace(/'/g, "\\'")}"` : '' %>>
                   <% if (canManageDepartments) { %>
                     <button class="absolute top-3 right-3 text-gray-400 hover:text-blue-400 z-10 bg-gray-900 bg-opacity-70 rounded-full p-2" title="Edit Department" onclick="event.stopPropagation(); openEditDepartmentModal('<%= dept._id %>');">
                       <i class="fa fa-pencil-alt text-lg"></i>
                     </button>
                   <% } %>
-                  <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-40 object-cover rounded mb-4" />
+                  <img src="<%= dept.image || '/static/images/default-logo.png' %>" alt="<%= dept.name %>" class="w-full h-40 object-cover rounded mb-4" style="pointer-events: none;" />
                   <div class="font-bold text-2xl text-white mb-3"><%= dept.name %></div>
                   <div class="text-gray-400 text-lg mb-3"><%= dept.description || '' %></div>
                   <div class="text-base text-gray-500"><%= dept.template && dept.template.name ? dept.template.name : '' %></div>
@@ -6534,26 +6549,102 @@ function openEditDepartmentModal(departmentId) {
     .then(res => res.json())
     .then(data => {
       const dept = data.department || {};
+      
+      // Set basic department info
+      document.getElementById('editDeptId').value = dept._id || '';
       document.getElementById('editDeptImagePreview').src = dept.image || '/static/images/default-logo.png';
+      document.getElementById('editDeptImageUrl').value = dept.image || '';
       document.getElementById('editDeptName').value = dept.name || '';
       document.getElementById('editDeptDescription').value = dept.description || '';
       document.getElementById('editDeptApprovalRequired').checked = !!dept.approvalRequired;
+      
+      // Populate components
+      if (dept.template && dept.template.components) {
+        dept.template.components.forEach(component => {
+          const checkbox = document.getElementById(`editDeptComponent${component.name.charAt(0).toUpperCase() + component.name.slice(1)}`);
+          if (checkbox) {
+            checkbox.checked = component.enabled;
+          }
+        });
+      }
+      
       updateEditDeptVisibilityLabel();
       document.getElementById('editDepartmentModal').style.display = 'flex';
     })
     .catch(() => {
       // fallback to local data if API fails
       const dept = (window.departmentsListData || []).find(d => d._id === departmentId) || {};
+      
+      // Set basic department info
+      document.getElementById('editDeptId').value = dept._id || '';
       document.getElementById('editDeptImagePreview').src = dept.image || '/static/images/default-logo.png';
+      document.getElementById('editDeptImageUrl').value = dept.image || '';
       document.getElementById('editDeptName').value = dept.name || '';
       document.getElementById('editDeptDescription').value = dept.description || '';
       document.getElementById('editDeptApprovalRequired').checked = !!dept.approvalRequired;
+      
+      // Populate components
+      if (dept.template && dept.template.components) {
+        dept.template.components.forEach(component => {
+          const checkbox = document.getElementById(`editDeptComponent${component.name.charAt(0).toUpperCase() + component.name.slice(1)}`);
+          if (checkbox) {
+            checkbox.checked = component.enabled;
+          }
+        });
+      }
+      
       updateEditDeptVisibilityLabel();
       document.getElementById('editDepartmentModal').style.display = 'flex';
     });
 }
 function closeEditDepartmentModal() {
   document.getElementById('editDepartmentModal').style.display = 'none';
+}
+
+// Handle department photo upload
+async function handleEditDeptImageChange(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  try {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file', 3000, 'error');
+      return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Image must be less than 5MB', 3000, 'error');
+      return;
+    }
+    
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('editDeptImagePreview').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    
+    // Show uploading status
+    showToast('Uploading photo...', 3000, 'info');
+    
+    // Upload to Cloudinary
+    const imageUrl = await uploadToCloudinary(file, 'departments', `dept_${Date.now()}`);
+    
+    // Store the URL
+    document.getElementById('editDeptImageUrl').value = imageUrl;
+    
+    // Show success status
+    showToast('Photo uploaded successfully!', 3000, 'success');
+    
+  } catch (error) {
+    console.error('Photo upload error:', error);
+    showToast('Upload failed: ' + error.message, 3000, 'error');
+    
+    // Reset preview on error
+    document.getElementById('editDeptImagePreview').src = '/static/images/default-logo.png';
+  }
 }
 </script>
 
@@ -6571,6 +6662,8 @@ window.departmentsListData = JSON.parse("<%= JSON.stringify(departments || []).r
       <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Edit Department</h3>
     </div>
     <form onsubmit="event.preventDefault(); saveEditDepartment();">
+      <input type="hidden" id="editDeptId" value="">
+      <input type="hidden" id="editDeptImageUrl" value="">
       <div class="mb-4">
         <label class="block text-gray-300 mb-2 text-base">Department Photo</label>
         <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-4 bg-gray-800 cursor-pointer hover:border-blue-500 transition" onclick="document.getElementById('editDeptImage').click()">
@@ -6588,6 +6681,61 @@ window.departmentsListData = JSON.parse("<%= JSON.stringify(departments || []).r
         <label class="block text-gray-300 mb-2 text-base" for="editDeptDescription">Description</label>
         <textarea id="editDeptDescription" rows="3" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base"></textarea>
       </div>
+      
+      <!-- Components Section -->
+      <div class="mb-4">
+        <label class="block text-gray-300 mb-2 text-base">Components</label>
+        <div class="bg-gray-800 rounded-lg p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fa fa-id-card text-blue-400"></i>
+              <span class="text-gray-200">Create Civilians</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="editDeptComponentCreateCivilians" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+              <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+            </label>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fa fa-car text-green-400"></i>
+              <span class="text-gray-200">Create Vehicles</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="editDeptComponentCreateVehicles" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+              <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+            </label>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fa fa-crosshairs text-red-400"></i>
+              <span class="text-gray-200">Create Firearms</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="editDeptComponentCreateFirearms" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+              <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+            </label>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i class="fa fa-exclamation-triangle text-yellow-400"></i>
+              <span class="text-gray-200">Call 911</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="editDeptComponentCall911" class="sr-only peer">
+              <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+              <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+      
       <div class="mb-4">
         <label class="block text-gray-300 mb-2 text-base flex items-center gap-2" for="editDeptApprovalRequired">
           Visibility
@@ -6620,12 +6768,16 @@ window.departmentsListData = JSON.parse("<%= JSON.stringify(departments || []).r
 
 <script>
 function saveEditDepartment() {
+  console.log('saveEditDepartment called');
   const deptId = currentEditDepartment;
   const communityId = '<%= community._id %>';
   const name = document.getElementById('editDeptName').value.trim();
   const description = document.getElementById('editDeptDescription').value.trim();
-  const imageInput = document.getElementById('editDeptImage');
+  const imageUrl = document.getElementById('editDeptImageUrl').value;
   const saveBtn = document.querySelector('#editDepartmentModal button[type="submit"]');
+  
+  console.log('Department data:', { deptId, communityId, name, description, imageUrl });
+  
   if (!name) {
     if (typeof showToast === 'function') {
       showToast('Department name is required', 2500);
@@ -6636,48 +6788,137 @@ function saveEditDepartment() {
     saveBtn.textContent = 'Save';
     return;
   }
+  
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving...';
 
-  // Prepare payload
-  const approvalRequired = document.getElementById('editDeptApprovalRequired').checked;
-  const payload = { name, description, approvalRequired };
-  // If a new image is selected, upload it (placeholder: just use base64 for now)
-  if (imageInput.files && imageInput.files[0]) {
-    const reader = new FileReader();
-    reader.onload = function(ev) {
-      payload.image = ev.target.result;
-      doUpdate();
-    };
-    reader.readAsDataURL(imageInput.files[0]);
-  } else {
-    doUpdate();
-  }
-
-  function doUpdate() {
-    fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+  // Fetch the current department data to preserve all existing structure
+  console.log('Fetching department data from API...');
+  
+  fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`)
+    .then(res => {
+      if (!res.ok) throw new Error('Failed to fetch department data');
+      return res.json();
     })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to update department');
-        return res.json();
-      })
-      .then(() => {
-        closeEditDepartmentModal();
-        if (typeof showToast === 'function') {
-          showToast('Department updated successfully', 2500);
-        } else {
-          alert('Department updated successfully');
+    .then(response => {
+      console.log('API response:', response);
+      const currentDept = response.department || response; // Handle both wrapped and unwrapped responses
+      console.log('currentDept extracted:', currentDept);
+      updateDepartment(currentDept);
+    })
+    .catch(err => {
+      console.error('Error fetching department:', err);
+      if (typeof showToast === 'function') {
+        showToast('Failed to fetch department data', 3000, 'error');
+      } else {
+        alert('Failed to fetch department data');
+      }
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save';
+    });
+  
+  function updateDepartment(currentDept) {
+    // Create the department object with only the fields we want to update
+    const payload = {
+      name, // Update name
+      description, // Update description
+      approvalRequired: document.getElementById('editDeptApprovalRequired').checked, // Update approval required
+      image: imageUrl || currentDept.image // Update image (keep existing if no new one)
+    };
+    
+    // Update the template components if template exists
+    if (currentDept.template && currentDept.template.components) {
+      // Prepare components for the new API endpoint
+      const componentsToUpdate = currentDept.template.components.map(component => {
+        const componentName = component.name;
+        let isEnabled = component.enabled; // Default to current value
+        
+        // Override with form values for the components we're managing
+        if (componentName === 'createCivilians') {
+          isEnabled = document.getElementById('editDeptComponentCreateCivilians').checked;
+        } else if (componentName === 'createVehicles') {
+          isEnabled = document.getElementById('editDeptComponentCreateVehicles').checked;
+        } else if (componentName === 'createFirearms') {
+          isEnabled = document.getElementById('editDeptComponentCreateFirearms').checked;
+        } else if (componentName === 'call911') {
+          isEnabled = document.getElementById('editDeptComponentCall911').checked;
         }
-        setTimeout(() => window.location.reload(), 1200);
-      })
-      .catch(err => {
-        alert(err.message || 'Failed to update department');
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Save';
+        
+        return {
+          _id: {
+            $oid: component._id
+          },
+          name: component.name,
+          enabled: isEnabled
+        };
       });
+      
+      // Update components using the new API endpoint
+      updateDepartmentComponents(componentsToUpdate);
+      return; // Exit early since we're handling components separately
+    }
+    
+    doUpdate();
+    
+    function updateDepartmentComponents(componentsToUpdate) {
+      console.log('Updating department components:', componentsToUpdate);
+      
+      fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}/components`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ components: componentsToUpdate })
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to update department components');
+          return res.json();
+        })
+        .then(() => {
+          console.log('Components updated successfully');
+          // Now update the main department data
+          doUpdate();
+        })
+        .catch(err => {
+          console.error('Error updating components:', err);
+          if (typeof showToast === 'function') {
+            showToast('Failed to update department components', 3000, 'error');
+          } else {
+            alert('Failed to update department components');
+          }
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save';
+        });
+    }
+
+    function doUpdate() {
+      console.log('doUpdate called with payload:', payload);
+      console.log('API URL:', `${API_URL}/api/v1/community/${communityId}/departments/${deptId}`);
+      
+      fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to update department');
+          return res.json();
+        })
+        .then(() => {
+          closeEditDepartmentModal();
+          if (typeof showToast === 'function') {
+            showToast('Department updated successfully', 2500);
+          } else {
+            alert('Department updated successfully');
+          }
+          // Set flag to refresh component permissions when user returns to civilian dashboard
+          sessionStorage.setItem('refreshComponentPermissions', 'true');
+          setTimeout(() => window.location.reload(), 1200);
+        })
+        .catch(err => {
+          alert(err.message || 'Failed to update department');
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save';
+        });
+    }
   }
 }
 function deleteEditDepartment() {

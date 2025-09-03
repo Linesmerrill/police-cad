@@ -1139,19 +1139,19 @@
       <!-- Operations -->
       <div class="nav-section">
         <div class="nav-section-title">Operations</div>
-        <div class="nav-item">
+        <div class="nav-item" id="navAddCivilian">
           <a onclick="openNewCivModal()" class="nav-link" style="cursor: pointer;">
             <i class="fa fa-id-card nav-icon"></i>
             <span class="nav-text">Add New Civilian</span>
           </a>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" id="navAddVehicle">
           <a onclick="openNewVehicleModal()" class="nav-link" style="cursor: pointer;">
             <i class="fa fa-car nav-icon"></i>
             <span class="nav-text">Add New Vehicle</span>
           </a>
         </div>
-        <div class="nav-item">
+        <div class="nav-item" id="navAddFirearm">
           <a onclick="openNewFirearmModal()" class="nav-link" style="cursor: pointer;">
             <i class="fa fa-crosshairs nav-icon"></i>
             <span class="nav-text">Add New Firearm</span>
@@ -1162,7 +1162,7 @@
       <!-- Utilities -->
       <div class="nav-section">
         <div class="nav-section-title">Utilities</div>
-        <div class="nav-item">
+        <div class="nav-item" id="navCall911">
           <a onclick="openCall911Modal()" class="nav-link" style="cursor: pointer;">
             <i class="fa fa-exclamation-triangle nav-icon"></i>
             <span class="nav-text">Call 911</span>
@@ -1323,10 +1323,10 @@
       </div>       
 
       <!-- Civilians Section -->
-      <div class="content-section">
+      <div class="content-section" id="civiliansSection">
         <div class="section-header">
           <h2 class="section-title">Civilians</h2>
-          <button onclick="openNewCivModal()" class="btn-primary">
+          <button onclick="openNewCivModal()" class="btn-primary" id="btnAddCivilian">
             <i class="fa fa-plus"></i> Add New Civilian
           </button>
         </div>
@@ -1374,10 +1374,10 @@
                   </div>
 
       <!-- Vehicles Section -->
-      <div class="content-section">
+      <div class="content-section" id="vehiclesSection">
         <div class="section-header">
           <h2 class="section-title">Vehicles</h2>
-          <button data-toggle="modal" href="#newVehicleModal" class="btn-primary">
+          <button data-toggle="modal" href="#newVehicleModal" class="btn-primary" id="btnAddVehicle">
             <i class="fa fa-plus"></i> Add New Vehicle
           </button>
                 </div>
@@ -1414,10 +1414,10 @@
   </div>
 
       <!-- Firearms Section -->
-      <div class="content-section">
+      <div class="content-section" id="firearmsSection">
         <div class="section-header">
           <h2 class="section-title">Firearms</h2>
-          <button onclick="openNewFirearmModal()" class="btn-primary">
+          <button onclick="openNewFirearmModal()" class="btn-primary" id="btnAddFirearm">
             <i class="fa fa-plus"></i> Add New Firearm
           </button>
       </div>
@@ -2249,6 +2249,10 @@
   <script src="/static/js/moment.js"></script>
   <script src="/static/js/civ-dashboard.js"></script>
   <script src="/static/js/notifications.js"></script>
+  <script>
+    // Make department ID available to JavaScript
+    window.currentDepartmentId = '<%= departmentId %>';
+  </script>
   <script src="/static/js/modern-dashboard.js"></script>
   <script src="/static/js/cloudinary-upload.js"></script>
   

@@ -47,6 +47,12 @@ $(document).ready(function() {
     // Setup search functionality
     setupSearch();
     
+    // Always check component permissions on page load
+    // This ensures the UI reflects the current state of department components
+    setTimeout(() => {
+        refreshComponentPermissions();
+    }, 1000); // Small delay to ensure community data is loaded first
+    
     // Setup pagination
     setupPagination();
     
@@ -442,6 +448,9 @@ function loadCommunityData() {
                     approvalNotice.style.display = 'none';
                 }
                 
+                // Check and apply component permissions
+                checkComponentPermissions(data.community);
+                
                 // Re-render civilians if they're already loaded to show approval indicators
                 if (lastRenderedCivilians && lastRenderedCivilians.length > 0) {
                     renderCivilians(lastRenderedCivilians);
@@ -455,6 +464,129 @@ function loadCommunityData() {
         });
     });
 }
+
+// Check component permissions and show/hide sections accordingly
+function checkComponentPermissions(communityData) {
+    if (!communityData || !communityData.departments) {
+        return;
+    }
+    
+    // Get the department ID from the URL or page data
+    const currentDepartmentId = window.currentDepartmentId || getDepartmentIdFromUrl();
+    
+    // Find the department by ID first (most accurate)
+    let civilianDept = null;
+    if (currentDepartmentId) {
+        civilianDept = communityData.departments.find(dept => dept._id === currentDepartmentId);
+    }
+    
+    // If not found by ID, try finding by name as fallback
+    if (!civilianDept) {
+        civilianDept = communityData.departments.find(dept => 
+            dept.name === 'Civvies' || dept.name === 'Civilians' || dept.name.toLowerCase().includes('civilian')
+        );
+    }
+    
+    // If still not found, try to find by template name
+    if (!civilianDept) {
+        civilianDept = communityData.departments.find(dept => 
+            dept.template && dept.template.name && dept.template.name.toLowerCase().includes('civilian')
+        );
+    }
+    
+    // If still not found, use the first department as fallback
+    if (!civilianDept && communityData.departments.length > 0) {
+        civilianDept = communityData.departments[0];
+    }
+    
+    // Helper function to get department ID from URL
+    function getDepartmentIdFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedDeptId = urlParams.get('d');
+        if (encodedDeptId) {
+            try {
+                // Decode the department ID (assuming it's base64 encoded)
+                return atob(encodedDeptId);
+            } catch (e) {
+                return null;
+            }
+        }
+        return null;
+    }
+    
+    if (!civilianDept || !civilianDept.template || !civilianDept.template.components) {
+        return;
+    }
+    
+    const components = civilianDept.template.components;
+    
+    // Check each component and show/hide corresponding sections
+    const componentMappings = {
+        'createCivilians': {
+            navId: 'navAddCivilian',
+            sectionId: 'civiliansSection',
+            btnId: 'btnAddCivilian'
+        },
+        'createVehicles': {
+            navId: 'navAddVehicle',
+            sectionId: 'vehiclesSection',
+            btnId: 'btnAddVehicle'
+        },
+        'createFirearms': {
+            navId: 'navAddFirearm',
+            sectionId: 'firearmsSection',
+            btnId: 'btnAddFirearm'
+        },
+        'call911': {
+            navId: 'navCall911',
+            sectionId: null, // No main section for 911
+            btnId: null
+        }
+    };
+    
+    // Apply permissions for each component
+    Object.keys(componentMappings).forEach(componentName => {
+        const component = components.find(comp => comp.name === componentName);
+        const mapping = componentMappings[componentName];
+        const isEnabled = component ? component.enabled : false;
+        
+        // Show/hide navigation items
+        if (mapping.navId) {
+            const navElement = document.getElementById(mapping.navId);
+            if (navElement) {
+                navElement.style.display = isEnabled ? 'block' : 'none';
+            }
+        }
+        
+        // Show/hide main sections
+        if (mapping.sectionId) {
+            const sectionElement = document.getElementById(mapping.sectionId);
+            if (sectionElement) {
+                sectionElement.style.display = isEnabled ? 'block' : 'none';
+            }
+        }
+        
+        // Show/hide buttons (if they exist outside the sections)
+        if (mapping.btnId) {
+            const btnElement = document.getElementById(mapping.btnId);
+            if (btnElement) {
+                btnElement.style.display = isEnabled ? 'inline-flex' : 'none';
+            }
+        }
+    });
+}
+
+// Function to refresh component permissions (can be called from other pages)
+function refreshComponentPermissions() {
+    loadCommunityData().then(() => {
+        // Component permissions refreshed
+    }).catch(() => {
+        // Failed to refresh component permissions
+    });
+}
+
+// Make refreshComponentPermissions available globally so it can be called from other pages
+window.refreshComponentPermissions = refreshComponentPermissions;
 
 // Load Civilians
 function loadCivilians() {
