@@ -623,8 +623,9 @@
                 }
             }
             
-            // Clear error styling on input
+            // Clear error styling on input and lowercase email
             emailInput.addEventListener('input', function() {
+                this.value = this.value.trim().toLowerCase();
                 this.classList.remove('error');
                 hideError();
             });
