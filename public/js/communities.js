@@ -1422,7 +1422,14 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
 
       const data = await response.json();
       const ownedCommunities = data || [];
-      setOwnedCommunityCount(ownedCommunities.length);
+      
+      // Only count communities with visibility field (new format)
+      const newFormatCommunities = ownedCommunities.filter(item => {
+        const community = item.community;
+        return community && community.visibility;
+      });
+      
+      setOwnedCommunityCount(newFormatCommunities.length);
 
       // Get user's subscription plan
       const plan = dbUser?.user?.subscription?.plan || "free";
