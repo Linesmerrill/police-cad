@@ -1848,6 +1848,53 @@
             </div>
           <% } %>
 
+          <!-- Civilians Management -->
+          <%
+            // Permission logic for managing civilians
+            let canManageCivilians = false;
+            if (userId && community.community && Array.isArray(community.community.roles)) {
+              community.community.roles.forEach(function(role) {
+                if (Array.isArray(role.members) && role.members.includes(userId)) {
+                  if (Array.isArray(role.permissions)) {
+                    role.permissions.forEach(function(perm) {
+                      if (
+                        (perm.name === "administrator" && perm.enabled === true) ||
+                        (perm.name === "manage members" && perm.enabled === true)
+                      ) {
+                        canManageCivilians = true;
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          %>
+          
+          <% if (canManageCivilians) { %>
+            <!-- User has permission to manage civilians -->
+            <div id="civiliansManagementCard" onclick="openCiviliansModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#10b981;">
+              <div style="text-align:center;">
+                <div style="margin-bottom:0.5rem;">
+                  <i class="fa fa-user" style="font-size:2rem; color:#10b981;"></i>
+                </div>
+                <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Civilians</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage all civilians in community</p>
+              </div>
+            </div>
+          <% } else { %>
+            <!-- User doesn't have permission to manage civilians -->
+            <div id="civiliansManagementCard" onclick="showNoCiviliansPermissionModal()" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
+              <div style="text-align:center;">
+                <div style="margin-bottom:0.5rem;">
+                  <i class="fa fa-user" style="font-size:2rem; color:#6b7280;"></i>
+                </div>
+                <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">Civilians</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage all civilians in community</p>
+                <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.75rem; font-style:italic;">Permission Required</p>
+              </div>
+            </div>
+          <% } %>
+
           <!-- Invite Codes Management -->
           <%
             // Permission logic for managing invite codes (same as manage members)
@@ -10014,6 +10061,239 @@ async function deleteEditEvent() {
               Cancel
             </button>
             <button onclick="confirmDeleteInviteCode()" style="background:#e53e3e; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Civilians Management Modal -->
+    <div id="civiliansModal" class="heroui-modal" style="display:none; position:fixed; z-index:4000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:1200px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+        <button onclick="closeCiviliansModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div style="text-align:center; margin-bottom:2rem;">
+          <i class="fa fa-user" style="font-size:3rem; color:#10b981; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Civilians Management</h3>
+          <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:1rem;">Manage all civilians in your community</p>
+        </div>
+        
+        <!-- Search Box -->
+        <div style="margin-bottom:1.5rem;">
+          <div style="position:relative;">
+            <input type="text" id="civiliansSearchInput" placeholder="Search civilians by name or username..." style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem; padding-right:3rem;" oninput="searchCivilians(this.value)">
+            <button id="civiliansSearchClear" onclick="clearCiviliansSearch()" style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:#a0aec0; cursor:pointer; display:none; font-size:1.125rem;">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Civilians Count -->
+        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
+          <div style="color:#a0aec0; font-size:0.875rem;">
+            <span id="civiliansCount">0</span> <span id="civiliansCountText">civilians found</span>
+          </div>
+        </div>
+
+        <!-- Civilians List -->
+        <div id="civiliansList" style="background:#2d3748; border-radius:12px; border:1px solid #4a5568; min-height:300px; max-height:500px; overflow-y:auto;">
+          <!-- Civilians will be loaded here -->
+        </div>
+
+        <!-- Pagination -->
+        <div id="civiliansPagination" style="margin-top:1.5rem; display:flex; justify-content:center; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+          <!-- Pagination controls will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Civilian Modal -->
+    <div id="editCivilianModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:900px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+        <button onclick="closeEditCivilianModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div id="civilianDetailsView" style="display: block;">
+          <div style="margin-bottom:1.5rem;">
+            <h4 style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">Civilian Details</h4>
+            <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Review and edit civilian information</p>
+          </div>
+          
+          <!-- Civilian Photo Section -->
+          <div style="margin-bottom:2rem; text-align:center;">
+            <div style="position:relative; display:inline-block;">
+              <img id="editCivDetailsPhoto" src="" alt="Civilian Photo" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid rgb(74, 85, 104); cursor: pointer; background: rgb(45, 55, 72); display: none;" onclick="document.getElementById('editCivDetailsPhotoInput').click()">
+              <div id="editCivDetailsPhotoPlaceholder" style="width: 120px; height: 120px; border-radius: 50%; background: rgb(45, 55, 72); border: 3px solid rgb(74, 85, 104); display: flex; align-items: center; justify-content: center; cursor: pointer; color: rgb(160, 174, 192); font-size: 2rem;" onclick="document.getElementById('editCivDetailsPhotoInput').click()">
+                <i class="fa fa-user"></i>
+              </div>
+              <input type="file" id="editCivDetailsPhotoInput" accept="image/*" style="display:none;" onchange="handleEditCivilianPhotoUpload(event)">
+              <div style="margin-top:0.5rem;">
+                <button type="button" onclick="document.getElementById('editCivDetailsPhotoInput').click()" style="background:#3b82f6; color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-size:0.875rem; cursor:pointer;">
+                  <i class="fa fa-camera"></i> Change Photo
+                </button>
+                <button type="button" id="editCivDetailsRemovePhoto" onclick="removeEditCivilianPhoto()" style="background: rgb(239, 68, 68); color: rgb(255, 255, 255); border: none; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.875rem; cursor: pointer; margin-left: 0.5rem; display: none;">
+                  <i class="fa fa-trash"></i> Remove
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <form id="editCivilianDetailsForm" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+            <!-- Left Column -->
+            <div>
+              <div style="margin-bottom:1.5rem;">
+                <label style="display:block; color:#fff; font-weight:500; margin-bottom:0.5rem;">Full Name *</label>
+                <input type="text" id="editName" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+              </div>
+              
+              <div style="margin-bottom:1.5rem;">
+                <label style="display:block; color:#fff; font-weight:500; margin-bottom:0.5rem;">Date of Birth *</label>
+                <input type="date" id="editBirthday" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+              </div>
+              
+              <div style="margin-bottom:1.5rem;">
+                <label style="display:block; color:#fff; font-weight:500; margin-bottom:0.5rem;">Gender</label>
+                <select id="editGender" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </select>
+              </div>
+              
+              <div style="margin-bottom:1.5rem;">
+                <label style="display:block; color:#fff; font-weight:500; margin-bottom:0.5rem;">Hair Color</label>
+                <input type="text" id="editHairColor" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+              </div>
+              
+              <div style="margin-bottom:1.5rem;">
+                <label style="display:block; color:#fff; font-weight:500; margin-bottom:0.5rem;">Eye Color</label>
+                <input type="text" id="editEyeColor" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+              </div>
+            </div>
+            
+            <!-- Right Column -->
+            <div>
+              <div style="margin-bottom:1.5rem;">
+                <label style="display:block; color:#fff; font-weight:500; margin-bottom:0.5rem;">Address</label>
+                <textarea id="editAddress" rows="3" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem; resize:vertical;"></textarea>
+              </div>
+              
+              <div style="margin-bottom:1.5rem;">
+                <label style="display:block; color:#fff; font-weight:500; margin-bottom:0.5rem;">Occupation</label>
+                <input type="text" id="editOccupation" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+              </div>
+            </div>
+          </form>
+          
+          <!-- Height and Weight Section -->
+          <div style="margin-top:2rem; padding-top:2rem; border-top:1px solid #4a5568;">
+            <h4 style="color:#fff; margin:0 0 1rem 0; font-size:1.2rem; font-weight:600;">Physical Characteristics</h4>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem;">
+              <!-- Height -->
+              <div>
+                <label style="display:block; color:#fff; font-weight:500; margin-bottom:0.5rem;">Height</label>
+                <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                  <button type="button" id="editHeightImperial" class="height-toggle-btn active" data-value="imperial" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-size:0.875rem; cursor:pointer;">Imperial</button>
+                  <button type="button" id="editHeightMetric" class="height-toggle-btn" data-value="metric" style="background:transparent; color:#a0aec0; border:none; padding:0.5rem 1rem; border-radius:6px; font-size:0.875rem; cursor:pointer;">Metric</button>
+                </div>
+                <div id="editHeightImperialInputs" class="edit-height-imperial" style="display:flex; gap:0.5rem;">
+                  <input type="number" id="editHeightFoot" placeholder="Feet" min="0" max="8" style="width:50%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+                  <input type="number" id="editHeightInches" placeholder="Inches" min="0" max="11" style="width:50%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+                </div>
+                <div id="editHeightMetricInputs" class="edit-height-metric" style="display:none;">
+                  <input type="number" id="editHeightCentimeters" placeholder="Centimeters" min="0" max="300" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+                </div>
+              </div>
+              
+              <!-- Weight -->
+              <div>
+                <label style="display:block; color:#fff; font-weight:500; margin-bottom:0.5rem;">Weight</label>
+                <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                  <button type="button" id="editWeightImperial" class="weight-toggle-btn" data-value="imperial" style="background:transparent; color:#a0aec0; border:none; padding:0.5rem 1rem; border-radius:6px; font-size:0.875rem; cursor:pointer;">Lbs</button>
+                  <button type="button" id="editWeightMetric" class="weight-toggle-btn active" data-value="metric" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; padding:0.5rem 1rem; border-radius:6px; font-size:0.875rem; cursor:pointer;">Kg</button>
+                </div>
+                <div id="editWeightImperialInputs" class="edit-weight-imperial" style="display: none;">
+                  <input type="number" id="editWeightPounds" placeholder="Pounds" min="0" max="1000" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+                </div>
+                <div id="editWeightMetricInputs" class="edit-weight-metric" style="display: block;">
+                  <input type="number" id="editWeightKilos" placeholder="Kilograms" min="0" max="500" style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:8px; color:#fff; font-size:1rem;">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Status Checkboxes -->
+          <div style="margin-top:2rem; padding-top:2rem; border-top:1px solid #4a5568;">
+            <h4 style="color:#fff; margin:0 0 1rem 0; font-size:1.2rem; font-weight:600;">Status Information</h4>
+            <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:1rem;">
+              <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; cursor:pointer;">
+                <input type="checkbox" id="editOrganDonor" style="width:1.2rem; height:1.2rem;">
+                <span>Organ Donor</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; cursor:pointer;">
+                <input type="checkbox" id="editVeteran" style="width:1.2rem; height:1.2rem;">
+                <span>Veteran</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; cursor:pointer;">
+                <input type="checkbox" id="editOnProbation" style="width:1.2rem; height:1.2rem;">
+                <span>On Probation</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; cursor:pointer;">
+                <input type="checkbox" id="editOnParole" style="width:1.2rem; height:1.2rem;">
+                <span>On Parole</span>
+              </label>
+            </div>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div style="margin-top:2rem; display:flex; justify-content:flex-end; align-items:center;">
+            <div style="display:flex; gap:1rem;">
+              <button onclick="closeEditCivilianModal()" type="button" style="background:#6b7280; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer; font-size:1rem;">
+                Cancel
+              </button>
+              <button id="editCivDetailsSaveBtn" type="button" onclick="saveCivilian()" style="background:#3b82f6; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:500; cursor:pointer; font-size:1rem;">
+                <i class="fa fa-save"></i> Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Civilians Permission Modal -->
+    <div id="noCiviliansPermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; border:1px solid #35385a; width:90%; max-width:500px; position:relative;">
+        <button onclick="closeNoCiviliansPermissionModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        <div style="padding:2rem; text-align:center;">
+          <i class="fa fa-lock" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
+          <p style="color:#a0aec0; margin:1rem 0 0 0; font-size:1rem;">You do not have permission to view this item.</p>
+          <p style="color:#f56565; margin:1rem 0 0 0; font-size:1.125rem; font-weight:500;">Request the <strong>manage members</strong> permission from an admin to view this content.</p>
+        </div>
+        <div style="margin-top:2rem; margin-bottom:2rem; text-align:center;">
+          <button onclick="closeNoCiviliansPermissionModal()" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Civilian Confirmation Modal -->
+    <div id="deleteCivilianConfirmModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; border:1px solid #35385a; width:90%; max-width:500px; position:relative;">
+        <button onclick="closeDeleteCivilianConfirmModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        <div style="padding:2rem; text-align:center;">
+          <i class="fa fa-exclamation-triangle" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0 0 1rem 0; font-size:1.5rem; font-weight:600;">Delete Civilian</h3>
+          <p style="color:#a0aec0; margin:0 0 1rem 0; font-size:1rem;">Are you sure you want to delete civilian <strong style="color:#fff;">"<span id="deleteCivilianName"></span>"</strong>?</p>
+          <p style="color:#e53e3e; margin:0 0 1.5rem 0; font-size:0.95rem; font-weight:500;">This action cannot be undone.</p>
+          <div style="display:flex; gap:0.75rem; justify-content:center; margin-top:1.5rem;">
+            <button onclick="closeDeleteCivilianConfirmModal()" style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='#7a8288'" onmouseout="this.style.background='#6b7280'">
+              Cancel
+            </button>
+            <button onclick="confirmDeleteCivilian()" style="background:#e53e3e; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
               Delete
             </button>
           </div>

@@ -1423,4 +1423,848 @@ function updateDepartmentJoinButton(departmentId, status) {
       console.error('Error deleting invite code:', error);
       showCustomToast(`Failed to delete invite code: ${error.message}`, 'error');
     }
-  }; 
+  };
+
+  // ========================================
+  // CIVILIANS MANAGEMENT FUNCTIONS
+  // ========================================
+
+  // Global variables for civilians management
+  let civiliansData = [];
+  let filteredCivilians = [];
+  let currentCiviliansPage = 1;
+  let civiliansPagination = {
+    currentPage: 1,
+    limit: 10,
+    totalCount: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false
+  };
+  let currentEditingCivilian = null;
+  let pendingDeleteCivilianId = null;
+  let pendingDeleteCivilianName = null;
+
+  // Open civilians modal
+  window.openCiviliansModal = function() {
+    document.getElementById('civiliansModal').style.display = 'flex';
+    loadCivilians();
+  };
+
+  // Close civilians modal
+  window.closeCiviliansModal = function() {
+    document.getElementById('civiliansModal').style.display = 'none';
+    // Clear search
+    const searchInput = document.getElementById('civiliansSearchInput');
+    if (searchInput) {
+      searchInput.value = '';
+    }
+    clearCiviliansSearch();
+  };
+
+  // Show no permission modal
+  window.showNoCiviliansPermissionModal = function() {
+    document.getElementById('noCiviliansPermissionModal').style.display = 'flex';
+  };
+
+  // Close no permission modal
+  window.closeNoCiviliansPermissionModal = function() {
+    document.getElementById('noCiviliansPermissionModal').style.display = 'none';
+  };
+
+  // Load civilians from API
+  async function loadCivilians(page = 1, limit = 10) {
+    try {
+      // Show loading state
+      showCiviliansLoading();
+      
+      const communityId = window?.communityId || (typeof COMMUNITY_ID !== 'undefined' ? COMMUNITY_ID : null) || (window.community && window.community._id) || null;
+      
+      if (!communityId) {
+        throw new Error('Community ID not found');
+      }
+
+      const response = await fetch(`${API_URL}/api/v2/community/${communityId}/civilians?page=${page}&limit=${limit}`, {
+        headers: {
+          'Authorization': `Bearer ${window.dbUser?.token || ''}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      civiliansData = data.civilians || [];
+      
+      // Ensure pagination data is properly set
+      const pagination = data.pagination || {};
+      civiliansPagination = {
+        currentPage: pagination.currentPage || page,
+        limit: pagination.limit || limit,
+        totalCount: pagination.totalCount || 0,
+        totalPages: pagination.totalPages || 0,
+        hasNext: pagination.hasNext !== undefined ? pagination.hasNext : (pagination.currentPage || page) < (pagination.totalPages || 0),
+        hasPrev: pagination.hasPrev !== undefined ? pagination.hasPrev : (pagination.currentPage || page) > 1
+      };
+      currentCiviliansPage = page;
+
+      // Update filtered civilians (initially same as all civilians)
+      filteredCivilians = [...civiliansData];
+      
+      // Update UI
+      updateCiviliansCount();
+      displayCivilians();
+      createCiviliansPaginationControls();
+      
+      // Hide loading state
+      hideCiviliansLoading();
+      
+    } catch (error) {
+      console.error('Error loading civilians:', error);
+      hideCiviliansLoading();
+      showCustomToast(`Failed to load civilians: ${error.message}`, 'error');
+    }
+  }
+
+  // Show loading state for civilians
+  function showCiviliansLoading() {
+    const civiliansList = document.getElementById('civiliansList');
+    if (civiliansList) {
+      // Create loading overlay
+      const loadingDiv = document.createElement('div');
+      loadingDiv.id = 'civiliansLoadingOverlay';
+      loadingDiv.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: #a0aec0;">
+          <i class="fa fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+          <div style="font-size: 1rem; font-weight: 500;">Loading civilians...</div>
+        </div>
+      `;
+      loadingDiv.style.position = 'absolute';
+      loadingDiv.style.top = '0';
+      loadingDiv.style.left = '0';
+      loadingDiv.style.right = '0';
+      loadingDiv.style.bottom = '0';
+      loadingDiv.style.background = 'rgba(30, 32, 44, 0.8)';
+      loadingDiv.style.borderRadius = '12px';
+      loadingDiv.style.zIndex = '10';
+      
+      civiliansList.style.position = 'relative';
+      civiliansList.appendChild(loadingDiv);
+    }
+  }
+
+  // Hide loading state for civilians
+  function hideCiviliansLoading() {
+    const loadingDiv = document.getElementById('civiliansLoadingOverlay');
+    if (loadingDiv) {
+      loadingDiv.remove();
+    }
+  }
+
+  // Update civilians count display
+  function updateCiviliansCount() {
+    const countElement = document.getElementById('civiliansCount');
+    const countTextElement = document.getElementById('civiliansCountText');
+    
+    const currentCount = filteredCivilians.length;
+    const totalCount = civiliansPagination?.totalCount || civiliansData.length;
+    
+    if (countElement) {
+      countElement.textContent = currentCount;
+    }
+    
+    if (countTextElement) {
+      if (currentCount === totalCount) {
+        countTextElement.textContent = totalCount === 1 ? 'civilian' : 'civilians';
+      } else {
+        countTextElement.textContent = `of ${totalCount} civilians`;
+      }
+    }
+  }
+
+  // Display civilians in the list
+  function displayCivilians() {
+    const civiliansList = document.getElementById('civiliansList');
+    if (!civiliansList) return;
+
+    if (filteredCivilians.length === 0) {
+      civiliansList.innerHTML = `
+        <div style="text-align:center; padding:3rem; color:#a0aec0;">
+          <i class="fa fa-user-slash" style="font-size:3rem; margin-bottom:1rem; opacity:0.5;"></i>
+          <p style="margin:0; font-size:1.125rem;">No civilians found</p>
+          <p style="margin:0.5rem 0 0 0; font-size:0.875rem; opacity:0.7;">Try adjusting your search or check back later</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    filteredCivilians.forEach(civilian => {
+      // Always access the nested civilian object
+      const civ = civilian.civilian;
+      
+      const approvalStatus = civ.approvalStatus || 'approved';
+      const statusColor = approvalStatus === 'approved' ? '#10b981' : 
+                         approvalStatus === 'pending' ? '#f59e0b' : '#ef4444';
+      const statusText = approvalStatus === 'approved' ? 'Approved' : 
+                        approvalStatus === 'pending' ? 'Pending' : 'Rejected';
+
+      // Use the name field directly since that's what the API provides
+      const displayName = civ.name || 'Unknown Civilian';
+      
+      // Get initials for avatar from the name
+      const nameParts = civ.name ? civ.name.split(' ') : [];
+      const initials = nameParts.length >= 2 ? 
+        `${nameParts[0].charAt(0).toUpperCase()}${nameParts[nameParts.length - 1].charAt(0).toUpperCase()}` :
+        civ.name ? civ.name.charAt(0).toUpperCase() : '?';
+
+      html += `
+        <div style="background:#1e2028; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; margin-bottom:1rem; transition:all 0.2s; hover:border-color:#10b981; cursor:pointer;" onclick="editCivilian('${civilian._id}')">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+            <div style="display:flex; align-items:center; gap:1rem;">
+              <div style="width:48px; height:48px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#10b981 0%,#059669 100%);">
+                ${civ.image ? 
+                  `<img src="${civ.image}" alt="${displayName}" style="width:100%; height:100%; object-fit:cover;" />` :
+                  `<div style="color:#fff; font-weight:600; font-size:1.125rem;">${initials}</div>`
+                }
+              </div>
+              <div>
+                <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">${displayName}</h4>
+                ${civilian.user ? `<p style="color:#68d391; margin:0.25rem 0 0 0; font-size:0.75rem; font-weight:500;">@${civilian.user.username}</p>` : ''}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <span style="background:${statusColor}; color:#fff; padding:0.25rem 0.75rem; border-radius:20px; font-size:0.75rem; font-weight:600; text-transform:uppercase;">
+                ${statusText}
+              </span>
+            </div>
+          </div>
+          
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:1rem;">
+            <div>
+              <span style="color:#a0aec0; font-size:0.75rem; text-transform:uppercase; font-weight:600;">Gender</span>
+              <p style="color:#fff; margin:0.25rem 0 0 0; font-size:0.875rem;">${civ.gender || 'N/A'}</p>
+            </div>
+            <div>
+              <span style="color:#a0aec0; font-size:0.75rem; text-transform:uppercase; font-weight:600;">Birthday</span>
+              <p style="color:#fff; margin:0.25rem 0 0 0; font-size:0.875rem;">${civ.birthday ? new Date(civ.birthday).toLocaleDateString() : 'N/A'}</p>
+            </div>
+            <div>
+              <span style="color:#a0aec0; font-size:0.75rem; text-transform:uppercase; font-weight:600;">Occupation</span>
+              <p style="color:#fff; margin:0.25rem 0 0 0; font-size:0.875rem;">${civ.occupation || 'N/A'}</p>
+            </div>
+          </div>
+          
+          <div style="display:flex; align-items:center; justify-content:space-between; padding-top:1rem; border-top:1px solid #4a5568;">
+            <div style="color:#a0aec0; font-size:0.75rem;">
+              Created: ${civ.createdAt ? new Date(civ.createdAt).toLocaleDateString() : 'N/A'}
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <button onclick="event.stopPropagation(); editCivilian('${civilian._id}')" style="background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                <i class="fa fa-edit"></i> Edit
+              </button>
+              <button onclick="event.stopPropagation(); deleteCivilian('${civilian._id}', '${displayName}')" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; font-size:0.875rem; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                <i class="fa fa-trash"></i> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    civiliansList.innerHTML = html;
+  }
+
+  // Create pagination controls
+  function createCiviliansPaginationControls() {
+    const paginationContainer = document.getElementById('civiliansPagination');
+    if (!paginationContainer) return;
+
+    const { currentPage, totalPages, hasNext, hasPrev } = civiliansPagination;
+    
+    let html = '';
+    
+    // Previous button
+    html += `
+      <button onclick="loadCivilians(${currentPage - 1})" 
+              ${!hasPrev ? 'disabled' : ''} 
+              style="background:${hasPrev ? '#4a5568' : '#2d3748'}; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-size:1rem; cursor:${hasPrev ? 'pointer' : 'not-allowed'}; opacity:${hasPrev ? '1' : '0.5'}; min-width:44px; min-height:44px;">
+        <i class="fa fa-chevron-left"></i> Previous
+      </button>
+    `;
+    
+    // Page numbers
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+      html += `
+        <button onclick="loadCivilians(${i})" 
+                style="background:${i === currentPage ? '#3b82f6' : '#4a5568'}; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-size:1rem; cursor:pointer; min-width:44px; min-height:44px;">
+          ${i}
+        </button>
+      `;
+    }
+    
+    // Next button
+    html += `
+      <button onclick="loadCivilians(${currentPage + 1})" 
+              ${!hasNext ? 'disabled' : ''} 
+              style="background:${hasNext ? '#4a5568' : '#2d3748'}; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-size:1rem; cursor:${hasNext ? 'pointer' : 'not-allowed'}; opacity:${hasNext ? '1' : '0.5'}; min-width:44px; min-height:44px;">
+        Next <i class="fa fa-chevron-right"></i>
+      </button>
+    `;
+    
+    paginationContainer.innerHTML = html;
+  }
+
+  // Search civilians
+  window.searchCivilians = function(query) {
+    const clearBtn = document.getElementById('civiliansSearchClear');
+    
+    if (query.trim()) {
+      clearBtn.style.display = 'block';
+      filteredCivilians = civiliansData.filter(civilian => {
+        // Always access the nested civilian object
+        const civ = civilian.civilian;
+        const username = civilian.user ? civilian.user.username : '';
+        const searchText = `${civ.name || ''} ${username} ${civilian._id || ''}`.toLowerCase();
+        return searchText.includes(query.toLowerCase());
+      });
+    } else {
+      clearBtn.style.display = 'none';
+      filteredCivilians = [...civiliansData];
+    }
+    
+    updateCiviliansCount();
+    displayCivilians();
+  };
+
+  // Clear search
+  window.clearCiviliansSearch = function() {
+    const searchInput = document.getElementById('civiliansSearchInput');
+    const clearBtn = document.getElementById('civiliansSearchClear');
+    
+    if (searchInput) {
+      searchInput.value = '';
+    }
+    if (clearBtn) {
+      clearBtn.style.display = 'none';
+    }
+    
+    filteredCivilians = [...civiliansData];
+    updateCiviliansCount();
+    displayCivilians();
+  };
+
+  // Edit civilian
+  window.editCivilian = function(civilianId) {
+    const civilian = civiliansData.find(c => c._id === civilianId);
+    if (!civilian) {
+      showCustomToast('Civilian not found', 'error');
+      return;
+    }
+
+    currentEditingCivilian = civilian;
+    // Always access the nested civilian object
+    const civ = civilian.civilian;
+
+    // Populate form fields
+    document.getElementById('editName').value = civ.name || '';
+    document.getElementById('editBirthday').value = civ.birthday || '';
+    document.getElementById('editGender').value = civ.gender || '';
+    document.getElementById('editHairColor').value = civ.hairColor || '';
+    document.getElementById('editEyeColor').value = civ.eyeColor || '';
+    document.getElementById('editAddress').value = civ.address || '';
+    document.getElementById('editOccupation').value = civ.occupation || '';
+
+    // Set photo
+    if (civ.image) {
+      document.getElementById('editCivDetailsPhoto').src = civ.image;
+      document.getElementById('editCivDetailsPhoto').style.display = 'block';
+      document.getElementById('editCivDetailsPhotoPlaceholder').style.display = 'none';
+      document.getElementById('editCivDetailsRemovePhoto').style.display = 'inline-block';
+    } else {
+      document.getElementById('editCivDetailsPhoto').style.display = 'none';
+      document.getElementById('editCivDetailsPhotoPlaceholder').style.display = 'flex';
+      document.getElementById('editCivDetailsRemovePhoto').style.display = 'none';
+    }
+
+    // Handle checkboxes
+    document.getElementById('editOrganDonor').checked = !!civ.organDonor;
+    document.getElementById('editVeteran').checked = !!civ.veteran;
+    document.getElementById('editOnParole').checked = !!civ.onParole;
+    document.getElementById('editOnProbation').checked = !!civ.onProbation;
+
+    // Handle height classification and values - match modern dashboard format
+    const heightClassification = civ.heightClassification || 'Imperial';
+    if (heightClassification === 'Imperial') {
+      // Set imperial as active
+      const imperialBtn = document.getElementById('editHeightImperial');
+      const metricBtn = document.getElementById('editHeightMetric');
+      imperialBtn.classList.add('active');
+      imperialBtn.style.background = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
+      imperialBtn.style.color = '#fff';
+      metricBtn.classList.remove('active');
+      metricBtn.style.background = 'transparent';
+      metricBtn.style.color = '#a0aec0';
+      document.getElementById('editHeightImperialInputs').style.display = 'flex';
+      document.getElementById('editHeightMetricInputs').style.display = 'none';
+      
+      // Convert height from inches to feet and inches
+      const heightInches = parseInt(civ.height) || 0;
+      const feet = Math.floor(heightInches / 12);
+      const inches = heightInches % 12;
+      document.getElementById('editHeightFoot').value = feet;
+      document.getElementById('editHeightInches').value = inches;
+    } else {
+      // Set metric as active - single input for cm
+      const imperialBtn = document.getElementById('editHeightImperial');
+      const metricBtn = document.getElementById('editHeightMetric');
+      metricBtn.classList.add('active');
+      metricBtn.style.background = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
+      metricBtn.style.color = '#fff';
+      imperialBtn.classList.remove('active');
+      imperialBtn.style.background = 'transparent';
+      imperialBtn.style.color = '#a0aec0';
+      document.getElementById('editHeightImperialInputs').style.display = 'none';
+      document.getElementById('editHeightMetricInputs').style.display = 'block';
+      document.getElementById('editHeightCentimeters').value = civ.height || '';
+    }
+
+    // Handle weight classification and values - default to kg, match modern dashboard format
+    const weightClassification = civ.weightClassification || 'kg';
+    if (weightClassification === 'lbs') {
+      // Set imperial as active
+      const imperialBtn = document.getElementById('editWeightImperial');
+      const metricBtn = document.getElementById('editWeightMetric');
+      imperialBtn.classList.add('active');
+      imperialBtn.style.background = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
+      imperialBtn.style.color = '#fff';
+      metricBtn.classList.remove('active');
+      metricBtn.style.background = 'transparent';
+      metricBtn.style.color = '#a0aec0';
+      document.getElementById('editWeightImperialInputs').style.display = 'block';
+      document.getElementById('editWeightMetricInputs').style.display = 'none';
+      document.getElementById('editWeightPounds').value = civ.weight || '';
+    } else {
+      // Set metric as active - default to kg
+      const imperialBtn = document.getElementById('editWeightImperial');
+      const metricBtn = document.getElementById('editWeightMetric');
+      metricBtn.classList.add('active');
+      metricBtn.style.background = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
+      metricBtn.style.color = '#fff';
+      imperialBtn.classList.remove('active');
+      imperialBtn.style.background = 'transparent';
+      imperialBtn.style.color = '#a0aec0';
+      document.getElementById('editWeightImperialInputs').style.display = 'none';
+      document.getElementById('editWeightMetricInputs').style.display = 'block';
+      document.getElementById('editWeightKilos').value = civ.weight || '';
+    }
+
+    // Show edit modal
+    document.getElementById('editCivilianModal').style.display = 'flex';
+    
+    // Setup event listeners for the modal (in case they weren't set up yet)
+    setupEditModalEventListeners();
+  };
+
+  // Close edit civilian modal
+  window.closeEditCivilianModal = function() {
+    document.getElementById('editCivilianModal').style.display = 'none';
+    // Don't clear currentEditingCivilian here - it might be needed for deletion
+  };
+
+  // Save civilian changes
+  window.saveCivilian = async function() {
+    if (!currentEditingCivilian) {
+      showCustomToast('No civilian selected for editing', 'error');
+      return;
+    }
+
+    try {
+      // Calculate height based on classification - match modern dashboard format
+      let height, heightClassification;
+      if (document.getElementById('editHeightImperial').classList.contains('active')) {
+        const feet = parseInt(document.getElementById('editHeightFoot').value) || 0;
+        const inches = parseInt(document.getElementById('editHeightInches').value) || 0;
+        height = (feet * 12 + inches).toString();
+        heightClassification = 'Imperial';
+      } else {
+        height = document.getElementById('editHeightCentimeters').value;
+        heightClassification = 'Metric';
+      }
+
+      // Calculate weight based on classification - match modern dashboard format
+      let weight, weightClassification;
+      if (document.getElementById('editWeightImperial').classList.contains('active')) {
+        weight = document.getElementById('editWeightPounds').value;
+        weightClassification = 'lbs';
+      } else {
+        weight = document.getElementById('editWeightKilos').value;
+        weightClassification = 'kg';
+      }
+
+      // Handle photo - use uploaded URL if available, empty string if removed, otherwise keep existing
+      let imageUrl = currentEditingCivilian.civilian.image; // Keep existing image by default
+      
+      if (window.currentEditPhotoUrl !== undefined) {
+        imageUrl = window.currentEditPhotoUrl; // This will be the new URL or empty string for removal
+      }
+
+      // Match modern dashboard API format
+      const formData = {
+        name: document.getElementById('editName').value.trim(),
+        birthday: document.getElementById('editBirthday').value,
+        address: document.getElementById('editAddress').value.trim() || undefined,
+        occupation: document.getElementById('editOccupation').value.trim() || undefined,
+        gender: document.getElementById('editGender').value,
+        height: height,
+        heightClassification: heightClassification,
+        weight: weight,
+        weightClassification: weightClassification,
+        eyeColor: document.getElementById('editEyeColor').value.trim() || undefined,
+        hairColor: document.getElementById('editHairColor').value.trim() || undefined,
+        organDonor: document.getElementById('editOrganDonor').checked,
+        veteran: document.getElementById('editVeteran').checked,
+        onParole: document.getElementById('editOnParole').checked,
+        onProbation: document.getElementById('editOnProbation').checked,
+        image: imageUrl,
+        userID: window.dbUser?._id,
+        activeCommunityID: window.communityId
+      };
+
+      // Validate required fields
+      if (!formData.name) {
+        showCustomToast('Name is required', 'error');
+        return;
+      }
+      
+      if (!formData.birthday) {
+        showCustomToast('Date of birth is required', 'error');
+        return;
+      }
+
+      // Make API call to update civilian - match modern dashboard format
+      const response = await fetch(`${API_URL}/api/v1/civilian/${currentEditingCivilian._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${window.dbUser?.token || ''}`
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const updatedCivilian = await response.json();
+      
+      // Clear the photo URL after successful save
+      window.currentEditPhotoUrl = null;
+      
+      showCustomToast('Civilian updated successfully', 'info');
+      closeEditCivilianModal();
+      loadCivilians(currentCiviliansPage);
+      
+    } catch (error) {
+      console.error('Error saving civilian:', error);
+      showCustomToast(`Failed to save civilian: ${error.message}`, 'error');
+    }
+  };
+
+  // Delete civilian
+  window.deleteCivilian = function(civilianId, civilianName) {
+    pendingDeleteCivilianId = civilianId;
+    pendingDeleteCivilianName = civilianName;
+    
+    document.getElementById('deleteCivilianName').textContent = civilianName;
+    document.getElementById('deleteCivilianConfirmModal').style.display = 'flex';
+  };
+
+  // Close delete confirmation modal
+  window.closeDeleteCivilianConfirmModal = function() {
+    document.getElementById('deleteCivilianConfirmModal').style.display = 'none';
+    pendingDeleteCivilianId = null;
+    pendingDeleteCivilianName = null;
+  };
+
+
+  // Confirm delete civilian
+  window.confirmDeleteCivilian = async function() {
+    if (!pendingDeleteCivilianId) {
+      showCustomToast('No civilian selected for deletion', 'error');
+      return;
+    }
+
+    try {
+      const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+      const response = await fetch(`${apiUrl}/api/v1/civilian/${pendingDeleteCivilianId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${window.dbUser?.token || ''}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      showCustomToast(`Civilian "${pendingDeleteCivilianName}" deleted successfully`, 'info');
+      closeDeleteCivilianConfirmModal();
+      
+      // Reload civilians to update the list
+      loadCivilians(currentCiviliansPage);
+      
+    } catch (error) {
+      console.error('Error deleting civilian:', error);
+      showCustomToast(`Failed to delete civilian: ${error.message}`, 'error');
+    }
+  };
+
+  // Toggle height classification inputs - match modern dashboard behavior
+  window.toggleHeightInputs = function(button) {
+    // Wait a bit to ensure modal is fully loaded
+    setTimeout(() => {
+      const imperialBtn = document.getElementById('editHeightImperial');
+      const metricBtn = document.getElementById('editHeightMetric');
+      const imperialInputs = document.getElementById('editHeightImperialInputs');
+      const metricInputs = document.getElementById('editHeightMetricInputs');
+      
+      if (!imperialBtn || !metricBtn || !imperialInputs || !metricInputs) {
+        console.error('Height toggle elements not found');
+        return;
+      }
+      
+      if (button === imperialBtn || button.id === 'editHeightImperial') {
+        // Set imperial as active
+        imperialBtn.classList.add('active');
+        imperialBtn.style.background = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
+        imperialBtn.style.color = '#fff';
+        metricBtn.classList.remove('active');
+        metricBtn.style.background = 'transparent';
+        metricBtn.style.color = '#a0aec0';
+        imperialInputs.style.display = 'flex';
+        metricInputs.style.display = 'none';
+      } else {
+        // Set metric as active - single input for cm
+        metricBtn.classList.add('active');
+        metricBtn.style.background = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
+        metricBtn.style.color = '#fff';
+        imperialBtn.classList.remove('active');
+        imperialBtn.style.background = 'transparent';
+        imperialBtn.style.color = '#a0aec0';
+        imperialInputs.style.display = 'none';
+        metricInputs.style.display = 'block';
+      }
+    }, 10);
+  };
+
+  // Toggle weight classification inputs - default to kg, match modern dashboard behavior
+  window.toggleWeightInputs = function(button) {
+    // Wait a bit to ensure modal is fully loaded
+    setTimeout(() => {
+      const imperialBtn = document.getElementById('editWeightImperial');
+      const metricBtn = document.getElementById('editWeightMetric');
+      const imperialInputs = document.getElementById('editWeightImperialInputs');
+      const metricInputs = document.getElementById('editWeightMetricInputs');
+      
+      if (!imperialBtn || !metricBtn || !imperialInputs || !metricInputs) {
+        console.error('Weight toggle elements not found');
+        return;
+      }
+      
+      if (button === imperialBtn || button.id === 'editWeightImperial') {
+        // Set imperial as active
+        imperialBtn.classList.add('active');
+        imperialBtn.style.background = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
+        imperialBtn.style.color = '#fff';
+        metricBtn.classList.remove('active');
+        metricBtn.style.background = 'transparent';
+        metricBtn.style.color = '#a0aec0';
+        imperialInputs.style.display = 'block';
+        metricInputs.style.display = 'none';
+      } else {
+        // Set metric as active - default to kg
+        metricBtn.classList.add('active');
+        metricBtn.style.background = 'linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
+        metricBtn.style.color = '#fff';
+        imperialBtn.classList.remove('active');
+        imperialBtn.style.background = 'transparent';
+        imperialBtn.style.color = '#a0aec0';
+        imperialInputs.style.display = 'none';
+        metricInputs.style.display = 'block';
+      }
+    }, 10);
+  };
+
+  // Setup event listeners for edit modal toggles
+  function setupEditModalEventListeners() {
+    // Height toggles
+    const heightImperialBtn = document.getElementById('editHeightImperial');
+    const heightMetricBtn = document.getElementById('editHeightMetric');
+    
+    if (heightImperialBtn) {
+      heightImperialBtn.addEventListener('click', function() {
+        toggleHeightInputs(this);
+      });
+    }
+    
+    if (heightMetricBtn) {
+      heightMetricBtn.addEventListener('click', function() {
+        toggleHeightInputs(this);
+      });
+    }
+    
+    // Weight toggles
+    const weightImperialBtn = document.getElementById('editWeightImperial');
+    const weightMetricBtn = document.getElementById('editWeightMetric');
+    
+    if (weightImperialBtn) {
+      weightImperialBtn.addEventListener('click', function() {
+        toggleWeightInputs(this);
+      });
+    }
+    
+    if (weightMetricBtn) {
+      weightMetricBtn.addEventListener('click', function() {
+        toggleWeightInputs(this);
+      });
+    }
+  }
+
+  // Photo upload handlers for edit modal
+  window.handleEditCivilianPhotoUpload = function(event) {
+    const file = event.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        showCustomToast('Please select a valid image file', 'error');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showCustomToast('Image size must be less than 5MB', 'error');
+        return;
+      }
+      
+      // Show loading state
+      showPhotoUploadLoading();
+      
+      // Upload immediately using the cloudinary helper
+      uploadPhotoToCloudinary(file);
+    }
+  };
+
+  // Show loading state for photo upload
+  function showPhotoUploadLoading() {
+    const photoContainer = document.querySelector('#editCivDetailsPhoto').parentElement;
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = 'photoUploadLoading';
+    loadingDiv.innerHTML = `
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #fff; background: rgba(0,0,0,0.8); padding: 1rem; border-radius: 8px;">
+        <i class="fa fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 0.5rem;"></i>
+        <div>Uploading photo...</div>
+      </div>
+    `;
+    loadingDiv.style.position = 'absolute';
+    loadingDiv.style.top = '0';
+    loadingDiv.style.left = '0';
+    loadingDiv.style.right = '0';
+    loadingDiv.style.bottom = '0';
+    loadingDiv.style.borderRadius = '50%';
+    loadingDiv.style.background = 'rgba(0,0,0,0.7)';
+    loadingDiv.style.display = 'flex';
+    loadingDiv.style.alignItems = 'center';
+    loadingDiv.style.justifyContent = 'center';
+    photoContainer.style.position = 'relative';
+    photoContainer.appendChild(loadingDiv);
+  }
+
+  // Hide loading state
+  function hidePhotoUploadLoading() {
+    const loadingDiv = document.getElementById('photoUploadLoading');
+    if (loadingDiv) {
+      loadingDiv.remove();
+    }
+  }
+
+  // Show success message
+  function showPhotoUploadSuccess() {
+    const photoContainer = document.querySelector('#editCivDetailsPhoto').parentElement;
+    const successDiv = document.createElement('div');
+    successDiv.id = 'photoUploadSuccess';
+    successDiv.innerHTML = `
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #fff; background: rgba(34, 197, 94, 0.9); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.875rem;">
+        <i class="fa fa-check" style="margin-right: 0.5rem;"></i>
+        Photo uploaded!
+      </div>
+    `;
+    successDiv.style.position = 'absolute';
+    successDiv.style.top = '0';
+    successDiv.style.left = '0';
+    successDiv.style.right = '0';
+    successDiv.style.bottom = '0';
+    successDiv.style.borderRadius = '50%';
+    successDiv.style.display = 'flex';
+    successDiv.style.alignItems = 'center';
+    successDiv.style.justifyContent = 'center';
+    photoContainer.style.position = 'relative';
+    photoContainer.appendChild(successDiv);
+    
+    // Remove success message after 2 seconds
+    setTimeout(() => {
+      if (successDiv.parentElement) {
+        successDiv.remove();
+      }
+    }, 2000);
+  }
+
+  // Upload photo using cloudinary helper
+  async function uploadPhotoToCloudinary(file) {
+    try {
+      // Use the existing cloudinary upload helper
+      const imageUrl = await window.uploadToCloudinary(file, 'civilians');
+      
+      // Store the URL for saving
+      window.currentEditPhotoUrl = imageUrl;
+      
+      // Update the display
+      document.getElementById('editCivDetailsPhoto').src = imageUrl;
+      document.getElementById('editCivDetailsPhoto').style.display = 'block';
+      document.getElementById('editCivDetailsPhotoPlaceholder').style.display = 'none';
+      document.getElementById('editCivDetailsRemovePhoto').style.display = 'inline-block';
+      
+      // Hide loading and show success
+      hidePhotoUploadLoading();
+      showPhotoUploadSuccess();
+      
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      hidePhotoUploadLoading();
+      showCustomToast('Photo upload failed: ' + error.message, 'error');
+    }
+  }
+
+  window.removeEditCivilianPhoto = function() {
+    // Set image to empty string for removal
+    window.currentEditPhotoUrl = '';
+    
+    // Reset the display
+    document.getElementById('editCivDetailsPhoto').src = '';
+    document.getElementById('editCivDetailsPhoto').style.display = 'none';
+    document.getElementById('editCivDetailsPhotoPlaceholder').style.display = 'flex';
+    document.getElementById('editCivDetailsRemovePhoto').style.display = 'none';
+    document.getElementById('editCivDetailsPhotoInput').value = '';
+  };
+
+  // Initialize event listeners when DOM is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    setupEditModalEventListeners();
+  }); 
