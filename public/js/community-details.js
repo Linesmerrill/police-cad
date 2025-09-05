@@ -1262,7 +1262,7 @@ function updateDepartmentJoinButton(departmentId, status) {
                 </div>
                 <div>
                   <span style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.25rem;">Expires:</span> 
-                  <span style="font-size:1rem;">${expiresAt ? expiresAt.toLocaleDateString() : 'Never'}</span>
+                  <span style="font-size:1rem;">${expiresAt ? expiresAt.toLocaleString() : 'Never'}</span>
                 </div>
                 <div>
                   <span style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.25rem;">Created:</span> 
