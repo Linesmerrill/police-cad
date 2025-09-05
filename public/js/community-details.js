@@ -893,4 +893,534 @@ function updateDepartmentJoinButton(departmentId, status) {
   
   window.showComingSoon = function() {
     alert('This feature is coming soon!');
+  };
+
+  // ===== INVITE CODES MANAGEMENT =====
+  
+  // Global variables for invite codes
+  let inviteCodesList = [];
+  const API_URL = window.API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+  
+  // Open invite codes modal
+  window.openInviteCodesModal = function() {
+    const modal = document.getElementById('inviteCodesModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+      
+      // Auto-generate and fill invite code (like mobile app)
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      document.getElementById('inviteCodeInput').value = code;
+      
+      loadInviteCodes();
+    }
+  };
+  
+  // Close invite codes modal
+  window.closeInviteCodesModal = function() {
+    const modal = document.getElementById('inviteCodesModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+    }
+  };
+  
+  // Show no permission modal
+  window.showNoInviteCodesPermissionModal = function() {
+    const modal = document.getElementById('noInviteCodesPermissionModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+    }
+  };
+  
+  // Close no permission modal
+  window.closeNoInviteCodesPermissionModal = function() {
+    const modal = document.getElementById('noInviteCodesPermissionModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+    }
+  };
+
+  // Show invite code success modal
+  window.showInviteCodeSuccessModal = function(code, link) {
+    const modal = document.getElementById('inviteCodeSuccessModal');
+    if (modal) {
+      // Update the code and link in the modal
+      document.getElementById('successCode').textContent = code;
+      document.getElementById('successLink').textContent = link;
+      
+      // Show the modal
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+    }
+  };
+
+  // Close invite code success modal
+  window.closeInviteCodeSuccessModal = function() {
+    const modal = document.getElementById('inviteCodeSuccessModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+    }
+    
+    // Always generate a new code when closing the success modal
+    const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    document.getElementById('inviteCodeInput').value = newCode;
+  };
+
+  // Copy success code to clipboard
+  window.copySuccessCode = function() {
+    const code = document.getElementById('successCode').textContent;
+    const button = event.target.closest('button');
+    
+    // Try modern clipboard API first
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(code).then(() => {
+        showCopyFeedback(button);
+      }).catch(err => {
+        console.error('Clipboard API failed:', err);
+        fallbackCopyToClipboard(code, button);
+      });
+    } else {
+      // Fallback for older browsers or non-secure contexts
+      fallbackCopyToClipboard(code, button);
+    }
+  };
+
+  // Copy success link to clipboard
+  window.copySuccessLink = function() {
+    const link = document.getElementById('successLink').textContent;
+    const button = event.target.closest('button');
+    
+    // Try modern clipboard API first
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(link).then(() => {
+        showCopyFeedback(button);
+      }).catch(err => {
+        console.error('Clipboard API failed:', err);
+        fallbackCopyToClipboard(link, button);
+      });
+    } else {
+      // Fallback for older browsers or non-secure contexts
+      fallbackCopyToClipboard(link, button);
+    }
+  };
+
+  // Show copy feedback animation
+  function showCopyFeedback(button) {
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fa fa-check"></i>';
+    button.style.background = '#48bb78';
+    setTimeout(() => {
+      button.innerHTML = originalText;
+      button.style.background = '#4a5568';
+    }, 1000);
+  }
+
+  // Fallback copy method for older browsers
+  function fallbackCopyToClipboard(text, button) {
+    try {
+      // Create a temporary textarea element
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      // Try to copy using execCommand
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        showCopyFeedback(button);
+      } else {
+        throw new Error('execCommand failed');
+      }
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+      // Show a custom toast instead of browser alert
+      showCustomToast('Unable to copy automatically. Please select and copy manually.', 'warning');
+    }
+  }
+
+  // Custom toast notification function
+  function showCustomToast(message, type = 'info') {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${type === 'warning' ? '#f59e0b' : type === 'error' ? '#ef4444' : '#3b82f6'};
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      z-index: 10000;
+      max-width: 300px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.3s ease;
+    `;
+    toast.textContent = message;
+    
+    // Add to page
+    document.body.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 4000);
+  }
+
+  // Create another invite code
+  window.createAnotherCode = function() {
+    // Close success modal
+    closeInviteCodeSuccessModal();
+    
+    // Reset form to defaults
+    document.getElementById('expireAfterSelect').value = '7d';
+    document.getElementById('maxUsesSelect').value = '0';
+    
+    // Note: closeInviteCodeSuccessModal() already generates a new code
+  };
+  
+  // Generate random invite code (matches mobile app logic)
+  window.generateInviteCode = function() {
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    document.getElementById('inviteCodeInput').value = code;
+    return code;
+  };
+  
+  // Create invite code (matches mobile app logic)
+  window.createInviteCode = async function() {
+    let code = document.getElementById('inviteCodeInput').value.trim();
+    const expireAfter = document.getElementById('expireAfterSelect').value;
+    const maxUsesValue = document.getElementById('maxUsesSelect').value;
+    
+    // Generate code if empty (matches mobile app behavior)
+    if (!code) {
+      code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      document.getElementById('inviteCodeInput').value = code;
+    }
+    
+    // Calculate expiration date (matches mobile app logic)
+    let expiresAt = null;
+    if (expireAfter !== 'never') {
+      const now = new Date();
+      const timeMap = {
+        '30m': 30 * 60 * 1000,
+        '1h': 60 * 60 * 1000,
+        '6h': 6 * 60 * 60 * 1000,
+        '12h': 12 * 60 * 60 * 1000,
+        '1d': 24 * 60 * 60 * 1000,
+        '7d': 7 * 24 * 60 * 60 * 1000
+      };
+      
+      if (timeMap[expireAfter]) {
+        expiresAt = new Date(now.getTime() + timeMap[expireAfter]).toISOString();
+      }
+    }
+    
+    // Handle max uses (API expects 0 for "No limit")
+    const maxUses = maxUsesValue === '0' ? 0 : parseInt(maxUsesValue);
+    
+    // Get community ID from EJS globals (same as other functions in this file)
+    const communityId = window?.communityId || (typeof COMMUNITY_ID !== 'undefined' ? COMMUNITY_ID : null) || (window.community && window.community._id) || null;
+    const userId = window.dbUser?._id;
+    
+    if (!communityId || !userId) {
+      alert('Error: Missing community or user information');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/add-invite-code`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${window.dbUser?.token || ''}`
+        },
+        body: JSON.stringify({
+          code: code,
+          maxUses: maxUses,
+          expiresAt: expiresAt,
+          createdBy: userId
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create invite code');
+      }
+      
+      const data = await response.json();
+      
+      // Generate TinyURL link (matches mobile app)
+      const baseUrl = window.location.origin;
+      const inviteUrl = `${baseUrl}/join/${code}`;
+      
+      // Show success with custom modal
+      const link = `https://tinyurl.com/linescad/${code}`;
+      showInviteCodeSuccessModal(code, link);
+      
+      // Reload invite codes list
+      loadInviteCodes();
+      
+    } catch (error) {
+      console.error('Error creating invite code:', error);
+      alert('Error creating invite code: ' + error.message);
+    }
+  };
+  
+  // Load existing invite codes with pagination
+  async function loadInviteCodes(page = 1, limit = 10) {
+    const loadingDiv = document.getElementById('inviteCodesLoading');
+    const emptyDiv = document.getElementById('inviteCodesEmpty');
+    const listDiv = document.getElementById('inviteCodesList');
+    
+    // Show loading state
+    loadingDiv.style.display = 'block';
+    emptyDiv.style.display = 'none';
+    listDiv.style.display = 'none';
+    
+    try {
+      const response = await fetch(`${API_URL}/api/v2/community/${communityId}/invite-codes?page=${page}&limit=${limit}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${window.dbUser?.token || ''}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        displayInviteCodes(data.inviteCodes, data.pagination);
+      } else {
+        throw new Error('Failed to load invite codes');
+      }
+    } catch (error) {
+      console.error('Error loading invite codes:', error);
+      loadingDiv.style.display = 'none';
+      emptyDiv.style.display = 'block';
+      listDiv.style.display = 'none';
+    }
+  }
+
+  // Display invite codes with pagination
+  function displayInviteCodes(inviteCodes, pagination) {
+    const loadingDiv = document.getElementById('inviteCodesLoading');
+    const emptyDiv = document.getElementById('inviteCodesEmpty');
+    const listDiv = document.getElementById('inviteCodesList');
+    
+    if (inviteCodes.length === 0) {
+      loadingDiv.style.display = 'none';
+      emptyDiv.style.display = 'block';
+      listDiv.style.display = 'none';
+      return;
+    }
+    
+    // Create invite codes list
+    let html = '<div style="space-y:0.75rem;">';
+    
+    inviteCodes.forEach(inviteCode => {
+      const expiresAt = inviteCode.expiresAt ? new Date(inviteCode.expiresAt) : null;
+      const isExpired = expiresAt && expiresAt < new Date();
+      const isUnlimited = inviteCode.maxUses === 0;
+      const remainingUses = isUnlimited ? '∞' : inviteCode.remainingUses || 0;
+      
+      html += `
+        <div style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.25rem; margin-bottom:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:1rem; gap:1rem;">
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem; flex-wrap:wrap;">
+                <code style="background:#1e2028; color:#68d391; padding:0.5rem 0.75rem; border-radius:6px; font-family:monospace; font-size:1rem; font-weight:600; border:1px solid #4a5568;">${inviteCode.code}</code>
+                ${isExpired ? '<span style="background:#e53e3e; color:#fff; padding:0.25rem 0.75rem; border-radius:6px; font-size:0.875rem; font-weight:500;">EXPIRED</span>' : ''}
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; font-size:0.95rem; color:#a0aec0; line-height:1.5;">
+                <div>
+                  <span style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.25rem;">Uses:</span> 
+                  <span style="font-size:1rem;">${remainingUses}${isUnlimited ? '' : ` / ${inviteCode.maxUses}`}</span>
+                </div>
+                <div>
+                  <span style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.25rem;">Expires:</span> 
+                  <span style="font-size:1rem;">${expiresAt ? expiresAt.toLocaleDateString() : 'Never'}</span>
+                </div>
+                <div>
+                  <span style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.25rem;">Created:</span> 
+                  <span style="font-size:1rem;">${new Date(inviteCode.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div>
+                  <span style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.25rem;">By:</span> 
+                  <span style="font-size:1rem;">${inviteCode.createdByUser?.username || 'Unknown'}</span>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; gap:0.75rem; margin-left:1rem; flex-shrink:0;">
+              <button onclick="copyInviteLink('${inviteCode.code}')" style="background:#4a5568; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:1rem; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;" title="Copy Link">
+                <i class="fa fa-copy"></i>
+              </button>
+              <button onclick="deleteInviteCode('${inviteCode._id}', '${inviteCode.code}')" style="background:#e53e3e; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:1rem; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;" title="Delete Code">
+                <i class="fa fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    html += '</div>';
+    
+    // Add pagination if needed
+    if (pagination.totalPages > 1) {
+      html += createPaginationControls(pagination);
+    }
+    
+    listDiv.innerHTML = html;
+    loadingDiv.style.display = 'none';
+    emptyDiv.style.display = 'none';
+    listDiv.style.display = 'block';
+  }
+
+  // Create pagination controls
+  function createPaginationControls(pagination) {
+    let html = '<div style="display:flex; justify-content:center; align-items:center; gap:0.75rem; margin-top:1.5rem; padding-top:1rem; border-top:1px solid #4a5568; flex-wrap:wrap;">';
+    
+    // Previous button
+    if (pagination.hasPrevPage) {
+      html += `<button onclick="loadInviteCodes(${pagination.currentPage - 1})" style="background:#4a5568; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; cursor:pointer; font-size:1rem; min-height:44px; display:flex; align-items:center; gap:0.5rem;">
+        <i class="fa fa-chevron-left"></i> Previous
+      </button>`;
+    } else {
+      html += `<button disabled style="background:#2d3748; color:#6b7280; border:none; border-radius:8px; padding:0.75rem 1rem; cursor:not-allowed; font-size:1rem; min-height:44px; display:flex; align-items:center; gap:0.5rem;">
+        <i class="fa fa-chevron-left"></i> Previous
+      </button>`;
+    }
+    
+    // Page numbers
+    const startPage = Math.max(1, pagination.currentPage - 2);
+    const endPage = Math.min(pagination.totalPages, pagination.currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+      if (i === pagination.currentPage) {
+        html += `<button style="background:#667eea; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-size:1rem; font-weight:600; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;">${i}</button>`;
+      } else {
+        html += `<button onclick="loadInviteCodes(${i})" style="background:#4a5568; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; cursor:pointer; font-size:1rem; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;">${i}</button>`;
+      }
+    }
+    
+    // Next button
+    if (pagination.hasNextPage) {
+      html += `<button onclick="loadInviteCodes(${pagination.currentPage + 1})" style="background:#4a5568; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; cursor:pointer; font-size:1rem; min-height:44px; display:flex; align-items:center; gap:0.5rem;">
+        Next <i class="fa fa-chevron-right"></i>
+      </button>`;
+    } else {
+      html += `<button disabled style="background:#2d3748; color:#6b7280; border:none; border-radius:8px; padding:0.75rem 1rem; cursor:not-allowed; font-size:1rem; min-height:44px; display:flex; align-items:center; gap:0.5rem;">
+        Next <i class="fa fa-chevron-right"></i>
+      </button>`;
+    }
+    
+    html += '</div>';
+    return html;
+  }
+  
+  // Copy invite link to clipboard (matches mobile app TinyURL pattern)
+  window.copyInviteLink = function(code) {
+    // Use the same TinyURL pattern as mobile app
+    const link = `https://tinyurl.com/linescad/${code}`;
+    const button = event.target.closest('button');
+    
+    // Try modern clipboard API first
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(link).then(() => {
+        showCopyFeedback(button);
+      }).catch(err => {
+        console.error('Clipboard API failed:', err);
+        fallbackCopyToClipboard(link, button);
+      });
+    } else {
+      // Fallback for older browsers or non-secure contexts
+      fallbackCopyToClipboard(link, button);
+    }
+  };
+  
+  // Global variables for delete confirmation
+  let pendingDeleteId = null;
+  let pendingDeleteCode = null;
+
+  // Show delete confirmation modal
+  window.deleteInviteCode = function(inviteCodeId, code) {
+    pendingDeleteId = inviteCodeId;
+    pendingDeleteCode = code;
+    
+    // Update modal content
+    document.getElementById('deleteCodeName').textContent = code;
+    
+    // Show modal
+    const modal = document.getElementById('deleteConfirmModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+    }
+  };
+
+  // Close delete confirmation modal
+  window.closeDeleteConfirmModal = function() {
+    const modal = document.getElementById('deleteConfirmModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+    }
+    // Clear pending delete data
+    pendingDeleteId = null;
+    pendingDeleteCode = null;
+  };
+
+  // Confirm delete invite code
+  window.confirmDeleteInviteCode = async function() {
+    if (!pendingDeleteId || !pendingDeleteCode) {
+      console.error('No pending delete data');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/api/v1/invite-code/${pendingDeleteId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${window.dbUser?.token || ''}`
+        }
+      });
+      
+      if (response.ok) {
+        showCustomToast(`Invite code "${pendingDeleteCode}" deleted successfully`, 'info');
+        // Close modal
+        closeDeleteConfirmModal();
+        // Reload the invite codes list
+        loadInviteCodes();
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete invite code');
+      }
+    } catch (error) {
+      console.error('Error deleting invite code:', error);
+      showCustomToast(`Failed to delete invite code: ${error.message}`, 'error');
+    }
   }; 

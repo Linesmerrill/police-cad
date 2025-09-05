@@ -956,11 +956,18 @@
                   });
                 }
               %>
-              <!-- Invite - Coming soon -->
-              <button onclick="showComingSoonModal('Invite Members', 'This feature will allow you to invite new members to your community. Coming soon!')" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
-                <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
-                <span class="text-lg font-medium">Invite</span>
-              </button>
+              <!-- Invite - Now enabled with invite codes -->
+              <% if (canManageMembers) { %>
+                <button onclick="openInviteCodesModal()" class="flex flex-col items-center p-6 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-colors cursor-pointer">
+                  <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
+                  <span class="text-lg font-medium">Invite</span>
+                </button>
+              <% } else { %>
+                <button onclick="showNoInviteCodesPermissionModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
+                  <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
+                  <span class="text-lg font-medium">Invite</span>
+                </button>
+              <% } %>
             <% } else { %>
               <!-- Non-members see disabled buttons with member-only modal -->
               <button onclick="showComingSoonModal('Promote Community', 'This feature will allow you to promote your community to reach more members. Coming soon!')" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
@@ -973,7 +980,7 @@
                 <span class="text-lg font-medium">Settings</span>
               </button>
               
-              <button onclick="showComingSoonModal('Invite Members', 'This feature will allow you to invite new members to your community. Coming soon!')" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
+              <button onclick="showNoInviteCodesPermissionModal()" class="flex flex-col items-center p-6 bg-gray-500 text-white rounded-lg opacity-60 cursor-not-allowed transition-colors">
                 <i class="fa-solid fa-user-plus w-8 h-8 mb-3 text-2xl"></i>
                 <span class="text-lg font-medium">Invite</span>
               </button>
@@ -1837,6 +1844,57 @@
                 </div>
                 <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Civilian Approvals</h5>
                 <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Review pending civilian profiles</p>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Invite Codes Management -->
+          <%
+            // Permission logic for managing invite codes (same as manage members)
+            let canManageInviteCodes = false;
+            if (userId && community.community && Array.isArray(community.community.roles)) {
+              community.community.roles.forEach(function(role) {
+                if (Array.isArray(role.members) && role.members.includes(userId)) {
+                  if (Array.isArray(role.permissions)) {
+                    role.permissions.forEach(function(perm) {
+                      if (
+                        (perm.name === "administrator" && perm.enabled === true) ||
+                        (perm.name === "manage members" && perm.enabled === true)
+                      ) {
+                        canManageInviteCodes = true;
+                      }
+                    });
+                  }
+                }
+              });
+            }
+            // Also allow community owner
+            if (community.community.ownerID === userId) {
+              canManageInviteCodes = true;
+            }
+          %>
+          
+          <% if (canManageInviteCodes) { %>
+            <!-- User has permission to manage invite codes -->
+            <div id="inviteCodesCard" onclick="openInviteCodesModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
+              <div style="text-align:center;">
+                <div style="margin-bottom:0.5rem;">
+                  <i class="fa fa-user-plus" style="font-size:2rem; color:#10b981;"></i>
+                </div>
+                <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Invite Codes</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Create & manage invite codes</p>
+              </div>
+            </div>
+          <% } else { %>
+            <!-- User doesn't have permission to manage invite codes -->
+            <div id="inviteCodesCard" onclick="showNoInviteCodesPermissionModal()" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
+              <div style="text-align:center;">
+                <div style="margin-bottom:0.5rem;">
+                  <i class="fa fa-user-plus" style="font-size:2rem; color:#6b7280;"></i>
+                </div>
+                <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">Invite Codes</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Create & manage invite codes</p>
+                <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.75rem; font-style:italic;">Permission Required</p>
               </div>
             </div>
           <% } %>
@@ -9782,5 +9840,186 @@ async function deleteEditEvent() {
         });
       });
     </script>
+
+    <!-- Invite Codes Management Modal -->
+    <div id="inviteCodesModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; border:1px solid #35385a; width:90%; max-width:800px; max-height:90vh; overflow-y:auto; position:relative;">
+        <button onclick="closeInviteCodesModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7; z-index:10;"><i class="fa fa-times"></i></button>
+        
+        <div style="padding:2rem;">
+          <!-- Header -->
+          <div style="text-align:center; margin-bottom:2rem;">
+            <i class="fa fa-user-plus" style="font-size:3rem; color:#10b981; margin-bottom:1rem;"></i>
+            <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Invite Codes</h3>
+            <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:1rem;">Create and manage invite codes for your community</p>
+          </div>
+
+          <!-- Create New Invite Code Section -->
+          <div style="background:#2d3748; border-radius:12px; padding:1.5rem; margin-bottom:2rem; border:1px solid #4a5568;">
+            <h4 style="color:#fff; margin:0 0 1rem 0; font-size:1.125rem; font-weight:600;">Create New Invite Code</h4>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+              <!-- Invite Code Input -->
+              <div>
+                <label style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.5rem;">Invite Code</label>
+                <input id="inviteCodeInput" type="text" placeholder="Auto-generated code" maxlength="20" readonly
+                       style="width:100%; height:44px; background:#1e2028; color:#f7fafc; border:1.5px solid #35385a; border-radius:8px; font-size:1rem; font-weight:500; padding-left:1rem; padding-right:1rem;">
+              </div>
+              
+              <!-- Generate Button -->
+              <div style="display:flex; align-items:end;">
+                <button onclick="generateInviteCode()" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer; width:100%;">
+                  <i class="fa fa-random"></i> Generate Random
+                </button>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+              <!-- Expire After -->
+              <div>
+                <label style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.5rem;">Expire After</label>
+                <select id="expireAfterSelect" style="width:100%; height:44px; background:#1e2028; color:#f7fafc; border:1.5px solid #35385a; border-radius:8px; font-size:1rem; font-weight:500; padding-left:1rem; padding-right:1rem;">
+                  <option value="30m">30 minutes</option>
+                  <option value="1h">1 hour</option>
+                  <option value="6h">6 hours</option>
+                  <option value="12h">12 hours</option>
+                  <option value="1d">1 day</option>
+                  <option value="7d" selected>7 days</option>
+                  <option value="never">Never</option>
+                </select>
+              </div>
+              
+              <!-- Max Number of Uses -->
+              <div>
+                <label style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.5rem;">Max Number of Uses</label>
+                <select id="maxUsesSelect" style="width:100%; height:44px; background:#1e2028; color:#f7fafc; border:1.5px solid #35385a; border-radius:8px; font-size:1rem; font-weight:500; padding-left:1rem; padding-right:1rem;">
+                  <option value="0" selected>No limit</option>
+                  <option value="1">1</option>
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Create Button -->
+            <button onclick="createInviteCode()" style="background:linear-gradient(135deg,#10b981 0%,#059669 100%); color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; width:100%; font-size:1rem;">
+              <i class="fa fa-plus"></i> Create Invite Code
+            </button>
+          </div>
+
+          <!-- Existing Invite Codes Section -->
+          <div style="background:#2d3748; border-radius:12px; padding:1.5rem; border:1px solid #4a5568;">
+            <h4 style="color:#fff; margin:0 0 1rem 0; font-size:1.125rem; font-weight:600;">Existing Invite Codes</h4>
+            
+            <!-- Loading State -->
+            <div id="inviteCodesLoading" style="text-align:center; padding:2rem; display:none;">
+              <div class="loading-spinner" style="width:40px; height:40px; border:4px solid #4a5568; border-top:4px solid #10b981; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
+              <p style="color:#a0aec0; margin:0;">Loading invite codes...</p>
+            </div>
+            
+            <!-- Empty State -->
+            <div id="inviteCodesEmpty" style="text-align:center; padding:2rem; display:none;">
+              <i class="fa fa-user-plus" style="font-size:3rem; color:#6b7280; margin-bottom:1rem;"></i>
+              <p style="color:#a0aec0; margin:0;">No invite codes created yet</p>
+            </div>
+            
+            <!-- Invite Codes List -->
+            <div id="inviteCodesList" style="display:none;">
+              <!-- Invite codes will be populated here -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Invite Codes Permission Modal -->
+    <div id="noInviteCodesPermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; border:1px solid #35385a; width:90%; max-width:500px; position:relative;">
+        <button onclick="closeNoInviteCodesPermissionModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div style="padding:2rem; text-align:center;">
+          <i class="fa fa-lock" style="font-size:3rem; color:#f56565; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">No Permission</h3>
+          <p style="color:#a0aec0; margin:1rem 0 0 0; font-size:1rem;">You do not have permission to view this item.</p>
+          <p style="color:#f56565; margin:1rem 0 0 0; font-size:1.125rem; font-weight:500;">Request the <strong>manage members</strong> permission from an admin to view this content.</p>
+        </div>
+        <div style="margin-top:2rem; margin-bottom:2rem; text-align:center;">
+          <button onclick="closeNoInviteCodesPermissionModal()" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1.125rem;">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invite Code Success Modal -->
+    <div id="inviteCodeSuccessModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; border:1px solid #35385a; width:90%; max-width:600px; position:relative;">
+        <button onclick="closeInviteCodeSuccessModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div style="padding:2rem; text-align:center;">
+          <i class="fa fa-check-circle" style="font-size:3rem; color:#48bb78; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0 0 1rem 0; font-size:1.5rem; font-weight:600;">Invite Code Created!</h3>
+          <p style="color:#a0aec0; margin:0 0 1.5rem 0; font-size:1rem;">Your invite code has been successfully created and is ready to share.</p>
+          
+          <!-- Code Display -->
+          <div style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; margin:1.5rem 0; text-align:left;">
+            <div style="margin-bottom:1rem;">
+              <label style="color:#e0e7ff; font-weight:500; font-size:0.875rem; display:block; margin-bottom:0.5rem;">Invite Code:</label>
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                <code id="successCode" style="background:#1e2028; color:#68d391; padding:0.75rem; border-radius:8px; font-family:monospace; font-size:1.125rem; flex:1; border:1px solid #4a5568;">TWGBT7</code>
+                <button onclick="copySuccessCode()" style="background:#4a5568; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:0.875rem; transition:background 0.2s;" onmouseover="this.style.background='#5a6570'" onmouseout="this.style.background='#4a5568'">
+                  <i class="fa fa-copy"></i>
+                </button>
+              </div>
+            </div>
+            <div>
+              <label style="color:#e0e7ff; font-weight:500; font-size:0.875rem; display:block; margin-bottom:0.5rem;">Share Link:</label>
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                <code id="successLink" style="background:#1e2028; color:#68d391; padding:0.75rem; border-radius:8px; font-family:monospace; font-size:0.875rem; flex:1; word-break:break-all; border:1px solid #4a5568;">https://tinyurl.com/linescad/TWGBT7</code>
+                <button onclick="copySuccessLink()" style="background:#4a5568; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:0.875rem; transition:background 0.2s;" onmouseover="this.style.background='#5a6570'" onmouseout="this.style.background='#4a5568'">
+                  <i class="fa fa-copy"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div style="display:flex; gap:0.75rem; justify-content:center; margin-top:1.5rem;">
+            <button onclick="closeInviteCodeSuccessModal()" style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='#7a8288'" onmouseout="this.style.background='#6b7280'">
+              Close
+            </button>
+            <button onclick="createAnotherCode()" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+              Create Another
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; border:1px solid #35385a; width:90%; max-width:500px; position:relative;">
+        <button onclick="closeDeleteConfirmModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div style="padding:2rem; text-align:center;">
+          <i class="fa fa-exclamation-triangle" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0 0 1rem 0; font-size:1.5rem; font-weight:600;">Delete Invite Code</h3>
+          <p style="color:#a0aec0; margin:0 0 1rem 0; font-size:1rem;">Are you sure you want to delete invite code <strong style="color:#fff;">"<span id="deleteCodeName"></span>"</strong>?</p>
+          <p style="color:#e53e3e; margin:0 0 1.5rem 0; font-size:0.95rem; font-weight:500;">This action cannot be undone.</p>
+          
+          <div style="display:flex; gap:0.75rem; justify-content:center; margin-top:1.5rem;">
+            <button onclick="closeDeleteConfirmModal()" style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='#7a8288'" onmouseout="this.style.background='#6b7280'">
+              Cancel
+            </button>
+            <button onclick="confirmDeleteInviteCode()" style="background:#e53e3e; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </body>
 </html>
