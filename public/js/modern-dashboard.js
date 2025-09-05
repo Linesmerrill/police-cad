@@ -226,7 +226,7 @@ $(document).ready(function() {
     $('#deleteAccountConfirmModalClose').click(closeDeleteAccountModal);
     
     // Account form handlers
-    $('#accountUsername').on('keyup', function(e) {
+    $('#accountUsername_2').on('keyup', function(e) {
         if(e.target.value != dbUser.user.username && e.target.value != '') {
             $('#updateUsernameBtns').show();
         } else {
@@ -234,7 +234,7 @@ $(document).ready(function() {
         }
     });
     
-    $('#accountCallSign').on('keyup', function(e) {
+    $('#accountCallSign_2').on('keyup', function(e) {
         if(e.target.value != dbUser.user.callSign && e.target.value != '') {
             $('#updateCallSignBtns').show();
         } else {
@@ -570,7 +570,17 @@ function checkComponentPermissions(communityData) {
         if (mapping.btnId) {
             const btnElement = document.getElementById(mapping.btnId);
             if (btnElement) {
-                btnElement.style.display = isEnabled ? 'inline-flex' : 'none';
+                // Check if user is admin before hiding buttons
+                const isOwner = communityData && communityData.ownerID === dbUser._id;
+                const hasAdminPermission = checkUserAdminPermission(communityData);
+                const isAdmin = isOwner || hasAdminPermission;
+                
+                if (isAdmin && componentName === 'createCivilians') {
+                    // Admin can always see civilian creation button, regardless of component status
+                    btnElement.style.display = 'inline-flex';
+                } else {
+                    btnElement.style.display = isEnabled ? 'inline-flex' : 'none';
+                }
             }
         }
     });
@@ -578,11 +588,49 @@ function checkComponentPermissions(communityData) {
 
 // Function to refresh component permissions (can be called from other pages)
 function refreshComponentPermissions() {
-    loadCommunityData().then(() => {
+    loadCommunityData().then((communityData) => {
         // Component permissions refreshed
+        // After component permissions are set, check if user is admin and update button styling
+        const isOwner = communityData && communityData.ownerID === dbUser._id;
+        const hasAdminPermission = checkUserAdminPermission(communityData);
+        const isAdmin = isOwner || hasAdminPermission;
+        
+        if (isAdmin) {
+            // User is admin, ensure buttons are properly styled for admin
+            // Use setTimeout to ensure this runs after checkComponentPermissions
+            setTimeout(() => {
+                updateCivilianCreationButtonsForAdmin();
+            }, 0);
+        }
     }).catch(() => {
         // Failed to refresh component permissions
     });
+}
+
+// Check if user has administrator permission in community roles
+function checkUserAdminPermission(communityData) {
+    if (!communityData || !communityData.roles || !Array.isArray(communityData.roles)) {
+        return false;
+    }
+    
+    const userId = dbUser._id;
+    
+    // Check each role to see if user is a member and has administrator permission
+    for (const role of communityData.roles) {
+        if (role.members && role.members.includes(userId)) {
+            // User is a member of this role, check if role has administrator permission enabled
+            if (role.permissions && Array.isArray(role.permissions)) {
+                const hasAdminPermission = role.permissions.some(permission => 
+                    permission.name === 'administrator' && permission.enabled === true
+                );
+                if (hasAdminPermission) {
+                    return true;
+                }
+            }
+        }
+    }
+    
+    return false;
 }
 
 // Make refreshComponentPermissions available globally so it can be called from other pages
@@ -1689,11 +1737,19 @@ function checkCivilianCreationLimits() {
         url: `${API_URL}/api/v1/community/${communityId}`,
         method: 'GET',
         success: function(data) {
-            if (data.community && data.community.civilianCreationLimitsEnabled) {
-                // Limits are enabled, check current count
+            // Check if user is admin (community owner or has administrator permission)
+            const isOwner = data.community && data.community.ownerID === dbUser._id;
+            const hasAdminPermission = checkUserAdminPermission(data.community);
+            const isAdmin = isOwner || hasAdminPermission;
+            
+            if (data.community && data.community.civilianCreationLimitsEnabled && !isAdmin) {
+                // Limits are enabled and user is not admin, check current count
                 checkCurrentCivilianCount(communityId, data.community.civilianCreationLimit);
             } else {
-                // No limits, allow creation
+                // No limits or user is admin, allow creation
+                if (isAdmin) {
+                    showToast('Admin: Bypassing civilian creation limits');
+                }
                 $('#newCivModal').modal('show');
             }
         },
@@ -1767,7 +1823,7 @@ function countUserCivilians(userId, limit) {
             if (civilianCount >= limit) {
                 // User has reached their limit
 
-                showCivilianLimitWarning(limit, civilianCount);
+                showCivilianLimitWarning(limit, civilianCount, true);
             } else {
                 // User can create more civilians
 
@@ -1783,7 +1839,7 @@ function countUserCivilians(userId, limit) {
 }
 
 // Show warning modal when user has reached their limit
-function showCivilianLimitWarning(limit, currentCount) {
+function showCivilianLimitWarning(limit, currentCount, limitsEnabled = true) {
     // Create and show a custom warning modal
     const warningHtml = `
         <div class="modal fade" id="civilianLimitWarningModal" tabindex="-1" role="dialog">
@@ -1805,6 +1861,11 @@ function showCivilianLimitWarning(limit, currentCount) {
                             <p style="margin: 0; color: #fff;"><strong>Community Limit:</strong> ${limit} civilian${limit !== 1 ? 's' : ''}</p>
                         </div>
                         <p>This is a community setting set by the community owner. If you have questions, reach out to them directly.</p>
+                        ${limitsEnabled ? `
+                        <div style="background: #1e3a8a; padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #3b82f6;">
+                            <p style="margin: 0; color: #93c5fd;"><strong>Note:</strong> Community administrators can bypass these limits and create unlimited civilians.</p>
+                        </div>
+                        ` : ''}
                     </div>
                     <div class="modal-footer" style="border-top: 1px solid #35385a; padding: 1.5rem;">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal" style="background: #6b7280; border: none; border-radius: 8px; padding: 0.75rem 1.5rem;">
@@ -1842,9 +1903,17 @@ function checkCivilianCreationLimitsOnLoad() {
         url: `${API_URL}/api/v1/community/${communityId}`,
         method: 'GET',
         success: function(data) {
-            if (data.community && data.community.civilianCreationLimitsEnabled) {
-                // Limits are enabled, check current count and update UI
+            // Check if user is admin (community owner or has administrator permission)
+            const isOwner = data.community && data.community.ownerID === dbUser._id;
+            const hasAdminPermission = checkUserAdminPermission(data.community);
+            const isAdmin = isOwner || hasAdminPermission;
+            
+            if (data.community && data.community.civilianCreationLimitsEnabled && !isAdmin) {
+                // Limits are enabled and user is not admin, check current count and update UI
                 updateCivilianCreationButtonState(communityId, data.community.civilianCreationLimit);
+            } else if (isAdmin) {
+                // Admin bypass - show admin message and enable buttons
+                updateCivilianCreationButtonsForAdmin();
             }
         },
         error: function(xhr) {
@@ -1916,12 +1985,19 @@ function updateCivilianCreationButtons(currentCount, limit) {
     const buttons = document.querySelectorAll('[onclick*="openNewCivModal"]');
     
     buttons.forEach((button, index) => {
+        // Check if user is admin before applying limits
+        const isOwner = window.currentCommunityData && window.currentCommunityData.ownerID === dbUser._id;
+        const hasAdminPermission = checkUserAdminPermission(window.currentCommunityData);
+        const isAdmin = isOwner || hasAdminPermission;
         
-        if (currentCount >= limit) {
-            // User has reached their limit
+        if (currentCount >= limit && !isAdmin) {
+            // User has reached their limit and is not admin
             button.disabled = false; // Keep enabled so click events work
             button.style.opacity = '0.6';
             button.style.cursor = 'not-allowed';
+            button.style.display = 'inline-flex'; // Ensure proper flexbox layout for icon alignment
+            button.style.alignItems = 'center'; // Center align icon and text vertically
+            button.style.gap = '0.5rem'; // Add consistent spacing between icon and text
             
             // Add tooltip or update text to show limit reached
             const originalText = button.innerHTML;
@@ -1935,13 +2011,38 @@ function updateCivilianCreationButtons(currentCount, limit) {
             button.onclick = function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                showCivilianLimitWarning(limit, currentCount);
+                showCivilianLimitWarning(limit, currentCount, true);
             };
-        } else {
-            // User can still create civilians
+        } else if (isAdmin) {
+            // Admin can always create civilians, regardless of limit
             button.disabled = false;
             button.style.opacity = '1';
             button.style.cursor = 'pointer';
+            button.style.display = 'inline-flex'; // Ensure proper flexbox layout for icon alignment
+            button.style.alignItems = 'center'; // Center align icon and text vertically
+            button.style.gap = '0.5rem'; // Add consistent spacing between icon and text
+            
+            // Restore original text and add admin styling
+            const originalText = button.getAttribute('data-original-text');
+            if (originalText) {
+                button.innerHTML = originalText;
+                button.removeAttribute('data-original-text');
+            }
+            
+            // Restore original onclick functionality
+            button.onclick = function() {
+                openNewCivModal();
+            };
+            
+            button.title = `Create new civilian (Admin - limits bypassed)`;
+        } else {
+            // User can still create civilians (under limit)
+            button.disabled = false;
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+            button.style.display = 'inline-flex'; // Ensure proper flexbox layout for icon alignment
+            button.style.alignItems = 'center'; // Center align icon and text vertically
+            button.style.gap = '0.5rem'; // Add consistent spacing between icon and text
             
             // Restore original text if it was changed
             const originalText = button.getAttribute('data-original-text');
@@ -1955,6 +2056,37 @@ function updateCivilianCreationButtons(currentCount, limit) {
             
             button.title = `Create new civilian (${currentCount}/${limit} used)`;
         }
+    });
+}
+
+// Update civilian creation buttons for admin users (bypass limits)
+function updateCivilianCreationButtonsForAdmin() {
+    // Find all buttons that call openNewCivModal
+    const buttons = document.querySelectorAll('[onclick*="openNewCivModal"]');
+    
+    buttons.forEach((button, index) => {
+        // Admin can always create civilians
+        button.disabled = false;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+        button.style.display = 'inline-flex'; // Ensure proper flexbox layout for icon alignment
+        button.style.alignItems = 'center'; // Center align icon and text vertically
+        button.style.gap = '0.5rem'; // Add consistent spacing between icon and text
+        
+        // Restore original text if it was changed
+        const originalText = button.getAttribute('data-original-text');
+        if (originalText) {
+            button.innerHTML = originalText;
+            button.removeAttribute('data-original-text');
+        }
+        
+        // Restore the original onclick functionality by calling openNewCivModal directly
+        button.onclick = function() {
+            openNewCivModal();
+        };
+        
+        // Add admin indicator to tooltip
+        button.title = `Create new civilian (Admin - limits bypassed)`;
     });
 }
 
@@ -2956,9 +3088,9 @@ function closeDeleteAccountModal() {
 }
 
 function fillAccountDetails() {
-    $('#accountEmail').val(dbUser.user.email);
-    $('#accountUsername').val(dbUser.user.username);
-    $('#accountCallSign').val(dbUser.user.callSign);
+    $('#accountEmail_2').val(dbUser.user.email);
+    $('#accountUsername_2').val(dbUser.user.username);
+    $('#accountCallSign_2').val(dbUser.user.callSign);
 }
 
 function initializeAccountSettings() {
@@ -2968,12 +3100,12 @@ function initializeAccountSettings() {
 }
 
 function cancelUsername() {
-    $('#accountUsername').val(dbUser.user.username);
+    $('#accountUsername_2').val(dbUser.user.username);
     $('#updateUsernameBtns').hide();
 }
 
 function cancelCallSign() {
-    $('#accountCallSign').val(dbUser.user.callSign);
+    $('#accountCallSign_2').val(dbUser.user.callSign);
     $('#updateCallSignBtns').hide();
 }
 
