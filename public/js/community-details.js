@@ -2357,6 +2357,7 @@ function updateDepartmentJoinButton(departmentId, status) {
     filterTenCodes();
   }
 
+
   // Filter 10-codes based on search input
   function filterTenCodes() {
     const tenCodesList = document.getElementById('tenCodesList');
@@ -2470,13 +2471,11 @@ function updateDepartmentJoinButton(departmentId, status) {
             throw new Error(errorData.error || 'Failed to delete 10-code');
           }
 
-          showCustomToast('10-code deleted successfully', 'success');
+          showCustomToast('10-Code deleted successfully', 'success');
           
           // Remove the 10-code from the local community object
           if (window.community?.community?.tenCodes) {
             window.community.community.tenCodes = window.community.community.tenCodes.filter(tc => tc._id !== id);
-          } else if (window.community?.tenCodes) {
-            window.community.tenCodes = window.community.tenCodes.filter(tc => tc._id !== id);
           }
           
           loadTenCodes(); // Reload the list
@@ -2538,31 +2537,33 @@ function updateDepartmentJoinButton(departmentId, status) {
         throw new Error(errorData.error || 'Failed to create 10-code');
       }
 
-      showCustomToast('10-code created successfully', 'success');
+      // Get the response data to extract the ID
+      const responseData = await response.json();
+      
+      showCustomToast('New 10-Code created successfully', 'success');
       closeAddEditTenCodeModal();
       
-      // Update the local community object with the new 10-code
+      // Update the local community object with the new 10-code using the real ID
       const newTenCode = {
-        _id: response.tenCodeId || response.data?.tenCodeId,
-        code: code,
-        description: description,
+        _id: responseData.tenCode._id,
+        code: responseData.tenCode.code,
+        description: responseData.tenCode.description,
         isActive: true
       };
       
-      // Add to the community object
-      if (window.community?.community?.tenCodes) {
-        window.community.community.tenCodes.push(newTenCode);
-      } else if (window.community?.tenCodes) {
-        window.community.tenCodes.push(newTenCode);
-      } else {
-        // Initialize if it doesn't exist
-        if (window.community?.community) {
-          window.community.community.tenCodes = [newTenCode];
-        } else {
-          window.community.tenCodes = [newTenCode];
-        }
+      // Ensure the tenCodes array exists and add the new code
+      if (!window.community) {
+        window.community = {};
+      }
+      if (!window.community.community) {
+        window.community.community = {};
+      }
+      if (!window.community.community.tenCodes) {
+        window.community.community.tenCodes = [];
       }
       
+      // Add the new 10-code to the array
+      window.community.community.tenCodes.push(newTenCode);
       loadTenCodes(); // Reload the list
     } catch (error) {
       showCustomToast('Error creating 10-code: ' + error.message, 'error');
@@ -2590,7 +2591,7 @@ function updateDepartmentJoinButton(departmentId, status) {
         throw new Error(errorData.error || 'Failed to update 10-code');
       }
 
-      showCustomToast('10-code updated successfully', 'success');
+      showCustomToast('10-Code updated successfully', 'success');
       closeAddEditTenCodeModal();
       
       // Update the local community object with the updated 10-code
@@ -2606,11 +2607,6 @@ function updateDepartmentJoinButton(departmentId, status) {
         const index = window.community.community.tenCodes.findIndex(tc => tc._id === id);
         if (index !== -1) {
           window.community.community.tenCodes[index] = updatedTenCode;
-        }
-      } else if (window.community?.tenCodes) {
-        const index = window.community.tenCodes.findIndex(tc => tc._id === id);
-        if (index !== -1) {
-          window.community.tenCodes[index] = updatedTenCode;
         }
       }
       
