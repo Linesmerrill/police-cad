@@ -1697,8 +1697,22 @@
           </div>
         </div>
 
+        <!-- Settings Search Bar -->
+        <div style="margin-bottom:1.5rem;">
+          <div style="position:relative;">
+            <input type="text" id="settingsSearchInput" placeholder="Search settings..." 
+                   style="width:100%; background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:0.75rem 1rem 0.75rem 2.5rem; color:#fff; font-size:1rem; outline:none; transition:border-color 0.2s;"
+                   onkeyup="filterSettings(this.value)">
+            <i class="fa fa-search" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:#a0aec0; font-size:1rem;"></i>
+            <button id="settingsSearchClear" onclick="clearSettingsSearch()" 
+                    style="position:absolute; right:0.75rem; top:50%; transform:translateY(-50%); background:none; border:none; color:#a0aec0; cursor:pointer; font-size:1rem; display:none;">
+              <i class="fa fa-times"></i>
+            </button>
+          </div>
+        </div>
+
         <!-- Settings Navigation -->
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:2rem;">
+        <div id="settingsGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-bottom:2rem;">
           <!-- General Settings -->
           <%
             // Permission logic for managing general community settings
@@ -1988,6 +2002,57 @@
                 </div>
                 <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">Bans</h5>
                 <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage banned users</p>
+                <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.75rem; font-style:italic;">Permission Required</p>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- 10-Codes Management -->
+          <%
+            // Permission logic for managing 10-codes (same as manage community settings)
+            let canManageTenCodes = false;
+            if (userId && community.community && Array.isArray(community.community.roles)) {
+              community.community.roles.forEach(function(role) {
+                if (Array.isArray(role.members) && role.members.includes(userId)) {
+                  if (Array.isArray(role.permissions)) {
+                    role.permissions.forEach(function(perm) {
+                      if (
+                        (perm.name === "administrator" && perm.enabled === true) ||
+                        (perm.name === "manage community settings" && perm.enabled === true)
+                      ) {
+                        canManageTenCodes = true;
+                      }
+                    });
+                  }
+                }
+              });
+            }
+            // Also allow community owner
+            if (community.community.ownerID === userId) {
+              canManageTenCodes = true;
+            }
+          %>
+          
+          <% if (canManageTenCodes) { %>
+            <!-- User has permission to manage 10-codes -->
+            <div id="tenCodesCard" onclick="openTenCodesModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#f59e0b;">
+              <div style="text-align:center;">
+                <div style="margin-bottom:0.5rem;">
+                  <i class="fa fa-bullhorn" style="font-size:2rem; color:#f59e0b;"></i>
+                </div>
+                <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">10-Codes</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage community 10-codes</p>
+              </div>
+            </div>
+          <% } else { %>
+            <!-- User doesn't have permission to manage 10-codes -->
+            <div id="tenCodesCard" onclick="showNoTenCodesPermissionModal()" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
+              <div style="text-align:center;">
+                <div style="margin-bottom:0.5rem;">
+                  <i class="fa fa-bullhorn" style="font-size:2rem; color:#6b7280;"></i>
+                </div>
+                <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">10-Codes</h5>
+                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Manage community 10-codes</p>
                 <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.75rem; font-style:italic;">Permission Required</p>
               </div>
             </div>
@@ -7564,6 +7629,7 @@ async function deleteEditEvent() {
       window.communityId = "<%= community._id %>";
       window.jwtToken = "<%= user && user._doc ? user._doc.jwtToken || '' : '' %>";
       window.canManageAnnouncements = <%- canManageAnnouncements %>;
+      window.community = <%- JSON.stringify(community) %>;
       
       // For testing - ensure we have a user ID for mock data
       if (!window.dbUser._id) {
@@ -9725,7 +9791,7 @@ async function deleteEditEvent() {
     </div>
 
     <!-- Custom Confirmation Modal -->
-    <div id="customConfirmModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.75); align-items:center; justify-content:center;">
+    <div id="customConfirmModal" class="heroui-modal" style="display:none; position:fixed; z-index:6000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.75); align-items:center; justify-content:center;">
       <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:95%; border:1px solid #35385a; text-align:center;">
         <!-- Icon -->
         <div style="margin-bottom:1.5rem;">
@@ -10298,6 +10364,82 @@ async function deleteEditEvent() {
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- 10-Codes Management Modal -->
+    <div id="tenCodesModal" class="heroui-modal" style="display:none; position:fixed; z-index:5000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:800px; width:95%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+        <button onclick="closeTenCodesModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-bullhorn" style="font-size:3rem; color:#f59e0b; margin-bottom:1rem;"></i>
+          <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">10-Codes Management</h3>
+          <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:1rem;">Manage community-wide 10-codes</p>
+        </div>
+        
+        <!-- Add New 10-Code Button -->
+        <div style="margin-bottom:1.5rem; text-align:right;">
+          <button onclick="openAddTenCodeModal()" style="background:#f59e0b; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+            <i class="fa fa-plus" style="margin-right:0.5rem;"></i> Add 10-Code
+          </button>
+        </div>
+        
+        <!-- Search Bar -->
+        <div style="margin-bottom:1.5rem;">
+          <div style="position:relative;">
+            <input 
+              type="text" 
+              id="tenCodesSearchInput" 
+              placeholder="Search 10-codes..." 
+              style="width:100%; height:44px; background:#2d3748; color:#f7fafc; border:1.5px solid #35385a; border-radius:8px; font-size:1rem; padding-left:2.5rem; padding-right:1rem;"
+              onkeyup="filterTenCodes()"
+            />
+            <i class="fa fa-search" style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:#a0aec0; font-size:1rem;"></i>
+          </div>
+        </div>
+        
+        <!-- 10-Codes List -->
+        <div id="tenCodesList" style="max-height:400px; overflow-y:auto;">
+          <!-- 10-codes will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Add/Edit 10-Code Modal -->
+    <div id="addEditTenCodeModal" class="heroui-modal" style="display:none; position:fixed; z-index:6000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
+        <button onclick="closeAddEditTenCodeModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+        
+        <div style="text-align:center; margin-bottom:1.5rem;">
+          <i class="fa fa-bullhorn" style="font-size:2.5rem; color:#f59e0b; margin-bottom:0.5rem;"></i>
+          <h3 id="addEditTenCodeTitle" style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">Add 10-Code</h3>
+        </div>
+        
+        <form id="addEditTenCodeForm">
+          <div style="margin-bottom:1rem;">
+            <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500;">Code</label>
+            <input type="text" id="tenCodeCode" placeholder="e.g., Signal 100" required
+                   style="width:100%; background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:0.75rem; color:#fff; font-size:1rem; outline:none;">
+          </div>
+          
+          <div style="margin-bottom:1.5rem;">
+            <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500;">Description</label>
+            <textarea id="tenCodeDescription" placeholder="e.g., HOLD ALL BUT EMERGENCY" required rows="3"
+                      style="width:100%; background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:0.75rem; color:#fff; font-size:1rem; outline:none; resize:vertical;"></textarea>
+          </div>
+          
+          <div style="display:flex; gap:1rem; justify-content:flex-end;">
+            <button type="button" onclick="closeAddEditTenCodeModal()" 
+                    style="background:#6b7280; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+              Cancel
+            </button>
+            <button type="submit" 
+                    style="background:#f59e0b; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
+              <span id="addEditTenCodeSubmitText">Add 10-Code</span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 

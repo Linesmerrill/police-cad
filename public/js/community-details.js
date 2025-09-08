@@ -2264,7 +2264,358 @@ function updateDepartmentJoinButton(departmentId, status) {
     document.getElementById('editCivDetailsPhotoInput').value = '';
   };
 
-  // Initialize event listeners when DOM is ready
+  // Settings search functionality
+  window.filterSettings = function(query) {
+    const settingsGrid = document.getElementById('settingsGrid');
+    const clearBtn = document.getElementById('settingsSearchClear');
+    
+    if (!settingsGrid) return;
+    
+    const cards = settingsGrid.querySelectorAll('[id$="Card"]');
+    let visibleCount = 0;
+    
+    cards.forEach(card => {
+      const title = card.querySelector('h5');
+      const description = card.querySelector('p:not([style*="italic"])');
+      
+      if (title && description) {
+        const titleText = title.textContent.toLowerCase();
+        const descText = description.textContent.toLowerCase();
+        const searchQuery = query.toLowerCase();
+        
+        if (titleText.includes(searchQuery) || descText.includes(searchQuery)) {
+          card.style.display = 'block';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      }
+    });
+    
+    // Show/hide clear button
+    if (query.trim()) {
+      clearBtn.style.display = 'block';
+    } else {
+      clearBtn.style.display = 'none';
+    }
+  };
+
+  window.clearSettingsSearch = function() {
+    const searchInput = document.getElementById('settingsSearchInput');
+    const clearBtn = document.getElementById('settingsSearchClear');
+    
+    if (searchInput) {
+      searchInput.value = '';
+      filterSettings('');
+    }
+    
+    if (clearBtn) {
+      clearBtn.style.display = 'none';
+    }
+  };
+
+  // 10-Codes modal functions
+  window.openTenCodesModal = function() {
+    document.getElementById('tenCodesModal').style.display = 'flex';
+    // Clear search input when opening modal
+    const searchInput = document.getElementById('tenCodesSearchInput');
+    if (searchInput) {
+      searchInput.value = '';
+    }
+    loadTenCodes();
+  };
+
+  window.closeTenCodesModal = function() {
+    document.getElementById('tenCodesModal').style.display = 'none';
+  };
+
+  window.showNoTenCodesPermissionModal = function() {
+    showCustomModal(
+      'Permission Required',
+      'You do not have permission to manage 10-Codes. Request the manage community settings permission from your community administrator.',
+      'info'
+    );
+  };
+
+  // Load 10-codes from community data
+  function loadTenCodes() {
+    const tenCodesList = document.getElementById('tenCodesList');
+    if (!tenCodesList) return;
+
+    // Get tenCodes from community data - try different possible structures
+    let tenCodes = [];
+    if (window.community?.community?.tenCodes) {
+      tenCodes = window.community.community.tenCodes;
+    } else if (window.community?.tenCodes) {
+      tenCodes = window.community.tenCodes;
+    }
+    
+    // Store the original tenCodes for filtering
+    window.allTenCodes = tenCodes;
+    
+    // Apply current filter if any
+    filterTenCodes();
+  }
+
+  // Filter 10-codes based on search input
+  function filterTenCodes() {
+    const tenCodesList = document.getElementById('tenCodesList');
+    const searchInput = document.getElementById('tenCodesSearchInput');
+    if (!tenCodesList || !searchInput) return;
+
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const allTenCodes = window.allTenCodes || [];
+
+    if (allTenCodes.length === 0) {
+      tenCodesList.innerHTML = `
+        <div style="text-align:center; padding:2rem; color:#a0aec0;">
+          <i class="fa fa-bullhorn" style="font-size:3rem; margin-bottom:1rem; opacity:0.5;"></i>
+          <p style="margin:0; font-size:1rem;">No 10-codes configured yet</p>
+          <p style="margin:0.5rem 0 0 0; font-size:0.875rem;">Add your first 10-code to get started</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Filter tenCodes based on search term
+    const filteredTenCodes = allTenCodes.filter(code => {
+      if (!searchTerm) return true;
+      return code.code.toLowerCase().includes(searchTerm) || 
+             code.description.toLowerCase().includes(searchTerm);
+    });
+
+    if (filteredTenCodes.length === 0) {
+      tenCodesList.innerHTML = `
+        <div style="text-align:center; padding:2rem; color:#a0aec0;">
+          <i class="fa fa-search" style="font-size:3rem; margin-bottom:1rem; opacity:0.5;"></i>
+          <p style="margin:0; font-size:1rem;">No 10-codes found</p>
+          <p style="margin:0.5rem 0 0 0; font-size:0.875rem;">Try adjusting your search terms</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    filteredTenCodes.forEach((code, index) => {
+      // Escape special characters for HTML
+      const escapedCode = code.code.replace(/'/g, "\\'").replace(/"/g, '\\"');
+      const escapedDescription = code.description.replace(/'/g, "\\'").replace(/"/g, '\\"');
+      
+      html += `
+        <div class="ten-code-item" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.25rem; margin-bottom:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="flex:1;">
+              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
+                <span style="background:#f59e0b; color:#fff; padding:0.5rem 0.75rem; border-radius:6px; font-size:1rem; font-weight:600;">${escapedCode}</span>
+              </div>
+              <p style="color:#fff; margin:0; font-size:1rem;">${escapedDescription}</p>
+            </div>
+            <div style="display:flex; gap:0.75rem; margin-left:1rem; flex-shrink:0;">
+              <button onclick="editTenCode('${code._id}', '${escapedCode}', '${escapedDescription}')" 
+                      style="background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:1rem; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;" title="Edit Code">
+                <i class="fa fa-edit"></i>
+              </button>
+              <button onclick="deleteTenCode('${code._id}', '${escapedCode}')" 
+                      style="background:#ef4444; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:1rem; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center;" title="Delete Code">
+                <i class="fa fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    tenCodesList.innerHTML = html;
+  }
+
+  // Add/Edit 10-Code modal functions
+  window.openAddTenCodeModal = function() {
+    document.getElementById('addEditTenCodeTitle').textContent = 'Add 10-Code';
+    document.getElementById('addEditTenCodeSubmitText').textContent = 'Add 10-Code';
+    document.getElementById('addEditTenCodeForm').reset();
+    document.getElementById('addEditTenCodeModal').style.display = 'flex';
+  };
+
+  window.closeAddEditTenCodeModal = function() {
+    document.getElementById('addEditTenCodeModal').style.display = 'none';
+  };
+
+  window.editTenCode = function(id, code, description) {
+    document.getElementById('addEditTenCodeTitle').textContent = 'Edit 10-Code';
+    document.getElementById('addEditTenCodeSubmitText').textContent = 'Update 10-Code';
+    document.getElementById('tenCodeCode').value = code;
+    document.getElementById('tenCodeDescription').value = description;
+    
+    // Store the ID for updating
+    document.getElementById('addEditTenCodeForm').setAttribute('data-edit-id', id);
+    
+    document.getElementById('addEditTenCodeModal').style.display = 'flex';
+  };
+
+  window.deleteTenCode = function(id, code) {
+    showCustomConfirm(
+      'Delete 10-Code',
+      `Are you sure you want to delete the 10-code "${code}"? This action cannot be undone.`,
+      async () => {
+        try {
+          const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${window.dbUser?.token || ''}`
+            }
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to delete 10-code');
+          }
+
+          showCustomToast('10-code deleted successfully', 'success');
+          
+          // Remove the 10-code from the local community object
+          if (window.community?.community?.tenCodes) {
+            window.community.community.tenCodes = window.community.community.tenCodes.filter(tc => tc._id !== id);
+          } else if (window.community?.tenCodes) {
+            window.community.tenCodes = window.community.tenCodes.filter(tc => tc._id !== id);
+          }
+          
+          loadTenCodes(); // Reload the list
+        } catch (error) {
+          showCustomToast('Error deleting 10-code: ' + error.message, 'error');
+        }
+      }
+    );
+  };
+
+  // Handle form submission
   document.addEventListener('DOMContentLoaded', function() {
     setupEditModalEventListeners();
-  }); 
+    
+    // 10-Code form submission
+    const tenCodeForm = document.getElementById('addEditTenCodeForm');
+    if (tenCodeForm) {
+      tenCodeForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const code = document.getElementById('tenCodeCode').value.trim();
+        const description = document.getElementById('tenCodeDescription').value.trim();
+        const editId = this.getAttribute('data-edit-id');
+        
+        if (!code || !description) {
+          showCustomToast('Please fill in all fields', 'error');
+          return;
+        }
+        
+        if (editId) {
+          // Update existing 10-code
+          updateTenCode(editId, code, description);
+        } else {
+          // Add new 10-code
+          addTenCode(code, description);
+        }
+      });
+    }
+  });
+
+  // Add new 10-code
+  async function addTenCode(code, description) {
+    try {
+      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${window.dbUser?.token || ''}`
+        },
+        body: JSON.stringify({
+          code: code,
+          description: description,
+          isActive: true
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create 10-code');
+      }
+
+      showCustomToast('10-code created successfully', 'success');
+      closeAddEditTenCodeModal();
+      
+      // Update the local community object with the new 10-code
+      const newTenCode = {
+        _id: response.tenCodeId || response.data?.tenCodeId,
+        code: code,
+        description: description,
+        isActive: true
+      };
+      
+      // Add to the community object
+      if (window.community?.community?.tenCodes) {
+        window.community.community.tenCodes.push(newTenCode);
+      } else if (window.community?.tenCodes) {
+        window.community.tenCodes.push(newTenCode);
+      } else {
+        // Initialize if it doesn't exist
+        if (window.community?.community) {
+          window.community.community.tenCodes = [newTenCode];
+        } else {
+          window.community.tenCodes = [newTenCode];
+        }
+      }
+      
+      loadTenCodes(); // Reload the list
+    } catch (error) {
+      showCustomToast('Error creating 10-code: ' + error.message, 'error');
+    }
+  }
+
+  // Update existing 10-code
+  async function updateTenCode(id, code, description) {
+    try {
+      const response = await fetch(`${API_URL}/api/v1/community/${communityId}/tenCodes/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${window.dbUser?.token || ''}`
+        },
+        body: JSON.stringify({
+          code: code,
+          description: description,
+          isActive: true
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update 10-code');
+      }
+
+      showCustomToast('10-code updated successfully', 'success');
+      closeAddEditTenCodeModal();
+      
+      // Update the local community object with the updated 10-code
+      const updatedTenCode = {
+        _id: id,
+        code: code,
+        description: description,
+        isActive: true
+      };
+      
+      // Find and update the 10-code in the community object
+      if (window.community?.community?.tenCodes) {
+        const index = window.community.community.tenCodes.findIndex(tc => tc._id === id);
+        if (index !== -1) {
+          window.community.community.tenCodes[index] = updatedTenCode;
+        }
+      } else if (window.community?.tenCodes) {
+        const index = window.community.tenCodes.findIndex(tc => tc._id === id);
+        if (index !== -1) {
+          window.community.tenCodes[index] = updatedTenCode;
+        }
+      }
+      
+      loadTenCodes(); // Reload the list
+    } catch (error) {
+      showCustomToast('Error updating 10-code: ' + error.message, 'error');
+    }
+  } 
