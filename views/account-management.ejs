@@ -31,9 +31,9 @@
             
             <!-- Profile Image -->
             <div style="text-align:center; margin-bottom:2rem;">
-              <div id="profilePicture" style="width:80px; height:80px; border-radius:50%; background-image:url(<%= user.profilePicture || '/static/images/civ-unknown-user.png' %>); background-size:cover; background-position:center; margin:0 auto 1rem; border:3px solid #35385a;"></div>
+              <div id="profilePicture" onclick="showProfileImageModal()" style="width:80px; height:80px; border-radius:50%; background-image:url(<%= user.user.profilePicture || '/static/images/civ-unknown-user.png' %>); background-size:cover; background-position:center; margin:0 auto 1rem; border:3px solid #35385a; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"></div>
               <a href="#" onclick="showProfileImageModal()" style="color:#667eea; text-decoration:none; font-size:0.9rem; cursor:pointer;">
-                Update Profile Image <i class="fa fa-external-link-alt"></i>
+                Update Profile Image
               </a>
             </div>
 
@@ -305,10 +305,178 @@
   // Profile Image Modal
   function showProfileImageModal() {
     document.getElementById('profileImageModal').style.display = 'flex';
+    // Update preview with current profile picture
+    updateProfilePreview();
+    // Show/hide remove button based on current profile picture
+    updateRemoveButtonVisibility();
   }
 
   function closeProfileImageModal() {
     document.getElementById('profileImageModal').style.display = 'none';
+    // Reset upload progress
+    document.getElementById('uploadProgress').style.display = 'none';
+    document.getElementById('progressBar').style.width = '0%';
+  }
+
+  // Update profile preview
+  function updateProfilePreview() {
+    const currentProfilePreview = document.getElementById('currentProfilePreview');
+    const profilePicture = document.getElementById('profilePicture');
+    if (currentProfilePreview && profilePicture) {
+      const currentImage = profilePicture.style.backgroundImage;
+      currentProfilePreview.style.backgroundImage = currentImage;
+    }
+  }
+
+  // Update remove button visibility based on current profile picture
+  function updateRemoveButtonVisibility() {
+    const removeButton = document.querySelector('button[onclick="removeProfilePicture()"]');
+    const profilePicture = document.getElementById('profilePicture');
+    
+    if (removeButton && profilePicture) {
+      const currentImage = profilePicture.style.backgroundImage;
+      const isDefaultImage = currentImage.includes('/static/images/civ-unknown-user.png') || 
+                           currentImage === 'none' || 
+                           currentImage === '' ||
+                           !currentImage;
+      
+      if (isDefaultImage) {
+        removeButton.style.display = 'none';
+      } else {
+        removeButton.style.display = 'inline-block';
+      }
+    }
+  }
+
+  // Handle profile image upload
+  async function handleProfileImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file.');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB.');
+      return;
+    }
+
+    // Show upload progress
+    document.getElementById('uploadProgress').style.display = 'block';
+    document.getElementById('progressBar').style.width = '0%';
+
+    try {
+      // Simulate progress
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 30;
+        if (progress > 90) progress = 90;
+        document.getElementById('progressBar').style.width = progress + '%';
+      }, 200);
+
+      // Use existing Cloudinary upload function
+      const imageUrl = await window.uploadToCloudinary(file, 'profile-pictures');
+
+      clearInterval(progressInterval);
+      document.getElementById('progressBar').style.width = '100%';
+
+      // Update user profile picture in database
+      await updateUserProfilePicture(imageUrl);
+
+      // Update UI
+      updateProfilePictureInUI(imageUrl);
+      
+      // Hide progress
+      setTimeout(() => {
+        document.getElementById('uploadProgress').style.display = 'none';
+        document.getElementById('progressBar').style.width = '0%';
+      }, 1000);
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload image. Please try again.');
+      document.getElementById('uploadProgress').style.display = 'none';
+      document.getElementById('progressBar').style.width = '0%';
+    }
+  }
+
+  // Remove profile picture
+  function removeProfilePicture() {
+    showCustomConfirm(
+      'Remove Profile Picture',
+      'Are you sure you want to remove your profile picture? This action cannot be undone.',
+      async () => {
+        try {
+          // Update user profile picture to empty string
+          await updateUserProfilePicture('');
+
+          // Update UI
+          updateProfilePictureInUI('/static/images/civ-unknown-user.png');
+          
+        } catch (error) {
+          console.error('Remove error:', error);
+          showCustomToast('Failed to remove profile picture. Please try again.', 'error');
+        }
+      },
+      null, // onDiscard (not needed for this case)
+      'Yes, Remove', // confirmText
+      'No, Keep Current' // cancelText
+    );
+  }
+
+  // Update user profile picture in database
+  async function updateUserProfilePicture(imageUrl) {
+    const response = await fetch(`${window.API_URL}/api/v1/user/<%= user._id %>`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        profilePicture: imageUrl
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update profile picture');
+    }
+
+    return response.json();
+  }
+
+  // Update profile picture in UI
+  function updateProfilePictureInUI(imageUrl) {
+    // Update main profile picture
+    const profilePicture = document.getElementById('profilePicture');
+    if (profilePicture) {
+      profilePicture.style.backgroundImage = `url(${imageUrl})`;
+    }
+
+    // Update preview
+    const currentProfilePreview = document.getElementById('currentProfilePreview');
+    if (currentProfilePreview) {
+      currentProfilePreview.style.backgroundImage = `url(${imageUrl})`;
+    }
+
+    // Update user object
+    if (window.dbUser && window.dbUser.user) {
+      window.dbUser.user.profilePicture = imageUrl;
+    }
+
+    // Update remove button visibility
+    updateRemoveButtonVisibility();
+
+    // Show success message
+    const successAlert = document.getElementById('successfully-updated-alert');
+    if (successAlert) {
+      successAlert.style.display = 'block';
+      setTimeout(() => {
+        successAlert.style.display = 'none';
+      }, 3000);
+    }
   }
 
   // Deactivate Account Modal
@@ -367,16 +535,53 @@
 
 <!-- Profile Image Modal -->
 <div id="profileImageModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
-  <div style="background: #1a202c; border-radius: 12px; padding: 2rem; max-width: 400px; width: 90%; text-align: center; border: 1px solid #35385a;">
+  <div style="background: #1a202c; border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%; text-align: center; border: 1px solid #35385a;">
+    <button onclick="closeProfileImageModal()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; opacity: 0.7;">
+      <i class="fa fa-times"></i>
+    </button>
+    
     <div style="margin-bottom: 1.5rem;">
-      <i class="fa fa-tools" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i>
-      <h3 style="color: #fff; margin: 0 0 1rem 0; font-size: 1.5rem; font-weight: 600;">Under Construction</h3>
-      <p style="color: #e2e8f0; margin: 0; font-size: 1rem; line-height: 1.5;">
-        Profile image upload functionality is coming soon! We're working hard to bring you this feature.
+      <i class="fa fa-camera" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i>
+      <h3 style="color: #fff; margin: 0 0 1rem 0; font-size: 1.5rem; font-weight: 600;">Update Profile Picture</h3>
+      <p style="color: #e2e8f0; margin: 0 0 1.5rem 0; font-size: 1rem; line-height: 1.5;">
+        Upload a new profile picture or remove your current one.
       </p>
     </div>
-    <button onclick="closeProfileImageModal()" style="background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color: #fff; border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
-      Got it!
-    </button>
+
+    <!-- Current Profile Picture Preview -->
+    <div style="margin-bottom: 1.5rem;">
+      <div id="currentProfilePreview" style="width: 100px; height: 100px; border-radius: 50%; background-image: url(<%= user.user.profilePicture || '/static/images/civ-unknown-user.png' %>); background-size: cover; background-position: center; margin: 0 auto; border: 3px solid #35385a;"></div>
+    </div>
+
+    <!-- Upload Section -->
+    <div style="margin-bottom: 1.5rem;">
+      <input type="file" id="profileImageInput" accept="image/*" style="display: none;" onchange="handleProfileImageUpload(event)">
+      <button onclick="document.getElementById('profileImageInput').click()" style="background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color: #fff; border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 500; cursor: pointer; margin-right: 0.5rem; transition: all 0.2s;">
+        <i class="fa fa-upload" style="margin-right: 0.5rem;"></i> Upload New Image
+      </button>
+      <button onclick="removeProfilePicture()" style="background: #e53e3e; color: #fff; border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+        <i class="fa fa-trash" style="margin-right: 0.5rem;"></i> Remove Picture
+      </button>
+    </div>
+
+    <!-- Upload Progress -->
+    <div id="uploadProgress" style="display: none; margin-bottom: 1.5rem;">
+      <div style="background: #2d3748; border-radius: 8px; padding: 1rem;">
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 0.5rem;">
+          <i class="fa fa-spinner fa-spin" style="color: #667eea; margin-right: 0.5rem;"></i>
+          <span style="color: #fff;">Uploading...</span>
+        </div>
+        <div style="background: #4a5568; border-radius: 4px; height: 6px;">
+          <div id="progressBar" style="background: #667eea; height: 100%; border-radius: 4px; width: 0%; transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display: flex; gap: 1rem; justify-content: center;">
+      <button onclick="closeProfileImageModal()" style="background: #4a5568; color: #fff; border: none; border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 500; cursor: pointer; transition: all 0.2s;">
+        Cancel
+      </button>
+    </div>
   </div>
 </div>

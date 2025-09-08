@@ -8553,7 +8553,7 @@ async function deleteEditEvent() {
       }
 
       // Custom Confirmation Modal Functions
-      function showCustomConfirm(title, message, onConfirm, onDiscard = null) {
+      function showCustomConfirm(title, message, onConfirm, onDiscard = null, confirmText = null, cancelText = null) {
         // Set modal content
         document.getElementById('confirmTitle').textContent = title;
         document.getElementById('confirmMessage').textContent = message;
@@ -8563,7 +8563,7 @@ async function deleteEditEvent() {
         
         if (onDiscard) {
           // Two-button mode (Save/Discard)
-          confirmBtn.textContent = 'Save & Close';
+          confirmBtn.textContent = confirmText || 'Save & Close';
           confirmBtn.style.background = '#10b981'; // Green for save
           confirmBtn.onclick = () => {
             hideCustomConfirm();
@@ -8575,7 +8575,7 @@ async function deleteEditEvent() {
           // Update cancel button to be "Discard"
           const cancelBtn = document.querySelector('#customConfirmModal button[onclick="hideCustomConfirm()"]');
           if (cancelBtn) {
-            cancelBtn.textContent = 'Discard Changes';
+            cancelBtn.textContent = cancelText || 'Discard Changes';
             cancelBtn.style.background = '#ef4444'; // Red for discard
             cancelBtn.onclick = () => {
               hideCustomConfirm();
@@ -8586,7 +8586,7 @@ async function deleteEditEvent() {
           }
         } else {
           // Single button mode (original behavior)
-          confirmBtn.textContent = 'Confirm';
+          confirmBtn.textContent = confirmText || 'Confirm';
           confirmBtn.style.background = '#ef4444'; // Red for confirm
           confirmBtn.onclick = () => {
             hideCustomConfirm();
@@ -8598,7 +8598,7 @@ async function deleteEditEvent() {
           // Reset cancel button to original
           const cancelBtn = document.querySelector('#customConfirmModal button[onclick="hideCustomConfirm()"]');
           if (cancelBtn) {
-            cancelBtn.textContent = 'Cancel';
+            cancelBtn.textContent = cancelText || 'Cancel';
             cancelBtn.style.background = '#6b7280'; // Gray for cancel
             cancelBtn.onclick = () => {
               hideCustomConfirm();
@@ -9791,7 +9791,7 @@ async function deleteEditEvent() {
     </div>
 
     <!-- Custom Confirmation Modal -->
-    <div id="customConfirmModal" class="heroui-modal" style="display:none; position:fixed; z-index:6000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.75); align-items:center; justify-content:center;">
+    <div id="customConfirmModal" class="heroui-modal" style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.75); align-items:center; justify-content:center;">
       <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:95%; border:1px solid #35385a; text-align:center;">
         <!-- Icon -->
         <div style="margin-bottom:1.5rem;">
