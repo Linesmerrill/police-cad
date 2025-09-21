@@ -4,6 +4,11 @@ var dbUser;
 var dbVehicles;
 var socket;
 
+// Status Codes Global Variables
+var statusCodesCache = [];
+var statusCodeMap = {};
+var filteredStatusCodes = [];
+
 // Hide modal utility function (global scope)
 function hideModal(modalId) {
   const $modal = $(`#${modalId}`);
@@ -167,22 +172,32 @@ $(function () {
   $(document).ready(function() {
     window.forceModalCleanup();
     
-    // Simple modal functions like modern dashboard
-    window.openNewVehicleModal = function() {
-      $('#newVehicleModal').modal('show');
-    };
-    
-    window.closeNewVehicleModal = function() {
-      $('#newVehicleModal').modal('hide');
-    };
-    
-    window.openNewPersonaModal = function() {
-      $('#newCivModal').modal('show');
-    };
-    
-    window.closeNewPersonaModal = function() {
-      $('#newCivModal').modal('hide');
-    };
+  // Simple modal functions like modern dashboard
+  window.openNewVehicleModal = function() {
+    $('#newVehicleModal').modal('show');
+  };
+
+  window.closeNewVehicleModal = function() {
+    $('#newVehicleModal').modal('hide');
+  };
+
+  window.openNewPersonaModal = function() {
+    $('#newCivModal').modal('show');
+  };
+
+  window.closeNewPersonaModal = function() {
+    $('#newCivModal').modal('hide');
+  };
+
+  // Status Codes Modal Functions
+  window.openStatusCodesModal = function() {
+    loadStatusCodes();
+    $('#statusCodesModal').modal('show');
+  };
+
+  window.closeStatusCodesModal = function() {
+    $('#statusCodesModal').modal('hide');
+  };
   });
 
   // Form validation and popover handling
@@ -4667,7 +4682,181 @@ function handleDeleteCallNote(noteId) {
     },
     error: function(xhr) {
       console.error('Error deleting call note:', xhr.responseText);
-      showToast('Failed to delete note: ' + (xhr.responseJSON?.message || 'Unknown error'), 'danger');
+      showToast('Failed to delete note: ' + (xhr.responseJSON?.message || 'Unknown error'), 'danger');                                                          
     }
   });
 }
+
+// ===== STATUS CODES FUNCTIONALITY =====
+
+// Load status codes from API
+function loadStatusCodes() {
+  const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+  if (!communityId) {
+    $('#noStatusCodes').text('Please join a community to view status codes.').show();
+    $('#statusCodesContent').hide();
+    return;
+  }
+
+  if (statusCodesCache.length > 0) {
+    displayStatusCodes(statusCodesCache);
+    return;
+  }
+
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/community/${communityId}`,
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${dbUser.token || ''}`
+    },
+    success: function(data) {
+      statusCodesCache = data?.community?.tenCodes || [];
+      
+      // Build statusCodeMap
+      statusCodeMap = {};
+      statusCodesCache.forEach(tc => {
+        statusCodeMap[tc._id] = tc.code;
+      });
+      
+      filteredStatusCodes = statusCodesCache;
+      
+      if (statusCodesCache.length === 0) {
+        $('#noStatusCodes').show();
+        $('#statusCodesContent').hide();
+      } else {
+        $('#noStatusCodes').hide();
+        $('#statusCodesContent').show();
+        displayStatusCodes(statusCodesCache);
+      }
+      
+      // Load current status after statusCodesCache is populated
+      loadCurrentStatus();
+    },
+    error: function(xhr) {
+      console.error('Error loading status codes:', xhr.responseText);
+      $('#noStatusCodes').text('Failed to load status codes: ' + (xhr.responseJSON?.message || 'Unknown error')).show();
+      $('#statusCodesContent').hide();
+    }
+  });
+}
+
+// Display status codes in modern card grid
+function displayStatusCodes(codes) {
+  const codesToDisplay = filteredStatusCodes.length > 0 ? filteredStatusCodes : codes;
+  
+  $('#statusCodesGrid').empty();
+  
+  codesToDisplay.forEach(code => {
+    const codeHtml = `
+      <div class="heroui-code-card" onclick="selectStatusCode('${code._id}')">
+        <div class="heroui-code-number">${code.code}</div>
+        <div class="heroui-code-description">${code.description}</div>
+      </div>
+    `;
+    $('#statusCodesGrid').append(codeHtml);
+  });
+}
+
+// Handle status code selection
+function selectStatusCode(statusCodeID) {
+  if (!statusCodeID) {
+    console.error('Invalid statusCodeID:', statusCodeID);
+    showToast('Invalid status code selected.', 'danger');
+    return;
+  }
+  
+  // Verify status code in cache
+  const statusCode = statusCodesCache.find(sc => sc._id === statusCodeID);
+  if (!statusCode) {
+    console.error('Status code not found in cache:', statusCodeID);
+    showToast('Selected status code not found.', 'danger');
+    return;
+  }
+  
+  updateStatus(statusCodeID);
+  $('#statusCodesModal').modal('hide');
+}
+
+// Update user status
+function updateStatus(statusCode) {
+  const userId = dbUser._id;
+  const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+  const data = { 
+    departmentID: dbUser.user?.lastAccessedCommunity?.departmentID, 
+    tenCodeID: statusCode 
+  };
+  
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/community/${communityId}/members/${userId}/tenCode`,
+    method: 'PUT',
+    data: JSON.stringify(data),
+    contentType: 'application/json',
+    headers: {
+      'Authorization': `Bearer ${dbUser.token || ''}`
+    },
+    success: function(res) {
+      const status = statusCodeMap[statusCode] || 'Unknown';
+      $('#currentStatus').text(status);
+      $('#statusSetBy').text(`Set By: ${dbUser.user.username}`);
+      showToast(`Status updated to: ${status}`, 'success');
+    },
+    error: function(xhr) {
+      console.error('Error updating status:', xhr.responseText);
+      showToast('Failed to update status: ' + (xhr.responseJSON?.message || 'Unknown error'), 'danger');
+    }
+  });
+}
+
+// Load current status
+function loadCurrentStatus() {
+  const userId = dbUser._id;
+  const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+  
+  $.ajax({
+    url: `${POLICE_CAD_API_URL}/api/v1/community/${communityId}`,
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${dbUser.token || ''}`
+    },
+    success: function(data) {
+      const tenCodeID = data?.community?.members[userId]?.tenCodeID;
+      if (tenCodeID && statusCodeMap[tenCodeID]) {
+        $('#currentStatus').text(statusCodeMap[tenCodeID]);
+        $('#statusSetBy').text(`Set By: ${dbUser.user.username}`);
+      } else {
+        $('#currentStatus').text('None');
+        $('#statusSetBy').text('Set By: None');
+      }
+    },
+    error: function(xhr) {
+      console.error('Error loading current status:', xhr.responseText);
+      $('#currentStatus').text('Unknown');
+      $('#statusSetBy').text('Set By: None');
+    }
+  });
+}
+
+// Initialize status codes functionality
+$(document).ready(function() {
+  // Load status codes and current status on page load
+  if (dbUser && dbUser.user?.lastAccessedCommunity) {
+    // Load status codes first, then current status
+    loadStatusCodes();
+  }
+  
+  // Search functionality
+  $('#statusCodeSearch').on('input', function() {
+    const searchTerm = $(this).val().toLowerCase();
+    
+    if (searchTerm === '') {
+      filteredStatusCodes = statusCodesCache;
+    } else {
+      filteredStatusCodes = statusCodesCache.filter(code => 
+        code.code.toLowerCase().includes(searchTerm) || 
+        code.description.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    displayStatusCodes(filteredStatusCodes);
+  });
+});

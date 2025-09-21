@@ -124,6 +124,211 @@
         height: 32px;
       }
     }
+
+    /* HeroUI Pro Status Code Styles */
+    :root {
+      --primary-color: #667eea;
+      --primary-dark: #5a67d8;
+      --secondary-color: #764ba2;
+      --accent-color: #f093fb;
+      --success-color: #48bb78;
+      --warning-color: #ed8936;
+      --danger-color: #f56565;
+      --dark-bg: #1a202c;
+      --darker-bg: #171923;
+      --card-bg: #2d3748;
+      --text-primary: #f7fafc;
+      --text-secondary: #a0aec0;
+      --border-color: #4a5568;
+      --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .heroui-status-card {
+      background: linear-gradient(135deg, #23263a 0%, #2d3748 100%);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      border: 1px solid #35385a;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .heroui-status-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .heroui-status-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .heroui-status-title {
+      color: #f7fafc;
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .heroui-status-badge {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 0.6rem 1.2rem;
+      border-radius: 16px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      box-shadow: 0 3px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .heroui-status-badge:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .heroui-current-status {
+      background: #1e2028;
+      border-radius: 8px;
+      padding: 0.75rem;
+      border: 1px solid #35385a;
+      margin-bottom: 0;
+    }
+
+    .heroui-status-label {
+      color: #a0aec0;
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .heroui-status-value {
+      color: #f7fafc;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .heroui-status-setby {
+      color: #a0aec0;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .heroui-codes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .heroui-code-card {
+      background: #1e2028;
+      border: 1px solid #35385a;
+      border-radius: 12px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .heroui-code-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .heroui-code-card:hover::before {
+      opacity: 1;
+    }
+
+    .heroui-code-card:hover {
+      border-color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    }
+
+    .heroui-code-number {
+      color: #667eea;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .heroui-code-description {
+      color: #f7fafc;
+      font-size: 1.1rem;
+      line-height: 1.4;
+    }
+
+    .heroui-search-container {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    .heroui-search-input {
+      width: 100%;
+      background: #1e2028;
+      border: 1px solid #35385a;
+      border-radius: 12px;
+      padding: 1rem 1rem 1rem 2.5rem;
+      color: #f7fafc;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .heroui-search-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .heroui-search-input::placeholder {
+      color: #a0aec0;
+    }
+
+    .heroui-search-icon {
+      position: absolute;
+      left: 0.875rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #a0aec0;
+      font-size: 1rem;
+    }
+
+    @media (min-width: 768px) {
+      header {
+        min-height: 15%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .heroui-codes-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .heroui-status-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+    }
     
     .text-align-center {
       text-align: center;
@@ -1178,11 +1383,11 @@
             <% include community-alerts %>
 
             <div class="col-lg-10 col-lg-offset-1 text-center">
-                              <button data-toggle="modal" href="#medicalDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Medical
+              <button data-toggle="modal" href="#medicalDatabaseModal" class="btn btn-primary btn-lg">Medical
                   Database</button>
-              <button onclick="openNewPersonaModal()" class="btn btn-primary btn-lg margin-top-2">Add New
+              <button onclick="openNewPersonaModal()" class="btn btn-primary btn-lg">Add New
                 Persona</button>
-              <button onclick="openNewVehicleModal()" class="btn btn-primary btn-lg margin-top-2">Add New
+              <button onclick="openNewVehicleModal()" class="btn btn-primary btn-lg">Add New
                 Vehicle</button>
             </div>
           </div>
@@ -1190,6 +1395,28 @@
       </header>
       <section style='background-image: url("/static/images/blue-clouds.jpg");'>
         <div class="container">
+
+          <!-- Status Code Component -->
+          <div class="col-md-12 col-md-offset-0.75">
+            <div class="heroui-status-card">
+              <div class="heroui-status-header">
+                <h3 class="heroui-status-title">
+                  <i class="fas fa-broadcast-tower" style="margin-right: 0.5rem; color: #667eea;"></i>
+                  Status Codes
+                </h3>
+                <button class="heroui-status-badge" onclick="openStatusCodesModal()">
+                  <i class="fas fa-cog" style="margin-right: 0.5rem;"></i>
+                  Set Status
+                </button>
+              </div>
+              
+              <div class="heroui-current-status">
+                <div class="heroui-status-label">Current Status</div>
+                <div id="currentStatus" class="heroui-status-value">Loading...</div>
+                <div id="statusSetBy" class="heroui-status-setby">Set By: Loading...</div>
+              </div>
+            </div>
+          </div>
 
           <!--Table for Personas  -->
           <div class="col-md-12 col-md-offset-0.75">
@@ -2455,6 +2682,49 @@
               </div>
             </fieldset>
           </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Codes Modal -->
+  <div id="statusCodesModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">
+            <i class="fas fa-broadcast-tower" style="margin-right: 0.5rem; color: #667eea;"></i>
+            EMS Status Codes
+          </h4>
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="heroui-search-container">
+            <i class="fas fa-search heroui-search-icon"></i>
+            <input type="text" id="statusCodeSearch" class="heroui-search-input" placeholder="Search by code or description...">
+          </div>
+          
+          <div id="noStatusCodes" class="alert alert-info" style="display: none; background: #1e2028; border: 1px solid #35385a; color: #a0aec0;">
+            <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+            No status codes available for this community.
+          </div>
+          
+          <div id="statusCodesContent">
+            <div class="heroui-codes-grid" id="statusCodesGrid">
+              <!-- Status codes will be loaded here dynamically -->
+            </div>
+          </div>
+          
+          <div style="color: #a0aec0; margin-top: 1.5rem; padding-top: 1rem; font-size: 1rem; text-align: center; border-top: 1px solid #35385a;">
+            <i class="fas fa-mouse-pointer" style="margin-right: 0.5rem;"></i>
+            Click on a code to set as your status
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            <i class="fas fa-times" style="margin-right: 0.5rem;"></i>
+            Close
+          </button>
         </div>
       </div>
     </div>
