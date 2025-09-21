@@ -4,6 +4,47 @@ var dbUser;
 var dbVehicles;
 var socket;
 
+// Hide modal utility function (global scope)
+function hideModal(modalId) {
+  const $modal = $(`#${modalId}`);
+  
+  // Check if modal is actually visible before hiding
+  if (!$modal.hasClass('show') && $modal.css('display') !== 'block') {
+    return;
+  }
+  
+  // First, hide the modal
+  $modal.modal("hide");
+  
+  // Wait a bit for Bootstrap to process, then do aggressive cleanup
+  setTimeout(() => {
+    // Ensure body classes are cleaned up
+    $("body").removeClass("modal-open");
+    
+    // Remove all backdrops (there might be multiple)
+    $(".modal-backdrop").remove();
+    
+    // Reset modal state
+    $modal.removeClass("show").css("display", "none");
+    
+    // Clear any modal-related data attributes
+    $modal.removeData("bs.modal");
+    
+    // Ensure no lingering modal-open classes and reset body styles
+    $("body").css({
+      "padding-right": "",
+      "overflow": ""
+    });
+    
+    // Force remove any remaining backdrops
+    setTimeout(() => {
+      $(".modal-backdrop").remove();
+      $("body").removeClass("modal-open");
+    }, 100);
+    
+  }, 150);
+}
+
 // Function to initialize socket after global variables are set
 function initializeSocket() {
   // Initialize socket connection
@@ -110,6 +151,40 @@ $(function () {
     // Don't aggressively clean up backdrop - let Bootstrap handle it
   });
 
+  // Global function to force cleanup of any lingering modal backdrops
+  window.forceModalCleanup = function() {
+    $(".modal-backdrop").remove();
+    $("body").removeClass("modal-open");
+    $("body").css({
+      "padding-right": "",
+      "overflow": ""
+    });
+    // Also hide any visible modals
+    $(".modal.show").removeClass("show").css("display", "none");
+  };
+
+  // Clean up any existing modal backdrops on page load
+  $(document).ready(function() {
+    window.forceModalCleanup();
+    
+    // Simple modal functions like modern dashboard
+    window.openNewVehicleModal = function() {
+      $('#newVehicleModal').modal('show');
+    };
+    
+    window.closeNewVehicleModal = function() {
+      $('#newVehicleModal').modal('hide');
+    };
+    
+    window.openNewPersonaModal = function() {
+      $('#newCivModal').modal('show');
+    };
+    
+    window.closeNewPersonaModal = function() {
+      $('#newCivModal').modal('hide');
+    };
+  });
+
   // Form validation and popover handling
   $("#first-name").keydown(function (event) {
     if (event.keyCode==32) {
@@ -169,9 +244,6 @@ function toggleInput(showClass, hideClass) {
   $(`.${hideClass}`).removeClass("show").addClass("hide");
 }
 
-function hideModal(modalID) {
-  $("#" + modalID).modal("hide");
-}
 
 function searchPlate() {
   let x = document.getElementById("plateDetails");
@@ -3191,18 +3263,14 @@ function createNewEms() {
     // Clear the form
     clearEmsPersonaForm();
     
-    // Hide the modal
-    $('#newCivModal').modal('hide');
-    
-    // Clean up modal backdrop
-    $('.modal-backdrop').remove();
-    $('body').removeClass('modal-open');
+    // Hide the modal using proper cleanup
+    hideModal('newCivModal');
     
     // Reload the personas list
     loadEmsPersonas();
   })
   .catch(error => {
-    console.error('❌ Failed to create EMS persona:', error);
+    console.error('Failed to create EMS persona:', error);
     showToast(`Failed to create personnel: ${error.message}`, 'danger');
   })
   .finally(() => {
@@ -3272,7 +3340,7 @@ function viewEmsPersona(personaId) {
     $('#viewPersonaModal').modal('show');
   })
   .catch(error => {
-    console.error('❌ Failed to view EMS persona:', error);
+    console.error('Failed to view EMS persona:', error);
     showToast('Failed to load personnel details', 'danger');
   });
 }
@@ -3308,7 +3376,7 @@ function editEmsPersona(personaId) {
     $('#editPersonaModal').modal('show');
   })
   .catch(error => {
-    console.error('❌ Failed to edit EMS persona:', error);
+    console.error('Failed to edit EMS persona:', error);
     showToast('Failed to load personnel for editing', 'danger');
   });
 }
@@ -3633,15 +3701,11 @@ function createNewEmsVehicle() {
     // Hide the modal
     $('#newVehicleModal').modal('hide');
     
-    // Clean up modal backdrop
-    $('.modal-backdrop').remove();
-    $('body').removeClass('modal-open');
-    
     // Reload the vehicles list
     loadEmsVehicles();
   })
   .catch(error => {
-    console.error('❌ Failed to create EMS vehicle:', error);
+    console.error('Failed to create EMS vehicle:', error);
     showToast(`Failed to create vehicle: ${error.message}`, 'danger');
   })
   .finally(() => {
@@ -3709,7 +3773,7 @@ function viewEmsVehicle(vehicleId) {
     $('#viewVehicleModal').modal('show');
   })
   .catch(error => {
-    console.error('❌ Failed to view EMS vehicle:', error);
+    console.error('Failed to view EMS vehicle:', error);
     showToast('Failed to load vehicle details', 'danger');
   });
 }
@@ -3743,7 +3807,7 @@ function editEmsVehicle(vehicleId) {
     $('#editVehicleModal').modal('show');
   })
   .catch(error => {
-    console.error('❌ Failed to edit EMS vehicle:', error);
+    console.error('Failed to edit EMS vehicle:', error);
     showToast('Failed to load vehicle for editing', 'danger');
   });
 }
@@ -3885,6 +3949,11 @@ function confirmDeleteEmsVehicle() {
 // Create new EMS vehicle (updated for new modal)
 function createEmsVehicle() {
   const plate = $('#new-vehicle-plate').val().trim();
+  
+  // Exit early if form is empty (prevents auto-calls when modal opens)
+  if (!plate) {
+    return;
+  }
   const model = $('#new-vehicle-model').val();
   const engineNumber = $('#new-vehicle-engineNumber').val().trim();
   const color = $('#new-vehicle-color').val().trim();
@@ -3946,15 +4015,11 @@ function createEmsVehicle() {
     // Hide the modal
     $('#newVehicleModal').modal('hide');
     
-    // Clean up modal backdrop
-    $('.modal-backdrop').remove();
-    $('body').removeClass('modal-open');
-    
     // Reload the vehicles list
     loadEmsVehicles();
   })
   .catch(error => {
-    console.error('❌ Failed to create EMS vehicle:', error);
+    console.error('Failed to create EMS vehicle:', error);
     showToast(`Failed to create vehicle: ${error.message}`, 'danger');
   })
   .finally(() => {

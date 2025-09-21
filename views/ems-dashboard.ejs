@@ -1114,10 +1114,10 @@
                         Database</a>
           </li>
           <li>
-            <a data-toggle="modal" href="#newCivModal"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Persona</a>
+            <a href="#" onclick="openNewPersonaModal()"><span class="fa fa-id-card ml-3 mr-3"></span> Add New Persona</a>
           </li>
           <li>
-            <a data-toggle="modal" href="#newVehicleModal"><span class="fa fa-car ml-3 mr-3"></span> Add New Vehicle</a>
+            <a href="#" onclick="openNewVehicleModal()"><span class="fa fa-car ml-3 mr-3"></span> Add New Vehicle</a>
           </li>
         </div>
         <li class="background-color-222">
@@ -1180,9 +1180,9 @@
             <div class="col-lg-10 col-lg-offset-1 text-center">
                               <button data-toggle="modal" href="#medicalDatabaseModal" class="btn btn-primary btn-lg margin-top-2">Medical
                   Database</button>
-              <button data-toggle="modal" href="#newCivModal" class="btn btn-primary btn-lg margin-top-2">Add New
+              <button onclick="openNewPersonaModal()" class="btn btn-primary btn-lg margin-top-2">Add New
                 Persona</button>
-              <button data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-lg margin-top-2">Add New
+              <button onclick="openNewVehicleModal()" class="btn btn-primary btn-lg margin-top-2">Add New
                 Vehicle</button>
             </div>
           </div>
@@ -1194,8 +1194,7 @@
           <!--Table for Personas  -->
           <div class="col-md-12 col-md-offset-0.75">
             <div class="margin-bottom-1">
-              <span id="active-bolos margin-right-1" style="font-size: 18px;">Personnel:</span> <button data-toggle="modal"
-                href="#newCivModal" class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Persona</button>
+              <span id="active-bolos margin-right-1" style="font-size: 18px;">Personnel:</span>               <button onclick="openNewPersonaModal()" class="btn btn-primary btn-md pull-right margin-bottom-1">Add New Persona</button>
             </div>
             <div id="issue-loading-personnel-alert" style="display:none">
               <p class="text-center" style="font-style: italic; font-size: 14px">⚠️ Issue loading personnel, try refreshing the page...</p>
@@ -1221,8 +1220,7 @@
           <!--Table for Vehicles  -->
           <div class="col-md-12 col-md-offset-0.75 margin-top-2">
             <div class="margin-bottom-1">
-              <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span> <button
-                data-toggle="modal" href="#newVehicleModal" class="btn btn-primary btn-md pull-right margin-bottom-1">Add
+              <span id="active-bolos" class="margin-right-1" style="font-size: 18px;">Vehicles:</span>               <button onclick="openNewVehicleModal()" class="btn btn-primary btn-md pull-right margin-bottom-1">Add
                 New Vehicle</button>
             </div>
             <table id="vehicle-table" class="table table-hover table-bordered">
@@ -1525,7 +1523,7 @@
     <div class="modal-dialog modal-md">
       <div class="modal-content">
         <div class="modal-body">
-          <form id="newVehicleForm">
+          <form id="newVehicleForm" onsubmit="return false;">
             <!-- Form Header -->
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h4 class="mb-0">Add a New Vehicle</h4>
