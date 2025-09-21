@@ -8913,7 +8913,11 @@ async function deleteEditEvent() {
           searchInput.value = '';
         }
         communityCurrentSearchTerm = '';
-        communityFilteredMembers = [];
+        // Clear debounce timer
+        if (searchDebounceTimer) {
+          clearTimeout(searchDebounceTimer);
+          searchDebounceTimer = null;
+        }
         
         // Ensure card loading state is reset
         hideMembersCardLoading();
@@ -8965,16 +8969,7 @@ async function deleteEditEvent() {
           communityMembersTotal = data.totalUsers || 0;
           communityMembersPage = page;
           
-          // Apply current search filter if exists
-          if (communityCurrentSearchTerm) {
-            communityFilteredMembers = communityMembersData.filter(member => 
-              member.user?.username?.toLowerCase().includes(communityCurrentSearchTerm.toLowerCase()) ||
-              member.user?.email?.toLowerCase().includes(communityCurrentSearchTerm.toLowerCase()) ||
-              getMemberRole(member)?.toLowerCase().includes(communityCurrentSearchTerm.toLowerCase())
-            );
-          } else {
-            communityFilteredMembers = [...communityMembersData];
-          }
+          // No need for client-side filtering anymore since we use API-based search
           
           renderMembersList();
           updatePagination();
@@ -9010,7 +9005,7 @@ async function deleteEditEvent() {
           return;
         }
         
-        if (communityFilteredMembers.length === 0) {
+        if (communityMembersData.length === 0) {
           listContainer.innerHTML = `
             <div style="text-align:center; padding:2rem; color:#a0aec0;">
               <i class="fa fa-users" style="font-size:2rem; margin-bottom:1rem;"></i>
@@ -9020,7 +9015,7 @@ async function deleteEditEvent() {
           return;
         }
         
-        const membersHtml = communityFilteredMembers.map(member => `
+        const membersHtml = communityMembersData.map(member => `
           <div class="member-item" style="background:#2d3748; border:1px solid #4a5568; border-radius:8px; padding:1rem; margin-bottom:0.75rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;" onclick="openMemberActions('${member._id}')">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <div style="flex:1;">
@@ -9035,6 +9030,7 @@ async function deleteEditEvent() {
                     <h4 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">
                       ${member.user?.username || 'Unknown User'}
                       ${member._id === '<%= community.community.ownerID %>' ? ' <i class="fa fa-crown" style="color:#f59e0b; font-size:0.75rem;"></i>' : ''}
+                      ${member.user?.isVerified ? ' <i class="fa fa-check-circle" style="color:#10b981; font-size:0.75rem;" title="Verified User"></i>' : ''}
                     </h4>
                     ${member.user?.callSign ? `<p style="color:#a0aec0; margin:0; font-size:0.75rem;">Call Sign: ${member.user.callSign}</p>` : ''}
                   </div>
@@ -9093,29 +9089,167 @@ async function deleteEditEvent() {
         if (newPage >= 1 && newPage <= totalPages) {
           // Show pagination loading state
           showPaginationLoading();
-          loadMembers(newPage);
+          
+          // If we have a search term, use search pagination, otherwise use normal pagination
+          if (communityCurrentSearchTerm && communityCurrentSearchTerm.trim()) {
+            performMemberSearch(communityCurrentSearchTerm, newPage);
+          } else {
+            loadMembers(newPage);
+          }
         }
       }
 
-      function searchMembers(searchTerm) {
-        communityCurrentSearchTerm = searchTerm;
-        
-        if (!searchTerm.trim()) {
-          communityFilteredMembers = [...communityMembersData];
-        } else {
-          const searchLower = searchTerm.toLowerCase();
-          communityFilteredMembers = communityMembersData.filter(member => 
-            member.user?.username?.toLowerCase().includes(searchLower) ||
-            member.user?.email?.toLowerCase().includes(searchLower) ||
-            getMemberRole(member)?.toLowerCase().includes(searchLower)
-          );
+      // Debounce timer for search
+      let searchDebounceTimer = null;
+      
+      async function searchMembers(searchTerm) {
+        // Clear previous debounce timer
+        if (searchDebounceTimer) {
+          clearTimeout(searchDebounceTimer);
         }
         
-        renderMembersList();
+        // Sanitize and trim the search term
+        const sanitizedTerm = searchTerm ? searchTerm.trim() : '';
+        communityCurrentSearchTerm = sanitizedTerm;
+        
+        // If search term is empty, load all members normally
+        if (!sanitizedTerm) {
+          loadMembers(1);
+          return;
+        }
+        
+        // Validate search term length (prevent extremely long searches)
+        if (sanitizedTerm.length > 100) {
+          console.warn('Search term too long, truncating');
+          communityCurrentSearchTerm = sanitizedTerm.substring(0, 100);
+        }
+        
+        // Debounce search to avoid excessive API calls
+        searchDebounceTimer = setTimeout(async () => {
+          await performMemberSearch(communityCurrentSearchTerm, 1);
+        }, 300); // 300ms delay
+      }
+      
+      async function performMemberSearch(searchTerm, page = 1) {
+        const loadingDiv = document.getElementById('membersLoading');
+        const listContainer = document.getElementById('membersListContainer');
+        const paginationDiv = document.getElementById('membersPagination');
+        
+        if (!listContainer || !paginationDiv) {
+          return;
+        }
+        
+        try {
+          // Show loading state
+          if (loadingDiv) {
+            loadingDiv.style.display = 'block';
+          }
+          listContainer.innerHTML = '';
+          paginationDiv.style.display = 'none';
+          
+          const communityId = '<%= community._id %>';
+          const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+          
+          // Use the new search API endpoint
+          const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/members/search?q=${encodeURIComponent(searchTerm)}&page=${page}&limit=${communityMembersLimit}`);
+          
+          if (!response.ok) {
+            let errorMessage = 'Search failed';
+            if (response.status === 400) {
+              errorMessage = 'Invalid search request';
+            } else if (response.status === 404) {
+              errorMessage = 'Community not found';
+            } else if (response.status >= 500) {
+              errorMessage = 'Server error occurred';
+            }
+            throw new Error(`${errorMessage}: ${response.status}`);
+          }
+          
+          let data;
+          try {
+            data = await response.json();
+          } catch (jsonError) {
+            throw new Error('Invalid response format from server');
+          }
+          
+          // Validate response structure
+          if (!data || typeof data !== 'object') {
+            throw new Error('Invalid response data');
+          }
+          
+          // Transform the simplified API response back to the original structure
+          // The API returns simplified objects, but we need to maintain compatibility with existing code
+          communityMembersData = (data.members || []).map(member => {
+            // Validate member object structure
+            if (!member || !member.id || !member.username) {
+              console.warn('Invalid member object in search results:', member);
+              return null;
+            }
+            
+            return {
+              _id: member.id,
+              userId: member.id,
+              user: {
+                userId: member.id,
+                username: member.username,
+                profilePicture: member.profilePicture || '',
+                callSign: member.callSign || '',
+                isVerified: Boolean(member.isVerified),
+                isOnline: false, // Default since this info isn't in the simplified response
+                communities: [], // Empty array to prevent getMemberJoinDate errors
+                createdAt: new Date().toISOString() // Default creation date
+              }
+            };
+          }).filter(member => member !== null); // Remove any invalid members
+          
+          communityMembersTotal = data.pagination?.totalCount || 0;
+          communityMembersPage = data.pagination?.currentPage || 1;
+          
+          // Hide loading state
+          if (loadingDiv) {
+            loadingDiv.style.display = 'none';
+          }
+          
+          // Render the search results
+          renderMembersList();
+          
+          // Update pagination for search results
+          updatePagination();
+          
+        } catch (error) {
+          console.error('Search error:', error);
+          
+          // Hide loading state
+          if (loadingDiv) {
+            loadingDiv.style.display = 'none';
+          }
+          
+          // Show user-friendly error message
+          let errorMessage = 'Failed to search members. Please try again.';
+          if (error.message.includes('Invalid search request')) {
+            errorMessage = 'Please check your search and try again.';
+          } else if (error.message.includes('Community not found')) {
+            errorMessage = 'Community not found. Please refresh the page.';
+          } else if (error.message.includes('Server error')) {
+            errorMessage = 'Server is temporarily unavailable. Please try again later.';
+          }
+          
+          listContainer.innerHTML = `
+            <div style="text-align:center; padding:2rem; color:#ef4444;">
+              <i class="fa fa-exclamation-triangle" style="font-size:2rem; margin-bottom:1rem;"></i>
+              <p style="margin:0;">${errorMessage}</p>
+              <button onclick="searchMembers(document.getElementById('memberSearchInput').value)" 
+                      style="margin-top:1rem; background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:pointer; font-size:0.875rem;">
+                <i class="fa fa-refresh" style="margin-right:0.5rem;"></i>
+                Try Again
+              </button>
+            </div>
+          `;
+        }
       }
 
       function openMemberActions(memberId) {
-        const member = communityFilteredMembers.find(m => m._id === memberId);
+        const member = communityMembersData.find(m => m._id === memberId);
         if (!member) return;
         
         // Store selected member info globally for other functions to use
