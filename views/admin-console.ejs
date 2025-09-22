@@ -102,6 +102,116 @@
         transform: translateY(-1px);
         color: #fff;
       }
+      
+      .code-value {
+        font-family: 'Courier New', monospace;
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        border: 1px solid rgba(102, 126, 234, 0.3);
+      }
+      
+      .copy-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        color: #fff !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+      }
+      
+      .copy-btn:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+        color: #fff !important;
+      }
+      
+      .pending-user-card {
+        background: #1e2028;
+        border: 1px solid #35385a;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 0;
+        transition: all 0.2s ease;
+      }
+      
+      .pending-user-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.1);
+      }
+      
+      .pending-user-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #35385a;
+      }
+      
+      .pending-user-email {
+        font-size: 1.1rem;
+        color: #f7fafc;
+      }
+      
+      .pending-user-details {
+        background: #11131a;
+        border-radius: 8px;
+        padding: 1rem;
+      }
+      
+      .pending-user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      
+      .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      
+      .info-label {
+        color: #a0aec0;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+      
+      .info-value {
+        color: #f7fafc;
+        font-size: 0.9rem;
+      }
+      
+      .pending-user-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, #35385a 50%, transparent 100%);
+        margin: 1.5rem 0;
+      }
+      
+      .recent-search-item {
+        margin-bottom: 0.75rem;
+      }
+      
+      .no-users-found {
+        text-align: center;
+        padding: 3rem 2rem;
+      }
+      
+      .no-users-message {
+        max-width: 400px;
+        margin: 0 auto;
+      }
+      
+      .no-users-suggestion {
+        background: #11131a;
+        border: 1px solid #35385a;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+      }
       .btn-secondary {
         background: #35385a;
         border: 1px solid #4a4f7a;
@@ -594,6 +704,11 @@
               </a>
             </li>
             <li role="presentation">
+              <a href="#pending-users-tab" data-toggle="tab">
+                <i class="fas fa-user-clock" style="margin-right: 8px;"></i>Pending Users
+              </a>
+            </li>
+            <li role="presentation">
               <a href="#communities-tab" data-toggle="tab">
                 <i class="fas fa-building" style="margin-right: 8px;"></i>Communities
               </a>
@@ -636,6 +751,30 @@
               </div>
               
               <div id="userResults"></div>
+            </div>
+            
+            <!-- Pending Users Tab -->
+            <div role="tabpanel" class="tab-pane" id="pending-users-tab">
+              <div class="row">
+                <div class="col-md-8">
+                  <input type="text" id="pendingUserSearch" class="form-control search-input" 
+                         placeholder="Search pending users by email address..." />
+                </div>
+                <div class="col-md-4">
+                  <button type="button" id="searchPendingUsersBtn" class="btn btn-gradient btn-block">
+                    <i class="fas fa-search" style="margin-right: 8px;"></i>Search Pending Users
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Recent Searches Section -->
+              <div class="recent-searches">
+                <h6><i class="fas fa-history" style="margin-right: 8px;"></i>Recent Searches</h6>
+                <div id="pendingUsersRecentSearches" class="recent-searches-list"></div>
+              </div>
+              
+              <!-- Search Results -->
+              <div id="pendingUserResults" class="search-results"></div>
             </div>
             
             <!-- Communities Tab -->
@@ -1454,13 +1593,19 @@
       // Global variables for search pagination
       let currentUserPage = 0;
       let currentCommunityPage = 0;
+      let currentPendingUserPage = 0;
       let resultsPerPage = 5;
       let allUsers = [];
       let allCommunities = [];
+      let allPendingUsers = [];
       
       // User pagination variables
       let totalUserPages = 1;
       let totalUserRecords = 0;
+      
+      // Pending User pagination variables
+      let totalPendingUserPages = 1;
+      let totalPendingUserRecords = 0;
       
       // Community pagination variables
       let totalCommunityPages = 1;
@@ -2094,32 +2239,201 @@
         }
       });
       
+      // Search Pending Users
+      $('#searchPendingUsersBtn').click(function() {
+        const query = $('#pendingUserSearch').val().trim();
+        if (!query) {
+          showInfoModal('Search Required', 'Please enter an email address to search for pending users.');
+          return;
+        }
+        // Reset pagination for new search
+        currentPendingUserPage = 0;
+        searchPendingUsers(query, 0);
+      });
+      
+      $('#pendingUserSearch').keypress(function(e) {
+        if (e.which === 13) {
+          $('#searchPendingUsersBtn').click();
+        }
+      });
+      
+      function searchPendingUsers(query, page = 0) {
+        $('#pendingUserResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching pending users...</div>');
+        
+        // Track search activity
+        trackAdminAction('pending_user_search', `Searched for pending users with query: "${query}"`);
+        
+        // Convert query to lowercase for backend consistency
+        const normalizedQuery = query.toLowerCase();
+        
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/search/pending-verifications`,
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            query: normalizedQuery,
+            page: page,
+            limit: resultsPerPage
+          }),
+          success: function(response) {
+            if (response.pendingVerifications && response.pendingVerifications.length > 0) {
+              displayPendingUserResults(response.pendingVerifications, response.pagination);
+              
+              // Store search in recent searches
+              addToRecentSearches(query, 'pending_users');
+              
+              // Update recent searches UI
+              updateRecentSearchesUI();
+            } else {
+              // No pending users found - show helpful message
+              const noPendingUsersHtml = `
+                <div class="no-users-found">
+                  <div class="no-users-message">
+                    <i class="fas fa-user-clock" style="font-size: 2rem; color: #a0aec0; margin-bottom: 1rem;"></i>
+                    <h5 style="color: #f7fafc; margin-bottom: 0.5rem;">No pending users found</h5>
+                    <p style="color: #a0aec0; margin-bottom: 1.5rem;">No pending verification codes match your search.</p>
+                    <div class="no-users-suggestion">
+                      <p style="color: #a0aec0; font-size: 0.9rem; margin-bottom: 1rem;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem; color: #667eea;"></i>
+                        If this user already has an account, you can check the Users tab.
+                      </p>
+                      <button class="btn btn-gradient btn-sm" onclick="switchToUsers('${query}')">
+                        <i class="fas fa-users" style="margin-right: 0.5rem;"></i>
+                        Check Registered Users
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              `;
+              $('#pendingUserResults').html(noPendingUsersHtml);
+            }
+          },
+          error: function(xhr, status, error) {
+            let errorMessage = 'Unknown error occurred';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+              errorMessage = xhr.responseJSON.error;
+            } else if (xhr.status === 404) {
+              errorMessage = 'API endpoint not found';
+            } else if (xhr.status === 500) {
+              errorMessage = 'Internal server error';
+            }
+            $('#pendingUserResults').html(`<div class="loading" style="color: #ff6b6b;">Error: ${errorMessage}</div>`);
+          }
+        });
+      }
+      
+      function displayPendingUserResults(pendingUsers, pagination) {
+        if (!pendingUsers || pendingUsers.length === 0) {
+          $('#pendingUserResults').html('<div class="loading">No pending users found</div>');
+          return;
+        }
+        
+        // Store all pending users globally for pagination
+        allPendingUsers = pendingUsers;
+        currentPendingUserPage = pagination.currentPage;
+        totalPendingUserPages = pagination.totalPages;
+        totalPendingUserRecords = pagination.totalRecords;
+        
+        // Display first page
+        displayPendingUserResultsPage(pendingUsers, pagination.currentPage, pagination.totalRecords, pagination.totalPages);
+      }
+      
+      function displayPendingUserResultsPage(pendingUsers, currentPage, totalRecords, totalPages) {
+        let html = '';
+        
+        pendingUsers.forEach((pendingUser, index) => {
+          const createdAt = new Date(pendingUser.createdAt).toLocaleString();
+          html += `
+            <div class="pending-user-card">
+              <div class="pending-user-header">
+                <div class="pending-user-email">
+                  <i class="fas fa-envelope" style="margin-right: 8px; color: #667eea;"></i>
+                  <strong>${pendingUser.email}</strong>
+                </div>
+                <div class="pending-user-actions">
+                  <button class="btn btn-sm copy-btn" 
+                          onclick="copyToClipboard('${pendingUser.code}', event)" 
+                          title="Copy verification code">
+                    <i class="fas fa-copy"></i> Copy Code
+                  </button>
+                </div>
+              </div>
+              <div class="pending-user-details">
+                <div class="pending-user-info">
+                  <div class="info-item">
+                    <span class="info-label">Verification Code:</span>
+                    <span class="code-value">${pendingUser.code}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Attempts:</span>
+                    <span class="info-value">${pendingUser.attempts}</span>
+                  </div>
+                  <div class="info-item">
+                    <span class="info-label">Created:</span>
+                    <span class="info-value">${createdAt}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            ${index < pendingUsers.length - 1 ? '<div class="pending-user-divider"></div>' : ''}
+          `;
+        });
+        
+        html += generatePaginationControls('pendingUser', totalRecords, currentPage);
+        $('#pendingUserResults').html(html);
+      }
+      
       function searchUsers(query, page = 0) {
         $('#userResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Searching users...</div>');
         
         // Track search activity
         trackAdminAction('user_search', `Searched for users with query: "${query}"`);
         
+        // Normalize the query - trim and lowercase for email searches
+        const normalizedQuery = query.trim().toLowerCase();
+        
         $.ajax({
           url: `${API_BASE}/api/v1/admin/search/users`,
           method: 'POST',
           data: JSON.stringify({ 
-            query: query,
+            query: normalizedQuery,
             page: page,
             limit: resultsPerPage
           }),
           contentType: 'application/json',
           success: function(data) {
-            if (data.users && data.pagination) {
+            if (data.users && data.pagination && data.users.length > 0) {
               // Store pagination info
               currentUserPage = data.pagination.currentPage || 0;
               totalUserPages = data.pagination.totalPages || 1;
               totalUserRecords = data.pagination.totalRecords || 0;
               
               displayUserResultsPage(data.users, currentUserPage, totalUserRecords, totalUserPages);
-            } else {
+            } else if (data.users && data.users.length > 0) {
               // Fallback for old backend response
-              displayUserResults(data.users || []);
+              displayUserResults(data.users);
+            } else {
+              // No users found - show helpful message
+              const noUsersHtml = `
+                <div class="no-users-found">
+                  <div class="no-users-message">
+                    <i class="fas fa-user-times" style="font-size: 2rem; color: #a0aec0; margin-bottom: 1rem;"></i>
+                    <h5 style="color: #f7fafc; margin-bottom: 0.5rem;">No users found</h5>
+                    <p style="color: #a0aec0; margin-bottom: 1.5rem;">No registered users match your search.</p>
+                    <div class="no-users-suggestion">
+                      <p style="color: #a0aec0; font-size: 0.9rem; margin-bottom: 1rem;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem; color: #667eea;"></i>
+                        If this user is still pending verification, you can check the Pending Users tab.
+                      </p>
+                      <button class="btn btn-gradient btn-sm" onclick="switchToPendingUsers('${query}')">
+                        <i class="fas fa-user-clock" style="margin-right: 0.5rem;"></i>
+                        Check Pending Users
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              `;
+              $('#userResults').html(noUsersHtml);
             }
             // Log the user search action
             logAdminAction('user_search', 'User search performed', `Searched for users with query: "${query}"`);
@@ -2132,6 +2446,36 @@
         
         // Add to recent searches
         addToRecentSearches(query, 'users');
+      }
+      
+      // Function to switch to pending users tab with pre-filled email
+      function switchToPendingUsers(email) {
+        // Switch to Pending Users tab
+        $('a[href="#pending-users-tab"]').tab('show');
+        
+        // Set the search input value
+        $('#pendingUserSearch').val(email.trim());
+        
+        // Automatically trigger the search
+        searchPendingUsers(email.trim(), 0);
+        
+        // Track this action
+        trackAdminAction('pending_user_search', `Switched to pending users from no users found: "${email}"`);
+      }
+      
+      // Function to switch to users tab with pre-filled email
+      function switchToUsers(email) {
+        // Switch to Users tab
+        $('a[href="#users-tab"]').tab('show');
+        
+        // Set the search input value
+        $('#userSearch').val(email.trim());
+        
+        // Automatically trigger the search
+        searchUsers(email.trim(), 0);
+        
+        // Track this action
+        trackAdminAction('user_search', `Switched to users from no pending users found: "${email}"`);
       }
       
       // Recent Searches Management Functions
@@ -2170,6 +2514,9 @@
       function updateRecentSearchesUI() {
         const recentSearches = JSON.parse(localStorage.getItem('adminRecentSearches') || '[]');
         
+        // Update Pending Users tab recent searches
+        updateTabRecentSearches('pendingUsers', recentSearches.filter(item => item.type === 'pending_users'));
+        
         // Update Users tab recent searches
         updateTabRecentSearches('users', recentSearches.filter(item => item.type === 'users'));
         
@@ -2178,8 +2525,18 @@
       }
       
       function updateTabRecentSearches(tabType, searches) {
-        const sectionId = tabType === 'users' ? 'recentSearchesSection' : 'recentSearchesSectionCommunities';
-        const listId = tabType === 'users' ? 'recentSearchesList' : 'recentSearchesListCommunities';
+        let sectionId, listId;
+        
+        if (tabType === 'pendingUsers') {
+          sectionId = 'pendingUsersRecentSearches';
+          listId = 'pendingUsersRecentSearches';
+        } else if (tabType === 'users') {
+          sectionId = 'recentSearchesSection';
+          listId = 'recentSearchesList';
+        } else {
+          sectionId = 'recentSearchesSectionCommunities';
+          listId = 'recentSearchesListCommunities';
+        }
         
         const section = $(`#${sectionId}`);
         const list = $(`#${listId}`);
@@ -2196,7 +2553,7 @@
           html += `
             <div class="recent-search-item" onclick="performRecentSearch('${search.query}', '${search.type}')">
               <span class="search-text">${search.query}</span>
-              <span class="search-type">${search.type === 'users' ? 'Users' : 'Communities'}</span>
+              <span class="search-type">${search.type === 'users' ? 'Users' : search.type === 'pending_users' ? 'Pending Users' : 'Communities'}</span>
               <button class="remove-btn" onclick="removeRecentSearch('${search.query}', '${search.type}', event)">
                 <i class="fas fa-times"></i>
               </button>
@@ -2208,7 +2565,14 @@
       }
       
       function performRecentSearch(query, type) {
-        if (type === 'users') {
+        if (type === 'pending_users') {
+          // Switch to Pending Users tab
+          $('a[href="#pending-users-tab"]').tab('show');
+          // Set search input value
+          $('#pendingUserSearch').val(query);
+          // Perform search
+          searchPendingUsers(query, 0);
+        } else if (type === 'users') {
           // Switch to Users tab
           $('a[href="#users-tab"]').tab('show');
           // Set search input value
@@ -2329,6 +2693,22 @@
         html += generatePaginationControls('user', totalRecords, currentPage);
         
         $('#userResults').html(html);
+      }
+      
+      // Pending User pagination functions
+      function changePendingUserPage(direction) {
+        const newPage = currentPendingUserPage + direction;
+        
+        // Clamp to valid range
+        if (newPage < 0 || newPage >= totalPendingUserPages) {
+          return;
+        }
+        
+        // Get current search query and search for new page
+        const currentQuery = $('#pendingUserSearch').val().trim();
+        if (currentQuery) {
+          searchPendingUsers(currentQuery, newPage);
+        }
       }
       
       // User pagination functions
