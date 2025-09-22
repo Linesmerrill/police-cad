@@ -152,7 +152,7 @@
       }
       
       .pending-user-email {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         color: #f7fafc;
       }
       
@@ -176,13 +176,13 @@
       
       .info-label {
         color: #a0aec0;
-        font-size: 0.9rem;
+        font-size: 1rem;
         font-weight: 500;
       }
       
       .info-value {
         color: #f7fafc;
-        font-size: 0.9rem;
+        font-size: 1rem;
       }
       
       .pending-user-divider {
@@ -191,8 +191,50 @@
         margin: 1.5rem 0;
       }
       
+      /* Email validation warning styles */
+      .email-warning {
+        padding: 0.75rem;
+        margin: 0.5rem 0;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        font-size: 0.95rem;
+        font-weight: 500;
+      }
+      
+      .email-warning.invalid-warning {
+        background: linear-gradient(135deg, rgba(229, 62, 62, 0.1) 0%, rgba(229, 62, 62, 0.05) 100%);
+        border: 1px solid rgba(229, 62, 62, 0.3);
+        color: #fed7d7;
+      }
+      
+      .email-warning.invalid-warning i {
+        color: #e53e3e;
+        margin-right: 0.5rem;
+        font-size: 1rem;
+      }
+      
+      .email-warning.suspicious-warning {
+        background: linear-gradient(135deg, rgba(214, 158, 46, 0.1) 0%, rgba(214, 158, 46, 0.05) 100%);
+        border: 1px solid rgba(214, 158, 46, 0.3);
+        color: #faf089;
+      }
+      
+      .email-warning.suspicious-warning i {
+        color: #d69e2e;
+        margin-right: 0.5rem;
+        font-size: 1rem;
+      }
+      
       .recent-search-item {
         margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+      }
+      
+      .recent-searches h6 {
+        font-size: 1rem;
+        color: #e2e8f0;
+        font-weight: 600;
       }
       
       .no-users-found {
@@ -297,7 +339,7 @@
       .recent-searches-title {
         color: #e2e8f0;
         font-weight: 600;
-        font-size: 0.875rem;
+        font-size: 1rem;
         margin: 0;
         display: flex;
         align-items: center;
@@ -2338,10 +2380,107 @@
         displayPendingUserResultsPage(pendingUsers, pagination.currentPage, pagination.totalRecords, pagination.totalPages);
       }
       
+      // Email validation functions
+      function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+      }
+      
+      function getEmailValidationLevel(email) {
+        if (!email || typeof email !== 'string') return 'invalid';
+        
+        // Basic email structure check
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) return 'invalid';
+        
+        // Check for common typos in domain extensions
+        const domain = email.split('@')[1];
+        const validExtensions = [
+          'com', 'org', 'net', 'edu', 'gov', 'mil', 'int',
+          'co.uk', 'co.jp', 'co.in', 'com.au', 'com.br', 'com.mx',
+          'de', 'fr', 'it', 'es', 'ca', 'au', 'jp', 'in', 'br', 'mx'
+        ];
+        
+        // Check if domain ends with a valid extension
+        const hasValidExtension = validExtensions.some(ext => domain.endsWith('.' + ext) || domain === ext);
+        
+        // Check for suspicious patterns
+        const suspiciousPatterns = [
+          /[^a-zA-Z0-9@._-]/, // Contains invalid characters
+          /\.{2,}/, // Multiple consecutive dots
+          /^\.|\.$/, // Starts or ends with dot
+          /@.*@/, // Multiple @ symbols
+          /\.{2,}@/, // Dots before @
+          /@\.{2,}/, // Dots after @
+        ];
+        
+        for (const pattern of suspiciousPatterns) {
+          if (pattern.test(email)) return 'invalid';
+        }
+        
+        // Check for common typos in popular domains
+        const commonDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com'];
+        const emailDomain = domain.toLowerCase();
+        
+        for (const commonDomain of commonDomains) {
+          if (emailDomain.includes(commonDomain) && emailDomain !== commonDomain) {
+            // Check if it's just a typo (similar but not exact)
+            if (emailDomain.length <= commonDomain.length + 3) {
+              return 'suspicious';
+            }
+          }
+        }
+        
+        // Check for domains that end with extra characters (like .comq)
+        if (domain.includes('.') && !hasValidExtension) {
+          const parts = domain.split('.');
+          const lastPart = parts[parts.length - 1];
+          if (lastPart.length > 4 || !/^[a-zA-Z]+$/.test(lastPart)) {
+            return 'suspicious';
+          }
+        }
+        
+        return hasValidExtension ? 'valid' : 'suspicious';
+      }
+      
+      function getEmailWarningIcon(validationLevel) {
+        switch (validationLevel) {
+          case 'invalid':
+            return '<i class="fas fa-exclamation-triangle" style="color: #e53e3e; margin-left: 8px;" title="Invalid email address"></i>';
+          case 'suspicious':
+            return '<i class="fas fa-exclamation-circle" style="color: #d69e2e; margin-left: 8px;" title="Potentially invalid email address"></i>';
+          default:
+            return '<i class="fas fa-check-circle" style="color: #38a169; margin-left: 8px;" title="Valid email address"></i>';
+        }
+      }
+      
+      function getEmailWarningMessage(validationLevel, email) {
+        switch (validationLevel) {
+          case 'invalid':
+            return `<div class="email-warning invalid-warning">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span>Invalid email format - user may have entered incorrect email</span>
+            </div>`;
+          case 'suspicious':
+            const domain = email.split('@')[1];
+            return `<div class="email-warning suspicious-warning">
+              <i class="fas fa-exclamation-circle"></i>
+              <span>Potentially invalid email (${domain}) - verify with user</span>
+            </div>`;
+          default:
+            return '';
+        }
+      }
+      
       function displayPendingUserResultsPage(pendingUsers, currentPage, totalRecords, totalPages) {
         let html = '';
         
         pendingUsers.forEach((pendingUser, index) => {
+          // Validate email
+          const emailValidation = getEmailValidationLevel(pendingUser.email);
+          const warningIcon = getEmailWarningIcon(emailValidation);
+          const warningMessage = getEmailWarningMessage(emailValidation, pendingUser.email);
+          
           const createdAt = new Date(pendingUser.createdAt).toLocaleString();
           html += `
             <div class="pending-user-card">
@@ -2349,6 +2488,7 @@
                 <div class="pending-user-email">
                   <i class="fas fa-envelope" style="margin-right: 8px; color: #667eea;"></i>
                   <strong>${pendingUser.email}</strong>
+                  ${warningIcon}
                 </div>
                 <div class="pending-user-actions">
                   <button class="btn btn-sm copy-btn" 
@@ -2358,6 +2498,7 @@
                   </button>
                 </div>
               </div>
+              ${warningMessage}
               <div class="pending-user-details">
                 <div class="pending-user-info">
                   <div class="info-item">
