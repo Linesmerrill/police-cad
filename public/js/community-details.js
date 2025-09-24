@@ -1517,6 +1517,12 @@ function updateDepartmentJoinButton(departmentId, status) {
       displayCivilians();
       createCiviliansPaginationControls();
       
+      // Show pagination when loading all civilians
+      const paginationContainer = document.getElementById('civiliansPagination');
+      if (paginationContainer) {
+        paginationContainer.style.display = 'flex';
+      }
+      
       // Hide loading state
       hideCiviliansLoading();
       
@@ -1719,27 +1725,93 @@ function updateDepartmentJoinButton(departmentId, status) {
     paginationContainer.innerHTML = html;
   }
 
-  // Search civilians
+  // Search civilians using the new API endpoint
+  let searchTimeout;
   window.searchCivilians = function(query) {
     const clearBtn = document.getElementById('civiliansSearchClear');
     
-    if (query.trim()) {
-      clearBtn.style.display = 'block';
-      filteredCivilians = civiliansData.filter(civilian => {
-        // Always access the nested civilian object
-        const civ = civilian.civilian;
-        const username = civilian.user ? civilian.user.username : '';
-        const searchText = `${civ.name || ''} ${username} ${civilian._id || ''}`.toLowerCase();
-        return searchText.includes(query.toLowerCase());
-      });
-    } else {
-      clearBtn.style.display = 'none';
-      filteredCivilians = [...civiliansData];
+    // Clear previous timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
     }
     
-    updateCiviliansCount();
-    displayCivilians();
+    if (query.trim()) {
+      clearBtn.style.display = 'block';
+      
+      // Debounce the search to avoid excessive API calls
+      searchTimeout = setTimeout(async () => {
+        await performCiviliansSearch(query);
+      }, 300);
+    } else {
+      clearBtn.style.display = 'none';
+      // Reset to show all civilians
+      loadCivilians(1);
+    }
   };
+
+  // Perform the actual search using the new API endpoint
+  async function performCiviliansSearch(query) {
+    try {
+      // Show loading state
+      showCiviliansLoading();
+      
+      const communityId = window?.communityId || (typeof COMMUNITY_ID !== 'undefined' ? COMMUNITY_ID : null) || (window.community && window.community._id) || null;
+      
+      if (!communityId) {
+        throw new Error('Community ID not found');
+      }
+
+      const response = await fetch(`${API_URL}/api/v2/civilians/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${window.dbUser?.token || ''}`
+        },
+        body: JSON.stringify({
+          query: query,
+          communityId: communityId,
+          page: 0, // Start from page 0 for search results
+          limit: 50 // Show more results for search
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Update civilians data with search results
+      civiliansData = data.civilians || [];
+      filteredCivilians = [...civiliansData];
+      
+      // Update pagination info for search results
+      civiliansPagination = {
+        currentPage: data.pagination?.currentPage || 0,
+        limit: data.pagination?.limit || 50,
+        totalCount: data.pagination?.totalRecords || 0,
+        totalPages: data.pagination?.totalPages || 1,
+        hasNext: data.pagination?.hasNextPage || false,
+        hasPrev: data.pagination?.hasPrevPage || false
+      };
+      
+      updateCiviliansCount();
+      displayCivilians();
+      
+      // Hide pagination for search results since we're showing all matching results
+      const paginationContainer = document.getElementById('civiliansPagination');
+      if (paginationContainer) {
+        paginationContainer.style.display = 'none';
+      }
+      
+    } catch (error) {
+      console.error('Error searching civilians:', error);
+      showCustomToast(`Failed to search civilians: ${error.message}`, 'error');
+      
+      // Reset to show all civilians on error
+      loadCivilians(1);
+    }
+  }
 
   // Clear search
   window.clearCiviliansSearch = function() {
@@ -1753,9 +1825,13 @@ function updateDepartmentJoinButton(departmentId, status) {
       clearBtn.style.display = 'none';
     }
     
-    filteredCivilians = [...civiliansData];
-    updateCiviliansCount();
-    displayCivilians();
+    // Clear any pending search timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Reset to show all civilians with pagination
+    loadCivilians(1);
   };
 
   // Edit civilian
