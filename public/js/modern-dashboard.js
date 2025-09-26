@@ -617,7 +617,7 @@ function refreshComponentPermissions() {
             // User is admin, ensure buttons are properly styled for admin
             // Use setTimeout to ensure this runs after checkComponentPermissions
             setTimeout(() => {
-                updateCivilianCreationButtonsForAdmin();
+                updateCivilianCreationButtonsForAdmin(null);
             }, 0);
         }
     }).catch(() => {
@@ -1950,7 +1950,7 @@ function checkCivilianCreationLimitsOnLoad() {
                 updateCivilianCreationButtonState(communityId, data.community.civilianCreationLimit);
             } else if (isAdmin) {
                 // Admin bypass - show admin message and enable buttons
-                updateCivilianCreationButtonsForAdmin();
+                updateCivilianCreationButtonsForAdmin(data.community);
             }
         },
         error: function(xhr) {
@@ -2355,7 +2355,7 @@ function showAdminLimitInfoModal(entityType) {
 }
 
 // Update civilian creation buttons for admin users (bypass limits)
-function updateCivilianCreationButtonsForAdmin() {
+function updateCivilianCreationButtonsForAdmin(communityData = null) {
     // Find all buttons that call openNewCivModal
     const buttons = document.querySelectorAll('[onclick*="openNewCivModal"]');
     
@@ -2383,9 +2383,11 @@ function updateCivilianCreationButtonsForAdmin() {
         // Add admin indicator to tooltip
         button.title = `Create new civilian (Admin - limits bypassed)`;
         
-        // Add limit indicator for admin (both sidebar and section title)
-        addAdminLimitIndicator(button, 'civilian');
-        addAdminLimitIndicatorToSection(button, 'civilian');
+        // Add limit indicator for admin (both sidebar and section title) only if limits are enabled
+        if (communityData && communityData.civilianCreationLimitsEnabled) {
+            addAdminLimitIndicator(button, 'civilian');
+            addAdminLimitIndicatorToSection(button, 'civilian');
+        }
     });
 }
 
@@ -2555,7 +2557,7 @@ function checkVehicleCreationLimitsOnLoad() {
                 updateVehicleCreationButtonState(communityId, data.community.vehicleCreationLimit);
             } else if (isAdmin) {
                 // Admin bypass - show admin message and enable buttons
-                updateVehicleCreationButtonsForAdmin();
+                updateVehicleCreationButtonsForAdmin(data.community);
             }
         },
         error: function(xhr) {
@@ -2691,7 +2693,7 @@ function updateVehicleCreationButtons(currentCount, limit) {
 }
 
 // Update vehicle creation buttons for admin users (bypass limits)
-function updateVehicleCreationButtonsForAdmin() {
+function updateVehicleCreationButtonsForAdmin(communityData = null) {
     // Find all buttons that call openNewVehicleModal
     const buttons = document.querySelectorAll('[onclick*="openNewVehicleModal"]');
     
@@ -2719,9 +2721,11 @@ function updateVehicleCreationButtonsForAdmin() {
         // Add admin indicator to tooltip
         button.title = `Create new vehicle (Admin - limits bypassed)`;
         
-        // Add limit indicator for admin (both sidebar and section title)
-        addAdminLimitIndicator(button, 'vehicle');
-        addAdminLimitIndicatorToSection(button, 'vehicle');
+        // Add limit indicator for admin (both sidebar and section title) only if limits are enabled
+        if (communityData && communityData.vehicleCreationLimitsEnabled) {
+            addAdminLimitIndicator(button, 'vehicle');
+            addAdminLimitIndicatorToSection(button, 'vehicle');
+        }
     });
 }
 
@@ -2889,7 +2893,7 @@ function checkFirearmCreationLimitsOnLoad() {
                 updateFirearmCreationButtonState(communityId, data.community.firearmCreationLimit);
             } else if (isAdmin) {
                 // Admin bypass - show admin message and enable buttons
-                updateFirearmCreationButtonsForAdmin();
+                updateFirearmCreationButtonsForAdmin(data.community);
             }
         },
         error: function(xhr) {
@@ -3025,7 +3029,7 @@ function updateFirearmCreationButtons(currentCount, limit) {
 }
 
 // Update firearm creation buttons for admin users (bypass limits)
-function updateFirearmCreationButtonsForAdmin() {
+function updateFirearmCreationButtonsForAdmin(communityData = null) {
     // Find all buttons that call openNewFirearmModal
     const buttons = document.querySelectorAll('[onclick*="openNewFirearmModal"]');
     
@@ -3053,9 +3057,11 @@ function updateFirearmCreationButtonsForAdmin() {
         // Add admin indicator to tooltip
         button.title = `Create new firearm (Admin - limits bypassed)`;
         
-        // Add limit indicator for admin (both sidebar and section title)
-        addAdminLimitIndicator(button, 'firearm');
-        addAdminLimitIndicatorToSection(button, 'firearm');
+        // Add limit indicator for admin (both sidebar and section title) only if limits are enabled
+        if (communityData && communityData.firearmCreationLimitsEnabled) {
+            addAdminLimitIndicator(button, 'firearm');
+            addAdminLimitIndicatorToSection(button, 'firearm');
+        }
     });
 }
 
