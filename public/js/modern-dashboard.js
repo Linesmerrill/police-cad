@@ -44,6 +44,12 @@ $(document).ready(function() {
     // Check civilian creation limits and update UI accordingly
     checkCivilianCreationLimitsOnLoad();
     
+    // Check vehicle creation limits and update UI accordingly
+    checkVehicleCreationLimitsOnLoad();
+    
+    // Check firearm creation limits and update UI accordingly
+    checkFirearmCreationLimitsOnLoad();
+    
     // Setup search functionality
     setupSearch();
     
@@ -188,6 +194,12 @@ $(document).ready(function() {
                         loadFirearms();
                     }
                 }, 500);
+                
+                // Update firearm creation button states after successful creation
+                const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+                if (communityId) {
+                    checkFirearmCreationLimitsOnLoad();
+                }
             },
             error: function(xhr) {
                 const errorMessage = xhr.responseJSON?.message || 'Failed to create firearm';
@@ -287,6 +299,12 @@ $(document).ready(function() {
                     showToast('Vehicle deleted successfully!');
                     closeVehDetailsModal();
                     loadVehicles();
+                    
+                    // Update vehicle creation button states after successful deletion
+                    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+                    if (communityId) {
+                        checkVehicleCreationLimitsOnLoad();
+                    }
                 },
                 error: function(xhr) {
                     showToast('Failed to delete vehicle: ' + (xhr.responseJSON?.message || xhr.statusText || 'Unknown error'));
@@ -1842,34 +1860,53 @@ function countUserCivilians(userId, limit) {
 function showCivilianLimitWarning(limit, currentCount, limitsEnabled = true) {
     // Create and show a custom warning modal
     const warningHtml = `
-        <div class="modal fade" id="civilianLimitWarningModal" tabindex="-1" role="dialog">
+        <div class="modal fade" id="civilianLimitWarningModal" tabindex="-1" role="dialog" aria-labelledby="civilianLimitWarningModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; border-radius: 16px;">
-                    <div class="modal-header" style="border-bottom: 1px solid #35385a; padding: 1.5rem;">
-                        <div class="d-flex align-items-center">
-                            <i class="fa fa-exclamation-triangle" style="color: #f59e0b; font-size: 1.5rem; margin-right: 1rem;"></i>
-                            <h5 class="modal-title" style="color: #fff; margin: 0;">Community Limit Reached</h5>
-                        </div>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff; background: none; border: none; font-size: 1.5rem;">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
+                <div class="modal-content" style="background: #1a202c; border: 1px solid #4a5568; border-radius: 12px;">
+                    <div class="modal-header" style="border-bottom: 1px solid #4a5568; padding: 1.5rem;">
+                        <h5 class="modal-title" id="civilianLimitWarningModalLabel" style="color: #fff; font-weight: 600;">
+                            <i class="fa fa-exclamation-triangle" style="color: #f59e0b; margin-right: 0.5rem;"></i>
+                            Community Limit Reached
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff; background: none; border: none; font-size: 1.5rem; padding: 0; margin: 0; margin-left: auto; float: right;">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </h5>
                     </div>
-                    <div class="modal-body" style="padding: 1.5rem; color: #a0aec0;">
-                        <p>You have reached your limit of ${currentCount} out of ${limit} for this community.</p>
-                        <div style="background: #2d3748; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                            <p style="margin: 0; color: #fff;"><strong>Current Count:</strong> ${currentCount} civilian${currentCount !== 1 ? 's' : ''}</p>
-                            <p style="margin: 0; color: #fff;"><strong>Community Limit:</strong> ${limit} civilian${limit !== 1 ? 's' : ''}</p>
+                    <div class="modal-body" style="padding: 1.5rem;">
+                        <div style="text-align: center; margin-bottom: 1.5rem;">
+                            <div style="background: #2d3748; border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                                <i class="fa fa-exclamation-triangle" style="font-size: 2rem; color: #f59e0b;"></i>
+                            </div>
+                            <h4 style="color: #fff; margin-bottom: 0.5rem;">Limit Reached</h4>
+                            <p style="color: #a0aec0; margin-bottom: 0;">You have reached your limit of <strong style="color: #fff;">${limit}</strong> civilian${limit !== 1 ? 's' : ''} total</p>
                         </div>
-                        <p>This is a community setting set by the community owner. If you have questions, reach out to them directly.</p>
+                        
+                        <div style="background: #1e3a8a; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #3b82f6;">
+                            <p style="margin: 0; color: #93c5fd; font-size: 0.875rem;">
+                                <i class="fa fa-info-circle" style="color: #3b82f6; margin-right: 0.5rem;"></i>
+                                <strong>Current Count:</strong> ${currentCount} civilian${currentCount !== 1 ? 's' : ''}
+                            </p>
+                        </div>
+                        
+                        <div style="background: #f59e0b; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
+                            <p style="margin: 0; color: #fff; font-size: 0.875rem;">
+                                <i class="fa fa-lightbulb" style="color: #fff; margin-right: 0.5rem;"></i>
+                                <strong>Tip:</strong> Contact your community administrator if you need to create more civilians.
+                            </p>
+                        </div>
+                        
                         ${limitsEnabled ? `
-                        <div style="background: #1e3a8a; padding: 1rem; border-radius: 8px; margin: 1rem 0; border-left: 4px solid #3b82f6;">
-                            <p style="margin: 0; color: #93c5fd;"><strong>Note:</strong> Community administrators can bypass these limits and create unlimited civilians.</p>
+                        <div style="background: #1e3a8a; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #3b82f6;">
+                            <p style="margin: 0; color: #93c5fd; font-size: 0.875rem;">
+                                <i class="fa fa-info-circle" style="color: #3b82f6; margin-right: 0.5rem;"></i>
+                                <strong>Note:</strong> Community administrators can bypass these limits and create unlimited civilians.
+                            </p>
                         </div>
                         ` : ''}
                     </div>
-                    <div class="modal-footer" style="border-top: 1px solid #35385a; padding: 1.5rem;">
+                    <div class="modal-footer" style="border-top: 1px solid #4a5568; padding: 1.5rem;">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal" style="background: #6b7280; border: none; border-radius: 8px; padding: 0.75rem 1.5rem;">
-                            Close
+                            <i class="fa fa-times" style="margin-right: 0.5rem;"></i>Close
                         </button>
                     </div>
                 </div>
@@ -2059,6 +2096,264 @@ function updateCivilianCreationButtons(currentCount, limit) {
     });
 }
 
+// Add admin limit indicator next to section titles
+function addAdminLimitIndicatorToSection(button, entityType) {
+    // Find the section title based on the button's context
+    let sectionTitle = null;
+    
+    // Try to find the section title by looking for common patterns
+    const buttonParent = button.closest('.content-section, .section-header, .card, [class*="section"]');
+    if (buttonParent) {
+        // Look for h1, h2, h3, or elements with title-like classes
+        sectionTitle = buttonParent.querySelector('h1, h2, h3, .section-title, .title, [class*="title"]');
+    }
+    
+    // If we can't find a section title, try to find it by looking at the button's siblings
+    if (!sectionTitle && button.parentNode) {
+        const siblings = Array.from(button.parentNode.children);
+        const buttonIndex = siblings.indexOf(button);
+        
+        // Look backwards from the button to find a title
+        for (let i = buttonIndex - 1; i >= 0; i--) {
+            const element = siblings[i];
+            if (element.tagName && element.tagName.match(/^H[1-6]$/) || 
+                element.classList.contains('section-title') || 
+                element.classList.contains('title')) {
+                sectionTitle = element;
+                break;
+            }
+        }
+    }
+    
+    if (!sectionTitle) {
+        console.warn('Could not find section title for admin limit indicator');
+        return;
+    }
+    
+    // Remove any existing limit indicator from this section
+    const existingIndicator = sectionTitle.parentNode.querySelector('.admin-limit-indicator-section');
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+    
+    // Create limit indicator
+    const indicator = document.createElement('span');
+    indicator.className = 'admin-limit-indicator-section';
+    indicator.style.cssText = `
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 0.5rem;
+        cursor: pointer;
+        color: #f59e0b;
+        font-size: 1rem;
+        vertical-align: baseline;
+        line-height: 1;
+    `;
+    
+    // Add lock icon with larger size
+    indicator.innerHTML = '<i class="fa fa-lock" style="font-size: 1.1rem; line-height: 1;"></i>';
+    
+    // Add click handler to show limit info modal
+    indicator.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showAdminLimitInfoModal(entityType);
+    };
+    
+    // Add hover tooltip
+    indicator.title = `Click to view ${entityType} creation limits`;
+    
+    // Insert after the title text
+    sectionTitle.appendChild(indicator);
+}
+
+// Add admin limit indicator next to sidebar items
+function addAdminLimitIndicator(button, entityType) {
+    // Map entity types to sidebar item IDs
+    const sidebarItemMap = {
+        'civilian': 'navAddCivilian',
+        'vehicle': 'navAddVehicle', 
+        'firearm': 'navAddFirearm'
+    };
+    
+    const sidebarItemId = sidebarItemMap[entityType];
+    if (!sidebarItemId) {
+        console.warn('Unknown entity type for admin limit indicator:', entityType);
+        return;
+    }
+    
+    // Find the sidebar item
+    const sidebarItem = document.getElementById(sidebarItemId);
+    if (!sidebarItem) {
+        console.warn('Could not find sidebar item:', sidebarItemId);
+        return;
+    }
+    
+    // Find the nav-text span within the sidebar item
+    const navText = sidebarItem.querySelector('.nav-text');
+    if (!navText) {
+        console.warn('Could not find nav-text in sidebar item:', sidebarItemId);
+        return;
+    }
+    
+    // Remove any existing limit indicator from this sidebar item
+    const existingIndicator = sidebarItem.querySelector('.admin-limit-indicator');
+    if (existingIndicator) {
+        existingIndicator.remove();
+    }
+    
+    // Create limit indicator
+    const indicator = document.createElement('span');
+    indicator.className = 'admin-limit-indicator';
+    indicator.style.cssText = `
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 0.5rem;
+        cursor: pointer;
+        color: #f59e0b;
+        font-size: 0.875rem;
+        vertical-align: baseline;
+        line-height: 1;
+    `;
+    
+    // Add lock icon
+    indicator.innerHTML = '<i class="fa fa-lock" style="font-size: 0.9rem; line-height: 1;"></i>';
+    
+    // Add click handler to show limit info modal
+    indicator.onclick = function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showAdminLimitInfoModal(entityType);
+    };
+    
+    // Add hover tooltip
+    indicator.title = `Click to view ${entityType} creation limits`;
+    
+    // Insert after the nav-text
+    navText.appendChild(indicator);
+}
+
+// Show admin limit info modal
+function showAdminLimitInfoModal(entityType) {
+    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+    if (!communityId) return;
+    
+    // Fetch community settings to get current limits
+    $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}`,
+        method: 'GET',
+        success: function(data) {
+            const community = data.community;
+            let limitInfo = '';
+            let iconClass = '';
+            let entityName = '';
+            
+            switch(entityType) {
+                case 'civilian':
+                    entityName = 'Civilians';
+                    iconClass = 'fa-users';
+                    if (community.civilianCreationLimitsEnabled) {
+                        limitInfo = `Limit: ${community.civilianCreationLimit} civilian${community.civilianCreationLimit !== 1 ? 's' : ''}`;
+                    } else {
+                        limitInfo = 'No limits set';
+                    }
+                    break;
+                case 'vehicle':
+                    entityName = 'Vehicles';
+                    iconClass = 'fa-car';
+                    if (community.vehicleCreationLimitsEnabled) {
+                        limitInfo = `Limit: ${community.vehicleCreationLimit} vehicle${community.vehicleCreationLimit !== 1 ? 's' : ''}`;
+                    } else {
+                        limitInfo = 'No limits set';
+                    }
+                    break;
+                case 'firearm':
+                    entityName = 'Firearms';
+                    iconClass = 'fa-crosshairs';
+                    if (community.firearmCreationLimitsEnabled) {
+                        limitInfo = `Limit: ${community.firearmCreationLimit} firearm${community.firearmCreationLimit !== 1 ? 's' : ''}`;
+                    } else {
+                        limitInfo = 'No limits set';
+                    }
+                    break;
+            }
+            
+            const modalHtml = `
+                <div class="modal fade" id="adminLimitInfoModal" tabindex="-1" role="dialog" aria-labelledby="adminLimitInfoModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content" style="background: #1a202c; border: 1px solid #4a5568; border-radius: 12px;">
+                            <div class="modal-header" style="border-bottom: 1px solid #4a5568; padding: 1.5rem;">
+                                <h5 class="modal-title" id="adminLimitInfoModalLabel" style="color: #fff; font-weight: 600;">
+                                    <i class="fa ${iconClass}" style="color: #f59e0b; margin-right: 0.5rem;"></i>
+                                    ${entityName} Creation Limits
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff; background: none; border: none; font-size: 1.5rem; padding: 0; margin: 0; margin-left: auto; float: right;">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </h5>
+                            </div>
+                            <div class="modal-body" style="padding: 1.5rem;">
+                                <div style="text-align: center; margin-bottom: 1.5rem;">
+                                    <div style="background: #2d3748; border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                                        <i class="fa ${iconClass}" style="font-size: 2rem; color: #f59e0b;"></i>
+                                    </div>
+                                    <h4 style="color: #fff; margin-bottom: 0.5rem;">Admin View</h4>
+                                    <p style="color: #a0aec0; margin-bottom: 0;">Current ${entityName.toLowerCase()} creation limits</p>
+                                </div>
+                                
+                                <div style="background: #1e3a8a; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #3b82f6;">
+                                    <p style="margin: 0; color: #93c5fd; font-size: 0.875rem;">
+                                        <i class="fa fa-info-circle" style="color: #3b82f6; margin-right: 0.5rem;"></i>
+                                        <strong>${limitInfo}</strong>
+                                    </p>
+                                </div>
+                                
+                                <div style="background: #f59e0b; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #f59e0b;">
+                                    <p style="margin: 0; color: #fff; font-size: 0.875rem;">
+                                        <i class="fa fa-shield-alt" style="color: #fff; margin-right: 0.5rem;"></i>
+                                        <strong>Admin Privilege:</strong> You can bypass these limits and create unlimited ${entityName.toLowerCase()}.
+                                    </p>
+                                </div>
+                                
+                                <div style="background: #2d3748; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                                    <p style="margin: 0; color: #a0aec0; font-size: 0.875rem;">
+                                        <i class="fa fa-cog" style="color: #a0aec0; margin-right: 0.5rem;"></i>
+                                        <strong>Note:</strong> These limits are set by the community owner and apply to regular users.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="modal-footer" style="border-top: 1px solid #4a5568; padding: 1.5rem;">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal" style="background: #6b7280; border: none; border-radius: 8px; padding: 0.75rem 1.5rem;">
+                                    <i class="fa fa-times" style="margin-right: 0.5rem;"></i>Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove any existing modal
+            $('#adminLimitInfoModal').remove();
+            
+            // Add modal to body
+            $('body').append(modalHtml);
+            
+            // Show modal
+            $('#adminLimitInfoModal').modal('show');
+            
+            // Remove modal from DOM when hidden
+            $('#adminLimitInfoModal').on('hidden.bs.modal', function() {
+                $(this).remove();
+            });
+        },
+        error: function(xhr) {
+            console.error('Error fetching community settings for admin limit info:', xhr);
+            showToast('Error loading limit information');
+        }
+    });
+}
+
 // Update civilian creation buttons for admin users (bypass limits)
 function updateCivilianCreationButtonsForAdmin() {
     // Find all buttons that call openNewCivModal
@@ -2087,7 +2382,701 @@ function updateCivilianCreationButtonsForAdmin() {
         
         // Add admin indicator to tooltip
         button.title = `Create new civilian (Admin - limits bypassed)`;
+        
+        // Add limit indicator for admin (both sidebar and section title)
+        addAdminLimitIndicator(button, 'civilian');
+        addAdminLimitIndicatorToSection(button, 'civilian');
     });
+}
+
+// Check vehicle creation limits
+function checkVehicleCreationLimits() {
+    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+    
+    if (!communityId) {
+        showToast('Error: No active community found');
+        return;
+    }
+    
+    // Fetch community settings to check limits
+    $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}`,
+        method: 'GET',
+        success: function(data) {
+            // Check if user is admin (community owner or has administrator permission)
+            const isOwner = data.community && data.community.ownerID === dbUser._id;
+            const hasAdminPermission = checkUserAdminPermission(data.community);
+            const isAdmin = isOwner || hasAdminPermission;
+            
+            if (data.community && data.community.vehicleCreationLimitsEnabled && !isAdmin) {
+                // Limits are enabled and user is not admin, check current count
+                checkCurrentVehicleCount(communityId, data.community.vehicleCreationLimit);
+            } else {
+                // No limits or user is admin, allow creation
+                if (isAdmin) {
+                    showToast('Admin: Bypassing vehicle creation limits');
+                }
+                // Open the vehicle modal properly
+                document.getElementById('createVehicleForm').reset();
+                $('#newVehicleModal').modal('show');
+            }
+        },
+        error: function(xhr) {
+            console.error('Error fetching community settings:', xhr);
+            // If we can't fetch settings, allow creation as fallback
+            $('#newVehicleModal').modal('show');
+        }
+    });
+}
+
+// Check current vehicle count for the user
+function checkCurrentVehicleCount(communityId, limit) {
+    const userId = dbUser._id;
+    
+    // Count vehicles for this user
+    countUserVehicles(userId, limit);
+}
+
+// Count vehicles for a user (total, not per department)
+function countUserVehicles(userId, limit) {
+    $.ajax({
+        url: `${API_URL}/api/v1/vehicles/user/${userId}?active_community_id=${dbUser.user.lastAccessedCommunity.communityID}`,
+        method: 'GET',
+        success: function(data) {
+            let vehicleCount = 0;
+            
+            if (data && Array.isArray(data)) {
+                // Count ALL vehicles for this user (total count, not per department)
+                vehicleCount = data.length;
+            }
+            
+            if (vehicleCount >= limit) {
+                // User has reached their limit
+                showVehicleLimitWarning(limit, vehicleCount, true);
+            } else {
+                // User can create more vehicles
+                // Open the vehicle modal properly
+                document.getElementById('createVehicleForm').reset();
+                $('#newVehicleModal').modal('show');
+            }
+        },
+        error: function(xhr) {
+            console.error('❌ Error counting vehicles:', xhr);
+            // If we can't count, allow creation as fallback
+            $('#newVehicleModal').modal('show');
+        }
+    });
+}
+
+// Show warning modal when user has reached their vehicle limit
+function showVehicleLimitWarning(limit, currentCount, limitsEnabled = true) {
+    const modalHtml = `
+        <div class="modal fade" id="vehicleLimitWarningModal" tabindex="-1" role="dialog" aria-labelledby="vehicleLimitWarningModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content" style="background: #1a202c; border: 1px solid #4a5568; border-radius: 12px;">
+                    <div class="modal-header" style="border-bottom: 1px solid #4a5568; padding: 1.5rem;">
+                        <h5 class="modal-title" id="vehicleLimitWarningModalLabel" style="color: #fff; font-weight: 600;">
+                            <i class="fa fa-car" style="color: #ef4444; margin-right: 0.5rem;"></i>
+                            Vehicle Creation Limit Reached
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff; background: none; border: none; font-size: 1.5rem; padding: 0; margin: 0; margin-left: auto; float: right;">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </h5>
+                    </div>
+                    <div class="modal-body" style="padding: 1.5rem;">
+                        <div style="text-align: center; margin-bottom: 1.5rem;">
+                            <div style="background: #2d3748; border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                                <i class="fa fa-car" style="font-size: 2rem; color: #ef4444;"></i>
+                            </div>
+                            <h4 style="color: #fff; margin-bottom: 0.5rem;">Limit Reached</h4>
+                            <p style="color: #a0aec0; margin-bottom: 0;">You have reached your limit of <strong style="color: #fff;">${limit}</strong> vehicle${limit !== 1 ? 's' : ''} total</p>
+                        </div>
+                        
+                        <div style="background: #1e3a8a; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #3b82f6;">
+                            <p style="margin: 0; color: #93c5fd; font-size: 0.875rem;">
+                                <i class="fa fa-info-circle" style="color: #3b82f6; margin-right: 0.5rem;"></i>
+                                <strong>Current Count:</strong> ${currentCount} vehicle${currentCount !== 1 ? 's' : ''}
+                            </p>
+                        </div>
+                        
+                        <div style="background: #2d3748; padding: 1rem; border-radius: 8px;">
+                            <p style="margin: 0; color: #a0aec0; font-size: 0.875rem;">
+                                <i class="fa fa-lightbulb" style="color: #f59e0b; margin-right: 0.5rem;"></i>
+                                <strong>Tip:</strong> Contact your community administrator if you need to create more vehicles.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="border-top: 1px solid #4a5568; padding: 1rem 1.5rem;">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" style="background: #4a5568; border: 1px solid #6b7280; color: #fff; padding: 0.5rem 1rem; border-radius: 6px;">
+                            <i class="fa fa-times" style="margin-right: 0.5rem;"></i>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove any existing modal
+    $('#vehicleLimitWarningModal').remove();
+    
+    // Add modal to body
+    $('body').append(modalHtml);
+    
+    // Show modal
+    $('#vehicleLimitWarningModal').modal('show');
+    
+    // Remove modal from DOM when hidden
+    $('#vehicleLimitWarningModal').on('hidden.bs.modal', function() {
+        $(this).remove();
+    });
+}
+
+// Check vehicle creation limits when page loads and update UI
+function checkVehicleCreationLimitsOnLoad() {
+    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+    
+    if (!communityId) {
+        return; // No active community, can't check limits
+    }
+    
+    // Fetch community settings to check limits
+    $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}`,
+        method: 'GET',
+        success: function(data) {
+            // Check if user is admin (community owner or has administrator permission)
+            const isOwner = data.community && data.community.ownerID === dbUser._id;
+            const hasAdminPermission = checkUserAdminPermission(data.community);
+            const isAdmin = isOwner || hasAdminPermission;
+            
+            if (data.community && data.community.vehicleCreationLimitsEnabled && !isAdmin) {
+                // Limits are enabled and user is not admin, check current count and update UI
+                updateVehicleCreationButtonState(communityId, data.community.vehicleCreationLimit);
+            } else if (isAdmin) {
+                // Admin bypass - show admin message and enable buttons
+                updateVehicleCreationButtonsForAdmin();
+            }
+        },
+        error: function(xhr) {
+            console.error('Error fetching community settings on load:', xhr);
+        }
+    });
+}
+
+// Update the vehicle creation button state based on current limits
+function updateVehicleCreationButtonState(communityId, limit) {
+    const userId = dbUser._id;
+    
+    // If no limit provided, fetch it from community settings
+    if (limit === null) {
+        $.ajax({
+            url: `${API_URL}/api/v1/community/${communityId}`,
+            method: 'GET',
+            success: function(data) {
+                if (data.community && data.community.vehicleCreationLimitsEnabled) {
+                    updateVehicleCreationButtonState(communityId, data.community.vehicleCreationLimit);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error fetching community settings:', xhr);
+            }
+        });
+        return;
+    }
+    
+    // Count vehicles for this user
+    $.ajax({
+        url: `${API_URL}/api/v1/vehicles/user/${userId}?active_community_id=${dbUser.user.lastAccessedCommunity.communityID}`,
+        method: 'GET',
+        success: function(data) {
+            let vehicleCount = 0;
+            
+            if (data && Array.isArray(data)) {
+                vehicleCount = data.length;
+            }
+            
+            // Update all vehicle creation buttons
+            updateVehicleCreationButtons(vehicleCount, limit);
+        },
+        error: function(xhr) {
+            console.error('Error fetching community departments on load:', xhr);
+        }
+    });
+}
+
+// Update all vehicle creation buttons based on current count vs limit
+function updateVehicleCreationButtons(currentCount, limit) {
+    // Find all buttons that call openNewVehicleModal
+    const buttons = document.querySelectorAll('[onclick*="openNewVehicleModal"]');
+    
+    buttons.forEach((button, index) => {
+        // Check if user is admin before applying limits
+        const isOwner = window.currentCommunityData && window.currentCommunityData.ownerID === dbUser._id;
+        const hasAdminPermission = checkUserAdminPermission(window.currentCommunityData);
+        const isAdmin = isOwner || hasAdminPermission;
+        
+        if (currentCount >= limit && !isAdmin) {
+            // User has reached their limit and is not admin
+            button.disabled = false; // Keep enabled so click events work
+            button.style.opacity = '0.6';
+            button.style.cursor = 'not-allowed';
+            button.style.display = 'inline-flex'; // Ensure proper flexbox layout for icon alignment
+            button.style.alignItems = 'center'; // Center align icon and text vertically
+            button.style.gap = '0.5rem'; // Add consistent spacing between icon and text
+            
+            // Add tooltip or update text to show limit reached
+            const originalText = button.innerHTML;
+            button.innerHTML = `<i class="fa fa-ban"></i> Limit Reached (${currentCount}/${limit})`;
+            button.title = `You have reached your limit of ${limit} vehicle${limit !== 1 ? 's' : ''} total`;
+            
+            // Store original text for potential restoration
+            button.setAttribute('data-original-text', originalText);
+            
+            // Add click handler to show warning modal when limit reached button is clicked
+            button.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showVehicleLimitWarning(limit, currentCount, true);
+            };
+        } else if (isAdmin) {
+            // Admin can always create vehicles, regardless of limit
+            button.disabled = false;
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+            button.style.display = 'inline-flex';
+            button.style.alignItems = 'center';
+            button.style.gap = '0.5rem';
+            
+            // Restore original text if it was changed
+            const originalText = button.getAttribute('data-original-text');
+            if (originalText) {
+                button.innerHTML = originalText;
+                button.removeAttribute('data-original-text');
+            }
+            
+            // Restore the original onclick functionality
+            button.onclick = function() {
+                checkVehicleCreationLimits();
+            };
+            
+            // Add admin indicator to tooltip
+            button.title = `Create new vehicle (Admin - limits bypassed)`;
+        } else {
+            // User is under limit, ensure button is properly enabled
+            button.disabled = false;
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+            button.style.display = 'inline-flex';
+            button.style.alignItems = 'center';
+            button.style.gap = '0.5rem';
+            
+            // Restore original text if it was changed
+            const originalText = button.getAttribute('data-original-text');
+            if (originalText) {
+                button.innerHTML = originalText;
+                button.removeAttribute('data-original-text');
+            }
+            
+            // Restore the original onclick functionality
+            button.onclick = function() {
+                checkVehicleCreationLimits();
+            };
+            
+            // Update tooltip to show remaining count
+            const remaining = limit - currentCount;
+            button.title = `Create new vehicle (${remaining} remaining)`;
+        }
+    });
+}
+
+// Update vehicle creation buttons for admin users (bypass limits)
+function updateVehicleCreationButtonsForAdmin() {
+    // Find all buttons that call openNewVehicleModal
+    const buttons = document.querySelectorAll('[onclick*="openNewVehicleModal"]');
+    
+    buttons.forEach((button, index) => {
+        // Admin can always create vehicles
+        button.disabled = false;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+        button.style.display = 'inline-flex'; // Ensure proper flexbox layout for icon alignment
+        button.style.alignItems = 'center'; // Center align icon and text vertically
+        button.style.gap = '0.5rem'; // Add consistent spacing between icon and text
+        
+        // Restore original text if it was changed
+        const originalText = button.getAttribute('data-original-text');
+        if (originalText) {
+            button.innerHTML = originalText;
+            button.removeAttribute('data-original-text');
+        }
+        
+        // Restore the original onclick functionality by calling checkVehicleCreationLimits directly
+        button.onclick = function() {
+            checkVehicleCreationLimits();
+        };
+        
+        // Add admin indicator to tooltip
+        button.title = `Create new vehicle (Admin - limits bypassed)`;
+        
+        // Add limit indicator for admin (both sidebar and section title)
+        addAdminLimitIndicator(button, 'vehicle');
+        addAdminLimitIndicatorToSection(button, 'vehicle');
+    });
+}
+
+// Check firearm creation limits
+function checkFirearmCreationLimits() {
+    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+    
+    if (!communityId) {
+        showToast('Error: No active community found');
+        return;
+    }
+    
+    // Fetch community settings to check limits
+    $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}`,
+        method: 'GET',
+        success: function(data) {
+            // Check if user is admin (community owner or has administrator permission)
+            const isOwner = data.community && data.community.ownerID === dbUser._id;
+            const hasAdminPermission = checkUserAdminPermission(data.community);
+            const isAdmin = isOwner || hasAdminPermission;
+            
+            if (data.community && data.community.firearmCreationLimitsEnabled && !isAdmin) {
+                // Limits are enabled and user is not admin, check current count
+                checkCurrentFirearmCount(communityId, data.community.firearmCreationLimit);
+            } else {
+                // No limits or user is admin, allow creation
+                if (isAdmin) {
+                    showToast('Admin: Bypassing firearm creation limits');
+                }
+                // Open the firearm modal properly
+                openFirearmModalDirectly();
+            }
+        },
+        error: function(xhr) {
+            console.error('Error fetching community settings:', xhr);
+            // If we can't fetch settings, allow creation as fallback
+            openFirearmModalDirectly();
+        }
+    });
+}
+
+// Check current firearm count for the user
+function checkCurrentFirearmCount(communityId, limit) {
+    const userId = dbUser._id;
+    
+    // Count firearms for this user
+    countUserFirearms(userId, limit);
+}
+
+// Count firearms for a user (total, not per department)
+function countUserFirearms(userId, limit) {
+    $.ajax({
+        url: `${API_URL}/api/v1/firearms/user/${userId}?active_community_id=${dbUser.user.lastAccessedCommunity.communityID}`,
+        method: 'GET',
+        success: function(data) {
+            let firearmCount = 0;
+            
+            if (data && Array.isArray(data)) {
+                // Count ALL firearms for this user (total count, not per department)
+                firearmCount = data.length;
+            }
+            
+            if (firearmCount >= limit) {
+                // User has reached their limit
+                showFirearmLimitWarning(limit, firearmCount, true);
+            } else {
+                // User can create more firearms
+                // Open the firearm modal properly
+                openFirearmModalDirectly();
+            }
+        },
+        error: function(xhr) {
+            console.error('❌ Error counting firearms:', xhr);
+            // If we can't count, allow creation as fallback
+            openFirearmModalDirectly();
+        }
+    });
+}
+
+// Show warning modal when user has reached their firearm limit
+function showFirearmLimitWarning(limit, currentCount, limitsEnabled = true) {
+    const modalHtml = `
+        <div class="modal fade" id="firearmLimitWarningModal" tabindex="-1" role="dialog" aria-labelledby="firearmLimitWarningModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content" style="background: #1a202c; border: 1px solid #4a5568; border-radius: 12px;">
+                    <div class="modal-header" style="border-bottom: 1px solid #4a5568; padding: 1.5rem;">
+                        <h5 class="modal-title" id="firearmLimitWarningModalLabel" style="color: #fff; font-weight: 600;">
+                            <i class="fa fa-crosshairs" style="color: #ef4444; margin-right: 0.5rem;"></i>
+                            Firearm Creation Limit Reached
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #fff; background: none; border: none; font-size: 1.5rem; padding: 0; margin: 0; margin-left: auto; float: right;">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </h5>
+                    </div>
+                    <div class="modal-body" style="padding: 1.5rem;">
+                        <div style="text-align: center; margin-bottom: 1.5rem;">
+                            <div style="background: #2d3748; border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+                                <i class="fa fa-crosshairs" style="font-size: 2rem; color: #ef4444;"></i>
+                            </div>
+                            <h4 style="color: #fff; margin-bottom: 0.5rem;">Limit Reached</h4>
+                            <p style="color: #a0aec0; margin-bottom: 0;">You have reached your limit of <strong style="color: #fff;">${limit}</strong> firearm${limit !== 1 ? 's' : ''} total</p>
+                        </div>
+                        
+                        <div style="background: #1e3a8a; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #3b82f6;">
+                            <p style="margin: 0; color: #93c5fd; font-size: 0.875rem;">
+                                <i class="fa fa-info-circle" style="color: #3b82f6; margin-right: 0.5rem;"></i>
+                                <strong>Current Count:</strong> ${currentCount} firearm${currentCount !== 1 ? 's' : ''}
+                            </p>
+                        </div>
+                        
+                        <div style="background: #2d3748; padding: 1rem; border-radius: 8px;">
+                            <p style="margin: 0; color: #a0aec0; font-size: 0.875rem;">
+                                <i class="fa fa-lightbulb" style="color: #f59e0b; margin-right: 0.5rem;"></i>
+                                <strong>Tip:</strong> Contact your community administrator if you need to create more firearms.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="border-top: 1px solid #4a5568; padding: 1rem 1.5rem;">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" style="background: #4a5568; border: 1px solid #6b7280; color: #fff; padding: 0.5rem 1rem; border-radius: 6px;">
+                            <i class="fa fa-times" style="margin-right: 0.5rem;"></i>
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove any existing modal
+    $('#firearmLimitWarningModal').remove();
+    
+    // Add modal to body
+    $('body').append(modalHtml);
+    
+    // Show modal
+    $('#firearmLimitWarningModal').modal('show');
+    
+    // Remove modal from DOM when hidden
+    $('#firearmLimitWarningModal').on('hidden.bs.modal', function() {
+        $(this).remove();
+    });
+}
+
+// Check firearm creation limits when page loads and update UI
+function checkFirearmCreationLimitsOnLoad() {
+    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+    
+    if (!communityId) {
+        return; // No active community, can't check limits
+    }
+    
+    // Fetch community settings to check limits
+    $.ajax({
+        url: `${API_URL}/api/v1/community/${communityId}`,
+        method: 'GET',
+        success: function(data) {
+            // Check if user is admin (community owner or has administrator permission)
+            const isOwner = data.community && data.community.ownerID === dbUser._id;
+            const hasAdminPermission = checkUserAdminPermission(data.community);
+            const isAdmin = isOwner || hasAdminPermission;
+            
+            if (data.community && data.community.firearmCreationLimitsEnabled && !isAdmin) {
+                // Limits are enabled and user is not admin, check current count and update UI
+                updateFirearmCreationButtonState(communityId, data.community.firearmCreationLimit);
+            } else if (isAdmin) {
+                // Admin bypass - show admin message and enable buttons
+                updateFirearmCreationButtonsForAdmin();
+            }
+        },
+        error: function(xhr) {
+            console.error('Error fetching community settings on load:', xhr);
+        }
+    });
+}
+
+// Update the firearm creation button state based on current limits
+function updateFirearmCreationButtonState(communityId, limit) {
+    const userId = dbUser._id;
+    
+    // If no limit provided, fetch it from community settings
+    if (limit === null) {
+        $.ajax({
+            url: `${API_URL}/api/v1/community/${communityId}`,
+            method: 'GET',
+            success: function(data) {
+                if (data.community && data.community.firearmCreationLimitsEnabled) {
+                    updateFirearmCreationButtonState(communityId, data.community.firearmCreationLimit);
+                }
+            },
+            error: function(xhr) {
+                console.error('Error fetching community settings:', xhr);
+            }
+        });
+        return;
+    }
+    
+    // Count firearms for this user
+    $.ajax({
+        url: `${API_URL}/api/v1/firearms/user/${userId}?active_community_id=${dbUser.user.lastAccessedCommunity.communityID}`,
+        method: 'GET',
+        success: function(data) {
+            let firearmCount = 0;
+            
+            if (data && Array.isArray(data)) {
+                firearmCount = data.length;
+            }
+            
+            // Update all firearm creation buttons
+            updateFirearmCreationButtons(firearmCount, limit);
+        },
+        error: function(xhr) {
+            console.error('Error fetching community departments on load:', xhr);
+        }
+    });
+}
+
+// Update all firearm creation buttons based on current count vs limit
+function updateFirearmCreationButtons(currentCount, limit) {
+    // Find all buttons that call openNewFirearmModal
+    const buttons = document.querySelectorAll('[onclick*="openNewFirearmModal"]');
+    
+    buttons.forEach((button, index) => {
+        // Check if user is admin before applying limits
+        const isOwner = window.currentCommunityData && window.currentCommunityData.ownerID === dbUser._id;
+        const hasAdminPermission = checkUserAdminPermission(window.currentCommunityData);
+        const isAdmin = isOwner || hasAdminPermission;
+        
+        if (currentCount >= limit && !isAdmin) {
+            // User has reached their limit and is not admin
+            button.disabled = false; // Keep enabled so click events work
+            button.style.opacity = '0.6';
+            button.style.cursor = 'not-allowed';
+            button.style.display = 'inline-flex'; // Ensure proper flexbox layout for icon alignment
+            button.style.alignItems = 'center'; // Center align icon and text vertically
+            button.style.gap = '0.5rem'; // Add consistent spacing between icon and text
+            
+            // Add tooltip or update text to show limit reached
+            const originalText = button.innerHTML;
+            button.innerHTML = `<i class="fa fa-ban"></i> Limit Reached (${currentCount}/${limit})`;
+            button.title = `You have reached your limit of ${limit} firearm${limit !== 1 ? 's' : ''} total`;
+            
+            // Store original text for potential restoration
+            button.setAttribute('data-original-text', originalText);
+            
+            // Add click handler to show warning modal when limit reached button is clicked
+            button.onclick = function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showFirearmLimitWarning(limit, currentCount, true);
+            };
+        } else if (isAdmin) {
+            // Admin can always create firearms, regardless of limit
+            button.disabled = false;
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+            button.style.display = 'inline-flex';
+            button.style.alignItems = 'center';
+            button.style.gap = '0.5rem';
+            
+            // Restore original text if it was changed
+            const originalText = button.getAttribute('data-original-text');
+            if (originalText) {
+                button.innerHTML = originalText;
+                button.removeAttribute('data-original-text');
+            }
+            
+            // Restore the original onclick functionality
+            button.onclick = function() {
+                checkFirearmCreationLimits();
+            };
+            
+            // Add admin indicator to tooltip
+            button.title = `Create new firearm (Admin - limits bypassed)`;
+        } else {
+            // User is under limit, ensure button is properly enabled
+            button.disabled = false;
+            button.style.opacity = '1';
+            button.style.cursor = 'pointer';
+            button.style.display = 'inline-flex';
+            button.style.alignItems = 'center';
+            button.style.gap = '0.5rem';
+            
+            // Restore original text if it was changed
+            const originalText = button.getAttribute('data-original-text');
+            if (originalText) {
+                button.innerHTML = originalText;
+                button.removeAttribute('data-original-text');
+            }
+            
+            // Restore the original onclick functionality
+            button.onclick = function() {
+                checkFirearmCreationLimits();
+            };
+            
+            // Update tooltip to show remaining count
+            const remaining = limit - currentCount;
+            button.title = `Create new firearm (${remaining} remaining)`;
+        }
+    });
+}
+
+// Update firearm creation buttons for admin users (bypass limits)
+function updateFirearmCreationButtonsForAdmin() {
+    // Find all buttons that call openNewFirearmModal
+    const buttons = document.querySelectorAll('[onclick*="openNewFirearmModal"]');
+    
+    buttons.forEach((button, index) => {
+        // Admin can always create firearms
+        button.disabled = false;
+        button.style.opacity = '1';
+        button.style.cursor = 'pointer';
+        button.style.display = 'inline-flex'; // Ensure proper flexbox layout for icon alignment
+        button.style.alignItems = 'center'; // Center align icon and text vertically
+        button.style.gap = '0.5rem'; // Add consistent spacing between icon and text
+        
+        // Restore original text if it was changed
+        const originalText = button.getAttribute('data-original-text');
+        if (originalText) {
+            button.innerHTML = originalText;
+            button.removeAttribute('data-original-text');
+        }
+        
+        // Restore the original onclick functionality by calling checkFirearmCreationLimits directly
+        button.onclick = function() {
+            checkFirearmCreationLimits();
+        };
+        
+        // Add admin indicator to tooltip
+        button.title = `Create new firearm (Admin - limits bypassed)`;
+        
+        // Add limit indicator for admin (both sidebar and section title)
+        addAdminLimitIndicator(button, 'firearm');
+        addAdminLimitIndicatorToSection(button, 'firearm');
+    });
+}
+
+// Open firearm modal directly (used when limits are bypassed or not enabled)
+function openFirearmModalDirectly() {
+    // Ensure any existing modals are properly closed first
+    closeFirearmDetailsModal();
+    closeCivDetailsModal();
+    closeVehDetailsModal();
+    
+    const modal = document.getElementById('newFirearmModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Reset form fields
+        document.getElementById('newFirearmSerial').value = '';
+        document.getElementById('newFirearmName').value = '';
+        document.getElementById('newFirearmType').value = '';
+        document.getElementById('newFirearmCaliber').value = '';
+        document.getElementById('newFirearmColor').value = '';
+        document.getElementById('newFirearmIsStolen').value = 'false';
+    }
 }
 
 // Toggle input visibility for height/weight units
@@ -2451,8 +3440,8 @@ function updateVehModern(vehId) {
 
 // Open Add New Vehicle modal
 function openNewVehicleModal() {
-    document.getElementById('createVehicleForm').reset();
-    $('#newVehicleModal').modal('show');
+    // Check vehicle creation limits before opening modal
+    checkVehicleCreationLimits();
 }
 
 // Close Add New Vehicle modal
@@ -2525,6 +3514,12 @@ $(document).ready(function() {
                 // Reset the form
                 $('#createVehicleForm')[0].reset();
                 loadVehicles();
+                
+                // Update vehicle creation button states after successful creation
+                const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+                if (communityId) {
+                    checkVehicleCreationLimitsOnLoad();
+                }
             },
             error: function(xhr) {
                 console.error('[AddVehicle] Error creating vehicle:', xhr);
@@ -2831,22 +3826,8 @@ function closeFirearmDetailsModal() {
 }
 
 function openNewFirearmModal() {
-    // Ensure any existing modals are properly closed first
-    closeFirearmDetailsModal();
-    closeCivDetailsModal();
-    closeVehDetailsModal();
-    
-    const modal = document.getElementById('newFirearmModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        // Reset form fields
-        document.getElementById('newFirearmSerial').value = '';
-        document.getElementById('newFirearmName').value = '';
-        document.getElementById('newFirearmType').value = '';
-        document.getElementById('newFirearmCaliber').value = '';
-        document.getElementById('newFirearmColor').value = '';
-        document.getElementById('newFirearmIsStolen').value = 'false';
-    }
+    // Check firearm creation limits before opening modal
+    checkFirearmCreationLimits();
 }
 
 function closeNewFirearmModal() {
@@ -2948,6 +3929,12 @@ function deleteFirearmModern(firearmId) {
                     }, 200);
                 } else {
                     loadFirearms();
+                }
+                
+                // Update firearm creation button states after successful deletion
+                const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+                if (communityId) {
+                    checkFirearmCreationLimitsOnLoad();
                 }
             }, 500);
         },

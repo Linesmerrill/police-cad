@@ -2191,6 +2191,80 @@
           </div>
         </div>
         
+        <!-- Vehicle Creation Limits Section -->
+        <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+            <i class="fa fa-car" style="font-size:1.5rem; color:#3b82f6;"></i>
+            <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">Vehicle Creation Limits</h4>
+          </div>
+          <p style="color:#a0aec0; margin-bottom:1rem; font-size:0.875rem;">Control how many vehicles each user can create in this community</p>
+          
+          <div style="background:#1e3a8a; padding:1rem; border-radius:8px; margin:1rem 0; border-left:4px solid #3b82f6;">
+            <p style="margin:0; color:#93c5fd; font-size:0.875rem;">
+              <i class="fa fa-info-circle" style="color:#3b82f6; margin-right:0.5rem;"></i>
+              <strong>Note:</strong> Community administrators can bypass these limits and create unlimited vehicles.
+            </p>
+          </div>
+          
+          <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
+              <input type="checkbox" id="enableVehicleLimits" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;">
+              Enable vehicle creation limits
+            </label>
+          </div>
+          
+          <div id="vehicleLimitsOptions" style="display:none; padding:1rem; background:#1a202c; border-radius:8px; border:1px solid #4a5568;">
+            <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem;">
+              Maximum vehicles per user in this community:
+            </label>
+            <input type="number" id="maxVehiclesPerDept" min="1" max="100" value="5" 
+                   style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:1rem; transition: border-color 0.2s ease;"
+                   oninput="validateMaxVehiclesInput(this)">
+            <div id="maxVehiclesError" style="display:none; color:#ef4444; margin:0.5rem 0 0 0; font-size:0.75rem; font-weight:500;">
+              <i class="fa fa-exclamation-circle" style="margin-right:0.25rem;"></i>
+              <span id="maxVehiclesErrorText"></span>
+            </div>
+            <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.75rem;">Set to 1-100. Users will be limited to creating this many vehicles in this community.</p>
+          </div>
+        </div>
+        
+        <!-- Firearm Creation Limits Section -->
+        <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+            <i class="fa fa-crosshairs" style="font-size:1.5rem; color:#ef4444;"></i>
+            <h4 style="color:#fff; margin:0; font-size:1.125rem; font-weight:600;">Firearm Creation Limits</h4>
+          </div>
+          <p style="color:#a0aec0; margin-bottom:1rem; font-size:0.875rem;">Control how many firearms each user can create in this community</p>
+          
+          <div style="background:#1e3a8a; padding:1rem; border-radius:8px; margin:1rem 0; border-left:4px solid #3b82f6;">
+            <p style="margin:0; color:#93c5fd; font-size:0.875rem;">
+              <i class="fa fa-info-circle" style="color:#3b82f6; margin-right:0.5rem;"></i>
+              <strong>Note:</strong> Community administrators can bypass these limits and create unlimited firearms.
+            </p>
+          </div>
+          
+          <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+            <label style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500; cursor:pointer;">
+              <input type="checkbox" id="enableFirearmLimits" style="width:1.25rem; height:1.25rem; accent-color:#3b82f6;">
+              Enable firearm creation limits
+            </label>
+          </div>
+          
+          <div id="firearmLimitsOptions" style="display:none; padding:1rem; background:#1a202c; border-radius:8px; border:1px solid #4a5568;">
+            <label style="display:block; color:#fff; margin-bottom:0.5rem; font-weight:500; font-size:0.875rem;">
+              Maximum firearms per user in this community:
+            </label>
+            <input type="number" id="maxFirearmsPerDept" min="1" max="100" value="5" 
+                   style="width:100%; padding:0.75rem; background:#2d3748; border:1px solid #4a5568; border-radius:6px; color:#fff; font-size:1rem; transition: border-color 0.2s ease;"
+                   oninput="validateMaxFirearmsInput(this)">
+            <div id="maxFirearmsError" style="display:none; color:#ef4444; margin:0.5rem 0 0 0; font-size:0.75rem; font-weight:500;">
+              <i class="fa fa-exclamation-circle" style="margin-right:0.25rem;"></i>
+              <span id="maxFirearmsErrorText"></span>
+            </div>
+            <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.75rem;">Set to 1-100. Users will be limited to creating this many firearms in this community.</p>
+          </div>
+        </div>
+        
         <!-- Civilian Approval Section -->
         <div style="margin-bottom:2rem; padding:1.5rem; background:#2d3748; border-radius:12px; border:1px solid #4a5568;">
           <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
@@ -3421,6 +3495,62 @@ function validateMaxCiviliansInput(input) {
   const value = parseInt(input.value);
   const errorDiv = document.getElementById('maxCiviliansError');
   const errorText = document.getElementById('maxCiviliansErrorText');
+  
+  // Reset styling
+  input.style.borderColor = '#4a5568';
+  
+  // Check if value is valid
+  if (isNaN(value) || value < 1 || value > 100) {
+    // Show error
+    input.style.borderColor = '#ef4444';
+    errorDiv.style.display = 'block';
+    
+    if (isNaN(value) || value === '') {
+      errorText.textContent = 'Please enter a valid number';
+    } else if (value < 1) {
+      errorText.textContent = 'Value must be at least 1';
+    } else if (value > 100) {
+      errorText.textContent = 'Value cannot exceed 100';
+    }
+  } else {
+    // Hide error
+    errorDiv.style.display = 'none';
+  }
+}
+
+// Validate maximum vehicles input
+function validateMaxVehiclesInput(input) {
+  const value = parseInt(input.value);
+  const errorDiv = document.getElementById('maxVehiclesError');
+  const errorText = document.getElementById('maxVehiclesErrorText');
+  
+  // Reset styling
+  input.style.borderColor = '#4a5568';
+  
+  // Check if value is valid
+  if (isNaN(value) || value < 1 || value > 100) {
+    // Show error
+    input.style.borderColor = '#ef4444';
+    errorDiv.style.display = 'block';
+    
+    if (isNaN(value) || value === '') {
+      errorText.textContent = 'Please enter a valid number';
+    } else if (value < 1) {
+      errorText.textContent = 'Value must be at least 1';
+    } else if (value > 100) {
+      errorText.textContent = 'Value cannot exceed 100';
+    }
+  } else {
+    // Hide error
+    errorDiv.style.display = 'none';
+  }
+}
+
+// Validate maximum firearms input
+function validateMaxFirearmsInput(input) {
+  const value = parseInt(input.value);
+  const errorDiv = document.getElementById('maxFirearmsError');
+  const errorText = document.getElementById('maxFirearmsErrorText');
   
   // Reset styling
   input.style.borderColor = '#4a5568';
@@ -7960,6 +8090,44 @@ async function deleteEditEvent() {
         
         toggleCivilianApprovalInfo(enableApproval);
         
+        // Set vehicle creation limits - use the actual field names from community JSON
+        const enableVehicleLimits = communityData.community?.vehicleCreationLimitsEnabled || false;
+        
+        const enableVehicleLimitsElement = document.getElementById('enableVehicleLimits');
+        if (enableVehicleLimitsElement) {
+          enableVehicleLimitsElement.checked = enableVehicleLimits;
+        }
+        
+        toggleVehicleLimitsOptions(enableVehicleLimits);
+        
+        if (enableVehicleLimits) {
+          const maxVehicles = communityData.community?.vehicleCreationLimit || 5;
+          
+          const maxVehiclesElement = document.getElementById('maxVehiclesPerDept');
+          if (maxVehiclesElement) {
+            maxVehiclesElement.value = maxVehicles;
+          }
+        }
+        
+        // Set firearm creation limits - use the actual field names from community JSON
+        const enableFirearmLimits = communityData.community?.firearmCreationLimitsEnabled || false;
+        
+        const enableFirearmLimitsElement = document.getElementById('enableFirearmLimits');
+        if (enableFirearmLimitsElement) {
+          enableFirearmLimitsElement.checked = enableFirearmLimits;
+        }
+        
+        toggleFirearmLimitsOptions(enableFirearmLimits);
+        
+        if (enableFirearmLimits) {
+          const maxFirearms = communityData.community?.firearmCreationLimit || 5;
+          
+          const maxFirearmsElement = document.getElementById('maxFirearmsPerDept');
+          if (maxFirearmsElement) {
+            maxFirearmsElement.value = maxFirearms;
+          }
+        }
+        
         // Hide loading state
         document.getElementById('generalSettingsLoading').style.display = 'none';
       }
@@ -8021,6 +8189,44 @@ async function deleteEditEvent() {
         
         toggleCivilianApprovalInfo(enableApproval);
         
+        // Set vehicle creation limits - use the actual field names from community JSON
+        const enableVehicleLimits = communityData?.vehicleCreationLimitsEnabled || false;
+        
+        const enableVehicleLimitsElement = document.getElementById('enableVehicleLimits');
+        if (enableVehicleLimitsElement) {
+          enableVehicleLimitsElement.checked = enableVehicleLimits;
+        }
+        
+        toggleVehicleLimitsOptions(enableVehicleLimits);
+        
+        if (enableVehicleLimits) {
+          const maxVehicles = communityData?.vehicleCreationLimit || 5;
+          
+          const maxVehiclesElement = document.getElementById('maxVehiclesPerDept');
+          if (maxVehiclesElement) {
+            maxVehiclesElement.value = maxVehicles;
+          }
+        }
+        
+        // Set firearm creation limits - use the actual field names from community JSON
+        const enableFirearmLimits = communityData?.firearmCreationLimitsEnabled || false;
+        
+        const enableFirearmLimitsElement = document.getElementById('enableFirearmLimits');
+        if (enableFirearmLimitsElement) {
+          enableFirearmLimitsElement.checked = enableFirearmLimits;
+        }
+        
+        toggleFirearmLimitsOptions(enableFirearmLimits);
+        
+        if (enableFirearmLimits) {
+          const maxFirearms = communityData?.firearmCreationLimit || 5;
+          
+          const maxFirearmsElement = document.getElementById('maxFirearmsPerDept');
+          if (maxFirearmsElement) {
+            maxFirearmsElement.value = maxFirearms;
+          }
+        }
+        
         // Hide loading state
         document.getElementById('generalSettingsLoading').style.display = 'none';
       }
@@ -8037,10 +8243,40 @@ async function deleteEditEvent() {
         enableApprovalCheckbox.addEventListener('change', function() {
           toggleCivilianApprovalInfo(this.checked);
         });
+        
+        // Vehicle limits toggle
+        const enableVehicleLimitsCheckbox = document.getElementById('enableVehicleLimits');
+        enableVehicleLimitsCheckbox.addEventListener('change', function() {
+          toggleVehicleLimitsOptions(this.checked);
+        });
+        
+        // Firearm limits toggle
+        const enableFirearmLimitsCheckbox = document.getElementById('enableFirearmLimits');
+        enableFirearmLimitsCheckbox.addEventListener('change', function() {
+          toggleFirearmLimitsOptions(this.checked);
+        });
       }
 
       function toggleCivilianLimitsOptions(show) {
         const optionsDiv = document.getElementById('civilianLimitsOptions');
+        if (show) {
+          optionsDiv.style.display = 'block';
+        } else {
+          optionsDiv.style.display = 'none';
+        }
+      }
+
+      function toggleVehicleLimitsOptions(show) {
+        const optionsDiv = document.getElementById('vehicleLimitsOptions');
+        if (show) {
+          optionsDiv.style.display = 'block';
+        } else {
+          optionsDiv.style.display = 'none';
+        }
+      }
+
+      function toggleFirearmLimitsOptions(show) {
+        const optionsDiv = document.getElementById('firearmLimitsOptions');
         if (show) {
           optionsDiv.style.display = 'block';
         } else {
@@ -8062,6 +8298,14 @@ async function deleteEditEvent() {
         const maxCivilians = enableLimits ? parseInt(document.getElementById('maxCiviliansPerDept').value) : 5;
         const enableApproval = document.getElementById('enableCivilianApproval').checked;
         
+        // Get vehicle limits
+        const enableVehicleLimits = document.getElementById('enableVehicleLimits').checked;
+        const maxVehicles = enableVehicleLimits ? parseInt(document.getElementById('maxVehiclesPerDept').value) : 5;
+        
+        // Get firearm limits
+        const enableFirearmLimits = document.getElementById('enableFirearmLimits').checked;
+        const maxFirearms = enableFirearmLimits ? parseInt(document.getElementById('maxFirearmsPerDept').value) : 5;
+        
         // Validate civilian limits if enabled
         if (enableLimits) {
           if (isNaN(maxCivilians) || maxCivilians < 1 || maxCivilians > 100) {
@@ -8072,11 +8316,35 @@ async function deleteEditEvent() {
           }
         }
         
+        // Validate vehicle limits if enabled
+        if (enableVehicleLimits) {
+          if (isNaN(maxVehicles) || maxVehicles < 1 || maxVehicles > 100) {
+            // Show error and prevent saving
+            validateMaxVehiclesInput(document.getElementById('maxVehiclesPerDept'));
+            showSettingsError('Please fix the validation errors before saving.');
+            return;
+          }
+        }
+        
+        // Validate firearm limits if enabled
+        if (enableFirearmLimits) {
+          if (isNaN(maxFirearms) || maxFirearms < 1 || maxFirearms > 100) {
+            // Show error and prevent saving
+            validateMaxFirearmsInput(document.getElementById('maxFirearmsPerDept'));
+            showSettingsError('Please fix the validation errors before saving.');
+            return;
+          }
+        }
+        
         // Use the actual field names that match the backend community model
         const updateData = {
           civilianCreationLimitsEnabled: enableLimits,
           civilianCreationLimit: maxCivilians,
-          civilianApprovalSystemEnabled: enableApproval
+          civilianApprovalSystemEnabled: enableApproval,
+          vehicleCreationLimitsEnabled: enableVehicleLimits,
+          vehicleCreationLimit: maxVehicles,
+          firearmCreationLimitsEnabled: enableFirearmLimits,
+          firearmCreationLimit: maxFirearms
         };
         
         // Save to server - use the same route as saveCommunityProfile
