@@ -459,34 +459,272 @@ function showToastNotification(notification) {
   fetchNotifications(0); // Update unseenCount
 }
 
-// WebSocket setup for live notifications
+// Socket.IO setup for live notifications
 $(document).ready(function () {
   let reconnectAttempts = 0;
   const maxReconnectAttempts = 5;
   const baseReconnectDelay = 1000; // 1 second
 
-  function connectWebSocket() {
-    socket = new WebSocket(
-      `ws${API_URL.startsWith("https") ? "s" : ""}://${API_URL.replace(
-        /^https?:\/\//,
-        ""
-      )}/ws/notifications?userId=${dbUser._id}`
-    );
+  // Watchdog to keep panic alerts visible if they should be
+  setInterval(function() {
+    const panicInline = $('#panic-alert-inline');
+    const panicBanner = $('#panic-alert-banner');
+    
+    if (panicInline.attr('data-panic-active') === 'true') {
+      if (panicInline.hasClass('hide')) {
+        panicInline.removeClass('hide').addClass('show');
+        $('#active-alerts-section').show();
+      }
+    }
+    
+    if (panicBanner.attr('data-panic-active') === 'true') {
+      if (panicBanner.hasClass('hide') || panicBanner.css('display') === 'none') {
+        panicBanner.removeClass('hide').addClass('show').css('display', 'block');
+      }
+    }
+  }, 1000);
 
-    socket.onopen = function () {
+  function connectWebSocket() {
+    // Use Socket.IO instead of raw WebSocket
+    socket = io();
+    
+    socket.on('connect', function () {
       reconnectAttempts = 0; // Reset on successful connection
+      // Socket.IO connected successfully
       // Start ping to keep connection alive
       startPing();
-    };
+    });
 
-    socket.onmessage = function (event) {
-      const data = JSON.parse(event.data);
-      if (data.event === "new_notification") {
-        showToastNotification(data.data);
+    socket.on('new_notification', function (data) {
+      showToastNotification(data);
+    });
+
+            socket.on('panic_alert_created', function (data) {
+              // Socket: panic_alert_created received
+              // Only process if this is for our community
+              if (typeof dbUser !== 'undefined' && data.communityId !== dbUser.user?.lastAccessedCommunity?.communityID) {
+                return;
+              }
+              
+              // Show panic alerts on other browsers
+              if (data && data.username) {
+                const callSign = data.callSign || 'No Unit #';
+                const itemId = 'panic-item-' + data.userId;
+
+                // Ensure container exists and is visible
+                var $container = $('#panic-alert-inline');
+                var $items = $('#panic-alert-items');
+                if (!$items.length) { return; }
+
+                var itemHtml = '' +
+                  '<div id="' + itemId + '" class="panic-item" data-user-id="' + data.userId + '" style="background-color:#f2dede; border-left:5px solid #dc3545; padding:12px; border-radius:4px; margin-bottom:10px; cursor:pointer;">' +
+                    '<div style="font-weight:bold; color:#721c24; margin-bottom:6px;"><i class="fa fa-exclamation-triangle"></i> Panic Triggered</div>' +
+                    '<div style="color:#333; font-size:0.95em;">' +
+                      '<strong>Triggered by:</strong> ' + data.username + ' (' + callSign + ') - ' + data.departmentType.toUpperCase() + '<br>' +
+                      '<strong>Time:</strong> ' + new Date(data.triggeredAt).toLocaleString() +
+                    '</div>' +
+                    '<div style="margin-top:6px;"><small style="color:#721c24; font-style:italic;">Click to view details and clear</small></div>' +
+                  '</div>';
+
+                var $existing = $('#' + itemId);
+                if ($existing.length) {
+                  $existing.replaceWith(itemHtml);
+                } else {
+                  $items.append(itemHtml);
+                }
+
+                // Show section and update count
+                $container.removeClass('hide').addClass('show').attr('data-panic-active','true');
+                $('#active-alerts-section').show();
+                var count = $('#panic-alert-items .panic-item').length;
+                $('#active-emergency-count').text('(' + count + ')');
+
+                // Bind click for details/clear
+                $('#' + itemId).off('click').on('click', function() {
+                  var uid = $(this).attr('data-user-id');
+                  if (uid) { $('#panic-id').val(uid); $('#panicDetailModal').modal('show'); }
+                });
+
+                // Update panic button state
+                $('#panicButton').prop('disabled', false)
+                  .html('<i class="fa fa-exclamation-triangle" style="margin-right: 8px;"></i>🚨 PANIC ACTIVE 🚨')
+                  .removeClass('btn-danger')
+                  .addClass('btn-warning');
+              }
+            });
+
+            socket.on('panic_button_updated', function (panicData, req) {
+              // Only process if this is for our community
+              const communityId = req?.activeCommunity || panicData?.activeCommunityID;
+              if (typeof dbUser !== 'undefined' && communityId !== dbUser.user?.lastAccessedCommunity?.communityID) {
+                return;
+              }
+              
+              // Handle Map object from Node.js backend
+              if (panicData && typeof panicData === 'object' && panicData.entries) {
+                panicData.forEach(function(panicInfo, userId) {
+                  
+                  const callSign = panicInfo.callSign || 'No Unit #';
+                  const itemId = 'panic-item-' + userId;
+
+                  // Ensure container exists and is visible
+                  var $container = $('#panic-alert-inline');
+                  var $items = $('#panic-alert-items');
+                  if (!$items.length) { 
+                    return; 
+                  }
+
+                  var itemHtml = '' +
+                    '<div id="' + itemId + '" class="panic-item" data-user-id="' + userId + '" style="background-color:#f2dede; border-left:5px solid #dc3545; padding:12px; border-radius:4px; margin-bottom:10px; cursor:pointer;">' +
+                      '<div style="font-weight:bold; color:#721c24; margin-bottom:6px;"><i class="fa fa-exclamation-triangle"></i> Panic Triggered</div>' +
+                      '<div style="color:#333; font-size:0.95em;">' +
+                        '<strong>Triggered by:</strong> ' + panicInfo.username + ' (' + callSign + ') - POLICE<br>' +
+                        '<strong>Time:</strong> ' + new Date().toLocaleString() +
+                      '</div>' +
+                      '<div style="margin-top:6px;"><small style="color:#721c24; font-style:italic;">Click to view details and clear</small></div>' +
+                    '</div>';
+
+                  var $existing = $('#' + itemId);
+                  if ($existing.length) {
+                    $existing.replaceWith(itemHtml);
+                  } else {
+                    $items.append(itemHtml);
+                  }
+
+                  // Show section and update count
+                  $container.removeClass('hide').addClass('show').attr('data-panic-active','true');
+                  $('#active-alerts-section').show();
+                  var count = $('#panic-alert-items .panic-item').length;
+                  $('#active-emergency-count').text('(' + count + ')');
+
+                  // Bind click for details/clear
+                  $('#' + itemId).off('click').on('click', function() {
+                    var uid = $(this).attr('data-user-id');
+                    if (uid) { $('#panic-id').val(uid); $('#panicDetailModal').modal('show'); }
+                  });
+
+                  // Update panic button state
+                  $('#panicButton').prop('disabled', false)
+                    .html('<i class="fa fa-exclamation-triangle" style="margin-right: 8px;"></i>🚨 PANIC ACTIVE 🚨')
+                    .removeClass('btn-danger')
+                    .addClass('btn-warning');
+                });
+                return;
+              }
+              
+              // Show panic alerts on other browsers (fallback for regular objects)
+              if (panicData && panicData.username) {
+                const callSign = panicData.callSign || 'No Unit #';
+                const itemId = 'panic-item-' + panicData.userId;
+
+                // Ensure container exists and is visible
+                var $container = $('#panic-alert-inline');
+                var $items = $('#panic-alert-items');
+                if (!$items.length) { return; }
+
+                var itemHtml = '' +
+                  '<div id="' + itemId + '" class="panic-item" data-user-id="' + panicData.userId + '" style="background-color:#f2dede; border-left:5px solid #dc3545; padding:12px; border-radius:4px; margin-bottom:10px; cursor:pointer;">' +
+                    '<div style="font-weight:bold; color:#721c24; margin-bottom:6px;"><i class="fa fa-exclamation-triangle"></i> Panic Triggered</div>' +
+                    '<div style="color:#333; font-size:0.95em;">' +
+                      '<strong>Triggered by:</strong> ' + panicData.username + ' (' + callSign + ') - ' + panicData.departmentType.toUpperCase() + '<br>' +
+                      '<strong>Time:</strong> ' + new Date(panicData.triggeredAt || panicData.timestamp).toLocaleString() +
+                    '</div>' +
+                    '<div style="margin-top:6px;"><small style="color:#721c24; font-style:italic;">Click to view details and clear</small></div>' +
+                  '</div>';
+
+                var $existing = $('#' + itemId);
+                if ($existing.length) {
+                  $existing.replaceWith(itemHtml);
+                } else {
+                  $items.append(itemHtml);
+                }
+
+                // Show section and update count
+                $container.removeClass('hide').addClass('show').attr('data-panic-active','true');
+                $('#active-alerts-section').show();
+                var count = $('#panic-alert-items .panic-item').length;
+                $('#active-emergency-count').text('(' + count + ')');
+
+                // Bind click for details/clear
+                $('#' + itemId).off('click').on('click', function() {
+                  var uid = $(this).attr('data-user-id');
+                  if (uid) { $('#panic-id').val(uid); $('#panicDetailModal').modal('show'); }
+                });
+
+                // Update panic button state
+                $('#panicButton').prop('disabled', false)
+                  .html('<i class="fa fa-exclamation-triangle" style="margin-right: 8px;"></i>🚨 PANIC ACTIVE 🚨')
+                  .removeClass('btn-danger')
+                  .addClass('btn-warning');
+              }
+              
+              // Don't call loadPanicStatuses() here - it will override our panic banner
+            });
+
+    socket.on('panic_button_cleared', function (data) {
+      // Only process if this is for our community
+      const communityId = data.communityId || data.communityID;
+      if (typeof dbUser !== 'undefined' && communityId !== dbUser.user?.lastAccessedCommunity?.communityID) {
+        return;
       }
-    };
+      
+      // Remove cleared user's panic item and update count/visibility
+      const userId = data.userId || data.userID;
+      if (data && userId) {
+        $('#panic-alert-items #panic-item-' + userId).remove();
+      }
+      
+      var remaining = $('#panic-alert-items .panic-item').length;
+      if (remaining === 0) {
+        $('#panic-alert-inline').removeClass('show').addClass('hide').removeAttr('data-panic-active');
+        $('#active-alerts-section').hide();
+      }
+      $('#active-emergency-count').text(remaining ? '(' + remaining + ')' : '');
+      
+      // Reset panic button
+      $('#panicButton').prop('disabled', false)
+        .html('<i class="fa fa-exclamation-triangle" style="margin-right: 8px;"></i>🚨 PANIC BUTTON 🚨')
+        .removeClass('btn-warning')
+        .addClass('btn-danger');
+    });
 
-    socket.onclose = function (event) {
+    socket.on('signal_100_button_updated', function (req) {
+      // Handle signal 100 updates
+      // Signal 100 updated
+      
+      // Show signal 100 banner immediately on other browsers
+      if (req.signal100Data && req.signal100Data.message) {
+        $('#signal-100-banner').removeClass('hide').addClass('show');
+        
+        // Make signal 100 banner clickable to show details
+        $('#signal-100-banner').off('click').on('click', function() {
+          if (typeof populateSignal100Details === 'function') {
+            populateSignal100Details();
+            $('#signal100DetailModal').modal('show');
+          }
+        }).css('cursor', 'pointer');
+        
+        // Update signal 100 button state
+        $('#signal100Button').prop('disabled', true)
+          .html('<i class="fa fa-bullhorn" style="margin-right: 8px;"></i>📢 SIGNAL 100 ACTIVE 📢')
+          .removeClass('btn-warning')
+          .addClass('btn-danger');
+      } else {
+        // Signal 100 was cleared
+        $('#signal-100-banner').removeClass('show').addClass('hide');
+        $('#signal-100-banner').off('click').css('cursor', 'default');
+        
+        $('#signal100Button').prop('disabled', false)
+          .html('<i class="fa fa-bullhorn" style="margin-right: 8px;"></i>📢 SIGNAL 100 📢')
+          .removeClass('btn-danger')
+          .addClass('btn-warning');
+      }
+      
+      // Don't call loadPanicStatuses() here - it will override our banners
+    });
+
+    socket.on('disconnect', function (event) {
+      // Socket.IO disconnected
       stopPing();
       if (reconnectAttempts < maxReconnectAttempts) {
         const delay = baseReconnectDelay * Math.pow(2, reconnectAttempts); // Exponential backoff
@@ -494,20 +732,21 @@ $(document).ready(function () {
         reconnectAttempts++;
         setTimeout(connectWebSocket, delay);
       } else {
-        console.error("Max WebSocket reconnect attempts reached");
+        // Max WebSocket reconnect attempts reached
       }
-    };
+    });
 
-    socket.onerror = function (error) {
-      console.error("WebSocket error:", error);
-    };
+    socket.on('connect_error', function (error) {
+      // Socket.IO connection error
+    });
   }
 
   let pingInterval;
   function startPing() {
+    // Socket.IO handles keepalive automatically, but we can add custom ping if needed
     pingInterval = setInterval(() => {
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "ping" }));
+      if (socket && socket.connected) {
+        socket.emit('ping');
       }
     }, 30000); // Ping every 30 seconds
   }

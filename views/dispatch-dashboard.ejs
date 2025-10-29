@@ -299,17 +299,8 @@
             <h1 class="cursive"><a href="/dispatch-dashboard"><i class="fa-solid fa-headset"></i> Dispatch Operations</a> • <a href="/community-dashboard"><span id="community-name"></span></a></h1>
           </div>
         </div>
-        <a data-toggle="modal" href="#signal100DetailModal" style="z-index: 8;width: 100%;">
-          <div id="signal-100-banner" class="panel panel-danger hide">
-            <div class="panel-heading">
-              <span class="panel-title">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
-              <button type="button" class="close" aria-label="Close"
-                style="position: absolute; margin-top: 5px; margin-left: 1em;">
-                <i class="fa fa-times"></i> Clear
-              </button>
-            </div>
-          </div>
-        </a>
+        <!-- Signal 100 banner removed from dispatch dashboard -->
+        
         <a data-toggle="modal" href="#holdTrafficDetailModal" style="z-index: 8;width: 100%;">
           <div id="hold-traffic-banner" class="panel panel-warning hide">
             <div class="panel-heading">
@@ -367,20 +358,48 @@
 
                         <!-- imports the community specific alerts -->
                         <% include community-alerts %>
-                          <!-- <div class="col-md-10 col-md-offset-1 text-center">
-                            <% if (user.user.activeCommunity !='' && user.user.activeCommunity !=null) {%>
-                              <button type="button" class="btn btn-danger btn-lg margin-top-2 margin-bottom-1"
+                          <div class="col-md-10 col-md-offset-1 text-center">
+                            <% if (user.user?.lastAccessedCommunity !=null) {%>
+                              <!-- Active Emergency Alerts Section -->
+                              <div class="row" id="active-alerts-section" style="margin-bottom: 20px; display: none;">
+                                <div class="col-md-12">
+                                  <div class="panel panel-danger" style="border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 2px solid #dc3545;">
+                                    <div class="panel-heading" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border-radius: 6px 6px 0 0; color: white;">
+                                      <h3 class="panel-title" style="font-size: 1.2em; font-weight: bold; color: white;">
+                                        <i class="fa fa-bell"></i> Active Emergency Alerts <span id="active-emergency-count"></span>
+                                      </h3>
+                                    </div>
+                                    <div class="panel-body" style="padding: 15px; background-color: #2a1a1a;">
+                                      <!-- Panic Alerts Container (scrollable) -->
+                                      <div id="panic-alert-inline" class="hide" style="max-height: 240px; overflow-y: auto;">
+                                        <div id="panic-alert-items"></div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <!-- Emergency Buttons -->
+                              <div class="margin-top-2 margin-bottom-2">
+                                <div class="row">
+                                  <div class="col-md-12 text-center" style="margin-bottom: 15px;">
+                                    <button id="panicButton" class="btn btn-danger btn-lg" onclick="panicButtonPressed()" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; border-radius: 8px; padding: 15px 40px; font-weight: bold; font-size: 1.2em; box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3); width: 100%; max-width: 600px;">
+                                      <i class="fa fa-exclamation-triangle" style="margin-right: 8px;"></i>
+                                      🚨 PANIC BUTTON 🚨
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                              <!-- <button type="button" class="btn btn-danger btn-lg margin-top-2 margin-bottom-1"
                                 onclick="signal100()"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>
                                 Signal 100</button>
                                 <button type="button" class="btn btn-warning btn-lg margin-top-2 margin-bottom-1"
                                 onclick="holdTraffic()"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
-                                10-3</button>
+                                10-3</button> -->
                               <% } else {%>
-                                <button type="button" data-toggle="modal" href="#nonCommunityBoloModal"
-                                  class="btn btn-danger btn-lg margin-top-2 mock-disabled margin-bottom-1"><i
-                                    class="fa fa-exclamation-circle" aria-hidden="true"></i> Signal 100</button>
+                                <!-- Signal 100 button removed from dispatch dashboard -->
                                 <% } %>
-                          </div> -->
+                          </div>
                           <% if (user.user?.lastAccessedCommunity ==null) {%>
                             <div class="col-md-10 col-md-offset-1 text-center">
                               <h3><i class="fa fa-arrow-left"></i> Click on any of the search buttons to get started
@@ -2056,7 +2075,7 @@
                   <div class="col-md-4 text-align-center">
                     <input id="panic-id" type="hidden" name="panic-id" value="">
                     <button id="clearPanic" class="btn btn-danger"
-                      onclick="hideModal('panicDetailModal')">Clear</button>
+                      onclick="clearPanicAlert($('#panic-id').val())">Clear</button>
                   </div>
                 </div>
               </fieldset>
@@ -2125,6 +2144,20 @@
      <% include partials/notificationModal %>
     <% include 10-codes %>
     <% include notepad %>
+
+    <!-- Panic Detail Modal -->
+    <div id="panicDetailModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <!-- Content will be populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signal 100 modal removed from dispatch dashboard -->
+
 </body>
 
 <!--scripts loaded here -->
@@ -2193,12 +2226,8 @@
 
     socket.on('load_panic_status_update', (map, signal100Resp, holdTrafficResp, origReq) => {
       if (dbUser.user.activeCommunity==origReq.activeCommunity) {
-        //load the signal 100 status to the page
-        if (signal100Resp) {
-          $('#signal-100-banner').removeClass('hide').addClass('show')
-        } else {
-          $('#signal-100-banner').removeClass('show').addClass('hide')
-        }
+        // Signal 100 handling removed from dispatch dashboard
+        
         if (holdTrafficResp) {
           $('#hold-traffic-banner').removeClass('hide').addClass('show')
         } else {
@@ -2229,34 +2258,59 @@
       }
     })
 
-    socket.on('panic_button_updated', (map, origReq) => {
-      if (dbUser.user.activeCommunity==origReq.activeCommunity) {
-        if ($('#panic-button-check-sound').prop('checked')) {
-          var audioElement=document.createElement('audio');
-          audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
-          audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
-          audioElement.play();
+    socket.on('panic_button_updated', (panicData, origReq) => {
+      // Check if this is for our community
+      const communityId = origReq?.activeCommunity || panicData?.activeCommunityID;
+      const currentCommunityId = dbUser.user?.lastAccessedCommunity?.communityID;
+      
+      if (communityId !== currentCommunityId) {
+        return;
+      }
+      
+      // Play audio if enabled
+      if ($('#panic-button-check-sound').prop('checked')) {
+        var audioElement = document.createElement('audio');
+        audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
+        audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
+        audioElement.play();
+      }
+      
+      // Add panic alert to UI immediately without calling loadPanicStatuses()
+      const userId = panicData.userId || origReq.userID;
+      const username = panicData.username || origReq.userUsername;
+      const callSign = panicData.callSign || 'No Unit #';
+      const departmentType = panicData.departmentType || 'POLICE';
+      const itemId = 'panic-item-' + userId;
+      
+      var $items = $('#panic-alert-items');
+      if ($items.length) {
+        var itemHtml = '' +
+          '<div id="' + itemId + '" class="panic-item" data-user-id="' + userId + '" style="background-color:#f2dede; border-left:5px solid #dc3545; padding:12px; border-radius:4px; margin-bottom:10px; cursor:pointer;">' +
+            '<div style="font-weight:bold; color:#721c24; margin-bottom:6px;"><i class="fa fa-exclamation-triangle"></i> Panic Triggered</div>' +
+            '<div style="color:#333; font-size:0.95em;">' +
+              '<strong>Triggered by:</strong> ' + username + ' (' + callSign + ') - ' + departmentType.toUpperCase() + '<br>' +
+              '<strong>Time:</strong> ' + new Date(panicData.timestamp || new Date()).toLocaleString() +
+            '</div>' +
+            '<div style="margin-top:6px;"><small style="color:#721c24; font-style:italic;">Click to view details and clear</small></div>' +
+          '</div>';
+        
+        var $existing = $('#' + itemId);
+        if ($existing.length) {
+          $existing.replaceWith(itemHtml);
+        } else {
+          $items.append(itemHtml);
         }
-        $('#panic-placeholder-socket').empty();
-        $('#panic-placeholder').append(
-          '<div id="panic-placeholder-socket"></div>'
-        ).fadeTo(1, function () {
-          $(this).add();
-        })
-        for (var m in map) {
-          $('#panic-placeholder-socket').append(
-            '<a id="'+map[m].userId+'-panic-row" data-toggle="modal" href="#panicDetailModal" onclick="populatePanicDetails(\''+map[m].userId+'\')">'+
-            '<div class="alert alert-danger alert-dismissible show" role="alert">'+
-            '<strong>Panic! </strong> Triggered by: <span id="'+map[m].userId+'-panic-username">'+map[m].username+'</span>'+
-            '<button type="button" type="button" class="close" aria-label="Close">'+
-            '<span aria-hidden="true">&times;</span>'+
-            '</button>'+
-            '</div>'+
-            '</a>'
-          ).fadeTo(1, function () {
-            $(this).add();
-          })
-        }
+        
+        $('#active-alerts-section').show();
+        $('#panic-alert-inline').removeClass('hide').addClass('show').attr('data-panic-active','true');
+        var count = $('#panic-alert-items .panic-item').length;
+        $('#active-emergency-count').text('(' + count + ')');
+        
+        // Bind click handler
+        $('#' + itemId).off('click').on('click', function(){
+          $('#panic-id').val(userId);
+          $('#panicDetailModal').modal('show');
+        });
       }
     })
 
@@ -2399,7 +2453,7 @@
   var pageLicense = 0;
   var civFirstName = "";
   var civLastName = "";
-  const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+  const API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com'; // Use real backend API
   let currentBoloPage = 0;
   const boloLimit = 10;
 
@@ -2641,24 +2695,25 @@
     });
   });
 
-  window.onload=function () {
-    if (dbUser.user?.lastAccessedCommunity!=null) {
-      var socket=io();
-      var myReq={
-        userID: dbUser._id,
-        userUsername: dbUser.user.username,
-        activeCommunity: dbUser.user?.lastAccessedCommunity.communityID
-      }
-      socket.emit('load_panic_statuses', myReq)
-    }
-  }
+  // Old panic system disabled - using new API-based system
+  // window.onload=function () {
+  //   if (dbUser.user?.lastAccessedCommunity!=null) {
+  //     var socket=io();
+  //     var myReq={
+  //       userID: dbUser._id,
+  //       userUsername: dbUser.user.username,
+  //       activeCommunity: dbUser.user?.lastAccessedCommunity.communityID
+  //     }
+  //     socket.emit('load_panic_statuses', myReq)
+  //   }
+  // }
 
   // AJAX function to load active BOLOs
   // Needs to be inside of this file so it can access the departmentId variable
   function loadActiveBOLOs() {
     const communityId = dbUser.user.lastAccessedCommunity.communityID;
     if (!communityId) {
-      console.warn("No community ID found, skipping BOLO load.");
+      // No community ID found, skipping BOLO load
       return;
     }
 
@@ -2714,7 +2769,7 @@
         
       },
       error: function (xhr) {
-        console.error("Error loading BOLOs:", xhr.responseText);
+        // Error loading BOLOs
         $("#boloTable tbody")
           .empty()
           .append(
@@ -3239,11 +3294,7 @@
     $('#boloDetailModal').modal('hide')
   })
 
-  function clearSignal100() {
-    var socket=io();
-      socket.emit('clear_signal_100', dbUser.user.activeCommunity)
-    $('#signal-100-banner').removeClass('show').addClass('hide')
-  }
+  // clearSignal100 function removed from dispatch dashboard
 
   function clearHoldTraffic() {
     var socket=io();
@@ -3860,48 +3911,393 @@
     })
   }
 
-  function signal100() {
-    //if it is already showing we don't want to show it again (there can only be 1 active
-    // signal 100 per community)
-    if (!$('#signal-100-banner').hasClass('show')) {
-      
-      var socket=io();
-      myReq={
-        userID: dbUser._id,
-        userUsername: dbUser.user.username,
-        activeCommunity: dbUser.user.activeCommunity
-      }
-      if ($('#panic-button-check-sound').prop('checked')) {
-        var audioElement=document.createElement('audio');
-        audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
-        audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
-        audioElement.play();
-      }
-
-      socket.emit('signal_100_button_update', myReq)
+  function panicButtonPressed() {
+    const userId = dbUser._id;
+    const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+    
+    if (!communityId) {
+      alert('You must be in a community to use the panic button');
+      return;
     }
+    
+    // Show loading state immediately
+    $('#panicButton')
+      .prop('disabled', true)
+      .html('<i class="fa fa-spinner fa-spin" style="margin-right: 8px;"></i>🚨 TRIGGERING PANIC... 🚨')
+      .removeClass('btn-danger')
+      .addClass('btn-warning');
+    
+    // Immediately show panic banner with current user info
+    const callSign = dbUser.user.callSign || 'No Unit #';
+    
+    // Add/replace this user's item in the scrollable alerts list
+    var $items = $('#panic-alert-items');
+    if ($items.length) {
+      var itemId = 'panic-item-' + userId;
+      var itemHtml = '' +
+        '<div id="' + itemId + '" class="panic-item" data-user-id="' + userId + '" style="background-color:#f2dede; border-left:5px solid #dc3545; padding:12px; border-radius:4px; margin-bottom:10px; cursor:pointer;">' +
+          '<div style="font-weight:bold; color:#721c24; margin-bottom:6px;"><i class="fa fa-exclamation-triangle"></i> Panic Triggered</div>' +
+          '<div style="color:#333; font-size:0.95em;">' +
+            '<strong>Triggered by:</strong> ' + dbUser.user.username + ' (' + callSign + ') - DISPATCH<br>' +
+            '<strong>Time:</strong> ' + new Date().toLocaleString() +
+          '</div>' +
+          '<div style="margin-top:6px;"><small style="color:#721c24; font-style:italic;">Click to view details and clear</small></div>' +
+        '</div>';
+      var $existing = $('#' + itemId);
+      if ($existing.length) { $existing.replaceWith(itemHtml); } else { $items.append(itemHtml); }
+      $('#active-alerts-section').show();
+      $('#panic-alert-inline').removeClass('hide').addClass('show').attr('data-panic-active','true');
+      var count = $('#panic-alert-items .panic-item').length; $('#active-emergency-count').text('(' + count + ')');
+      $('#' + itemId).off('click').on('click', function(){ $('#panic-id').val(userId); $('#panicDetailModal').modal('show'); });
+    }
+    
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}/panic-alerts`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      data: JSON.stringify({
+        userId: userId,
+        username: dbUser.user.username,
+        callSign: callSign,
+        departmentType: 'dispatch',
+        status: 'active'
+      }),
+      success: function() {
+        // Play audio alert if enabled
+        if ($('#panic-button-check-sound').prop('checked')) {
+          var audioElement = document.createElement('audio');
+          audioElement.setAttribute('src', '/static/audio/Police_panic_button_sound_adj.mp3');
+          audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
+          audioElement.play();
+        }
+        
+        // Emit socket event for real-time updates
+        if (typeof socket !== 'undefined' && socket.connected) {
+          socket.emit('panic_button_update', {
+            userID: userId,
+            userUsername: dbUser.user.username,
+            callSign: callSign,
+            departmentType: 'dispatch',
+            activeCommunity: communityId
+          });
+        }
+        
+        // Update button state to show panic is active
+        $('#panicButton')
+          .html('<i class="fa fa-spinner fa-spin" style="margin-right: 8px;"></i>🚨 PANIC ACTIVE 🚨')
+          .removeClass('btn-danger')
+          .addClass('btn-warning');
+        
+        // Don't call loadPanicStatuses() here - it will hide the banner we just showed
+      },
+      error: function(xhr) {
+        // Error triggering panic
+        showCustomAlert('Failed to trigger panic: ' + (xhr.responseJSON?.message || 'Unknown error'), 'error');
+        
+        // Hide panic banner and reset button on error
+        $('#panic-alert-items #panic-item-' + userId).remove();
+        var remaining = $('#panic-alert-items .panic-item').length;
+        if (remaining === 0) {
+          $('#panic-alert-inline').removeClass('show').addClass('hide').removeAttr('data-panic-active');
+          $('#active-alerts-section').hide();
+        }
+        $('#active-emergency-count').text(remaining ? '(' + remaining + ')' : '');
+        $('#panicButton')
+          .prop('disabled', false)
+          .html('<i class="fa fa-exclamation-triangle" style="margin-right: 8px;"></i>🚨 PANIC BUTTON 🚨')
+          .removeClass('btn-warning')
+          .addClass('btn-danger');
+      }
+    });
   }
 
-  function holdTraffic() {
-    //if it is already showing we don't want to show it again (there can only be 1 active
-    // hold traffic per community)
-    if (!$('#hold-traffic-banner').hasClass('show')) {
-      var socket=io();
-      myReq={
-        userID: dbUser._id,
-        userUsername: dbUser.user.username,
-        activeCommunity: dbUser.user.activeCommunity
-      }
-      if ($('#panic-button-check-sound').prop('checked')) {
-        var audioElement=document.createElement('audio');
-        audioElement.setAttribute('src', '/static/audio/Hold_traffic_sound_adj.mp3');
-        audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
-        audioElement.play();
-      }
-
-      socket.emit('hold_traffic_button_update', myReq)
-    }
+  // Custom alert function (similar to the one used in other parts of the app)
+  function showCustomAlert(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alertHtml = '<div class="alert ' + alertClass + ' alert-dismissible show" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px;">' +
+      '<strong>' + (type === 'success' ? 'Success!' : 'Error!') + '</strong> ' + message +
+      '<button type="button" class="close" onclick="$(this).parent().fadeOut()" aria-label="Close">' +
+        '<span aria-hidden="true">&times;</span>' +
+      '</button>' +
+    '</div>';
+    $('body').append(alertHtml);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(function() {
+      $('.alert').fadeOut();
+    }, 5000);
   }
+
+  // AJAX function to load panic statuses
+  function loadPanicStatuses() {
+    const communityId = dbUser.user?.lastAccessedCommunity.communityID;
+    if (!communityId) return;
+    
+    // Try new API first, fall back to old API if needed
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}/panic-alerts?status=active`,
+      method: 'GET',
+      success: function(data) {
+        // Handle both old and new API response formats
+        let alerts = [];
+        
+        if (data.success && data.alerts) {
+          // New API format - data.alerts array
+          alerts = data.alerts;
+        } else if (data.panicAlerts && Array.isArray(data.panicAlerts)) {
+          // Old API format - data.panicAlerts array
+          alerts = data.panicAlerts;
+        } else if (data.activePanics && typeof data.activePanics === 'object') {
+          // Old Map format - convert to array
+          alerts = Object.values(data.activePanics).map(panic => ({
+            userId: panic.userId,
+            username: panic.username,
+            callSign: panic.callSign,
+            departmentType: panic.departmentType,
+            triggeredAt: panic.timestamp || panic.triggeredAt,
+            communityId: panic.activeCommunityID
+          }));
+        }
+        
+        if (alerts.length > 0) {
+          // Clear existing items and rebuild
+          $('#panic-alert-items').empty();
+          
+          alerts.forEach(function(panicAlert) {
+            const callSign = panicAlert.callSign || 'No Unit #';
+            const itemId = 'panic-item-' + panicAlert.userId;
+            const itemHtml = '' +
+              '<div id="' + itemId + '" class="panic-item" data-user-id="' + panicAlert.userId + '" style="background-color:#f2dede; border-left:5px solid #dc3545; padding:12px; border-radius:4px; margin-bottom:10px; cursor:pointer;">' +
+                '<div style="font-weight:bold; color:#721c24; margin-bottom:6px;"><i class="fa fa-exclamation-triangle"></i> Panic Triggered</div>' +
+                '<div style="color:#333; font-size:0.95em;">' +
+                  '<strong>Triggered by:</strong> ' + panicAlert.username + ' (' + callSign + ') - ' + panicAlert.departmentType.toUpperCase() + '<br>' +
+                  '<strong>Time:</strong> ' + new Date(panicAlert.triggeredAt).toLocaleString() +
+                '</div>' +
+                '<div style="margin-top:6px;"><small style="color:#721c24; font-style:italic;">Click to view details and clear</small></div>' +
+              '</div>';
+            $('#panic-alert-items').append(itemHtml);
+            
+            // Bind click handler
+            $('#' + itemId).off('click').on('click', function() {
+              $('#panic-id').val(panicAlert.userId);
+              $('#panicDetailModal').modal('show');
+            });
+          });
+          
+          // Show alerts section and update count
+          $('#active-alerts-section').show();
+          $('#panic-alert-inline').removeClass('hide').addClass('show').attr('data-panic-active','true');
+          $('#active-emergency-count').text('(' + alerts.length + ')');
+          
+          // Update panic button state
+          if (alerts.some(alert => alert.userId === dbUser._id)) {
+            // User triggered a panic - disable their button
+            $('#panicButton').prop('disabled', true)
+              .html('<i class="fa fa-spinner fa-spin" style="margin-right: 8px;"></i>🚨 PANIC ACTIVE 🚨')
+              .removeClass('btn-danger')
+              .addClass('btn-warning');
+          } else {
+            // User didn't trigger panic - show active but enabled
+            $('#panicButton').prop('disabled', false)
+              .html('<i class="fa fa-exclamation-triangle" style="margin-right: 8px;"></i>🚨 PANIC ACTIVE 🚨')
+              .removeClass('btn-danger')
+              .addClass('btn-warning');
+          }
+        } else {
+          // No active panics - hide alerts section and reset button
+          $('#active-alerts-section').hide();
+          $('#panic-alert-inline').removeClass('show').addClass('hide').removeAttr('data-panic-active');
+          $('#active-emergency-count').text('');
+          
+          $('#panicButton').prop('disabled', false)
+            .html('<i class="fa fa-exclamation-triangle" style="margin-right: 8px;"></i>🚨 PANIC BUTTON 🚨')
+            .removeClass('btn-warning')
+            .addClass('btn-danger');
+        }
+      },
+      error: function(xhr) {
+        // New API failed, trying old API
+        
+        // Fallback to old API endpoint
+        $.ajax({
+          url: `${API_URL}/api/v1/community/${communityId}/panic`,
+          method: 'GET',
+          success: function(data) {
+            // Handle old API response format
+            let alerts = [];
+            
+            if (data.panicAlerts && Array.isArray(data.panicAlerts)) {
+              alerts = data.panicAlerts;
+            } else if (data.activePanics && typeof data.activePanics === 'object') {
+              alerts = Object.values(data.activePanics).map(panic => ({
+                userId: panic.userId,
+                username: panic.username,
+                callSign: panic.callSign,
+                departmentType: panic.departmentType,
+                triggeredAt: panic.timestamp || panic.triggeredAt,
+                communityId: panic.activeCommunityID
+              }));
+            }
+            
+            if (alerts.length > 0) {
+              // Clear existing items and rebuild
+              $('#panic-alert-items').empty();
+              
+              alerts.forEach(function(panicAlert) {
+                const callSign = panicAlert.callSign || 'No Unit #';
+                const itemId = 'panic-item-' + panicAlert.userId;
+                const itemHtml = '' +
+                  '<div id="' + itemId + '" class="panic-item" data-user-id="' + panicAlert.userId + '" style="background-color:#f2dede; border-left:5px solid #dc3545; padding:12px; border-radius:4px; margin-bottom:10px; cursor:pointer;">' +
+                    '<div style="font-weight:bold; color:#721c24; margin-bottom:6px;"><i class="fa fa-exclamation-triangle"></i> Panic Triggered</div>' +
+                    '<div style="color:#333; font-size:0.95em;">' +
+                      '<strong>Triggered by:</strong> ' + panicAlert.username + ' (' + callSign + ') - ' + panicAlert.departmentType.toUpperCase() + '<br>' +
+                      '<strong>Time:</strong> ' + new Date(panicAlert.triggeredAt).toLocaleString() +
+                    '</div>' +
+                    '<div style="margin-top:6px;"><small style="color:#721c24; font-style:italic;">Click to view details and clear</small></div>' +
+                  '</div>';
+                $('#panic-alert-items').append(itemHtml);
+                
+                // Bind click handler
+                $('#' + itemId).off('click').on('click', function() {
+                  $('#panic-id').val(panicAlert.userId);
+                  $('#panicDetailModal').modal('show');
+                });
+              });
+              
+              // Show alerts section and update count
+              $('#active-alerts-section').show();
+              $('#panic-alert-inline').removeClass('hide').addClass('show').attr('data-panic-active','true');
+              $('#active-emergency-count').text('(' + alerts.length + ')');
+              
+              // Update panic button state
+              if (alerts.some(alert => alert.userId === dbUser._id)) {
+                $('#panicButton').prop('disabled', true)
+                  .html('<i class="fa fa-spinner fa-spin" style="margin-right: 8px;"></i>🚨 PANIC ACTIVE 🚨')
+                  .removeClass('btn-danger')
+                  .addClass('btn-warning');
+              } else {
+                $('#panicButton').prop('disabled', false)
+                  .html('<i class="fa fa-exclamation-triangle" style="margin-right: 8px;"></i>🚨 PANIC ACTIVE 🚨')
+                  .removeClass('btn-danger')
+                  .addClass('btn-warning');
+              }
+            } else {
+              // No active panics - hide alerts section and reset button
+              $('#active-alerts-section').hide();
+              $('#panic-alert-inline').removeClass('show').addClass('hide').removeAttr('data-panic-active');
+              $('#active-emergency-count').text('');
+              
+              $('#panicButton').prop('disabled', false)
+                .html('<i class="fa fa-exclamation-triangle" style="margin-right: 8px;"></i>🚨 PANIC BUTTON 🚨')
+                .removeClass('btn-warning')
+                .addClass('btn-danger');
+            }
+          },
+          error: function(xhr2) {
+            // Old API also failed
+          }
+        });
+      }
+    });
+  }
+
+  // Load panic statuses on page load
+  $(document).ready(function() {
+    loadPanicStatuses();
+    
+    // Disabled polling - using socket notifications for real-time updates
+    // setInterval(loadPanicStatuses, 30000);
+  });
+
+  // Panic Detail Modal Functions
+  function populatePanicDetails(userId) {
+    const communityId = dbUser.user?.lastAccessedCommunity.communityID;
+    if (!communityId) return;
+    
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}/panic`,
+      method: 'GET',
+      success: function(data) {
+        if (data.panicAlerts && data.panicAlerts.length > 0) {
+          const panicAlert = data.panicAlerts.find(alert => alert.userId === userId);
+          if (panicAlert) {
+            $('#panicDetailModal .modal-body').html(`
+              <h4>Panic Alert Details</h4>
+              <hr style="width: 88%;max-width: 100rem;">
+              
+              <div class="form-group">
+                <label class="col-md-4 control-label">Triggered By:</label>
+                <div class="col-md-8">
+                  <h5>${panicAlert.username} (${panicAlert.departmentType.toUpperCase()})</h5>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="col-md-4 control-label">Triggered At:</label>
+                <div class="col-md-8">
+                  <h5>${new Date(panicAlert.timestamp).toLocaleString()}</h5>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="col-md-4 control-label">Community:</label>
+                <div class="col-md-8">
+                  <h5>${panicAlert.activeCommunityID}</h5>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <div class="col-md-12 text-center">
+                  <button type="button" class="btn btn-danger btn-lg" onclick="clearPanicAlert('${userId}')">
+                    <i class="fa fa-times" style="margin-right: 8px;"></i>Clear Panic Alert
+                  </button>
+                </div>
+              </div>
+            `);
+          }
+        }
+      },
+      error: function(xhr) {
+        // Error loading panic details
+      }
+    });
+  }
+
+  function clearPanicAlert(userId) {
+    const communityId = dbUser.user?.lastAccessedCommunity.communityID;
+    if (!communityId) return;
+    
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}/panic-alerts/user/${userId}`,
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      data: JSON.stringify({
+        clearedBy: dbUser._id
+      }),
+      success: function(response) {
+        // Emit socket event for real-time updates
+        if (typeof socket !== 'undefined' && socket.connected) {
+          socket.emit('clear_panic', {
+            userID: userId,
+            communityID: communityId
+          });
+        }
+        
+        $('#panicDetailModal').modal('hide');
+        loadPanicStatuses(); // Refresh panic statuses
+      },
+      error: function(xhr) {
+        // Error clearing panic alert
+        showCustomAlert('Failed to clear panic alert: ' + (xhr.responseJSON?.message || 'Unknown error'), 'error');
+      }
+    });
+  }
+
+  // Signal 100 functions removed from dispatch dashboard
 
   function populateDriversLicense(civ) {
     if (civ != undefined && civ != null) {

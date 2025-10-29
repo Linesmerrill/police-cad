@@ -6,7 +6,21 @@ var communitySchema = mongoose.Schema({
     ownerID: String,
     code: String,
     activePanics: Map,
+    activePanicAlerts: [{
+      userId: String,
+      username: String,
+      callSign: String,
+      departmentType: String,
+      triggeredAt: Date,
+      status: String
+    }],
     activeSignal100: Boolean,
+    signal100Data: {
+      message: String,
+      activatedBy: String,
+      activatedAt: Date,
+      communityId: String
+    },
     activeHoldTraffic: Boolean,
     createdAt: Date,
     updatedAt: Date

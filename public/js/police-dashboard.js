@@ -277,28 +277,29 @@ function updateStatus(status) {
 
 var panicButtonEnabled = true;
 
-function panicButtonPressed() {
-  if (panicButtonEnabled) {
-    var socket = io();
-    myReq = {
-      userID: dbUser._id,
-      userUsername: dbUser.user.username,
-      activeCommunity: dbUser.user.activeCommunity,
-    };
-    if ($("#panic-button-check-sound").prop("checked")) {
-      var audioElement = document.createElement("audio");
-      audioElement.setAttribute(
-        "src",
-        "/static/audio/Police_panic_button_sound_adj.mp3"
-      );
-      audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
-      // audioElement.play();
-    }
+// OLD PANIC BUTTON FUNCTION - DISABLED IN FAVOR OF NEW API-BASED VERSION
+// function panicButtonPressed() {
+//   if (panicButtonEnabled) {
+//     var socket = io();
+//     myReq = {
+//       userID: dbUser._id,
+//       userUsername: dbUser.user.username,
+//       activeCommunity: dbUser.user.activeCommunity,
+//     };
+//     if ($("#panic-button-check-sound").prop("checked")) {
+//       var audioElement = document.createElement("audio");
+//       audioElement.setAttribute(
+//         "src",
+//         "/static/audio/Police_panic_button_sound_adj.mp3"
+//       );
+//       audioElement.volume = dbUser.user.alertVolumeLevel / 100 || 0.1;
+//       // audioElement.play();
+//     }
 
-    socket.emit("panic_button_update", myReq);
-    panicButtonEnabled = false;
-  }
-}
+//     socket.emit("panic_button_update", myReq);
+//     panicButtonEnabled = false;
+//   }
+// }
 
 // $("#updateBolo").one("click", function () {
 //   var val = $(this).attr("value");

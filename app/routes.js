@@ -4685,48 +4685,44 @@ module.exports = function (app, passport, server) {
       }
     });
 
-    socket.on("load_panic_statuses", (req) => {
-      // console.debug('load panic status req: ', req)
-      if (req.activeCommunity != null && req.activeCommunity != undefined) {
-        var isValid = isValidObjectIdLength(
-          req.activeCommunity,
-          "cannot lookup invalid length activeCommunity, socket: load_panic_statuses"
-        );
-        if (!isValid) {
-          return;
-        }
-        Community.findById(
-          {
-            _id: ObjectId(req.activeCommunity),
-          },
-          function (err, resp) {
-            if (err) return console.error(err);
-            if (resp != null) {
-              if (resp.community != null) {
-                // console.debug("resp", resp)
-                // console.debug("resp.community", resp.community)
-                return socket.broadcast.emit(
-                  "load_panic_status_update",
-                  resp.community.activePanics,
-                  resp.community.activeSignal100,
-                  resp.community.activeHoldTraffic,
-                  req
-                );
-              }
-            }
-          }
-        );
-      }
-    });
+    // OLD SOCKET LISTENER - DISABLED TO PREVENT INTERFERENCE WITH NEW API SYSTEM
+    // socket.on("load_panic_statuses", (req) => {
+    //   // console.debug('load panic status req: ', req)
+    //   if (req.activeCommunity != null && req.activeCommunity != undefined) {
+    //     var isValid = isValidObjectIdLength(
+    //       req.activeCommunity,
+    //       "cannot lookup invalid length activeCommunity, socket: load_panic_statuses"
+    //     );
+    //     if (!isValid) {
+    //       return;
+    //     }
+    //     Community.findById(
+    //       {
+    //         _id: ObjectId(req.activeCommunity),
+    //       },
+    //       function (err, resp) {
+    //         if (err) return console.error(err);
+    //         if (resp != null) {
+    //           if (resp.community != null) {
+    //             // console.debug("resp", resp)
+    //             // console.debug("resp.community", resp.community)
+    //             return socket.broadcast.emit(
+    //               "load_panic_status_update",
+    //               resp.community.activePanics,
+    //               resp.community.activeSignal100,
+    //               resp.community.activeHoldTraffic,
+    //               req
+    //             );
+    //           }
+    //         }
+    //       }
+    //     );
+    //   }
+    // });
 
+    // OLD PANIC BUTTON SOCKET LISTENER - DISABLED TO PREVENT INTERFERENCE WITH NEW API SYSTEM
     socket.on("panic_button_update", (req) => {
-      // console.debug('panic button update req: ', req)
       if (req.activeCommunity != null && req.activeCommunity != undefined) {
-        var values = {
-          userId: req.userID,
-          username: req.userUsername,
-          activeCommunityID: req.activeCommunity,
-        };
         var isValid = isValidObjectIdLength(
           req.activeCommunity,
           "cannot lookup invalid length activeCommunity, socket: panic_button_update"
@@ -4734,92 +4730,22 @@ module.exports = function (app, passport, server) {
         if (!isValid) {
           return;
         }
-        Community.findById(
-          {
-            _id: ObjectId(req.activeCommunity),
-          },
-          function (err, resp) {
-            if (err) return console.error(err);
-            if (resp != null) {
-              if (resp.community != null) {
-                if (
-                  resp.community.activePanics == undefined ||
-                  resp.community.activePanics == null
-                ) {
-                  var mapInsert = new Map();
-                  mapInsert.set(req.userID, values);
-                  var isValid = isValidObjectIdLength(
-                    req.activeCommunity,
-                    "cannot lookup invalid length activeCommunity, socket: panic_button_update"
-                  );
-                  if (!isValid) {
-                    return;
-                  }
-                  Community.findByIdAndUpdate(
-                    {
-                      _id: ObjectId(req.activeCommunity),
-                    },
-                    {
-                      $set: {
-                        "community.activePanics": mapInsert,
-                      },
-                    },
-                    function (err) {
-                      if (err) return console.error(err);
-                      return socket.broadcast.emit(
-                        "panic_button_updated",
-                        mapInsert,
-                        req
-                      );
-                    }
-                  );
-                } else {
-                  if (
-                    resp.community.activePanics.get(req.userID) == undefined
-                  ) {
-                    resp.community.activePanics.set(req.userID, values);
-                    var isValid = isValidObjectIdLength(
-                      req.activeCommunity,
-                      "cannot lookup invalid length activeCommunity, socket: panic_button_update"
-                    );
-                    if (!isValid) {
-                      return;
-                    }
-                    Community.findByIdAndUpdate(
-                      {
-                        _id: ObjectId(req.activeCommunity),
-                      },
-                      {
-                        $set: {
-                          "community.activePanics": resp.community.activePanics,
-                        },
-                      },
-                      function (err) {
-                        if (err) return console.error(err);
-                        return socket.broadcast.emit(
-                          "panic_button_updated",
-                          resp.community.activePanics,
-                          req
-                        );
-                      }
-                    );
-                  } else {
-                    return socket.broadcast.emit(
-                      "panic_button_updated",
-                      resp.community.activePanics,
-                      req
-                    );
-                  }
-                }
-              }
-            }
-          }
-        );
+        
+        var values = {
+          userId: req.userID,
+          username: req.userUsername,
+          callSign: req.callSign || 'No Unit #',
+          departmentType: req.departmentType || 'police',
+          activeCommunityID: req.activeCommunity,
+          timestamp: new Date()
+        };
+        
+        // Broadcast panic event to all clients
+        io.emit("panic_button_updated", values, req);
       }
     });
 
     socket.on("clear_panic", (req) => {
-      // console.debug("clear req", req)
       if (req.communityID != null && req.communityID != undefined) {
         var isValid = isValidObjectIdLength(
           req.communityID,
@@ -4828,42 +4754,9 @@ module.exports = function (app, passport, server) {
         if (!isValid) {
           return;
         }
-        Community.findById(
-          {
-            _id: ObjectId(req.communityID),
-          },
-          function (err, resp) {
-            if (err) return console.error(err);
-            if (resp != null) {
-              if (resp.community != null) {
-                if (resp.community.activePanics != null) {
-                  resp.community.activePanics.delete(req.userID);
-                  var isValid = isValidObjectIdLength(
-                    req.communityID,
-                    "cannot lookup invalid length communityID, socket: clear_panic"
-                  );
-                  if (!isValid) {
-                    return;
-                  }
-                  Community.findByIdAndUpdate(
-                    {
-                      _id: ObjectId(req.communityID),
-                    },
-                    {
-                      $set: {
-                        "community.activePanics": resp.community.activePanics,
-                      },
-                    },
-                    function (err) {
-                      if (err) return console.error(err);
-                      return socket.broadcast.emit("cleared_panic", req);
-                    }
-                  );
-                }
-              }
-            }
-          }
-        );
+        
+        // Broadcast clear event to all clients
+        socket.broadcast.emit("panic_button_cleared", req);
       }
     });
 
@@ -6109,6 +6002,526 @@ module.exports = function (app, passport, server) {
   // ===========================================
   // END ANNOUNCEMENT API ROUTES
   // ===========================================
+
+  // Panic Button API Endpoints
+  
+  // Police panic button endpoint
+  app.post("/api/v1/police/:userId/panic", authCheck, async function (req, res) {
+    try {
+      const { userId } = req.params;
+      const { communityId, departmentType } = req.body;
+      
+      if (!isValidObjectIdLength(userId, "Invalid user ID")) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+      
+      // Verify user exists and has access to the community
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Update community panic state
+      const community = await Community.findById(communityId);
+      if (!community) {
+        return res.status(404).json({ error: "Community not found" });
+      }
+      
+      const panicData = {
+        userId: userId,
+        username: user.user.username,
+        callSign: user.user.callSign || 'No Unit #',
+        departmentType: departmentType || 'police',
+        timestamp: new Date(),
+        activeCommunityID: communityId
+      };
+      
+      // Update community activePanics map
+      if (!community.community.activePanics) {
+        community.community.activePanics = new Map();
+      }
+      
+      community.community.activePanics.set(userId, panicData);
+      
+      // Also update the new activePanicAlerts array
+      if (!community.community.activePanicAlerts) {
+        community.community.activePanicAlerts = [];
+      }
+      
+      // Remove any existing panic from this user
+      community.community.activePanicAlerts = community.community.activePanicAlerts.filter(
+        alert => alert.userId !== userId
+      );
+      
+      // Add new panic alert
+      community.community.activePanicAlerts.push({
+        userId: userId,
+        username: user.user.username,
+        callSign: user.user.callSign || 'No Unit #',
+        departmentType: departmentType || 'police',
+        triggeredAt: new Date(),
+        status: 'active'
+      });
+      
+      await community.save();
+      
+      // Send webhook notifications to all community members
+      await sendPanicWebhookNotifications(communityId, panicData);
+      
+      res.json({ 
+        success: true, 
+        message: "Panic button activated successfully",
+        panicData: panicData
+      });
+      
+    } catch (error) {
+      // Error activating police panic button
+      res.status(500).json({ error: "Failed to activate panic button" });
+    }
+  });
+  
+  // EMS panic button endpoint
+  app.post("/api/v1/ems/:userId/panic", authCheck, async function (req, res) {
+    try {
+      const { userId } = req.params;
+      const { communityId, departmentType } = req.body;
+      
+      if (!isValidObjectIdLength(userId, "Invalid user ID")) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+      
+      // Verify user exists and has access to the community
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Update community panic state
+      const community = await Community.findById(communityId);
+      if (!community) {
+        return res.status(404).json({ error: "Community not found" });
+      }
+      
+      const panicData = {
+        userId: userId,
+        username: user.user.username,
+        callSign: user.user.callSign || 'No Unit #',
+        departmentType: departmentType || 'ems',
+        timestamp: new Date(),
+        activeCommunityID: communityId
+      };
+      
+      // Update community activePanics map
+      if (!community.community.activePanics) {
+        community.community.activePanics = new Map();
+      }
+      
+      community.community.activePanics.set(userId, panicData);
+      
+      // Also update the new activePanicAlerts array
+      if (!community.community.activePanicAlerts) {
+        community.community.activePanicAlerts = [];
+      }
+      
+      // Remove any existing panic from this user
+      community.community.activePanicAlerts = community.community.activePanicAlerts.filter(
+        alert => alert.userId !== userId
+      );
+      
+      // Add new panic alert
+      community.community.activePanicAlerts.push({
+        userId: userId,
+        username: user.user.username,
+        callSign: user.user.callSign || 'No Unit #',
+        departmentType: departmentType || 'police',
+        triggeredAt: new Date(),
+        status: 'active'
+      });
+      
+      await community.save();
+      
+      // Send webhook notifications to all community members
+      await sendPanicWebhookNotifications(communityId, panicData);
+      
+      res.json({ 
+        success: true, 
+        message: "Panic button activated successfully",
+        panicData: panicData
+      });
+      
+    } catch (error) {
+      // Error activating EMS panic button
+      res.status(500).json({ error: "Failed to activate panic button" });
+    }
+  });
+  
+  // Dispatch panic button endpoint
+  app.post("/api/v1/dispatch/:userId/panic", authCheck, async function (req, res) {
+    try {
+      const { userId } = req.params;
+      const { communityId, departmentType } = req.body;
+      
+      if (!isValidObjectIdLength(userId, "Invalid user ID")) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+      
+      // Verify user exists and has access to the community
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Update community panic state
+      const community = await Community.findById(communityId);
+      if (!community) {
+        return res.status(404).json({ error: "Community not found" });
+      }
+      
+      const panicData = {
+        userId: userId,
+        username: user.user.username,
+        callSign: user.user.callSign || 'No Unit #',
+        departmentType: departmentType || 'dispatch',
+        timestamp: new Date(),
+        activeCommunityID: communityId
+      };
+      
+      // Update community activePanics map
+      if (!community.community.activePanics) {
+        community.community.activePanics = new Map();
+      }
+      
+      community.community.activePanics.set(userId, panicData);
+      
+      // Also update the new activePanicAlerts array
+      if (!community.community.activePanicAlerts) {
+        community.community.activePanicAlerts = [];
+      }
+      
+      // Remove any existing panic from this user
+      community.community.activePanicAlerts = community.community.activePanicAlerts.filter(
+        alert => alert.userId !== userId
+      );
+      
+      // Add new panic alert
+      community.community.activePanicAlerts.push({
+        userId: userId,
+        username: user.user.username,
+        callSign: user.user.callSign || 'No Unit #',
+        departmentType: departmentType || 'police',
+        triggeredAt: new Date(),
+        status: 'active'
+      });
+      
+      await community.save();
+      
+      // Send webhook notifications to all community members
+      await sendPanicWebhookNotifications(communityId, panicData);
+      
+      res.json({ 
+        success: true, 
+        message: "Panic button activated successfully",
+        panicData: panicData
+      });
+      
+    } catch (error) {
+      // Error activating dispatch panic button
+      res.status(500).json({ error: "Failed to activate panic button" });
+    }
+  });
+  
+  // Clear panic button endpoint
+  app.delete("/api/v1/police/:userId/panic", authCheck, async function (req, res) {
+    try {
+      const { userId } = req.params;
+      const communityId = req.body.communityId || req.query.communityId;
+      
+      // DELETE panic request
+      
+      if (!userId) {
+        // Missing userId in panic clear request
+        return res.status(400).json({ error: "User ID is required" });
+      }
+      
+      if (!isValidObjectIdLength(userId, "Invalid user ID")) {
+        console.error('Invalid userId length:', userId);
+        return res.status(400).json({ error: "Invalid user ID format" });
+      }
+      
+      if (!communityId) {
+        // Missing communityId in panic clear request
+        return res.status(400).json({ error: "Community ID is required" });
+      }
+      
+      if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
+        console.error('Invalid communityId length:', communityId);
+        return res.status(400).json({ error: "Invalid community ID format" });
+      }
+      
+      const community = await Community.findById(communityId);
+      if (!community) {
+        console.error('Community not found:', communityId);
+        return res.status(404).json({ error: "Community not found" });
+      }
+      
+      // Remove panic from community
+      if (community.community.activePanics && community.community.activePanics.has(userId)) {
+        community.community.activePanics.delete(userId);
+      }
+      
+      // Also remove from activePanicAlerts array
+      if (community.community.activePanicAlerts) {
+        const initialLength = community.community.activePanicAlerts.length;
+        community.community.activePanicAlerts = community.community.activePanicAlerts.filter(
+          alert => alert.userId !== userId
+        );
+        
+        if (community.community.activePanicAlerts.length < initialLength) {
+          // Removed panic from activePanicAlerts array for user
+        }
+      }
+      
+      await community.save();
+      
+      if (community.community.activePanics && community.community.activePanics.has(userId)) {
+        
+        console.log('Panic cleared successfully for user:', userId, 'in community:', communityId);
+        
+        // Emit socket event to notify all users panic was cleared
+        io.emit('panic_button_cleared', {
+          userId: userId,
+          communityId: communityId
+        });
+      } else {
+        // No active panic found for user
+      }
+      
+      res.json({ 
+        success: true, 
+        message: "Panic cleared successfully"
+      });
+      
+    } catch (error) {
+      // Error clearing panic button
+      res.status(500).json({ 
+        error: "Failed to clear panic button",
+        details: error.message 
+      });
+    }
+  });
+  
+  // Get community panic status endpoint
+  app.get("/api/v1/community/:communityId/panic", authCheck, async function (req, res) {
+    try {
+      const { communityId } = req.params;
+      
+      if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+      
+      const community = await Community.findById(communityId);
+      if (!community) {
+        return res.status(404).json({ error: "Community not found" });
+      }
+      
+      // Use activePanicAlerts array if available, otherwise convert Map to Array
+      let panicAlerts = [];
+      
+      if (community.community.activePanicAlerts && community.community.activePanicAlerts.length > 0) {
+        // Use new array format
+        panicAlerts = community.community.activePanicAlerts.filter(alert => alert.status === 'active' || !alert.status);
+      } else if (community.community.activePanics) {
+        // Fallback to old Map format
+        for (let [userId, panicData] of community.community.activePanics) {
+          panicAlerts.push({
+            userId: userId,
+            username: panicData.username,
+            callSign: panicData.callSign || 'No Unit #',
+            departmentType: panicData.departmentType,
+            timestamp: panicData.timestamp,
+            triggeredAt: panicData.timestamp
+          });
+        }
+      }
+      
+      res.json({
+        success: true,
+        signal100: community.community.activeSignal100 || false,
+        holdTraffic: community.community.activeHoldTraffic || false,
+        panicAlerts: panicAlerts,
+        alerts: panicAlerts
+      });
+      
+    } catch (error) {
+      // Error getting community panic status
+      res.status(500).json({ error: "Failed to get panic status" });
+    }
+  });
+
+  // Signal 100 API Endpoints
+  
+  // Activate signal 100 endpoint
+  app.post("/api/v1/community/:communityId/signal100", authCheck, async function (req, res) {
+    try {
+      const { communityId } = req.params;
+      const { message, activatedBy } = req.body;
+      
+      if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+      
+      // Get community data
+      const community = await Community.findById(communityId);
+      if (!community) {
+        return res.status(404).json({ error: "Community not found" });
+      }
+      
+      // Update community signal 100 state
+      community.community.activeSignal100 = true;
+      community.community.signal100Data = {
+        message: message || '',
+        activatedBy: activatedBy || 'Unknown',
+        activatedAt: new Date(),
+        communityId: communityId
+      };
+      
+      await community.save();
+      
+      // Send webhook notifications to all community members
+      await sendSignal100WebhookNotifications(communityId, community.community.signal100Data);
+      
+      res.json({ 
+        success: true, 
+        message: "Signal 100 activated successfully",
+        signal100Data: community.community.signal100Data
+      });
+      
+    } catch (error) {
+      console.error('Error activating signal 100:', error);
+      res.status(500).json({ error: "Failed to activate signal 100" });
+    }
+  });
+  
+  // Get signal 100 status endpoint
+  app.get("/api/v1/community/:communityId/signal100", authCheck, async function (req, res) {
+    try {
+      const { communityId } = req.params;
+      
+      if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+      
+      // Get community data
+      const community = await Community.findById(communityId);
+      if (!community) {
+        return res.status(404).json({ error: "Community not found" });
+      }
+      
+      res.json({
+        signal100: community.community.activeSignal100 || false,
+        message: community.community.signal100Data?.message || '',
+        activatedBy: community.community.signal100Data?.activatedBy || '',
+        activatedAt: community.community.signal100Data?.activatedAt || null
+      });
+      
+    } catch (error) {
+      console.error('Error getting signal 100 status:', error);
+      res.status(500).json({ error: "Failed to get signal 100 status" });
+    }
+  });
+  
+  // Clear signal 100 endpoint
+  app.delete("/api/v1/community/:communityId/signal100", authCheck, async function (req, res) {
+    try {
+      const { communityId } = req.params;
+      
+      if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+      
+      // Get community data
+      const community = await Community.findById(communityId);
+      if (!community) {
+        return res.status(404).json({ error: "Community not found" });
+      }
+      
+      // Clear signal 100 state
+      community.community.activeSignal100 = false;
+      community.community.signal100Data = null;
+      
+      await community.save();
+      
+      // Send webhook notifications to all community members
+      await sendSignal100WebhookNotifications(communityId, null);
+      
+      res.json({ 
+        success: true, 
+        message: "Signal 100 cleared successfully"
+      });
+      
+    } catch (error) {
+      console.error('Error clearing signal 100:', error);
+      res.status(500).json({ error: "Failed to clear signal 100" });
+    }
+  });
+  
+  // Helper function to send webhook notifications for panic alerts
+  async function sendPanicWebhookNotifications(communityId, panicData) {
+    try {
+      // Get all users in the community
+      const communityUsers = await User.find({
+        'user.lastAccessedCommunity.communityID': communityId
+      });
+      
+      // Send ONE broadcast event to all users in the community, not individual events
+      io.emit('panic_button_updated', panicData, {
+        userID: panicData.userId,
+        userUsername: panicData.username,
+        activeCommunity: communityId,
+        departmentType: panicData.departmentType
+      });
+      
+      // Panic button triggered
+      
+    } catch (error) {
+      // Error sending panic webhook notifications
+    }
+  }
+
+  // Helper function to send webhook notifications for signal 100
+  async function sendSignal100WebhookNotifications(communityId, signal100Data) {
+    try {
+      // Get all users in the community
+      const communityUsers = await User.find({
+        'user.lastAccessedCommunity.communityID': communityId
+      });
+      
+      // Send ONE broadcast event to all users in the community, not individual events
+      io.emit('signal_100_button_updated', {
+        userID: signal100Data?.activatedBy || 'system',
+        userUsername: signal100Data?.activatedBy || 'Unknown',
+        activeCommunity: communityId,
+        signal100Data: signal100Data
+      });
+      
+      console.log('Signal 100', signal100Data ? 'activated' : 'cleared', 'by:', signal100Data?.activatedBy || 'Unknown', 'in community:', communityId, '- notified', communityUsers.length, 'users');
+      
+    } catch (error) {
+      console.error('Error sending signal 100 webhook notifications:', error);
+    }
+  }
 
   // Move this to the very end
   app.get("*", function (req, res) {
