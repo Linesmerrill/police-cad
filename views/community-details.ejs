@@ -549,6 +549,7 @@
     </style>
   </head>
   <body>
+    <div id="deptToast" style="display:none; position:fixed; top:20px; right:20px; background:#2563eb; color:#fff; padding:12px 16px; border-radius:8px; box-shadow:0 8px 16px rgba(0,0,0,.25); border:1px solid #93c5fd; z-index:9999;">Please select the department you want to access first.</div>
     <!-- Header Bar -->
     <nav class="flex items-center justify-between px-4 py-3 bg-gray-900 shadow-lg sticky top-0 z-20">
       <div class="flex items-center space-x-2">
@@ -10846,5 +10847,22 @@ async function deleteEditEvent() {
       </div>
     </div>
 
+    <script>
+      (function() {
+        try {
+          var params = new URLSearchParams(window.location.search);
+          if (params.get('notice') === 'selectDepartment') {
+            var toast = document.getElementById('deptToast');
+            if (toast) {
+              toast.style.display = 'block';
+              setTimeout(function() { toast.style.display = 'none'; }, 5000);
+            }
+            if (window.location.hash !== '#departments-section') {
+              window.location.hash = 'departments-section';
+            }
+          }
+        } catch (e) { /* no-op */ }
+      })();
+    </script>
   </body>
 </html>

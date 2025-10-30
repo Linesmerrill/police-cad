@@ -609,6 +609,15 @@ module.exports = function (app, passport, server) {
         }
       }
       
+      // If no department context is provided, redirect to community or communities
+      if (!departmentId && !departmentName) {
+        const communityId = (req.user && req.user.user && (req.user.user.lastAccessedCommunity && req.user.user.lastAccessedCommunity.communityID)) || (req.user && req.user.user && req.user.user.activeCommunity);
+        if (communityId) {
+          return res.redirect(`/community/${encodeId(communityId)}?notice=selectDepartment#departments-section`);
+        }
+        return res.redirect('/communities');
+      }
+      
       // If a specific department is requested, verify user access
       if (departmentId && departmentName) {
         const communityId = req.user.user.lastAccessedCommunity?.communityID || req.user.user.activeCommunity;
@@ -709,6 +718,15 @@ module.exports = function (app, passport, server) {
           console.error('Failed to decode department ID:', e);
           departmentId = null;
         }
+      }
+      
+      // If no department context is provided, redirect to community or communities
+      if (!(departmentId || req.session.departmentId) && !departmentName) {
+        const communityId = (req.user && req.user.user && (req.user.user.lastAccessedCommunity && req.user.user.lastAccessedCommunity.communityID)) || (req.user && req.user.user && req.user.user.activeCommunity);
+        if (communityId) {
+          return res.redirect(`/community/${encodeId(communityId)}?notice=selectDepartment#departments-section`);
+        }
+        return res.redirect('/communities');
       }
       
       // If a specific department is requested, verify user access
@@ -867,6 +885,15 @@ module.exports = function (app, passport, server) {
           console.error('Failed to decode department ID:', e);
           departmentId = null;
         }
+      }
+      
+      // If no department context is provided, redirect to community or communities
+      if (!(departmentId || req.session.departmentId) && !departmentName) {
+        const communityId = (req.user && req.user.user && (req.user.user.lastAccessedCommunity && req.user.user.lastAccessedCommunity.communityID)) || (req.user && req.user.user && req.user.user.activeCommunity);
+        if (communityId) {
+          return res.redirect(`/community/${encodeId(communityId)}?notice=selectDepartment#departments-section`);
+        }
+        return res.redirect('/communities');
       }
       
       // If a specific department is requested, verify user access
