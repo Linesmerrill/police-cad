@@ -958,6 +958,384 @@ const BrowseCommunities = ({
   );
 };
 
+// Community Search Modal Component
+const CommunitySearchModal = ({ isOpen, onClose, initialQuery = "" }) => {
+  const [query, setQuery] = React.useState(initialQuery);
+  const [results, setResults] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
+  const [totalCount, setTotalCount] = React.useState(0);
+  const [hasSearched, setHasSearched] = React.useState(false);
+  const resultsPerPage = 12;
+  const inputRef = React.useRef();
+  const debounceTimeout = React.useRef();
+
+  const fetchSearchResults = async (searchQuery, page = 1) => {
+    if (!searchQuery.trim()) {
+      setResults([]);
+      setHasSearched(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Escape brackets for regex if backend uses regex search
+      // This ensures brackets are treated as literal characters, not regex character classes
+      const escapedQuery = searchQuery.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+      // Then URL encode for the API call
+      const encodedQuery = encodeURIComponent(escapedQuery);
+      const response = await fetch(
+        `${API_URL}/api/v1/search/communities?q=${encodedQuery}&limit=${resultsPerPage}&page=${page}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Validate response structure
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response format');
+      }
+      
+      const communities = (data.data || []).map((item) => {
+        if (!item || !item._id) return null;
+        const c = item.community || item;
+        const subscription = c.subscription || {};
+        const isVerified =
+          ["elite", "premium", "standard"].includes(subscription.plan) && subscription.active === true;
+        return {
+          id: item._id,
+          name: c.name || 'Unnamed Community',
+          image: c.imageLink || "/static/images/default-logo.png",
+          description: c.promotionalText || c.promotionalDescription || c.description || "",
+          _id: item._id,
+          isVerified,
+        };
+      }).filter(Boolean); // Remove any null entries
+
+      setResults(communities);
+      setTotalCount(data.totalCount || data.total || communities.length);
+      setTotalPages(data.totalPages || Math.ceil((data.totalCount || data.total || communities.length) / resultsPerPage) || 1);
+      setCurrentPage(page);
+      setHasSearched(true);
+    } catch (error) {
+      // Silently handle errors in production - user will see empty results
+      setResults([]);
+      setHasSearched(true);
+      setTotalCount(0);
+      setTotalPages(1);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = () => {
+    if (query.trim()) {
+      setCurrentPage(1);
+      fetchSearchResults(query.trim(), 1);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+    
+    // Clear existing timeout
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+    
+    // Reset to page 1 when query changes
+    setCurrentPage(1);
+    
+    // Debounce search
+    debounceTimeout.current = setTimeout(() => {
+      if (value.trim()) {
+        fetchSearchResults(value.trim(), 1);
+      } else {
+        setResults([]);
+        setHasSearched(false);
+      }
+    }, 300);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      // Clear debounce and search immediately
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+      handleSearch();
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages && query.trim()) {
+      fetchSearchResults(query.trim(), newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleCommunityClick = (community) => {
+    if (community && community._id) {
+      window.location.href = `/community/${encodeCommunityId(community._id)}`;
+    }
+  };
+
+  React.useEffect(() => {
+    if (isOpen && inputRef.current) {
+      // Small delay to ensure modal is fully rendered before focusing
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      if (initialQuery) {
+        setQuery(initialQuery);
+        fetchSearchResults(initialQuery, 1);
+      }
+    } else if (!isOpen) {
+      // Clear debounce timeout on close
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+      setQuery("");
+      setResults([]);
+      setHasSearched(false);
+      setCurrentPage(1);
+    }
+    
+    // Handle escape key to close modal
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+    
+    // Cleanup
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, initialQuery, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-start justify-center overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div
+        className="bg-gray-900 w-full max-w-6xl mx-4 my-8 rounded-lg shadow-2xl border border-gray-700"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="search-modal-title"
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-6 rounded-t-lg z-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 id="search-modal-title" className="text-2xl font-bold text-white flex items-center gap-2">
+              <i className="fa fa-search text-blue-400" aria-hidden="true"></i>
+              Search Communities
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white transition-colors text-2xl"
+              aria-label="Close search modal"
+              type="button"
+            >
+              <i className="fa fa-times" aria-hidden="true"></i>
+            </button>
+          </div>
+          
+          {/* Search Input */}
+          <div className="flex gap-3">
+            <div className="flex-1 relative">
+              <input
+                ref={inputRef}
+                type="text"
+                className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg pr-12"
+                placeholder="Search for a community..."
+                value={query}
+                onChange={handleInputChange}
+                onKeyPress={handleKeyPress}
+                aria-label="Search for communities"
+                aria-describedby="search-description"
+              />
+              {loading && (
+                <span className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <svg className="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                  </svg>
+                </span>
+              )}
+            </div>
+            <button
+              onClick={handleSearch}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition whitespace-nowrap"
+              aria-label="Search communities"
+              disabled={loading}
+            >
+              <i className="fa fa-search mr-2"></i>Search
+            </button>
+          </div>
+        </div>
+
+        {/* Results */}
+        <div className="p-6">
+          {loading && !hasSearched ? (
+            <div className="flex justify-center items-center py-16">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-700 border-t-blue-500 mx-auto mb-4"></div>
+                <p className="text-gray-400 text-lg">Searching...</p>
+              </div>
+            </div>
+          ) : hasSearched && results.length === 0 ? (
+            <div className="text-center py-16">
+              <i className="fa fa-search text-gray-600 text-6xl mb-4"></i>
+              <p className="text-gray-400 text-xl">No communities found</p>
+              <p className="text-gray-500 mt-2">Try a different search term</p>
+            </div>
+          ) : hasSearched && results.length > 0 ? (
+            <>
+              <div className="mb-4 text-gray-400">
+                Found {totalCount} {totalCount === 1 ? 'community' : 'communities'}
+                {query && ` for "${query}"`}
+              </div>
+              
+              {/* Results Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {results.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-all cursor-pointer transform hover:scale-[1.02]"
+                    onClick={() => handleCommunityClick(item)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleCommunityClick(item);
+                      }
+                    }}
+                    aria-label={`View ${item.name} community`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={item.image}
+                        alt={`${item.name} logo`}
+                        className="w-16 h-16 rounded-lg object-cover border border-gray-700 bg-gray-800 flex-shrink-0"
+                        loading="lazy"
+                        onError={(e) => {
+                          e.target.src = "/static/images/default-logo.png";
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-white flex items-baseline gap-2 mb-1">
+                          <span className="break-words">{item.name}</span>
+                          {item.isVerified && (
+                            <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0" fill="none">
+                              <circle cx="12" cy="12" r="10" fill="#eab308" />
+                              <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-400 line-clamp-2">{item.description}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-6 pt-6 border-t border-gray-700">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    <i className="fa fa-chevron-left mr-1"></i>Previous
+                  </button>
+                  
+                  <div className="flex gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`px-4 py-2 rounded-lg transition ${
+                            currentPage === pageNum
+                              ? "bg-blue-600 text-white"
+                              : "bg-gray-800 border border-gray-700 text-white hover:bg-gray-700"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    Next<i className="fa fa-chevron-right ml-1"></i>
+                  </button>
+                  
+                  <span className="text-gray-400 ml-4">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-16">
+              <i className="fa fa-search text-gray-600 text-6xl mb-4"></i>
+              <p className="text-gray-400 text-xl">Enter a search term to find communities</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // CommunitySearchBar: HeroUI Free style search bar for communities
 const CommunitySearchBar = ({ onCreateCommunity }) => {
   const [inputValue, setInputValue] = React.useState("");
@@ -965,6 +1343,7 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
   const [loading, setLoading] = React.useState(false);
   const [noResults, setNoResults] = React.useState(false);
   const [showDropdown, setShowDropdown] = React.useState(false);
+  const [showSearchModal, setShowSearchModal] = React.useState(false);
   const debounceTimeout = React.useRef();
   const inputRef = React.useRef();
 
@@ -976,29 +1355,48 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
       return;
     }
     setLoading(true);
-    fetch(`${API_URL}/api/v1/search/communities?q=${encodeURIComponent(query)}&limit=6&page=1`)
-      .then((res) => res.json())
+    // Escape brackets for regex if backend uses regex search
+    const escapedQuery = query.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+    // Then URL encode for the API call
+    const encodedQuery = encodeURIComponent(escapedQuery);
+    fetch(`${API_URL}/api/v1/search/communities?q=${encodedQuery}&limit=6&page=1`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Search failed: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
+        if (!data || typeof data !== 'object') {
+          throw new Error('Invalid response format');
+        }
         const communities = (data.data || []).map((item) => {
+          if (!item || !item._id) return null;
           const c = item.community || item;
           const subscription = c.subscription || {};
           const isVerified =
             ["elite", "premium", "standard"].includes(subscription.plan) && subscription.active === true;
           return {
             id: item._id,
-            name: c.name,
+            name: c.name || 'Unnamed Community',
             image: c.imageLink || "/static/images/default-logo.png",
             description: c.promotionalText || c.promotionalDescription || c.description || "",
             _id: item._id,
             isVerified,
           };
-        });
+        }).filter(Boolean); // Remove any null entries
         setOptions(communities);
         setNoResults(communities.length === 0);
         setShowDropdown(true);
         setLoading(false);
       })
       .catch(() => {
+        // Silently handle errors - user will see empty dropdown
         setOptions([]);
         setNoResults(true);
         setShowDropdown(true);
@@ -1016,7 +1414,15 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
     }, 300);
   };
 
-  // Handle selection
+  // Handle Enter key or search button click - open modal
+  const handleSearch = () => {
+    if (inputValue.trim()) {
+      setShowSearchModal(true);
+      setShowDropdown(false);
+    }
+  };
+
+  // Handle selection from dropdown
   const handleSelection = (selected) => {
     setShowDropdown(false);
     setInputValue("");
@@ -1026,16 +1432,34 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
     }
   };
 
-  // Hide dropdown on outside click
+  // Handle key press
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  // Hide dropdown on outside click and escape key
   React.useEffect(() => {
     const handleClick = (e) => {
       if (inputRef.current && !inputRef.current.contains(e.target)) {
         setShowDropdown(false);
       }
     };
+    
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showDropdown) {
+        setShowDropdown(false);
+      }
+    };
+    
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [showDropdown]);
 
   // Add authentication check function
   const handleCreateCommunity = () => {
@@ -1049,74 +1473,100 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
   };
 
   return (
-    <div className="w-full flex justify-center py-8 bg-gray-900 z-10">
-      <div className="w-full max-w-4xl px-4 flex flex-col sm:flex-row items-center gap-4 mx-auto" ref={inputRef}>
-        <div className="flex-grow flex justify-center relative min-w-0 w-full">
-          <input
-            type="text"
-            className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow pr-12"
-            placeholder="Search for a community..."
-            value={inputValue}
-            onChange={handleInputChange}
-            onFocus={() => inputValue && setShowDropdown(true)}
-          />
-          {loading && (
-            <span className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <svg className="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-              </svg>
-            </span>
-          )}
-          {showDropdown && (
-            <div
-              className="absolute left-0 right-0 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto w-full"
-              style={{ top: '100%' }}
-            >
-              {loading ? (
-                <div className="p-4 text-gray-400 text-center text-lg">Searching...</div>
-              ) : noResults ? (
-                <div className="p-4 text-gray-400 text-center text-lg">No communities found</div>
-              ) : (
-                options.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-3 p-3 hover:bg-gray-700 cursor-pointer w-full"
-                    onClick={() => handleSelection(item)}
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-10 h-10 rounded object-cover border border-gray-700 bg-gray-800 flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-white flex items-baseline gap-2 text-lg">
-                        <span className="truncate">{item.name}</span>
-                        {item.isVerified && (
-                          <svg viewBox="0 0 24 24" className="w-5 h-5 flex-shrink-0" fill="none" style={{ transform: 'translateY(-3px)' }}>
-                            <circle cx="12" cy="12" r="10" fill="#eab308" />
-                            <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
+    <>
+      <div className="w-full flex justify-center py-8 bg-gray-900 z-10">
+        <div className="w-full max-w-4xl px-4 flex flex-col sm:flex-row items-center gap-4 mx-auto" ref={inputRef}>
+          <div className="flex-grow flex justify-center relative min-w-0 w-full">
+            <input
+              type="text"
+              className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow pr-12"
+              placeholder="Search for a community..."
+              value={inputValue}
+              onChange={handleInputChange}
+              onKeyPress={handleKeyPress}
+              onFocus={() => inputValue && setShowDropdown(true)}
+            />
+            {loading && (
+              <span className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <svg className="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+              </span>
+            )}
+            {showDropdown && (
+              <div
+                className="absolute left-0 right-0 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto w-full"
+                style={{ top: '100%' }}
+              >
+                {loading ? (
+                  <div className="p-4 text-gray-400 text-center text-lg">Searching...</div>
+                ) : noResults ? (
+                  <div className="p-4 text-gray-400 text-center text-lg">No communities found</div>
+                ) : (
+                  <>
+                    {options.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-3 p-3 hover:bg-gray-700 cursor-pointer w-full"
+                        onClick={() => handleSelection(item)}
+                      >
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-10 h-10 rounded object-cover border border-gray-700 bg-gray-800 flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-white flex items-baseline gap-2 text-lg">
+                            <span className="truncate">{item.name}</span>
+                            {item.isVerified && (
+                              <svg viewBox="0 0 24 24" className="w-5 h-5 flex-shrink-0" fill="none" style={{ transform: 'translateY(-3px)' }}>
+                                <circle cx="12" cy="12" r="10" fill="#eab308" />
+                                <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            )}
+                          </div>
+                          <div className="text-base text-gray-400 truncate max-w-full sm:max-w-xs">{item.description}</div>
+                        </div>
                       </div>
-                      <div className="text-base text-gray-400 truncate max-w-full sm:max-w-xs">{item.description}</div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+                    ))}
+                    {options.length >= 6 && (
+                      <div
+                        className="p-3 text-center text-blue-400 hover:text-blue-300 cursor-pointer border-t border-gray-700"
+                        onClick={handleSearch}
+                      >
+                        <i className="fa fa-search mr-2"></i>View all results ({options.length}+)
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button
+              onClick={handleSearch}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition whitespace-nowrap flex-1 sm:flex-none"
+            >
+              <i className="fa fa-search mr-2"></i>Search
+            </button>
+            <button
+              id="create-community-btn"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition whitespace-nowrap w-full sm:w-auto"
+              onClick={handleCreateCommunity}
+            >
+              <i className="fa fa-plus"></i> Create a New Community
+            </button>
+          </div>
         </div>
-        <button
-          id="create-community-btn"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition whitespace-nowrap w-full sm:w-auto sm:ml-4"
-          style={{ marginRight: 0 }}
-          onClick={handleCreateCommunity}
-        >
-          <i className="fa fa-plus"></i> Create a New Community
-        </button>
       </div>
-    </div>
+      
+      <CommunitySearchModal
+        isOpen={showSearchModal}
+        onClose={() => setShowSearchModal(false)}
+        initialQuery={inputValue}
+      />
+    </>
   );
 };
 
@@ -1511,9 +1961,15 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
         
         setFormData(prev => ({ ...prev, imageLink: imageUrl }));
       } catch (error) {
-        console.error('Error uploading image:', error);
+        // Silently handle upload errors - user can retry
         setFormData(prev => ({ ...prev, imageLink: '' }));
-        // You could show a toast notification here
+        // Show toast notification for user feedback
+        setToast({
+          isVisible: true,
+          message: 'Failed to upload image. Please try again.',
+          type: 'error',
+        });
+        setTimeout(() => setToast(prev => ({ ...prev, isVisible: false })), 5000);
       }
     }
   };
