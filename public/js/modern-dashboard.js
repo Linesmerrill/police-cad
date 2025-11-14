@@ -50,6 +50,18 @@ $(document).ready(function() {
     // Check firearm creation limits and update UI accordingly
     checkFirearmCreationLimitsOnLoad();
     
+    // Add backup event listeners for Add New Civilian buttons
+    // This ensures the buttons work even if onclick attributes fail
+    $(document).on('click', '#btnAddCivilian, [onclick*="openNewCivModal"]', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof openNewCivModal === 'function') {
+            openNewCivModal();
+        } else {
+            alert('Error: Function not loaded. Please refresh the page.');
+        }
+    });
+    
     // Setup search functionality
     setupSearch();
     
@@ -82,23 +94,29 @@ $(document).ready(function() {
     // Set up periodic refresh of notification count (every 30 seconds)
     setInterval(fetchNotificationCount, 30000);
     
-    // Prevent form submission and handle edit button click
-    $('#editFirearmForm').submit(function(e) {
+    // Prevent form submission for edit firearm form
+    $('#editFirearmForm').on('submit', function(e) {
         e.preventDefault();
-        const firearmId = document.getElementById('firearmIdHidden').value;
-        if (firearmId) {
-            updateFirearmModern(firearmId);
-        }
+        return false;
     });
     
-    $('#firearmDetailsEditBtn').click(function() {
+    // Handle edit button click - prevent duplicate calls
+    $('#firearmDetailsEditBtn').off('click').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Prevent duplicate calls
+        if (isUpdatingFirearm) {
+            return false;
+        }
+        
         const firearmId = document.getElementById('firearmIdHidden').value;
         if (firearmId) {
             updateFirearmModern(firearmId);
         } else {
-            console.error('No firearm ID found');
             showToast('Error: No firearm ID found');
         }
+        return false;
     });
     
     $('#firearmDetailsDeleteBtn').click(function() {
@@ -108,21 +126,46 @@ $(document).ready(function() {
         }
     });
     
+    // Prevent form submission for edit civilian form
+    $('#editCivilianForm').on('submit', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    
     // Setup civilian modal button handlers
-    $('#civDetailsEditBtn').click(function() {
+    $('#civDetailsEditBtn').click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         const civId = document.getElementById('civIdHidden').value;
         if (civId) {
             updateCivModern(civId);
         }
+        return false;
     });
     
-    $('#civDetailsDeleteBtn').click(function() {
+    $('#civDetailsDeleteBtn').click(function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
         const civId = document.getElementById('civIdHidden').value;
         if (civId && confirm('Are you sure you want to delete this civilian? This action cannot be undone.')) {
+            // Prevent any form submissions or redirects
+            const currentUrl = window.location.href;
+            
             $.ajax({
                 url: `${API_URL}/api/v1/civilian/${civId}`,
                 method: 'DELETE',
-                success: function() {
+                xhrFields: {
+                    // Prevent automatic redirect following
+                    withCredentials: false
+                },
+                success: function(response, textStatus, xhr) {
+                    // Ensure we're still on the same page
+                    if (window.location.href !== currentUrl) {
+                        // If somehow redirected, go back
+                        window.history.pushState({}, '', currentUrl);
+                    }
+                    
                     showToast('Civilian deleted successfully!');
                     closeCivDetailsModal();
                     loadCivilians();
@@ -134,10 +177,23 @@ $(document).ready(function() {
                     }
                 },
                 error: function(xhr) {
+                    // Ensure we're still on the same page
+                    if (window.location.href !== currentUrl) {
+                        // If somehow redirected, go back
+                        window.history.pushState({}, '', currentUrl);
+                    }
+                    
+                    // Check for 401/403 which might indicate session issues
+                    if (xhr.status === 401 || xhr.status === 403) {
+                        showToast('Authentication error. Please refresh the page and try again.');
+                        return;
+                    }
+                    
                     showToast('Failed to delete civilian: ' + (xhr.responseJSON?.message || 'Unknown error'));
                 }
             });
         }
+        return false;
     });
     
     $('#generateSerialBtn').click(function() {
@@ -342,7 +398,7 @@ function searchAllSections(searchTerm) {
             }
         },
         error: function(xhr) {
-            console.error('❌ Error searching civilians:', xhr);
+            // Silently handle search errors - user will see empty results
         }
     });
     
@@ -356,7 +412,7 @@ function searchAllSections(searchTerm) {
             }
         },
         error: function(xhr) {
-            console.error('❌ Error searching vehicles:', xhr);
+            // Silently handle search errors - user will see empty results
         }
     });
     
@@ -370,7 +426,7 @@ function searchAllSections(searchTerm) {
             }
         },
         error: function(xhr) {
-            console.error('❌ Error searching firearms:', xhr);
+            // Silently handle search errors - user will see empty results
         }
     });
     
@@ -441,7 +497,7 @@ function searchAllSections(searchTerm) {
             }
         },
         error: function(xhr) {
-            console.error('❌ Error searching licenses:', xhr);
+            // Silently handle search errors - show empty results
             renderLicenses([]);
         }
     });
@@ -476,7 +532,7 @@ function loadCommunityData() {
                 resolve(data.community);
             },
             error: function(xhr) {
-                console.error('❌ Error loading community data:', xhr);
+                // Silently handle error - will retry on next load
                 reject(xhr);
             }
         });
@@ -685,9 +741,7 @@ function loadCivilians() {
             }
         },
         error: function(xhr) {
-            console.error('❌ Error loading civilians:', xhr);
-            console.error('❌ Status:', xhr.status);
-            console.error('❌ Response:', xhr.responseText);
+            // Silently handle error - user will see error alert
             $('#civilians-loading').hide();
             $('#issue-loading-personnel-alert').show();
         }
@@ -1325,7 +1379,7 @@ function sendCivilianForApproval(civId) {
             loadCivilians(); // Refresh the list to show updated status
         },
         error: function(xhr) {
-            console.error('❌ Error sending civilian for approval:', xhr);
+            // Silently handle error - user sees toast message
             showToast('Failed to send civilian for approval. Please try again.');
         }
     });
@@ -1368,7 +1422,7 @@ function openCivDetailsModal(civ) {
     
     const modal = document.getElementById('civDetailsModal');
     if (!modal) {
-        console.error('Civilian details modal not found');
+        // Silently handle missing modal
         return;
     }
     
@@ -1459,8 +1513,6 @@ function openCivDetailsModal(civ) {
     const tabContent = civModal.querySelector('#civTabContent-edit');
     if (tabContent) {
         tabContent.style.display = 'block';
-    } else {
-        console.error('civTabContent-edit element not found');
     }
     
     // Clear search input if it exists
@@ -1737,8 +1789,46 @@ function closeCivDetailsModal() {
 
 // Check civilian creation limits before opening modal
 function openNewCivModal() {
+    // Check if modal exists
+    const modal = $('#newCivModal');
+    if (!modal.length) {
+        const errorMsg = 'Error: Modal not found. Please refresh the page.';
+        if (typeof showToast === 'function') {
+            showToast(errorMsg);
+        } else {
+            alert(errorMsg);
+        }
+        return;
+    }
+    
+    // Check if jQuery and Bootstrap are available
+    if (typeof $ === 'undefined' || typeof $.fn.modal === 'undefined') {
+        const errorMsg = 'Error: Required libraries not loaded. Please refresh the page.';
+        if (typeof showToast === 'function') {
+            showToast(errorMsg);
+        } else {
+            alert(errorMsg);
+        }
+        return;
+    }
+    
     // Check if civilian creation limits are enabled for this community
-    checkCivilianCreationLimits();
+    // If check fails, we'll fallback to showing modal directly
+    try {
+        checkCivilianCreationLimits();
+    } catch (e) {
+        // If there's any error, show modal directly as fallback
+        try {
+            $('#newCivModal').modal('show');
+        } catch (modalError) {
+            alert('Error opening modal. Please refresh the page.');
+        }
+    }
+}
+
+// Make function globally available
+if (typeof window !== 'undefined') {
+    window.openNewCivModal = openNewCivModal;
 }
 
 // Check civilian creation limits
@@ -1746,7 +1836,19 @@ function checkCivilianCreationLimits() {
     const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
     
     if (!communityId) {
-        showToast('Error: No active community found');
+        if (typeof showToast === 'function') {
+            showToast('Error: No active community found');
+        }
+        // Fallback: try to show modal anyway
+        try {
+            $('#newCivModal').modal('show');
+        } catch (e) {
+            if (typeof showToast === 'function') {
+                showToast('Error: Could not open modal. Please refresh the page.');
+            } else {
+                alert('Error: Could not open modal. Please refresh the page.');
+            }
+        }
         return;
     }
     
@@ -1754,25 +1856,32 @@ function checkCivilianCreationLimits() {
     $.ajax({
         url: `${API_URL}/api/v1/community/${communityId}`,
         method: 'GET',
+        timeout: 5000, // 5 second timeout
         success: function(data) {
-            // Check if user is admin (community owner or has administrator permission)
-            const isOwner = data.community && data.community.ownerID === dbUser._id;
-            const hasAdminPermission = checkUserAdminPermission(data.community);
-            const isAdmin = isOwner || hasAdminPermission;
-            
-            if (data.community && data.community.civilianCreationLimitsEnabled && !isAdmin) {
-                // Limits are enabled and user is not admin, check current count
-                checkCurrentCivilianCount(communityId, data.community.civilianCreationLimit);
-            } else {
-                // No limits or user is admin, allow creation
-                if (isAdmin) {
-                    showToast('Admin: Bypassing civilian creation limits');
+            try {
+                // Check if user is admin (community owner or has administrator permission)
+                const isOwner = data.community && data.community.ownerID === dbUser._id;
+                const hasAdminPermission = typeof checkUserAdminPermission === 'function' ? checkUserAdminPermission(data.community) : false;
+                const isAdmin = isOwner || hasAdminPermission;
+                
+                const limitsEnabled = data.community && data.community.civilianCreationLimitsEnabled;
+                
+                if (limitsEnabled && !isAdmin) {
+                    // Limits are enabled and user is not admin, check current count
+                    checkCurrentCivilianCount(communityId, data.community.civilianCreationLimit);
+                } else {
+                    // No limits or user is admin, allow creation
+                    if (isAdmin && typeof showToast === 'function') {
+                        showToast('Admin: Bypassing civilian creation limits');
+                    }
+                    $('#newCivModal').modal('show');
                 }
+            } catch (e) {
+                // If there's an error processing the response, show modal anyway
                 $('#newCivModal').modal('show');
             }
         },
         error: function(xhr) {
-            console.error('Error fetching community settings:', xhr);
             // If we can't fetch settings, allow creation as fallback
             $('#newCivModal').modal('show');
         }
@@ -1783,24 +1892,37 @@ function checkCivilianCreationLimits() {
 function checkCurrentCivilianCount(communityId, limit) {
     const userId = dbUser._id;
     
+    if (!userId) {
+        // Fallback: show modal if we can't get user ID
+        $('#newCivModal').modal('show');
+        return;
+    }
+    
     // Get user's current department from the community
     $.ajax({
         url: `${API_URL}/api/v1/community/${communityId}`,
         method: 'GET',
+        timeout: 5000, // 5 second timeout
         success: function(data) {
-            if (data.community && data.community.departments) {
-                // Find the department the user is in
-                const userDepartment = findUserDepartment(data.community.departments, userId);
-                
-                // Count total civilians for this user (not per department)
-                countUserCivilians(userId, limit);
-            } else {
-                showToast('Error: Could not load department information');
+            try {
+                if (data.community && data.community.departments) {
+                    // Find the department the user is in
+                    const userDepartment = findUserDepartment(data.community.departments, userId);
+                    
+                    // Count total civilians for this user (not per department)
+                    countUserCivilians(userId, limit);
+                } else {
+                    // Fallback: show modal if we can't get department info
+                    $('#newCivModal').modal('show');
+                }
+            } catch (e) {
+                // Fallback: show modal on error
+                $('#newCivModal').modal('show');
             }
         },
         error: function(xhr) {
-            console.error('Error fetching community departments:', xhr);
-            showToast('Error: Could not load department information');
+            // Fallback: show modal if API call fails
+            $('#newCivModal').modal('show');
         }
     });
 }
@@ -1820,36 +1942,40 @@ function findUserDepartment(departments, userId) {
 
 // Count civilians for a user (total, not per department)
 function countUserCivilians(userId, limit) {
-
+    const communityId = dbUser?.user?.lastAccessedCommunity?.communityID;
+    
+    if (!communityId) {
+        // Fallback: show modal if we can't get community ID
+        $('#newCivModal').modal('show');
+        return;
+    }
     
     $.ajax({
-        url: `${API_URL}/api/v1/civilians/user/${userId}?active_community_id=${dbUser.user.lastAccessedCommunity.communityID}`,
+        url: `${API_URL}/api/v1/civilians/user/${userId}?active_community_id=${communityId}`,
         method: 'GET',
+        timeout: 5000, // 5 second timeout
         success: function(data) {
-            let civilianCount = 0;
-            
-
-            
-            if (data && Array.isArray(data)) {
-                // Count ALL civilians for this user (total count, not per department)
-                civilianCount = data.length;
-
-            }
-            
-
-            
-            if (civilianCount >= limit) {
-                // User has reached their limit
-
-                showCivilianLimitWarning(limit, civilianCount, true);
-            } else {
-                // User can create more civilians
-
+            try {
+                let civilianCount = 0;
+                
+                if (data && Array.isArray(data)) {
+                    // Count ALL civilians for this user (total count, not per department)
+                    civilianCount = data.length;
+                }
+                
+                if (civilianCount >= limit) {
+                    // User has reached their limit
+                    showCivilianLimitWarning(limit, civilianCount, true);
+                } else {
+                    // User can create more civilians
+                    $('#newCivModal').modal('show');
+                }
+            } catch (e) {
+                // Fallback: show modal on error
                 $('#newCivModal').modal('show');
             }
         },
         error: function(xhr) {
-            console.error('❌ Error counting civilians:', xhr);
             // If we can't count, allow creation as fallback
             $('#newCivModal').modal('show');
         }
@@ -1954,7 +2080,7 @@ function checkCivilianCreationLimitsOnLoad() {
             }
         },
         error: function(xhr) {
-            console.error('Error fetching community settings on load:', xhr);
+            // Silently handle error - limits check will be skipped
         }
     });
 }
@@ -1974,7 +2100,7 @@ function updateCivilianCreationButtonState(communityId, limit) {
                 }
             },
             error: function(xhr) {
-                console.error('Error fetching community settings:', xhr);
+                // Silently handle error - will use fallback
             }
         });
         return;
@@ -2005,13 +2131,13 @@ function updateCivilianCreationButtonState(communityId, limit) {
                         updateCivilianCreationButtons(civilianCount, limit);
                     },
                     error: function(xhr) {
-                        console.error('Error counting civilians on load:', xhr);
+                        // Silently handle error - button state won't update
                     }
                 });
             }
         },
         error: function(xhr) {
-            console.error('Error fetching community departments on load:', xhr);
+            // Silently handle error - limits check will be skipped
         }
     });
 }
@@ -2126,7 +2252,7 @@ function addAdminLimitIndicatorToSection(button, entityType) {
     }
     
     if (!sectionTitle) {
-        console.warn('Could not find section title for admin limit indicator');
+        // Silently handle missing element
         return;
     }
     
@@ -2179,21 +2305,21 @@ function addAdminLimitIndicator(button, entityType) {
     
     const sidebarItemId = sidebarItemMap[entityType];
     if (!sidebarItemId) {
-        console.warn('Unknown entity type for admin limit indicator:', entityType);
+        // Silently handle unknown entity type
         return;
     }
     
     // Find the sidebar item
     const sidebarItem = document.getElementById(sidebarItemId);
     if (!sidebarItem) {
-        console.warn('Could not find sidebar item:', sidebarItemId);
+        // Silently handle missing sidebar item
         return;
     }
     
     // Find the nav-text span within the sidebar item
     const navText = sidebarItem.querySelector('.nav-text');
     if (!navText) {
-        console.warn('Could not find nav-text in sidebar item:', sidebarItemId);
+        // Silently handle missing nav-text
         return;
     }
     
@@ -2348,7 +2474,7 @@ function showAdminLimitInfoModal(entityType) {
             });
         },
         error: function(xhr) {
-            console.error('Error fetching community settings for admin limit info:', xhr);
+            // Silently handle error - user sees toast message
             showToast('Error loading limit information');
         }
     });
@@ -2424,7 +2550,7 @@ function checkVehicleCreationLimits() {
             }
         },
         error: function(xhr) {
-            console.error('Error fetching community settings:', xhr);
+            // Silently handle error - will use fallback
             // If we can't fetch settings, allow creation as fallback
             $('#newVehicleModal').modal('show');
         }
@@ -2463,7 +2589,6 @@ function countUserVehicles(userId, limit) {
             }
         },
         error: function(xhr) {
-            console.error('❌ Error counting vehicles:', xhr);
             // If we can't count, allow creation as fallback
             $('#newVehicleModal').modal('show');
         }
@@ -2561,7 +2686,7 @@ function checkVehicleCreationLimitsOnLoad() {
             }
         },
         error: function(xhr) {
-            console.error('Error fetching community settings on load:', xhr);
+            // Silently handle error - limits check will be skipped
         }
     });
 }
@@ -2581,7 +2706,7 @@ function updateVehicleCreationButtonState(communityId, limit) {
                 }
             },
             error: function(xhr) {
-                console.error('Error fetching community settings:', xhr);
+                // Silently handle error - will use fallback
             }
         });
         return;
@@ -2602,7 +2727,7 @@ function updateVehicleCreationButtonState(communityId, limit) {
             updateVehicleCreationButtons(vehicleCount, limit);
         },
         error: function(xhr) {
-            console.error('Error fetching community departments on load:', xhr);
+            // Silently handle error - limits check will be skipped
         }
     });
 }
@@ -2761,7 +2886,7 @@ function checkFirearmCreationLimits() {
             }
         },
         error: function(xhr) {
-            console.error('Error fetching community settings:', xhr);
+            // Silently handle error - will use fallback
             // If we can't fetch settings, allow creation as fallback
             openFirearmModalDirectly();
         }
@@ -2799,7 +2924,6 @@ function countUserFirearms(userId, limit) {
             }
         },
         error: function(xhr) {
-            console.error('❌ Error counting firearms:', xhr);
             // If we can't count, allow creation as fallback
             openFirearmModalDirectly();
         }
@@ -2897,7 +3021,7 @@ function checkFirearmCreationLimitsOnLoad() {
             }
         },
         error: function(xhr) {
-            console.error('Error fetching community settings on load:', xhr);
+            // Silently handle error - limits check will be skipped
         }
     });
 }
@@ -2917,7 +3041,7 @@ function updateFirearmCreationButtonState(communityId, limit) {
                 }
             },
             error: function(xhr) {
-                console.error('Error fetching community settings:', xhr);
+                // Silently handle error - will use fallback
             }
         });
         return;
@@ -2938,7 +3062,7 @@ function updateFirearmCreationButtonState(communityId, limit) {
             updateFirearmCreationButtons(firearmCount, limit);
         },
         error: function(xhr) {
-            console.error('Error fetching community departments on load:', xhr);
+            // Silently handle error - limits check will be skipped
         }
     });
 }
@@ -3158,7 +3282,6 @@ function createNewCiv() {
             $('#submitNewCiv').prop('disabled', false).html('<i class="fa fa-plus"></i> Create Civilian');
         },
         error: function(xhr) {
-            console.error('❌ Error creating civilian:', xhr);
             const errorMessage = xhr.responseJSON?.message || 'Failed to create civilian';
             showToast('Error: ' + errorMessage);
             
@@ -3528,7 +3651,6 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
-                console.error('[AddVehicle] Error creating vehicle:', xhr);
                 const errorMessage = xhr.responseJSON?.message || 'Failed to create vehicle';
                 showToast('Error: ' + errorMessage);
             }
@@ -3583,7 +3705,7 @@ function getLinkedVehicles(page) {
             const currentCivId = document.getElementById('civIdHidden').value;
             if (currentCivId !== civilianId) return;
             
-            console.error('Error fetching vehicles:', xhr.responseText);
+            // Silently handle error - user will see empty list
             document.getElementById('manage-vehicles-loading').style.display = 'none';
             document.getElementById('issue-loading-vehicles-alert').style.display = 'block';
             document.getElementById('manage-no-vehicles-message').style.display = 'none';
@@ -3600,7 +3722,7 @@ function fetchCivName(civId) {
     }).then(function(data) {
         return data?.civilian?.name || 'Unknown';
     }).catch(function(xhr, status, error) {
-        console.error(`Error fetching civilian name for ID ${civId}:`, xhr.responseText);
+        // Silently handle error - return default name
         return 'Unknown';
     });
 }
@@ -3679,7 +3801,7 @@ function renderLinkedVehicles(vehicles, civilianId) {
         const currentCivId = document.getElementById('civIdHidden').value;
         if (currentCivId !== civilianId) return;
         
-        console.error('Error rendering linked vehicles:', error);
+        // Silently handle error - user will see empty list
         document.getElementById('manage-vehicles-loading').style.display = 'none';
         document.getElementById('issue-loading-vehicles-alert').style.display = 'block';
         showToast('Error rendering vehicle data: ' + error.message);
@@ -3860,7 +3982,16 @@ function closeNewFirearmModal() {
     }
 }
 
+// Flag to prevent duplicate firearm updates
+let isUpdatingFirearm = false;
+
 function updateFirearmModern(firearmId) {
+    // Prevent duplicate calls
+    if (isUpdatingFirearm) {
+        return;
+    }
+    
+    isUpdatingFirearm = true;
     
     // Get form data
     const formData = {
@@ -3871,10 +4002,9 @@ function updateFirearmModern(firearmId) {
         isStolen: document.getElementById('firearmIsStolen').value
     };
     
-
-    
     // Validate required fields
     if (!formData.serialNumber || !formData.name || !formData.weaponType) {
+        isUpdatingFirearm = false;
         showToast('Please fill in all required fields.');
         return;
     }
@@ -3886,6 +4016,7 @@ function updateFirearmModern(firearmId) {
         headers: { 'Content-Type': 'application/json' },
         data: JSON.stringify(formData),
         success: function(response) {
+            isUpdatingFirearm = false;
             showToast('Firearm updated successfully!');
             closeFirearmDetailsModal();
             
@@ -3904,9 +4035,7 @@ function updateFirearmModern(firearmId) {
             }, 500);
         },
         error: function(xhr) {
-            console.error('Firearm update error:', xhr);
-            console.error('Status:', xhr.status);
-            console.error('Response:', xhr.responseText);
+            isUpdatingFirearm = false;
             showToast('Error updating firearm: ' + (xhr.responseJSON?.message || 'Unknown error'));
         }
     });
@@ -4022,7 +4151,7 @@ function fetchNotificationCount() {
             updateNotificationCount(data.unseenCount || 0);
         },
         error: function (xhr) {
-            console.error("Error fetching notification count:", xhr.responseText);
+            // Silently handle error - notification count won't update
         },
     });
 }
@@ -4240,7 +4369,6 @@ function submit911Call() {
                     }
                 },
                 error: function(xhr) {
-                    console.error('Error submitting 911 call:', xhr.responseText);
                     const errorMessage = xhr.responseJSON?.message || 'Failed to submit emergency call';
                     showToast('Error: ' + errorMessage);
                 },
@@ -4252,7 +4380,7 @@ function submit911Call() {
             });
         },
         error: function(xhr) {
-            console.error('Error fetching departments:', xhr.responseText);
+            // Silently handle error - user sees toast message
             showToast('Error: Failed to fetch dispatch departments.');
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
@@ -5885,7 +6013,7 @@ function setupSubscriptionBadge() {
     const subscriptionIcon = subscriptionBadge.querySelector('i');
     
     if (!subscriptionBadge || !subscriptionText || !subscriptionIcon) {
-        console.error('Subscription badge elements not found');
+        // Silently handle missing elements
         return;
     }
     
