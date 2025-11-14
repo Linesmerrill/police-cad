@@ -4724,7 +4724,7 @@ async function confirmTransferOwnership(newOwnerId) {
     showTransferOwnershipLoading();
     
     const communityId = '<%= community._id %>';
-    const currentUserId = '<%= user._doc._id %>';
+    const currentUserId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     
     const response = await fetch(`${apiUrl}/api/v2/community/${communityId}/transfer-ownership`, {
@@ -9572,7 +9572,7 @@ async function deleteEditEvent() {
         
         if (canManageMembers || isOwner) {
           // Don't allow actions on yourself
-          if (member._id !== '<%= user._doc._id %>') {
+          if (member._id !== '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>') {
             actionsContainer.innerHTML = `
               <button onclick="kickMember('${member._id}')" style="background:#f59e0b; color:#fff; border:none; border-radius:8px; padding:0.75rem 1.5rem; font-weight:500; cursor:pointer; font-size:1rem;">
                 <i class="fa fa-user-times" style="margin-right:0.5rem;"></i>
@@ -9610,7 +9610,7 @@ async function deleteEditEvent() {
       function checkManageMembersPermission() {
         // Check if user has manage members permission OR administrator permission
         const userRoles = <%- JSON.stringify(community.community.roles || []) %>;
-        const userId = '<%= user._doc._id %>';
+        const userId = '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>';
         
         for (const role of userRoles) {
           if (role.members && role.members.includes(userId)) {
@@ -9630,7 +9630,7 @@ async function deleteEditEvent() {
       }
 
       function checkIsOwner() {
-        return '<%= user._doc._id %>' === '<%= community.community.ownerID %>';
+        return '<%= user && user._doc ? user._doc._id : (user && user._id ? user._id : "") %>' === '<%= community.community.ownerID %>';
       }
 
       function formatDate(dateString) {
