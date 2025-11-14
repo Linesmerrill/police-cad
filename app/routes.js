@@ -2193,90 +2193,169 @@ module.exports = function (app, passport, server) {
       [
         function (done) {
           crypto.randomBytes(20, function (err, buf) {
+            if (err) {
+              // Error code: FP-1001 - Token generation failed
+              req.flash(
+                "emailSend",
+                "An error occurred while processing your request. Please try again. If the problem persists, contact support with error code: FP-1001"
+              );
+              return res.redirect("/forgot-password");
+            }
             var token = buf.toString("hex");
-            done(err, token);
+            done(null, token);
           });
         },
         function (token, done) {
           if (!exists(req.body.email)) {
             req.flash(
               "emailSend",
-              "Please enter a valid Email address and try again (error code: #1000)"
+              "Please enter a valid Email address and try again (error code: FP-1000)"
             );
             return res.redirect("/forgot-password");
           }
           if (req.body.email.trim().length < 1) {
             req.flash(
               "emailSend",
-              "Please enter a valid Email address and try again"
+              "Please enter a valid Email address and try again (error code: FP-1000)"
             );
             return res.redirect("/forgot-password");
           }
+          
+          const searchEmail = req.body.email.toLowerCase();
+          
           User.findOne(
             {
-              "user.email": req.body.email.toLowerCase(),
+              "user.email": searchEmail,
             },
             function (err, users) {
-              if (err) return console.error(err);
+              if (err) {
+                // Error code: FP-1002 - Database lookup failed
+                req.flash(
+                  "emailSend",
+                  "An error occurred while processing your request. Please try again. If the problem persists, contact support with error code: FP-1002"
+                );
+                return res.redirect("/forgot-password");
+              }
+              
               if (!users) {
+                // Don't reveal if email exists or not for security
                 req.flash(
                   "emailSend",
                   "If this e-mail exists, then an email has been sent to '" +
-                    req.body.email.toLowerCase() +
+                    searchEmail +
                     "' with a link to change the password."
                 );
                 return res.redirect("/forgot-password");
               }
+              
+              // Set the reset fields
               users.user.resetPasswordToken = token;
               users.user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-
-              users.save(function (err) {
-                done(err, token, users);
+              
+              // Explicitly mark nested fields as modified for older accounts
+              // This ensures Mongoose tracks changes even if fields were empty/null
+              users.markModified('user.resetPasswordToken');
+              users.markModified('user.resetPasswordExpires');
+              
+              users.save(function (err, savedUser) {
+                if (err) {
+                  // Error code: FP-1003 - Failed to save reset token
+                  req.flash(
+                    "emailSend",
+                    "An error occurred while processing your request. Please try again. If the problem persists, contact support with error code: FP-1003"
+                  );
+                  return res.redirect("/forgot-password");
+                }
+                
+                done(null, token, users);
               });
             }
           );
         },
         function (token, users, done) {
+          if (!process.env.MAIL_API_KEY) {
+            // Error code: FP-1004 - Email service not configured
+            req.flash(
+              "emailSend",
+              "An error occurred while sending the email. Please contact support with error code: FP-1004"
+            );
+            return res.redirect("/forgot-password");
+          }
+          
           var smtpTransport = nodemailer.createTransport(
             nodemailerSendgrid({
               apiKey: process.env.MAIL_API_KEY,
             })
           );
+          
           fs.readFile("resetPassword.html", "utf8", function (err, htmlData) {
             if (err) {
-              console.error("failed to read file: ", err);
-              return res.redirect("back");
-            }
-            let template = handlebars.compile(htmlData);
-            let data = {
-              resetLink:
-                process.env.SITE_PROTOCOL +
-                req.headers.host +
-                "/reset/" +
-                token,
-              sentTo: users.user.email.toLowerCase(),
-            };
-            let htmlToSend = template(data);
-            var mailOptions = {
-              to: users.user.email.toLowerCase(),
-              from: process.env.FROM_EMAIL,
-              subject: "Lines Police CAD Reset Password",
-              html: htmlToSend,
-            };
-            smtpTransport.sendMail(mailOptions, function (err) {
+              // Error code: FP-1005 - Email template not found
               req.flash(
                 "emailSend",
-                "If this e-mail exists, then an email has been sent to " +
-                  users.user.email.toLowerCase() +
-                  " with a link to change the password."
+                "An error occurred while preparing the email. Please contact support with error code: FP-1005"
               );
-              done(err, "done");
-            });
+              return res.redirect("/forgot-password");
+            }
+            
+            try {
+              let template = handlebars.compile(htmlData);
+              const resetLink = process.env.SITE_PROTOCOL +
+                  req.headers.host +
+                  "/reset/" +
+                  token;
+              
+              let data = {
+                resetLink: resetLink,
+                sentTo: users.user.email.toLowerCase(),
+              };
+              let htmlToSend = template(data);
+              
+              var mailOptions = {
+                to: users.user.email.toLowerCase(),
+                from: process.env.FROM_EMAIL || "noreply@linespolice-cad.com",
+                subject: "Lines Police CAD Reset Password",
+                html: htmlToSend,
+              };
+              
+              smtpTransport.sendMail(mailOptions, function (err) {
+                if (err) {
+                  // Error code: FP-1006 - Email send failed
+                  req.flash(
+                    "emailSend",
+                    "An error occurred while sending the email. Please try again. If the problem persists, contact support with error code: FP-1006"
+                  );
+                  return res.redirect("/forgot-password");
+                }
+                
+                // Success - don't reveal if email exists or not for security
+                req.flash(
+                  "emailSend",
+                  "If this e-mail exists, then an email has been sent to " +
+                    users.user.email.toLowerCase() +
+                    " with a link to change the password."
+                );
+                done(null, "done");
+              });
+            } catch (templateErr) {
+              // Error code: FP-1007 - Email template compilation failed
+              req.flash(
+                "emailSend",
+                "An error occurred while preparing the email. Please contact support with error code: FP-1007"
+              );
+              return res.redirect("/forgot-password");
+            }
           });
         },
       ],
       function (err) {
-        if (err) return next(err);
+        if (err) {
+          // Error code: FP-1008 - Unexpected error in password reset flow
+          req.flash(
+            "emailSend",
+            "An unexpected error occurred. Please try again. If the problem persists, contact support with error code: FP-1008"
+          );
+        }
         res.render("forgot-password", {
           message: req.flash("emailSend"),
         });
