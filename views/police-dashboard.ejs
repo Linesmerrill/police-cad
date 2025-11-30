@@ -224,15 +224,15 @@
         <div class="collapse in" id="toggleSearch">
           <input type="hidden" id="searchType" value="Civilian">
   <li>
-    <a data-toggle="modal" onclick="showSearchDatabaseModal('Civilian')" data-search-type="Civilian"><span
+    <a data-toggle="modal" onclick="if(typeof showSearchDatabaseModal === 'function') { showSearchDatabaseModal('Civilian'); } else { showJavaScriptRequiredAlert(); }" data-search-type="Civilian"><span
         class="fa fa-id-card ml-3 mr-3"></span> Name Database</a>
   </li>
   <li>
-    <a data-toggle="modal" onclick="showSearchDatabaseModal('Vehicle')" data-search-type="Vehicle"><span
+    <a data-toggle="modal" onclick="if(typeof showSearchDatabaseModal === 'function') { showSearchDatabaseModal('Vehicle'); } else { showJavaScriptRequiredAlert(); }" data-search-type="Vehicle"><span
         class="fa fa-car ml-3 mr-3"></span> Plate Database</a>
   </li>
   <li>
-    <a data-toggle="modal" onclick="showSearchDatabaseModal('Firearm')" data-search-type="Firearm"><span
+    <a data-toggle="modal" onclick="if(typeof showSearchDatabaseModal === 'function') { showSearchDatabaseModal('Firearm'); } else { showJavaScriptRequiredAlert(); }" data-search-type="Firearm"><span
         class="fa fa-database ml-3 mr-3"></span> Firearm Database</a>
   </li>
 </div>
@@ -285,7 +285,7 @@
             </button>
           </div>
           <div class="navbar-header" style="position: absolute; left: 85px;">
-            <h1 class="cursive"><a href="/police-dashboard"><i class="fa fa-star"></i> Police Operations</a> • <a href="/community-dashboard"><span id="community-name"></span></a></h1>
+            <h1 class="cursive"><a href="/police-dashboard"><i class="fa fa-star"></i> Police Operations</a> • <a href="/community-dashboard"><span id="community-name"><%= user.user?.lastAccessedCommunity?.communityName || user.user?.lastAccessedCommunity?.name || 'Community' %></span></a></h1>
             
           </div>
           
@@ -464,6 +464,35 @@
 
   <% include search-database %>
   <% include details-modal %>
+
+  <!-- JavaScript Disabled Alert Modal -->
+  <div id="javascriptDisabledModal" class="heroui-modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.85); align-items:center; justify-content:center;">
+    <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:700px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2.5rem 2rem 2rem 2rem; position:relative; max-height:90vh; overflow-y:auto;">
+      <button id="javascriptDisabledModalClose" aria-label="Close" onclick="document.getElementById('javascriptDisabledModal').style.display='none'" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+      <div style="font-size:1.5rem; font-weight:700; color:#f7fafc; margin-bottom:1.5rem;">
+        <i class="fa fa-exclamation-triangle" style="color:#fbbf24; margin-right:0.5rem;"></i>
+        JavaScript Required
+      </div>
+      <div style="color:#cbd5e0; line-height:1.6; margin-bottom:1.5rem;">
+        <p>The search features require JavaScript to be enabled in your browser. Please enable JavaScript to use the search functionality.</p>
+        <p style="font-weight:600; color:#f7fafc; margin-top:1.5rem; margin-bottom:0.5rem;">How to enable JavaScript:</p>
+        <div id="browserInstructions" style="background:#1e2028; border-radius:8px; padding:1rem; margin-top:1rem;">
+          <!-- Instructions will be populated by JavaScript based on detected browser -->
+        </div>
+      </div>
+      <div style="display:flex; gap:1rem; margin-top:2rem;">
+        <button onclick="document.getElementById('javascriptDisabledModal').style.display='none'" style="flex:1; background:#667eea; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer;">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fallback Search Form (for when JavaScript is disabled) -->
+  <noscript>
+    <div style="position:fixed; top:0; left:0; right:0; background:#fbbf24; color:#000; padding:1rem; text-align:center; z-index:10000; border-bottom:2px solid #f59e0b;">
+      <strong>⚠️ JavaScript is disabled.</strong> The search features require JavaScript. 
+      <a href="/search-database" style="color:#000; text-decoration:underline; margin-left:0.5rem;">Click here for a basic search page</a>
+    </div>
+  </noscript>
 
   <div id="viewLicense" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -1677,6 +1706,116 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 <script>if (window.module) module = window.module;</script>
 <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<!-- JavaScript Detection and Alert Functions -->
+<script>
+  // Detect browser and show appropriate instructions
+  function detectBrowserAndShowInstructions() {
+    const instructionsDiv = document.getElementById('browserInstructions');
+    if (!instructionsDiv) return;
+    
+    const userAgent = navigator.userAgent.toLowerCase();
+    let instructions = '';
+    
+    if (userAgent.indexOf('chrome') > -1 && userAgent.indexOf('edg') === -1) {
+      // Chrome
+      instructions = `
+        <ol style="margin:0; padding-left:1.5rem; color:#cbd5e0;">
+          <li>Click the <strong>lock icon</strong> or <strong>information icon</strong> in the address bar</li>
+          <li>Click <strong>"Site settings"</strong> or <strong>"JavaScript"</strong></li>
+          <li>Select <strong>"Allow"</strong> for JavaScript</li>
+          <li>Refresh the page</li>
+        </ol>
+      `;
+    } else if (userAgent.indexOf('firefox') > -1) {
+      // Firefox
+      instructions = `
+        <ol style="margin:0; padding-left:1.5rem; color:#cbd5e0;">
+          <li>Click the <strong>menu button</strong> (three horizontal lines) in the top right</li>
+          <li>Select <strong>"Settings"</strong></li>
+          <li>Go to <strong>"Privacy & Security"</strong></li>
+          <li>Scroll down to <strong>"Permissions"</strong> and uncheck <strong>"Disable JavaScript"</strong></li>
+          <li>Refresh the page</li>
+        </ol>
+      `;
+    } else if (userAgent.indexOf('safari') > -1 && userAgent.indexOf('chrome') === -1) {
+      // Safari
+      instructions = `
+        <ol style="margin:0; padding-left:1.5rem; color:#cbd5e0;">
+          <li>Click <strong>Safari</strong> in the menu bar</li>
+          <li>Select <strong>"Preferences"</strong></li>
+          <li>Go to the <strong>"Security"</strong> tab</li>
+          <li>Check <strong>"Enable JavaScript"</strong></li>
+          <li>Refresh the page</li>
+        </ol>
+      `;
+    } else if (userAgent.indexOf('edg') > -1) {
+      // Edge
+      instructions = `
+        <ol style="margin:0; padding-left:1.5rem; color:#cbd5e0;">
+          <li>Click the <strong>three dots</strong> menu in the top right</li>
+          <li>Select <strong>"Settings"</strong></li>
+          <li>Click <strong>"Site permissions"</strong></li>
+          <li>Click <strong>"JavaScript"</strong></li>
+          <li>Toggle <strong>"Allowed"</strong> to enable JavaScript</li>
+          <li>Refresh the page</li>
+        </ol>
+      `;
+    } else {
+      // Generic instructions
+      instructions = `
+        <p style="color:#cbd5e0; margin:0;">
+          Please check your browser's settings to enable JavaScript. Look for:
+        </p>
+        <ul style="margin:0.5rem 0 0 1.5rem; padding-left:1.5rem; color:#cbd5e0;">
+          <li>Browser Settings → Privacy/Security → JavaScript</li>
+          <li>Or search for "JavaScript" in your browser's settings</li>
+        </ul>
+      `;
+    }
+    
+    instructionsDiv.innerHTML = instructions;
+  }
+  
+  // Show JavaScript required alert
+  function showJavaScriptRequiredAlert() {
+    detectBrowserAndShowInstructions();
+    const modal = document.getElementById('javascriptDisabledModal');
+    if (modal) {
+      modal.style.display = 'flex';
+    } else {
+      // Fallback to browser alert if modal not available
+      alert('JavaScript is required for search features. Please enable JavaScript in your browser settings.');
+    }
+  }
+  
+  // Make function globally available
+  window.showJavaScriptRequiredAlert = showJavaScriptRequiredAlert;
+  
+  // Check if JavaScript is enabled and show warning if critical functions are missing
+  document.addEventListener('DOMContentLoaded', function() {
+    // Small delay to ensure all scripts are loaded
+    setTimeout(function() {
+      if (typeof showSearchDatabaseModal === 'undefined') {
+        console.warn('showSearchDatabaseModal is not defined. Search functionality may not work.');
+        // Don't show alert automatically, only when user tries to use it
+      }
+      
+      // Set up community name fallback if not set after 2 seconds
+      setTimeout(function() {
+        const communityNameEl = document.getElementById('community-name');
+        if (communityNameEl && (!communityNameEl.textContent || communityNameEl.textContent.trim() === '')) {
+          // Try to get from user data
+          if (typeof dbUser !== 'undefined' && dbUser?.user?.lastAccessedCommunity?.communityName) {
+            communityNameEl.textContent = dbUser.user.lastAccessedCommunity.communityName;
+          } else if (typeof dbUser !== 'undefined' && dbUser?.user?.lastAccessedCommunity) {
+            communityNameEl.textContent = 'Community';
+          }
+        }
+      }, 2000);
+    }, 500);
+  });
+</script>
 </body>
 
 </html>
@@ -1894,7 +2033,11 @@ function loadTenCodes() {
     success: function(data) {
       communityData = data;
       tenCodesCache = data?.community?.tenCodes || [];
-      $('#community-name').text(data?.community?.name)
+      
+      // Set community name with fallback
+      const communityName = data?.community?.name || 'Unknown Community';
+      $('#community-name').text(communityName);
+      
       // Build tenCodeMap
       tenCodeMap = {};
       tenCodesCache.forEach(tc => {
@@ -1915,7 +2058,12 @@ function loadTenCodes() {
       loadCurrentStatus();
     },
     error: function(xhr) {
-      console.error('Error loading 10-codes:', xhr.responseText);
+      console.error('Error loading community data:', xhr.responseText);
+      
+      // Try to set community name from user data as fallback
+      const fallbackName = dbUser?.user?.lastAccessedCommunity?.communityName || 'Community';
+      $('#community-name').text(fallbackName || 'Community');
+      
       $('#noTenCodes').text('Failed to load 10-codes: ' + (xhr.responseJSON?.message || 'Unknown error')).show();
       $('#tenCodesTable').hide();
       $('#tenCodesPagination').hide();

@@ -1,4 +1,58 @@
 // static/js/search-database.js
+
+// Define showSearchDatabaseModal globally before document.ready to ensure it's available
+// This prevents "showSearchDatabaseModal is not defined" errors
+function showSearchDatabaseModal(value) {
+  // Check if jQuery and required elements are available
+  if (typeof $ === 'undefined' || !$.fn.modal) {
+    console.error('jQuery or Bootstrap modal not available');
+    // Try to use custom alert modal if available
+    if (typeof showJavaScriptRequiredAlert === 'function') {
+      showJavaScriptRequiredAlert();
+    } else {
+      alert('Search functionality requires JavaScript to be enabled. Please enable JavaScript in your browser settings.');
+    }
+    return;
+  }
+  
+  // Map searchType to button IDs
+  const buttonMap = {
+    Civilian: "#searchTypeCivilian",
+    Vehicle: "#searchTypeVehicle",
+    Firearm: "#searchTypeFirearm",
+  };
+
+  // Set search type input
+  $("#searchType").val(value);
+
+  // Clean up modal state
+  $("body").removeClass("modal-open");
+  $(".modal-backdrop").remove();
+  $(".modal")
+    .not("#searchDatabaseModal")
+    .modal("hide")
+    .removeData("bs.modal");
+
+  // Update button states
+  const buttonId = buttonMap[value];
+  if (buttonId) {
+    $(".search-type-btn").removeClass("active");
+    $(buttonId).addClass("active");
+    // Trigger click to update UI (if needed)
+    $(buttonId).trigger("click");
+  } else {
+    console.warn("No button mapped for searchType:", value);
+  }
+
+  // Show modal
+  $("#searchDatabaseModal")
+    .modal("show")
+    .one("shown.bs.modal", function () {});
+}
+
+// Make function available globally immediately
+window.showSearchDatabaseModal = showSearchDatabaseModal;
+
 $(document).ready(function () {
   let searchType = "Civilian";
   let searchQuery = "";
@@ -400,17 +454,23 @@ $(document).ready(function () {
     $recent.empty();
     if (recentSearches.length > 0) {
       recentSearches.forEach((search) => {
+        // Defensive check: ensure search.query is a string
+        if (!search || typeof search.query !== 'string') {
+          console.warn('Invalid search entry:', search);
+          return; // Skip invalid entries
+        }
+        
         // For all search types, show what will actually be searched when there are spaces
         let displayQuery = search.query;
         let searchHint = "";
-        if (search.query && search.query.includes(' ')) {
+        if (search.query && typeof search.query === 'string' && search.query.includes(' ')) {
           const firstWord = extractFirstWord(search.query);
           if (firstWord !== search.query) {
             searchHint = ` (will search: "${firstWord}")`;
           }
         }
         
-        const searchQueryToUse = search.query && search.query.includes(' ') ? extractFirstWord(search.query) : search.query;
+        const searchQueryToUse = (search.query && typeof search.query === 'string' && search.query.includes(' ')) ? extractFirstWord(search.query) : search.query;
         $recent.append(`
           <div class="recent-search" data-query="${search.query}" data-type="${search.type}" title="Click to search for \"${searchQueryToUse}\"">
             <span class="text-white">${displayQuery}</span>
@@ -647,41 +707,9 @@ $(document).ready(function () {
     // Example: $('#serialNum').val(item.firearm?.serialNumber || '');
   }
 
-  function showSearchDatabaseModal(value) {
-    // Map searchType to button IDs
-    const buttonMap = {
-      Civilian: "#searchTypeCivilian",
-      Vehicle: "#searchTypeVehicle",
-      Firearm: "#searchTypeFirearm",
-    };
-
-    // Set search type input
-    $("#searchType").val(value);
-
-    // Clean up modal state
-    $("body").removeClass("modal-open");
-    $(".modal-backdrop").remove();
-    $(".modal")
-      .not("#searchDatabaseModal")
-      .modal("hide")
-      .removeData("bs.modal");
-
-    // Update button states
-    const buttonId = buttonMap[value];
-    if (buttonId) {
-      $(".search-type-btn").removeClass("active");
-      $(buttonId).addClass("active");
-      // Trigger click to update UI (if needed)
-      $(buttonId).trigger("click");
-    } else {
-      console.warn("No button mapped for searchType:", value);
-    }
-
-    // Show modal
-    $("#searchDatabaseModal")
-      .modal("show")
-      .one("shown.bs.modal", function () {});
-  }
+  // showSearchDatabaseModal is now defined globally above, but we can override it here
+  // to ensure it has access to the internal state if needed
+  window.showSearchDatabaseModal = showSearchDatabaseModal;
 
   $(".search-type-btn").on("click", function () {
     const type = $(this).data("type");
@@ -689,6 +717,4 @@ $(document).ready(function () {
     $(this).addClass("active");
     $("#searchType").val(type);
   });
-
-  window.showSearchDatabaseModal = showSearchDatabaseModal;
 });
