@@ -117,6 +117,11 @@
               All Rights Reserved</span
             ></span
           >
+          <% if (typeof buildVersion !== 'undefined') { %>
+          <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #888;">
+            <span>Build: <%= buildVersion %></span>
+          </div>
+          <% } %>
         </div>
       </div>
     </div>

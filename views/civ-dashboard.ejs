@@ -2388,6 +2388,9 @@
         <a href="mailto:support@linespolicecad.com" style="color: var(--text-secondary); font-size: 1.3rem;"><i class="fa fa-envelope"></i></a>
       </div>
       <div style="margin-top: 2.5rem; color: #44475a; font-size: 0.95rem;">Made with <span style="color: #f093fb;">&#10084;</span> by the LPC Team</div>
+      <% if (typeof buildVersion !== 'undefined') { %>
+      <div style="margin-top: 1rem; color: #44475a; font-size: 0.85rem;">Build: <%= buildVersion %></div>
+      <% } %>
     </div>
   </footer>
 

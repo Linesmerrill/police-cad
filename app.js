@@ -61,6 +61,17 @@ app.use(
 // Set the view engine to ejs.
 app.set("view engine", "ejs");
 
+// Load and set build version for all templates
+try {
+  const versionData = require("./version.json");
+  app.locals.buildVersion = versionData.version;
+  app.locals.buildDate = versionData.buildDate;
+} catch (error) {
+  console.warn("Warning: Could not load version.json. Using default version.");
+  app.locals.buildVersion = "0.0.0-00:00:00";
+  app.locals.buildDate = new Date().toISOString();
+}
+
 // Setup session storage.
 app.use(
   session({

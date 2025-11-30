@@ -50,7 +50,8 @@
   "scripts": {
     "start": "node app.js",
     "test": "mocha",
-    "dev": "nodemon --ext js,ejs app.js"
+    "dev": "nodemon --ext js,ejs app.js",
+    "update-version": "node scripts/update-version.js"
   },
   "engines": {
     "node": "20.x"
