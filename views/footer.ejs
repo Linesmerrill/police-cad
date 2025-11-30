@@ -104,7 +104,7 @@
       style="transform: translate(0px); opacity: 1"
     >
       <div class="home-page">
-        <div class="copyright">
+        <div class="copyright" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: auto; min-height: 80px; line-height: normal;">
           <span
             ><span
               >©2023 by
@@ -118,9 +118,7 @@
             ></span
           >
           <% if (typeof buildVersion !== 'undefined') { %>
-          <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #888;">
-            <span>Build: <%= buildVersion %></span>
-          </div>
+          <span style="margin-top: 0.5rem; font-size: 0.85rem; color: #888; display: block;">Build: <%= buildVersion %></span>
           <% } %>
         </div>
       </div>
