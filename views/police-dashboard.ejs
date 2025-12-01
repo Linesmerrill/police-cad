@@ -191,6 +191,14 @@
     font-size: 14px;
   }
   /* end of notification styles */
+  
+  /* CSS-only modal fallback for when JavaScript is disabled */
+  #javascriptDisabledModal {
+    display: none;
+  }
+  #javascriptDisabledModal:target {
+    display: flex !important;
+  }
 </style>
 </head>
 
@@ -200,7 +208,7 @@
     <nav id="sidebar" style="z-index: 9;">
       <div class="img bg-wrap text-center py-4" style="background-image: url(/static/images/police-corner-bg.jpg);">
         <div class="user-logo">
-          <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()">
+          <a href="#accountModal" data-toggle="modal" onclick="openAccountModal(); return false;">
             <div class="img profile-picture"></div>
           </a>
           <h3>
@@ -224,15 +232,15 @@
         <div class="collapse in" id="toggleSearch">
           <input type="hidden" id="searchType" value="Civilian">
   <li>
-    <a data-toggle="modal" onclick="if(typeof showSearchDatabaseModal === 'function') { showSearchDatabaseModal('Civilian'); } else { showJavaScriptRequiredAlert(); }" data-search-type="Civilian"><span
+    <a href="#javascriptDisabledModal" data-toggle="modal" data-target="#searchDatabaseModal" onclick="return handleDatabaseClick('Civilian', event);" data-search-type="Civilian"><span
         class="fa fa-id-card ml-3 mr-3"></span> Name Database</a>
   </li>
   <li>
-    <a data-toggle="modal" onclick="if(typeof showSearchDatabaseModal === 'function') { showSearchDatabaseModal('Vehicle'); } else { showJavaScriptRequiredAlert(); }" data-search-type="Vehicle"><span
+    <a href="#javascriptDisabledModal" data-toggle="modal" data-target="#searchDatabaseModal" onclick="return handleDatabaseClick('Vehicle', event);" data-search-type="Vehicle"><span
         class="fa fa-car ml-3 mr-3"></span> Plate Database</a>
   </li>
   <li>
-    <a data-toggle="modal" onclick="if(typeof showSearchDatabaseModal === 'function') { showSearchDatabaseModal('Firearm'); } else { showJavaScriptRequiredAlert(); }" data-search-type="Firearm"><span
+    <a href="#javascriptDisabledModal" data-toggle="modal" data-target="#searchDatabaseModal" onclick="return handleDatabaseClick('Firearm', event);" data-search-type="Firearm"><span
         class="fa fa-database ml-3 mr-3"></span> Firearm Database</a>
   </li>
 </div>
@@ -244,7 +252,7 @@
         <div class="collapse in" id="toggleUtilities">
           <li>
             <% if (user.user?.lastAccessedCommunity != null ) {%>
-  <a href="javascript:void(0)" onclick="showBoloModal()"><span
+  <a href="#javascriptDisabledModal" data-toggle="modal" data-target="#boloModal" onclick="return handleBoloClick(event);"><span
       class="fa fa-exclamation-triangle ml-3 mr-3"></span>Create BOLO</a>
 <% } else {%>
   <a data-toggle="modal" href="#nonCommunityBoloModal" class="mock-disabled"><span
@@ -255,7 +263,7 @@
             <a data-toggle="modal" href="#10codesModal"><span class="fa fa-list-alt ml-3 mr-3"></span> 10-Codes</a>
           </li> -->
           <li>
-            <a data-toggle="modal" href="#notepadModal"><span class="fa fa-clipboard ml-3 mr-3"></span> Notepad</a>
+            <a href="#javascriptDisabledModal" data-toggle="modal" data-target="#notepadModal" onclick="return handleNotepadClick(event);"><span class="fa fa-clipboard ml-3 mr-3"></span> Notepad</a>
           </li>
           <li>
             <a href="/penal-code"><span class="fa fa-laptop ml-3 mr-3"></span>Penal Codes <i
@@ -374,6 +382,26 @@
                                             <h5 id="statusSetBy" class="text-align-center">Set By:
                                               <%=user.user.dispatchStatusSetBy%>
                                             </h5>
+                                            
+                                            <!-- JavaScript Disabled Warning Card -->
+                                            <noscript>
+                                              <div style="max-width:700px; margin:2rem auto; background:linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius:12px; padding:1.5rem; box-shadow:0 4px 12px rgba(0,0,0,0.3); border:2px solid #f59e0b;">
+                                                <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
+                                                  <div style="background:#fff; border-radius:50%; width:48px; height:48px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                                    <i class="fa fa-exclamation-triangle" style="font-size:24px; color:#f59e0b;"></i>
+                                                  </div>
+                                                  <div style="flex:1;">
+                                                    <h3 style="margin:0; color:#000; font-weight:700; font-size:1.25rem;">JavaScript is Not Enabled</h3>
+                                                    <p style="margin:0.5rem 0 0 0; color:#1f2937; font-size:0.95rem;">This dashboard requires JavaScript to function properly. Many features will not work without it.</p>
+                                                  </div>
+                                                </div>
+                                                <a href="#javascriptDisabledModal" style="display:inline-block; background:#1f2937; color:#fff; padding:0.75rem 1.5rem; border-radius:8px; text-decoration:none; font-weight:600; transition:all 0.2s; text-align:center; width:100%; box-sizing:border-box;">
+                                                  <i class="fa fa-info-circle" style="margin-right:0.5rem;"></i>
+                                                  Click to View Details & Instructions
+                                                </a>
+                                              </div>
+                                            </noscript>
+                                            
                                             <div class="modal-body">
   <h4>10-Codes</h4>
   <hr style="width: 88%;max-width: 100rem;">
@@ -468,7 +496,7 @@
   <!-- JavaScript Disabled Alert Modal -->
   <div id="javascriptDisabledModal" class="heroui-modal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.85); align-items:center; justify-content:center;">
     <div class="heroui-modal-content" style="background:#23263a; border-radius:16px; max-width:700px; width:98%; margin:auto; box-shadow:0 8px 32px rgba(0,0,0,0.25); padding:2.5rem 2rem 2rem 2rem; position:relative; max-height:90vh; overflow-y:auto;">
-      <button id="javascriptDisabledModalClose" aria-label="Close" onclick="document.getElementById('javascriptDisabledModal').style.display='none'" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+      <a href="#" id="javascriptDisabledModalClose" aria-label="Close" onclick="if(typeof document !== 'undefined') document.getElementById('javascriptDisabledModal').style.display='none'; return false;" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7; text-decoration:none;"><i class="fa fa-times"></i></a>
       <div style="font-size:1.5rem; font-weight:700; color:#f7fafc; margin-bottom:1.5rem;">
         <i class="fa fa-exclamation-triangle" style="color:#fbbf24; margin-right:0.5rem;"></i>
         JavaScript Required
@@ -476,23 +504,42 @@
       <div style="color:#cbd5e0; line-height:1.6; margin-bottom:1.5rem;">
         <p>The search features require JavaScript to be enabled in your browser. Please enable JavaScript to use the search functionality.</p>
         <p style="font-weight:600; color:#f7fafc; margin-top:1.5rem; margin-bottom:0.5rem;">How to enable JavaScript:</p>
-        <div id="browserInstructions" style="background:#1e2028; border-radius:8px; padding:1rem; margin-top:1rem;">
-          <!-- Instructions will be populated by JavaScript based on detected browser -->
+        <div id="browserInstructions" style="background:#1e2028; border-radius:8px; padding:1rem; margin-top:1rem; color:#cbd5e0;">
+          <p style="margin:0 0 0.5rem 0;"><strong>General Instructions:</strong></p>
+          <ol style="margin:0; padding-left:1.5rem;">
+            <li>Click the <strong>lock icon</strong> or <strong>information icon</strong> in your browser's address bar</li>
+            <li>Look for <strong>"Site settings"</strong> or <strong>"JavaScript"</strong></li>
+            <li>Select <strong>"Allow"</strong> for JavaScript</li>
+            <li>Refresh this page</li>
+          </ol>
+          <p style="margin:1rem 0 0.5rem 0;"><strong>Or check your browser settings:</strong></p>
+          <ul style="margin:0; padding-left:1.5rem;">
+            <li>Browser Settings → Privacy/Security → JavaScript</li>
+            <li>Or search for "JavaScript" in your browser's settings</li>
+          </ul>
         </div>
+        <p style="font-weight:600; color:#f7fafc; margin-top:1.5rem; margin-bottom:0.5rem;">Alternative Solution - Try Private/Incognito Mode:</p>
+        <div id="incognitoInstructions" style="background:#1e2028; border-radius:8px; padding:1rem; margin-top:1rem; color:#cbd5e0;">
+          <p style="margin:0 0 0.5rem 0;"><strong>Try Private/Incognito Mode:</strong></p>
+          <p style="margin:0 0 0.5rem 0;">Sometimes browser extensions or security settings can interfere with JavaScript. Private/Incognito mode disables extensions and may resolve the issue.</p>
+          <ol style="margin:0; padding-left:1.5rem;">
+            <li><strong>Chrome/Edge:</strong> Press <strong>Ctrl+Shift+N</strong> (Windows/Linux) or <strong>Cmd+Shift+N</strong> (Mac), or use the menu → New incognito/InPrivate window</li>
+            <li><strong>Firefox:</strong> Press <strong>Ctrl+Shift+P</strong> (Windows/Linux) or <strong>Cmd+Shift+P</strong> (Mac), or use the menu → New Private Window</li>
+            <li><strong>Safari:</strong> Press <strong>Cmd+Shift+N</strong>, or use Safari → File → New Private Window</li>
+            <li>Navigate back to this page in the new private window</li>
+          </ol>
+        </div>
+        <p style="color:#cbd5e0; margin-top:1rem; font-size:0.9rem; font-style:italic;">
+          <i class="fa fa-info-circle" style="margin-right:0.5rem;"></i>
+          Sometimes browser extensions or security settings can interfere with JavaScript. Private/Incognito mode disables extensions and may resolve the issue.
+        </p>
       </div>
       <div style="display:flex; gap:1rem; margin-top:2rem;">
-        <button onclick="document.getElementById('javascriptDisabledModal').style.display='none'" style="flex:1; background:#667eea; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer;">Got it</button>
+        <a href="#" onclick="if(typeof document !== 'undefined') document.getElementById('javascriptDisabledModal').style.display='none'; return false;" style="flex:1; background:#667eea; color:#fff; border:none; padding:0.75rem 1.5rem; border-radius:8px; font-weight:600; cursor:pointer; text-align:center; text-decoration:none; display:inline-block;">Got it</a>
       </div>
     </div>
   </div>
 
-  <!-- Fallback Search Form (for when JavaScript is disabled) -->
-  <noscript>
-    <div style="position:fixed; top:0; left:0; right:0; background:#fbbf24; color:#000; padding:1rem; text-align:center; z-index:10000; border-bottom:2px solid #f59e0b;">
-      <strong>⚠️ JavaScript is disabled.</strong> The search features require JavaScript. 
-      <a href="/search-database" style="color:#000; text-decoration:underline; margin-left:0.5rem;">Click here for a basic search page</a>
-    </div>
-  </noscript>
 
   <div id="viewLicense" class="modal fade" style="z-index: 9000" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog">
@@ -1712,12 +1759,17 @@
   // Detect browser and show appropriate instructions
   function detectBrowserAndShowInstructions() {
     const instructionsDiv = document.getElementById('browserInstructions');
+    const incognitoDiv = document.getElementById('incognitoInstructions');
     if (!instructionsDiv) return;
     
+    // Only replace content if we can detect the browser - otherwise keep default content
     const userAgent = navigator.userAgent.toLowerCase();
     let instructions = '';
+    let incognitoInstructions = '';
+    let shouldReplace = false;
     
     if (userAgent.indexOf('chrome') > -1 && userAgent.indexOf('edg') === -1) {
+      shouldReplace = true;
       // Chrome
       instructions = `
         <ol style="margin:0; padding-left:1.5rem; color:#cbd5e0;">
@@ -1727,7 +1779,16 @@
           <li>Refresh the page</li>
         </ol>
       `;
+      incognitoInstructions = `
+        <p style="color:#cbd5e0; margin:0 0 0.5rem 0;"><strong>Try Incognito Mode:</strong></p>
+        <ol style="margin:0; padding-left:1.5rem; color:#cbd5e0;">
+          <li>Press <strong>Ctrl+Shift+N</strong> (Windows/Linux) or <strong>Cmd+Shift+N</strong> (Mac)</li>
+          <li>Or click the <strong>three dots menu</strong> → <strong>"New incognito window"</strong></li>
+          <li>Navigate back to this page - extensions and settings are often disabled in incognito mode</li>
+        </ol>
+      `;
     } else if (userAgent.indexOf('firefox') > -1) {
+      shouldReplace = true;
       // Firefox
       instructions = `
         <ol style="margin:0; padding-left:1.5rem; color:#cbd5e0;">
@@ -1738,7 +1799,16 @@
           <li>Refresh the page</li>
         </ol>
       `;
+      incognitoInstructions = `
+        <p style="color:#cbd5e0; margin:0 0 0.5rem 0;"><strong>Try Private Browsing Mode:</strong></p>
+        <ol style="margin:0; padding-left:1.5rem; color:#cbd5e0;">
+          <li>Press <strong>Ctrl+Shift+P</strong> (Windows/Linux) or <strong>Cmd+Shift+P</strong> (Mac)</li>
+          <li>Or click the <strong>menu button</strong> → <strong>"New Private Window"</strong></li>
+          <li>Navigate back to this page - extensions are disabled in private mode</li>
+        </ol>
+      `;
     } else if (userAgent.indexOf('safari') > -1 && userAgent.indexOf('chrome') === -1) {
+      shouldReplace = true;
       // Safari
       instructions = `
         <ol style="margin:0; padding-left:1.5rem; color:#cbd5e0;">
@@ -1749,7 +1819,16 @@
           <li>Refresh the page</li>
         </ol>
       `;
+      incognitoInstructions = `
+        <p style="color:#cbd5e0; margin:0 0 0.5rem 0;"><strong>Try Private Browsing Mode:</strong></p>
+        <ol style="margin:0; padding-left:1.5rem; color:#cbd5e0;">
+          <li>Press <strong>Cmd+Shift+N</strong></li>
+          <li>Or click <strong>Safari</strong> → <strong>"File"</strong> → <strong>"New Private Window"</strong></li>
+          <li>Navigate back to this page - extensions are disabled in private mode</li>
+        </ol>
+      `;
     } else if (userAgent.indexOf('edg') > -1) {
+      shouldReplace = true;
       // Edge
       instructions = `
         <ol style="margin:0; padding-left:1.5rem; color:#cbd5e0;">
@@ -1759,6 +1838,14 @@
           <li>Click <strong>"JavaScript"</strong></li>
           <li>Toggle <strong>"Allowed"</strong> to enable JavaScript</li>
           <li>Refresh the page</li>
+        </ol>
+      `;
+      incognitoInstructions = `
+        <p style="color:#cbd5e0; margin:0 0 0.5rem 0;"><strong>Try InPrivate Mode:</strong></p>
+        <ol style="margin:0; padding-left:1.5rem; color:#cbd5e0;">
+          <li>Press <strong>Ctrl+Shift+N</strong> (Windows) or <strong>Cmd+Shift+N</strong> (Mac)</li>
+          <li>Or click the <strong>three dots menu</strong> → <strong>"New InPrivate window"</strong></li>
+          <li>Navigate back to this page - extensions are disabled in InPrivate mode</li>
         </ol>
       `;
     } else {
@@ -1772,10 +1859,177 @@
           <li>Or search for "JavaScript" in your browser's settings</li>
         </ul>
       `;
+      incognitoInstructions = `
+        <p style="color:#cbd5e0; margin:0 0 0.5rem 0;"><strong>Try Private/Incognito Mode:</strong></p>
+        <p style="color:#cbd5e0; margin:0;">
+          Most browsers have a private/incognito mode that disables extensions. Look for:
+        </p>
+        <ul style="margin:0.5rem 0 0 1.5rem; padding-left:1.5rem; color:#cbd5e0;">
+          <li>Menu → New Private/Incognito Window</li>
+          <li>Or use keyboard shortcut: Ctrl+Shift+N (Windows/Linux) or Cmd+Shift+N (Mac)</li>
+        </ul>
+      `;
+      shouldReplace = true;
     }
     
-    instructionsDiv.innerHTML = instructions;
+    // Only replace content if we detected a specific browser, otherwise keep default HTML content
+    if (shouldReplace && instructions) {
+      instructionsDiv.innerHTML = instructions;
+    }
+    if (shouldReplace && incognitoDiv && incognitoInstructions) {
+      incognitoDiv.innerHTML = incognitoInstructions;
+    }
   }
+  
+  // Handle database button clicks with improved compatibility
+  function handleDatabaseClick(searchType, event) {
+    // Prevent default link behavior
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Check if the function exists and is callable
+    if (typeof window.showSearchDatabaseModal === 'function') {
+      try {
+        window.showSearchDatabaseModal(searchType);
+        return false; // Prevent default
+      } catch (e) {
+        console.error('Error calling showSearchDatabaseModal:', e);
+        // Fall through to show alert
+      }
+    }
+    
+    // If function doesn't exist or failed, show alert
+    showJavaScriptRequiredAlert();
+    return false; // Prevent default
+  }
+  
+  // Handle BOLO button clicks with improved compatibility
+  function handleBoloClick(event) {
+    // Prevent default link behavior
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Check if the function exists and is callable
+    if (typeof window.showBoloModal === 'function') {
+      try {
+        window.showBoloModal();
+        return false; // Prevent default
+      } catch (e) {
+        console.error('Error calling showBoloModal:', e);
+        // Fall through to show alert
+      }
+    }
+    
+    // If function doesn't exist or failed, show alert
+    showJavaScriptRequiredAlert();
+    return false; // Prevent default
+  }
+  
+  // Handle Notepad button clicks with improved compatibility
+  function handleNotepadClick(event) {
+    // Prevent default link behavior
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Check if jQuery and Bootstrap modal are available
+    if (typeof $ !== 'undefined' && typeof $.fn.modal !== 'undefined') {
+      try {
+        $('#notepadModal').modal('show');
+        return false; // Prevent default
+      } catch (e) {
+        console.error('Error opening notepad modal:', e);
+        // Fall through to show alert
+      }
+    }
+    
+    // If jQuery/Bootstrap not available, show alert
+    showJavaScriptRequiredAlert();
+    return false; // Prevent default
+  }
+  
+  // Handle Notifications button clicks with improved compatibility
+  function handleNotificationsClick(event) {
+    // Prevent default link behavior
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Check if jQuery, Bootstrap modal, and fetchNotifications function are available
+    if (typeof $ !== 'undefined' && typeof $.fn.modal !== 'undefined' && typeof window.fetchNotifications === 'function') {
+      try {
+        // Call fetchNotifications first, then show modal
+        window.fetchNotifications(0);
+        const modal = document.getElementById('notificationModal');
+        if (modal) {
+          modal.style.display = 'flex';
+          document.body.classList.add('modal-open');
+        } else {
+          // Fallback to Bootstrap modal if custom modal not found
+          $('#notificationModal').modal('show');
+        }
+        return false; // Prevent default
+      } catch (e) {
+        console.error('Error opening notifications modal:', e);
+        // Fall through to show alert
+      }
+    }
+    
+    // If required functions not available, show alert
+    showJavaScriptRequiredAlert();
+    return false; // Prevent default
+  }
+  
+  // Handle Settings button clicks with improved compatibility
+  function handleSettingsClick(event) {
+    // Prevent default link behavior
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Check if openAccountModal function is available
+    if (typeof window.openAccountModal === 'function') {
+      try {
+        window.openAccountModal();
+        return false; // Prevent default
+      } catch (e) {
+        console.error('Error opening settings modal:', e);
+        // Fall through to show alert
+      }
+    } else if (typeof $ !== 'undefined' && typeof $.fn.modal !== 'undefined' && typeof window.fillAccountDetails === 'function') {
+      // Fallback for older code
+      try {
+        window.fillAccountDetails();
+        const modal = document.getElementById('accountModal');
+        if (modal) {
+          modal.style.display = 'flex';
+          document.body.classList.add('modal-open');
+        }
+        return false; // Prevent default
+      } catch (e) {
+        console.error('Error opening settings modal:', e);
+        // Fall through to show alert
+      }
+    }
+    
+    // If required functions not available, show alert
+    showJavaScriptRequiredAlert();
+    return false; // Prevent default
+  }
+  
+  // Make functions globally available immediately
+  window.handleDatabaseClick = handleDatabaseClick;
+  window.handleBoloClick = handleBoloClick;
+  window.handleNotepadClick = handleNotepadClick;
+  window.handleNotificationsClick = handleNotificationsClick;
+  window.handleSettingsClick = handleSettingsClick;
   
   // Show JavaScript required alert
   function showJavaScriptRequiredAlert() {
@@ -1785,12 +2039,35 @@
       modal.style.display = 'flex';
     } else {
       // Fallback to browser alert if modal not available
-      alert('JavaScript is required for search features. Please enable JavaScript in your browser settings.');
+      alert('JavaScript is required for search features. Please enable JavaScript in your browser settings or try using incognito/private browsing mode.');
     }
   }
   
-  // Make function globally available
+  // Make function globally available immediately (before DOMContentLoaded)
   window.showJavaScriptRequiredAlert = showJavaScriptRequiredAlert;
+  
+  // Initialize early - ensure functions are available before buttons are clicked
+  // This helps with compatibility when scripts load slowly
+  (function() {
+    if (typeof window.handleDatabaseClick === 'undefined') {
+      window.handleDatabaseClick = handleDatabaseClick;
+    }
+    if (typeof window.handleBoloClick === 'undefined') {
+      window.handleBoloClick = handleBoloClick;
+    }
+    if (typeof window.handleNotepadClick === 'undefined') {
+      window.handleNotepadClick = handleNotepadClick;
+    }
+    if (typeof window.handleNotificationsClick === 'undefined') {
+      window.handleNotificationsClick = handleNotificationsClick;
+    }
+    if (typeof window.handleSettingsClick === 'undefined') {
+      window.handleSettingsClick = handleSettingsClick;
+    }
+    if (typeof window.showJavaScriptRequiredAlert === 'undefined') {
+      window.showJavaScriptRequiredAlert = showJavaScriptRequiredAlert;
+    }
+  })();
   
   // Check if JavaScript is enabled and show warning if critical functions are missing
   document.addEventListener('DOMContentLoaded', function() {
@@ -2585,6 +2862,8 @@ function showBoloModal() {
   clearBoloForm();
   $('#boloModal').modal('show');
 }
+// Make function globally available
+window.showBoloModal = showBoloModal;
 
     // Load 10-codes when modal is shown
     $('#10codesModal').on('show.bs.modal', function() {
@@ -2639,7 +2918,90 @@ function showBoloModal() {
   var civFirstName = "";
   var civLastName = "";
 
+  // Close notification modal function
+  function closeNotificationModal() {
+    const modal = document.getElementById('notificationModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+      // Remove any modal backdrop
+      const backdrop = document.querySelector('.modal-backdrop');
+      if (backdrop) {
+        backdrop.remove();
+      }
+    }
+  }
+  
+  // Close account modal function
+  function closeAccountModal() {
+    const modal = document.getElementById('accountModal');
+    if (modal) {
+      modal.style.display = 'none';
+      document.body.classList.remove('modal-open');
+      // Remove any modal backdrop
+      const backdrop = document.querySelector('.modal-backdrop');
+      if (backdrop) {
+        backdrop.remove();
+      }
+    }
+  }
+  
+  // Open account modal function
+  function openAccountModal() {
+    if (typeof window.fillAccountDetails === 'function') {
+      window.fillAccountDetails();
+    }
+    const modal = document.getElementById('accountModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+    }
+  }
+  
+  // Make functions globally available
+  window.closeNotificationModal = closeNotificationModal;
+  window.closeAccountModal = closeAccountModal;
+  window.openAccountModal = openAccountModal;
+
   $(document).ready(function () {
+    // Set up notification modal close handlers
+    const notificationModalClose = document.getElementById('notificationModalClose');
+    const notificationModalCancel = document.getElementById('notificationModalCancel');
+    
+    if (notificationModalClose) {
+      notificationModalClose.addEventListener('click', closeNotificationModal);
+    }
+    
+    if (notificationModalCancel) {
+      notificationModalCancel.addEventListener('click', closeNotificationModal);
+    }
+    
+    // Close modal when clicking outside
+    const notificationModal = document.getElementById('notificationModal');
+    if (notificationModal) {
+      notificationModal.addEventListener('click', function(e) {
+        if (e.target === notificationModal) {
+          closeNotificationModal();
+        }
+      });
+    }
+    
+    // Set up account modal close handlers
+    const accountModalClose = document.getElementById('accountModalClose');
+    if (accountModalClose) {
+      accountModalClose.addEventListener('click', closeAccountModal);
+    }
+    
+    // Close account modal when clicking outside
+    const accountModal = document.getElementById('accountModal');
+    if (accountModal) {
+      accountModal.addEventListener('click', function(e) {
+        if (e.target === accountModal) {
+          closeAccountModal();
+        }
+      });
+    }
+    
     // Set API URL for shared notepad module
     if (typeof setApiUrl === 'function') {
       setApiUrl('<%= apiUrl %>');

@@ -14,9 +14,10 @@
 <div class="collapse in" id="toggleOther">
   <li>
     <a
+      href="#javascriptDisabledModal"
       data-toggle="modal"
-      href="#notificationModal"
-      onclick="fetchNotifications(0)"
+      data-target="#notificationModal"
+      onclick="return handleNotificationsClick(event);"
     >
       <span id="notification-symbol" class="fa fa-bell notif">
         <small id="notification-count" class="notification-badge"></small>
@@ -25,7 +26,7 @@
     >
   </li>
   <li>
-    <a data-toggle="modal" href="#accountModal" onclick="fillAccountDetails()"
+    <a href="#javascriptDisabledModal" data-toggle="modal" data-target="#accountModal" onclick="return handleSettingsClick(event);"
       ><span class="fa fa-cog mr-3"></span> Settings</a
     >
   </li>
