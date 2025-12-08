@@ -35,6 +35,9 @@
       body { 
         color: #e5e7eb;
         font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
       }
       .admin-navbar {
         background: rgba(30, 32, 40, 0.95) !important;
@@ -65,7 +68,11 @@
         padding: 15px 15px;
       }
       
-      .admin-container { margin-top: 80px; padding: 2rem 0; }
+      .admin-container { 
+        margin-top: 80px; 
+        padding: 2rem 0; 
+        flex: 1;
+      }
       .search-card {
         background: #1e2028;
         border: 1px solid #35385a;
@@ -694,6 +701,25 @@
       
       .admin-actions-container .btn i {
         flex-shrink: 0;
+      }
+      
+      /* Footer Styles */
+      .admin-footer {
+        background: rgba(30, 32, 40, 0.95);
+        border-top: 1px solid #35385a;
+        margin-top: auto;
+        padding: 2rem 0;
+        color: #9aa0b4;
+      }
+      
+      .admin-footer a {
+        color: #9aa0b4;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      
+      .admin-footer a:hover {
+        color: #c7cbe2;
       }
     </style>
   </head>
@@ -4014,6 +4040,35 @@
       
 
     </script>
+    
+    <!-- Admin Console Footer -->
+    <footer class="admin-footer">
+      <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <img src="/static/images/dispatch-logo-512.png" alt="LPC Logo" style="width: 32px; height: 32px; border-radius: 8px;">
+          <span style="font-size: 1.2rem; font-weight: 600; color: #e5e7eb; letter-spacing: 0.02em;">Lines Police CAD Admin Console</span>
+        </div>
+        <div style="font-size: 0.95rem; color: #9aa0b4; margin-bottom: 1rem;">
+          &copy; <%= new Date().getFullYear() %> Lines Police CAD. All rights reserved.
+        </div>
+        <div style="display: flex; gap: 1.2rem; margin-bottom: 1rem;">
+          <a href="https://github.com/linesmerrill/police-cad" target="_blank" rel="noopener" style="font-size: 1.3rem;">
+            <i class="fab fa-github"></i>
+          </a>
+          <a href="https://discord.gg/3ECFhqe" target="_blank" rel="noopener" style="font-size: 1.3rem;">
+            <i class="fab fa-discord"></i>
+          </a>
+          <a href="mailto:support@linespolicecad.com" style="font-size: 1.3rem;">
+            <i class="fa fa-envelope"></i>
+          </a>
+        </div>
+        <% if (typeof buildVersion !== 'undefined') { %>
+        <div style="margin-top: 1rem; color: #6b7280; font-size: 0.85rem;">
+          Build: <%= buildVersion %>
+        </div>
+        <% } %>
+      </div>
+    </footer>
   </body>
  </html>
 
