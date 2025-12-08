@@ -2767,6 +2767,69 @@
         displayUserResultsPage(users, 0, users.length, Math.ceil(users.length / resultsPerPage));
       }
       
+      // Helper function to format password reset status
+      function formatPasswordResetStatus(resetPasswordExpires) {
+        if (!resetPasswordExpires) {
+          return {
+            html: '<span style="color: #9aa0b4;">Never requested</span>',
+            text: 'Never requested'
+          };
+        }
+        
+        // Handle MongoDB date format { "$date": "2025-11-27T21:21:12.678Z" }
+        let expirationDate;
+        if (resetPasswordExpires.$date) {
+          expirationDate = new Date(resetPasswordExpires.$date);
+        } else if (typeof resetPasswordExpires === 'string') {
+          expirationDate = new Date(resetPasswordExpires);
+        } else {
+          expirationDate = new Date(resetPasswordExpires);
+        }
+        
+        // Check if date is valid
+        if (isNaN(expirationDate.getTime())) {
+          return {
+            html: '<span style="color: #9aa0b4;">Never requested</span>',
+            text: 'Never requested'
+          };
+        }
+        
+        const now = new Date();
+        // Calculate when reset was requested (approximately 1 hour before expiration)
+        const resetRequestedDate = new Date(expirationDate.getTime() - 3600000);
+        const hoursSinceRequest = (now.getTime() - resetRequestedDate.getTime()) / (1000 * 60 * 60);
+        const isExpired = expirationDate < now;
+        const isRecent = !isExpired && hoursSinceRequest < 24;
+        
+        const dateStr = resetRequestedDate.toLocaleDateString();
+        
+        if (isExpired) {
+          return {
+            html: `
+              <span style="color: #6b7280; opacity: 0.7;">
+                ${dateStr}
+              </span>
+              <span class="status-badge status-muted" style="margin-left: 0.5rem;">Expired</span>
+            `,
+            text: `${dateStr} (Expired)`
+          };
+        } else if (isRecent) {
+          return {
+            html: `
+              <span style="color: #10b981;">
+                ${dateStr}
+              </span>
+            `,
+            text: dateStr
+          };
+        } else {
+          return {
+            html: `<span style="color: #9aa0b4;">${dateStr}</span>`,
+            text: dateStr
+          };
+        }
+      }
+      
       function displayUserResultsPage(users, currentPage, totalRecords, totalPages) {
         if (!users || users.length === 0) {
           $('#userResults').html('<div class="loading">No users found</div>');
@@ -2774,9 +2837,12 @@
         }
         
         let html = '';
-        users.forEach(user => {
+        users.forEach((user, index) => {
+          // The search API doesn't return resetPasswordExpires, so we'll fetch it separately
+          // For now, show loading state - we'll fetch and update after rendering
+          const resetStatus = formatPasswordResetStatus(null); // Start with null, will update
           html += `
-            <div class="result-card">
+            <div class="result-card" data-user-id="${user.id}" data-user-index="${index}">
               <div class="result-header">
                 <div>
                   <h5 class="result-title">${user.email || 'No Email'}</h5>
@@ -2809,24 +2875,37 @@
                 </div>
                 <div class="info-item">
                   <div class="info-label">Password Reset Status</div>
-                  <div class="info-value">
-                    ${(() => {
-                      if (user.resetPasswordExpires) {
-                        const resetDate = new Date(user.resetPasswordExpires);
-                        const now = new Date();
-                        if (resetDate > now) {
-                          return `Reset requested on ${resetDate.toLocaleDateString()} (expires ${resetDate.toLocaleString()})`;
-                        } else {
-                          return `Reset requested on ${resetDate.toLocaleDateString()} (EXPIRED)`;
-                        }
-                      }
-                      return 'No reset requested';
-                    })()}
+                  <div class="info-value reset-status-${user.id}">
+                    <span style="color: #9aa0b4;"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
                   </div>
                 </div>
               </div>
             </div>
           `;
+        });
+        
+        // After rendering, fetch reset password status for each user
+        // Fetch in parallel but stagger slightly to avoid overwhelming the API
+        users.forEach((user, index) => {
+          setTimeout(() => {
+            $.ajax({
+              url: `${API_BASE}/api/v1/admin/users/${user.id}`,
+              method: 'GET',
+              success: function(data) {
+                if (data.user) {
+                  const resetPasswordExpires = data.user.user?.resetPasswordExpires || data.user.resetPasswordExpires;
+                  const resetStatus = formatPasswordResetStatus(resetPasswordExpires);
+                  $(`.reset-status-${user.id}`).html(resetStatus.html);
+                } else {
+                  $(`.reset-status-${user.id}`).html('<span style="color: #9aa0b4;">Never requested</span>');
+                }
+              },
+              error: function(xhr) {
+                // Silently fail and show "Never requested"
+                $(`.reset-status-${user.id}`).html('<span style="color: #9aa0b4;">Never requested</span>');
+              }
+            });
+          }, index * 50); // Stagger requests by 50ms to avoid overwhelming the API
         });
         
         // Add pagination controls
@@ -3099,17 +3178,10 @@
         // Convert MongoDB ObjectId to creation date
         const createdAt = user._id ? new Date(parseInt(user._id.toString().substring(0, 8), 16) * 1000) : new Date(user.createdAt);
         
-        // Handle password reset status
-        let resetStatus = 'No reset requested';
-        if (user.resetPasswordExpires) {
-          const resetDate = new Date(user.resetPasswordExpires);
-          const now = new Date();
-          if (resetDate > now) {
-            resetStatus = `Reset requested on ${resetDate.toLocaleDateString()} (expires ${resetDate.toLocaleString()})`;
-          } else {
-            resetStatus = `Reset requested on ${resetDate.toLocaleDateString()} (EXPIRED)`;
-          }
-        }
+        // Handle password reset status using helper function
+        // Check both nested (user.resetPasswordExpires) and flattened (resetPasswordExpires) paths
+        const resetPasswordExpires = user.user?.resetPasswordExpires || user.resetPasswordExpires;
+        const resetStatus = formatPasswordResetStatus(resetPasswordExpires);
         
         // Safely handle communities data
         const communities = user.communities || [];
@@ -3140,7 +3212,7 @@
             </div>
             <div class="info-item">
               <div class="info-label">Password Reset Status</div>
-              <div class="info-value">${resetStatus}</div>
+              <div class="info-value">${resetStatus.html}</div>
             </div>
             <div class="info-item">
               <div class="info-label">Communities</div>
