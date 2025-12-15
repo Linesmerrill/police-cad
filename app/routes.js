@@ -296,6 +296,157 @@ module.exports = function (app, passport, server) {
     return res.redirect("/admin");
   });
 
+  // Admin endpoint to reset a user's password (for emergency password resets)
+  app.post("/admin/reset-user-password", requireAdminSession, function (req, res) {
+    var email = req.body.email;
+    var tempPassword = req.body.tempPassword || Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    
+    if (!email) {
+      return res.json({ success: false, error: "Email is required" });
+    }
+    
+    User.findOne({ "user.email": email.toLowerCase() }, function (err, user) {
+      if (err) {
+        return res.json({ success: false, error: "Error finding user: " + err.message });
+      }
+      
+      if (!user) {
+        return res.json({ success: false, error: "User not found with email: " + email });
+      }
+      
+      // Generate hash for the new password
+      var hashedPassword = user.generateHash(tempPassword);
+      
+      // Update the user's password
+      user.user.password = hashedPassword;
+      user.user.updatedAt = new Date();
+      
+      user.save(function (err) {
+        if (err) {
+          return res.json({ success: false, error: "Error saving user: " + err.message });
+        }
+        
+        // Verify the password was saved correctly
+        User.findOne({ "user.email": email.toLowerCase() }, function (err, verifyUser) {
+          var passwordMatches = false;
+          if (!err && verifyUser) {
+            passwordMatches = verifyUser.verifyPassword(tempPassword);
+          }
+        
+          return res.json({ 
+            success: true, 
+            email: email,
+            tempPassword: tempPassword,
+            passwordVerified: passwordMatches,
+            message: "Password reset successful!" + (passwordMatches ? " Password verification passed." : " WARNING: Password verification failed!")
+          });
+        });
+      });
+    });
+  });
+
+  // Diagnostic endpoint to check user password status
+  app.get("/diagnose-user-password", function (req, res) {
+    var email = req.query.email || "morrisjason94@gmail.com";
+    
+    User.findOne({ "user.email": email.toLowerCase() }, function (err, user) {
+      if (err) {
+        return res.json({ success: false, error: "Error finding user: " + err.message });
+      }
+      
+      if (!user) {
+        return res.json({ success: false, error: "User not found with email: " + email });
+      }
+      
+      var bcrypt = require("bcrypt-nodejs");
+      var testPasswords = ["asdf", "test123", "password"];
+      var testResults = {};
+      
+      testPasswords.forEach(function(pwd) {
+        if (user.user.password) {
+          testResults[pwd] = bcrypt.compareSync(pwd, user.user.password);
+        } else {
+          testResults[pwd] = "NO_PASSWORD_STORED";
+        }
+      });
+      
+      return res.json({
+        success: true,
+        email: user.user.email,
+        username: user.user.username,
+        hasPassword: !!user.user.password,
+        passwordLength: user.user.password ? user.user.password.length : 0,
+        passwordPreview: user.user.password ? user.user.password.substring(0, 50) + "..." : null,
+        testResults: testResults,
+        verifyPasswordMethod: {
+          "asdf": user.verifyPassword("asdf"),
+          "test123": user.verifyPassword("test123")
+        }
+      });
+    });
+  });
+
+  // Emergency password reset endpoint (no auth required, uses secret token)
+  app.post("/emergency-reset-password", function (req, res) {
+    var secretToken = req.body.secretToken || req.query.secretToken;
+    var email = req.body.email || "morrisjason94@gmail.com";
+    
+    // Simple secret token check (you can change this)
+    if (secretToken !== "emergency-reset-2024") {
+      return res.json({ success: false, error: "Invalid secret token" });
+    }
+    
+    // Generate a random temporary password
+    var tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+    
+    User.findOne({ "user.email": email.toLowerCase() }, function (err, user) {
+      if (err) {
+        return res.json({ success: false, error: "Error finding user: " + err.message });
+      }
+      
+      if (!user) {
+        return res.json({ success: false, error: "User not found with email: " + email });
+      }
+      
+      console.log("Resetting password for:", email);
+      console.log("Current password hash:", user.user.password ? user.user.password.substring(0, 30) + "..." : "NULL");
+      
+      // Generate hash for the new password
+      var hashedPassword = user.generateHash(tempPassword);
+      console.log("New password hash:", hashedPassword.substring(0, 30) + "...");
+      
+      // Update the user's password
+      user.user.password = hashedPassword;
+      user.user.updatedAt = new Date();
+      
+      user.save(function (err) {
+        if (err) {
+          return res.json({ success: false, error: "Error saving user: " + err.message });
+        }
+        
+        // Verify the password was saved correctly
+        User.findOne({ "user.email": email.toLowerCase() }, function (err, verifyUser) {
+          var passwordMatches = false;
+          var storedHash = null;
+          if (!err && verifyUser) {
+            storedHash = verifyUser.user.password;
+            passwordMatches = verifyUser.verifyPassword(tempPassword);
+            console.log("Password verification:", passwordMatches);
+          }
+        
+          return res.json({ 
+            success: true, 
+            email: email,
+            tempPassword: tempPassword,
+            passwordVerified: passwordMatches,
+            storedHashPreview: storedHash ? storedHash.substring(0, 30) + "..." : null,
+            message: passwordMatches ? "Password reset successful and verified!" : "Password reset but verification failed!"
+          });
+        });
+      });
+    });
+  });
+
   // Add GET route for logout to handle direct navigation
   app.get("/admin/logout", function (req, res) {
     if (req.session) {
