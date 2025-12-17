@@ -314,6 +314,69 @@ module.exports = function (app, passport, server) {
         role: adminUser.role,
         roles: adminUser.roles
       };
+      
+      // Store login time for session duration calculation
+      req.session.loginTime = new Date();
+
+      // Log login activity to backend API (reuse apiToken and apiUrl from above)
+      if (apiToken) {
+        // Get roles from adminUser for the currentUser object
+        const adminRoles = adminUser.roles || (adminUser.role ? [adminUser.role] : ['admin']);
+        
+        // First find admin ID in backend API
+        axios.post(`${apiUrl}/api/v1/admin/search/admins`, 
+          { 
+            query: email,
+            currentUser: {
+              email: email,
+              roles: adminRoles
+            }
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiToken}`
+            },
+            timeout: 5000,
+            validateStatus: function (status) {
+              return status < 600;
+            }
+          }
+        ).then(function(searchResponse) {
+          if (searchResponse.status === 200 && searchResponse.data.admins && searchResponse.data.admins.length > 0) {
+            const adminId = searchResponse.data.admins[0].id || searchResponse.data.admins[0]._id;
+            
+            // Log login activity
+            axios.post(`${apiUrl}/api/v1/admin/activity/log`, 
+              {
+                adminId: adminId,
+                type: 'login',
+                title: 'Admin logged in',
+                details: 'Admin user logged into the system',
+                timestamp: new Date().toISOString(),
+                currentUser: {
+                  email: email,
+                  roles: adminRoles
+                }
+              },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${apiToken}`
+                },
+                timeout: 5000,
+                validateStatus: function (status) {
+                  return status < 600;
+                }
+              }
+            ).catch(function(err) {
+              // Silently fail - activity logging is not critical
+            });
+          }
+        }).catch(function(err) {
+          // Silently fail - activity logging is not critical
+        });
+      }
 
       return res.redirect("/admin/console");
     } catch (err) {
@@ -344,9 +407,98 @@ module.exports = function (app, passport, server) {
   });
 
   app.post("/admin/logout", function (req, res) {
+    // Calculate session duration before clearing session
+    let sessionDuration = null;
+    if (req.session && req.session.loginTime) {
+      const loginTime = new Date(req.session.loginTime);
+      const logoutTime = new Date();
+      const durationMs = logoutTime - loginTime;
+      
+      // Format duration: "Xh Ym" or "Ym" or "Xs"
+      const hours = Math.floor(durationMs / (1000 * 60 * 60));
+      const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+      
+      if (hours > 0) {
+        sessionDuration = `${hours}h ${minutes}m`;
+      } else if (minutes > 0) {
+        sessionDuration = `${minutes}m`;
+      } else {
+        sessionDuration = `${seconds}s`;
+      }
+    }
+    
+    const adminEmail = req.session && req.session.admin ? req.session.admin.email : null;
+    const adminRoles = req.session && req.session.admin ? (req.session.admin.roles || [req.session.admin.role]) : [];
+    
+    // Log logout activity to backend API before clearing session
+    const apiToken = process.env.POLICE_CAD_API_TOKEN;
+    const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+    
+    if (apiToken && adminEmail) {
+      const axios = require("axios");
+      
+      // Find admin ID in backend API
+      axios.post(`${apiUrl}/api/v1/admin/search/admins`, 
+        { 
+          query: adminEmail,
+          currentUser: {
+            email: adminEmail,
+            roles: adminRoles
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiToken}`
+          },
+          timeout: 5000,
+          validateStatus: function (status) {
+            return status < 600;
+          }
+        }
+      ).then(function(searchResponse) {
+        if (searchResponse.status === 200 && searchResponse.data.admins && searchResponse.data.admins.length > 0) {
+          const adminId = searchResponse.data.admins[0].id || searchResponse.data.admins[0]._id;
+          
+          // Log logout activity with session duration
+          axios.post(`${apiUrl}/api/v1/admin/activity/log`, 
+            {
+              adminId: adminId,
+              type: 'logout',
+              title: 'Admin logged out',
+              details: 'Admin user logged out of the system',
+              timestamp: new Date().toISOString(),
+              sessionDuration: sessionDuration || '0m',
+              currentUser: {
+                email: adminEmail,
+                roles: adminRoles
+              }
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiToken}`
+              },
+              timeout: 5000,
+              validateStatus: function (status) {
+                return status < 600;
+              }
+            }
+          ).catch(function(err) {
+            // Silently fail - activity logging is not critical
+          });
+        }
+      }).catch(function(err) {
+        // Silently fail - activity logging is not critical
+      });
+    }
+    
+    // Clear session after logging
     if (req.session) {
       delete req.session.adminToken;
       delete req.session.admin;
+      delete req.session.loginTime;
     }
     return res.redirect("/admin");
   });
@@ -504,9 +656,98 @@ module.exports = function (app, passport, server) {
 
   // Add GET route for logout to handle direct navigation
   app.get("/admin/logout", function (req, res) {
+    // Calculate session duration before clearing session
+    let sessionDuration = null;
+    if (req.session && req.session.loginTime) {
+      const loginTime = new Date(req.session.loginTime);
+      const logoutTime = new Date();
+      const durationMs = logoutTime - loginTime;
+      
+      // Format duration: "Xh Ym" or "Ym" or "Xs"
+      const hours = Math.floor(durationMs / (1000 * 60 * 60));
+      const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+      
+      if (hours > 0) {
+        sessionDuration = `${hours}h ${minutes}m`;
+      } else if (minutes > 0) {
+        sessionDuration = `${minutes}m`;
+      } else {
+        sessionDuration = `${seconds}s`;
+      }
+    }
+    
+    const adminEmail = req.session && req.session.admin ? req.session.admin.email : null;
+    const adminRoles = req.session && req.session.admin ? (req.session.admin.roles || [req.session.admin.role]) : [];
+    
+    // Log logout activity to backend API before clearing session
+    const apiToken = process.env.POLICE_CAD_API_TOKEN;
+    const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+    
+    if (apiToken && adminEmail) {
+      const axios = require("axios");
+      
+      // Find admin ID in backend API
+      axios.post(`${apiUrl}/api/v1/admin/search/admins`, 
+        { 
+          query: adminEmail,
+          currentUser: {
+            email: adminEmail,
+            roles: adminRoles
+          }
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiToken}`
+          },
+          timeout: 5000,
+          validateStatus: function (status) {
+            return status < 600;
+          }
+        }
+      ).then(function(searchResponse) {
+        if (searchResponse.status === 200 && searchResponse.data.admins && searchResponse.data.admins.length > 0) {
+          const adminId = searchResponse.data.admins[0].id || searchResponse.data.admins[0]._id;
+          
+          // Log logout activity with session duration
+          axios.post(`${apiUrl}/api/v1/admin/activity/log`, 
+            {
+              adminId: adminId,
+              type: 'logout',
+              title: 'Admin logged out',
+              details: 'Admin user logged out of the system',
+              timestamp: new Date().toISOString(),
+              sessionDuration: sessionDuration || '0m',
+              currentUser: {
+                email: adminEmail,
+                roles: adminRoles
+              }
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiToken}`
+              },
+              timeout: 5000,
+              validateStatus: function (status) {
+                return status < 600;
+              }
+            }
+          ).catch(function(err) {
+            // Silently fail - activity logging is not critical
+          });
+        }
+      }).catch(function(err) {
+        // Silently fail - activity logging is not critical
+      });
+    }
+    
+    // Clear session after logging
     if (req.session) {
       delete req.session.adminToken;
       delete req.session.admin;
+      delete req.session.loginTime;
     }
     return res.redirect("/admin");
   });

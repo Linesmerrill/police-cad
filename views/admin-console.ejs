@@ -1598,7 +1598,7 @@
               <div class="col-md-3">
                 <div class="stat-card">
                   <div class="stat-number">0</div>
-                  <div class="stat-label">Password Resets Initiated</div>
+                  <div class="stat-label">Accounts Reactivated</div>
                 </div>
               </div>
               <div class="col-md-3">
@@ -1786,11 +1786,11 @@
       }
       
       function renderActivityChart(activity) {
-        // Simple chart using HTML/CSS for now
-        // You can integrate Chart.js or D3.js for better charts later
-        const chartData = activity.chartData || [];
+        // Timeline data comes from activity.timeline according to backend spec
+        // Format: [{ date: "2025-12-17", count: 5 }, ...]
+        const timeline = activity.timeline || [];
         
-        if (!chartData || chartData.length === 0) {
+        if (!timeline || timeline.length === 0) {
           $('#activityChart').html(`
             <div class="text-center" style="padding: 2rem; color: #9aa0b4;">
               <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 1rem;"></i>
@@ -1801,7 +1801,7 @@
         }
         
         // Check if all values are 0 (no activity)
-        const hasAnyActivity = chartData.some(day => day.value > 0);
+        const hasAnyActivity = timeline.some(day => day.count > 0);
         
         if (!hasAnyActivity) {
           $('#activityChart').html(`
@@ -1813,20 +1813,25 @@
           return;
         }
         
+        // Find max count for scaling
+        const maxCount = Math.max(...timeline.map(day => day.count || 0), 1);
+        
         const chartHtml = `
           <div class="chart-container">
             <div class="chart-bars">
-              ${chartData.map(day => `
-                ${day.value > 0 ? `
-                  <div class="chart-bar" style="height: ${day.value * 2}px;" title="${day.date}: ${day.value} activities">
+              ${timeline.map(day => {
+                const count = day.count || 0;
+                const height = maxCount > 0 ? (count / maxCount) * 200 : 0; // Max height 200px
+                return count > 0 ? `
+                  <div class="chart-bar" style="height: ${height}px;" title="${day.date}: ${count} activities">
                     <div class="bar-label">${day.date}</div>
                   </div>
                 ` : `
-                  <div class="chart-bar chart-bar-empty" title="${day.date}: ${day.value} activities">
+                  <div class="chart-bar chart-bar-empty" title="${day.date}: ${count} activities">
                     <div class="bar-label">${day.date}</div>
                   </div>
-                `}
-              `).join('')}
+                `;
+              }).join('')}
             </div>
           </div>
         `;
@@ -1909,9 +1914,12 @@
       }
       
       function updateActivityMetrics(activity) {
-        // Calculate total logins from recent activity if not provided
-        const totalLogins = activity.totalLogins || 
-          (activity.recentActivity ? activity.recentActivity.filter(a => a.type === 'login').length : 0);
+        // Stats are in activity.stats according to backend spec
+        const stats = activity.stats || {};
+        const totalLogins = stats.totalLogins || 0;
+        const passwordResets = stats.passwordResets || 0;
+        const accountsReactivated = stats.accountsReactivated || 0;
+        const avgSessionTime = stats.avgSessionTime || '0m';
         
         const metricsHtml = `
           <div class="row">
@@ -1923,19 +1931,19 @@
             </div>
             <div class="col-md-3">
               <div class="stat-card">
-                <div class="stat-number">${activity.passwordResets || 0}</div>
+                <div class="stat-number">${passwordResets}</div>
                 <div class="stat-label">Password Resets</div>
               </div>
             </div>
             <div class="col-md-3">
               <div class="stat-card">
-                <div class="stat-number">${activity.passwordResetsInitiated || 0}</div>
-                <div class="stat-label">Password Resets Initiated</div>
+                <div class="stat-number">${accountsReactivated}</div>
+                <div class="stat-label">Accounts Reactivated</div>
               </div>
             </div>
             <div class="col-md-3">
               <div class="stat-card">
-                <div class="stat-number">${activity.avgSessionTime || '0m'}</div>
+                <div class="stat-number">${avgSessionTime}</div>
                 <div class="stat-label">Avg Session</div>
               </div>
             </div>
@@ -2186,6 +2194,7 @@
           'user_reset': 'User password reset sent',
           'user_reset_initiated': 'User password reset initiated',
           'user_reactivate': 'User account reactivated',
+          'account_reactivated': 'User account reactivated',
           'admin_creation': 'Admin user created',
           'admin_deletion': 'Admin user deleted',
           'admin_reset_existing': 'Password reset sent to existing admin',
@@ -3368,8 +3377,8 @@
               success: function(data) {
                 showInfoModal('Success', `Account reactivated successfully for <strong>${userEmail}</strong>!`);
                 
-                // Track this action
-                trackAdminAction('user_reactivate', `Reactivated account for user: ${userEmail}`);
+                // Track this action - use 'account_reactivated' type to match backend spec
+                logAdminAction('account_reactivated', 'User account reactivated', `Reactivated account for user: ${userEmail}`);
                 
                 // Refresh the user results to show updated status
                 const currentQuery = $('#userSearch').val().trim();
