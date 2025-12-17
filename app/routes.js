@@ -250,6 +250,61 @@ module.exports = function (app, passport, server) {
         return res.redirect("/admin?error=" + encodeURIComponent("Invalid credentials"));
       }
 
+      // Update lastLoginAt in backend API if API token is configured
+      const apiToken = process.env.POLICE_CAD_API_TOKEN;
+      const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+      
+      if (apiToken) {
+        // Try to find admin in backend API and update lastLoginAt
+        const axios = require("axios");
+        
+        // Get roles from adminUser for the currentUser object
+        const adminRoles = adminUser.roles || (adminUser.role ? [adminUser.role] : ['admin']);
+        
+        axios.post(`${apiUrl}/api/v1/admin/search/admins`, 
+          { 
+            query: email,
+            currentUser: {
+              email: email,
+              roles: adminRoles
+            }
+          },
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiToken}`
+            },
+            timeout: 5000,
+            validateStatus: function (status) {
+              return status < 600; // Don't throw on any status code
+            }
+          }
+        ).then(function(searchResponse) {
+          if (searchResponse.status === 200 && searchResponse.data.admins && searchResponse.data.admins.length > 0) {
+            const adminId = searchResponse.data.admins[0].id || searchResponse.data.admins[0]._id;
+            
+            // Update lastLoginAt via API
+            axios.patch(`${apiUrl}/api/v1/admin/admins/${adminId}`, 
+              { lastLoginAt: new Date().toISOString() },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${apiToken}`
+                },
+                timeout: 5000,
+                validateStatus: function (status) {
+                  return status < 600;
+                }
+              }
+            ).catch(function(err) {
+              // Silently fail - lastLoginAt update is not critical
+            });
+          }
+        }).catch(function(err) {
+          // Silently fail - lastLoginAt update is not critical for login flow
+        });
+      }
+
       // Create admin session
       req.session.adminToken = "local-admin-" + Date.now();
       req.session.admin = { 

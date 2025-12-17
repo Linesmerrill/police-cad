@@ -1440,7 +1440,10 @@
                 </div>
                 <div class="info-item">
                   <div class="info-label">Last Login</div>
-                  <div class="info-value">${admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleDateString() : 'Never'}</div>
+                  <div class="info-value">${admin.lastLoginAt ? (() => {
+                    const date = new Date(admin.lastLoginAt);
+                    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                  })() : 'Never'}</div>
                 </div>
               </div>
             </div>
@@ -1479,7 +1482,10 @@
         const isActive = admin.active !== undefined ? admin.active : true;
         const createdAt = admin.createdAt ? new Date(admin.createdAt).toLocaleDateString() : 'Unknown';
         const createdBy = admin.createdBy || 'System';
-        const lastLoginAt = admin.lastLoginAt ? new Date(admin.lastLoginAt).toLocaleDateString() : 'Never';
+        const lastLoginAt = admin.lastLoginAt ? (() => {
+          const date = new Date(admin.lastLoginAt);
+          return date.toLocaleDateString() + ' ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        })() : 'Never';
         const adminId = admin.id || admin._id || 'unknown';
         
         // Check if user has owner role
