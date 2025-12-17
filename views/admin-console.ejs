@@ -3057,12 +3057,40 @@
         
         let html = '';
         communities.forEach(community => {
+          // Format owner name - truncate if too long
+          const ownerName = (() => {
+            if (community.owner) {
+              if (community.owner.username && community.owner.email) {
+                const fullName = `${community.owner.username} (${community.owner.email})`;
+                return fullName.length > 50 ? fullName.substring(0, 47) + '...' : fullName;
+              } else if (community.owner.username) {
+                return community.owner.username.length > 50 ? community.owner.username.substring(0, 47) + '...' : community.owner.username;
+              } else if (community.owner.email) {
+                return community.owner.email.length > 50 ? community.owner.email.substring(0, 47) + '...' : community.owner.email;
+              }
+            }
+            return 'Unknown';
+          })();
+          
+          // Get owner ID
+          const ownerId = community.owner?.id || community.owner?._id || 'Unknown';
+          
+          // Count roles
+          const roleCount = community.owner?.roles ? 
+            (Array.isArray(community.owner.roles) ? community.owner.roles.length : 1) : 
+            (community.owner?.role ? 1 : 0);
+          
+          // Format created date with time
+          const createdAt = community.createdAt ? (() => {
+            const date = new Date(community.createdAt);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+          })() : 'Unknown';
+          
           html += `
             <div class="result-card">
               <div class="result-header">
                 <div>
                   <h5 class="result-title">${community.name || 'Unnamed Community'}</h5>
-                  <p class="result-subtitle">ID: ${community.id}</p>
                 </div>
                 <div class="action-buttons">
                   <button class="btn btn-secondary btn-sm" onclick="viewCommunityDetails('${community.id}')">
@@ -3071,22 +3099,31 @@
                 </div>
               </div>
               <div class="info-grid">
+                <div class="info-item" style="grid-column: 1 / -1;">
+                  <div class="info-label">Community ID</div>
+                  <div class="info-value" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <code style="background: #1e1e2e; padding: 0.25rem 0.5rem; border-radius: 4px; color: #a78bfa; font-weight: bold; font-size: 0.9em; border: 1px solid #4f46e5;">${community.id}</code>
+                    <button class="btn btn-sm" onclick="copyToClipboard('${community.id}', event)" style="padding: 0.25rem 0.5rem; min-width: auto; background: #4f46e5; border-color: #4f46e5;" title="Copy Community ID">
+                      <i class="fas fa-copy" style="font-size: 0.8em;"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="info-item" style="grid-column: 1 / -1;">
+                  <div class="info-label">Owner ID</div>
+                  <div class="info-value" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <code style="background: #1e1e2e; padding: 0.25rem 0.5rem; border-radius: 4px; color: #a78bfa; font-weight: bold; font-size: 0.9em; border: 1px solid #4f46e5;">${ownerId}</code>
+                    <button class="btn btn-sm" onclick="copyToClipboard('${ownerId}', event)" style="padding: 0.25rem 0.5rem; min-width: auto; background: #4f46e5; border-color: #4f46e5;" title="Copy Owner ID">
+                      <i class="fas fa-copy" style="font-size: 0.8em;"></i>
+                    </button>
+                  </div>
+                </div>
                 <div class="info-item">
                   <div class="info-label">Owner</div>
-                  <div class="info-value">
-                    ${(() => {
-                      if (community.owner) {
-                        if (community.owner.username && community.owner.email) {
-                          return `${community.owner.username} (${community.owner.email})`;
-                        } else if (community.owner.username) {
-                          return community.owner.username;
-                        } else if (community.owner.email) {
-                          return community.owner.email;
-                        }
-                      }
-                      return 'Unknown';
-                    })()}
-                  </div>
+                  <div class="info-value" style="word-break: break-word; max-width: 100%;">${ownerName}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Roles</div>
+                  <div class="info-value">${roleCount}</div>
                 </div>
                 <div class="info-item">
                   <div class="info-label">Members</div>
@@ -3102,7 +3139,7 @@
                 </div>
                 <div class="info-item">
                   <div class="info-label">Created</div>
-                  <div class="info-value">${new Date(community.createdAt).toLocaleDateString()}</div>
+                  <div class="info-value">${createdAt}</div>
                 </div>
                 <div class="info-item">
                   <div class="info-label">Departments</div>
