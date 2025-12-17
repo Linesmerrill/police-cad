@@ -484,7 +484,10 @@
             const spinner = loginBtn.querySelector('.spinner');
             const btnText = loginBtn.querySelector('.btn-text');
             
-
+            // Check for flash messages from Passport authentication failure
+            <% if (typeof message !== 'undefined' && message && message.length > 0) { %>
+                showError('Invalid email or password. Please check your credentials and try again.');
+            <% } %>
 
             // Handle form submission
             form.addEventListener('submit', async function(e) {
@@ -575,34 +578,29 @@
                         });
                     };
                     
-                    // Try to validate credentials with the API first
-                    try {
-                        const apiResponse = await fetch(`${apiUrl}/api/v1/auth/token`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': 'Basic ' + btoa(email + ':' + password)
-                            }
-                        });
-                        
-                        console.log('API Response status:', apiResponse.status, 'ok:', apiResponse.ok);
-                        
-                        // Check if we got a valid token response
-                        const apiData = await apiResponse.json().catch(() => ({}));
-                        console.log('API Response data:', apiData);
-                        
-                        if (apiResponse.ok && apiData.token) {
-                            // API validation successful, proceed with login
-                            submitLoginForm();
-                            return;
+                    // Validate credentials with the API first
+                    // Email is already lowercased on line 500
+                    const apiResponse = await fetch(`${apiUrl}/api/v1/auth/token`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Basic ' + btoa(email + ':' + password)
                         }
-                    } catch (apiError) {
-                        console.log('API validation failed, falling back to local authentication:', apiError);
-                    }
+                    });
                     
-                    // If API validation failed or errored, fall back to local authentication
-                    // This allows users with passwords only in local DB to still log in
-                    submitLoginForm();
+                    // Check if we got a valid token response
+                    const apiData = await apiResponse.json().catch(() => ({}));
+                    
+                    if (apiResponse.ok && apiData.token) {
+                        // API validation successful, proceed with login
+                        submitLoginForm();
+                        return;
+                    } else {
+                        // API validation failed - show error and stop
+                        showError('Invalid email or password. Please check your credentials and try again.');
+                        setLoading(false);
+                        return;
+                    }
                     
                 } catch (error) {
                     console.error('Login error:', error);

@@ -27,30 +27,70 @@ module.exports = function (passport) {
       },
       function (req, email, password, done) {
         process.nextTick(function () {
-          User.findOne(
-            {
-              "user.email": email.toLowerCase(),
+          // Authenticate against API only - no local database checks
+          var apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+          var axios = require("axios");
+          
+          // Normalize email to lowercase
+          var normalizedEmail = email.toLowerCase();
+          
+          // Build Basic auth header
+          var basicAuthBase64 = Buffer.from(normalizedEmail + ':' + password).toString('base64');
+          
+          // Authenticate with API
+          axios.post(`${apiUrl}/api/v1/auth/token`, {}, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Basic ' + basicAuthBase64
             },
-            function (err, user) {
-              if (err) {
-                return done(err);
-              }
-              if (!user)
-                return done(
-                  null,
-                  false,
-                  req.flash("error", "email address or password")
-                );
-
-              if (!user.verifyPassword(password))
-                return done(
-                  null,
-                  false,
-                  req.flash("error", "email address or password")
-                );
-              else return done(null, user);
+            timeout: 10000,
+            validateStatus: function (status) {
+              return status < 600; // Don't throw on any status code
             }
-          );
+          }).then(function(apiResponse) {
+            if (apiResponse.status === 200 || apiResponse.status === 201) {
+              // API authentication successful - now get/create user in local DB for session
+              User.findOne(
+                {
+                  "user.email": normalizedEmail,
+                },
+                function (err, user) {
+                  if (err) {
+                    return done(err);
+                  }
+                  
+                  // If user doesn't exist locally, create a minimal user record for session management
+                  if (!user) {
+                    var newUser = new User();
+                    newUser.user.email = normalizedEmail;
+                    newUser.user.username = normalizedEmail.split('@')[0];
+                    newUser.user.createdAt = new Date();
+                    newUser.save(function (err) {
+                      if (err) {
+                        return done(err);
+                      }
+                      return done(null, newUser);
+                    });
+                  } else {
+                    return done(null, user);
+                  }
+                }
+              );
+            } else {
+              return done(
+                null,
+                false,
+                req.flash("error", "email address or password")
+              );
+            }
+          }).catch(function(apiError) {
+            // API authentication failed
+            return done(
+              null,
+              false,
+              req.flash("error", "email address or password")
+            );
+          });
         });
       }
     )

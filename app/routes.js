@@ -566,13 +566,21 @@ module.exports = function (app, passport, server) {
     return res.redirect("/");
   });
 
-  app.get("/login-civ", authCheck, function (req, res) {
-    // if (req.isAuthenticated()) {
-    const redirect = req.session.redirect || "/communities";
-    delete req.session.redirect; // Clear after use
-    return res.redirect(redirect);
-    // }
-    // res.render("login-civ");
+  app.get("/login-civ", function (req, res) {
+    // If already authenticated, redirect to communities
+    if (req.isAuthenticated()) {
+      const redirect = req.session.redirect || "/communities";
+      delete req.session.redirect; // Clear after use
+      return res.redirect(redirect);
+    }
+    
+    // Get flash messages from Passport authentication failures
+    const errorMessage = req.flash("error");
+    const message = errorMessage && errorMessage.length > 0 ? errorMessage[0] : "";
+    
+    res.render("login-civ", {
+      message: message,
+    });
   });
 
   app.get("/login-police", authCheck, function (req, res) {
@@ -2251,7 +2259,6 @@ module.exports = function (app, passport, server) {
       passReqToCallback: true,
     }),
     function (req, res, next) {
-      console.log("Session redirect value:", req.session.redirect);
       const redirect = req.session.redirect || "/communities";
       delete req.session.redirect; // Clear the session redirect after use
       res.redirect(redirect);
