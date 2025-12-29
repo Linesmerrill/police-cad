@@ -105,20 +105,33 @@ app.use(function forceLiveDomain(req, res, next) {
   return next();
 });
 
-// Get the port we'll listen to.
-var port = process.env.PORT || 8080;
+// Export app setup function to be used by server.js
+module.exports = function setupApp(nextApp, handle) {
+  // Get the port we'll listen to.
+  var port = process.env.PORT || 8080;
 
-/**
- * HTTP server for the express application.
- */
-const server = app.listen(port, function () {
-  console.log("Server started.", server.address());
-});
+  // Handle Next.js internal routes FIRST (before Express routes)
+  // This ensures webpack chunks and Next.js assets are served correctly
+  if (nextApp && handle) {
+    app.get('/_next/*', (req, res) => {
+      return handle(req, res);
+    });
+  }
 
-server.on("clientError", (err, socket) => {
-  console.error(err);
-  socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
-});
+  // Setup routes - Express routes will be checked first
+  require("./app/routes")(app, passport, null, nextApp, handle);
 
-// Setup routes.
-require("./app/routes")(app, passport, server);
+  /**
+   * HTTP server for the express application.
+   */
+  const server = app.listen(port, function () {
+    console.log("Server started.", server.address());
+  });
+
+  server.on("clientError", (err, socket) => {
+    console.error(err);
+    socket.end("HTTP/1.1 400 Bad Request\r\n\r\n");
+  });
+
+  return server;
+};

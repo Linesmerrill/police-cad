@@ -51,8 +51,14 @@ function decodeId(encoded) {
   return Buffer.from(base64, 'base64').toString('utf8');
 }
 
-module.exports = function (app, passport, server) {
+module.exports = function (app, passport, server, nextApp, handle) {
+  // Root route - use Next.js if available, otherwise fall back to EJS
   app.get("/", function (req, res) {
+    if (nextApp && handle) {
+      // Use Next.js for the landing page
+      return handle(req, res);
+    }
+    // Fallback to EJS if Next.js is not available
     res.render("index", {
       message: req.flash("info"),
     });
@@ -1280,13 +1286,14 @@ module.exports = function (app, passport, server) {
     }
   });
 
-  app.get("/profile", authCheck, function (req, res) {
-    return res.render("profile", {
-      user: req.user,
-      referer: encodeURIComponent("/profile"),
-      redirect: encodeURIComponent(redirect),
-    });
-  });
+  // Profile route is now handled by Next.js at app/profile/page.tsx
+  // app.get("/profile", authCheck, function (req, res) {
+  //   return res.render("profile", {
+  //     user: req.user,
+  //     referer: encodeURIComponent("/profile"),
+  //     redirect: encodeURIComponent(redirect),
+  //   });
+  // });
 
   app.get("/community-dashboard", authCheck, function (req, res) {
     return res.render("community-dashboard", {
@@ -2542,8 +2549,121 @@ module.exports = function (app, passport, server) {
     res.json({ success: true });
   });
 
+  // API route to get current user - MUST be before catch-all
+  app.get("/api/user/current", function (req, res) {
+    if (req.isAuthenticated() && req.user) {
+      // Extract user data safely
+      const userData = req.user._doc || req.user;
+      const user = userData.user || userData;
+      
+      // Extract ObjectId from top-level _id (document _id, not user._id)
+      // Handle both MongoDB extended JSON format { $oid: "..." } and Mongoose ObjectId
+      let userIdString = '';
+      const documentId = req.user._id || userData._id;
+      
+      if (documentId) {
+        if (typeof documentId === 'object') {
+          // Handle MongoDB extended JSON format { $oid: "..." }
+          if (documentId.$oid) {
+            userIdString = documentId.$oid;
+          } else if (documentId.toString) {
+            // Handle Mongoose ObjectId
+            userIdString = documentId.toString();
+          } else {
+            userIdString = String(documentId);
+          }
+        } else {
+          userIdString = String(documentId);
+        }
+      }
+      
+      return res.json({
+        user: {
+          id: userIdString,
+          username: user.username,
+          email: user.email,
+          name: user.name,
+          callSign: user.callSign || '',
+          discordConnected: user.discordConnected || false,
+          panicButtonSound: user.panicButtonSound || false,
+          alertVolumeLevel: user.alertVolumeLevel || 10,
+          createdAt: user.createdAt
+        }
+      });
+    }
+    return res.json({ user: null });
+  });
+
+  // API route to verify password
+  app.post("/api/verify-password", auth, function (req, res) {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const password = req.body.password;
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+
+    const userData = req.user._doc || req.user;
+    const user = userData.user || userData;
+
+    if (!user || !user.password) {
+      return res.status(400).json({ error: 'User not found or no password set' });
+    }
+
+    var bcrypt = require("bcrypt-nodejs");
+    const passwordMatch = bcrypt.compareSync(password, user.password);
+
+    if (passwordMatch) {
+      return res.json({ valid: true });
+    } else {
+      return res.json({ valid: false });
+    }
+  });
+
+  // API route to check if email is already in use
+  app.post("/api/check-email", auth, function (req, res) {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const email = req.body.email;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const emailLower = email.trim().toLowerCase();
+    const currentUserId = req.user._id ? req.user._id.toString() : String(req.user._id);
+
+    // Check if email is already in use by another user
+    User.findOne(
+      {
+        "user.email": emailLower,
+        _id: { $ne: ObjectId(currentUserId) }
+      },
+      function (err, existingUser) {
+        if (err) {
+          console.error('check-email: Error checking email', err);
+          return res.status(500).json({ error: 'Error checking email' });
+        }
+
+        if (existingUser) {
+          return res.json({ available: false, inUse: true });
+        } else {
+          return res.json({ available: true, inUse: false });
+        }
+      }
+    );
+  });
+
   // Be sure to place all GET requests above this catchall
+  // Exclude Next.js internal routes
   app.get("*", function (req, res) {
+    // Let Next.js handle its own routes
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile') {
+      return handle(req, res);
+    }
     res.render("page-not-found");
   });
 
@@ -3456,6 +3576,129 @@ module.exports = function (app, passport, server) {
             console.error(err);
           }
           return res.redirect("back");
+        }
+      );
+    } else if (req.body.action === "changeEmail") {
+      var isValid = isValidObjectIdLength(
+        req.body.userID,
+        "cannot lookup invalid length userID, route: /manageAccount"
+      );
+      if (!isValid) {
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect("back");
+      }
+
+      if (!exists(req.body.newEmail) || !exists(req.body.currentPassword)) {
+        console.log('changeEmail: Missing required fields', {
+          hasNewEmail: exists(req.body.newEmail),
+          hasCurrentPassword: exists(req.body.currentPassword),
+          body: Object.keys(req.body)
+        });
+        req.app.locals.specialContext = "invalidRequest";
+        return res.redirect("back");
+      }
+
+      var newEmail = req.body.newEmail.trim().toLowerCase();
+      var currentPassword = req.body.currentPassword;
+      
+      console.log('changeEmail: Processing request', {
+        userID: req.body.userID,
+        newEmail: newEmail,
+        hasPassword: !!currentPassword
+      });
+
+      // Find user and verify password
+      User.findOne(
+        {
+          _id: ObjectId(req.body.userID),
+        },
+        function (err, user) {
+          if (err) {
+            console.error('changeEmail: Error finding user', err);
+            req.app.locals.specialContext = "error";
+            return res.redirect("back");
+          }
+          if (!user) {
+            console.log('changeEmail: User not found', { userID: req.body.userID });
+            req.app.locals.specialContext = "error";
+            return res.redirect("back");
+          }
+
+          console.log('changeEmail: User found, verifying password');
+
+          // Verify current password
+          var bcrypt = require("bcrypt-nodejs");
+          var passwordMatch = bcrypt.compareSync(currentPassword, user.user.password);
+          console.log('changeEmail: Password verification', { 
+            passwordMatch: passwordMatch,
+            hasStoredPassword: !!user.user.password
+          });
+          
+          if (!passwordMatch) {
+            console.log('changeEmail: Password verification failed');
+            req.app.locals.specialContext = "invalidPassword";
+            return res.redirect("back");
+          }
+
+          console.log('changeEmail: Password verified, checking if email is in use');
+
+          // Check if email is already in use
+          User.findOne(
+            {
+              "user.email": newEmail,
+              _id: { $ne: ObjectId(req.body.userID) }
+            },
+            function (err, existingUser) {
+              if (err) {
+                console.error('changeEmail: Error checking existing email', err);
+                req.app.locals.specialContext = "error";
+                return res.redirect("back");
+              }
+              if (existingUser) {
+                console.log('changeEmail: Email already in use', { 
+                  existingUserID: existingUser._id 
+                });
+                req.app.locals.specialContext = "emailInUse";
+                return res.redirect("back");
+              }
+
+              console.log('changeEmail: Email available, updating database');
+
+              // Update email
+              User.findOneAndUpdate(
+                {
+                  _id: ObjectId(req.body.userID),
+                },
+                {
+                  $set: {
+                    "user.email": newEmail,
+                    "user.updatedAt": new Date(),
+                  },
+                },
+                { new: true }, // Return updated document
+                function (err, updatedUser) {
+                  if (err) {
+                    console.error('changeEmail: Database error', err);
+                    req.app.locals.specialContext = "error";
+                    return res.redirect("back");
+                  }
+                  if (!updatedUser) {
+                    console.log('changeEmail: User not found for update', { userID: req.body.userID });
+                    req.app.locals.specialContext = "error";
+                    return res.redirect("back");
+                  }
+                  console.log('changeEmail: Email updated successfully', {
+                    userID: req.body.userID,
+                    oldEmail: user.user.email,
+                    newEmail: newEmail,
+                    updatedEmail: updatedUser.user?.email
+                  });
+                  req.app.locals.specialContext = "emailChanged";
+                  return res.redirect("back");
+                }
+              );
+            }
+          );
         }
       );
     } else {
@@ -6669,11 +6912,6 @@ module.exports = function (app, passport, server) {
   // ===========================================
   // END ANNOUNCEMENT API ROUTES
   // ===========================================
-
-  // Move this to the very end
-  app.get("*", function (req, res) {
-    res.render("page-not-found");
-  });
 }; //end of routes
 
 function auth(req, res, next) {
