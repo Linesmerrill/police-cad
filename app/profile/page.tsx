@@ -1408,13 +1408,15 @@ export default function Profile() {
             <div
               onMouseDown={(e) => {
                 // Only stop propagation for mouse events, not for input interactions
-                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                const target = e.target as HTMLElement;
+                if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
                   e.stopPropagation();
                 }
               }}
               onClick={(e) => {
                 // Only stop propagation for click events on the modal container itself
-                if (e.target === e.currentTarget || (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON')) {
+                const target = e.target as HTMLElement;
+                if (e.target === e.currentTarget || (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && target.tagName !== 'BUTTON')) {
                   e.stopPropagation();
                 }
               }}
