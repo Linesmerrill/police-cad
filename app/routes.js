@@ -75,11 +75,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   );
 
-  app.get("/discord-bot", function (req, res) {
-    res.redirect(
-      "https://discord.com/api/oauth2/authorize?client_id=1005557484271976569&permissions=8&scope=bot%20applications.commands"
-    );
-  });
+  // Discord Bot page is now handled by Next.js at app/discord-bot/page.tsx
+  // app.get("/discord-bot", function (req, res) {
+  //   res.redirect(
+  //     "https://discord.com/api/oauth2/authorize?client_id=1005557484271976569&permissions=8&scope=bot%20applications.commands"
+  //   );
+  // });
 
   app.get("/release-log", function (req, res) {
     res.render("release-log");
@@ -2661,7 +2662,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Exclude Next.js internal routes
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile') {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot') {
       return handle(req, res);
     }
     res.render("page-not-found");

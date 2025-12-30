@@ -10,7 +10,7 @@ const navigation = [
   { name: 'Home', href: '/' },
   { name: 'About', href: '/about-us' },
   { name: 'Contact Us', href: '/contact-us' },
-  { name: 'Discord Bot', href: '/discord-bot', external: true },
+  { name: 'Discord Bot', href: '/discord-bot' },
 ];
 
 export default function Navbar() {
