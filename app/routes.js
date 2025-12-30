@@ -992,6 +992,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // API endpoint to validate reset token (for Next.js)
   app.get("/api/reset-token/validate", function (req, res) {
     const token = req.session.resetToken;
+    const currentTime = Date.now();
+    
     if (!token) {
       return res.json({ valid: false, message: "No reset token found in session." });
     }
@@ -1000,12 +1002,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
       {
         "user.resetPasswordToken": token,
         "user.resetPasswordExpires": {
-          $gt: Date.now(),
+          $gt: currentTime,
         },
       },
       function (err, user) {
         if (err) {
-          console.error(err);
+          console.error('Error validating reset token:', err);
           return res.json({ valid: false, message: "Error validating token." });
         }
         if (!user) {
@@ -1019,8 +1021,21 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.get("/reset/:token", function (req, res) {
     if (req.params.token && req.params.token != "encryptedToken") {
       // Store token in session and redirect to encryptedToken route
-      req.session.resetToken = req.params.token;
-      return res.redirect("/reset/encryptedToken");
+      const urlToken = req.params.token;
+      req.session.resetToken = urlToken;
+      
+      // Save session before redirecting to ensure it persists
+      req.session.save(function (err) {
+        if (err) {
+          console.error('Error saving session:', err);
+          req.flash(
+            "emailSend",
+            "An error occurred. Please try again."
+          );
+          return res.redirect("/forgot-password");
+        }
+        return res.redirect("/reset/encryptedToken");
+      });
     } else {
       // Token is in session (encryptedToken route), validate and let Next.js handle
       if (!req.session.resetToken) {
@@ -1031,11 +1046,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
         return res.redirect("/forgot-password");
       }
       
+      const sessionToken = req.session.resetToken;
+      const currentTime = Date.now();
+      
       User.findOne(
         {
-          "user.resetPasswordToken": req.session.resetToken,
+          "user.resetPasswordToken": sessionToken,
           "user.resetPasswordExpires": {
-            $gt: Date.now(),
+            $gt: currentTime,
           },
         },
         function (err, user) {
@@ -2906,8 +2924,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
               }
               
               // Set the reset fields
+              const expirationTime = Date.now() + 3600000; // 1 hour from now
               users.user.resetPasswordToken = token;
-              users.user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+              users.user.resetPasswordExpires = expirationTime;
               
               // Explicitly mark nested fields as modified for older accounts
               // This ensures Mongoose tracks changes even if fields were empty/null
@@ -2916,6 +2935,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
               
               users.save(function (err, savedUser) {
                 if (err) {
+                  console.error('Error saving reset token:', err);
                   // Error code: FP-1003 - Failed to save reset token
                   req.flash(
                     "emailSend",
@@ -3023,19 +3043,32 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   app.post("/reset/:token", function (req, res) {
     var token = req.session.resetToken;
+    const currentTime = Date.now();
 
     async.waterfall(
       [
         function (done) {
+          if (!token) {
+            req.flash(
+              "resetSend",
+              "Password reset token is invalid or has expired."
+            );
+            return res.redirect("back");
+          }
+          
           User.findOne(
             {
               "user.resetPasswordToken": token,
               "user.resetPasswordExpires": {
-                $gt: Date.now(),
+                $gt: currentTime,
               },
             },
             function (err, users) {
-              if (err) return console.error(err);
+              if (err) {
+                console.error('Error finding user in POST /reset:', err);
+                return console.error(err);
+              }
+              
               if (!users) {
                 req.flash(
                   "resetSend",
@@ -3049,7 +3082,22 @@ module.exports = function (app, passport, server, nextApp, handle) {
               user.user.resetPasswordExpires = undefined;
 
               user.save(function (err) {
-                done(err, user);
+                if (err) {
+                  return done(err);
+                }
+                
+                // Clear the reset token from session since it's no longer needed
+                if (req.session.resetToken) {
+                  delete req.session.resetToken;
+                  // Save session to persist the deletion
+                  req.session.save(function(saveErr) {
+                    if (saveErr) {
+                      console.error('Error saving session after clearing token:', saveErr);
+                    }
+                  });
+                }
+                
+                done(null, user);
               });
             }
           );
