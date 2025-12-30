@@ -90,22 +90,39 @@ function LoginForm() {
       // Get the API URL with fallback
       const apiUrl = process.env.NEXT_PUBLIC_POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
       
-      // Function to submit login form
+      // Function to submit login form with timeout protection
       const submitLoginForm = async () => {
         try {
-          // Set redirect in session
-          await fetch('/set-redirect', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ redirect: '/communities' }),
-            credentials: 'include' // Use 'include' to ensure cookies are sent
-          });
+          // Set redirect in session with timeout
+          const controller = new AbortController();
+          const redirectTimeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+          
+          try {
+            await fetch('/set-redirect', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ redirect: '/communities' }),
+              credentials: 'include',
+              signal: controller.signal
+            });
+            clearTimeout(redirectTimeout);
+          } catch (err) {
+            clearTimeout(redirectTimeout);
+            // Continue even if set-redirect fails
+            console.warn('Failed to set redirect:', err);
+          }
         } catch (err) {
           // Continue even if set-redirect fails
           console.warn('Failed to set redirect:', err);
         }
+        
+        // Set a client-side timeout to show error if form submission hangs
+        const submissionTimeout = setTimeout(() => {
+          setLoading(false);
+          setError('Login request timed out. Please try again.');
+        }, 30000); // 30 second timeout
         
         // Use the hidden form in the DOM instead of creating a new one
         const hiddenForm = document.getElementById('loginForm') as HTMLFormElement;
@@ -115,6 +132,10 @@ function LoginForm() {
         if (hiddenForm && hiddenEmail && hiddenPassword) {
           hiddenEmail.value = trimmedEmail;
           hiddenPassword.value = trimmedPassword;
+          
+          // Store timeout ID to clear it if page navigates successfully
+          (window as any).__loginTimeout = submissionTimeout;
+          
           // Submit the form - this will trigger Passport authentication and set the session
           hiddenForm.submit();
         } else {
@@ -137,30 +158,57 @@ function LoginForm() {
           form.appendChild(emailInput);
           form.appendChild(passwordInput);
           document.body.appendChild(form);
+          
+          // Store timeout ID
+          (window as any).__loginTimeout = submissionTimeout;
+          
           form.submit();
         }
       };
       
-      // Validate credentials with the API first
-      const apiResponse = await fetch(`${apiUrl}/api/v1/auth/token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Basic ' + btoa(trimmedEmail + ':' + trimmedPassword)
+      // Validate credentials with the API first (with timeout)
+      const apiController = new AbortController();
+      const apiTimeout = setTimeout(() => apiController.abort(), 10000); // 10 second timeout for API call
+      
+      try {
+        const apiResponse = await fetch(`${apiUrl}/api/v1/auth/token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Basic ' + btoa(trimmedEmail + ':' + trimmedPassword)
+          },
+          signal: apiController.signal
+        });
+        
+        clearTimeout(apiTimeout);
+        
+        // Check if we got a valid token response
+        const apiData = await apiResponse.json().catch(() => ({}));
+        
+        if (apiResponse.ok && apiData.token) {
+          // API validation successful, proceed with login
+          submitLoginForm();
+          return;
+        } else {
+          // API validation failed - show error and stop
+          setError('Invalid email or password. Please check your credentials and try again.');
+          setLoading(false);
+          return;
         }
-      });
-      
-      // Check if we got a valid token response
-      const apiData = await apiResponse.json().catch(() => ({}));
-      
-      if (apiResponse.ok && apiData.token) {
-        // API validation successful, proceed with login
+      } catch (apiError: any) {
+        clearTimeout(apiTimeout);
+        
+        // Check if it was a timeout
+        if (apiError.name === 'AbortError') {
+          setError('Request timed out. Please check your connection and try again.');
+          setLoading(false);
+          return;
+        }
+        
+        // Other API errors - still try to proceed with form submission
+        // (the server will validate anyway)
+        console.warn('API validation error, proceeding with form submission:', apiError);
         submitLoginForm();
-        return;
-      } else {
-        // API validation failed - show error and stop
-        setError('Invalid email or password. Please check your credentials and try again.');
-        setLoading(false);
         return;
       }
       

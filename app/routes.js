@@ -176,8 +176,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
     res.render("login", { redirect: encodeURIComponent(redirect) });
   });
 
-  app.get("/signup", function (req, res) {
+  // Old signup page moved to signup-list
+  app.get("/signup-list", function (req, res) {
     res.render("signup");
+  });
+
+  // New signup page handled by Next.js
+  app.get("/signup", function (req, res) {
+    if (req.isAuthenticated()) {
+      return res.redirect("/communities");
+    }
+    return handle(req, res);
   });
 
   app.get("/not-authorized", function (req, res) {
@@ -896,20 +905,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
     return res.redirect("/dispatch-dashboard");
   });
 
+  // Redirect /signup-civ to /signup for backward compatibility
   app.get("/signup-civ", function (req, res) {
     if (req.isAuthenticated()) {
       return res.redirect("/communities");
     }
-    // Validate and fallback for API URL
-    let apiUrl = process.env.POLICE_CAD_API_URL;
-    if (!apiUrl) {
-      console.warn("[WARN] POLICE_CAD_API_URL is not set. Using fallback '/api'.");
-      apiUrl = '/api'; // Fallback to relative API path or set your default here
-    }
-    res.render("signup-civ", {
-      message: "",
-      apiUrl: apiUrl // Pass API URL to EJS
-    });
+    // Preserve query parameters if any
+    const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+    return res.redirect("/signup" + queryString);
   });
 
   app.get("/signup-police", authCheck, function (req, res) {
@@ -2742,11 +2745,78 @@ module.exports = function (app, passport, server, nextApp, handle) {
     return handle(req, res);
   });
 
+  // Handle incorrect Discord OAuth path for signup verification - redirect to correct path
+  app.get("/auth/discord/signup/verify/:token", function (req, res) {
+    return res.redirect(`/signup/verify/${req.params.token}`);
+  });
+
+  // Handle /signup/verify page (without token) - let Next.js handle it
+  app.get("/signup/verify", function (req, res) {
+    return handle(req, res);
+  });
+
+  // GET /signup/verify/:token - Verify email and auto-login (MUST be before catchall)
+  app.get("/signup/verify/:token", function (req, res) {
+    const token = req.params.token;
+    const currentTime = Date.now();
+
+    User.findOne(
+      {
+        "user.emailVerificationToken": token,
+        "user.emailVerificationExpires": {
+          $gt: currentTime,
+        },
+      },
+      function (err, user) {
+        if (err) {
+          console.error('Error finding user with verification token:', err);
+          req.flash("emailSend", "An error occurred. Please try again.");
+          return res.redirect("/signup/verify?error=verification_failed");
+        }
+
+        if (!user) {
+          // Invalid token - redirect to verify page without email so they can log in
+          return res.redirect("/signup/verify?error=invalid_token");
+        }
+
+        // Mark email as verified
+        user.user.emailVerified = true;
+        user.user.emailVerificationToken = undefined;
+        user.user.emailVerificationExpires = undefined;
+
+        user.save(function (err) {
+          if (err) {
+            console.error('Error saving verified user:', err);
+            req.flash("emailSend", "An error occurred. Please try again.");
+            return res.redirect("/signup/verify?error=verification_failed");
+          }
+
+          // Auto-login the user
+          req.login(user, function(err) {
+            if (err) {
+              console.error('Error auto-logging in user after verification:', err);
+              req.flash("info", "Email verified successfully! Please log in.");
+              return res.redirect("/login");
+            }
+            // Save session before redirect to ensure it persists
+            req.session.save(function(err) {
+              if (err) {
+                console.error('Error saving session after login:', err);
+              }
+              // Success - redirect to communities
+              return res.redirect("/communities");
+            });
+          });
+        });
+      }
+    );
+  });
+
   // Be sure to place all GET requests above this catchall
   // Exclude Next.js internal routes
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path.startsWith('/reset/')) {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/')) {
       return handle(req, res);
     }
     res.render("page-not-found");
@@ -2761,11 +2831,495 @@ module.exports = function (app, passport, server, nextApp, handle) {
       passReqToCallback: true,
     }),
     function (req, res, next) {
+      // Set a timeout to prevent hanging (30 seconds)
+      const timeout = setTimeout(() => {
+        if (!res.headersSent) {
+          console.error('Login route timeout - redirecting to login page');
+          return res.redirect('/login?error=timeout');
+        }
+      }, 30000);
+
+      // Check if user's email is explicitly not verified (emailVerified === false)
+      // Old accounts without this field (undefined/null) are treated as verified
+      if (req.user && req.user.user && req.user.user.emailVerified === false) {
+        // Account exists but is explicitly not verified - redirect to verify page
+        const userEmail = req.user.user.email;
+        // Logout the user since they can't access the app until verified
+        // Add timeout to logout callback
+        const logoutTimeout = setTimeout(() => {
+          if (!res.headersSent) {
+            console.error('Logout timeout - forcing redirect');
+            clearTimeout(timeout);
+            return res.redirect(`/signup/verify?email=${encodeURIComponent(userEmail)}`);
+          }
+        }, 5000); // 5 second timeout for logout
+
+        req.logout(function(err) {
+          clearTimeout(logoutTimeout);
+          clearTimeout(timeout);
+          
+          if (err) {
+            console.error('Error logging out unverified user:', err);
+            // Still redirect even if logout fails
+            if (!res.headersSent) {
+              return res.redirect(`/signup/verify?email=${encodeURIComponent(userEmail)}`);
+            }
+            return;
+          }
+          // Redirect to verify page with email
+          if (!res.headersSent) {
+            return res.redirect(`/signup/verify?email=${encodeURIComponent(userEmail)}`);
+          }
+        });
+        return;
+      }
+      
+      // Clear timeout since we're proceeding normally
+      clearTimeout(timeout);
+      
+      // User is verified (either emailVerified === true or undefined/null for old accounts) - proceed with normal redirect
       const redirect = req.session.redirect || "/communities";
       delete req.session.redirect; // Clear the session redirect after use
       res.redirect(redirect);
     }
   );
+
+  // POST /api/signup - Create temp account and send verification email
+  app.post("/api/signup", function (req, res) {
+    if (req.isAuthenticated()) {
+      return res.status(400).json({ message: 'You are already logged in.' });
+    }
+
+    const { username, email, password } = req.body;
+
+    // Validate inputs
+    if (!username || username.trim().length < 3) {
+      return res.status(400).json({ message: 'Username must be at least 3 characters long.', field: 'username' });
+    }
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address.', field: 'email' });
+    }
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long.', field: 'password' });
+    }
+
+    const searchEmail = email.toLowerCase().trim();
+    const searchUsername = username.trim();
+
+    async.waterfall(
+      [
+        function (done) {
+          // Check if email already exists
+          User.findOne(
+            {
+              "user.email": searchEmail
+            },
+            function (err, existingUser) {
+              if (err) {
+                return done(err);
+              }
+              if (existingUser) {
+                // Check if account is verified
+                // Only send verification email if emailVerified is explicitly false
+                // Old accounts (undefined/null) and verified accounts (true) should not receive emails
+                const emailVerified = existingUser.user.emailVerified;
+                
+                // Reject if:
+                // 1. emailVerified is explicitly true (verified account)
+                // 2. emailVerified is undefined/null (old account, treated as verified)
+                if (emailVerified === true || emailVerified === undefined || emailVerified === null) {
+                  return res.status(409).json({ message: 'An account with this email already exists. Please log in.', field: 'email' });
+                }
+                
+                // Only proceed if emailVerified === false (explicitly unverified)
+                if (emailVerified !== false) {
+                  // Safety check - shouldn't reach here, but just in case
+                  return res.status(409).json({ message: 'An account with this email already exists. Please log in.', field: 'email' });
+                }
+                
+                // Account exists and is explicitly not verified (emailVerified === false) - resend verification email
+                // Generate new verification token
+                crypto.randomBytes(20, function (err, buf) {
+                  if (err) {
+                    return done(err);
+                  }
+                  var newToken = buf.toString("hex");
+                  existingUser.user.emailVerificationToken = newToken;
+                  existingUser.user.emailVerificationExpires = Date.now() + 86400000; // 24 hours
+                  existingUser.save(function (err) {
+                    if (err) {
+                      return done(err);
+                    }
+                    // Send verification email
+                    if (!process.env.MAIL_API_KEY) {
+                      return res.status(500).json({ message: 'Email service is not configured. Please contact support.' });
+                    }
+                    var smtpTransport = nodemailer.createTransport(
+                      nodemailerSendgrid({
+                        apiKey: process.env.MAIL_API_KEY,
+                      })
+                    );
+                    let baseUrl = process.env.BASE_URL;
+                    if (!baseUrl && process.env.CLIENT_REDIRECT) {
+                      const clientRedirect = process.env.CLIENT_REDIRECT;
+                      const url = new URL(clientRedirect);
+                      baseUrl = `${url.protocol}//${url.host}`;
+                    }
+                    if (!baseUrl) {
+                      baseUrl = 'https://www.linespolice-cad.com';
+                    }
+                    const verificationUrl = `${baseUrl}/signup/verify/${newToken}`;
+                    fs.readFile("signupVerification.html", "utf8", function (err, htmlData) {
+                      if (err) {
+                        var mailOptions = {
+                          to: existingUser.user.email,
+                          from: process.env.FROM_EMAIL,
+                          subject: "Verify Your Lines Police CAD Account",
+                          html: `<h2>Welcome to Lines Police CAD!</h2><p>Please click the link below to verify your email address:</p><p><a href="${verificationUrl}">${verificationUrl}</a></p><p>This link will expire in 24 hours.</p>`,
+                        };
+                        smtpTransport.sendMail(mailOptions, function (err) {
+                          if (err) {
+                            return done(err);
+                          }
+                          // Response sent - don't call done() to stop waterfall
+                          return res.status(200).json({ 
+                            message: 'A verification email has been resent. Please check your inbox.',
+                            success: true,
+                            redirectTo: `/signup/verify?email=${encodeURIComponent(searchEmail)}`
+                          });
+                        });
+                      } else {
+                        let template = handlebars.compile(htmlData);
+                        let data = {
+                          verificationUrl: verificationUrl,
+                          username: existingUser.user.username,
+                        };
+                        let htmlToSend = template(data);
+                        var mailOptions = {
+                          to: existingUser.user.email,
+                          from: process.env.FROM_EMAIL,
+                          subject: "Verify Your Lines Police CAD Account",
+                          html: htmlToSend,
+                        };
+                        smtpTransport.sendMail(mailOptions, function (err) {
+                          if (err) {
+                            return done(err);
+                          }
+                          // Response sent - don't call done() to stop waterfall
+                          return res.status(200).json({ 
+                            message: 'A verification email has been resent. Please check your inbox.',
+                            success: true,
+                            redirectTo: `/signup/verify?email=${encodeURIComponent(searchEmail)}`
+                          });
+                        });
+                      }
+                    });
+                    // Don't call done() here - response will be sent in email callback
+                  });
+                });
+                // Don't call done() here - we're handling the response in the nested callbacks
+                return;
+              }
+              // No existing user - continue with account creation
+              done(null);
+            }
+          );
+        },
+        function (done) {
+          // Generate verification token
+          crypto.randomBytes(20, function (err, buf) {
+            if (err) {
+              return done(err);
+            }
+            var token = buf.toString("hex");
+            done(null, token);
+          });
+        },
+        function (token, done) {
+          // Create temp user account (not verified yet)
+          var newUser = new User();
+          newUser.user.username = searchUsername;
+          newUser.user.email = searchEmail;
+          newUser.user.callSign = req.body.callSign ? req.body.callSign.trim() : "";
+          newUser.user.password = newUser.generateHash(password);
+          newUser.user.name = "";
+          newUser.user.address = "";
+          newUser.user.discordConnected = false;
+          newUser.user.resetPasswordToken = "";
+          newUser.user.resetPasswordExpires = "";
+          newUser.user.emailVerificationToken = token;
+          newUser.user.emailVerificationExpires = Date.now() + 86400000; // 24 hours
+          newUser.user.emailVerified = false;
+          newUser.user.createdAt = new Date();
+          
+          newUser.save(function (err, savedUser) {
+            if (err) {
+              return done(err);
+            }
+            done(null, token, savedUser);
+          });
+        },
+        function (token, user, done) {
+          // Send verification email
+          if (!process.env.MAIL_API_KEY) {
+            return res.status(500).json({ message: 'Email service is not configured. Please contact support.' });
+          }
+
+          var smtpTransport = nodemailer.createTransport(
+            nodemailerSendgrid({
+              apiKey: process.env.MAIL_API_KEY,
+            })
+          );
+
+          // Use BASE_URL if set, otherwise extract base from CLIENT_REDIRECT, or use default
+          let baseUrl = process.env.BASE_URL;
+          if (!baseUrl && process.env.CLIENT_REDIRECT) {
+            // Extract base URL from CLIENT_REDIRECT (remove /auth/discord if present)
+            const clientRedirect = process.env.CLIENT_REDIRECT;
+            const url = new URL(clientRedirect);
+            baseUrl = `${url.protocol}//${url.host}`;
+          }
+          if (!baseUrl) {
+            baseUrl = 'https://www.linespolice-cad.com';
+          }
+          const verificationUrl = `${baseUrl}/signup/verify/${token}`;
+
+          fs.readFile("signupVerification.html", "utf8", function (err, htmlData) {
+            if (err) {
+              console.error("Failed to read signup verification email template:", err);
+              // Fallback to simple text email
+              var mailOptions = {
+                to: user.user.email,
+                from: process.env.FROM_EMAIL,
+                subject: "Verify Your Lines Police CAD Account",
+                html: `
+                  <h2>Welcome to Lines Police CAD!</h2>
+                  <p>Please click the link below to verify your email address:</p>
+                  <p><a href="${verificationUrl}">${verificationUrl}</a></p>
+                  <p>This link will expire in 24 hours.</p>
+                `,
+              };
+              smtpTransport.sendMail(mailOptions, function (err) {
+                if (err) {
+                  return done(err);
+                }
+                done(null);
+              });
+            } else {
+              let template = handlebars.compile(htmlData);
+              let data = {
+                verificationUrl: verificationUrl,
+                username: user.user.username,
+              };
+              let htmlToSend = template(data);
+              var mailOptions = {
+                to: user.user.email,
+                from: process.env.FROM_EMAIL,
+                subject: "Verify Your Lines Police CAD Account",
+                html: htmlToSend,
+              };
+
+              smtpTransport.sendMail(mailOptions, function (err) {
+                if (err) {
+                  return done(err);
+                }
+                done(null);
+              });
+            }
+          });
+        },
+      ],
+      function (err) {
+        if (err) {
+          console.error('Signup error:', err);
+          return res.status(500).json({ message: 'An error occurred while creating your account. Please try again.' });
+        }
+        return res.status(200).json({ 
+          message: 'Account created successfully! Please check your email to verify your account.',
+          success: true 
+        });
+      }
+    );
+  });
+
+
+  // POST /api/signup/resend - Resend verification email
+  app.post("/api/signup/resend", function (req, res) {
+    const { email } = req.body;
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address.' });
+    }
+
+    const searchEmail = email.toLowerCase().trim();
+
+    // Allow resend even if authenticated (user might be on verify page after login attempt)
+    // We'll check emailVerified status to determine if we should send
+
+    async.waterfall(
+      [
+        function (done) {
+          // Try exact match first
+          User.findOne(
+            { "user.email": searchEmail },
+            function (err, user) {
+              if (err) {
+                return done(err);
+              }
+              if (!user) {
+                // Try case-insensitive search as fallback
+                User.findOne(
+                  { "user.email": { $regex: new RegExp(`^${searchEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } },
+                  function (err2, user2) {
+                    if (err2) {
+                      // Don't reveal if email exists or not for security
+                      return res.status(200).json({ 
+                        message: 'If this email is registered, a verification email has been sent.' 
+                      });
+                    }
+                    if (!user2) {
+                      // Don't reveal if email exists or not for security
+                      return res.status(200).json({ 
+                        message: 'If this email is registered, a verification email has been sent.' 
+                      });
+                    }
+                    // Use the found user
+                    user = user2;
+                    // Continue with the found user
+                    checkEmailVerified(user);
+                  }
+                );
+                return;
+              }
+              checkEmailVerified(user);
+            }
+          );
+          
+          function checkEmailVerified(user) {
+            // Only send email if emailVerified is explicitly false
+            // Old accounts (undefined/null) and verified accounts (true) should not receive emails
+            const emailVerified = user.user.emailVerified;
+            
+            if (emailVerified === true || (emailVerified === undefined || emailVerified === null)) {
+              // Account is already verified (or old account without emailVerified field) - don't send email
+              return res.status(200).json({ 
+                message: 'This email is already verified. Please log in.' 
+              });
+            }
+            
+            // Only proceed if emailVerified === false (explicitly unverified)
+            if (emailVerified !== false) {
+              // Safety check - shouldn't reach here, but just in case
+              return res.status(200).json({ 
+                message: 'This email is already verified. Please log in.' 
+              });
+            }
+            
+            // Account exists and is explicitly not verified (emailVerified === false) - proceed with sending email
+            done(null, user);
+          }
+        },
+        function (user, done) {
+          // Generate new verification token
+          crypto.randomBytes(20, function (err, buf) {
+            if (err) {
+              console.error('Error generating token:', err);
+              return done(err);
+            }
+            var token = buf.toString("hex");
+            const newExpiration = Date.now() + 86400000; // 24 hours
+            user.user.emailVerificationToken = token;
+            user.user.emailVerificationExpires = newExpiration;
+            user.save(function (err) {
+              if (err) {
+                return done(err);
+              }
+              done(null, token, user);
+            });
+          });
+        },
+        function (token, user, done) {
+          // Send verification email
+          if (!process.env.MAIL_API_KEY) {
+            return res.status(500).json({ message: 'Email service is not configured. Please contact support.' });
+          }
+
+          var smtpTransport = nodemailer.createTransport(
+            nodemailerSendgrid({
+              apiKey: process.env.MAIL_API_KEY,
+            })
+          );
+
+          // Use BASE_URL if set, otherwise extract base from CLIENT_REDIRECT, or use default
+          let baseUrl = process.env.BASE_URL;
+          if (!baseUrl && process.env.CLIENT_REDIRECT) {
+            // Extract base URL from CLIENT_REDIRECT (remove /auth/discord if present)
+            const clientRedirect = process.env.CLIENT_REDIRECT;
+            const url = new URL(clientRedirect);
+            baseUrl = `${url.protocol}//${url.host}`;
+          }
+          if (!baseUrl) {
+            baseUrl = 'https://www.linespolice-cad.com';
+          }
+          const verificationUrl = `${baseUrl}/signup/verify/${token}`;
+
+          fs.readFile("signupVerification.html", "utf8", function (err, htmlData) {
+            if (err) {
+              // Fallback to simple text email
+              var mailOptions = {
+                to: user.user.email,
+                from: process.env.FROM_EMAIL,
+                subject: "Verify Your Lines Police CAD Account",
+                html: `
+                  <h2>Verify Your Email</h2>
+                  <p>Please click the link below to verify your email address:</p>
+                  <p><a href="${verificationUrl}">${verificationUrl}</a></p>
+                  <p>This link will expire in 24 hours.</p>
+                `,
+              };
+              smtpTransport.sendMail(mailOptions, function (err) {
+                if (err) {
+                  return done(err);
+                }
+                done(null);
+              });
+            } else {
+              let template = handlebars.compile(htmlData);
+              let data = {
+                verificationUrl: verificationUrl,
+                username: user.user.username,
+              };
+              let htmlToSend = template(data);
+              var mailOptions = {
+                to: user.user.email,
+                from: process.env.FROM_EMAIL,
+                subject: "Verify Your Lines Police CAD Account",
+                html: htmlToSend,
+              };
+
+              smtpTransport.sendMail(mailOptions, function (err) {
+                if (err) {
+                  return done(err);
+                }
+                done(null);
+              });
+            }
+          });
+        },
+      ],
+      function (err) {
+        if (err) {
+          return res.status(500).json({ message: 'An error occurred. Please try again.' });
+        }
+        return res.status(200).json({ 
+          message: 'Verification email sent! Please check your inbox.',
+          success: true 
+        });
+      }
+    );
+  });
 
   // POST /login-civ - redirect to /login for backward compatibility
   app.post(

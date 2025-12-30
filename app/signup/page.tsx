@@ -1,87 +1,65 @@
 'use client';
 
 import { useState, useEffect, FormEvent, Suspense } from 'react';
-import { useRouter, useParams, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
-import { ExclamationTriangleIcon, CheckCircleIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
+import { ExclamationTriangleIcon, CheckCircleIcon, UserIcon, EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
 
-function ResetPasswordForm() {
+function SignupForm() {
   const router = useRouter();
-  const params = useParams();
   const searchParams = useSearchParams();
-  const token = params?.token as string;
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [callSign, setCallSign] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState(false);
-  const [confirmPasswordError, setConfirmPasswordError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [tokenValid, setTokenValid] = useState<boolean | null>(null);
-  
-  // Password requirements validation
-  const [passwordRequirements, setPasswordRequirements] = useState({
-    minLength: false,
-    matches: false
-  });
-  
-  // Check password requirements in real-time
-  useEffect(() => {
-    setPasswordRequirements({
-      minLength: password.length >= 6,
-      matches: password === confirmPassword && password.length > 0
-    });
-  }, [password, confirmPassword]);
+  const [usernameError, setUsernameError] = useState(false);
+  const [emailError, setEmailError] = useState(false);
+  const [passwordError, setPasswordError] = useState(false);
+  const [confirmPasswordError, setConfirmPasswordError] = useState(false);
+
+  // Password requirements
+  const isMinLength = password.length >= 6;
+  const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
 
   useEffect(() => {
-    // Check for message query parameter (from flash messages)
-    const messageParam = searchParams.get('message');
-    if (messageParam) {
-      setError(decodeURIComponent(messageParam));
-    }
-
-    // Check if token is valid when component mounts
-    const checkToken = async () => {
-      if (!token || token === 'encryptedToken') {
-        // If no token or encryptedToken, we need to check via session
-        // The Express route should have stored it in session
-        try {
-          const response = await fetch('/api/reset-token/validate', {
-            credentials: 'include'
-          });
-          if (response.ok) {
-            const data = await response.json();
-            if (data.valid) {
-              setTokenValid(true);
-            } else {
-              setTokenValid(false);
-              setError(data.message || 'Password reset token is invalid or has expired.');
-              // Redirect to forgot-password after 3 seconds
-              setTimeout(() => {
-                router.push('/forgot-password?message=' + encodeURIComponent('Password reset token is invalid or has expired.'));
-              }, 3000);
-            }
-          } else {
-            setTokenValid(false);
-            setError('Unable to validate reset token. Please try again.');
+    // Check if user is already logged in
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/user/current', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user) {
+            router.push('/communities');
+            return;
           }
-        } catch {
-          setTokenValid(false);
-          setError('Unable to validate reset token. Please try again.');
         }
-      } else {
-        // Token in URL - need to store it in session first via Express route
-        // The Express route will handle this and redirect
-        window.location.href = `/reset/${token}`;
+      } catch {
+        // User not logged in, continue
       }
     };
+    checkAuth();
 
-    checkToken();
-  }, [token, router, searchParams]);
+    // Check for message query parameter
+    const messageParam = searchParams.get('message');
+    if (messageParam) {
+      if (messageParam.includes('success') || messageParam.includes('email sent')) {
+        setSuccess(decodeURIComponent(messageParam));
+      } else {
+        setError(decodeURIComponent(messageParam));
+      }
+    }
+  }, [router, searchParams]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -89,161 +67,121 @@ function ResetPasswordForm() {
     // Clear previous messages
     setError('');
     setSuccess('');
+    setUsernameError(false);
+    setEmailError(false);
     setPasswordError(false);
     setConfirmPasswordError(false);
     
     // Validate inputs
-    if (!password) {
-      setError('Please enter a new password.');
+    const trimmedUsername = username.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+    const trimmedConfirmPassword = confirmPassword.trim();
+    
+    if (!trimmedUsername) {
+      setError('Please enter a username.');
+      setUsernameError(true);
+      return;
+    }
+    
+    if (trimmedUsername.length < 3) {
+      setError('Username must be at least 3 characters long.');
+      setUsernameError(true);
+      return;
+    }
+    
+    if (!trimmedEmail) {
+      setError('Please enter your email address.');
+      setEmailError(true);
+      return;
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError('Please enter a valid email address.');
+      setEmailError(true);
+      return;
+    }
+    
+    if (!trimmedPassword) {
+      setError('Please enter a password.');
       setPasswordError(true);
       return;
     }
     
-    if (password.length < 6) {
+    if (trimmedPassword.length < 6) {
       setError('Password must be at least 6 characters long.');
       setPasswordError(true);
       return;
     }
     
-    if (!confirmPassword) {
+    if (!trimmedConfirmPassword) {
       setError('Please confirm your password.');
       setConfirmPasswordError(true);
       return;
     }
     
-    if (password !== confirmPassword) {
+    if (trimmedPassword !== trimmedConfirmPassword) {
       setError('Passwords do not match.');
       setPasswordError(true);
       setConfirmPasswordError(true);
       return;
     }
     
-    // Show loading state
-    setLoading(true);
+    if (!acceptedTerms) {
+      setError('Please accept the Terms and Conditions to continue.');
+      return;
+    }
     
+    setLoading(true);
+
     try {
-      // Submit the form to the Express route
-      // The route uses the token from session
-      // Use a hidden form to ensure cookies are sent properly
-      const form = document.getElementById('resetPasswordForm') as HTMLFormElement;
-      if (form) {
-        // Create hidden form for submission to Express
-        const submitForm = document.createElement('form');
-        submitForm.method = 'POST';
-        submitForm.action = '/reset/encryptedToken'; // Use encryptedToken since token is in session
-        submitForm.style.display = 'none';
-        
-        const passwordInput = document.createElement('input');
-        passwordInput.type = 'hidden';
-        passwordInput.name = 'password';
-        passwordInput.value = password;
-        
-        submitForm.appendChild(passwordInput);
-        document.body.appendChild(submitForm);
-        submitForm.submit();
-        // Form will redirect, so we don't need to handle response
+      const apiUrl = process.env.NEXT_PUBLIC_POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+      
+      // Create temp account and send verification email
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          username: trimmedUsername,
+          email: trimmedEmail,
+          callSign: callSign.trim() || '',
+          password: trimmedPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || 'Failed to create account. Please try again.');
+        if (data.field) {
+          if (data.field === 'username') setUsernameError(true);
+          if (data.field === 'email') setEmailError(true);
+        }
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      setError('An error occurred. Please try again.');
+
+      // Success - redirect to verify page (or use redirectTo from response if provided)
+      if (data.redirectTo) {
+        setSuccess('A verification email has been resent. Please check your inbox.');
+        setTimeout(() => {
+          router.push(data.redirectTo);
+        }, 1500);
+      } else {
+        setSuccess('Account created! Please check your email to verify your account.');
+        setTimeout(() => {
+          router.push(`/signup/verify?email=${encodeURIComponent(trimmedEmail)}`);
+        }, 1500);
+      }
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError('An unexpected error occurred. Please try again.');
       setLoading(false);
     }
   };
-
-  // Show loading state while validating token
-  if (tokenValid === null) {
-    return (
-      <main 
-        style={{
-          minHeight: '100vh',
-          width: '100%',
-          maxWidth: '100vw',
-          backgroundColor: '#0a0a0f',
-          position: 'relative',
-          margin: 0,
-          padding: 0,
-          overflowX: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <Navbar />
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '2rem'
-        }}>
-          <div style={{
-            color: 'rgba(255, 255, 255, 0.7)',
-            fontSize: '1rem'
-          }}>
-            Validating reset token...
-          </div>
-        </div>
-        <Footer />
-      </main>
-    );
-  }
-
-  // Show error if token is invalid
-  if (tokenValid === false) {
-    return (
-      <main 
-        style={{
-          minHeight: '100vh',
-          width: '100%',
-          maxWidth: '100vw',
-          backgroundColor: '#0a0a0f',
-          position: 'relative',
-          margin: 0,
-          padding: 0,
-          overflowX: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <Navbar />
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '2rem'
-        }}>
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(25, 30, 50, 0.98) 0%, rgba(30, 20, 40, 0.98) 100%)',
-            borderRadius: '20px',
-            padding: '2rem',
-            maxWidth: '500px',
-            textAlign: 'center'
-          }}>
-            <ExclamationTriangleIcon style={{ width: '3rem', height: '3rem', color: '#ef4444', margin: '0 auto 1rem' }} />
-            <h2 style={{ color: '#ffffff', marginBottom: '1rem' }}>Invalid Token</h2>
-            <p style={{ color: 'rgba(255, 255, 255, 0.7)', marginBottom: '1.5rem' }}>
-              {error || 'Password reset token is invalid or has expired.'}
-            </p>
-            <Link
-              href="/forgot-password"
-              style={{
-                display: 'inline-block',
-                padding: '0.75rem 1.5rem',
-                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                color: '#000000',
-                textDecoration: 'none',
-                borderRadius: '10px',
-                fontWeight: '600'
-              }}
-            >
-              Request New Reset Link
-            </Link>
-          </div>
-        </div>
-        <Footer />
-      </main>
-    );
-  }
 
   return (
     <main 
@@ -256,6 +194,7 @@ function ResetPasswordForm() {
         margin: 0,
         padding: 0,
         overflowX: 'hidden',
+        boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -315,10 +254,10 @@ function ResetPasswordForm() {
             maxWidth: '100%',
           }}
         >
-        {/* Large RESET PASSWORD Title */}
+        {/* Large SIGNUP Title */}
         <h1
           style={{
-            fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+            fontSize: 'clamp(2.5rem, 8vw, 3.5rem)',
             fontWeight: '700',
             textAlign: 'center',
             marginBottom: '2rem',
@@ -338,7 +277,7 @@ function ResetPasswordForm() {
             filter: 'blur(2px)',
             zIndex: 0
           }}>
-            RESET PASSWORD
+            REGISTER
           </span>
           {/* Shimmer text */}
           <span style={{
@@ -352,11 +291,11 @@ function ResetPasswordForm() {
             animation: 'shimmer 12s linear infinite',
             display: 'inline-block'
           }}>
-            RESET PASSWORD
+            REGISTER
           </span>
         </h1>
 
-        {/* Reset Password Container */}
+        {/* Signup Container */}
         <div
           style={{
             background: 'linear-gradient(135deg, rgba(25, 30, 50, 0.98) 0%, rgba(30, 20, 40, 0.98) 100%)',
@@ -381,7 +320,7 @@ function ResetPasswordForm() {
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
               }}
             >
-              Create New Password
+              Create an Account
             </h2>
             <p
               style={{
@@ -390,7 +329,7 @@ function ResetPasswordForm() {
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
               }}
             >
-              Enter your new password below.
+              Join Lines Police CAD today
             </p>
           </div>
 
@@ -406,7 +345,7 @@ function ResetPasswordForm() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                color: '#6ee7b7',
+                color: '#a7f3d0',
                 fontSize: '0.875rem',
               }}
             >
@@ -436,9 +375,194 @@ function ResetPasswordForm() {
             </div>
           )}
 
-          {/* Reset Password Form */}
-          <form id="resetPasswordForm" onSubmit={handleSubmit}>
-            {/* New Password Field */}
+          {/* Signup Form */}
+          <form onSubmit={handleSubmit}>
+            {/* Username Field */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label
+                htmlFor="username"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  color: '#ffffff',
+                  fontWeight: '500',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                }}
+              >
+                <UserIcon style={{ width: '1rem', height: '1rem' }} />
+                Desired Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value={username}
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  setUsernameError(false);
+                  setError('');
+                }}
+                placeholder="Enter your username"
+                required
+                autoComplete="username"
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  border: `2px solid ${usernameError ? '#ef4444' : 'rgba(255, 255, 255, 0.2)'}`,
+                  borderRadius: '10px',
+                  fontSize: '1rem',
+                  backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                  color: '#ffffff',
+                  transition: 'all 0.3s ease',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#fbbf24';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(251, 191, 36, 0.1)';
+                }}
+                onBlur={(e) => {
+                  if (!usernameError) {
+                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                  }
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+              <p style={{
+                fontSize: '0.75rem',
+                color: 'rgba(255, 255, 255, 0.5)',
+                marginTop: '0.25rem',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+              }}>
+                You can always modify this later in your account settings.
+              </p>
+            </div>
+
+            {/* Call Sign Field */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label
+                htmlFor="callSign"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  color: '#ffffff',
+                  fontWeight: '500',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                }}
+              >
+                <UserIcon style={{ width: '1rem', height: '1rem' }} />
+                Call Sign
+              </label>
+              <input
+                type="text"
+                id="callSign"
+                name="callSign"
+                value={callSign}
+                onChange={(e) => {
+                  // Limit to 10 characters
+                  const value = e.target.value.slice(0, 10);
+                  setCallSign(value);
+                  setError('');
+                }}
+                placeholder="Optional - Max 10 characters"
+                autoComplete="off"
+                disabled={loading}
+                maxLength={10}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  border: '2px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '10px',
+                  fontSize: '1rem',
+                  backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                  color: '#ffffff',
+                  transition: 'all 0.3s ease',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#fbbf24';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(251, 191, 36, 0.1)';
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+              <p style={{
+                fontSize: '0.75rem',
+                color: 'rgba(255, 255, 255, 0.5)',
+                marginTop: '0.25rem',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+              }}>
+                Optional - Max 10 characters
+              </p>
+            </div>
+
+            {/* Email Field */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label
+                htmlFor="email"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  color: '#ffffff',
+                  fontWeight: '500',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                }}
+              >
+                <EnvelopeIcon style={{ width: '1rem', height: '1rem' }} />
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={email}
+                onChange={(e) => {
+                  // Remove spaces and convert to lowercase
+                  const cleanedEmail = e.target.value.replace(/\s/g, '').toLowerCase();
+                  setEmail(cleanedEmail);
+                  setEmailError(false);
+                  setError('');
+                }}
+                placeholder="Enter your email"
+                required
+                autoComplete="email"
+                disabled={loading}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem 1rem',
+                  border: `2px solid ${emailError ? '#ef4444' : 'rgba(255, 255, 255, 0.2)'}`,
+                  borderRadius: '10px',
+                  fontSize: '1rem',
+                  backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                  color: '#ffffff',
+                  transition: 'all 0.3s ease',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#fbbf24';
+                  e.target.style.boxShadow = '0 0 0 3px rgba(251, 191, 36, 0.1)';
+                }}
+                onBlur={(e) => {
+                  if (!emailError) {
+                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                  }
+                  e.target.style.boxShadow = 'none';
+                }}
+              />
+            </div>
+
+            {/* Password Field */}
             <div style={{ marginBottom: '1.5rem' }}>
               <label
                 htmlFor="password"
@@ -454,7 +578,7 @@ function ResetPasswordForm() {
                 }}
               >
                 <LockClosedIcon style={{ width: '1rem', height: '1rem' }} />
-                New Password
+                Password
               </label>
               <div style={{ position: 'relative' }}>
                 <input
@@ -467,7 +591,7 @@ function ResetPasswordForm() {
                     setPasswordError(false);
                     setError('');
                   }}
-                  placeholder="Enter new password"
+                  placeholder="Enter your password"
                   required
                   autoComplete="new-password"
                   disabled={loading}
@@ -475,13 +599,7 @@ function ResetPasswordForm() {
                     width: '100%',
                     padding: '0.75rem 1rem',
                     paddingRight: '3rem',
-                    border: `2px solid ${
-                      passwordError 
-                        ? '#ef4444' 
-                        : passwordRequirements.minLength 
-                          ? '#10b981' 
-                          : 'rgba(255, 255, 255, 0.2)'
-                    }`,
+                    border: `2px solid ${passwordError ? '#ef4444' : (isMinLength ? '#10b981' : 'rgba(255, 255, 255, 0.2)')}`,
                     borderRadius: '10px',
                     fontSize: '1rem',
                     backgroundColor: 'rgba(0, 0, 0, 0.3)',
@@ -494,8 +612,10 @@ function ResetPasswordForm() {
                     e.target.style.boxShadow = '0 0 0 3px rgba(251, 191, 36, 0.1)';
                   }}
                   onBlur={(e) => {
-                    if (!passwordError) {
+                    if (!passwordError && !isMinLength) {
                       e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                    } else if (!passwordError && isMinLength) {
+                      e.target.style.borderColor = '#10b981';
                     }
                     e.target.style.boxShadow = 'none';
                   }}
@@ -518,12 +638,6 @@ function ResetPasswordForm() {
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
-                  }}
                 >
                   {showPassword ? (
                     <EyeSlashIcon style={{ width: '1.25rem', height: '1.25rem' }} />
@@ -534,26 +648,22 @@ function ResetPasswordForm() {
               </div>
               {/* Password Requirements */}
               <div style={{
-                marginTop: '0.5rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                fontSize: '0.875rem',
+                marginTop: '0.5rem',
+                fontSize: '0.75rem',
+                color: isMinLength ? '#10b981' : 'rgba(255, 255, 255, 0.5)',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
               }}>
-                {passwordRequirements.minLength ? (
-                  <CheckCircleIcon style={{ width: '1rem', height: '1rem', color: '#10b981', flexShrink: 0 }} />
+                {isMinLength ? (
+                  <CheckCircleIcon style={{ width: '1rem', height: '1rem' }} />
                 ) : (
                   <div style={{ width: '1rem', height: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.75rem' }}>×</span>
                   </div>
                 )}
-                <span style={{
-                  color: passwordRequirements.minLength ? '#10b981' : 'rgba(255, 255, 255, 0.6)',
-                  transition: 'color 0.2s ease'
-                }}>
-                  At least 6 characters
-                </span>
+                At least 6 characters
               </div>
             </div>
 
@@ -579,14 +689,14 @@ function ResetPasswordForm() {
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
                   id="confirmPassword"
-                  name="confirm"
+                  name="confirmPassword"
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value);
                     setConfirmPasswordError(false);
                     setError('');
                   }}
-                  placeholder="Confirm new password"
+                  placeholder="Confirm your password"
                   required
                   autoComplete="new-password"
                   disabled={loading}
@@ -594,13 +704,7 @@ function ResetPasswordForm() {
                     width: '100%',
                     padding: '0.75rem 1rem',
                     paddingRight: '3rem',
-                    border: `2px solid ${
-                      confirmPasswordError 
-                        ? '#ef4444' 
-                        : passwordRequirements.matches && confirmPassword.length > 0
-                          ? '#10b981' 
-                          : 'rgba(255, 255, 255, 0.2)'
-                    }`,
+                    border: `2px solid ${confirmPasswordError ? '#ef4444' : (passwordsMatch ? '#10b981' : 'rgba(255, 255, 255, 0.2)')}`,
                     borderRadius: '10px',
                     fontSize: '1rem',
                     backgroundColor: 'rgba(0, 0, 0, 0.3)',
@@ -613,8 +717,10 @@ function ResetPasswordForm() {
                     e.target.style.boxShadow = '0 0 0 3px rgba(251, 191, 36, 0.1)';
                   }}
                   onBlur={(e) => {
-                    if (!confirmPasswordError) {
+                    if (!confirmPasswordError && !passwordsMatch) {
                       e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                    } else if (!confirmPasswordError && passwordsMatch) {
+                      e.target.style.borderColor = '#10b981';
                     }
                     e.target.style.boxShadow = 'none';
                   }}
@@ -637,12 +743,6 @@ function ResetPasswordForm() {
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
-                  }}
                 >
                   {showConfirmPassword ? (
                     <EyeSlashIcon style={{ width: '1.25rem', height: '1.25rem' }} />
@@ -651,41 +751,81 @@ function ResetPasswordForm() {
                   )}
                 </button>
               </div>
-              {/* Password Match Requirement */}
+              {/* Confirm Password Match */}
               {confirmPassword.length > 0 && (
                 <div style={{
-                  marginTop: '0.5rem',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
-                  fontSize: '0.875rem',
+                  marginTop: '0.5rem',
+                  fontSize: '0.75rem',
+                  color: passwordsMatch ? '#10b981' : 'rgba(255, 255, 255, 0.5)',
                   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                 }}>
-                  {passwordRequirements.matches ? (
-                    <CheckCircleIcon style={{ width: '1rem', height: '1rem', color: '#10b981', flexShrink: 0 }} />
+                  {passwordsMatch ? (
+                    <CheckCircleIcon style={{ width: '1rem', height: '1rem' }} />
                   ) : (
                     <div style={{ width: '1rem', height: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.75rem' }}>×</span>
                     </div>
                   )}
-                  <span style={{
-                    color: passwordRequirements.matches ? '#10b981' : 'rgba(255, 255, 255, 0.6)',
-                    transition: 'color 0.2s ease'
-                  }}>
-                    Passwords match
-                  </span>
+                  Passwords match
                 </div>
               )}
+            </div>
+
+            {/* Terms and Conditions Checkbox */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem',
+                  cursor: 'pointer',
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '0.875rem',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(e) => {
+                    setAcceptedTerms(e.target.checked);
+                    setError('');
+                  }}
+                  style={{
+                    marginTop: '0.125rem',
+                    width: '1.25rem',
+                    height: '1.25rem',
+                    cursor: 'pointer',
+                    accentColor: '#fbbf24',
+                  }}
+                />
+                <span>
+                  I accept the{' '}
+                  <Link
+                    href="/terms-and-conditions"
+                    target="_blank"
+                    style={{
+                      color: '#fbbf24',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Terms and Conditions
+                  </Link>
+                </span>
+              </label>
             </div>
 
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !isMinLength || !passwordsMatch || !acceptedTerms}
               style={{
                 width: '100%',
                 padding: '0.875rem',
-                background: loading
+                background: (loading || !isMinLength || !passwordsMatch || !acceptedTerms)
                   ? 'rgba(251, 191, 36, 0.5)'
                   : 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
                 color: '#000000',
@@ -693,7 +833,7 @@ function ResetPasswordForm() {
                 borderRadius: '10px',
                 fontSize: '1rem',
                 fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
+                cursor: (loading || !isMinLength || !passwordsMatch || !acceptedTerms) ? 'not-allowed' : 'pointer',
                 transition: 'all 0.3s ease',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                 display: 'flex',
@@ -703,7 +843,7 @@ function ResetPasswordForm() {
                 marginBottom: '1.5rem',
               }}
               onMouseEnter={(e) => {
-                if (!loading) {
+                if (!(loading || !isMinLength || !passwordsMatch || !acceptedTerms)) {
                   e.currentTarget.style.transform = 'translateY(-2px)';
                   e.currentTarget.style.boxShadow = '0 10px 20px rgba(251, 191, 36, 0.3)';
                 }
@@ -725,53 +865,30 @@ function ResetPasswordForm() {
                       animation: 'spin 1s linear infinite',
                     }}
                   />
-                  <span>Updating...</span>
+                  <span>Creating Account...</span>
                 </>
               ) : (
-                <>
-                  <LockClosedIcon style={{ width: '1.25rem', height: '1.25rem' }} />
-                  <span>Update Password</span>
-                </>
+                'Register'
               )}
             </button>
           </form>
 
-          {/* Links */}
+          {/* Login Link */}
           <div
             style={{
               textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.75rem',
             }}
           >
+            <span style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.875rem' }}>
+              Already registered?{' '}
+            </span>
             <Link
               href="/login"
-              style={{
-                color: '#fbbf24',
-                textDecoration: 'none',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                transition: 'color 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#f59e0b';
-                e.currentTarget.style.textDecoration = 'underline';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = '#fbbf24';
-                e.currentTarget.style.textDecoration = 'none';
-              }}
-            >
-              Back to Login
-            </Link>
-            <Link
-              href="/"
               style={{
                 color: 'rgba(251, 191, 36, 0.8)',
                 textDecoration: 'none',
                 fontSize: '0.875rem',
+                fontWeight: '600',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                 transition: 'color 0.2s',
               }}
@@ -784,7 +901,7 @@ function ResetPasswordForm() {
                 e.currentTarget.style.textDecoration = 'none';
               }}
             >
-              Back to Home
+              Login here
             </Link>
           </div>
         </div>
@@ -803,7 +920,7 @@ function ResetPasswordForm() {
   );
 }
 
-export default function ResetPassword() {
+export default function Signup() {
   return (
     <Suspense fallback={
       <main 
@@ -834,7 +951,7 @@ export default function ResetPassword() {
         <Footer />
       </main>
     }>
-      <ResetPasswordForm />
+      <SignupForm />
     </Suspense>
   );
 }

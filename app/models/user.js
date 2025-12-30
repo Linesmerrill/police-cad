@@ -21,6 +21,9 @@ var userSchema = mongoose.Schema({
     },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    emailVerificationToken: String,
+    emailVerificationExpires: Date,
+    emailVerified: Boolean,
     activeCommunity: String,
     lastAccessedCommunity: {
       communityID: String,
