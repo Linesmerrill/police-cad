@@ -981,18 +981,56 @@ module.exports = function (app, passport, server, nextApp, handle) {
       });
   });
 
-  app.get("/forgot-password", function (req, res) {
-    return res.render("forgot-password", {
-      user: req.user,
-      message: req.flash("emailSend"),
-    });
+  // Forgot Password page is now handled by Next.js at app/forgot-password/page.tsx
+  // app.get("/forgot-password", function (req, res) {
+  //   return res.render("forgot-password", {
+  //     user: req.user,
+  //     message: req.flash("emailSend"),
+  //   });
+  // });
+
+  // API endpoint to validate reset token (for Next.js)
+  app.get("/api/reset-token/validate", function (req, res) {
+    const token = req.session.resetToken;
+    if (!token) {
+      return res.json({ valid: false, message: "No reset token found in session." });
+    }
+    
+    User.findOne(
+      {
+        "user.resetPasswordToken": token,
+        "user.resetPasswordExpires": {
+          $gt: Date.now(),
+        },
+      },
+      function (err, user) {
+        if (err) {
+          console.error(err);
+          return res.json({ valid: false, message: "Error validating token." });
+        }
+        if (!user) {
+          return res.json({ valid: false, message: "Password reset token is invalid or has expired." });
+        }
+        return res.json({ valid: true });
+      }
+    );
   });
 
   app.get("/reset/:token", function (req, res) {
     if (req.params.token && req.params.token != "encryptedToken") {
+      // Store token in session and redirect to encryptedToken route
       req.session.resetToken = req.params.token;
       return res.redirect("/reset/encryptedToken");
     } else {
+      // Token is in session (encryptedToken route), validate and let Next.js handle
+      if (!req.session.resetToken) {
+        req.flash(
+          "emailSend",
+          "Password reset token is invalid or has expired."
+        );
+        return res.redirect("/forgot-password");
+      }
+      
       User.findOne(
         {
           "user.resetPasswordToken": req.session.resetToken,
@@ -1009,10 +1047,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
             );
             return res.redirect("/forgot-password");
           }
-          return res.render("reset", {
-            user: req.user,
-            message: req.flash("resetSend"),
-          });
+          // Token is valid, let Next.js handle the page
+          // Check for flash messages and add to query if present
+          const flashMessage = req.flash("resetSend");
+          const message = flashMessage && flashMessage.length > 0 ? flashMessage[0] : null;
+          if (message && !req.query.message) {
+            // Add message to query string only if not already present
+            const separator = req.url.includes('?') ? '&' : '?';
+            req.url = req.url + separator + 'message=' + encodeURIComponent(message);
+          }
+          // Let Next.js handle it - don't redirect, just pass through
+          return handle(req, res);
         }
       );
     }
@@ -2666,11 +2711,24 @@ module.exports = function (app, passport, server, nextApp, handle) {
     return handle(req, res);
   });
 
+  // Handle /forgot-password - pass flash messages via query params
+  app.get("/forgot-password", function (req, res) {
+    const flashMessage = req.flash("emailSend");
+    const message = flashMessage && flashMessage.length > 0 ? flashMessage[0] : null;
+    
+    if (message) {
+      // Redirect with message as query parameter
+      return res.redirect(`/forgot-password?message=${encodeURIComponent(message)}`);
+    }
+    // No message, let Next.js handle the page
+    return handle(req, res);
+  });
+
   // Be sure to place all GET requests above this catchall
   // Exclude Next.js internal routes
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions') {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path.startsWith('/reset/')) {
       return handle(req, res);
     }
     res.render("page-not-found");
@@ -2955,9 +3013,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "An unexpected error occurred. Please try again. If the problem persists, contact support with error code: FP-1008"
           );
         }
-        res.render("forgot-password", {
-          message: req.flash("emailSend"),
-        });
+        // Redirect to /forgot-password with message as query parameter
+        const flashMessage = req.flash("emailSend");
+        const message = flashMessage && flashMessage.length > 0 ? flashMessage[0] : '';
+        return res.redirect(`/forgot-password?message=${encodeURIComponent(message)}`);
       }
     );
   });
@@ -3023,14 +3082,32 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
               smtpTransport.sendMail(mailOptions, function (err) {
                 req.flash("info", "Success! Your password has been changed.");
-                done(err);
+                done(err, users);
               });
             }
           );
         },
+        function (users, done) {
+          // Auto-login the user after successful password reset
+          // They've already verified their identity via email
+          req.login(users, function (err) {
+            if (err) {
+              console.error("Error auto-logging in user after password reset:", err);
+              // Still redirect even if login fails - they can log in manually
+              return done(null);
+            }
+            done(null);
+          });
+        },
       ],
       function (err) {
-        return res.redirect("/");
+        if (err) {
+          // If there was an error, redirect back to reset page
+          return res.redirect("/reset/encryptedToken");
+        }
+        // Successfully reset password and logged in - redirect to communities
+        req.flash("info", "Success! Your password has been changed and you've been logged in.");
+        return res.redirect("/communities");
       }
     );
   });
