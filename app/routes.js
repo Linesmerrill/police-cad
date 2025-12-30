@@ -207,9 +207,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
     res.render("privacy-policy");
   });
 
-  app.get("/contact-us", function (req, res) {
-    res.render("contact-us");
-  });
+  // Contact Us page is now handled by Next.js at app/contact-us/page.tsx
+  // app.get("/contact-us", function (req, res) {
+  //   res.render("contact-us");
+  // });
 
   // Admin login page (GET) and login handler (POST)
   app.get("/admin", function (req, res) {
@@ -2663,7 +2664,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Exclude Next.js internal routes
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us') {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us') {
       return handle(req, res);
     }
     res.render("page-not-found");
