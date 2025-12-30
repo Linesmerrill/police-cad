@@ -69,7 +69,7 @@ function ResetPasswordForm() {
             setTokenValid(false);
             setError('Unable to validate reset token. Please try again.');
           }
-        } catch (error) {
+        } catch {
           setTokenValid(false);
           setError('Unable to validate reset token. Please try again.');
         }

@@ -1,9 +1,10 @@
+/* eslint-disable react/no-unescaped-entities */
 'use client';
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
-import { DocumentTextIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { DocumentTextIcon } from '@heroicons/react/24/solid';
 
 export default function TermsAndConditions() {
   const sections = [

@@ -1757,7 +1757,7 @@ export default function Profile() {
                 lineHeight: '1.6',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
               }}>
-                You're about to start the process of deactivating your account. Your display name, username, and public profile will no longer be viewable on linespolice-cad.com, LPC-APP for iOS, or LPC-APP for Android.
+                You&apos;re about to start the process of deactivating your account. Your display name, username, and public profile will no longer be viewable on linespolice-cad.com, LPC-APP for iOS, or LPC-APP for Android.
               </p>
               <div style={{
                 fontSize: '1rem',
@@ -1786,7 +1786,7 @@ export default function Profile() {
                   Upon deactivating your account, your data will be processed per our <a href="/privacy-policy" style={{ color: '#667eea', textDecoration: 'underline' }}>Privacy Policy</a>.
                 </li>
                 <li style={{ marginBottom: '0.5rem' }}>
-                  If you just want to change your username, you don't need to deactivate your account — edit it in your settings on your <a href="/profile" style={{ color: '#667eea', textDecoration: 'underline' }}>Profile Page</a>.
+                  If you just want to change your username, you don&apos;t need to deactivate your account — edit it in your settings on your <a href="/profile" style={{ color: '#667eea', textDecoration: 'underline' }}>Profile Page</a>.
                 </li>
                 <li>
                   To use your current email address with a different LPC account, <a href="/profile" style={{ color: '#667eea', textDecoration: 'underline' }}>change that</a> before you deactivate this account.
