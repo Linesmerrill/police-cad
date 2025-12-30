@@ -211,28 +211,35 @@ export default function TermsAndConditions() {
               paddingTop: '2rem'
             }}>
               <div style={{
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '80px',
-                height: '80px',
-                borderRadius: '1rem',
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                marginBottom: '1.5rem',
-                boxShadow: '0 0 30px rgba(239, 68, 68, 0.4)'
+                gap: '1.5rem',
+                flexWrap: 'wrap'
               }}>
-                <DocumentTextIcon style={{ width: '40px', height: '40px', color: '#ffffff' }} />
-              </div>
-              <h1 style={{
-                fontSize: 'clamp(2.5rem, 6vw, 4rem)',
-                fontWeight: '700',
-                marginBottom: '0.5rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                position: 'relative',
-                display: 'inline-block'
-              }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '1rem',
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  boxShadow: '0 0 30px rgba(239, 68, 68, 0.4)',
+                  flexShrink: 0
+                }}>
+                  <DocumentTextIcon style={{ width: '40px', height: '40px', color: '#ffffff' }} />
+                </div>
+                <h1 style={{
+                  fontSize: 'clamp(2.5rem, 6vw, 4rem)',
+                  fontWeight: '700',
+                  marginBottom: '0.5rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                  position: 'relative',
+                  display: 'inline-block'
+                }}>
                 {/* Glow behind text */}
                 <span style={{
                   position: 'absolute',
@@ -259,6 +266,7 @@ export default function TermsAndConditions() {
                   Terms and Conditions
                 </span>
               </h1>
+              </div>
               <p style={{
                 fontSize: '1rem',
                 color: 'rgba(255, 255, 255, 0.6)',

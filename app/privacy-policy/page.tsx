@@ -196,28 +196,35 @@ export default function PrivacyPolicy() {
               paddingTop: '2rem'
             }}>
               <div style={{
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '80px',
-                height: '80px',
-                borderRadius: '1rem',
-                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                marginBottom: '1.5rem',
-                boxShadow: '0 0 30px rgba(59, 130, 246, 0.4)'
+                gap: '1.5rem',
+                flexWrap: 'wrap'
               }}>
-                <ShieldCheckIcon style={{ width: '40px', height: '40px', color: '#ffffff' }} />
-              </div>
-              <h1 style={{
-                fontSize: 'clamp(2.5rem, 6vw, 4rem)',
-                fontWeight: '700',
-                marginBottom: '0.5rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                position: 'relative',
-                display: 'inline-block'
-              }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '1rem',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  boxShadow: '0 0 30px rgba(59, 130, 246, 0.4)',
+                  flexShrink: 0
+                }}>
+                  <ShieldCheckIcon style={{ width: '40px', height: '40px', color: '#ffffff' }} />
+                </div>
+                <h1 style={{
+                  fontSize: 'clamp(2.5rem, 6vw, 4rem)',
+                  fontWeight: '700',
+                  marginBottom: '0.5rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                  position: 'relative',
+                  display: 'inline-block'
+                }}>
                 {/* Glow behind text */}
                 <span style={{
                   position: 'absolute',
@@ -244,10 +251,12 @@ export default function PrivacyPolicy() {
                   Privacy Policy
                 </span>
               </h1>
+              </div>
               <p style={{
                 fontSize: '1rem',
                 color: 'rgba(255, 255, 255, 0.6)',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                textAlign: 'center'
               }}>
                 Effective date: December 30, 2025
               </p>
@@ -372,7 +381,8 @@ export default function PrivacyPolicy() {
                 color: 'rgba(255, 255, 255, 0.7)',
                 lineHeight: '1.6',
                 marginBottom: '1rem',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                textAlign: 'center'
               }}>
                 If you have any questions about this Privacy Policy, please contact us:
               </p>
