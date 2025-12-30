@@ -359,59 +359,30 @@ export default function Navbar() {
             }}
           >
             {navigation.map((item) => (
-              item.external ? (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: 'rgba(255, 255, 255, 0.85)',
-                    textDecoration: 'none',
-                    transition: 'color 0.2s',
-                    cursor: 'pointer',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                    whiteSpace: 'nowrap',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    display: 'flex',
-                    alignItems: 'center',
-                    height: '100%',
-                    lineHeight: '1'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)'}
-                >
-                  {item.name}
-                </a>
-              ) : (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  style={{
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: 'rgba(255, 255, 255, 0.85)',
-                    textDecoration: 'none',
-                    transition: 'color 0.2s',
-                    cursor: 'pointer',
-                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                    whiteSpace: 'nowrap',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    display: 'flex',
-                    alignItems: 'center',
-                    height: '100%',
-                    lineHeight: '1'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)'}
-                >
-                  {item.name}
-                </Link>
-              )
+              <Link
+                key={item.name}
+                href={item.href}
+                style={{
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  color: 'rgba(255, 255, 255, 0.85)',
+                  textDecoration: 'none',
+                  transition: 'color 0.2s',
+                  cursor: 'pointer',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                  whiteSpace: 'nowrap',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  height: '100%',
+                  lineHeight: '1'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#ffffff'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.85)'}
+              >
+                {item.name}
+              </Link>
             ))}
           </div>
         )}
@@ -512,45 +483,23 @@ export default function Navbar() {
           }}
         >
           {navigation.map((item) => (
-            item.external ? (
-              <a
-                key={item.name}
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setMobileMenuOpen(false)}
-                style={{
-                  display: 'block',
-                  padding: '0.75rem 1rem',
-                  fontSize: '1rem',
-                  fontWeight: '500',
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-                }}
-              >
-                {item.name}
-              </a>
-            ) : (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                style={{
-                  display: 'block',
-                  padding: '0.75rem 1rem',
-                  fontSize: '1rem',
-                  fontWeight: '500',
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  textDecoration: 'none',
-                  borderRadius: '0.5rem',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-                }}
-              >
-                {item.name}
-              </Link>
-            )
+            <Link
+              key={item.name}
+              href={item.href}
+              onClick={() => setMobileMenuOpen(false)}
+              style={{
+                display: 'block',
+                padding: '0.75rem 1rem',
+                fontSize: '1rem',
+                fontWeight: '500',
+                color: 'rgba(255, 255, 255, 0.9)',
+                textDecoration: 'none',
+                borderRadius: '0.5rem',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+              }}
+            >
+              {item.name}
+            </Link>
           ))}
           <Link
             href="/signup-civ"
