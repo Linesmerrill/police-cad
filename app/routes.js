@@ -90,9 +90,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
     res.render("about");
   });
 
-  app.get("/about-us", function (req, res) {
-    res.render("about-us");
-  });
+  // About Us page is now handled by Next.js at app/about-us/page.tsx
+  // app.get("/about-us", function (req, res) {
+  //   res.render("about-us");
+  // });
 
   app.get("/community/:hash", async function (req, res) {
     try {
@@ -2662,7 +2663,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Exclude Next.js internal routes
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot') {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us') {
       return handle(req, res);
     }
     res.render("page-not-found");
