@@ -97,14 +97,38 @@ export default function ContactUs() {
               <h1 style={{
                 fontSize: 'clamp(2.5rem, 6vw, 4rem)',
                 fontWeight: '700',
-                color: '#fbbf24',
                 marginBottom: '1rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.05em',
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                textShadow: '0 0 20px rgba(251, 191, 36, 0.3)'
+                position: 'relative',
+                display: 'inline-block'
               }}>
-                Contact Us
+                {/* Glow behind text */}
+                <span style={{
+                  position: 'absolute',
+                  inset: 0,
+                  color: '#fbbf24',
+                  textShadow: '0 0 20px rgba(251, 191, 36, 0.5), 0 0 40px rgba(251, 191, 36, 0.3)',
+                  filter: 'blur(2px)',
+                  zIndex: 0
+                }}>
+                  Contact Us
+                </span>
+                {/* Shimmer text */}
+                <span style={{
+                  position: 'relative',
+                  zIndex: 1,
+                  background: 'linear-gradient(90deg, #fbbf24 0%, #ffffff 30%, #ffffff 70%, #fbbf24 100%)',
+                  backgroundSize: '200% 100%',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  animation: 'shimmer 12s linear infinite',
+                  display: 'inline-block'
+                }}>
+                  Contact Us
+                </span>
               </h1>
               <p style={{
                 fontSize: 'clamp(1rem, 2.5vw, 1.25rem)',
