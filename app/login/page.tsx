@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 
-export default function LoginCiv() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -48,7 +48,7 @@ export default function LoginCiv() {
             return;
           }
         }
-      } catch (error) {
+      } catch {
         // Request failed or timed out - user not logged in, continue with login page
         // This is fine, server-side should have already redirected if authenticated
       }
@@ -531,7 +531,7 @@ export default function LoginCiv() {
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
               }}
             >
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link
                 href="/signup-civ"
                 style={{
@@ -586,6 +586,42 @@ export default function LoginCiv() {
         }
       `}</style>
     </main>
+  );
+}
+
+export default function LoginCiv() {
+  return (
+    <Suspense fallback={
+      <main 
+        style={{
+          minHeight: '100vh',
+          width: '100%',
+          maxWidth: '100vw',
+          backgroundColor: '#0a0a0f',
+          position: 'relative',
+          margin: 0,
+          padding: 0,
+          overflowX: 'hidden',
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <Navbar />
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'rgba(255, 255, 255, 0.7)'
+        }}>
+          Loading...
+        </div>
+        <Footer />
+      </main>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
 

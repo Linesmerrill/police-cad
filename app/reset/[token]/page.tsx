@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { ExclamationTriangleIcon, CheckCircleIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
 
-export default function ResetPassword() {
+function ResetPasswordForm() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -798,6 +798,42 @@ export default function ResetPassword() {
         }
       `}</style>
     </main>
+  );
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={
+      <main 
+        style={{
+          minHeight: '100vh',
+          width: '100%',
+          maxWidth: '100vw',
+          backgroundColor: '#0a0a0f',
+          position: 'relative',
+          margin: 0,
+          padding: 0,
+          overflowX: 'hidden',
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <Navbar />
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'rgba(255, 255, 255, 0.7)'
+        }}>
+          Loading...
+        </div>
+        <Footer />
+      </main>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
 

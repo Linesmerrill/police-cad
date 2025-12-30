@@ -16,7 +16,7 @@ export default function DiscordBot() {
       await navigator.clipboard.writeText(DISCORD_BOT_INVITE_URL);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
+    } catch {
       // Fallback for older browsers
       const textArea = document.createElement('textarea');
       textArea.value = DISCORD_BOT_INVITE_URL;
@@ -28,7 +28,7 @@ export default function DiscordBot() {
         document.execCommand('copy');
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-      } catch (err) {
+      } catch {
         // Copy failed
       }
       document.body.removeChild(textArea);
@@ -254,7 +254,7 @@ export default function DiscordBot() {
               gap: '2rem',
               marginBottom: '3rem'
             }}>
-              {steps.map((step, index) => (
+              {steps.map((step) => (
                 <div
                   key={step.number}
                   style={{
@@ -369,7 +369,7 @@ export default function DiscordBot() {
                   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
                 }}>
                   <span style={{ color: '#3b82f6', marginTop: '0.25rem' }}>•</span>
-                  <span>You must have "Manage Server" permissions on the Discord server to add the bot.</span>
+                  <span>You must have &quot;Manage Server&quot; permissions on the Discord server to add the bot.</span>
                 </li>
                 <li style={{
                   display: 'flex',

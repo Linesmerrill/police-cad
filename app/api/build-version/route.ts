@@ -23,7 +23,7 @@ export async function GET() {
     cacheTimestamp = now;
     
     return NextResponse.json({ buildVersion: cachedVersion });
-  } catch (error) {
+  } catch {
     // Fallback if version.json doesn't exist
     return NextResponse.json({ buildVersion: '0.0.0-00:00:00' });
   }

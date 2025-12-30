@@ -1,14 +1,13 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, FormEvent, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { ExclamationTriangleIcon, CheckCircleIcon, EnvelopeIcon } from '@heroicons/react/24/solid';
 
-export default function ForgotPassword() {
-  const router = useRouter();
+function ForgotPasswordForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
@@ -230,7 +229,7 @@ export default function ForgotPassword() {
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
               }}
             >
-              Enter your email address and we'll send you a link to reset your password.
+              Enter your email address and we&apos;ll send you a link to reset your password.
             </p>
           </div>
 
@@ -457,6 +456,42 @@ export default function ForgotPassword() {
         }
       `}</style>
     </main>
+  );
+}
+
+export default function ForgotPassword() {
+  return (
+    <Suspense fallback={
+      <main 
+        style={{
+          minHeight: '100vh',
+          width: '100%',
+          maxWidth: '100vw',
+          backgroundColor: '#0a0a0f',
+          position: 'relative',
+          margin: 0,
+          padding: 0,
+          overflowX: 'hidden',
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <Navbar />
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'rgba(255, 255, 255, 0.7)'
+        }}>
+          Loading...
+        </div>
+        <Footer />
+      </main>
+    }>
+      <ForgotPasswordForm />
+    </Suspense>
   );
 }
 

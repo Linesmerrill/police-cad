@@ -138,7 +138,7 @@ export default function ContactUs() {
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                 lineHeight: '1.6'
               }}>
-                Get in touch with us through any of the options below. We're here to help!
+                Get in touch with us through any of the options below. We&apos;re here to help!
               </p>
             </div>
 
