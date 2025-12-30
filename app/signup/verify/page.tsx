@@ -58,6 +58,7 @@ function VerifyForm() {
   useEffect(() => {
     const emailParam = searchParams.get('email');
     const errorParam = searchParams.get('error');
+    const sentParam = searchParams.get('sent'); // Indicates email was just sent from signup
     
     // Clear any previous error states when we have a valid email without an error
     if (emailParam && !errorParam) {
@@ -82,12 +83,18 @@ function VerifyForm() {
     if (emailParam) {
       const decodedEmail = decodeURIComponent(emailParam);
       setEmail(decodedEmail);
-      // Only auto-send and start cooldown if there's no error (email was just sent successfully)
-      if (!errorParam && !hasAutoSent.current) {
+      // Only auto-send if:
+      // 1. No error parameter
+      // 2. No 'sent' parameter (meaning we came from login, not signup)
+      // 3. Haven't already auto-sent
+      if (!errorParam && !sentParam && !hasAutoSent.current) {
         hasAutoSent.current = true;
         setCooldown(30);
-        // Auto-send verification email
+        // Auto-send verification email (only when coming from login)
         autoSendVerificationEmail(decodedEmail);
+      } else if (sentParam) {
+        // Email was just sent from signup - start cooldown but don't send again
+        setCooldown(30);
       }
     }
     // Don't redirect if there's an error - let them enter their email

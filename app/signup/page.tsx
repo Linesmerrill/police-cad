@@ -173,7 +173,7 @@ function SignupForm() {
       } else {
         setSuccess('Account created! Please check your email to verify your account.');
         setTimeout(() => {
-          router.push(`/signup/verify?email=${encodeURIComponent(trimmedEmail)}`);
+          router.push(`/signup/verify?email=${encodeURIComponent(trimmedEmail)}&sent=true`);
         }, 1500);
       }
     } catch (err) {
