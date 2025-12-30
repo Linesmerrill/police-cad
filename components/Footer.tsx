@@ -29,14 +29,16 @@ export default function Footer() {
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const hasFetchedRef = useRef(false);
+  const footerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     // Prevent duplicate calls (React StrictMode causes double renders in dev)
     if (hasFetchedRef.current) return;
     
-    hasFetchedRef.current = true;
-    
     const fetchBuildVersion = async () => {
+      if (hasFetchedRef.current) return; // Double check
+      hasFetchedRef.current = true;
+      
       try {
         const response = await fetch('/api/build-version');
         if (response.ok) {
@@ -48,7 +50,63 @@ export default function Footer() {
       }
     };
     
-    fetchBuildVersion();
+    // Lazy load: Only fetch when footer is visible or after a delay
+    let observer: IntersectionObserver | null = null;
+    let fallbackTimeout: NodeJS.Timeout | null = null;
+    
+    // Wait a bit for the ref to be available, then set up observer
+    const setupObserver = () => {
+      if (typeof IntersectionObserver !== 'undefined' && footerRef.current) {
+        observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting && !hasFetchedRef.current) {
+                fetchBuildVersion();
+                if (observer) observer.disconnect();
+                if (fallbackTimeout) clearTimeout(fallbackTimeout);
+              }
+            });
+          },
+          {
+            rootMargin: '100px', // Start loading 100px before footer is visible
+            threshold: 0.1
+          }
+        );
+        
+        observer.observe(footerRef.current);
+        
+        // Fallback: If footer doesn't become visible within 3 seconds, fetch anyway
+        fallbackTimeout = setTimeout(() => {
+          if (!hasFetchedRef.current) {
+            fetchBuildVersion();
+          }
+          if (observer) observer.disconnect();
+        }, 3000);
+      } else {
+        // Fallback: Defer fetch by 1 second to not block initial render
+        fallbackTimeout = setTimeout(() => {
+          if (!hasFetchedRef.current) {
+            fetchBuildVersion();
+          }
+        }, 1000);
+      }
+    };
+    
+    // Try immediately, or wait a tick for ref to be available
+    if (footerRef.current) {
+      setupObserver();
+    } else {
+      // Wait for next frame for ref to be available
+      requestAnimationFrame(() => {
+        setupObserver();
+      });
+    }
+    
+    // Cleanup
+    return () => {
+      if (observer) observer.disconnect();
+      if (fallbackTimeout) clearTimeout(fallbackTimeout);
+    };
   }, []);
 
   const copyBuildVersion = async () => {
@@ -83,6 +141,7 @@ export default function Footer() {
 
   return (
     <footer 
+      ref={footerRef}
       aria-labelledby="footer-heading" 
       style={{ 
         backgroundColor: '#0a0a0f', 

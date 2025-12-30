@@ -22,6 +22,20 @@ export default function ResetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
+  
+  // Password requirements validation
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    minLength: false,
+    matches: false
+  });
+  
+  // Check password requirements in real-time
+  useEffect(() => {
+    setPasswordRequirements({
+      minLength: password.length >= 6,
+      matches: password === confirmPassword && password.length > 0
+    });
+  }, [password, confirmPassword]);
 
   useEffect(() => {
     // Check for message query parameter (from flash messages)
@@ -461,7 +475,13 @@ export default function ResetPassword() {
                     width: '100%',
                     padding: '0.75rem 1rem',
                     paddingRight: '3rem',
-                    border: `2px solid ${passwordError ? '#ef4444' : 'rgba(255, 255, 255, 0.2)'}`,
+                    border: `2px solid ${
+                      passwordError 
+                        ? '#ef4444' 
+                        : passwordRequirements.minLength 
+                          ? '#10b981' 
+                          : 'rgba(255, 255, 255, 0.2)'
+                    }`,
                     borderRadius: '10px',
                     fontSize: '1rem',
                     backgroundColor: 'rgba(0, 0, 0, 0.3)',
@@ -511,6 +531,29 @@ export default function ResetPassword() {
                   )}
                 </button>
               </div>
+              {/* Password Requirements */}
+              <div style={{
+                marginTop: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.875rem',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+              }}>
+                {passwordRequirements.minLength ? (
+                  <CheckCircleIcon style={{ width: '1rem', height: '1rem', color: '#10b981', flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: '1rem', height: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.75rem' }}>×</span>
+                  </div>
+                )}
+                <span style={{
+                  color: passwordRequirements.minLength ? '#10b981' : 'rgba(255, 255, 255, 0.6)',
+                  transition: 'color 0.2s ease'
+                }}>
+                  At least 6 characters
+                </span>
+              </div>
             </div>
 
             {/* Confirm Password Field */}
@@ -550,7 +593,13 @@ export default function ResetPassword() {
                     width: '100%',
                     padding: '0.75rem 1rem',
                     paddingRight: '3rem',
-                    border: `2px solid ${confirmPasswordError ? '#ef4444' : 'rgba(255, 255, 255, 0.2)'}`,
+                    border: `2px solid ${
+                      confirmPasswordError 
+                        ? '#ef4444' 
+                        : passwordRequirements.matches && confirmPassword.length > 0
+                          ? '#10b981' 
+                          : 'rgba(255, 255, 255, 0.2)'
+                    }`,
                     borderRadius: '10px',
                     fontSize: '1rem',
                     backgroundColor: 'rgba(0, 0, 0, 0.3)',
@@ -600,6 +649,31 @@ export default function ResetPassword() {
                   )}
                 </button>
               </div>
+              {/* Password Match Requirement */}
+              {confirmPassword.length > 0 && (
+                <div style={{
+                  marginTop: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.875rem',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                }}>
+                  {passwordRequirements.matches ? (
+                    <CheckCircleIcon style={{ width: '1rem', height: '1rem', color: '#10b981', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: '1rem', height: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.75rem' }}>×</span>
+                    </div>
+                  )}
+                  <span style={{
+                    color: passwordRequirements.matches ? '#10b981' : 'rgba(255, 255, 255, 0.6)',
+                    transition: 'color 0.2s ease'
+                  }}>
+                    Passwords match
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}
