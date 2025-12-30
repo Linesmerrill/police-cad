@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ClipboardDocumentIcon, CheckIcon } from '@heroicons/react/24/outline';
 
@@ -28,8 +28,14 @@ const footerLinks = {
 export default function Footer() {
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const hasFetchedRef = useRef(false);
 
   useEffect(() => {
+    // Prevent duplicate calls (React StrictMode causes double renders in dev)
+    if (hasFetchedRef.current) return;
+    
+    hasFetchedRef.current = true;
+    
     const fetchBuildVersion = async () => {
       try {
         const response = await fetch('/api/build-version');

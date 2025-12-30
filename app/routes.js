@@ -170,7 +170,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
     res.render("faq");
   });
 
-  app.get("/login", function (req, res) {
+  // Old /login route moved to /login-select (kept for backward compatibility but not actively used)
+  app.get("/login-select", function (req, res) {
     const redirect = req.query.redirect || "/communities";
     res.render("login", { redirect: encodeURIComponent(redirect) });
   });
@@ -869,27 +870,15 @@ module.exports = function (app, passport, server, nextApp, handle) {
     );
   });
 
-  app.get("/login", function (req, res) {
-    return res.redirect("/");
+  // Login page is now handled by Next.js at app/login/page.tsx
+  
+  // Redirect /login-civ to /login for backward compatibility
+  app.get("/login-civ", function (req, res) {
+    // Preserve query parameters (like redirect)
+    const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+    return res.redirect("/login" + queryString);
   });
 
-  // Login Civ page is now handled by Next.js at app/login-civ/page.tsx
-  // app.get("/login-civ", function (req, res) {
-  //   // If already authenticated, redirect to communities
-  //   if (req.isAuthenticated()) {
-  //     const redirect = req.session.redirect || "/communities";
-  //     delete req.session.redirect; // Clear after use
-  //     return res.redirect(redirect);
-  //   }
-  //   
-  //   // Get flash messages from Passport authentication failures
-  //   const errorMessage = req.flash("error");
-  //   const message = errorMessage && errorMessage.length > 0 ? errorMessage[0] : "";
-  //   
-  //   res.render("login-civ", {
-  //     message: message,
-  //   });
-  // });
 
   app.get("/login-police", authCheck, function (req, res) {
     return res.redirect("/police-dashboard");
@@ -2663,20 +2652,50 @@ module.exports = function (app, passport, server, nextApp, handle) {
     );
   });
 
+  // Handle /login with server-side auth check for faster redirect
+  app.get("/login", function (req, res) {
+    // If already authenticated, redirect immediately (server-side for speed)
+    if (req.isAuthenticated()) {
+      const redirect = req.query.redirect || req.session.redirect || "/communities";
+      if (req.session.redirect) {
+        delete req.session.redirect; // Clear after use
+      }
+      return res.redirect(redirect);
+    }
+    // Not authenticated, let Next.js handle the login page
+    return handle(req, res);
+  });
+
   // Be sure to place all GET requests above this catchall
   // Exclude Next.js internal routes
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login-civ') {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions') {
       return handle(req, res);
     }
     res.render("page-not-found");
   });
 
+  // POST /login - main login route
+  app.post(
+    "/login",
+    passport.authenticate("login", {
+      failureRedirect: "/login",
+      failureFlash: true,
+      passReqToCallback: true,
+    }),
+    function (req, res, next) {
+      const redirect = req.session.redirect || "/communities";
+      delete req.session.redirect; // Clear the session redirect after use
+      res.redirect(redirect);
+    }
+  );
+
+  // POST /login-civ - redirect to /login for backward compatibility
   app.post(
     "/login-civ",
     passport.authenticate("login", {
-      failureRedirect: "/login-civ",
+      failureRedirect: "/login",
       failureFlash: true,
       passReqToCallback: true,
     }),
