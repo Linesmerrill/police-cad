@@ -203,9 +203,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
     res.render("terms-and-conditions");
   });
 
-  app.get("/privacy-policy", function (req, res) {
-    res.render("privacy-policy");
-  });
+  // Privacy Policy page is now handled by Next.js at app/privacy-policy/page.tsx
+  // app.get("/privacy-policy", function (req, res) {
+  //   res.render("privacy-policy");
+  // });
 
   // Contact Us page is now handled by Next.js at app/contact-us/page.tsx
   // app.get("/contact-us", function (req, res) {
@@ -2664,7 +2665,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Exclude Next.js internal routes
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us') {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy') {
       return handle(req, res);
     }
     res.render("page-not-found");
