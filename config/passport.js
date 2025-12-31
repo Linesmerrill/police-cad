@@ -49,6 +49,16 @@ module.exports = function (passport) {
             }
           }).then(function(apiResponse) {
             if (apiResponse.status === 200 || apiResponse.status === 201) {
+              // Check if account is deactivated in API response
+              var responseData = apiResponse.data || {};
+              if (responseData.isDeactivated === true || responseData.deactivated === true) {
+                return done(
+                  null,
+                  false,
+                  req.flash("error", "account_deactivated")
+                );
+              }
+              
               // API authentication successful - now get/create user in local DB for session
               User.findOne(
                 {
@@ -72,11 +82,31 @@ module.exports = function (passport) {
                       return done(null, newUser);
                     });
                   } else {
+                    // Check if account is deactivated
+                    if (user.user.isDeactivated === true) {
+                      return done(
+                        null,
+                        false,
+                        req.flash("error", "account_deactivated")
+                      );
+                    }
                     return done(null, user);
                   }
                 }
               );
             } else {
+              // Check if API response indicates deactivated account
+              var responseData = apiResponse.data || {};
+              if (responseData.isDeactivated === true || responseData.deactivated === true || 
+                  (responseData.message && (responseData.message.toLowerCase().includes('deactivated') || 
+                   responseData.message.toLowerCase().includes('inactive')))) {
+                return done(
+                  null,
+                  false,
+                  req.flash("error", "account_deactivated")
+                );
+              }
+              
               return done(
                 null,
                 false,

@@ -144,7 +144,6 @@ function ResetPasswordForm() {
         // Form will redirect, so we don't need to handle response
       }
     } catch (error) {
-      console.error('Error submitting form:', error);
       setError('An error occurred. Please try again.');
       setLoading(false);
     }

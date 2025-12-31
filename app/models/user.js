@@ -24,6 +24,9 @@ var userSchema = mongoose.Schema({
     emailVerificationToken: String,
     emailVerificationExpires: Date,
     emailVerified: Boolean,
+    isDeactivated: Boolean,
+    deactivatedAt: Date,
+    restoreUntil: Date,
     activeCommunity: String,
     lastAccessedCommunity: {
       communityID: String,

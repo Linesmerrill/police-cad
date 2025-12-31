@@ -177,7 +177,6 @@ function SignupForm() {
         }, 1500);
       }
     } catch (err) {
-      console.error('Signup error:', err);
       setError('An unexpected error occurred. Please try again.');
       setLoading(false);
     }

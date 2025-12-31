@@ -78,7 +78,6 @@ function ForgotPasswordForm() {
         submitForm.submit();
       }
     } catch (error) {
-      console.error('Error submitting form:', error);
       setError('An error occurred. Please try again.');
       setLoading(false);
     }

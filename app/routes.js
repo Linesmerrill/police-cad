@@ -2728,6 +2728,29 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
       return res.redirect(redirect);
     }
+    
+    // If there's an error query param already, let Next.js handle it (from explicit redirects)
+    const errorParam = req.query.error;
+    if (errorParam) {
+      return handle(req, res);
+    }
+    
+    // Check for flash messages and pass them as query parameters
+    // Passport uses "error" key when failureFlash: true
+    const errorFlash = req.flash("error");
+    if (errorFlash && errorFlash.length > 0) {
+      const errorMessage = errorFlash[0];
+      // Convert flash message to query parameter
+      // Passport sets "email address or password" for invalid credentials
+      let errorValue = 'authentication_failed';
+      if (errorMessage === 'account_deactivated') {
+        errorValue = 'account_deactivated';
+      } else if (errorMessage === 'email address or password' || errorMessage.includes('password') || errorMessage.includes('email')) {
+        errorValue = 'authentication_failed';
+      }
+      return res.redirect(`/login?error=${encodeURIComponent(errorValue)}`);
+    }
+    
     // Not authenticated, let Next.js handle the login page
     return handle(req, res);
   });
@@ -2834,37 +2857,42 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // Set a timeout to prevent hanging (30 seconds)
       const timeout = setTimeout(() => {
         if (!res.headersSent) {
-          console.error('Login route timeout - redirecting to login page');
           return res.redirect('/login?error=timeout');
         }
       }, 30000);
 
+      // Check if account is deactivated (check local user record first)
+      if (req.user && req.user.user && req.user.user.isDeactivated === true) {
+        // Account is deactivated - logout and redirect with error
+        clearTimeout(timeout);
+        const userEmail = req.user.user.email;
+        req.logout(function(err) {
+          if (!res.headersSent) {
+            return res.redirect('/login?error=account_deactivated');
+          }
+        });
+        return;
+      }
+      
       // Check if user's email is explicitly not verified (emailVerified === false)
       // Old accounts without this field (undefined/null) are treated as verified
       if (req.user && req.user.user && req.user.user.emailVerified === false) {
         // Account exists but is explicitly not verified - redirect to verify page
+        clearTimeout(timeout);
         const userEmail = req.user.user.email;
         // Logout the user since they can't access the app until verified
         // Add timeout to logout callback
         const logoutTimeout = setTimeout(() => {
           if (!res.headersSent) {
-            console.error('Logout timeout - forcing redirect');
-            clearTimeout(timeout);
             return res.redirect(`/signup/verify?email=${encodeURIComponent(userEmail)}`);
           }
         }, 5000); // 5 second timeout for logout
 
         req.logout(function(err) {
           clearTimeout(logoutTimeout);
-          clearTimeout(timeout);
           
-          if (err) {
-            console.error('Error logging out unverified user:', err);
-            // Still redirect even if logout fails
-            if (!res.headersSent) {
-              return res.redirect(`/signup/verify?email=${encodeURIComponent(userEmail)}`);
-            }
-            return;
+          if (!res.headersSent) {
+            return res.redirect(`/signup/verify?email=${encodeURIComponent(userEmail)}`);
           }
           // Redirect to verify page with email
           if (!res.headersSent) {
@@ -2879,8 +2907,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
       
       // User is verified (either emailVerified === true or undefined/null for old accounts) - proceed with normal redirect
       const redirect = req.session.redirect || "/communities";
-      delete req.session.redirect; // Clear the session redirect after use
-      res.redirect(redirect);
+      if (req.session.redirect) {
+        delete req.session.redirect; // Clear the session redirect after use
+      }
+      
+      // Save session before redirect to ensure it persists
+      req.session.save(function(err) {
+        if (err) {
+          // Session save failed, but continue with redirect
+        }
+        // Redirect to communities (or saved redirect)
+        return res.redirect(redirect);
+      });
     }
   );
 

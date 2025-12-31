@@ -18,11 +18,36 @@ function LoginForm() {
   const [passwordError, setPasswordError] = useState(false);
 
   useEffect(() => {
-    // Check for error query parameter (from failed authentication)
-    const errorParam = searchParams.get('error');
-    if (errorParam) {
-      setError('Invalid email or password. Please check your credentials and try again.');
-    }
+    // Function to check and set error from URL
+    const checkForError = () => {
+      // Check both searchParams and window.location as fallback
+      const errorParam = searchParams.get('error') || new URLSearchParams(window.location.search).get('error');
+      
+      if (errorParam) {
+        if (errorParam === 'account_deactivated') {
+          setError('deactivated');
+        } else if (errorParam === 'authentication_failed' || errorParam === 'email address or password' || errorParam.includes('password') || errorParam.includes('email')) {
+          setError('Invalid email or password. Please check your credentials and try again.');
+        } else {
+          setError('Invalid email or password. Please check your credentials and try again.');
+        }
+        return true; // Error found
+      }
+      return false; // No error
+    };
+    
+    // Check immediately
+    checkForError();
+    
+    // Also check after a short delay to catch errors that might appear after redirect
+    // This handles cases where the URL updates after the initial render
+    const delayedCheck = setTimeout(() => {
+      const currentError = new URLSearchParams(window.location.search).get('error');
+      if (currentError && !error) {
+        // Error param exists in URL but we haven't set it yet
+        checkForError();
+      }
+    }, 200);
     
     // Fallback client-side check (server-side should handle redirect, but this is a backup)
     // Use a quick check with immediate redirect if needed
@@ -56,6 +81,8 @@ function LoginForm() {
     
     // Run check immediately
     checkAuth();
+    
+    return () => clearTimeout(delayedCheck);
   }, [router, searchParams]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -111,20 +138,16 @@ function LoginForm() {
           } catch (err) {
             clearTimeout(redirectTimeout);
             // Continue even if set-redirect fails
-            console.warn('Failed to set redirect:', err);
           }
         } catch (err) {
           // Continue even if set-redirect fails
-          console.warn('Failed to set redirect:', err);
         }
         
-        // Set a client-side timeout to show error if form submission hangs
-        const submissionTimeout = setTimeout(() => {
-          setLoading(false);
-          setError('Login request timed out. Please try again.');
-        }, 30000); // 30 second timeout
+        // Use form submission for proper Passport cookie handling
+        // Set a flag to check for errors after redirect
+        sessionStorage.setItem('loginAttempt', 'true');
         
-        // Use the hidden form in the DOM instead of creating a new one
+        // Use the hidden form in the DOM
         const hiddenForm = document.getElementById('loginForm') as HTMLFormElement;
         const hiddenEmail = document.getElementById('hiddenEmail') as HTMLInputElement;
         const hiddenPassword = document.getElementById('hiddenPassword') as HTMLInputElement;
@@ -132,9 +155,6 @@ function LoginForm() {
         if (hiddenForm && hiddenEmail && hiddenPassword) {
           hiddenEmail.value = trimmedEmail;
           hiddenPassword.value = trimmedPassword;
-          
-          // Store timeout ID to clear it if page navigates successfully
-          (window as any).__loginTimeout = submissionTimeout;
           
           // Submit the form - this will trigger Passport authentication and set the session
           hiddenForm.submit();
@@ -158,9 +178,6 @@ function LoginForm() {
           form.appendChild(emailInput);
           form.appendChild(passwordInput);
           document.body.appendChild(form);
-          
-          // Store timeout ID
-          (window as any).__loginTimeout = submissionTimeout;
           
           form.submit();
         }
@@ -186,13 +203,27 @@ function LoginForm() {
         const apiData = await apiResponse.json().catch(() => ({}));
         
         if (apiResponse.ok && apiData.token) {
+          // Check if account is deactivated
+          if (apiData.isDeactivated === true || apiData.deactivated === true) {
+            setError('deactivated');
+            setLoading(false);
+            return;
+          }
           // API validation successful, proceed with login
           submitLoginForm();
           return;
         } else {
-          // API validation failed - show error and stop
-          setError('Invalid email or password. Please check your credentials and try again.');
-          setLoading(false);
+          // Check if API response indicates deactivated account
+          if (apiData.isDeactivated === true || apiData.deactivated === true || 
+              (apiData.message && (apiData.message.toLowerCase().includes('deactivated') || 
+               apiData.message.toLowerCase().includes('inactive')))) {
+            setError('deactivated');
+            setLoading(false);
+            return;
+          }
+          // API validation failed - but still try form submission
+          // (Passport will do its own validation, API might be down or have issues)
+          submitLoginForm();
           return;
         }
       } catch (apiError: any) {
@@ -207,13 +238,11 @@ function LoginForm() {
         
         // Other API errors - still try to proceed with form submission
         // (the server will validate anyway)
-        console.warn('API validation error, proceeding with form submission:', apiError);
         submitLoginForm();
         return;
       }
       
     } catch (error) {
-      console.error('Login error:', error);
       setError('An error occurred. Please try again.');
       setLoading(false);
     }
@@ -372,20 +401,47 @@ function LoginForm() {
           {error && (
             <div
               style={{
-                background: 'rgba(239, 68, 68, 0.1)',
+                background: error === 'deactivated' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
                 borderRadius: '8px',
-                padding: '0.75rem 1rem',
+                padding: error === 'deactivated' ? '1rem' : '0.75rem 1rem',
                 marginBottom: '1.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
                 color: '#fca5a5',
                 fontSize: '0.875rem',
               }}
             >
-              <ExclamationTriangleIcon style={{ width: '1.25rem', height: '1.25rem', flexShrink: 0 }} />
-              <span>{error}</span>
+              {error === 'deactivated' ? (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                    <ExclamationTriangleIcon style={{ width: '1.25rem', height: '1.25rem', flexShrink: 0 }} />
+                    <strong style={{ fontSize: '0.9375rem', fontWeight: '600' }}>Account Deactivated</strong>
+                  </div>
+                  <p style={{ margin: '0.5rem 0', lineHeight: '1.6', color: 'rgba(252, 165, 165, 0.9)' }}>
+                    Your account has been deactivated and you cannot log in at this time.
+                  </p>
+                  <p style={{ margin: '0.5rem 0', lineHeight: '1.6', color: 'rgba(252, 165, 165, 0.9)' }}>
+                    To reactivate your account, please contact us by creating an assistance ticket in our{' '}
+                    <a
+                      href="https://discord.gg/linespolice"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: '#fbbf24',
+                        textDecoration: 'underline',
+                        fontWeight: '600',
+                      }}
+                    >
+                      Discord server
+                    </a>
+                    {' '}and we will help you restore access to your account.
+                  </p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <ExclamationTriangleIcon style={{ width: '1.25rem', height: '1.25rem', flexShrink: 0 }} />
+                  <span>{error}</span>
+                </div>
+              )}
             </div>
           )}
 
