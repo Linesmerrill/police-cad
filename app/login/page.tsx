@@ -49,38 +49,8 @@ function LoginForm() {
       }
     }, 200);
     
-    // Fallback client-side check (server-side should handle redirect, but this is a backup)
-    // Use a quick check with immediate redirect if needed
-    const checkAuth = async () => {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1000); // 1 second timeout
-        
-        const response = await fetch('/api/user/current', {
-          credentials: 'include',
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.user) {
-            // User is already logged in, redirect immediately
-            const redirect = searchParams.get('redirect') || '/communities';
-            // Use replace instead of push for faster navigation, and use window.location for immediate redirect
-            window.location.href = redirect;
-            return;
-          }
-        }
-      } catch {
-        // Request failed or timed out - user not logged in, continue with login page
-        // This is fine, server-side should have already redirected if authenticated
-      }
-    };
-    
-    // Run check immediately
-    checkAuth();
+    // Server-side check in GET /login route should handle redirects
+    // Skip client-side check to avoid extra API call and potential delay
     
     return () => clearTimeout(delayedCheck);
   }, [router, searchParams]);
@@ -183,64 +153,10 @@ function LoginForm() {
         }
       };
       
-      // Validate credentials with the API first (with timeout)
-      const apiController = new AbortController();
-      const apiTimeout = setTimeout(() => apiController.abort(), 10000); // 10 second timeout for API call
-      
-      try {
-        const apiResponse = await fetch(`${apiUrl}/api/v1/auth/token`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Basic ' + btoa(trimmedEmail + ':' + trimmedPassword)
-          },
-          signal: apiController.signal
-        });
-        
-        clearTimeout(apiTimeout);
-        
-        // Check if we got a valid token response
-        const apiData = await apiResponse.json().catch(() => ({}));
-        
-        if (apiResponse.ok && apiData.token) {
-          // Check if account is deactivated
-          if (apiData.isDeactivated === true || apiData.deactivated === true) {
-            setError('deactivated');
-            setLoading(false);
-            return;
-          }
-          // API validation successful, proceed with login
-          submitLoginForm();
-          return;
-        } else {
-          // Check if API response indicates deactivated account
-          if (apiData.isDeactivated === true || apiData.deactivated === true || 
-              (apiData.message && (apiData.message.toLowerCase().includes('deactivated') || 
-               apiData.message.toLowerCase().includes('inactive')))) {
-            setError('deactivated');
-            setLoading(false);
-            return;
-          }
-          // API validation failed - but still try form submission
-          // (Passport will do its own validation, API might be down or have issues)
-          submitLoginForm();
-          return;
-        }
-      } catch (apiError: any) {
-        clearTimeout(apiTimeout);
-        
-        // Check if it was a timeout
-        if (apiError.name === 'AbortError') {
-          setError('Request timed out. Please check your connection and try again.');
-          setLoading(false);
-          return;
-        }
-        
-        // Other API errors - still try to proceed with form submission
-        // (the server will validate anyway)
-        submitLoginForm();
-        return;
-      }
+      // Skip API validation - it's redundant since Passport validates anyway
+      // This removes an extra 10-second potential delay
+      // Passport will handle authentication and deactivated account detection
+      submitLoginForm();
       
     } catch (error) {
       setError('An error occurred. Please try again.');

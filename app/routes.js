@@ -1027,17 +1027,28 @@ module.exports = function (app, passport, server, nextApp, handle) {
       const urlToken = req.params.token;
       req.session.resetToken = urlToken;
       
-      // Save session before redirecting to ensure it persists
+      // Save session before redirecting, but don't block if it's slow
+      const saveTimeout = setTimeout(() => {
+        if (!res.headersSent) {
+          return res.redirect(`/reset/${encodeURIComponent(urlToken)}`);
+        }
+      }, 2000); // 2 second timeout for session save
+      
       req.session.save(function (err) {
+        clearTimeout(saveTimeout);
         if (err) {
-          console.error('Error saving session:', err);
           req.flash(
             "emailSend",
             "An error occurred. Please try again."
           );
-          return res.redirect("/forgot-password");
+          if (!res.headersSent) {
+            return res.redirect("/forgot-password");
+          }
+          return;
         }
-        return res.redirect("/reset/encryptedToken");
+        if (!res.headersSent) {
+          return res.redirect("/reset/encryptedToken");
+        }
       });
     } else {
       // Token is in session (encryptedToken route), validate and let Next.js handle
@@ -2821,13 +2832,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
               req.flash("info", "Email verified successfully! Please log in.");
               return res.redirect("/login");
             }
-            // Save session before redirect to ensure it persists
-            req.session.save(function(err) {
-              if (err) {
-                console.error('Error saving session after login:', err);
+            // Save session before redirect, but don't block if it's slow
+            const saveTimeout = setTimeout(() => {
+              if (!res.headersSent) {
+                return res.redirect("/communities");
               }
-              // Success - redirect to communities
-              return res.redirect("/communities");
+            }, 2000); // 2 second timeout for session save
+            
+            req.session.save(function(err) {
+              clearTimeout(saveTimeout);
+              if (!res.headersSent) {
+                return res.redirect("/communities");
+              }
             });
           });
         });
@@ -2911,13 +2927,21 @@ module.exports = function (app, passport, server, nextApp, handle) {
         delete req.session.redirect; // Clear the session redirect after use
       }
       
-      // Save session before redirect to ensure it persists
-      req.session.save(function(err) {
-        if (err) {
-          // Session save failed, but continue with redirect
+      // Save session before redirect, but don't block if it's slow
+      // Set a timeout to prevent hanging on slow MongoDB
+      const saveTimeout = setTimeout(() => {
+        if (!res.headersSent) {
+          // Session save is taking too long, redirect anyway
+          return res.redirect(redirect);
         }
-        // Redirect to communities (or saved redirect)
-        return res.redirect(redirect);
+      }, 2000); // 2 second timeout for session save
+      
+      req.session.save(function(err) {
+        clearTimeout(saveTimeout);
+        if (!res.headersSent) {
+          // Redirect to communities (or saved redirect)
+          return res.redirect(redirect);
+        }
       });
     }
   );
@@ -3681,11 +3705,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 // Clear the reset token from session since it's no longer needed
                 if (req.session.resetToken) {
                   delete req.session.resetToken;
-                  // Save session to persist the deletion
+                  // Save session to persist the deletion (non-blocking)
                   req.session.save(function(saveErr) {
-                    if (saveErr) {
-                      console.error('Error saving session after clearing token:', saveErr);
-                    }
+                    // Ignore errors - token is cleared from memory anyway
                   });
                 }
                 
