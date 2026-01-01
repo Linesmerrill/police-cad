@@ -52,6 +52,147 @@ function decodeId(encoded) {
 }
 
 module.exports = function (app, passport, server, nextApp, handle) {
+  // POST /login - MUST be defined FIRST to prevent Next.js from intercepting
+  app.post(
+    "/login",
+    function(req, res, next) {
+      console.log('[LOGIN POST] Starting authentication');
+      // Custom authentication with explicit error handling
+      passport.authenticate("login", {
+        failureFlash: true,
+        passReqToCallback: true,
+      })(req, res, function(err) {
+        console.log('[LOGIN POST] Auth callback, err:', err, 'req.user:', !!req.user);
+        // If authentication failed, redirect with error
+        if (err || !req.user) {
+          console.log('[LOGIN POST] Authentication failed');
+          // Check flash message
+          const flashError = req.flash("error");
+          console.log('[LOGIN POST] Flash error:', flashError);
+          
+          let errorValue = 'authentication_failed';
+          if (flashError && flashError.length > 0) {
+            const errorMessage = flashError[0];
+            console.log('[LOGIN POST] Flash error message:', errorMessage);
+            if (errorMessage === 'account_deactivated') {
+              errorValue = 'account_deactivated';
+            }
+          }
+          
+          console.log('[LOGIN POST] Redirecting to /login?error=' + errorValue);
+          // Redirect with error in query string - use res.redirect to ensure proper encoding
+          return res.redirect(`/login?error=${errorValue}`);
+        }
+        console.log('[LOGIN POST] Authentication succeeded, continuing');
+        // Authentication succeeded, continue to next middleware
+        next();
+      });
+    },
+    function (req, res, next) {
+      // Set a timeout to prevent hanging (30 seconds)
+      const timeout = setTimeout(() => {
+        if (!res.headersSent) {
+          return res.redirect('/login?error=timeout');
+        }
+      }, 30000);
+
+      // Check if account is deactivated (check local user record first)
+      if (req.user && req.user.user && req.user.user.isDeactivated === true) {
+        // Account is deactivated - logout and redirect with error
+        clearTimeout(timeout);
+        const userEmail = req.user.user.email;
+        req.logout(function(err) {
+          if (!res.headersSent) {
+            return res.redirect('/login?error=account_deactivated');
+          }
+        });
+        return;
+      }
+      
+      // Check if user's email is explicitly not verified (emailVerified === false)
+      // Old accounts without this field (undefined/null) are treated as verified
+      if (req.user && req.user.user && req.user.user.emailVerified === false) {
+        // Account exists but is explicitly not verified - redirect to verify page
+        clearTimeout(timeout);
+        const userEmail = req.user.user.email;
+        // Logout the user since they can't access the app until verified
+        // Add timeout to logout callback
+        const logoutTimeout = setTimeout(() => {
+          if (!res.headersSent) {
+            return res.redirect(`/signup/verify?email=${encodeURIComponent(userEmail)}`);
+          }
+        }, 5000); // 5 second timeout for logout
+
+        req.logout(function(err) {
+          clearTimeout(logoutTimeout);
+          
+          if (!res.headersSent) {
+            return res.redirect(`/signup/verify?email=${encodeURIComponent(userEmail)}`);
+          }
+          // Redirect to verify page with email
+          if (!res.headersSent) {
+            return res.redirect(`/signup/verify?email=${encodeURIComponent(userEmail)}`);
+          }
+        });
+        return;
+      }
+      
+      // Clear timeout since we're proceeding normally
+      clearTimeout(timeout);
+      
+      // User is verified (either emailVerified === true or undefined/null for old accounts) - proceed with normal redirect
+      const redirect = req.session.redirect || "/communities";
+      if (req.session.redirect) {
+        delete req.session.redirect; // Clear the session redirect after use
+      }
+      
+      // Save session before redirect, but don't block if it's slow
+      // Set a timeout to prevent hanging on slow MongoDB
+      const saveTimeout = setTimeout(() => {
+        if (!res.headersSent) {
+          // Session save is taking too long, redirect anyway
+          return res.redirect(redirect);
+        }
+      }, 2000); // 2 second timeout for session save
+      
+      // Log session info before saving
+      console.log('[LOGIN POST] Before session save - sessionID:', req.sessionID, 'user:', !!req.user, 'isAuthenticated:', req.isAuthenticated());
+      
+      req.session.save(function(err) {
+        clearTimeout(saveTimeout);
+        if (err) {
+          console.error('[LOGIN POST] Session save error:', err);
+        } else {
+          console.log('[LOGIN POST] Session saved successfully - sessionID:', req.sessionID);
+          console.log('[LOGIN POST] Session after save:', {
+            id: req.sessionID,
+            cookie: req.session.cookie,
+            passport: req.session.passport
+          });
+        }
+        if (!res.headersSent) {
+          // Check if this is a JSON request (from Next.js login page)
+          if (req.headers['content-type'] === 'application/json' || req.headers.accept?.includes('application/json')) {
+            console.log('[LOGIN POST] Returning JSON response');
+            // Explicitly set the session cookie to ensure it's sent
+            if (req.sessionID) {
+              res.cookie('connect.sid', req.sessionID, {
+                ...req.session.cookie,
+                httpOnly: true,
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production'
+              });
+            }
+            return res.json({ success: true, redirect: redirect });
+          }
+          // Redirect to communities (or saved redirect)
+          console.log('[LOGIN POST] Redirecting to:', redirect);
+          return res.redirect(redirect);
+        }
+      });
+    }
+  );
+
   // Root route - use Next.js if available, otherwise fall back to EJS
   app.get("/", function (req, res) {
     if (nextApp && handle) {
@@ -3241,159 +3382,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     );
   });
 
-  app.all("*", function (req, res) {
-    // Let Next.js handle its own routes, API routes, and 404s
-    if (nextApp && handle) {
-      return handle(req, res);
-    }
-    // Fallback to old EJS template only if Next.js is not available
-    if (req.method === 'GET') {
-      res.render("page-not-found");
-    } else {
-      res.status(404).json({ error: 'Not found' });
-    }
-  });
-
-  // POST /login - main login route
-  app.post(
-    "/login",
-    function(req, res, next) {
-      console.log('[LOGIN POST] Starting authentication');
-      // Custom authentication with explicit error handling
-      passport.authenticate("login", {
-        failureFlash: true,
-        passReqToCallback: true,
-      })(req, res, function(err) {
-        console.log('[LOGIN POST] Auth callback, err:', err, 'req.user:', !!req.user);
-        // If authentication failed, redirect with error
-        if (err || !req.user) {
-          console.log('[LOGIN POST] Authentication failed');
-          // Check flash message
-          const flashError = req.flash("error");
-          console.log('[LOGIN POST] Flash error:', flashError);
-          
-          let errorValue = 'authentication_failed';
-          if (flashError && flashError.length > 0) {
-            const errorMessage = flashError[0];
-            console.log('[LOGIN POST] Flash error message:', errorMessage);
-            if (errorMessage === 'account_deactivated') {
-              errorValue = 'account_deactivated';
-            }
-          }
-          
-          console.log('[LOGIN POST] Redirecting to /login?error=' + errorValue);
-          // Redirect with error in query string - use res.redirect to ensure proper encoding
-          return res.redirect(`/login?error=${errorValue}`);
-        }
-        console.log('[LOGIN POST] Authentication succeeded, continuing');
-        // Authentication succeeded, continue to next middleware
-        next();
-      });
-    },
-    function (req, res, next) {
-      // Set a timeout to prevent hanging (30 seconds)
-      const timeout = setTimeout(() => {
-        if (!res.headersSent) {
-          return res.redirect('/login?error=timeout');
-        }
-      }, 30000);
-
-      // Check if account is deactivated (check local user record first)
-      if (req.user && req.user.user && req.user.user.isDeactivated === true) {
-        // Account is deactivated - logout and redirect with error
-        clearTimeout(timeout);
-        const userEmail = req.user.user.email;
-        req.logout(function(err) {
-          if (!res.headersSent) {
-            return res.redirect('/login?error=account_deactivated');
-          }
-        });
-        return;
-      }
-      
-      // Check if user's email is explicitly not verified (emailVerified === false)
-      // Old accounts without this field (undefined/null) are treated as verified
-      if (req.user && req.user.user && req.user.user.emailVerified === false) {
-        // Account exists but is explicitly not verified - redirect to verify page
-        clearTimeout(timeout);
-        const userEmail = req.user.user.email;
-        // Logout the user since they can't access the app until verified
-        // Add timeout to logout callback
-        const logoutTimeout = setTimeout(() => {
-          if (!res.headersSent) {
-            return res.redirect(`/signup/verify?email=${encodeURIComponent(userEmail)}`);
-          }
-        }, 5000); // 5 second timeout for logout
-
-        req.logout(function(err) {
-          clearTimeout(logoutTimeout);
-          
-          if (!res.headersSent) {
-            return res.redirect(`/signup/verify?email=${encodeURIComponent(userEmail)}`);
-          }
-          // Redirect to verify page with email
-          if (!res.headersSent) {
-            return res.redirect(`/signup/verify?email=${encodeURIComponent(userEmail)}`);
-          }
-        });
-        return;
-      }
-      
-      // Clear timeout since we're proceeding normally
-      clearTimeout(timeout);
-      
-      // User is verified (either emailVerified === true or undefined/null for old accounts) - proceed with normal redirect
-      const redirect = req.session.redirect || "/communities";
-      if (req.session.redirect) {
-        delete req.session.redirect; // Clear the session redirect after use
-      }
-      
-      // Save session before redirect, but don't block if it's slow
-      // Set a timeout to prevent hanging on slow MongoDB
-      const saveTimeout = setTimeout(() => {
-        if (!res.headersSent) {
-          // Session save is taking too long, redirect anyway
-          return res.redirect(redirect);
-        }
-      }, 2000); // 2 second timeout for session save
-      
-      // Log session info before saving
-      console.log('[LOGIN POST] Before session save - sessionID:', req.sessionID, 'user:', !!req.user, 'isAuthenticated:', req.isAuthenticated());
-      
-      req.session.save(function(err) {
-        clearTimeout(saveTimeout);
-        if (err) {
-          console.error('[LOGIN POST] Session save error:', err);
-        } else {
-          console.log('[LOGIN POST] Session saved successfully - sessionID:', req.sessionID);
-          console.log('[LOGIN POST] Session after save:', {
-            id: req.sessionID,
-            cookie: req.session.cookie,
-            passport: req.session.passport
-          });
-        }
-        if (!res.headersSent) {
-          // Check if this is a JSON request (from Next.js login page)
-          if (req.headers['content-type'] === 'application/json' || req.headers.accept?.includes('application/json')) {
-            console.log('[LOGIN POST] Returning JSON response');
-            // Explicitly set the session cookie to ensure it's sent
-            if (req.sessionID) {
-              res.cookie('connect.sid', req.sessionID, {
-                ...req.session.cookie,
-                httpOnly: true,
-                sameSite: 'lax',
-                secure: process.env.NODE_ENV === 'production'
-              });
-            }
-            return res.json({ success: true, redirect: redirect });
-          }
-          // Redirect to communities (or saved redirect)
-          console.log('[LOGIN POST] Redirecting to:', redirect);
-          return res.redirect(redirect);
-        }
-      });
-    }
-  );
+  // POST /login route moved to top of file to prevent Next.js interception
 
   // POST /api/signup - Create temp account and send verification email
   app.post("/api/signup", function (req, res) {
