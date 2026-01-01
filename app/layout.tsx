@@ -41,6 +41,13 @@ export default function RootLayout({
             gtag('config', 'G-1L40PLRXWM');
           `}
         </Script>
+        <Script id="cloudinary-config" strategy="beforeInteractive">
+          {`
+            window.CLOUDINARY_CLOUD_NAME = '${process.env.CLOUDINARY_CLOUD_NAME || ''}';
+            window.CLOUDINARY_API_KEY = '${process.env.CLOUDINARY_API_KEY || ''}';
+            window.CLOUDINARY_UPLOAD_PRESET = '${process.env.CLOUDINARY_UPLOAD_PRESET || ''}';
+          `}
+        </Script>
         {children}
       </body>
     </html>

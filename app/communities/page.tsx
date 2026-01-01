@@ -33,6 +33,10 @@ interface User {
   lastAccessedCommunity?: {
     communityID?: string;
   };
+  subscription?: {
+    plan?: string;
+    active?: boolean;
+  };
 }
 
 function encodeCommunityId(communityId: string): string {
@@ -629,6 +633,9 @@ const CommunitySection = ({
   paginationProps,
   filterTabs,
   emptyActions,
+  userPlan,
+  subscriptionActive,
+  userSubscriptionChecked = false,
 }: {
   title: string;
   communities: Community[];
@@ -646,6 +653,9 @@ const CommunitySection = ({
   };
   filterTabs?: React.ReactNode;
   emptyActions?: React.ReactNode;
+  userPlan?: string;
+  subscriptionActive?: boolean;
+  userSubscriptionChecked?: boolean;
 }) => {
   if (isLoading) {
     return (
@@ -667,22 +677,42 @@ const CommunitySection = ({
     );
   }
 
-  // Helper function to generate random ad positions (after first card, then every 3-5 cards)
-  const generateAdPositions = (totalCards: number): Set<number> => {
+  // Helper function to generate random ad positions based on subscription tier
+  const generateAdPositions = (totalCards: number, userPlan?: string, subscriptionActive?: boolean, sectionSeed: string = ''): Set<number> => {
     const positions = new Set<number>();
     
-    // Always place first ad after the first card (position 1)
+    // Premium Plus: No ads
+    if (subscriptionActive && userPlan === 'premium_plus') {
+      return positions;
+    }
+    
+    // Premium: 50% fewer ads (every 6-10 cards instead of 3-5)
+    const isPremium = subscriptionActive && userPlan === 'premium';
+    const minCardsBetweenAds = isPremium ? 6 : 3;
+    const maxCardsBetweenAds = isPremium ? 10 : 5;
+    
+    // Always place first ad after the first card (position 1) - unless Premium Plus
     if (totalCards >= 1) {
       positions.add(1);
     }
     
-    // Then place ads every 3-5 cards after the first ad
-    // Start counting from after the first ad (position 1), so next ad is at position 1 + (3-5) = 4-6
+    // Then place ads every N cards after the first ad
+    // Use a seeded random function based on section name to ensure different patterns per section
+    let randomSeed = 0;
+    for (let i = 0; i < sectionSeed.length; i++) {
+      randomSeed += sectionSeed.charCodeAt(i);
+    }
+    randomSeed += totalCards; // Also include totalCards in seed
+    
     let currentPosition = 1; // Start after first card
+    let iteration = 0;
     while (currentPosition < totalCards - 2) {
-      // Random number between 3 and 5 cards after the previous ad
-      const cardsUntilAd = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+      // Use a combination of Math.random() and the seed to ensure different patterns
+      // but also ensure it's different per section
+      const randomValue = Math.random() * (randomSeed + iteration + Date.now() % 1000);
+      const cardsUntilAd = Math.floor((randomValue % (maxCardsBetweenAds - minCardsBetweenAds + 1)) + minCardsBetweenAds);
       currentPosition += cardsUntilAd;
+      iteration++;
       
       if (currentPosition < totalCards) {
         positions.add(currentPosition);
@@ -693,9 +723,10 @@ const CommunitySection = ({
   };
 
   // Helper function to insert ads between cards
-  const renderCardsWithAds = () => {
+  const renderCardsWithAds = (userPlan?: string, subscriptionActive?: boolean, sectionName?: string) => {
     const items: React.ReactNode[] = [];
-    const adPositions = generateAdPositions(communities.length);
+    // Use section name + communities length as part of the seed to ensure different patterns per section
+    const adPositions = generateAdPositions(communities.length, userPlan, subscriptionActive, sectionName || 'default');
     
     communities.forEach((community, index) => {
       // Always push the card first
@@ -729,14 +760,14 @@ const CommunitySection = ({
     <div className="py-4 sm:py-8 w-full">
       {title && <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-4 sm:mb-6">{title}</h2>}
       {filterTabs}
-      {/* Top Ad */}
-      {communities.length > 0 && (
+      {/* Top Ad - Only show after checking subscription, and hide for Premium and Premium Plus */}
+      {communities.length > 0 && userSubscriptionChecked && !(subscriptionActive && (userPlan === 'premium' || userPlan === 'premium_plus')) && (
         <div className="mb-6">
           <GoogleAd adSlot="1760139308" matchCardHeight={false} />
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full items-start">
-        {renderCardsWithAds()}
+        {renderCardsWithAds(userPlan, subscriptionActive, title)}
       </div>
       {showPagination && paginationProps && (
         <PaginationControls
@@ -755,6 +786,19 @@ function CommunitiesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
+  const [userSubscriptionChecked, setUserSubscriptionChecked] = useState(false);
+  
+  // Cache for user communities data
+  const communitiesCache = useRef<Map<string, { data: Community[]; totalCount: number; timestamp: number }>>(new Map());
+  const filterCountsCache = useRef<{ data: { approved: number; pending: number; owned: number }; timestamp: number } | null>(null);
+  // Cache for elite, recommended, and browse (first page only)
+  const eliteCache = useRef<{ data: Community[]; totalCount: number; timestamp: number } | null>(null);
+  const recommendedCache = useRef<{ data: Community[]; totalCount: number; timestamp: number } | null>(null);
+  const browseCache = useRef<Map<string, { data: Community[]; totalCount: number; timestamp: number }>>(new Map());
+  
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for user communities
+  const STATIC_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes for elite/recommended/browse (they change less)
+  const fetchingRef = useRef<Set<string>>(new Set()); // Track ongoing fetches to prevent duplicates
   
   // Get initial section from query param or default to 'elite'
   const getInitialSection = () => {
@@ -767,6 +811,82 @@ function CommunitiesPageContent() {
   };
   
   const [activeSection, setActiveSection] = useState(getInitialSection);
+  
+  // Function to invalidate cache (call this after creating a community)
+  const invalidateCommunitiesCache = () => {
+    communitiesCache.current.clear();
+    filterCountsCache.current = null;
+  };
+  
+  // Function to invalidate all caches (including elite, recommended, browse)
+  const invalidateAllCaches = () => {
+    communitiesCache.current.clear();
+    filterCountsCache.current = null;
+    eliteCache.current = null;
+    recommendedCache.current = null;
+    browseCache.current.clear();
+  };
+  
+  // Expose cache invalidation to window for external use (e.g., after creating community)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).invalidateCommunitiesCache = invalidateCommunitiesCache;
+      (window as any).invalidateAllCaches = invalidateAllCaches;
+    }
+  }, []);
+  
+  // Refresh cache when page becomes visible (e.g., user returns from mobile app)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && activeSection === 'your-communities') {
+        // Invalidate cache when page becomes visible to refresh data
+        // This ensures communities created in mobile app show up
+        invalidateCommunitiesCache();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [activeSection]);
+  
+  // Helper function to get hash from URL
+  const getHashFromUrl = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.hash.slice(1); // Remove the #
+    }
+    return '';
+  };
+  
+  // Helper function to set hash in URL
+  const setHashInUrl = (hash: string) => {
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${hash ? `#${hash}` : ''}`);
+    }
+  };
+  
+  // Map filter IDs to hash format
+  const filterToHash: Record<string, string> = {
+    'approved': 'approved',
+    'pending': 'pending',
+    'owned': 'owned-by-you',
+    'all': 'all',
+    'PC': 'pc',
+    'Xbox': 'xbox',
+    'PlayStation': 'playstation',
+  };
+  
+  // Map hash format to filter IDs
+  const hashToFilter: Record<string, string> = {
+    'approved': 'approved',
+    'pending': 'pending',
+    'owned-by-you': 'owned',
+    'all': 'all',
+    'pc': 'PC',
+    'xbox': 'Xbox',
+    'playstation': 'PlayStation',
+  };
   
   // Community data states
   const [eliteCommunities, setEliteCommunities] = useState<Community[]>([]);
@@ -806,7 +926,6 @@ function CommunitiesPageContent() {
     PlayStation: 0,
   });
   const [browseFilterCountsLoaded, setBrowseFilterCountsLoaded] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const sections = [
     { id: 'elite', label: 'Elite', icon: 'fa-crown' },
@@ -835,10 +954,48 @@ function CommunitiesPageContent() {
       setActiveSection('elite');
     }
   }, [searchParams]);
+  
+  // Sync filter with hash on mount and when section/hash changes
+  useEffect(() => {
+    const hash = getHashFromUrl();
+    if (hash && activeSection === 'your-communities') {
+      const filterId = hashToFilter[hash];
+      if (filterId && ['approved', 'pending', 'owned'].includes(filterId)) {
+        setUserFilter(filterId as 'approved' | 'pending' | 'owned');
+      }
+    } else if (hash && activeSection === 'browse') {
+      const filterId = hashToFilter[hash];
+      if (filterId && ['all', 'PC', 'Xbox', 'PlayStation'].includes(filterId)) {
+        setCurrentTag(filterId);
+      }
+    }
+  }, [activeSection]);
+  
+  // Listen for hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = getHashFromUrl();
+      if (hash && activeSection === 'your-communities') {
+        const filterId = hashToFilter[hash];
+        if (filterId && ['approved', 'pending', 'owned'].includes(filterId)) {
+          setUserFilter(filterId as 'approved' | 'pending' | 'owned');
+        }
+      } else if (hash && activeSection === 'browse') {
+        const filterId = hashToFilter[hash];
+        if (filterId && ['all', 'PC', 'Xbox', 'PlayStation'].includes(filterId)) {
+          setCurrentTag(filterId);
+        }
+      }
+    };
+    
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [activeSection]);
 
   // Check if user is logged in
   useEffect(() => {
     const checkUser = async () => {
+      setUserSubscriptionChecked(false);
       try {
         const response = await fetch('/api/user/current', { credentials: 'include' });
         if (response.ok) {
@@ -853,12 +1010,14 @@ function CommunitiesPageContent() {
         }
       } catch (error) {
         setUser(null);
+      } finally {
+        setUserSubscriptionChecked(true);
       }
     };
     checkUser();
   }, []);
 
-  // Fetch filter counts for Your Communities
+  // Fetch filter counts for Your Communities (with caching)
   useEffect(() => {
     if (!user?.id || activeSection !== 'your-communities') {
       setUserFilterCountsLoaded(false);
@@ -866,7 +1025,22 @@ function CommunitiesPageContent() {
     }
 
     const fetchFilterCounts = async () => {
+      // Check cache first
+      const cacheKey = `filterCounts_${user.id}`;
+      if (filterCountsCache.current && 
+          Date.now() - filterCountsCache.current.timestamp < CACHE_DURATION) {
+        setUserFilterCounts(filterCountsCache.current.data);
+        setUserFilterCountsLoaded(true);
+        return;
+      }
+
+      // Check if already fetching
+      if (fetchingRef.current.has(cacheKey)) {
+        return;
+      }
+      fetchingRef.current.add(cacheKey);
       setUserFilterCountsLoaded(false);
+      
       try {
         // Fetch approved count
         const approvedResponse = await fetch(
@@ -884,29 +1058,59 @@ function CommunitiesPageContent() {
 
         // Fetch owned count
         const ownedResponse = await fetch(
-          `/api/user/owned-communities?userId=${user.id}`,
+          `/api/user/owned-communities?userId=${user.id}&page=1&limit=1000`,
           { credentials: 'include' }
         );
         const ownedData = ownedResponse.ok ? await ownedResponse.json() : { totalCount: 0 };
+        const ownedCount = ownedData.totalCount !== undefined ? ownedData.totalCount : (ownedData.data || []).length;
 
-        setUserFilterCounts({
+        const counts = {
           approved: approvedData.totalCount || 0,
           pending: pendingData.totalCount || 0,
-          owned: ownedData.totalCount || 0,
-        });
+          owned: ownedCount,
+        };
+        
+        // Update cache
+        filterCountsCache.current = {
+          data: counts,
+          timestamp: Date.now(),
+        };
+        
+        setUserFilterCounts(counts);
         setUserFilterCountsLoaded(true);
       } catch (error) {
         setUserFilterCountsLoaded(true); // Set to true even on error so we don't show loading state forever
+      } finally {
+        fetchingRef.current.delete(cacheKey);
       }
     };
 
     fetchFilterCounts();
   }, [user?.id, activeSection]);
 
-  // Fetch elite communities
+  // Fetch elite communities (with caching for first page only)
   useEffect(() => {
     const fetchElite = async () => {
+      // Only cache first page to save memory
+      const isFirstPage = elitePage === 0;
+      const cacheKey = 'elite_communities';
+      
+      // Check cache for first page only
+      if (isFirstPage && eliteCache.current && 
+          Date.now() - eliteCache.current.timestamp < STATIC_CACHE_DURATION) {
+        setEliteCommunities(eliteCache.current.data);
+        setEliteTotalCount(eliteCache.current.totalCount);
+        setIsEliteLoading(false);
+        return;
+      }
+      
+      // Check if already fetching
+      if (fetchingRef.current.has(cacheKey)) {
+        return;
+      }
+      fetchingRef.current.add(cacheKey);
       setIsEliteLoading(true);
+      
       try {
         const response = await fetch(`${API_URL}/api/v2/communities/elite?limit=${eliteItemsPerPage}&page=${elitePage}`);
         if (response.ok) {
@@ -924,6 +1128,16 @@ function CommunitiesPageContent() {
             code: item._id,
             subscription: item.subscription,
           })).sort((a: Community, b: Community) => a.name.localeCompare(b.name));
+          
+          // Cache first page only
+          if (isFirstPage) {
+            eliteCache.current = {
+              data: communities,
+              totalCount: data.totalCount || 0,
+              timestamp: Date.now(),
+            };
+          }
+          
           setEliteCommunities(communities);
           setEliteTotalCount(data.totalCount || 0);
         }
@@ -932,6 +1146,7 @@ function CommunitiesPageContent() {
         setEliteTotalCount(0);
       } finally {
         setIsEliteLoading(false);
+        fetchingRef.current.delete(cacheKey);
       }
     };
     if (activeSection === 'elite') {
@@ -955,13 +1170,32 @@ function CommunitiesPageContent() {
     }
 
     const fetchUserCommunities = async () => {
+      // Create cache key
+      const cacheKey = `communities_${user.id}_${userFilter}_${userPage}`;
+      
+      // Check cache first
+      const cached = communitiesCache.current.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        setUserCommunities(cached.data);
+        setUserTotalCount(cached.totalCount);
+        setIsUserLoading(false);
+        return;
+      }
+
+      // Check if already fetching this exact request
+      if (fetchingRef.current.has(cacheKey)) {
+        return;
+      }
+      fetchingRef.current.add(cacheKey);
       setIsUserLoading(true);
+      
       try {
         let url: string;
         
         if (userFilter === 'owned') {
-          // Use different endpoint for owned communities
-          url = `/api/user/owned-communities?userId=${user.id}`;
+          // Use different endpoint for owned communities - API expects 1-indexed page
+          const page = userPage + 1;
+          url = `/api/user/owned-communities?userId=${user.id}&page=${page}&limit=${userItemsPerPage}`;
         } else {
           // Use 1-indexed page - API expects page=1, page=2, etc.
           const page = userPage + 1;
@@ -996,6 +1230,13 @@ function CommunitiesPageContent() {
             subscription: item.subscription ? { active: true } : { active: false },
           }));
           
+          // Update cache
+          communitiesCache.current.set(cacheKey, {
+            data: communities,
+            totalCount: data.totalCount || 0,
+            timestamp: Date.now(),
+          });
+          
           setUserCommunities(communities);
           setUserTotalCount(data.totalCount || 0);
         } else {
@@ -1008,13 +1249,14 @@ function CommunitiesPageContent() {
         setUserTotalCount(0);
       } finally {
         setIsUserLoading(false);
+        fetchingRef.current.delete(cacheKey);
       }
     };
     
     fetchUserCommunities();
   }, [user?.id, userPage, activeSection, userItemsPerPage, userFilter]);
 
-  // Fetch recommended communities
+  // Fetch recommended communities (with caching for first page only)
   useEffect(() => {
     if (!user?.id || activeSection !== 'recommended') {
       setIsRecommendedLoading(false);
@@ -1022,7 +1264,26 @@ function CommunitiesPageContent() {
     }
 
     const fetchRecommended = async () => {
+      // Only cache first page to save memory
+      const isFirstPage = recommendedPage === 0;
+      const cacheKey = `recommended_${user.id}`;
+      
+      // Check cache for first page only
+      if (isFirstPage && recommendedCache.current && 
+          Date.now() - recommendedCache.current.timestamp < STATIC_CACHE_DURATION) {
+        setRecommendedCommunities(recommendedCache.current.data);
+        setRecommendedTotalCount(recommendedCache.current.totalCount);
+        setIsRecommendedLoading(false);
+        return;
+      }
+      
+      // Check if already fetching
+      if (fetchingRef.current.has(cacheKey)) {
+        return;
+      }
+      fetchingRef.current.add(cacheKey);
       setIsRecommendedLoading(true);
+      
       try {
         const url = `/api/user/recommended-communities?userId=${user.id}&limit=3&page=${recommendedPage}`;
         const response = await fetch(url, {
@@ -1046,6 +1307,16 @@ function CommunitiesPageContent() {
             code: item._id,
             subscription: item.subscription ? { active: true } : { active: false },
           }));
+          
+          // Cache first page only
+          if (isFirstPage) {
+            recommendedCache.current = {
+              data: communities,
+              totalCount: data.totalCount || 0,
+              timestamp: Date.now(),
+            };
+          }
+          
           setRecommendedCommunities(communities);
           setRecommendedTotalCount(data.totalCount || 0);
         } else {
@@ -1057,6 +1328,7 @@ function CommunitiesPageContent() {
         setRecommendedTotalCount(0);
       } finally {
         setIsRecommendedLoading(false);
+        fetchingRef.current.delete(cacheKey);
       }
     };
     fetchRecommended();
@@ -1107,7 +1379,7 @@ function CommunitiesPageContent() {
     fetchBrowseFilterCounts();
   }, [activeSection]);
 
-  // Fetch all communities
+  // Fetch all communities (with caching for first page only)
   useEffect(() => {
     if (activeSection !== 'browse') {
       setIsAllLoading(false);
@@ -1115,7 +1387,28 @@ function CommunitiesPageContent() {
     }
 
     const fetchAll = async () => {
+      // Only cache first page to save memory
+      const isFirstPage = allPage === 0;
+      const cacheKey = `browse_${currentTag}`;
+      
+      // Check cache for first page only
+      if (isFirstPage) {
+        const cached = browseCache.current.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < STATIC_CACHE_DURATION) {
+          setAllCommunities(cached.data);
+          setAllTotalCount(cached.totalCount);
+          setIsAllLoading(false);
+          return;
+        }
+      }
+      
+      // Check if already fetching
+      if (fetchingRef.current.has(cacheKey)) {
+        return;
+      }
+      fetchingRef.current.add(cacheKey);
       setIsAllLoading(true);
+      
       try {
         const url = `/api/communities/browse?tag=${currentTag}&limit=6&page=${allPage}`;
         const response = await fetch(url, {
@@ -1139,6 +1432,16 @@ function CommunitiesPageContent() {
             code: item._id,
             subscription: item.subscription ? { active: true } : { active: false },
           }));
+          
+          // Cache first page only
+          if (isFirstPage) {
+            browseCache.current.set(cacheKey, {
+              data: communities,
+              totalCount: data.totalCount || 0,
+              timestamp: Date.now(),
+            });
+          }
+          
           setAllCommunities(communities);
           setAllTotalCount(data.totalCount || 0);
         } else {
@@ -1150,6 +1453,7 @@ function CommunitiesPageContent() {
         setAllTotalCount(0);
       } finally {
         setIsAllLoading(false);
+        fetchingRef.current.delete(cacheKey);
       }
     };
     fetchAll();
@@ -1159,49 +1463,6 @@ function CommunitiesPageContent() {
     router.push(`/community/${encodeCommunityId(community._id)}`);
   };
 
-  // Simple Create Community Modal
-  const CreateCommunityModal = () => {
-    if (!showCreateModal) return null;
-
-    return (
-      <div
-        className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4"
-        onClick={() => setShowCreateModal(false)}
-      >
-        <div
-          className="bg-gray-800 rounded-lg p-8 max-w-md w-full border border-gray-700 shadow-xl"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="text-center">
-            <div className="bg-yellow-600 p-3 rounded-full w-fit mx-auto mb-4">
-              <i className="fa fa-tools text-white text-2xl"></i>
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-4">Coming Soon!</h3>
-            <p className="text-gray-300 mb-6">
-              Community creation is currently available in our mobile app. Download it to create your own community!
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
-              >
-                Got it
-              </button>
-              <button
-                onClick={() => {
-                  window.open('https://apps.apple.com/us/app/lpc-app/id6503307483', '_blank');
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
-              >
-                <i className="fa fa-mobile-alt mr-2"></i>
-                Get Mobile App
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   // Render content based on active section
   const renderContent = () => {
@@ -1232,29 +1493,50 @@ function CommunitiesPageContent() {
               </div>
             ) : (
               <>
-                {/* Top Ad for Elite */}
-                {eliteCommunities.length > 0 && (
+                {/* Top Ad for Elite - Only show after checking subscription, and hide for Premium and Premium Plus */}
+                {eliteCommunities.length > 0 && userSubscriptionChecked && !(user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus')) && (
                   <div className="mb-6">
                     <GoogleAd adSlot="1760139308" matchCardHeight={false} />
                   </div>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full items-start">
                   {(() => {
-                    // Generate random ad positions (after first card, then every 3-5 cards)
-                    const generateAdPositions = (totalCards: number): Set<number> => {
+                    // Generate positions based on subscription tier
+                    const generateAdPositions = (totalCards: number, userPlan?: string, subscriptionActive?: boolean): Set<number> => {
                       const positions = new Set<number>();
                       
-                      // Always place first ad after the first card (position 1)
+                      // Premium Plus: No ads
+                      if (subscriptionActive && userPlan === 'premium_plus') {
+                        return positions;
+                      }
+                      
+                      // Premium: 50% fewer ads (every 6-10 cards instead of 3-5)
+                      const isPremium = subscriptionActive && userPlan === 'premium';
+                      const minCardsBetweenAds = isPremium ? 6 : 3;
+                      const maxCardsBetweenAds = isPremium ? 10 : 5;
+                      
+                      // Always place first ad after the first card (position 1) - unless Premium Plus
                       if (totalCards >= 1) {
                         positions.add(1);
                       }
                       
-                      // Then place ads every 3-5 cards after that
+                      // Then place ads every N cards after the first ad
+                      // Use a seeded random function based on section name to ensure different patterns per section
+                      let randomSeed = 0;
+                      const sectionSeed = 'elite';
+                      for (let i = 0; i < sectionSeed.length; i++) {
+                        randomSeed += sectionSeed.charCodeAt(i);
+                      }
+                      randomSeed += totalCards; // Also include totalCards in seed
+                      
                       let currentPosition = 1; // Start after first card
+                      let iteration = 0;
                       while (currentPosition < totalCards - 2) {
-                        // Random number between 3 and 5
-                        const cardsUntilAd = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+                        // Use a combination of Math.random() and the seed to ensure different patterns
+                        const randomValue = Math.random() * (randomSeed + iteration + Date.now() % 1000);
+                        const cardsUntilAd = Math.floor((randomValue % (maxCardsBetweenAds - minCardsBetweenAds + 1)) + minCardsBetweenAds);
                         currentPosition += cardsUntilAd;
+                        iteration++;
                         
                         if (currentPosition < totalCards) {
                           positions.add(currentPosition);
@@ -1264,8 +1546,11 @@ function CommunitiesPageContent() {
                       return positions;
                     };
                     
-                    // Generate positions based on current page's communities
-                    const adPositions = generateAdPositions(eliteCommunities.length);
+                    const adPositions = generateAdPositions(
+                      eliteCommunities.length,
+                      user?.subscription?.plan,
+                      user?.subscription?.active
+                    );
                     
                     const items: React.ReactNode[] = [];
                     eliteCommunities.forEach((community, index) => {
@@ -1339,6 +1624,9 @@ function CommunitiesPageContent() {
             isLoading={isUserLoading}
             emptyMessage="You haven't joined any communities yet"
             emptyIcon="fa-users"
+            userPlan={user?.subscription?.plan}
+            subscriptionActive={user?.subscription?.active}
+            userSubscriptionChecked={userSubscriptionChecked}
             emptyActions={
               <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
                 <button
@@ -1362,7 +1650,7 @@ function CommunitiesPageContent() {
                 </button>
                 <button
                   onClick={() => {
-                    setShowCreateModal(true);
+                    router.push('/communities/create-new');
                   }}
                   className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white font-semibold rounded-lg shadow-lg hover:from-green-700 hover:to-teal-700 transition-all duration-200 transform hover:scale-105"
                 >
@@ -1388,6 +1676,9 @@ function CommunitiesPageContent() {
                 onFilterChange={(filterId) => {
                   setUserFilter(filterId as 'approved' | 'pending' | 'owned');
                   setUserPage(0); // Reset to first page when filter changes
+                  // Update hash in URL
+                  const hash = filterToHash[filterId] || filterId;
+                  setHashInUrl(hash);
                 }}
                 countsLoaded={userFilterCountsLoaded}
               />
@@ -1419,6 +1710,9 @@ function CommunitiesPageContent() {
             title="Recommended for You"
             communities={recommendedCommunities}
             actionText="Explore"
+            userPlan={user?.subscription?.plan}
+            subscriptionActive={user?.subscription?.active}
+            userSubscriptionChecked={userSubscriptionChecked}
             onAction={handleCommunityClick}
             isLoading={isRecommendedLoading}
             emptyMessage="No recommendations available"
@@ -1451,6 +1745,9 @@ function CommunitiesPageContent() {
               onFilterChange={(tag) => {
                 setCurrentTag(tag);
                 setAllPage(0); // Reset to first page when filter changes
+                // Update hash in URL
+                const hash = filterToHash[tag] || tag.toLowerCase();
+                setHashInUrl(hash);
               }}
               countsLoaded={browseFilterCountsLoaded}
             />
@@ -1468,28 +1765,38 @@ function CommunitiesPageContent() {
               </div>
             ) : (
               <>
-                {/* Top Ad for Browse */}
-                {allCommunities.length > 0 && (
+                {/* Top Ad for Browse - Only show after checking subscription, and hide for Premium and Premium Plus */}
+                {allCommunities.length > 0 && userSubscriptionChecked && !(user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus')) && (
                   <div className="mb-6">
                     <GoogleAd adSlot="1760139308" matchCardHeight={false} />
                   </div>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full items-start">
                   {(() => {
-                    // Generate random ad positions (after first card, then every 3-5 cards)
-                    const generateAdPositions = (totalCards: number): Set<number> => {
+                    // Generate positions based on subscription tier
+                    const generateAdPositions = (totalCards: number, userPlan?: string, subscriptionActive?: boolean): Set<number> => {
                       const positions = new Set<number>();
                       
-                      // Always place first ad after the first card (position 1)
+                      // Premium Plus: No ads
+                      if (subscriptionActive && userPlan === 'premium_plus') {
+                        return positions;
+                      }
+                      
+                      // Premium: 50% fewer ads (every 6-10 cards instead of 3-5)
+                      const isPremium = subscriptionActive && userPlan === 'premium';
+                      const minCardsBetweenAds = isPremium ? 6 : 3;
+                      const maxCardsBetweenAds = isPremium ? 10 : 5;
+                      
+                      // Always place first ad after the first card (position 1) - unless Premium Plus
                       if (totalCards >= 1) {
                         positions.add(1);
                       }
                       
-                      // Then place ads every 3-5 cards after that
+                      // Then place ads every N cards after the first ad
                       let currentPosition = 1; // Start after first card
                       while (currentPosition < totalCards - 2) {
-                        // Random number between 3 and 5
-                        const cardsUntilAd = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+                        // Random number between min and max cards after the previous ad
+                        const cardsUntilAd = Math.floor(Math.random() * (maxCardsBetweenAds - minCardsBetweenAds + 1)) + minCardsBetweenAds;
                         currentPosition += cardsUntilAd;
                         
                         if (currentPosition < totalCards) {
@@ -1500,8 +1807,11 @@ function CommunitiesPageContent() {
                       return positions;
                     };
                     
-                    // Generate positions based on current page's communities
-                    const adPositions = generateAdPositions(allCommunities.length);
+                    const adPositions = generateAdPositions(
+                      allCommunities.length,
+                      user?.subscription?.plan,
+                      user?.subscription?.active
+                    );
                     
                     const items: React.ReactNode[] = [];
                     allCommunities.forEach((community, index) => {
@@ -1569,7 +1879,7 @@ function CommunitiesPageContent() {
           {/* Search Bar */}
           <div className="bg-gray-900 border-b border-gray-700">
             <SearchBar 
-              onCreateCommunity={() => setShowCreateModal(true)}
+              onCreateCommunity={() => router.push('/communities/create-new')}
               onSearch={(query) => router.push(`/communities/search?q=${encodeURIComponent(query)}`)}
             />
           </div>
@@ -1598,9 +1908,6 @@ function CommunitiesPageContent() {
       </div>
 
       <Footer />
-
-      {/* Create Community Modal */}
-      <CreateCommunityModal />
     </div>
   );
 }

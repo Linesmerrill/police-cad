@@ -187,7 +187,24 @@ export default function Navbar() {
             }}
           >
             <UserIcon style={{ width: '16px', height: '16px' }} />
-            <span style={{ fontWeight: '700' }}>{user.username || user.email?.split('@')[0] || 'User'}</span>
+            <span style={{ fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+              {user.username || user.email?.split('@')[0] || 'User'}
+              {user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus') && (
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '16px',
+                  height: '16px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                  color: '#3b82f6',
+                  flexShrink: 0
+                }} title="Verified">
+                  <i className="fa fa-check-circle" style={{ fontSize: '12px' }}></i>
+                </span>
+              )}
+            </span>
             {userMenuOpen ? (
               <ChevronUpIcon style={{ width: '14px', height: '14px' }} />
             ) : (

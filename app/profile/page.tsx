@@ -23,6 +23,168 @@ export default function Profile() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [emailModalError, setEmailModalError] = useState<string | null>(null);
+  
+  // User subscription tiers
+  const userTiers = {
+    free: {
+      name: "Free",
+      features: [
+        {
+          text: "Create 1 community",
+          icon: "community",
+          description: "Allows you to create and manage 1 community.",
+        },
+        {
+          text: "Default departments",
+          icon: "department",
+          description: "Provides access to pre-set department categories.",
+        },
+        {
+          text: "Full ads",
+          icon: "ads",
+          description: "Displays the full amount of advertisements.",
+        },
+      ],
+    },
+    base: {
+      name: "Base",
+      features: [
+        {
+          text: "Create up to 5 communities",
+          icon: "community",
+          description: "Allows you to create and manage up to 5 communities.",
+        },
+        {
+          text: "Default departments",
+          icon: "department",
+          description: "Provides access to pre-set department categories.",
+        },
+        {
+          text: "Full ads",
+          icon: "ads",
+          description: "Displays the full amount of advertisements.",
+        },
+      ],
+    },
+    premium: {
+      name: "Premium",
+      features: [
+        {
+          text: "Verified checkmark",
+          icon: "checkmark",
+          description: "Displays a verified checkmark next to your profile.",
+        },
+        {
+          text: "Create up to 10 communities",
+          icon: "community",
+          description: "Allows you to create and manage up to 10 communities.",
+        },
+        {
+          text: "Default departments",
+          icon: "department",
+          description: "Provides access to pre-set department categories.",
+        },
+        {
+          text: "Limited ads (50% fewer)",
+          icon: "ads",
+          description:
+            "Reduces the number of ads by 50% compared to the Base tier.",
+        },
+      ],
+    },
+    premium_plus: {
+      name: "Premium +",
+      features: [
+        {
+          text: "Verified checkmark",
+          icon: "checkmark",
+          description: "Displays a verified checkmark next to your profile.",
+        },
+        {
+          text: "Unlimited communities",
+          icon: "community",
+          description:
+            "Allows you to create and manage an unlimited number of communities.",
+        },
+        {
+          text: "Custom departments",
+          icon: "department",
+          description:
+            "Enables you to create and name your own department categories.",
+        },
+        {
+          text: "No ads",
+          icon: "ads",
+          description: "Removes all advertisements for an ad-free experience.",
+        },
+      ],
+    },
+  };
+
+  // Subscription formatting helpers
+  const formatPlanName = (plan: string | undefined): string => {
+    if (!plan) return 'Free';
+    switch (plan) {
+      case 'premium_plus':
+        return 'Premium +';
+      case 'premium':
+        return 'Premium';
+      case 'base':
+        return 'Base';
+      default:
+        return plan.charAt(0).toUpperCase() + plan.slice(1);
+    }
+  };
+
+  const getPlanBadgeStyle = (plan: string | undefined): string => {
+    if (!plan || plan === 'free') {
+      return 'bg-gradient-to-r from-gray-500 to-gray-600 text-white';
+    }
+    switch (plan) {
+      case 'premium_plus':
+        return 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-yellow-900';
+      case 'premium':
+        return 'bg-gradient-to-r from-purple-500 to-purple-600 text-white';
+      case 'base':
+        return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white';
+      default:
+        return 'bg-gradient-to-r from-gray-500 to-gray-600 text-white';
+    }
+  };
+
+  const getFeatureIcon = (icon: string) => {
+    switch (icon) {
+      case 'community':
+        return 'fa-users';
+      case 'department':
+        return 'fa-building';
+      case 'ads':
+        return 'fa-ad';
+      case 'checkmark':
+        return 'fa-check-circle';
+      default:
+        return 'fa-check';
+    }
+  };
+
+  const calculateExpirationDate = (updatedAt: any, isAnnual: boolean): Date | null => {
+    if (!updatedAt) return null;
+    
+    const updateDate = typeof updatedAt === 'object' && '$date' in updatedAt 
+      ? new Date(updatedAt.$date) 
+      : new Date(updatedAt);
+    
+    if (isNaN(updateDate.getTime())) return null;
+    
+    const expirationDate = new Date(updateDate);
+    if (isAnnual) {
+      expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+    } else {
+      expirationDate.setMonth(expirationDate.getMonth() + 1);
+    }
+    
+    return expirationDate;
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -630,9 +792,27 @@ export default function Profile() {
                   fontWeight: '600',
                   color: '#ffffff',
                   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                  wordBreak: 'break-word'
+                  wordBreak: 'break-word',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
                 }}>
                   {user.username || 'N/A'}
+                  {user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus') && (
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                      color: '#3b82f6',
+                      flexShrink: 0
+                    }} title="Verified">
+                      <i className="fa fa-check-circle" style={{ fontSize: '16px' }}></i>
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -679,7 +859,7 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Call Sign */}
+            {/* Subscription Tier */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -699,7 +879,7 @@ export default function Profile() {
                 justifyContent: 'center',
                 flexShrink: 0
               }}>
-                <IdentificationIcon style={{ width: '20px', height: '20px', color: '#fbbf24' }} />
+                <CurrencyDollarIcon style={{ width: '20px', height: '20px', color: '#fbbf24' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
@@ -708,15 +888,20 @@ export default function Profile() {
                   marginBottom: '0.25rem',
                   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
                 }}>
-                  Call Sign
+                  Subscription Tier
                 </div>
                 <div style={{
                   fontSize: '1.125rem',
                   fontWeight: '600',
                   color: '#ffffff',
-                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
                 }}>
-                  {user.callSign || 'Not set'}
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${getPlanBadgeStyle(user?.subscription?.active ? user.subscription.plan : 'free')}`}>
+                    {formatPlanName(user?.subscription?.active ? user.subscription.plan : 'free')}
+                  </span>
                 </div>
               </div>
             </div>
@@ -846,9 +1031,27 @@ export default function Profile() {
                       fontWeight: '600',
                       color: '#ffffff',
                       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                      wordBreak: 'break-word'
+                      wordBreak: 'break-word',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
                     }}>
                       {user.username || 'N/A'}
+                      {user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus') && (
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                          color: '#3b82f6',
+                          flexShrink: 0
+                        }} title="Verified">
+                          <i className="fa fa-check-circle" style={{ fontSize: '16px' }}></i>
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1312,6 +1515,260 @@ export default function Profile() {
           </div>
         </div>
 
+        {/* Subscription Card */}
+        <div style={{
+          backgroundColor: 'rgba(15, 15, 20, 0.6)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '1rem',
+          padding: '2rem',
+          marginBottom: '2rem',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)'
+        }}>
+          <h2 style={{
+            fontSize: '1.5rem',
+            fontWeight: '700',
+            color: '#ffffff',
+            marginBottom: '1.5rem',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+          }}>
+            Subscription
+          </h2>
+          
+          {user?.subscription?.active && user.subscription.plan ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {/* Plan Name */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                padding: '1rem',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                borderRadius: '0.5rem',
+                border: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(251, 191, 36, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <CurrencyDollarIcon style={{ width: '20px', height: '20px', color: '#fbbf24' }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: '0.875rem',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    marginBottom: '0.25rem',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  }}>
+                    Current Plan
+                  </div>
+                  <div style={{
+                    fontSize: '1.125rem',
+                    fontWeight: '600',
+                    color: '#ffffff',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  }}>
+                    <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${getPlanBadgeStyle(user.subscription.plan)}`}>
+                      {formatPlanName(user.subscription.plan)}
+                    </span>
+                    {user.subscription.isAnnual && (
+                      <span style={{ marginLeft: '0.5rem', color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.875rem' }}>
+                        (Annual)
+                      </span>
+                    )}
+                    {!user.subscription.isAnnual && user.subscription.plan !== 'free' && (
+                      <span style={{ marginLeft: '0.5rem', color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.875rem' }}>
+                        (Monthly)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Subscription Details */}
+              {user.subscription.updatedAt && (
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '0.5rem',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  <div style={{
+                    fontSize: '0.875rem',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    marginBottom: '0.5rem',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  }}>
+                    Subscription Details
+                  </div>
+                  <div style={{
+                    fontSize: '0.875rem',
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                    lineHeight: '1.6'
+                  }}>
+                    <div style={{ marginBottom: '0.5rem' }}>
+                      <strong>Billing Cycle:</strong> {user.subscription.isAnnual ? 'Annual' : 'Monthly'}
+                    </div>
+                    {user.subscription.updatedAt && (
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <strong>Last Updated:</strong> {formatDate(typeof user.subscription.updatedAt === 'object' && '$date' in user.subscription.updatedAt ? user.subscription.updatedAt.$date : user.subscription.updatedAt)}
+                      </div>
+                    )}
+                    {(() => {
+                      const expirationDate = calculateExpirationDate(user.subscription.updatedAt, user.subscription.isAnnual);
+                      return expirationDate && (
+                        <div>
+                          <strong>Expires:</strong> {formatDate(expirationDate)}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* Subscription Features */}
+              {user.subscription.plan && userTiers[user.subscription.plan as keyof typeof userTiers] && (
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '0.5rem',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  <div style={{
+                    fontSize: '0.875rem',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    marginBottom: '1rem',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  }}>
+                    Plan Features
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem'
+                  }}>
+                    {userTiers[user.subscription.plan as keyof typeof userTiers].features.map((feature, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '0.75rem',
+                          padding: '0.75rem',
+                          backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                          borderRadius: '0.5rem'
+                        }}
+                      >
+                        <div style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(251, 191, 36, 0.2)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          marginTop: '0.125rem'
+                        }}>
+                          <i className={`fa ${getFeatureIcon(feature.icon)}`} style={{ fontSize: '12px', color: '#fbbf24' }}></i>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{
+                            fontSize: '0.875rem',
+                            fontWeight: '600',
+                            color: '#ffffff',
+                            marginBottom: '0.25rem',
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                          }}>
+                            {feature.text}
+                          </div>
+                          <div style={{
+                            fontSize: '0.75rem',
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                            lineHeight: '1.5'
+                          }}>
+                            {feature.description}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{
+              padding: '1rem',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '0.5rem',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <div style={{
+                fontSize: '1rem',
+                fontWeight: '600',
+                color: '#ffffff',
+                marginBottom: '0.5rem',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+              }}>
+                <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${getPlanBadgeStyle('free')}`}>
+                  Free
+                </span>
+              </div>
+              <div style={{
+                fontSize: '0.875rem',
+                color: 'rgba(255, 255, 255, 0.6)',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                lineHeight: '1.6'
+              }}>
+                You are currently on the Free plan.
+              </div>
+            </div>
+          )}
+
+          {/* Management Notice */}
+          <div style={{
+            marginTop: '1.5rem',
+            padding: '1rem',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: '0.5rem'
+          }}>
+            <div style={{
+              fontSize: '0.875rem',
+              color: 'rgba(255, 255, 255, 0.8)',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+              lineHeight: '1.6'
+            }}>
+              <strong style={{ color: '#ffffff' }}>Note:</strong> Subscriptions are managed through the mobile app. To subscribe, upgrade, or manage your subscription, please use the{' '}
+              <a
+                href="https://apps.apple.com/us/app/lpc-app/id6503307483"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#60a5fa', textDecoration: 'underline' }}
+              >
+                iOS app
+              </a>
+              {' '}or{' '}
+              <a
+                href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#60a5fa', textDecoration: 'underline' }}
+              >
+                Android app
+              </a>
+              .
+            </div>
+          </div>
+        </div>
+
         {/* Danger Zone Card */}
         <div style={{
           backgroundColor: 'rgba(239, 68, 68, 0.05)',
@@ -1737,9 +2194,27 @@ export default function Profile() {
                 fontWeight: '600',
                 color: '#ffffff',
                 marginBottom: '0.5rem',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
               }}>
                 @{user.username}
+                {user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus') && (
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    color: '#3b82f6',
+                    flexShrink: 0
+                  }} title="Verified">
+                    <i className="fa fa-check-circle" style={{ fontSize: '14px' }}></i>
+                  </span>
+                )}
               </div>
               <div style={{
                 fontSize: '1rem',

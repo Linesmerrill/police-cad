@@ -6,6 +6,8 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const userId = searchParams.get('userId');
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '9', 10);
 
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -53,11 +55,16 @@ export async function GET(request: NextRequest) {
         };
       });
 
+    // Apply pagination on the frontend since the backend doesn't support it
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedData = transformedData.slice(startIndex, endIndex);
+
     return NextResponse.json({
-      data: transformedData,
+      data: paginatedData,
       totalCount: transformedData.length,
-      page: 1,
-      limit: transformedData.length,
+      page: page,
+      limit: limit,
     });
   } catch (error) {
     console.error('Error proxying owned communities request:', error);

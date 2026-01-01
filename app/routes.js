@@ -2656,7 +2656,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
           discordConnected: user.discordConnected || false,
           panicButtonSound: user.panicButtonSound || false,
           alertVolumeLevel: user.alertVolumeLevel || 10,
-          createdAt: user.createdAt
+          createdAt: user.createdAt,
+          subscription: user.subscription || userData.subscription || null
         }
       });
     }
@@ -2849,14 +2850,61 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   // Be sure to place all GET requests above this catchall
-  // Let Next.js handle all unmatched routes (including 404s)
-  app.get("*", function (req, res) {
-    // Let Next.js handle its own routes and 404s
+  // Let Next.js handle all unmatched routes (including 404s and API routes)
+  // Handle all HTTP methods to support Next.js API routes (GET, POST, PUT, DELETE, etc.)
+  // Proxy route for community creation to avoid Next.js body lock issue
+  app.post("/api/communities/create", async function (req, res) {
+    try {
+      const cookieHeader = req.headers.cookie || '';
+      const body = req.body;
+
+      if (!body || !body.community) {
+        return res.status(400).json({ error: 'Community data is required' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+      
+      const response = await axios.post(
+        `${apiUrl}/api/v1/community`,
+        body,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error('Error proxying community creation request:', error);
+      const status = error.response?.status || 500;
+      let errorMessage = error.response?.data || error.message || 'Internal server error';
+      
+      // Handle rate limit errors specifically
+      if (status === 429) {
+        errorMessage = 'Too many requests, please try again later.';
+      } else if (typeof errorMessage === 'object' && errorMessage.message) {
+        errorMessage = errorMessage.message;
+      } else if (typeof errorMessage === 'object') {
+        errorMessage = JSON.stringify(errorMessage);
+      }
+      
+      res.status(status).json({ error: errorMessage });
+    }
+  });
+
+  app.all("*", function (req, res) {
+    // Let Next.js handle its own routes, API routes, and 404s
     if (nextApp && handle) {
       return handle(req, res);
     }
     // Fallback to old EJS template only if Next.js is not available
-    res.render("page-not-found");
+    if (req.method === 'GET') {
+      res.render("page-not-found");
+    } else {
+      res.status(404).json({ error: 'Not found' });
+    }
   });
 
   // POST /login - main login route
