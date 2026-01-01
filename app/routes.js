@@ -217,11 +217,15 @@ module.exports = function (app, passport, server, nextApp, handle) {
   );
 
   // Discord Bot page is now handled by Next.js at app/discord-bot/page.tsx
-  // app.get("/discord-bot", function (req, res) {
-  //   res.redirect(
-  //     "https://discord.com/api/oauth2/authorize?client_id=1005557484271976569&permissions=8&scope=bot%20applications.commands"
-  //   );
-  // });
+  app.get("/discord-bot", function (req, res) {
+    if (nextApp && handle) {
+      return handle(req, res);
+    }
+    // Fallback redirect if Next.js not available
+    res.redirect(
+      "https://discord.com/api/oauth2/authorize?client_id=1005557484271976569&permissions=8&scope=bot%20applications.commands"
+    );
+  });
 
   app.get("/release-log", function (req, res) {
     res.render("release-log");
@@ -232,9 +236,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   // About Us page is now handled by Next.js at app/about-us/page.tsx
-  // app.get("/about-us", function (req, res) {
-  //   res.render("about-us");
-  // });
+  app.get("/about-us", function (req, res) {
+    if (nextApp && handle) {
+      return handle(req, res);
+    }
+    // Fallback to EJS if Next.js not available
+    res.render("about-us");
+  });
 
   app.get("/community/:hash", async function (req, res) {
     try {
@@ -361,9 +369,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // });
 
   // Contact Us page is now handled by Next.js at app/contact-us/page.tsx
-  // app.get("/contact-us", function (req, res) {
-  //   res.render("contact-us");
-  // });
+  app.get("/contact-us", function (req, res) {
+    if (nextApp && handle) {
+      return handle(req, res);
+    }
+    // Fallback to EJS if Next.js not available
+    res.render("contact-us");
+  });
 
   // Admin login page (GET) and login handler (POST)
   app.get("/admin", function (req, res) {
@@ -2757,6 +2769,20 @@ module.exports = function (app, passport, server, nextApp, handle) {
       req.session.redirect = redirect;
     }
     res.json({ success: true });
+  });
+
+  // API route for build version - MUST be before catch-all to let Next.js handle it
+  app.get("/api/build-version", function (req, res) {
+    if (nextApp && handle) {
+      return handle(req, res);
+    }
+    // Fallback if Next.js not available
+    try {
+      const versionData = require("../version.json");
+      return res.json({ buildVersion: versionData.version });
+    } catch {
+      return res.json({ buildVersion: '0.0.0-00:00:00' });
+    }
   });
 
   // API route to get current user - MUST be before catch-all
@@ -8195,3 +8221,18 @@ Object.defineProperty(String.prototype, "capitalize", {
   },
   enumerable: false,
 });
+
+  // Catch-all route - pass all unmatched routes to Next.js
+  // This MUST be at the end of all route definitions
+  app.all("*", function (req, res) {
+    // Let Next.js handle its own routes, API routes, and 404s
+    if (nextApp && handle) {
+      return handle(req, res);
+    }
+    // Fallback to old EJS template only if Next.js is not available
+    if (req.method === 'GET') {
+      res.render("page-not-found");
+    } else {
+      res.status(404).json({ error: 'Not found' });
+    }
+  });
