@@ -940,23 +940,20 @@ module.exports = function (app, passport, server, nextApp, handle) {
     return res.redirect("/");
   });
 
-  /* /communities loads the Community view. Contains the current
-   *   community that was clicked on to be edited.
-   *   This is the default landing page when a user clicks on one of the listed 'Communities'.
-   *   Users can 'copy' the community code or 'edit' the community name.
-   *   Also community admins can 'kick' members from their community.
+  /* /communities is now handled by Next.js at app/communities/page.tsx
+   *   The old EJS template is kept for reference but no longer used.
    */
-  app.get("/communities", function (req, res) {
-    req.app.locals.specialContext = null;
-    return res.render("communities", {
-      members: null,
-      communities: null,
-      userID: null,
-      user: req.user,
-      referer: encodeURIComponent("/communities"),
-      redirect: encodeURIComponent(redirect),
-    });
-  });
+  // app.get("/communities", function (req, res) {
+  //   req.app.locals.specialContext = null;
+  //   return res.render("communities", {
+  //     members: null,
+  //     communities: null,
+  //     userID: null,
+  //     user: req.user,
+  //     referer: encodeURIComponent("/communities"),
+  //     redirect: encodeURIComponent(redirect),
+  //   });
+  // });
 
   app.get("/owned-communities", auth, function (req, res) {
     axios
@@ -2852,12 +2849,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   // Be sure to place all GET requests above this catchall
-  // Exclude Next.js internal routes
+  // Let Next.js handle all unmatched routes (including 404s)
   app.get("*", function (req, res) {
-    // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/')) {
+    // Let Next.js handle its own routes and 404s
+    if (nextApp && handle) {
       return handle(req, res);
     }
+    // Fallback to old EJS template only if Next.js is not available
     res.render("page-not-found");
   });
 

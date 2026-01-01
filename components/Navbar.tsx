@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Bars3Icon, XMarkIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import { UserIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { DISCORD_COMMUNITY } from '@/constants/discord';
 
 const navigation = [
@@ -14,6 +15,7 @@ const navigation = [
 ];
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(true);
   const [isSmallScreen, setIsSmallScreen] = useState(true);
@@ -23,6 +25,9 @@ export default function Navbar() {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const topBarRef = useRef<HTMLDivElement>(null);
+  
+  // Hide main header on communities page
+  const hideMainHeader = pathname === '/communities' || (pathname && pathname.startsWith('/communities/'));
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -107,9 +112,9 @@ export default function Navbar() {
 
   return (
     <>
-    {/* Top Bar - Discord Link and Login/User Menu */}
-    <div
-      ref={topBarRef}
+      {/* Top Bar - Discord Link and Login/User Menu */}
+      <div
+        ref={topBarRef}
       style={{
         backgroundColor: 'rgba(20, 20, 25, 0.95)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
@@ -289,44 +294,45 @@ export default function Navbar() {
           </Link>
         </div>
       )}
-    </div>
+      </div>
 
-    <header 
-      ref={headerRef}
-      style={{
-        backgroundColor: 'rgba(15, 15, 20, 0.95)',
-        backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        width: '100%',
-        maxWidth: '100vw',
-        overflowX: 'hidden',
-        boxSizing: 'border-box',
-        minHeight: '60px',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: 0,
-        margin: 0
-      }}
-      className="navbar-header"
-      data-mobile-menu-open={isMobile && mobileMenuOpen ? 'true' : 'false'}
-    >
-      <nav 
-        style={{
-          maxWidth: 'min(100%, 80rem)',
-          margin: '0 auto',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 1rem',
-          width: '100%',
-          boxSizing: 'border-box',
-          overflowX: 'hidden',
-          position: 'relative',
-          height: '60px',
-          flexWrap: 'nowrap',
-          minHeight: 0
-        }}
-      >
+      {!hideMainHeader && (
+        <header 
+          ref={headerRef}
+          style={{
+            backgroundColor: 'rgba(15, 15, 20, 0.95)',
+            backdropFilter: 'blur(10px)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+            width: '100%',
+            maxWidth: '100vw',
+            overflowX: 'hidden',
+            boxSizing: 'border-box',
+            minHeight: '60px',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: 0,
+            margin: 0
+          }}
+          className="navbar-header"
+          data-mobile-menu-open={isMobile && mobileMenuOpen ? 'true' : 'false'}
+        >
+          <nav 
+            style={{
+              maxWidth: 'min(100%, 80rem)',
+              margin: '0 auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 1rem',
+              width: '100%',
+              boxSizing: 'border-box',
+              overflowX: 'hidden',
+              position: 'relative',
+              height: '60px',
+              flexWrap: 'nowrap',
+              minHeight: 0
+            }}
+          >
         {/* Logo */}
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', height: '100%' }}>
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', height: '100%' }}>
@@ -522,7 +528,8 @@ export default function Navbar() {
           </Link>
         </div>
       )}
-    </header>
+        </header>
+      )}
     </>
   );
 }

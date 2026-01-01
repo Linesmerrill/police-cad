@@ -39,7 +39,7 @@
     "mongoose": "^5.13.14",
     "mpromise": "^0.5.5",
     "mquery": "^3.2.3",
-    "next": "^14.2.0",
+    "next": "^16.1.1",
     "nodemailer": "^6.6.1",
     "nodemailer-sendgrid": "^1.0.3",
     "now": "^19.1.1",
@@ -51,8 +51,8 @@
     "passport-twitter": ">= 0.0.0",
     "randomstring": "^1.2.1",
     "rate-limit-mongo": "^2.2.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "socket.io": "^4.1.2",
     "stream": "^0.0.2",
     "svg-captcha": "^1.4.0",
@@ -74,15 +74,15 @@
     "postinstall": "next build"
   },
   "engines": {
-    "node": "20.x"
+    "node": ">=20.9.0"
   },
   "devDependencies": {
-    "@types/node": "^20.11.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.17",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.35",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^16.1.1",
     "nodemon": "^2.0.22",
     "postcss": "^8.4.33",
     "tailwindcss": "^3.4.1",
