@@ -2738,14 +2738,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       return res.redirect(redirect);
     }
     
-    // If there's an error query param already, let Next.js handle it (from explicit redirects)
-    const errorParam = req.query.error;
-    if (errorParam) {
-      return handle(req, res);
-    }
-    
-    // Check for flash messages and pass them as query parameters
+    // Check for flash messages FIRST, before checking query params
     // Passport uses "error" key when failureFlash: true
+    // Note: req.flash() consumes the flash, so we need to check it before anything else
     const errorFlash = req.flash("error");
     if (errorFlash && errorFlash.length > 0) {
       const errorMessage = errorFlash[0];
@@ -2757,7 +2752,27 @@ module.exports = function (app, passport, server, nextApp, handle) {
       } else if (errorMessage === 'email address or password' || errorMessage.includes('password') || errorMessage.includes('email')) {
         errorValue = 'authentication_failed';
       }
-      return res.redirect(`/login?error=${encodeURIComponent(errorValue)}`);
+      // Redirect with error param - construct URL properly to avoid encoding issues
+      // Use res.redirect with a properly formatted URL
+      const redirectUrl = `/login?error=${errorValue}`;
+      // Set status and location header directly to avoid any encoding issues
+      res.status(302);
+      res.setHeader('Location', redirectUrl);
+      return res.end();
+    }
+    
+    // If there's an error query param already, let Next.js handle it (from explicit redirects)
+    // Handle both normal query params and incorrectly parsed ones
+    let errorParam = req.query.error;
+    if (!errorParam && req.query['error=authentication_failed'] !== undefined) {
+      // Handle incorrectly parsed query param
+      errorParam = 'authentication_failed';
+    } else if (!errorParam && req.query['error=account_deactivated'] !== undefined) {
+      errorParam = 'account_deactivated';
+    }
+    
+    if (errorParam) {
+      return handle(req, res);
     }
     
     // Not authenticated, let Next.js handle the login page
@@ -2894,6 +2909,335 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // POST /api/auth/login - proxy route for login (Next.js 16 body reading issue workaround)
+  app.post("/api/auth/login", async function (req, res) {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+      
+      // Create Basic Auth header
+      const authHeader = 'Basic ' + Buffer.from(`${email}:${password}`).toString('base64');
+      
+      // Call backend API
+      const response = await axios.post(
+        `${apiUrl}/api/v1/auth/token`,
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': authHeader
+          },
+        }
+      );
+
+      // Check for deactivated account in response
+      // The backend API returns: { "error": "unauthorized", "message": "...account is deactivated..." }
+      const responseData = response.data;
+      if (responseData) {
+        const message = responseData.message || '';
+        const error = responseData.error || '';
+        const messageLower = message.toLowerCase();
+        
+        if (
+          responseData.isDeactivated === true ||
+          responseData.deactivated === true ||
+          messageLower.includes('account is deactivated') ||
+          messageLower.includes('deactivated') ||
+          messageLower.includes('inactive') ||
+          error === 'account_deactivated'
+        ) {
+          console.log('[API /auth/login] Deactivated account detected:', responseData);
+          return res.status(403).json({ error: 'account_deactivated' });
+        }
+      }
+
+      res.status(response.status).json(responseData);
+    } catch (error) {
+      console.error('Error proxying login request:', error);
+      const status = error.response?.status || 500;
+      let errorData = error.response?.data;
+      
+      // Log the actual error response for debugging
+      console.log('[API /auth/login] Error response data:', JSON.stringify(errorData));
+      
+      // Check if it's a deactivated account error - check multiple possible formats
+      if (errorData) {
+        const errorObj = typeof errorData === 'object' ? errorData : {};
+        const message = errorObj.message || '';
+        const error = errorObj.error || '';
+        const messageLower = message.toLowerCase();
+        const errorStr = typeof errorData === 'string' ? errorData : JSON.stringify(errorData);
+        
+        if (
+          errorObj.isDeactivated === true ||
+          errorObj.deactivated === true ||
+          messageLower.includes('account is deactivated') ||
+          messageLower.includes('deactivated') ||
+          messageLower.includes('inactive') ||
+          error === 'account_deactivated' ||
+          errorStr.includes('deactivated')
+        ) {
+          console.log('[API /auth/login] Deactivated account detected in error:', errorData);
+          return res.status(403).json({ error: 'account_deactivated' });
+        }
+      }
+      
+      // Handle axios error response data
+      let errorMessage = errorData || error.message || 'Internal server error';
+      if (typeof errorMessage === 'object' && errorMessage.error) {
+        errorMessage = errorMessage.error;
+      } else if (typeof errorMessage === 'object' && errorMessage.message) {
+        errorMessage = errorMessage.message;
+      } else if (typeof errorMessage === 'object') {
+        errorMessage = JSON.stringify(errorMessage);
+      }
+      
+      res.status(status).json({ error: errorMessage });
+    }
+  });
+
+  // POST /api/signup - Create temp account and send verification email
+  // Moved here before app.all("*") to ensure it's handled by Express, not Next.js
+  app.post("/api/signup", function (req, res) {
+    if (req.isAuthenticated()) {
+      return res.status(400).json({ message: 'You are already logged in.' });
+    }
+
+    const { username, email, password, callSign } = req.body;
+
+    // Validate inputs
+    if (!username || username.trim().length < 3) {
+      return res.status(400).json({ message: 'Username must be at least 3 characters long.', field: 'username' });
+    }
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address.', field: 'email' });
+    }
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long.', field: 'password' });
+    }
+
+    const searchEmail = email.toLowerCase().trim();
+    const searchUsername = username.trim();
+
+    async.waterfall(
+      [
+        function (done) {
+          // Check if email already exists
+          User.findOne(
+            {
+              "user.email": searchEmail
+            },
+            function (err, existingUser) {
+              if (err) {
+                return done(err);
+              }
+              if (existingUser) {
+                // Check if account is verified
+                // Only send verification email if emailVerified is explicitly false
+                // Old accounts (undefined/null) and verified accounts (true) should not receive emails
+                const emailVerified = existingUser.user.emailVerified;
+                
+                // Reject if:
+                // 1. emailVerified is explicitly true (verified account)
+                // 2. emailVerified is undefined/null (old account, treated as verified)
+                if (emailVerified === true || emailVerified === undefined || emailVerified === null) {
+                  return res.status(409).json({ message: 'An account with this email already exists. Please log in.', field: 'email' });
+                }
+                
+                // Only proceed if emailVerified === false (explicitly unverified)
+                if (emailVerified !== false) {
+                  // Safety check - shouldn't reach here, but just in case
+                  return res.status(409).json({ message: 'An account with this email already exists. Please log in.', field: 'email' });
+                }
+                
+                // Account exists and is explicitly not verified (emailVerified === false) - resend verification email
+                // Generate new verification token
+                crypto.randomBytes(20, function (err, buf) {
+                  if (err) {
+                    return done(err);
+                  }
+                  var newToken = buf.toString("hex");
+                  existingUser.user.emailVerificationToken = newToken;
+                  existingUser.user.emailVerificationExpires = Date.now() + 86400000; // 24 hours
+                  existingUser.save(function (err) {
+                    if (err) {
+                      return done(err);
+                    }
+                    // Send verification email
+                    if (!process.env.MAIL_API_KEY) {
+                      return res.status(500).json({ message: 'Email service is not configured. Please contact support.' });
+                    }
+                    var smtpTransport = nodemailer.createTransport(
+                      nodemailerSendgrid({
+                        apiKey: process.env.MAIL_API_KEY,
+                      })
+                    );
+                    let baseUrl = process.env.BASE_URL;
+                    if (!baseUrl && process.env.CLIENT_REDIRECT) {
+                      const clientRedirect = process.env.CLIENT_REDIRECT;
+                      const url = new URL(clientRedirect);
+                      baseUrl = `${url.protocol}//${url.host}`;
+                    }
+                    if (!baseUrl) {
+                      baseUrl = 'https://www.linespolice-cad.com';
+                    }
+                    const verificationUrl = `${baseUrl}/signup/verify/${newToken}`;
+                    fs.readFile("signupVerification.html", "utf8", function (err, htmlData) {
+                      if (err) {
+                        var mailOptions = {
+                          to: existingUser.user.email,
+                          from: process.env.FROM_EMAIL,
+                          subject: "Verify Your Lines Police CAD Account",
+                          html: `<h2>Welcome to Lines Police CAD!</h2><p>Please click the link below to verify your email address:</p><p><a href="${verificationUrl}">${verificationUrl}</a></p><p>This link will expire in 24 hours.</p>`,
+                        };
+                        smtpTransport.sendMail(mailOptions, function (err) {
+                          if (err) {
+                            return done(err);
+                          }
+                          // Response sent - don't call done() to stop waterfall
+                          return res.json({ message: 'Verification email resent. Please check your inbox.', redirectTo: `/signup/verify?email=${encodeURIComponent(searchEmail)}&sent=true` });
+                        });
+                      } else {
+                        let template = handlebars.compile(htmlData);
+                        let data = {
+                          verificationUrl: verificationUrl,
+                          username: existingUser.user.username,
+                        };
+                        let htmlToSend = template(data);
+                        var mailOptions = {
+                          to: existingUser.user.email,
+                          from: process.env.FROM_EMAIL,
+                          subject: "Verify Your Lines Police CAD Account",
+                          html: htmlToSend,
+                        };
+                        smtpTransport.sendMail(mailOptions, function (err) {
+                          if (err) {
+                            return done(err);
+                          }
+                          // Response sent - don't call done() to stop waterfall
+                          return res.json({ message: 'Verification email resent. Please check your inbox.', redirectTo: `/signup/verify?email=${encodeURIComponent(searchEmail)}&sent=true` });
+                        });
+                      }
+                    });
+                    return; // Don't call done() since we already sent response
+                  });
+                });
+                return; // Don't call done() since we're handling async email sending
+              } else {
+                // Email doesn't exist - create new user
+                return done(null);
+              }
+            }
+          );
+        },
+        function (done) {
+          // Generate verification token
+          crypto.randomBytes(20, function (err, buf) {
+            if (err) {
+              return done(err);
+            }
+            var token = buf.toString("hex");
+            done(null, token);
+          });
+        },
+        function (token, done) {
+          // Create new user
+          var newUser = new User();
+          newUser.user.username = searchUsername;
+          newUser.user.callSign = callSign ? callSign.trim() : '';
+          newUser.user.email = searchEmail;
+          newUser.user.password = newUser.generateHash(password);
+          newUser.user.name = "";
+          newUser.user.address = "";
+          newUser.user.discordConnected = false;
+          newUser.user.resetPasswordToken = "";
+          newUser.user.resetPasswordExpires = "";
+          newUser.user.emailVerificationToken = token;
+          newUser.user.emailVerificationExpires = Date.now() + 86400000; // 24 hours
+          newUser.user.emailVerified = false; // Explicitly set to false for new accounts
+          newUser.user.createdAt = new Date();
+          newUser.save(function (err) {
+            if (err) {
+              return done(err);
+            }
+            done(null, newUser, token);
+          });
+        },
+        function (user, token, done) {
+          // Send verification email
+          if (!process.env.MAIL_API_KEY) {
+            return res.status(500).json({ message: 'Email service is not configured. Please contact support.' });
+          }
+          var smtpTransport = nodemailer.createTransport(
+            nodemailerSendgrid({
+              apiKey: process.env.MAIL_API_KEY,
+            })
+          );
+          let baseUrl = process.env.BASE_URL;
+          if (!baseUrl && process.env.CLIENT_REDIRECT) {
+            const clientRedirect = process.env.CLIENT_REDIRECT;
+            const url = new URL(clientRedirect);
+            baseUrl = `${url.protocol}//${url.host}`;
+          }
+          if (!baseUrl) {
+            baseUrl = 'https://www.linespolice-cad.com';
+          }
+          const verificationUrl = `${baseUrl}/signup/verify/${token}`;
+          fs.readFile("signupVerification.html", "utf8", function (err, htmlData) {
+            if (err) {
+              var mailOptions = {
+                to: user.user.email,
+                from: process.env.FROM_EMAIL,
+                subject: "Verify Your Lines Police CAD Account",
+                html: `<h2>Welcome to Lines Police CAD!</h2><p>Please click the link below to verify your email address:</p><p><a href="${verificationUrl}">${verificationUrl}</a></p><p>This link will expire in 24 hours.</p>`,
+              };
+              smtpTransport.sendMail(mailOptions, function (err) {
+                if (err) {
+                  return done(err);
+                }
+                // Response sent - don't call done() to stop waterfall
+                return res.json({ message: 'Account created! Please check your email to verify your account.' });
+              });
+            } else {
+              let template = handlebars.compile(htmlData);
+              let data = {
+                verificationUrl: verificationUrl,
+                username: user.user.username,
+              };
+              let htmlToSend = template(data);
+              var mailOptions = {
+                to: user.user.email,
+                from: process.env.FROM_EMAIL,
+                subject: "Verify Your Lines Police CAD Account",
+                html: htmlToSend,
+              };
+              smtpTransport.sendMail(mailOptions, function (err) {
+                if (err) {
+                  return done(err);
+                }
+                // Response sent - don't call done() to stop waterfall
+                return res.json({ message: 'Account created! Please check your email to verify your account.' });
+              });
+            }
+          });
+        }
+      ],
+      function (err) {
+        if (err) {
+          console.error('Error in signup waterfall:', err);
+          return res.status(500).json({ message: 'An error occurred. Please try again.' });
+        }
+      }
+    );
+  });
+
   app.all("*", function (req, res) {
     // Let Next.js handle its own routes, API routes, and 404s
     if (nextApp && handle) {
@@ -2910,11 +3254,39 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // POST /login - main login route
   app.post(
     "/login",
-    passport.authenticate("login", {
-      failureRedirect: "/login",
-      failureFlash: true,
-      passReqToCallback: true,
-    }),
+    function(req, res, next) {
+      console.log('[LOGIN POST] Starting authentication');
+      // Custom authentication with explicit error handling
+      passport.authenticate("login", {
+        failureFlash: true,
+        passReqToCallback: true,
+      })(req, res, function(err) {
+        console.log('[LOGIN POST] Auth callback, err:', err, 'req.user:', !!req.user);
+        // If authentication failed, redirect with error
+        if (err || !req.user) {
+          console.log('[LOGIN POST] Authentication failed');
+          // Check flash message
+          const flashError = req.flash("error");
+          console.log('[LOGIN POST] Flash error:', flashError);
+          
+          let errorValue = 'authentication_failed';
+          if (flashError && flashError.length > 0) {
+            const errorMessage = flashError[0];
+            console.log('[LOGIN POST] Flash error message:', errorMessage);
+            if (errorMessage === 'account_deactivated') {
+              errorValue = 'account_deactivated';
+            }
+          }
+          
+          console.log('[LOGIN POST] Redirecting to /login?error=' + errorValue);
+          // Redirect with error in query string - use res.redirect to ensure proper encoding
+          return res.redirect(`/login?error=${errorValue}`);
+        }
+        console.log('[LOGIN POST] Authentication succeeded, continuing');
+        // Authentication succeeded, continue to next middleware
+        next();
+      });
+    },
     function (req, res, next) {
       // Set a timeout to prevent hanging (30 seconds)
       const timeout = setTimeout(() => {
