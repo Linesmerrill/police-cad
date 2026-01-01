@@ -83,6 +83,9 @@ app.use(
     cookie: {
       path: "/",
       maxAge: 1000 * 60 * 60 * 24 * 30, // 1 Month (30 days) see: https://www.npmjs.com/package/connect-mongodb-session
+      httpOnly: true,
+      sameSite: 'lax', // Allow cookies to be sent with cross-site requests from same site
+      secure: process.env.NODE_ENV === 'production', // Only use secure cookies in production (HTTPS)
     },
   })
 );

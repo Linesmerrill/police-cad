@@ -113,19 +113,27 @@ function LoginForm() {
         
         const sessionResponse = await fetch('/login', {
           method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+          },
           body: formData,
           credentials: 'include',
         });
         
         // Check if session was established successfully
-        if (sessionResponse.ok || sessionResponse.redirected) {
+        if (sessionResponse.ok) {
+          const sessionData = await sessionResponse.json().catch(() => null);
           // Success - redirect to communities
           const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
+          // Small delay to ensure session cookie is set
+          await new Promise(resolve => setTimeout(resolve, 100));
           // Use window.location for full page reload to ensure session is set
           window.location.href = redirect;
         } else {
           // Session setup failed - try redirecting anyway (auth was successful)
           const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
+          // Small delay to ensure session cookie is set
+          await new Promise(resolve => setTimeout(resolve, 100));
           window.location.href = redirect;
         }
       } catch (sessionError) {
