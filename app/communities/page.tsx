@@ -667,11 +667,16 @@ const CommunitySection = ({
 
   if (communities.length === 0) {
     return (
-      <div className="py-12 text-center">
-        <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
-          {emptyIcon && <i className={`${emptyIcon} text-4xl text-gray-500 mb-4`}></i>}
-          <h3 className="text-xl font-semibold text-white mb-2">{title}</h3>
-          <p className="text-gray-400">{emptyMessage || 'No communities found'}</p>
+      <div className="py-4 sm:py-8 w-full">
+        {title && <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-4 sm:mb-6">{title}</h2>}
+        {filterTabs}
+        <div className="py-12 text-center">
+          <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
+            {emptyIcon && <i className={`${emptyIcon} text-4xl text-gray-500 mb-4`}></i>}
+            <h3 className="text-xl font-semibold text-white mb-2">{title}</h3>
+            <p className="text-gray-400">{emptyMessage || 'No communities found'}</p>
+            {emptyActions}
+          </div>
         </div>
       </div>
     );
@@ -788,22 +793,21 @@ function CommunitiesPageContent() {
   const [user, setUser] = useState<User | null>(null);
   const [userSubscriptionChecked, setUserSubscriptionChecked] = useState(false);
   
-  // Cache for user communities data
-  const communitiesCache = useRef<Map<string, { data: Community[]; totalCount: number; timestamp: number }>>(new Map());
+  // Cache for filter counts only (user communities no longer cached)
   const filterCountsCache = useRef<{ data: { approved: number; pending: number; owned: number }; timestamp: number } | null>(null);
   // Cache for elite, recommended, and browse (first page only)
   const eliteCache = useRef<{ data: Community[]; totalCount: number; timestamp: number } | null>(null);
   const recommendedCache = useRef<{ data: Community[]; totalCount: number; timestamp: number } | null>(null);
   const browseCache = useRef<Map<string, { data: Community[]; totalCount: number; timestamp: number }>>(new Map());
   
-  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for user communities
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes for filter counts
   const STATIC_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes for elite/recommended/browse (they change less)
   const fetchingRef = useRef<Set<string>>(new Set()); // Track ongoing fetches to prevent duplicates
   
   // Get initial section from query param or default to 'elite'
   const getInitialSection = () => {
     const pageParam = searchParams.get('page');
-    const validSections = ['elite', 'your-communities', 'recommended', 'browse'];
+    const validSections = ['elite', 'your-communities', 'recommended', 'browse', 'join-code'];
     if (pageParam && validSections.includes(pageParam)) {
       return pageParam;
     }
@@ -812,15 +816,15 @@ function CommunitiesPageContent() {
   
   const [activeSection, setActiveSection] = useState(getInitialSection);
   
-  // Function to invalidate cache (call this after creating a community)
+  // Function to invalidate filter counts cache (call this after creating a community)
   const invalidateCommunitiesCache = () => {
-    communitiesCache.current.clear();
     filterCountsCache.current = null;
+    // Force filter counts to reload
+    setUserFilterCountsLoaded(false);
   };
   
   // Function to invalidate all caches (including elite, recommended, browse)
   const invalidateAllCaches = () => {
-    communitiesCache.current.clear();
     filterCountsCache.current = null;
     eliteCache.current = null;
     recommendedCache.current = null;
@@ -835,14 +839,14 @@ function CommunitiesPageContent() {
     }
   }, []);
   
-  // Refresh cache when page becomes visible (e.g., user returns from mobile app)
+  // Refresh filter counts when page becomes visible (e.g., user returns from mobile app)
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && activeSection === 'your-communities') {
-        // Invalidate cache when page becomes visible to refresh data
-        // This ensures communities created in mobile app show up
+        // Invalidate filter counts cache when page becomes visible to refresh counts
+        // User communities are always fetched fresh, so no need to invalidate them
         invalidateCommunitiesCache();
       }
     };
@@ -926,22 +930,44 @@ function CommunitiesPageContent() {
     PlayStation: 0,
   });
   const [browseFilterCountsLoaded, setBrowseFilterCountsLoaded] = useState(false);
+  
+  // Join via code state
+  const [inviteCode, setInviteCode] = useState('');
+  const [isJoining, setIsJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
+  const [joinSuccess, setJoinSuccess] = useState(false);
 
   const sections = [
     { id: 'elite', label: 'Elite', icon: 'fa-crown' },
     { id: 'your-communities', label: 'Your Communities', icon: 'fa-users' },
     { id: 'recommended', label: 'Recommended', icon: 'fa-compass' },
     { id: 'browse', label: 'Browse All', icon: 'fa-globe' },
+    { id: 'join-code', label: 'Join via Code', icon: 'fa-key' },
   ];
 
   // Update URL when section changes
   const handleSectionChange = (sectionId: string) => {
     setActiveSection(sectionId);
+    // Invalidate cache when switching to "Your Communities" to ensure fresh data
+    if (sectionId === 'your-communities') {
+      invalidateCommunitiesCache();
+    }
     const newUrl = sectionId === 'elite' 
       ? '/communities' 
       : `/communities?page=${sectionId}`;
     router.replace(newUrl, { scroll: false });
   };
+
+  // Check for success parameter and invalidate cache if present
+  useEffect(() => {
+    const successParam = searchParams.get('success');
+    if (successParam && activeSection === 'your-communities') {
+      // User just joined/created a community - invalidate cache to show fresh data
+      invalidateCommunitiesCache();
+      // Remove the success parameter from URL
+      router.replace('/communities?page=your-communities', { scroll: false });
+    }
+  }, [searchParams, activeSection]);
 
   // Sync with URL query param on mount and when searchParams change
   useEffect(() => {
@@ -1025,13 +1051,21 @@ function CommunitiesPageContent() {
     }
 
     const fetchFilterCounts = async () => {
-      // Check cache first
+      // Check cache first - show immediately if available
       const cacheKey = `filterCounts_${user.id}`;
-      if (filterCountsCache.current && 
-          Date.now() - filterCountsCache.current.timestamp < CACHE_DURATION) {
+      const hasCachedData = filterCountsCache.current && 
+          Date.now() - filterCountsCache.current.timestamp < CACHE_DURATION;
+      
+      if (hasCachedData) {
+        // Show cached counts immediately
         setUserFilterCounts(filterCountsCache.current.data);
         setUserFilterCountsLoaded(true);
-        return;
+        
+        // Fetch fresh data in background to check for updates
+        // Don't set loading state - we already have data to show
+      } else {
+        // No cache - show loading state
+        setUserFilterCountsLoaded(false);
       }
 
       // Check if already fetching
@@ -1039,54 +1073,109 @@ function CommunitiesPageContent() {
         return;
       }
       fetchingRef.current.add(cacheKey);
-      setUserFilterCountsLoaded(false);
       
       try {
+        // Fetch all counts - handle each independently so one failure doesn't block others
+        let approvedCount = 0;
+        let pendingCount = 0;
+        let ownedCount = 0;
+
         // Fetch approved count
-        const approvedResponse = await fetch(
-          `/api/user/communities?userId=${user.id}&page=1&filter=${encodeURIComponent('status:approved')}&limit=1`,
-          { credentials: 'include' }
-        );
-        const approvedData = approvedResponse.ok ? await approvedResponse.json() : { totalCount: 0 };
+        try {
+          const approvedResponse = await fetch(
+            `/api/user/communities?userId=${user.id}&page=1&filter=${encodeURIComponent('status:approved')}&limit=1`,
+            { credentials: 'include' }
+          );
+          if (approvedResponse.ok) {
+            const approvedData = await approvedResponse.json();
+            approvedCount = approvedData.totalCount || 0;
+          } else {
+            // 500 or other error - means no approved communities, use 0
+            approvedCount = 0;
+          }
+        } catch (error) {
+          // Network error - use 0
+          approvedCount = 0;
+        }
 
         // Fetch pending count
-        const pendingResponse = await fetch(
-          `/api/user/communities?userId=${user.id}&page=1&filter=${encodeURIComponent('status:pending')}&limit=1`,
-          { credentials: 'include' }
-        );
-        const pendingData = pendingResponse.ok ? await pendingResponse.json() : { totalCount: 0 };
+        try {
+          const pendingResponse = await fetch(
+            `/api/user/communities?userId=${user.id}&page=1&filter=${encodeURIComponent('status:pending')}&limit=1`,
+            { credentials: 'include' }
+          );
+          if (pendingResponse.ok) {
+            const pendingData = await pendingResponse.json();
+            pendingCount = pendingData.totalCount || 0;
+          } else {
+            // Error response - means no pending communities, use 0
+            pendingCount = 0;
+          }
+        } catch (error) {
+          // Network error - use 0
+          pendingCount = 0;
+        }
 
         // Fetch owned count
-        const ownedResponse = await fetch(
-          `/api/user/owned-communities?userId=${user.id}&page=1&limit=1000`,
-          { credentials: 'include' }
-        );
-        const ownedData = ownedResponse.ok ? await ownedResponse.json() : { totalCount: 0 };
-        const ownedCount = ownedData.totalCount !== undefined ? ownedData.totalCount : (ownedData.data || []).length;
+        try {
+          const ownedResponse = await fetch(
+            `/api/user/owned-communities?userId=${user.id}&page=1&limit=1000`,
+            { credentials: 'include' }
+          );
+          if (ownedResponse.ok) {
+            const ownedData = await ownedResponse.json();
+            ownedCount = ownedData.totalCount !== undefined ? ownedData.totalCount : (ownedData.data || []).length;
+          } else {
+            // 500 or other error - means no owned communities, use 0
+            ownedCount = 0;
+          }
+        } catch (error) {
+          // Network error - use 0
+          ownedCount = 0;
+        }
 
         const counts = {
-          approved: approvedData.totalCount || 0,
-          pending: pendingData.totalCount || 0,
+          approved: approvedCount,
+          pending: pendingCount,
           owned: ownedCount,
         };
         
-        // Update cache
+        // Compare with cached data to see if anything changed
+        const cachedCounts = filterCountsCache.current?.data;
+        const hasChanged = !cachedCounts ||
+          counts.approved !== (cachedCounts.approved || 0) ||
+          counts.pending !== (cachedCounts.pending || 0) ||
+          counts.owned !== (cachedCounts.owned || 0);
+        
+        // Always update cache with fresh data
         filterCountsCache.current = {
           data: counts,
           timestamp: Date.now(),
         };
         
-        setUserFilterCounts(counts);
+        // Only update UI if data changed (or if we didn't have cache)
+        if (hasChanged || !cachedCounts) {
+          setUserFilterCounts(counts);
+        }
         setUserFilterCountsLoaded(true);
       } catch (error) {
+        console.error('Error fetching filter counts:', error);
         setUserFilterCountsLoaded(true); // Set to true even on error so we don't show loading state forever
       } finally {
         fetchingRef.current.delete(cacheKey);
       }
     };
-
+    
     fetchFilterCounts();
   }, [user?.id, activeSection]);
+
+  // Invalidate filter counts cache when switching to "Your Communities" to ensure fresh counts
+  useEffect(() => {
+    if (activeSection === 'your-communities') {
+      filterCountsCache.current = null;
+      setUserFilterCountsLoaded(false);
+    }
+  }, [activeSection]);
 
   // Fetch elite communities (with caching for first page only)
   useEffect(() => {
@@ -1170,23 +1259,15 @@ function CommunitiesPageContent() {
     }
 
     const fetchUserCommunities = async () => {
-      // Create cache key
+      // Create cache key for duplicate request prevention only
       const cacheKey = `communities_${user.id}_${userFilter}_${userPage}`;
       
-      // Check cache first
-      const cached = communitiesCache.current.get(cacheKey);
-      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-        setUserCommunities(cached.data);
-        setUserTotalCount(cached.totalCount);
-        setIsUserLoading(false);
-        return;
-      }
-
       // Check if already fetching this exact request
       if (fetchingRef.current.has(cacheKey)) {
         return;
       }
       fetchingRef.current.add(cacheKey);
+      
       setIsUserLoading(true);
       
       try {
@@ -1230,21 +1311,15 @@ function CommunitiesPageContent() {
             subscription: item.subscription ? { active: true } : { active: false },
           }));
           
-          // Update cache
-          communitiesCache.current.set(cacheKey, {
-            data: communities,
-            totalCount: data.totalCount || 0,
-            timestamp: Date.now(),
-          });
-          
           setUserCommunities(communities);
           setUserTotalCount(data.totalCount || 0);
         } else {
-          const errorText = await response.text();
+          // Error response - means no communities for this filter, show empty
           setUserCommunities([]);
           setUserTotalCount(0);
         }
       } catch (error) {
+        console.error('[fetchUserCommunities] Exception:', { userFilter, error });
         setUserCommunities([]);
         setUserTotalCount(0);
       } finally {
@@ -1463,6 +1538,69 @@ function CommunitiesPageContent() {
     router.push(`/community/${encodeCommunityId(community._id)}`);
   };
 
+  const handleJoinViaCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setJoinError(null);
+    setJoinSuccess(false);
+    
+    if (!inviteCode.trim()) {
+      setJoinError('Please enter an invite code');
+      return;
+    }
+
+    if (!user?.id) {
+      setJoinError('You must be logged in to join a community');
+      return;
+    }
+
+    setIsJoining(true);
+    
+    try {
+      const response = await fetch('/community/join', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          inviteCode: inviteCode.trim(),
+          userId: user.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setJoinSuccess(true);
+        setInviteCode('');
+        // Invalidate cache to refresh communities list
+        invalidateCommunitiesCache();
+        
+        // Redirect to community page if we have communityId
+        if (data.communityId) {
+          setTimeout(() => {
+            router.push(`/community/${data.communityId}`);
+          }, 1500);
+        } else {
+          // Otherwise redirect to Your Communities after a delay
+          setTimeout(() => {
+            setActiveSection('your-communities');
+            router.push('/communities?page=your-communities');
+          }, 1500);
+        }
+      } else {
+        // Handle error response
+        const errorMessage = data.message || data.error || 'Failed to join community. Please check the invite code and try again.';
+        setJoinError(errorMessage);
+      }
+    } catch (error) {
+      console.error('Error joining community:', error);
+      setJoinError('An error occurred while joining the community. Please try again.');
+    } finally {
+      setIsJoining(false);
+    }
+  };
+
 
   // Render content based on active section
   const renderContent = () => {
@@ -1622,7 +1760,7 @@ function CommunitiesPageContent() {
             actionText="Jump In"
             onAction={handleCommunityClick}
             isLoading={isUserLoading}
-            emptyMessage="You haven't joined any communities yet"
+            emptyMessage="You haven't joined any communities yet. You can create one or search for a community to join."
             emptyIcon="fa-users"
             userPlan={user?.subscription?.plan}
             subscriptionActive={user?.subscription?.active}
@@ -1674,7 +1812,11 @@ function CommunitiesPageContent() {
                 filters={userFilters}
                 activeFilter={userFilter}
                 onFilterChange={(filterId) => {
-                  setUserFilter(filterId as 'approved' | 'pending' | 'owned');
+                  const newFilter = filterId as 'approved' | 'pending' | 'owned';
+                  // Clear communities immediately when filter changes to avoid showing stale data
+                  setUserCommunities([]);
+                  setUserTotalCount(0);
+                  setUserFilter(newFilter);
                   setUserPage(0); // Reset to first page when filter changes
                   // Update hash in URL
                   const hash = filterToHash[filterId] || filterId;
@@ -1856,6 +1998,92 @@ function CommunitiesPageContent() {
                   />
                 )}
               </>
+            )}
+          </div>
+        );
+      
+      case 'join-code':
+        return (
+          <div className="py-4 sm:py-8 w-full max-w-2xl mx-auto">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-4 sm:mb-6">
+              <i className="fa fa-key mr-2"></i>
+              Join via Code
+            </h2>
+            
+            {!user ? (
+              <div className="bg-gray-800 rounded-lg p-8 border border-gray-700 text-center">
+                <i className="fa fa-sign-in-alt text-4xl text-gray-500 mb-4"></i>
+                <h3 className="text-xl font-semibold text-white mb-2">Sign In Required</h3>
+                <p className="text-gray-400 mb-4">You must be logged in to join a community via invite code</p>
+                <Link
+                  href="/login-civ?redirect=/communities?page=join-code"
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
+                >
+                  <i className="fa fa-sign-in-alt mr-2"></i>
+                  Sign In
+                </Link>
+              </div>
+            ) : (
+              <div className="bg-gray-800 rounded-lg p-6 sm:p-8 border border-gray-700">
+                {joinSuccess ? (
+                  <div className="text-center">
+                    <i className="fa fa-check-circle text-5xl text-green-500 mb-4"></i>
+                    <h3 className="text-xl font-semibold text-white mb-2">Successfully Joined!</h3>
+                    <p className="text-gray-400">Redirecting you to the community...</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleJoinViaCode} className="space-y-6">
+                    <div>
+                      <label htmlFor="inviteCode" className="block text-sm font-medium text-gray-300 mb-2">
+                        Invite Code
+                      </label>
+                      <input
+                        type="text"
+                        id="inviteCode"
+                        value={inviteCode}
+                        onChange={(e) => {
+                          setInviteCode(e.target.value);
+                          setJoinError(null);
+                        }}
+                        placeholder="Enter invite code"
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={isJoining}
+                        autoFocus
+                      />
+                      <p className="mt-2 text-sm text-gray-400">
+                        Enter the invite code you received to join a community
+                      </p>
+                    </div>
+
+                    {joinError && (
+                      <div className="bg-red-900/50 border border-red-700 rounded-lg p-4">
+                        <div className="flex items-center">
+                          <i className="fa fa-exclamation-circle text-red-400 mr-2"></i>
+                          <p className="text-red-300 text-sm">{joinError}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={isJoining || !inviteCode.trim()}
+                      className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white font-semibold rounded-lg shadow-lg hover:from-green-700 hover:to-teal-700 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      {isJoining ? (
+                        <>
+                          <i className="fa fa-spinner fa-spin mr-2"></i>
+                          Joining...
+                        </>
+                      ) : (
+                        <>
+                          <i className="fa fa-sign-in-alt mr-2"></i>
+                          Join Community
+                        </>
+                      )}
+                    </button>
+                  </form>
+                )}
+              </div>
             )}
           </div>
         );
