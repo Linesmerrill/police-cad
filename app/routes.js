@@ -2621,6 +2621,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // API route to get current user - MUST be before catch-all
   app.get("/api/user/current", function (req, res) {
     console.log('[GET /api/user/current] isAuthenticated:', req.isAuthenticated(), 'hasUser:', !!req.user, 'sessionID:', req.sessionID);
+    console.log('[GET /api/user/current] Cookies:', req.headers.cookie);
+    console.log('[GET /api/user/current] Session:', req.session);
     if (req.isAuthenticated() && req.user) {
       // Extract user data safely
       const userData = req.user._doc || req.user;
@@ -3355,17 +3357,38 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
       }, 2000); // 2 second timeout for session save
       
+      // Log session info before saving
+      console.log('[LOGIN POST] Before session save - sessionID:', req.sessionID, 'user:', !!req.user, 'isAuthenticated:', req.isAuthenticated());
+      
       req.session.save(function(err) {
         clearTimeout(saveTimeout);
         if (err) {
           console.error('[LOGIN POST] Session save error:', err);
+        } else {
+          console.log('[LOGIN POST] Session saved successfully - sessionID:', req.sessionID);
+          console.log('[LOGIN POST] Session after save:', {
+            id: req.sessionID,
+            cookie: req.session.cookie,
+            passport: req.session.passport
+          });
         }
         if (!res.headersSent) {
           // Check if this is a JSON request (from Next.js login page)
           if (req.headers['content-type'] === 'application/json' || req.headers.accept?.includes('application/json')) {
+            console.log('[LOGIN POST] Returning JSON response');
+            // Explicitly set the session cookie to ensure it's sent
+            if (req.sessionID) {
+              res.cookie('connect.sid', req.sessionID, {
+                ...req.session.cookie,
+                httpOnly: true,
+                sameSite: 'lax',
+                secure: process.env.NODE_ENV === 'production'
+              });
+            }
             return res.json({ success: true, redirect: redirect });
           }
           // Redirect to communities (or saved redirect)
+          console.log('[LOGIN POST] Redirecting to:', redirect);
           return res.redirect(redirect);
         }
       });
