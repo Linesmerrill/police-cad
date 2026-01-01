@@ -1056,7 +1056,7 @@ function CommunitiesPageContent() {
       const hasCachedData = filterCountsCache.current && 
           Date.now() - filterCountsCache.current.timestamp < CACHE_DURATION;
       
-      if (hasCachedData) {
+      if (hasCachedData && filterCountsCache.current) {
         // Show cached counts immediately
         setUserFilterCounts(filterCountsCache.current.data);
         setUserFilterCountsLoaded(true);
