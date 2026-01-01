@@ -344,8 +344,13 @@ const SearchBar = ({ onCreateCommunity, onSearch }: { onCreateCommunity: () => v
             id: item._id,
             _id: item._id,
             name: c.name || 'Unnamed Community',
-            imageLink: c.imageLink || "/static/images/default-logo.png",
+            imageLink: c.imageLink && !c.imageLink.includes("file:///") && c.imageLink.trim() !== ''
+              ? c.imageLink
+              : "/static/images/default-logo.png",
             description: c.promotionalText || c.promotionalDescription || c.description || "",
+            subscription: c.subscription || null,
+            promotionalText: c.promotionalText || null,
+            tags: c.tags || [],
           };
         }).filter(Boolean);
         setResults(communities);
@@ -428,39 +433,79 @@ const SearchBar = ({ onCreateCommunity, onSearch }: { onCreateCommunity: () => v
                     Search results for &quot;{query}&quot;
                   </div>
                   
-                  {/* Go to search page option */}
+                  {/* Search page option */}
                   <Link
                     href={`/communities/search?q=${encodeURIComponent(query)}`}
                     onClick={() => setShowModal(false)}
                     className="block p-3 hover:bg-gray-700 rounded-lg transition-colors bg-gray-750"
                   >
                     <div className="flex items-center gap-3">
-                      <i className="fa fa-search text-gray-400"></i>
-                      <span className="text-white font-medium">Go to {query}</span>
+                      <i className="fa fa-search text-blue-400"></i>
+                      <span className="text-white font-medium">Search &quot;{query}&quot;</span>
                     </div>
                   </Link>
                   
                   {/* Community results */}
                   {results.length > 0 && (
                     <>
-                      {results.map((community) => (
-                        <Link
-                          key={community._id}
-                          href={`/community/${encodeCommunityId(community._id)}`}
-                          onClick={() => setShowModal(false)}
-                          className="block p-3 hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <i className="fa fa-trophy text-yellow-500"></i>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="text-white font-medium truncate">{community.name}</h4>
-                              {community.description && (
-                                <p className="text-gray-400 text-sm line-clamp-1 truncate">{community.description}</p>
-                              )}
+                      {results.map((community) => {
+                        // Determine badge type
+                        const hasElite = (community.subscription?.active === true && community.subscription?.plan === 'elite') || community.promotionalText;
+                        const hasPremium = community.subscription?.active === true && community.subscription?.plan === 'premium';
+                        const hasStandard = community.subscription?.active === true && community.subscription?.plan === 'standard';
+                        const hasBasic = community.subscription?.active === true && community.subscription?.plan === 'basic';
+                        
+                        return (
+                          <Link
+                            key={community._id}
+                            href={`/community/${encodeCommunityId(community._id)}`}
+                            onClick={() => setShowModal(false)}
+                            className="block p-3 hover:bg-gray-700 rounded-lg transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              {/* Community Image */}
+                              <div className="flex-shrink-0 relative">
+                                <img
+                                  src={community.imageLink || "/static/images/default-logo.png"}
+                                  alt={community.name}
+                                  className="w-12 h-12 rounded-lg object-cover"
+                                />
+                                {/* Badge overlay */}
+                                {(hasElite || hasPremium || hasStandard || hasBasic) && (
+                                  <div className="absolute -top-1 -right-1">
+                                    {hasElite && (
+                                      <span className="inline-flex items-center bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs px-1.5 py-0.5 rounded-full font-bold shadow-lg">
+                                        <i className="fa fa-crown text-[10px]"></i>
+                                      </span>
+                                    )}
+                                    {hasPremium && !hasElite && (
+                                      <span className="inline-flex items-center bg-gradient-to-r from-purple-400 to-pink-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold shadow-lg">
+                                        <i className="fa fa-star text-[10px]"></i>
+                                      </span>
+                                    )}
+                                    {hasStandard && !hasElite && !hasPremium && (
+                                      <span className="inline-flex items-center bg-gradient-to-r from-blue-400 to-indigo-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold shadow-lg">
+                                        <i className="fa fa-check-circle text-[10px]"></i>
+                                      </span>
+                                    )}
+                                    {hasBasic && !hasElite && !hasPremium && !hasStandard && (
+                                      <span className="inline-flex items-center bg-gradient-to-r from-green-400 to-teal-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold shadow-lg">
+                                        <i className="fa fa-user text-[10px]"></i>
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-white font-medium truncate">{community.name}</h4>
+                                {community.description && (
+                                  <p className="text-gray-400 text-sm line-clamp-1 truncate mt-1">{community.description}</p>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </Link>
-                      ))}
+                          </Link>
+                        );
+                      })}
                     </>
                   )}
                 </div>
@@ -583,6 +628,7 @@ const CommunitySection = ({
   showPagination = false,
   paginationProps,
   filterTabs,
+  emptyActions,
 }: {
   title: string;
   communities: Community[];
@@ -599,6 +645,7 @@ const CommunitySection = ({
     onPageChange: (page: number) => void;
   };
   filterTabs?: React.ReactNode;
+  emptyActions?: React.ReactNode;
 }) => {
   if (isLoading) {
     return (
@@ -649,7 +696,6 @@ const CommunitySection = ({
   const renderCardsWithAds = () => {
     const items: React.ReactNode[] = [];
     const adPositions = generateAdPositions(communities.length);
-    console.log(`[${title}] Ad positions:`, Array.from(adPositions), 'Total cards:', communities.length);
     
     communities.forEach((community, index) => {
       // Always push the card first
@@ -666,7 +712,6 @@ const CommunitySection = ({
       // Insert ad AFTER the card if this position should have an ad
       // Position 1 means after the first card (index 0)
       if (adPositions.has(index + 1)) {
-        console.log(`[${title}] Adding ad at position`, index + 1);
         items.push(
           <GoogleAd 
             key={`ad-${index}`}
@@ -795,25 +840,18 @@ function CommunitiesPageContent() {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        console.log('[Communities] Checking user...');
         const response = await fetch('/api/user/current', { credentials: 'include' });
-        console.log('[Communities] User API response status:', response.status);
         if (response.ok) {
           const data = await response.json();
-          console.log('[Communities] User API response data:', data);
           if (data.user && data.user.id) {
-            console.log('[Communities] User found with ID:', data.user.id);
             setUser(data.user);
           } else {
-            console.log('[Communities] No user or user.id in response');
             setUser(null);
           }
         } else {
-          console.log('[Communities] User API response not OK');
           setUser(null);
         }
       } catch (error) {
-        console.error('[Communities] Error checking user:', error);
         setUser(null);
       }
     };
@@ -858,7 +896,6 @@ function CommunitiesPageContent() {
         });
         setUserFilterCountsLoaded(true);
       } catch (error) {
-        console.error('[Communities] Error fetching filter counts:', error);
         setUserFilterCountsLoaded(true); // Set to true even on error so we don't show loading state forever
       }
     };
@@ -904,22 +941,13 @@ function CommunitiesPageContent() {
 
   // Fetch user communities
   useEffect(() => {
-    console.log('[Communities] Fetch user communities effect triggered', {
-      activeSection,
-      userId: user?.id,
-      userPage,
-      userItemsPerPage,
-    });
-
     // Only fetch if we're on the your-communities section
     if (activeSection !== 'your-communities') {
-      console.log('[Communities] Not on your-communities section, skipping fetch');
       return;
     }
 
     // If no user, set loading to false and return
     if (!user?.id) {
-      console.log('[Communities] No user ID, skipping fetch');
       setIsUserLoading(false);
       setUserCommunities([]);
       setUserTotalCount(0);
@@ -927,7 +955,6 @@ function CommunitiesPageContent() {
     }
 
     const fetchUserCommunities = async () => {
-      console.log('[Communities] Starting fetch for user communities');
       setIsUserLoading(true);
       try {
         let url: string;
@@ -944,8 +971,6 @@ function CommunitiesPageContent() {
           url = `/api/user/communities?userId=${user.id}&page=${page}&filter=${encodedFilter}&limit=${userItemsPerPage}`;
         }
         
-        console.log('[Communities] Fetching from URL:', url);
-        
         const response = await fetch(url, {
           credentials: 'include',
           headers: {
@@ -953,13 +978,8 @@ function CommunitiesPageContent() {
           },
         });
         
-        console.log('[Communities] API response status:', response.status);
-        
         if (response.ok) {
           const data = await response.json();
-          console.log('[Communities] API response data:', data);
-          console.log('[Communities] Communities count:', data.data?.length || 0);
-          console.log('[Communities] Total count:', data.totalCount);
           
           const communities = (data.data || []).map((item: any) => ({
             _id: item._id,
@@ -976,22 +996,18 @@ function CommunitiesPageContent() {
             subscription: item.subscription ? { active: true } : { active: false },
           }));
           
-          console.log('[Communities] Mapped communities:', communities);
           setUserCommunities(communities);
           setUserTotalCount(data.totalCount || 0);
         } else {
           const errorText = await response.text();
-          console.error('[Communities] API error response:', response.status, errorText);
           setUserCommunities([]);
           setUserTotalCount(0);
         }
       } catch (error) {
-        console.error('[Communities] Fetch error:', error);
         setUserCommunities([]);
         setUserTotalCount(0);
       } finally {
         setIsUserLoading(false);
-        console.log('[Communities] Fetch complete, loading set to false');
       }
     };
     
@@ -1084,7 +1100,6 @@ function CommunitiesPageContent() {
         });
         setBrowseFilterCountsLoaded(true);
       } catch (error) {
-        console.error('[Communities] Error fetching browse filter counts:', error);
         setBrowseFilterCountsLoaded(true); // Set to true even on error so we don't show loading state forever
       }
     };
@@ -1251,7 +1266,6 @@ function CommunitiesPageContent() {
                     
                     // Generate positions based on current page's communities
                     const adPositions = generateAdPositions(eliteCommunities.length);
-                    console.log('[Elite] Ad positions:', Array.from(adPositions), 'Total cards:', eliteCommunities.length);
                     
                     const items: React.ReactNode[] = [];
                     eliteCommunities.forEach((community, index) => {
@@ -1269,7 +1283,6 @@ function CommunitiesPageContent() {
                       // Insert ad AFTER the card if this position should have an ad
                       // Position 1 means after the first card (index 0)
                       if (adPositions.has(index + 1)) {
-                        console.log('[Elite] Adding ad at position', index + 1);
                         items.push(
                           <GoogleAd 
                             key={`ad-elite-${index}`}
@@ -1302,21 +1315,12 @@ function CommunitiesPageContent() {
         );
       
       case 'your-communities':
+        // If user is not loaded yet, show loading state
+        // Since users can only access this page if logged in, we just show loading
         if (!user) {
           return (
-            <div className="py-12 text-center">
-              <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
-                <i className="fa fa-sign-in-alt text-4xl text-gray-500 mb-4"></i>
-                <h3 className="text-xl font-semibold text-white mb-2">Sign In to See Your Communities</h3>
-                <p className="text-gray-400 mb-4">Join communities and they'll appear here</p>
-                <Link
-                  href="/login-civ?redirect=/communities"
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
-                >
-                  <i className="fa fa-sign-in-alt mr-2"></i>
-                  Sign In
-                </Link>
-              </div>
+            <div className="py-8">
+              <LoadingSpinner text="Loading your communities..." />
             </div>
           );
         }
@@ -1335,6 +1339,38 @@ function CommunitiesPageContent() {
             isLoading={isUserLoading}
             emptyMessage="You haven't joined any communities yet"
             emptyIcon="fa-users"
+            emptyActions={
+              <div className="flex flex-col sm:flex-row gap-3 justify-center mt-6">
+                <button
+                  onClick={() => {
+                    setActiveSection('browse');
+                    router.replace('/communities?page=browse');
+                  }}
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
+                >
+                  <i className="fa fa-globe mr-2"></i>
+                  Browse Communities
+                </button>
+                <button
+                  onClick={() => {
+                    router.push('/communities/search');
+                  }}
+                  className="inline-flex items-center px-6 py-3 bg-gray-700 text-white font-semibold rounded-lg shadow-lg hover:bg-gray-600 transition-all duration-200 transform hover:scale-105"
+                >
+                  <i className="fa fa-search mr-2"></i>
+                  Search Communities
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCreateModal(true);
+                  }}
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-teal-600 text-white font-semibold rounded-lg shadow-lg hover:from-green-700 hover:to-teal-700 transition-all duration-200 transform hover:scale-105"
+                >
+                  <i className="fa fa-plus mr-2"></i>
+                  Create Community
+                </button>
+              </div>
+            }
             showPagination={userTotalCount > userItemsPerPage}
             paginationProps={{
               currentPage: userPage,
@@ -1466,7 +1502,6 @@ function CommunitiesPageContent() {
                     
                     // Generate positions based on current page's communities
                     const adPositions = generateAdPositions(allCommunities.length);
-                    console.log('[Browse] Ad positions:', Array.from(adPositions), 'Total cards:', allCommunities.length);
                     
                     const items: React.ReactNode[] = [];
                     allCommunities.forEach((community, index) => {
@@ -1484,7 +1519,6 @@ function CommunitiesPageContent() {
                       // Insert ad AFTER the card if this position should have an ad
                       // Position 1 means after the first card (index 0)
                       if (adPositions.has(index + 1)) {
-                        console.log('[Browse] Adding ad at position', index + 1);
                         items.push(
                           <GoogleAd 
                             key={`ad-browse-${index}`}

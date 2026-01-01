@@ -39,6 +39,12 @@ function CommunityCard({ community }: { community: Community }) {
   const router = useRouter();
   const isVerified = community.subscription?.active && 
     ['elite', 'premium', 'standard'].includes(community.subscription?.plan || '');
+  
+  // Determine badge type
+  const hasElite = (community.subscription?.active === true && community.subscription?.plan === 'elite') || community.promotionalText;
+  const hasPremium = community.subscription?.active === true && community.subscription?.plan === 'premium';
+  const hasStandard = community.subscription?.active === true && community.subscription?.plan === 'standard';
+  const hasBasic = community.subscription?.active === true && community.subscription?.plan === 'basic';
 
   return (
     <div
@@ -46,13 +52,40 @@ function CommunityCard({ community }: { community: Community }) {
       className="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-blue-500 transition-all cursor-pointer transform hover:scale-[1.02]"
     >
       <div className="flex items-start gap-4">
-        <img
-          src={community.imageLink && !community.imageLink.includes("file:///") && community.imageLink.trim() !== ''
-            ? community.imageLink
-            : "/static/images/default-logo.png"}
-          alt={community.name}
-          className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-        />
+        <div className="flex-shrink-0 relative">
+          <img
+            src={community.imageLink && !community.imageLink.includes("file:///") && community.imageLink.trim() !== ''
+              ? community.imageLink
+              : "/static/images/default-logo.png"}
+            alt={community.name}
+            className="w-16 h-16 rounded-lg object-cover"
+          />
+          {/* Badge overlay */}
+          {(hasElite || hasPremium || hasStandard || hasBasic) && (
+            <div className="absolute -top-1 -right-1">
+              {hasElite && (
+                <span className="inline-flex items-center bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs px-1.5 py-0.5 rounded-full font-bold shadow-lg">
+                  <i className="fa fa-crown text-[10px]"></i>
+                </span>
+              )}
+              {hasPremium && !hasElite && (
+                <span className="inline-flex items-center bg-gradient-to-r from-purple-400 to-pink-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold shadow-lg">
+                  <i className="fa fa-star text-[10px]"></i>
+                </span>
+              )}
+              {hasStandard && !hasElite && !hasPremium && (
+                <span className="inline-flex items-center bg-gradient-to-r from-blue-400 to-indigo-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold shadow-lg">
+                  <i className="fa fa-check-circle text-[10px]"></i>
+                </span>
+              )}
+              {hasBasic && !hasElite && !hasPremium && !hasStandard && (
+                <span className="inline-flex items-center bg-gradient-to-r from-green-400 to-teal-500 text-white text-xs px-1.5 py-0.5 rounded-full font-bold shadow-lg">
+                  <i className="fa fa-user text-[10px]"></i>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
             <h3 className="text-lg font-semibold text-white truncate">{community.name}</h3>
@@ -147,81 +180,104 @@ function CommunitiesSearchContent() {
   const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 12;
 
-  // Fetch search results
+  // Fetch search results - debounced search as user types
   useEffect(() => {
-    const searchQuery = searchParams.get('q') || '';
-    if (!searchQuery.trim()) {
+    const searchQuery = query.trim();
+    if (!searchQuery) {
       setResults([]);
       setTotalCount(0);
       setIsLoading(false);
       return;
     }
 
-    const fetchResults = async () => {
-      setIsLoading(true);
-      try {
-        const page = currentPage + 1; // API uses 1-indexed pages
-        const response = await fetch(
-          `/api/communities/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${itemsPerPage}`,
-          {
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-          }
-        );
+    // Debounce the search
+    const timer = setTimeout(() => {
+      const fetchResults = async () => {
+        setIsLoading(true);
+        try {
+          const page = currentPage + 1; // API uses 1-indexed pages
+          const response = await fetch(
+            `/api/communities/search?q=${encodeURIComponent(searchQuery)}&page=${page}&limit=${itemsPerPage}`,
+            {
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+            }
+          );
 
-        if (response.ok) {
-          const data = await response.json();
-          const communities = (data.data || []).map((item: any) => {
-            if (!item || !item._id) return null;
-            const c = item.community || item;
-            return {
-              _id: item._id,
-              name: c.name || 'Unnamed Community',
-              imageLink: c.imageLink && !c.imageLink.includes("file:///") && c.imageLink.trim() !== ''
-                ? c.imageLink
-                : "/static/images/default-logo.png",
-              promotionalText: c.promotionalText || '',
-              promotionalDescription: c.promotionalDescription || '',
-              description: c.description || '',
-              membersCount: c.membersCount || 0,
-              tags: c.tags || [],
-              subscription: c.subscription ? {
-                active: c.subscription.active || false,
-                plan: c.subscription.plan || '',
-              } : { active: false },
-            };
-          }).filter(Boolean);
-          setResults(communities);
-          setTotalCount(data.totalCount || data.total || communities.length);
-        } else {
+          if (response.ok) {
+            const data = await response.json();
+            const communities = (data.data || []).map((item: any) => {
+              if (!item || !item._id) return null;
+              const c = item.community || item;
+              return {
+                _id: item._id,
+                name: c.name || 'Unnamed Community',
+                imageLink: c.imageLink && !c.imageLink.includes("file:///") && c.imageLink.trim() !== ''
+                  ? c.imageLink
+                  : "/static/images/default-logo.png",
+                promotionalText: c.promotionalText || '',
+                promotionalDescription: c.promotionalDescription || '',
+                description: c.description || '',
+                membersCount: c.membersCount || 0,
+                tags: c.tags || [],
+                subscription: c.subscription ? {
+                  active: c.subscription.active || false,
+                  plan: c.subscription.plan || '',
+                } : { active: false },
+              };
+            }).filter(Boolean);
+            setResults(communities);
+            setTotalCount(data.totalCount || data.total || communities.length);
+          } else {
+            setResults([]);
+            setTotalCount(0);
+          }
+        } catch (error) {
           setResults([]);
           setTotalCount(0);
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error('Error searching communities:', error);
-        setResults([]);
-        setTotalCount(0);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      };
 
-    fetchResults();
-  }, [searchParams, currentPage]);
+      fetchResults();
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [query, currentPage]);
+  
+  // Update URL when query changes (but don't trigger navigation)
+  useEffect(() => {
+    if (query.trim()) {
+      const newUrl = `/communities/search?q=${encodeURIComponent(query.trim())}`;
+      window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+    }
+  }, [query]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      router.push(`/communities/search?q=${encodeURIComponent(query)}`);
-      setCurrentPage(0); // Reset to first page on new search
-    }
+    // Search is already happening as user types, so just reset to first page
+    setCurrentPage(0);
   };
 
-  const searchQuery = searchParams.get('q') || '';
+  const searchQuery = query.trim() || searchParams.get('q') || '';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       <Navbar />
+      
+      {/* Header Bar with Back Button */}
+      <div className="bg-gray-900 border-b border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link
+            href="/communities"
+            className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
+          >
+            <i className="fa fa-arrow-left"></i>
+            <span className="font-medium">Back to Communities</span>
+          </Link>
+        </div>
+      </div>
       
       {/* Search Bar */}
       <div className="bg-gray-900 border-b border-gray-700">
