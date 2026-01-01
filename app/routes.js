@@ -8140,6 +8140,21 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // ===========================================
   // END ANNOUNCEMENT API ROUTES
   // ===========================================
+
+  // Catch-all route - pass all unmatched routes to Next.js
+  // This MUST be at the end of all route definitions
+  app.all("*", function (req, res) {
+    // Let Next.js handle its own routes, API routes, and 404s
+    if (nextApp && handle) {
+      return handle(req, res);
+    }
+    // Fallback to old EJS template only if Next.js is not available
+    if (req.method === 'GET') {
+      res.render("page-not-found");
+    } else {
+      res.status(404).json({ error: 'Not found' });
+    }
+  });
 }; //end of routes
 
 function auth(req, res, next) {
@@ -8221,18 +8236,3 @@ Object.defineProperty(String.prototype, "capitalize", {
   },
   enumerable: false,
 });
-
-  // Catch-all route - pass all unmatched routes to Next.js
-  // This MUST be at the end of all route definitions
-  app.all("*", function (req, res) {
-    // Let Next.js handle its own routes, API routes, and 404s
-    if (nextApp && handle) {
-      return handle(req, res);
-    }
-    // Fallback to old EJS template only if Next.js is not available
-    if (req.method === 'GET') {
-      res.render("page-not-found");
-    } else {
-      res.status(404).json({ error: 'Not found' });
-    }
-  });
