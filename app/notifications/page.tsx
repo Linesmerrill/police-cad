@@ -56,23 +56,25 @@ const FilterTabs = ({
   countsLoaded?: boolean;
 }) => {
   return (
-    <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-700 pb-4">
-      {filters.map((filter) => (
-        <button
-          key={filter.id}
-          onClick={() => onFilterChange(filter.id)}
-          className={`px-4 py-2 rounded-t-lg transition-all font-medium ${
-            activeFilter === filter.id
-              ? 'bg-gray-800 text-white border-b-2 border-blue-500'
-              : 'text-gray-400 hover:text-white hover:bg-gray-800'
-          }`}
-        >
-          {filter.label}
-          {countsLoaded && filter.count !== undefined && (
-            <span className="ml-2 text-sm opacity-75">({filter.count})</span>
-          )}
-        </button>
-      ))}
+    <div className="mb-6 border-b border-gray-700 pb-4 overflow-x-auto">
+      <div className="flex gap-2 min-w-max">
+        {filters.map((filter) => (
+          <button
+            key={filter.id}
+            onClick={() => onFilterChange(filter.id)}
+            className={`px-4 py-2 rounded-t-lg transition-all font-medium whitespace-nowrap flex-shrink-0 ${
+              activeFilter === filter.id
+                ? 'bg-gray-800 text-white border-b-2 border-blue-500'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800'
+            }`}
+          >
+            {filter.label}
+            {countsLoaded && filter.count !== undefined && (
+              <span className="ml-2 text-sm opacity-75">({filter.count})</span>
+            )}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };
