@@ -1695,7 +1695,11 @@ function CommunitiesPageContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-6 lg:gap-6 w-full items-start">
                   {(() => {
                     // Don't render any ads if subscription hasn't been checked yet, or if user is premium plus
-                    const shouldShowAds = userSubscriptionChecked && !(user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus'));
+                    // For premium users, show ads 50% of the time
+                    const isPremium = user?.subscription?.active && user.subscription.plan === 'premium';
+                    const isPremiumPlus = user?.subscription?.active && user.subscription.plan === 'premium_plus';
+                    const premiumShowAds = isPremium ? Math.random() < 0.5 : true; // 50% chance for premium
+                    const shouldShowAds = userSubscriptionChecked && !isPremiumPlus && premiumShowAds;
                     
                     // Generate positions based on subscription tier
                     const generateAdPositions = (totalCards: number, userPlan?: string, subscriptionActive?: boolean): Set<number> => {
@@ -1976,7 +1980,11 @@ function CommunitiesPageContent() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-6 lg:gap-6 w-full items-start">
                   {(() => {
                     // Don't render any ads if subscription hasn't been checked yet, or if user is premium plus
-                    const shouldShowAds = userSubscriptionChecked && !(user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus'));
+                    // For premium users, show ads 50% of the time
+                    const isPremium = user?.subscription?.active && user.subscription.plan === 'premium';
+                    const isPremiumPlus = user?.subscription?.active && user.subscription.plan === 'premium_plus';
+                    const premiumShowAds = isPremium ? Math.random() < 0.5 : true; // 50% chance for premium
+                    const shouldShowAds = userSubscriptionChecked && !isPremiumPlus && premiumShowAds;
                     
                     // Generate positions based on subscription tier
                     const generateAdPositions = (totalCards: number, userPlan?: string, subscriptionActive?: boolean): Set<number> => {
