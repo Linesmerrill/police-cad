@@ -1064,9 +1064,10 @@ function CommunitiesPageContent() {
       setIsCheckingUser(true);
       
       // If we just came from login, wait a bit for session to be established
+      // Cookies work in incognito but may need a moment to be available in requests
       const isFromLogin = document.referrer.includes('/login') || window.location.search.includes('from=login');
       if (isFromLogin && retryCount === 0) {
-        await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms for session to be set
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for cookie to be available
       }
       
       try {
@@ -1084,7 +1085,7 @@ function CommunitiesPageContent() {
         // If we got here, user is not authenticated
         // Retry once if we just came from login (session might not be ready yet)
         if (isFromLogin && retryCount === 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait another second
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait longer before retry
           return checkUser(1); // Retry once
         }
         
@@ -1094,7 +1095,7 @@ function CommunitiesPageContent() {
       } catch (error) {
         // Retry once if we just came from login (session might not be ready yet)
         if ((document.referrer.includes('/login') || window.location.search.includes('from=login')) && retryCount === 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait another second
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait longer before retry
           return checkUser(1); // Retry once
         }
         

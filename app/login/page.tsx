@@ -131,10 +131,11 @@ function LoginForm() {
           const redirectUrl = redirect.includes('?') 
             ? `${redirect}&from=login` 
             : `${redirect}?from=login`;
-          // Small delay to ensure session cookie is set
-          await new Promise(resolve => setTimeout(resolve, 300));
-          // Use window.location for full page reload to ensure session is set
-          window.location.href = redirectUrl;
+          // Delay to ensure session cookie is set and available
+          // Cookies work in incognito but may need a moment to be available
+          await new Promise(resolve => setTimeout(resolve, 800));
+          // Use window.location.replace to avoid back button issues and ensure cookie is sent
+          window.location.replace(redirectUrl);
         } else {
           // Session setup failed - try redirecting anyway (auth was successful)
           const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
@@ -142,9 +143,9 @@ function LoginForm() {
           const redirectUrl = redirect.includes('?') 
             ? `${redirect}&from=login` 
             : `${redirect}?from=login`;
-          // Small delay to ensure session cookie is set
-          await new Promise(resolve => setTimeout(resolve, 300));
-          window.location.href = redirectUrl;
+          // Delay to ensure session cookie is set and available
+          await new Promise(resolve => setTimeout(resolve, 800));
+          window.location.replace(redirectUrl);
         }
       } catch (sessionError) {
         console.error('Session setup error:', sessionError);
@@ -154,6 +155,16 @@ function LoginForm() {
         const redirectUrl = redirect.includes('?') 
           ? `${redirect}&from=login` 
           : `${redirect}?from=login`;
+        // Longer delay for incognito mode
+        let isIncognito = false;
+        try {
+          localStorage.setItem('test', 'test');
+          localStorage.removeItem('test');
+        } catch (e) {
+          isIncognito = true;
+        }
+        const delay = isIncognito ? 1000 : 500;
+        await new Promise(resolve => setTimeout(resolve, delay));
         window.location.href = redirectUrl;
       }
     } catch (error) {

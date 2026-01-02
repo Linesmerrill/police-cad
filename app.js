@@ -86,6 +86,7 @@ app.use(
       httpOnly: true,
       sameSite: 'lax', // Allow cookies to be sent with cross-site requests from same site
       secure: process.env.NODE_ENV === 'production', // Only use secure cookies in production (HTTPS)
+      domain: undefined, // Don't set domain to allow cookies in incognito mode
     },
   })
 );

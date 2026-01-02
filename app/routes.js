@@ -188,7 +188,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 ...req.session.cookie,
                 httpOnly: true,
                 sameSite: 'lax',
-                secure: process.env.NODE_ENV === 'production'
+                secure: process.env.NODE_ENV === 'production',
+                domain: undefined, // Don't set domain to allow cookies in incognito mode
               });
             }
             return res.json({ success: true, redirect: redirect });
