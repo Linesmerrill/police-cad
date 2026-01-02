@@ -25,6 +25,7 @@ export default function Navbar() {
   const [loadingDots, setLoadingDots] = useState('.');
   const [notificationCount, setNotificationCount] = useState(0);
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+  const [isRefreshingNotifications, setIsRefreshingNotifications] = useState(false);
   const [hasCheckedNotifications, setHasCheckedNotifications] = useState(false);
   const menuButtonRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -115,16 +116,42 @@ export default function Navbar() {
     };
   }, []);
 
+  // Load cached notification count on mount
+  useEffect(() => {
+    if (user?.id) {
+      const cacheKey = `notificationCount_${user.id}`;
+      const cachedCount = localStorage.getItem(cacheKey);
+      if (cachedCount !== null) {
+        const count = parseInt(cachedCount, 10);
+        setNotificationCount(count);
+        setHasCheckedNotifications(true);
+      }
+    }
+  }, [user?.id]);
+
   // Fetch notification count only when user clicks on their username
   const fetchNotificationCount = async () => {
     if (!user?.id) {
       setNotificationCount(0);
       setHasCheckedNotifications(false);
       setIsLoadingNotifications(false);
+      setIsRefreshingNotifications(false);
+      localStorage.removeItem(`notificationCount_${user.id}`);
       return;
     }
 
-    setIsLoadingNotifications(true);
+    const cacheKey = `notificationCount_${user.id}`;
+    const cachedCount = localStorage.getItem(cacheKey);
+    const hasCachedValue = cachedCount !== null;
+
+    // Only show loading animation if we don't have a cached value
+    if (!hasCachedValue) {
+      setIsLoadingNotifications(true);
+    } else {
+      // Show subtle refresh indicator if we have cached value
+      setIsRefreshingNotifications(true);
+    }
+
     try {
       const response = await fetch(
         `/api/user/notifications/count?userId=${user.id}`,
@@ -141,18 +168,27 @@ export default function Navbar() {
         const count = data.unseenCount || 0;
         setNotificationCount(count);
         setHasCheckedNotifications(true);
+        // Update cache
+        localStorage.setItem(cacheKey, count.toString());
       } else {
-        // If fetch fails, assume no notifications
-        setNotificationCount(0);
-        setHasCheckedNotifications(true);
+        // If fetch fails, keep cached value if available
+        if (!hasCachedValue) {
+          setNotificationCount(0);
+          setHasCheckedNotifications(true);
+          localStorage.setItem(cacheKey, '0');
+        }
       }
     } catch (error) {
-      // Silently handle error - assume no notifications
+      // Silently handle error - keep cached value if available
       console.error('Error fetching notification count:', error);
-      setNotificationCount(0);
-      setHasCheckedNotifications(true);
+      if (!hasCachedValue) {
+        setNotificationCount(0);
+        setHasCheckedNotifications(true);
+        localStorage.setItem(cacheKey, '0');
+      }
     } finally {
       setIsLoadingNotifications(false);
+      setIsRefreshingNotifications(false);
     }
   };
 
@@ -161,6 +197,13 @@ export default function Navbar() {
     if (!user?.id) {
       setNotificationCount(0);
       setHasCheckedNotifications(false);
+      setIsRefreshingNotifications(false);
+      // Clear cache for all users (cleanup)
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('notificationCount_')) {
+          localStorage.removeItem(key);
+        }
+      });
     }
   }, [user?.id]);
 
@@ -434,7 +477,10 @@ export default function Navbar() {
                       fontWeight: '700',
                       padding: notificationCount > 99 ? '0 7px' : '0 6px',
                       whiteSpace: 'nowrap',
-                      flexShrink: 0
+                      flexShrink: 0,
+                      position: 'relative',
+                      boxShadow: isRefreshingNotifications ? '0 0 0 2px rgba(239, 68, 68, 0.5)' : 'none',
+                      animation: isRefreshingNotifications ? 'refreshPulse 1.5s ease-in-out infinite' : 'none'
                     }}
                     title={`${notificationCount} unread notification${notificationCount === 1 ? '' : 's'}`}
                   >
@@ -737,6 +783,17 @@ export default function Navbar() {
       )}
         </header>
       )}
+
+      <style jsx>{`
+        @keyframes refreshPulse {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+          }
+          50% {
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+          }
+        }
+      `}</style>
     </>
   );
 }
