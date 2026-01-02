@@ -91,60 +91,40 @@ export default function Navbar() {
     };
   }, []);
 
-  // Fetch notification count when user is logged in
-  useEffect(() => {
+  // Fetch notification count only when user clicks on their username
+  const fetchNotificationCount = async () => {
     if (!user?.id) {
       setNotificationCount(0);
       return;
     }
 
-    const fetchNotificationCount = async () => {
-      try {
-        const response = await fetch(
-          `/api/user/notifications/count?userId=${user.id}`,
-          {
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setNotificationCount(data.unseenCount || 0);
+    try {
+      const response = await fetch(
+        `/api/user/notifications/count?userId=${user.id}`,
+        {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         }
-      } catch (error) {
-        // Silently handle error - notification count won't update
-        console.error('Error fetching notification count:', error);
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setNotificationCount(data.unseenCount || 0);
       }
-    };
+    } catch (error) {
+      // Silently handle error - notification count won't update
+      console.error('Error fetching notification count:', error);
+    }
+  };
 
-    fetchNotificationCount();
-
-    // Poll for updates every 30 seconds
-    const interval = setInterval(fetchNotificationCount, 30000);
-
-    // Refresh when page becomes visible (user switches back to tab)
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        fetchNotificationCount();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    // Refresh when window gains focus
-    const handleFocus = () => {
-      fetchNotificationCount();
-    };
-    window.addEventListener('focus', handleFocus);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
-  }, [user?.id, pathname]); // Refresh when pathname changes (e.g., navigating to/from notifications page)
+  // Reset notification count when user logs out
+  useEffect(() => {
+    if (!user?.id) {
+      setNotificationCount(0);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     // Close user menu when clicking outside
@@ -221,7 +201,13 @@ export default function Navbar() {
           justifyContent: isSmallScreen ? 'center' : 'flex-end'
         }} ref={userMenuRef}>
           <button
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            onClick={() => {
+              setUserMenuOpen(!userMenuOpen);
+              // Fetch notification count when user opens the dropdown
+              if (!userMenuOpen) {
+                fetchNotificationCount();
+              }
+            }}
             style={{
               background: 'transparent',
               border: 'none',
@@ -246,25 +232,7 @@ export default function Navbar() {
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <UserIcon style={{ width: '16px', height: '16px' }} />
-              {notificationCount > 0 && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: '-4px',
-                    right: '-4px',
-                    backgroundColor: '#ef4444',
-                    borderRadius: '50%',
-                    width: '10px',
-                    height: '10px',
-                    border: '2px solid rgba(15, 15, 20, 0.95)',
-                    display: 'block'
-                  }}
-                  title={`${notificationCount} unread notification${notificationCount === 1 ? '' : 's'}`}
-                />
-              )}
-            </div>
+            <UserIcon style={{ width: '16px', height: '16px' }} />
             <span style={{ fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               {user.username || user.email?.split('@')[0] || 'User'}
               {user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus') && (
