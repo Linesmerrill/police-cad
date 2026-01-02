@@ -2141,6 +2141,26 @@ function CommunitiesPageContent() {
     }
   };
 
+  // Show loading state while checking user
+  if (isCheckingUser) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[calc(100vh-60px)]">
+          <div className="text-center">
+            <i className="fa fa-spinner fa-spin text-4xl text-blue-500 mb-4"></i>
+            <p className="text-gray-400">Loading...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If no user, will redirect (handled in useEffect)
+  if (!user) {
+    return null;
+  }
+
   return (
     <>
       <style jsx global>{`
