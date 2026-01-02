@@ -2,6 +2,19 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+// Polyfill for requestIdleCallback
+const requestIdleCallback = typeof window !== 'undefined' && (window as any).requestIdleCallback
+  ? (window as any).requestIdleCallback
+  : (callback: (deadline: { timeRemaining: () => number; didTimeout: boolean }) => void, options?: { timeout?: number }) => {
+      const start = Date.now();
+      return setTimeout(() => {
+        callback({
+          timeRemaining: () => Math.max(0, 50 - (Date.now() - start)),
+          didTimeout: false,
+        });
+      }, options?.timeout || 1);
+    };
+
 interface GoogleAdProps {
   adSlot: string;
   adFormat?: 'auto' | 'rectangle' | 'vertical' | 'horizontal';
@@ -56,28 +69,38 @@ export default function GoogleAd({
     // Only load ad when it should be loaded (lazy loading)
     if (!shouldLoad || !adRef.current || adPushed.current) return;
 
-    // Wait for AdSense to load, then push the ad
+    // Wait for AdSense to load, then push the ad asynchronously
     const loadAd = () => {
       if (adRef.current && !adPushed.current) {
         try {
           if ((window as any).adsbygoogle) {
-            ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-            adPushed.current = true;
-            
-            // Check if ad loaded after a delay
+            // Push ad asynchronously using setTimeout to avoid blocking the main thread
             setTimeout(() => {
-              const iframe = adRef.current?.querySelector('iframe');
-              if (iframe) {
-                setAdLoaded(true);
-                setAdVisible(true);
-              } else {
-                // Ad blocker or ad didn't load
-                setAdVisible(true); // Always show container for proper spacing
+              if (adRef.current && !adPushed.current) {
+                try {
+                  ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+                  adPushed.current = true;
+                  
+                  // Check if ad loaded after a delay (non-blocking)
+                  setTimeout(() => {
+                    const iframe = adRef.current?.querySelector('iframe');
+                    if (iframe) {
+                      setAdLoaded(true);
+                      setAdVisible(true);
+                    } else {
+                      // Ad blocker or ad didn't load
+                      setAdVisible(true); // Always show container for proper spacing
+                    }
+                  }, 2000);
+                } catch (error) {
+                  console.error('Error pushing ad:', error);
+                  setAdVisible(true);
+                }
               }
-            }, 2000);
+            }, 0); // Use setTimeout(0) to push to next event loop tick
           } else {
-            // Retry after a short delay
-            setTimeout(loadAd, 100);
+            // Retry after a delay to avoid blocking
+            setTimeout(loadAd, 1000);
           }
         } catch (error) {
           console.error('Error loading ad:', error);
@@ -86,9 +109,15 @@ export default function GoogleAd({
       }
     };
 
-    // Start loading after a short delay to ensure script is ready
-    const timer = setTimeout(loadAd, 500);
-    return () => clearTimeout(timer);
+    // Start loading after page is interactive - use requestIdleCallback to avoid blocking
+    const timer = requestIdleCallback(loadAd, { timeout: 3000 });
+    return () => {
+      if (typeof timer === 'number') {
+        clearTimeout(timer);
+      } else if (timer && typeof (timer as any).cancel === 'function') {
+        (timer as any).cancel();
+      }
+    };
   }, [adSlot, matchCardHeight, shouldLoad]);
 
   useEffect(() => {

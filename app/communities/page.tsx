@@ -2096,11 +2096,13 @@ function CommunitiesPageContent() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       {/* Google Analytics - already in layout.tsx */}
-      {/* Google AdSense Script - load once */}
+      {/* Google AdSense Script - load asynchronously after page is interactive */}
       <Script
         src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3842696805773142"
-        strategy="lazyOnload"
+        strategy="afterInteractive"
         crossOrigin="anonymous"
+        async
+        defer
       />
       <Navbar />
       
