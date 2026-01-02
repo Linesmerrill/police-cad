@@ -231,17 +231,40 @@ function NotificationsContent() {
     
     if (activeFilter === 'community') {
       // Community join requests: type is join_request but no department (no data3 or data3 is empty)
-      return notification.type === 'join_request' && (!data3 || data3 === '');
+      const isCommunity = notification.type === 'join_request' && (!data3 || data3 === '');
+      return isCommunity;
     }
     if (activeFilter === 'department') {
       // Department join requests: has department ID and name (data3 and data4 exist and are not empty)
-      return data3 && data3 !== '' && data4 && data4 !== '';
+      const hasDepartment = data3 && data3 !== '' && data4 && data4 !== '';
+      return hasDepartment;
     }
     if (activeFilter === 'friend') {
       return notification.type === 'friend_request';
     }
     return true;
   });
+
+  // Debug: Log filter results
+  useEffect(() => {
+    if (allNotifications.length > 0) {
+      const communityCount = allNotifications.filter(n => n.type === 'join_request' && (!n.data3 || n.data3 === '')).length;
+      const departmentCount = allNotifications.filter(n => {
+        const d3 = n.data3 || n.data?.data3;
+        const d4 = n.data4 || n.data?.data4;
+        return d3 && d3 !== '' && d4 && d4 !== '';
+      }).length;
+      const friendCount = allNotifications.filter(n => n.type === 'friend_request').length;
+      console.log('Filter counts:', {
+        all: allNotifications.length,
+        community: communityCount,
+        department: departmentCount,
+        friend: friendCount,
+        activeFilter,
+        filteredCount: filteredNotifications.length,
+      });
+    }
+  }, [allNotifications, activeFilter, filteredNotifications.length]);
 
   const handleLoadMore = () => {
     setCurrentPage((prev) => prev + 1);
