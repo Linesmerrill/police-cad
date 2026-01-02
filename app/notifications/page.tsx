@@ -224,16 +224,18 @@ function NotificationsContent() {
   // Filter notifications based on active filter (matching mobile app logic)
   const filteredNotifications = allNotifications.filter((notification) => {
     if (activeFilter === 'all') return true;
+    
+    // Get data fields - check both top-level and nested data object
+    const data3 = notification.data3 || notification.data?.data3;
+    const data4 = notification.data4 || notification.data?.data4;
+    
     if (activeFilter === 'community') {
       // Community join requests: type is join_request but no department (no data3 or data3 is empty)
-      const isCommunity = notification.type === 'join_request' && (!notification.data3 || notification.data3 === '');
-      return isCommunity;
+      return notification.type === 'join_request' && (!data3 || data3 === '');
     }
     if (activeFilter === 'department') {
       // Department join requests: has department ID and name (data3 and data4 exist and are not empty)
-      // Also check if type is join_request with data3/data4, or if data3/data4 exist regardless of type
-      const hasDepartment = (notification.data3 && notification.data3 !== '' && notification.data4 && notification.data4 !== '');
-      return hasDepartment;
+      return data3 && data3 !== '' && data4 && data4 !== '';
     }
     if (activeFilter === 'friend') {
       return notification.type === 'friend_request';
