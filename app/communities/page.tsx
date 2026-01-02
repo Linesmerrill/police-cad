@@ -823,6 +823,14 @@ function CommunitiesPageContent() {
   };
   
   const [activeSection, setActiveSection] = useState(getInitialSection);
+  const [bubbles, setBubbles] = useState<Array<{
+    size: number;
+    duration: number;
+    delay: number;
+    left: number;
+    top: number;
+    opacity: number;
+  }>>([]);
   
   // Function to invalidate filter counts cache (call this after creating a community)
   const invalidateCommunitiesCache = () => {
@@ -2175,31 +2183,25 @@ function CommunitiesPageContent() {
         {/* Main Content */}
         <div className="flex-1 min-w-0 w-full overflow-x-hidden relative">
           {/* Floating Bubbles Background */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-            {Array.from({ length: 15 }).map((_, i) => {
-              const size = Math.random() * 100 + 50; // 50-150px
-              const duration = Math.random() * 20 + 15; // 15-35s
-              const delay = Math.random() * 5; // 0-5s
-              const left = Math.random() * 100; // 0-100%
-              const opacity = Math.random() * 0.15 + 0.05; // 0.05-0.2
-              
-              return (
+          {bubbles.length > 0 && (
+            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+              {bubbles.map((bubble, i) => (
                 <div
                   key={i}
                   className="absolute rounded-full bg-gradient-to-br from-blue-400/30 via-purple-400/20 to-pink-400/20 blur-xl"
                   style={{
-                    width: `${size}px`,
-                    height: `${size}px`,
-                    left: `${left}%`,
-                    top: `${Math.random() * 100}%`,
-                    opacity: opacity,
-                    animation: `floatBubble ${duration}s ease-in-out infinite`,
-                    animationDelay: `${delay}s`,
+                    width: `${bubble.size}px`,
+                    height: `${bubble.size}px`,
+                    left: `${bubble.left}%`,
+                    top: `${bubble.top}%`,
+                    opacity: bubble.opacity,
+                    animation: `floatBubble ${bubble.duration}s ease-in-out infinite`,
+                    animationDelay: `${bubble.delay}s`,
                   }}
                 />
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
           
           <div className="relative z-10 w-full px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8 max-w-7xl mx-auto bg-gradient-to-br from-gray-900/60 via-blue-900/20 to-purple-900/20 backdrop-blur-sm rounded-tl-2xl rounded-tr-2xl lg:rounded-tl-none lg:rounded-tr-none border-t border-gray-700/50">
             {renderContent()}
