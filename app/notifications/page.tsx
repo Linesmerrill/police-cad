@@ -159,21 +159,36 @@ function NotificationsContent() {
           if (fetchedNotifications.length > 0 && currentPage === 1) {
             const types = fetchedNotifications.map(n => n.type);
             const joinRequests = fetchedNotifications.filter(n => n.type === 'join_request');
-            console.log('Notification types:', [...new Set(types)]);
-            console.log('Join requests count:', joinRequests.length);
+            console.log('[Notifications] Total notifications:', fetchedNotifications.length);
+            console.log('[Notifications] Types:', [...new Set(types)]);
+            console.log('[Notifications] Join requests count:', joinRequests.length);
             if (joinRequests.length > 0) {
-              console.log('Sample join_request:', {
-                type: joinRequests[0].type,
-                data1: joinRequests[0].data1,
-                data2: joinRequests[0].data2,
-                data3: joinRequests[0].data3,
-                data4: joinRequests[0].data4,
-                hasData3: !!joinRequests[0].data3,
-                hasData4: !!joinRequests[0].data4,
-                data3Value: joinRequests[0].data3,
-                data4Value: joinRequests[0].data4,
+              const sample = joinRequests[0];
+              console.log('[Notifications] Sample join_request:', {
+                type: sample.type,
+                data1: sample.data1,
+                data2: sample.data2,
+                data3: sample.data3,
+                data4: sample.data4,
+                hasData3: !!sample.data3,
+                hasData4: !!sample.data4,
+                data3Type: typeof sample.data3,
+                data4Type: typeof sample.data4,
+                fullNotification: sample,
               });
             }
+            // Log all notification types with their data fields
+            fetchedNotifications.forEach((n, idx) => {
+              if (idx < 3) { // Log first 3
+                console.log(`[Notifications] Notification ${idx}:`, {
+                  type: n.type,
+                  data1: n.data1,
+                  data2: n.data2,
+                  data3: n.data3,
+                  data4: n.data4,
+                });
+              }
+            });
           }
           
           // Deduplicate notifications
@@ -249,8 +264,8 @@ function NotificationsContent() {
 
   const handleFilterChange = (filterId: string) => {
     setActiveFilter(filterId as NotificationFilter);
-    setCurrentPage(1);
-    setAllNotifications([]);
+    // Don't clear notifications or reset page - just change the filter
+    // The filteredNotifications will update automatically
   };
 
   const handleNotificationAction = async (notification: Notification, action: 'approved' | 'declined') => {
