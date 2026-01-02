@@ -97,6 +97,7 @@ export default function Navbar() {
   const fetchNotificationCount = async () => {
     if (!user?.id) {
       setNotificationCount(0);
+      setHasCheckedNotifications(false);
       return;
     }
 
@@ -115,14 +116,17 @@ export default function Navbar() {
         const data = await response.json();
         const count = data.unseenCount || 0;
         setNotificationCount(count);
+        setHasCheckedNotifications(true);
       } else {
-        // If fetch fails, assume no notifications and hide badge
+        // If fetch fails, assume no notifications
         setNotificationCount(0);
+        setHasCheckedNotifications(true);
       }
     } catch (error) {
-      // Silently handle error - assume no notifications and hide badge
+      // Silently handle error - assume no notifications
       console.error('Error fetching notification count:', error);
       setNotificationCount(0);
+      setHasCheckedNotifications(true);
     }
   };
 
@@ -130,9 +134,7 @@ export default function Navbar() {
   useEffect(() => {
     if (!user?.id) {
       setNotificationCount(0);
-    } else {
-      // When user logs in, show badge by default (will be updated when they open dropdown)
-      setNotificationCount(1);
+      setHasCheckedNotifications(false);
     }
   }, [user?.id]);
 
