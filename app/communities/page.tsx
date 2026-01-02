@@ -73,7 +73,7 @@ const CommunityCard = ({
   actionText: string; 
   onAction: (community: Community) => void;
 }) => (
-  <div className="bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-gray-700 hover:border-gray-600 overflow-hidden flex flex-col h-full relative isolate">
+  <div className="bg-gray-800 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-gray-700 hover:border-gray-600 overflow-hidden flex flex-col h-full relative isolate ring-1 ring-gray-600/50">
     {/* Image Container */}
     <div className="relative h-48 overflow-hidden">
       <img
@@ -151,9 +151,9 @@ const CommunityCard = ({
     </div>
 
     {/* Content */}
-    <div className="p-6 flex flex-col flex-grow bg-gradient-to-b from-gray-800 to-gray-850">
+    <div className="p-6 flex flex-col flex-grow bg-gradient-to-b from-gray-800 via-gray-800 to-gray-850">
       <div className="flex-grow">
-        <h3 className="text-xl font-bold text-white mb-3 line-clamp-2 leading-tight">
+        <h3 className="text-xl font-bold text-white mb-3 line-clamp-2 leading-tight border-b border-gray-700/50 pb-2">
           {community?.name}
         </h3>
 
