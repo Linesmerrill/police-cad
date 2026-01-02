@@ -1768,7 +1768,7 @@ function CommunitiesPageContent() {
           <CommunitySection
             title="Your Communities"
             communities={userCommunities}
-            actionText="Jump In"
+            actionText={userFilter === 'pending' ? 'View' : 'Jump In'}
             onAction={handleCommunityClick}
             isLoading={isUserLoading}
             emptyMessage="You haven't joined any communities yet. You can create one or search for a community to join."
