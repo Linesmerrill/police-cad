@@ -107,16 +107,18 @@ function LoginForm() {
       // This is required to establish the session cookie for authenticated requests
       try {
         // Use the Express login endpoint to set up Passport session
-        const formData = new FormData();
-        formData.append('email', trimmedEmail);
-        formData.append('password', trimmedPassword);
+        // Send as URL-encoded form data (not FormData) for express.urlencoded() to parse
+        const formBody = new URLSearchParams();
+        formBody.append('email', trimmedEmail);
+        formBody.append('password', trimmedPassword);
         
         const sessionResponse = await fetch('/login', {
           method: 'POST',
           headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
             'Accept': 'application/json',
           },
-          body: formData,
+          body: formBody.toString(),
           credentials: 'include',
         });
         

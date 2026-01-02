@@ -57,6 +57,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
     "/login",
     function(req, res, next) {
       console.log('[LOGIN POST] Starting authentication');
+      console.log('[LOGIN POST] Request body:', { email: req.body?.email ? 'present' : 'missing', password: req.body?.password ? 'present' : 'missing' });
+      console.log('[LOGIN POST] Content-Type:', req.headers['content-type']);
+      console.log('[LOGIN POST] Accept:', req.headers.accept);
+      
+      // Check if body is missing - return 400 with JSON if Accept header is application/json
+      if (!req.body || !req.body.email || !req.body.password) {
+        console.log('[LOGIN POST] Missing email or password in body');
+        if (req.headers.accept?.includes('application/json')) {
+          return res.status(400).json({ error: 'Email and password are required' });
+        }
+        return res.status(400).redirect('/login?error=missing_fields');
+      }
+      
       // Custom authentication with explicit error handling
       passport.authenticate("login", {
         failureFlash: true,
