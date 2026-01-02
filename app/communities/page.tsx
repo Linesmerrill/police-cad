@@ -2149,7 +2149,7 @@ function CommunitiesPageContent() {
 
         {/* Main Content */}
         <div className="flex-1 min-w-0 w-full overflow-x-hidden">
-          <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8 max-w-7xl mx-auto bg-gray-900/40 backdrop-blur-sm rounded-tl-2xl rounded-tr-2xl lg:rounded-tl-none lg:rounded-tr-none border-t border-gray-700/50">
+          <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8 max-w-7xl mx-auto bg-gradient-to-br from-gray-900/60 via-blue-900/20 to-purple-900/20 backdrop-blur-sm rounded-tl-2xl rounded-tr-2xl lg:rounded-tl-none lg:rounded-tr-none border-t border-gray-700/50">
             {renderContent()}
           </div>
         </div>
