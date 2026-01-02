@@ -374,15 +374,31 @@ function NotificationsContent() {
     return date.toLocaleDateString();
   };
 
-  const getNotificationMessage = (notification: Notification): string => {
+  const getNotificationMessage = (notification: Notification): React.ReactNode => {
     if (notification.type === 'friend_request') {
-      return `${notification.senderUsername || 'Someone'} ${notification.message}`;
+      return (
+        <>
+          <span className="font-bold">{notification.senderUsername || 'Someone'}</span> {notification.message}
+        </>
+      );
     } else if (notification.type === 'join_request' && !notification.data3) {
-      return `${notification.senderUsername || 'Someone'} ${notification.message} ${notification.data2 || 'a community'}`;
+      return (
+        <>
+          <span className="font-bold">{notification.senderUsername || 'Someone'}</span> {notification.message} <span className="font-bold">{notification.data2 || 'a community'}</span>
+        </>
+      );
     } else if (notification.type === 'join_request' && notification.data3) {
-      return `${notification.senderUsername || 'Someone'} ${notification.message} ${notification.data2 || 'a community'}'s department ${notification.data4 || ''}`;
+      return (
+        <>
+          <span className="font-bold">{notification.senderUsername || 'Someone'}</span> {notification.message} <span className="font-bold">{notification.data2 || 'a community'}</span>'s department {notification.data4 || ''}
+        </>
+      );
     } else if (notification.type === 'notification') {
-      return `${notification.message} ${notification.data2 || ''}`;
+      return (
+        <>
+          {notification.message} <span className="font-bold">{notification.data2 || ''}</span>
+        </>
+      );
     }
     return notification.message;
   };
