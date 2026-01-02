@@ -1059,9 +1059,16 @@ function CommunitiesPageContent() {
 
   // Check if user is logged in
   useEffect(() => {
-    const checkUser = async () => {
+    const checkUser = async (retryCount = 0) => {
       setUserSubscriptionChecked(false);
       setIsCheckingUser(true);
+      
+      // If we just came from login, wait a bit for session to be established
+      const isFromLogin = document.referrer.includes('/login') || window.location.search.includes('from=login');
+      if (isFromLogin && retryCount === 0) {
+        await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms for session to be set
+      }
+      
       try {
         const response = await fetch('/api/user/current', { credentials: 'include' });
         if (response.ok) {
@@ -1069,25 +1076,35 @@ function CommunitiesPageContent() {
           if (data.user && data.user.id) {
             setUser(data.user);
             setUserSubscriptionChecked(true); // Set to true when user is authenticated
-          } else {
-            // User not logged in, redirect to login
-            const currentPath = window.location.pathname + window.location.search;
-            router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
-            return; // Exit early to prevent setting userSubscriptionChecked
+            setIsCheckingUser(false);
+            return;
           }
-        } else {
-          // User not logged in, redirect to login
-          const currentPath = window.location.pathname + window.location.search;
-          router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
-          return; // Exit early to prevent setting userSubscriptionChecked
         }
-      } catch (error) {
-        // User not logged in, redirect to login
+        
+        // If we got here, user is not authenticated
+        // Retry once if we just came from login (session might not be ready yet)
+        if (isFromLogin && retryCount === 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait another second
+          return checkUser(1); // Retry once
+        }
+        
+        // User not logged in after retries, redirect to login
         const currentPath = window.location.pathname + window.location.search;
         router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
-        return; // Exit early to prevent setting userSubscriptionChecked
+      } catch (error) {
+        // Retry once if we just came from login (session might not be ready yet)
+        if ((document.referrer.includes('/login') || window.location.search.includes('from=login')) && retryCount === 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait another second
+          return checkUser(1); // Retry once
+        }
+        
+        // User not logged in after retries, redirect to login
+        const currentPath = window.location.pathname + window.location.search;
+        router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
       } finally {
-        setIsCheckingUser(false);
+        if (retryCount > 0 || !(document.referrer.includes('/login') || window.location.search.includes('from=login'))) {
+          setIsCheckingUser(false);
+        }
       }
     };
     checkUser();

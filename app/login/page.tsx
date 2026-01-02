@@ -127,22 +127,34 @@ function LoginForm() {
           const sessionData = await sessionResponse.json().catch(() => null);
           // Success - redirect to communities
           const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
+          // Add from=login parameter to help communities page detect we're coming from login
+          const redirectUrl = redirect.includes('?') 
+            ? `${redirect}&from=login` 
+            : `${redirect}?from=login`;
           // Small delay to ensure session cookie is set
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise(resolve => setTimeout(resolve, 300));
           // Use window.location for full page reload to ensure session is set
-          window.location.href = redirect;
+          window.location.href = redirectUrl;
         } else {
           // Session setup failed - try redirecting anyway (auth was successful)
           const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
+          // Add from=login parameter to help communities page detect we're coming from login
+          const redirectUrl = redirect.includes('?') 
+            ? `${redirect}&from=login` 
+            : `${redirect}?from=login`;
           // Small delay to ensure session cookie is set
-          await new Promise(resolve => setTimeout(resolve, 100));
-          window.location.href = redirect;
+          await new Promise(resolve => setTimeout(resolve, 300));
+          window.location.href = redirectUrl;
         }
       } catch (sessionError) {
         console.error('Session setup error:', sessionError);
         // If session setup fails, still redirect (auth was successful)
         const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
-        window.location.href = redirect;
+        // Add from=login parameter to help communities page detect we're coming from login
+        const redirectUrl = redirect.includes('?') 
+          ? `${redirect}&from=login` 
+          : `${redirect}?from=login`;
+        window.location.href = redirectUrl;
       }
     } catch (error) {
       console.error('Login error:', error);
