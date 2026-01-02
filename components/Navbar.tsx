@@ -27,6 +27,7 @@ export default function Navbar() {
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const [isRefreshingNotifications, setIsRefreshingNotifications] = useState(false);
   const [hasCheckedNotifications, setHasCheckedNotifications] = useState(false);
+  const [shouldShowBadge, setShouldShowBadge] = useState(true); // Default to true to show badge initially
   const menuButtonRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
@@ -116,15 +117,27 @@ export default function Navbar() {
     };
   }, []);
 
-  // Load cached notification count on mount
+  // Load cached notification count and badge state on mount
   useEffect(() => {
     if (user?.id) {
       const cacheKey = `notificationCount_${user.id}`;
+      const badgeKey = `notificationBadgeShown_${user.id}`;
       const cachedCount = localStorage.getItem(cacheKey);
+      const badgeShown = localStorage.getItem(badgeKey);
+      
       if (cachedCount !== null) {
         const count = parseInt(cachedCount, 10);
         setNotificationCount(count);
         setHasCheckedNotifications(true);
+        // If we've checked before and found no notifications, don't show badge
+        if (badgeShown === 'false' || (count === 0 && badgeShown === null)) {
+          setShouldShowBadge(false);
+        } else {
+          setShouldShowBadge(true);
+        }
+      } else {
+        // First time - show badge by default
+        setShouldShowBadge(true);
       }
     }
   }, [user?.id]);
@@ -170,12 +183,26 @@ export default function Navbar() {
         setHasCheckedNotifications(true);
         // Update cache
         localStorage.setItem(cacheKey, count.toString());
+        
+        // Store badge state - hide badge if no notifications, show if there are
+        const badgeKey = `notificationBadgeShown_${user.id}`;
+        if (count === 0) {
+          setShouldShowBadge(false);
+          localStorage.setItem(badgeKey, 'false');
+        } else {
+          setShouldShowBadge(true);
+          localStorage.setItem(badgeKey, 'true');
+        }
       } else {
         // If fetch fails, keep cached value if available
         if (!hasCachedValue) {
           setNotificationCount(0);
           setHasCheckedNotifications(true);
           localStorage.setItem(cacheKey, '0');
+          // Hide badge if no notifications
+          const badgeKey = `notificationBadgeShown_${user.id}`;
+          setShouldShowBadge(false);
+          localStorage.setItem(badgeKey, 'false');
         }
       }
     } catch (error) {
@@ -185,6 +212,10 @@ export default function Navbar() {
         setNotificationCount(0);
         setHasCheckedNotifications(true);
         localStorage.setItem(cacheKey, '0');
+        // Hide badge if no notifications
+        const badgeKey = `notificationBadgeShown_${user.id}`;
+        setShouldShowBadge(false);
+        localStorage.setItem(badgeKey, 'false');
       }
     } finally {
       setIsLoadingNotifications(false);
@@ -198,9 +229,10 @@ export default function Navbar() {
       setNotificationCount(0);
       setHasCheckedNotifications(false);
       setIsRefreshingNotifications(false);
+      setShouldShowBadge(true); // Reset to show badge for next user
       // Clear cache for all users (cleanup)
       Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('notificationCount_')) {
+        if (key.startsWith('notificationCount_') || key.startsWith('notificationBadgeShown_')) {
           localStorage.removeItem(key);
         }
       });
@@ -342,7 +374,7 @@ export default function Navbar() {
           >
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <UserIcon style={{ width: '16px', height: '16px' }} />
-              {(!hasCheckedNotifications || notificationCount > 0) && (
+              {shouldShowBadge && (notificationCount > 0 || !hasCheckedNotifications) && (
                 <span
                   style={{
                     position: 'absolute',
