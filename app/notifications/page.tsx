@@ -96,6 +96,8 @@ function NotificationsContent() {
   });
   const [countsLoaded, setCountsLoaded] = useState(false);
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
   const notificationsPerPage = 10;
 
   // Check if user is logged in
@@ -300,14 +302,18 @@ function NotificationsContent() {
     }
   };
 
-  const handleDeleteNotification = async (notification: Notification) => {
-    if (!user?.id || !notification.notificationId) return;
+  const handleDeleteClick = (notification: Notification) => {
+    setNotificationToDelete(notification);
+    setDeleteModalOpen(true);
+  };
 
-    // Show confirmation dialog
-    const confirmed = window.confirm('Are you sure you want to delete this notification?');
-    if (!confirmed) return;
+  const handleDeleteConfirm = async () => {
+    if (!user?.id || !notificationToDelete?.notificationId) return;
 
-    setActionLoading((prev) => ({ ...prev, [notification.notificationId]: true }));
+    setDeleteModalOpen(false);
+    setActionLoading((prev) => ({ ...prev, [notificationToDelete.notificationId]: true }));
+
+    const notification = notificationToDelete;
 
     try {
       const response = await fetch(
@@ -356,7 +362,13 @@ function NotificationsContent() {
       alert('Failed to delete notification');
     } finally {
       setActionLoading((prev) => ({ ...prev, [notification.notificationId]: false }));
+      setNotificationToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setNotificationToDelete(null);
   };
 
   const handleMarkAsRead = async (notification: Notification) => {
@@ -614,7 +626,7 @@ function NotificationsContent() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteNotification(notification);
+                            handleDeleteClick(notification);
                           }}
                           disabled={isLoading}
                           className="flex-shrink-0 text-gray-400 hover:text-white transition-colors p-2 disabled:opacity-50"
@@ -650,6 +662,62 @@ function NotificationsContent() {
           </>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(30, 32, 44, 0.75)' }}
+          onClick={handleDeleteCancel}
+        >
+          <div
+            className="bg-gray-800 rounded-2xl p-6 max-w-md w-full mx-4 border border-gray-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Icon */}
+            <div className="text-center mb-4">
+              <i className="fa fa-exclamation-triangle text-5xl text-yellow-500"></i>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-white text-xl font-semibold text-center mb-2">
+              Delete Notification
+            </h3>
+
+            {/* Message */}
+            <p className="text-gray-400 text-center mb-6">
+              Are you sure you want to delete this notification? This action cannot be undone.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={handleDeleteCancel}
+                className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={actionLoading[notificationToDelete?.notificationId || '']}
+                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {actionLoading[notificationToDelete?.notificationId || ''] ? (
+                  <>
+                    <i className="fa fa-spinner fa-spin"></i>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <i className="fa fa-trash"></i>
+                    Delete
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
