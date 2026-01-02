@@ -460,67 +460,13 @@ function showToastNotification(notification) {
 }
 
 // WebSocket setup for live notifications
+// Disabled - backend /ws/notifications endpoint not available
+// Using polling instead via fetchNotificationCount()
 $(document).ready(function () {
-  let reconnectAttempts = 0;
-  const maxReconnectAttempts = 5;
-  const baseReconnectDelay = 1000; // 1 second
-
-  function connectWebSocket() {
-    socket = new WebSocket(
-      `ws${API_URL.startsWith("https") ? "s" : ""}://${API_URL.replace(
-        /^https?:\/\//,
-        ""
-      )}/ws/notifications?userId=${dbUser._id}`
-    );
-
-    socket.onopen = function () {
-      reconnectAttempts = 0; // Reset on successful connection
-      // Start ping to keep connection alive
-      startPing();
-    };
-
-    socket.onmessage = function (event) {
-      const data = JSON.parse(event.data);
-      if (data.event === "new_notification") {
-        showToastNotification(data.data);
-      }
-    };
-
-    socket.onclose = function (event) {
-      stopPing();
-      if (reconnectAttempts < maxReconnectAttempts) {
-        const delay = baseReconnectDelay * Math.pow(2, reconnectAttempts); // Exponential backoff
-
-        reconnectAttempts++;
-        setTimeout(connectWebSocket, delay);
-      } else {
-        console.error("Max WebSocket reconnect attempts reached");
-      }
-    };
-
-    socket.onerror = function (error) {
-      console.error("WebSocket error:", error);
-    };
-  }
-
-  let pingInterval;
-  function startPing() {
-    pingInterval = setInterval(() => {
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({ type: "ping" }));
-      }
-    }, 30000); // Ping every 30 seconds
-  }
-
-  function stopPing() {
-    if (pingInterval) {
-      clearInterval(pingInterval);
-      pingInterval = null;
-    }
-  }
-
-  connectWebSocket();
-
+  // WebSocket connection disabled to prevent errors
+  // The backend /ws/notifications endpoint is not available
+  // Notifications are updated via polling in fetchNotificationCount()
+  
   // Fetch notification count on page load
   fetchNotificationCount();
 });
