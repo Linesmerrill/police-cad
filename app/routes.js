@@ -2920,6 +2920,142 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // POST /api/user/notifications/action - proxy route for approve/deny notification actions (Next.js 16 body reading issue workaround)
+  app.post("/api/user/notifications/action", async function (req, res) {
+    try {
+      const { userId, notificationId, action, notificationType, sentFromID, data1, data2, data3, data4 } = req.body;
+
+      if (!userId || !notificationId || !action || !notificationType) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+      const cookieHeader = req.headers.cookie || '';
+
+      const requests = [];
+
+      // Handle friend request
+      if (notificationType === 'friend_request') {
+        requests.push(
+          axios.post(
+            `${apiUrl}/api/v1/user/${userId}/add-friend`,
+            { friend_id: sentFromID },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                Cookie: cookieHeader,
+              },
+            }
+          )
+        );
+      }
+      // Handle join request (community)
+      else if (notificationType === 'join_request' && !data3) {
+        requests.push(
+          axios.put(
+            `${apiUrl}/api/v1/user/${sentFromID}/communities?migration=false`,
+            {
+              communityId: data1,
+              status: action,
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                Cookie: cookieHeader,
+              },
+            }
+          )
+        );
+      }
+      // Handle join request (department)
+      else if (notificationType === 'join_request' && data3) {
+        requests.push(
+          axios.put(
+            `${apiUrl}/api/v1/community/${data1}/departments/${data3}/join-requests`,
+            {
+              userId: sentFromID,
+              status: action,
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                Cookie: cookieHeader,
+              },
+            }
+          )
+        );
+      }
+
+      // Send notification to the requester
+      if (requests.length > 0) {
+        const message =
+          action === 'approved'
+            ? `✅ Your request to join ${data2}${data4 ? "'s department " + data4 : ''} has been ${action}.`
+            : `❌ Your request to join ${data2}${data4 ? "'s department " + data4 : ''} has been ${action}.`;
+        
+        requests.push(
+          axios.post(
+            `${apiUrl}/api/v1/users/notifications`,
+            {
+              sentFromID: userId,
+              sentToID: sentFromID,
+              type: 'notification',
+              message,
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                Cookie: cookieHeader,
+              },
+            }
+          )
+        );
+      }
+
+      // Delete the notification
+      requests.push(
+        axios.delete(
+          `${apiUrl}/api/v1/user/${userId}/notifications/${notificationId}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Cookie: cookieHeader,
+            },
+          }
+        )
+      );
+
+      const responses = await Promise.all(requests);
+      const errors = responses.filter(r => r.status >= 400);
+      
+      if (errors.length > 0) {
+        const errorResponse = errors[0];
+        let errorText = 'Failed to process request';
+        try {
+          if (errorResponse.response && errorResponse.response.data) {
+            const errorData = errorResponse.response.data;
+            errorText = errorData.message || errorData.error || JSON.stringify(errorData);
+          } else {
+            errorText = errorResponse.message || 'Request failed';
+          }
+        } catch (e) {
+          errorText = `Request failed with status ${errorResponse.status || 500}`;
+        }
+        return res.status(errorResponse.status || 500).json({ error: errorText });
+      }
+
+      return res.json({ success: true });
+    } catch (error) {
+      console.error('Error proxying notification action request:', error);
+      const status = error.response?.status || 500;
+      let errorMessage = error.response?.data || error.message || 'Internal server error';
+      if (typeof errorMessage === 'object') {
+        errorMessage = errorMessage.message || errorMessage.error || JSON.stringify(errorMessage);
+      }
+      return res.status(status).json({ error: errorMessage });
+    }
+  });
+
   // API route to verify password
   app.post("/api/verify-password", auth, function (req, res) {
     if (!req.isAuthenticated() || !req.user) {
