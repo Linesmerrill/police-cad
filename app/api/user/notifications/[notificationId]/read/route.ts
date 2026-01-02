@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_URL = process.env.NEXT_PUBLIC_POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 
-export async function POST(
+export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ notificationId: string }> }
 ) {
@@ -22,14 +22,15 @@ export async function POST(
     // Get cookies from the request to forward to the API
     const cookies = request.headers.get('cookie') || '';
 
-    const url = `${API_URL}/api/v2/users/${userId}/notifications/${notificationId}/read`;
+    const url = `${API_URL}/api/v1/user/${userId}/notifications/${notificationId}/read`;
     
     const response = await fetch(url, {
-      method: 'POST',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Cookie': cookies,
       },
+      body: JSON.stringify({ seen: true }),
     });
 
     if (!response.ok) {

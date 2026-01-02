@@ -303,6 +303,10 @@ function NotificationsContent() {
   const handleDeleteNotification = async (notification: Notification) => {
     if (!user?.id || !notification.notificationId) return;
 
+    // Show confirmation dialog
+    const confirmed = window.confirm('Are you sure you want to delete this notification?');
+    if (!confirmed) return;
+
     setActionLoading((prev) => ({ ...prev, [notification.notificationId]: true }));
 
     try {
@@ -332,8 +336,20 @@ function NotificationsContent() {
           setUnseenCount((prev) => Math.max(0, prev - 1));
         }
       } else {
-        const errorData = await response.json();
-        alert(errorData.error || 'Failed to delete notification');
+        let errorMessage = 'Failed to delete notification';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.message || 'Failed to delete notification';
+          } else {
+            const errorText = await response.text();
+            errorMessage = errorText || `Request failed with status ${response.status}`;
+          }
+        } catch (e) {
+          errorMessage = `Request failed with status ${response.status}`;
+        }
+        alert(errorMessage);
       }
     } catch (error) {
       console.error('Error deleting notification:', error);
@@ -350,11 +366,12 @@ function NotificationsContent() {
       await fetch(
         `/api/user/notifications/${notification.notificationId}/read?userId=${user.id}`,
         {
-          method: 'POST',
+          method: 'PUT',
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
+          body: JSON.stringify({ seen: true }),
         }
       );
       // Update local state
