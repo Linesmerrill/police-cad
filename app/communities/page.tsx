@@ -734,7 +734,11 @@ const CommunitySection = ({
     const items: React.ReactNode[] = [];
     
     // Don't render any ads if subscription hasn't been checked yet, or if user is premium plus
-    const shouldShowAds = userSubscriptionChecked && !(subscriptionActive && (userPlan === 'premium' || userPlan === 'premium_plus'));
+    // For premium users, show ads 50% of the time
+    const isPremium = subscriptionActive && userPlan === 'premium';
+    const isPremiumPlus = subscriptionActive && userPlan === 'premium_plus';
+    const premiumShowAds = isPremium ? Math.random() < 0.5 : true; // 50% chance for premium
+    const shouldShowAds = userSubscriptionChecked && !isPremiumPlus && premiumShowAds;
     
     // Use section name + communities length as part of the seed to ensure different patterns per section
     const adPositions = shouldShowAds 
@@ -773,8 +777,13 @@ const CommunitySection = ({
     <div className="py-4 sm:py-8 w-full">
       {title && <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-4 sm:mb-6">{title}</h2>}
       {filterTabs}
-      {/* Top Ad - Only show after checking subscription, and hide for Premium and Premium Plus */}
-      {communities.length > 0 && userSubscriptionChecked && !(subscriptionActive && (userPlan === 'premium' || userPlan === 'premium_plus')) && (
+      {/* Top Ad - Only show after checking subscription, hide for Premium Plus, and show 50% of the time for Premium */}
+      {(() => {
+        const isPremium = subscriptionActive && userPlan === 'premium';
+        const isPremiumPlus = subscriptionActive && userPlan === 'premium_plus';
+        const premiumShowAds = isPremium ? Math.random() < 0.5 : true; // 50% chance for premium
+        return communities.length > 0 && userSubscriptionChecked && !isPremiumPlus && premiumShowAds;
+      })() && (
         <div className="mb-6">
           <GoogleAd adSlot="1760139308" matchCardHeight={false} />
         </div>
