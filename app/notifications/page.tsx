@@ -155,42 +155,6 @@ function NotificationsContent() {
           const data = await response.json();
           const fetchedNotifications = data.notifications || [];
           
-          // Debug: Log notification types and structure
-          if (fetchedNotifications.length > 0 && currentPage === 1) {
-            const types = fetchedNotifications.map(n => n.type);
-            const joinRequests = fetchedNotifications.filter(n => n.type === 'join_request');
-            console.log('[Notifications] Total notifications:', fetchedNotifications.length);
-            console.log('[Notifications] Types:', [...new Set(types)]);
-            console.log('[Notifications] Join requests count:', joinRequests.length);
-            if (joinRequests.length > 0) {
-              const sample = joinRequests[0];
-              console.log('[Notifications] Sample join_request:', {
-                type: sample.type,
-                data1: sample.data1,
-                data2: sample.data2,
-                data3: sample.data3,
-                data4: sample.data4,
-                hasData3: !!sample.data3,
-                hasData4: !!sample.data4,
-                data3Type: typeof sample.data3,
-                data4Type: typeof sample.data4,
-                fullNotification: sample,
-              });
-            }
-            // Log all notification types with their data fields
-            fetchedNotifications.forEach((n, idx) => {
-              if (idx < 3) { // Log first 3
-                console.log(`[Notifications] Notification ${idx}:`, {
-                  type: n.type,
-                  data1: n.data1,
-                  data2: n.data2,
-                  data3: n.data3,
-                  data4: n.data4,
-                });
-              }
-            });
-          }
-          
           // Deduplicate notifications
           const uniqueNotifications: Notification[] = [];
           const seenIds = new Set<string>();
