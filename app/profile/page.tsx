@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { UserIcon, EnvelopeIcon, CalendarIcon, CurrencyDollarIcon, LockClosedIcon, SpeakerWaveIcon, BellIcon, TrashIcon, EyeIcon, EyeSlashIcon, IdentificationIcon } from '@heroicons/react/24/solid';
@@ -8,6 +9,7 @@ import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { DISCORD_COMMUNITY } from '@/constants/discord';
 
 export default function Profile() {
+  const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editingUsername, setEditingUsername] = useState(false);
@@ -669,6 +671,56 @@ export default function Profile() {
       
       <div style={{ position: 'relative', zIndex: 2 }}>
         <Navbar />
+        
+        {/* Header Bar with Back Button */}
+        <div style={{
+          background: 'rgba(17, 24, 39, 0.95)',
+          borderBottom: '1px solid rgba(55, 65, 81, 0.5)',
+          padding: '1rem clamp(1rem, 4vw, 2rem)'
+        }}>
+          <div style={{
+            maxWidth: 'min(100%, 80rem)',
+            margin: '0 auto',
+            width: '100%'
+          }}>
+            <button
+              onClick={() => {
+                // Check if there's a valid previous page in history
+                if (typeof window !== 'undefined') {
+                  const referrer = document.referrer;
+                  if (referrer && !referrer.includes('/profile')) {
+                    router.back();
+                  } else {
+                    router.push('/communities');
+                  }
+                }
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                color: 'rgba(156, 163, 175, 1)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                padding: '0.5rem 0',
+                transition: 'color 0.2s',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'rgba(156, 163, 175, 1)';
+              }}
+            >
+              <i className="fa fa-arrow-left" style={{ fontSize: '0.875rem' }}></i>
+              <span>Back</span>
+            </button>
+          </div>
+        </div>
       
       {/* Message Banner */}
       {message && (
