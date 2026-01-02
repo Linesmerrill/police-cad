@@ -265,6 +265,8 @@ function NotificationsContent() {
         if (unseenCount > 0) {
           setUnseenCount((prev) => prev - 1);
         }
+        // Trigger background notification count refresh in Navbar
+        window.dispatchEvent(new Event('refreshNotificationCount'));
       } else {
         let errorMessage = 'Failed to process request';
         try {
@@ -322,6 +324,8 @@ function NotificationsContent() {
         if (!notification.isRead && !notification.seen) {
           setUnseenCount((prev) => Math.max(0, prev - 1));
         }
+        // Trigger background notification count refresh in Navbar
+        window.dispatchEvent(new Event('refreshNotificationCount'));
       } else {
         let errorMessage = 'Failed to delete notification';
         try {
@@ -376,6 +380,8 @@ function NotificationsContent() {
       if (unseenCount > 0) {
         setUnseenCount((prev) => prev - 1);
       }
+      // Trigger background notification count refresh in Navbar
+      window.dispatchEvent(new Event('refreshNotificationCount'));
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }

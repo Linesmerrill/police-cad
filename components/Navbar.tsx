@@ -23,7 +23,6 @@ export default function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [notificationCount, setNotificationCount] = useState(0);
   const [hasCheckedNotifications, setHasCheckedNotifications] = useState(false);
-  const [hasCheckedNotifications, setHasCheckedNotifications] = useState(false);
   const menuButtonRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
@@ -138,6 +137,21 @@ export default function Navbar() {
     }
   }, [user?.id]);
 
+  // Listen for notification refresh events from other components
+  useEffect(() => {
+    const handleNotificationRefresh = () => {
+      // Trigger background notification check
+      if (user?.id) {
+        fetchNotificationCount();
+      }
+    };
+
+    window.addEventListener('refreshNotificationCount', handleNotificationRefresh);
+    return () => {
+      window.removeEventListener('refreshNotificationCount', handleNotificationRefresh);
+    };
+  }, [user?.id]);
+
   useEffect(() => {
     // Close user menu when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
@@ -246,7 +260,7 @@ export default function Navbar() {
           >
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <UserIcon style={{ width: '16px', height: '16px' }} />
-              {hasCheckedNotifications && notificationCount > 0 && (
+              {(!hasCheckedNotifications || notificationCount > 0) && (
                 <span
                   style={{
                     position: 'absolute',
@@ -259,7 +273,7 @@ export default function Navbar() {
                     border: '2px solid rgba(15, 15, 20, 0.95)',
                     display: 'block'
                   }}
-                  title={`${notificationCount} unread notification${notificationCount === 1 ? '' : 's'}`}
+                  title={hasCheckedNotifications ? `${notificationCount} unread notification${notificationCount === 1 ? '' : 's'}` : 'Check for notifications'}
                 />
               )}
             </div>
