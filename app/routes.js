@@ -2847,6 +2847,79 @@ module.exports = function (app, passport, server, nextApp, handle) {
     return res.json({ user: null });
   });
 
+  // PUT /api/user/notifications/:notificationId/read - proxy route for mark as read (Next.js 16 body reading issue workaround)
+  app.put("/api/user/notifications/:notificationId/read", async function (req, res) {
+    try {
+      const { notificationId } = req.params;
+      const userId = req.query.userId;
+
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+
+      if (!notificationId) {
+        return res.status(400).json({ error: 'Notification ID is required' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+      const cookieHeader = req.headers.cookie || '';
+
+      const response = await axios.put(
+        `${apiUrl}/api/v1/user/${userId}/notifications/${notificationId}/read`,
+        { seen: true },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error('Error proxying mark notification as read request:', error);
+      const status = error.response?.status || 500;
+      const errorMessage = error.response?.data || error.message || 'Internal server error';
+      res.status(status).json({ error: errorMessage });
+    }
+  });
+
+  // DELETE /api/user/notifications/:notificationId - proxy route for delete notification (Next.js 16 body reading issue workaround)
+  app.delete("/api/user/notifications/:notificationId", async function (req, res) {
+    try {
+      const { notificationId } = req.params;
+      const userId = req.query.userId;
+
+      if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+
+      if (!notificationId) {
+        return res.status(400).json({ error: 'Notification ID is required' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+      const cookieHeader = req.headers.cookie || '';
+
+      const response = await axios.delete(
+        `${apiUrl}/api/v1/user/${userId}/notifications/${notificationId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      res.status(response.status).json({ success: true });
+    } catch (error) {
+      console.error('Error proxying delete notification request:', error);
+      const status = error.response?.status || 500;
+      const errorMessage = error.response?.data || error.message || 'Internal server error';
+      res.status(status).json({ error: errorMessage });
+    }
+  });
+
   // API route to verify password
   app.post("/api/verify-password", auth, function (req, res) {
     if (!req.isAuthenticated() || !req.user) {
