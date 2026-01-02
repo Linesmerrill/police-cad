@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Bars3Icon, XMarkIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, ChevronDownIcon, ChevronUpIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon, BellIcon } from '@heroicons/react/24/outline';
 import { UserIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -251,6 +251,28 @@ export default function Navbar() {
               >
                 <Cog6ToothIcon style={{ width: '18px', height: '18px' }} />
                 Account Settings
+              </Link>
+
+              <Link
+                href="/notifications"
+                onClick={() => setUserMenuOpen(false)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.75rem',
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  textDecoration: 'none',
+                  borderRadius: '4px',
+                  transition: 'background-color 0.2s',
+                  fontSize: '0.875rem',
+                  marginTop: '0.25rem'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <BellIcon style={{ width: '18px', height: '18px' }} />
+                Notifications
               </Link>
 
               <a
