@@ -101,14 +101,31 @@ export async function POST(request: NextRequest) {
     const errors = responses.filter(r => !r.ok);
     
     if (errors.length > 0) {
-      const errorText = await errors[0].text();
-      return NextResponse.json({ error: errorText }, { status: errors[0].status });
+      const errorResponse = errors[0];
+      let errorText = 'Failed to process request';
+      try {
+        const contentType = errorResponse.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await errorResponse.json();
+          errorText = errorData.message || errorData.error || JSON.stringify(errorData);
+        } else {
+          errorText = await errorResponse.text();
+          // If it's HTML, try to extract a meaningful error
+          if (errorText.includes('<!DOCTYPE') || errorText.includes('<html')) {
+            errorText = 'Server error occurred';
+          }
+        }
+      } catch (e) {
+        errorText = `Request failed with status ${errorResponse.status}`;
+      }
+      return NextResponse.json({ error: errorText }, { status: errorResponse.status });
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error proxying notification action request:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const errorMessage = error?.message || 'Internal server error';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

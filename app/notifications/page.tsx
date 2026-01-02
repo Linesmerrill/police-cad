@@ -277,12 +277,24 @@ function NotificationsContent() {
           setUnseenCount((prev) => prev - 1);
         }
       } else {
-        const errorData = await response.json();
-        alert(errorData.error || 'Failed to process request');
+        let errorMessage = 'Failed to process request';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorData.message || 'Failed to process request';
+          } else {
+            const errorText = await response.text();
+            errorMessage = errorText || `Request failed with status ${response.status}`;
+          }
+        } catch (e) {
+          errorMessage = `Request failed with status ${response.status}`;
+        }
+        alert(errorMessage);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error handling notification action:', error);
-      alert('Failed to process request');
+      alert(error?.message || 'Failed to process request');
     } finally {
       setActionLoading((prev) => ({ ...prev, [notification.notificationId]: false }));
     }
