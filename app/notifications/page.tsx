@@ -2,7 +2,6 @@
 
 import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -116,6 +115,41 @@ function NotificationsContent() {
     };
     checkUser();
   }, [router]);
+
+  // Initialize filter from URL hash
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.slice(1); // Remove the #
+      if (hash && ['all', 'community', 'department', 'friend'].includes(hash)) {
+        setActiveFilter(hash as NotificationFilter);
+      }
+    }
+  }, []);
+
+  // Update URL hash when filter changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const newHash = `#${activeFilter}`;
+      if (window.location.hash !== newHash) {
+        window.history.replaceState(null, '', newHash);
+      }
+    }
+  }, [activeFilter]);
+
+  // Listen for hash changes (browser back/forward)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      if (hash && ['all', 'community', 'department', 'friend'].includes(hash)) {
+        setActiveFilter(hash as NotificationFilter);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   // Fetch notifications
   useEffect(() => {
