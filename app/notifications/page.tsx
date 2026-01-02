@@ -204,12 +204,12 @@ function NotificationsContent() {
   const filteredNotifications = allNotifications.filter((notification) => {
     if (activeFilter === 'all') return true;
     if (activeFilter === 'community') {
-      // Community join requests: type is join_request but no department (no data3/data4)
-      return notification.type === 'join_request' && !notification.data3 && !notification.data4;
+      // Community join requests: type is join_request but no department (no data3 or data3 is empty)
+      return notification.type === 'join_request' && (!notification.data3 || notification.data3 === '');
     }
     if (activeFilter === 'department') {
-      // Department join requests: has department ID and name (data3 and data4 exist)
-      return notification.data3 && notification.data4;
+      // Department join requests: has department ID and name (data3 and data4 exist and are not empty)
+      return notification.data3 && notification.data3 !== '' && notification.data4 && notification.data4 !== '';
     }
     if (activeFilter === 'friend') {
       return notification.type === 'friend_request';
