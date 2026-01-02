@@ -21,7 +21,7 @@ export default function Navbar() {
   const [isSmallScreen, setIsSmallScreen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [notificationCount, setNotificationCount] = useState(0);
+  const [notificationCount, setNotificationCount] = useState(1); // Default to 1 to show badge, will be updated when dropdown opens
   const menuButtonRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
@@ -111,11 +111,16 @@ export default function Navbar() {
 
       if (response.ok) {
         const data = await response.json();
-        setNotificationCount(data.unseenCount || 0);
+        const count = data.unseenCount || 0;
+        setNotificationCount(count);
+      } else {
+        // If fetch fails, assume no notifications and hide badge
+        setNotificationCount(0);
       }
     } catch (error) {
-      // Silently handle error - notification count won't update
+      // Silently handle error - assume no notifications and hide badge
       console.error('Error fetching notification count:', error);
+      setNotificationCount(0);
     }
   };
 
@@ -123,6 +128,9 @@ export default function Navbar() {
   useEffect(() => {
     if (!user?.id) {
       setNotificationCount(0);
+    } else {
+      // When user logs in, show badge by default (will be updated when they open dropdown)
+      setNotificationCount(1);
     }
   }, [user?.id]);
 
