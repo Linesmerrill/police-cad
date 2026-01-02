@@ -29,8 +29,6 @@ export default function Navbar() {
   
   // Hide main header on communities page
   const hideMainHeader = pathname === '/communities' || (pathname && pathname.startsWith('/communities/'));
-  
-  const API_URL = process.env.NEXT_PUBLIC_POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -103,7 +101,7 @@ export default function Navbar() {
     const fetchNotificationCount = async () => {
       try {
         const response = await fetch(
-          `${API_URL}/api/v2/users/${user.id}/notifications?limit=1&page=0`,
+          `/api/user/notifications/count?userId=${user.id}`,
           {
             credentials: 'include',
             headers: {
@@ -146,7 +144,7 @@ export default function Navbar() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [user?.id, API_URL, pathname]); // Refresh when pathname changes (e.g., navigating to/from notifications page)
+  }, [user?.id, pathname]); // Refresh when pathname changes (e.g., navigating to/from notifications page)
 
   useEffect(() => {
     // Close user menu when clicking outside
