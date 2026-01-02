@@ -177,10 +177,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
           console.error('[LOGIN POST] Session save error:', err);
         } else {
           // Session saved successfully
-            id: req.sessionID,
-            cookie: req.session.cookie,
-            passport: req.session.passport
-          });
         }
         if (!res.headersSent) {
           // Check if this is a JSON request (from Next.js login page)
