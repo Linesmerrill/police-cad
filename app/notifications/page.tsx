@@ -155,6 +155,27 @@ function NotificationsContent() {
           const data = await response.json();
           const fetchedNotifications = data.notifications || [];
           
+          // Debug: Log notification types and structure
+          if (fetchedNotifications.length > 0 && currentPage === 1) {
+            const types = fetchedNotifications.map(n => n.type);
+            const joinRequests = fetchedNotifications.filter(n => n.type === 'join_request');
+            console.log('Notification types:', [...new Set(types)]);
+            console.log('Join requests count:', joinRequests.length);
+            if (joinRequests.length > 0) {
+              console.log('Sample join_request:', {
+                type: joinRequests[0].type,
+                data1: joinRequests[0].data1,
+                data2: joinRequests[0].data2,
+                data3: joinRequests[0].data3,
+                data4: joinRequests[0].data4,
+                hasData3: !!joinRequests[0].data3,
+                hasData4: !!joinRequests[0].data4,
+                data3Value: joinRequests[0].data3,
+                data4Value: joinRequests[0].data4,
+              });
+            }
+          }
+          
           // Deduplicate notifications
           const uniqueNotifications: Notification[] = [];
           const seenIds = new Set<string>();
@@ -260,12 +281,6 @@ function NotificationsContent() {
         setAllNotifications((prev) =>
           prev.filter((n) => n.notificationId !== notification.notificationId)
         );
-        // Update counts
-        setFilterCounts((prev) => ({
-          ...prev,
-          all: prev.all - 1,
-          [activeFilter]: Math.max(0, prev[activeFilter as keyof typeof prev] - 1),
-        }));
         if (unseenCount > 0) {
           setUnseenCount((prev) => prev - 1);
         }
