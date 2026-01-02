@@ -1059,22 +1059,25 @@ function CommunitiesPageContent() {
           const data = await response.json();
           if (data.user && data.user.id) {
             setUser(data.user);
+            setUserSubscriptionChecked(true); // Set to true when user is authenticated
           } else {
             // User not logged in, redirect to login
             const currentPath = window.location.pathname + window.location.search;
             router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+            return; // Exit early to prevent setting userSubscriptionChecked
           }
         } else {
           // User not logged in, redirect to login
           const currentPath = window.location.pathname + window.location.search;
           router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+          return; // Exit early to prevent setting userSubscriptionChecked
         }
       } catch (error) {
         // User not logged in, redirect to login
         const currentPath = window.location.pathname + window.location.search;
         router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+        return; // Exit early to prevent setting userSubscriptionChecked
       } finally {
-        setUserSubscriptionChecked(true);
         setIsCheckingUser(false);
       }
     };
