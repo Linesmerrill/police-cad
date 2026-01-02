@@ -96,7 +96,7 @@ function NotificationsContent() {
   });
   const [countsLoaded, setCountsLoaded] = useState(false);
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
-  const notificationsPerPage = 20;
+  const notificationsPerPage = 10;
 
   // Check if user is logged in
   useEffect(() => {
@@ -131,8 +131,26 @@ function NotificationsContent() {
     const fetchNotifications = async () => {
       setIsLoading(true);
       try {
+        // First, fetch a small sample to get counts
+        const countResponse = await fetch(
+          `/api/user/notifications?userId=${user.id}&limit=1&page=1`,
+          {
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (countResponse.ok) {
+          const countData = await countResponse.json();
+          setTotalCount(countData.total || 0);
+          setUnseenCount(countData.unseenCount || 0);
+        }
+
+        // Then fetch the actual notifications for current page
         const response = await fetch(
-          `/api/user/notifications?userId=${user.id}&limit=1000&page=1`,
+          `/api/user/notifications?userId=${user.id}&limit=${notificationsPerPage}&page=${currentPage}`,
           {
             credentials: 'include',
             headers: {
@@ -160,16 +178,30 @@ function NotificationsContent() {
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
 
-          setAllNotifications(uniqueNotifications);
-          setTotalCount(data.total || 0);
-          setUnseenCount(data.unseenCount || 0);
+          if (currentPage === 1) {
+            setAllNotifications(uniqueNotifications);
+          } else {
+            // Append new notifications when loading more
+            setAllNotifications((prev) => {
+              const combined = [...prev, ...uniqueNotifications];
+              const deduped = combined.filter((n, index, self) =>
+                index === self.findIndex((t) => t.notificationId === n.notificationId)
+              );
+              return deduped.sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              );
+            });
+          }
+
+          setHasMore(currentPage * notificationsPerPage < (data.total || 0));
           
-          // Calculate filter counts
+          // Calculate filter counts from all loaded notifications
+          const allLoaded = currentPage === 1 ? uniqueNotifications : [...allNotifications, ...uniqueNotifications];
           const counts = {
-            all: uniqueNotifications.length,
-            community: uniqueNotifications.filter(n => n.type === 'join_request' && !n.data3).length,
-            department: uniqueNotifications.filter(n => n.type === 'join_request' && n.data3).length,
-            friend: uniqueNotifications.filter(n => n.type === 'friend_request').length,
+            all: data.total || 0,
+            community: allLoaded.filter(n => n.type === 'join_request' && !n.data3).length,
+            department: allLoaded.filter(n => n.type === 'join_request' && n.data3).length,
+            friend: allLoaded.filter(n => n.type === 'friend_request').length,
           };
           setFilterCounts(counts);
           setCountsLoaded(true);
@@ -184,7 +216,7 @@ function NotificationsContent() {
     };
 
     fetchNotifications();
-  }, [user?.id, isCheckingUser]);
+  }, [user?.id, currentPage, isCheckingUser]);
 
   // Filter notifications based on active filter
   const filteredNotifications = allNotifications.filter((notification) => {
@@ -194,6 +226,16 @@ function NotificationsContent() {
     if (activeFilter === 'friend') return notification.type === 'friend_request';
     return true;
   });
+
+  const handleLoadMore = () => {
+    setCurrentPage((prev) => prev + 1);
+  };
+
+  const handleFilterChange = (filterId: string) => {
+    setActiveFilter(filterId as NotificationFilter);
+    setCurrentPage(1);
+    setAllNotifications([]);
+  };
 
   const handleNotificationAction = async (notification: Notification, action: 'approved' | 'declined') => {
     if (!user?.id || !notification.notificationId) return;
@@ -404,7 +446,7 @@ function NotificationsContent() {
             <FilterTabs
               filters={filters}
               activeFilter={activeFilter}
-              onFilterChange={(filterId) => setActiveFilter(filterId as NotificationFilter)}
+              onFilterChange={handleFilterChange}
               countsLoaded={countsLoaded}
             />
 
@@ -530,6 +572,25 @@ function NotificationsContent() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {hasMore && (
+              <div className="mt-6 text-center">
+                <button
+                  onClick={handleLoadMore}
+                  disabled={isLoading}
+                  className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <>
+                      <i className="fa fa-spinner fa-spin mr-2"></i>
+                      Loading...
+                    </>
+                  ) : (
+                    'Load More'
+                  )}
+                </button>
               </div>
             )}
           </>
