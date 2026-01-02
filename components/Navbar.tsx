@@ -232,7 +232,25 @@ export default function Navbar() {
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            <UserIcon style={{ width: '16px', height: '16px' }} />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <UserIcon style={{ width: '16px', height: '16px' }} />
+              {notificationCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '-4px',
+                    right: '-4px',
+                    backgroundColor: '#ef4444',
+                    borderRadius: '50%',
+                    width: '10px',
+                    height: '10px',
+                    border: '2px solid rgba(15, 15, 20, 0.95)',
+                    display: 'block'
+                  }}
+                  title={`${notificationCount} unread notification${notificationCount === 1 ? '' : 's'}`}
+                />
+              )}
+            </div>
             <span style={{ fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               {user.username || user.email?.split('@')[0] || 'User'}
               {user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus') && (
