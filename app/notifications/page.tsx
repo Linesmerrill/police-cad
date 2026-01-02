@@ -412,7 +412,7 @@ function NotificationsContent() {
     } else if (notification.type === 'join_request' && notification.data3) {
       return (
         <>
-          <span className="font-bold">{notification.senderUsername || 'Someone'}</span> {notification.message} <span className="font-bold">{notification.data2 || 'a community'}</span>'s department {notification.data4 || ''}
+          <span className="font-bold">{notification.senderUsername || 'Someone'}</span> {notification.message} <span className="font-bold">{notification.data2 || 'a community'}</span>'s department <span className="font-bold">{notification.data4 || ''}</span>
         </>
       );
     } else if (notification.type === 'notification') {
