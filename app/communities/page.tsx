@@ -800,6 +800,7 @@ function CommunitiesPageContent() {
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [userSubscriptionChecked, setUserSubscriptionChecked] = useState(false);
+  const [isCheckingUser, setIsCheckingUser] = useState(true);
   
   // Cache for filter counts only (user communities no longer cached)
   const filterCountsCache = useRef<{ data: { approved: number; pending: number; owned: number }; timestamp: number } | null>(null);
