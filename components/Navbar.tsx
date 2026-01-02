@@ -21,7 +21,8 @@ export default function Navbar() {
   const [isSmallScreen, setIsSmallScreen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [notificationCount, setNotificationCount] = useState(1); // Default to 1 to show badge, will be updated when dropdown opens
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [hasCheckedNotifications, setHasCheckedNotifications] = useState(false);
   const menuButtonRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
