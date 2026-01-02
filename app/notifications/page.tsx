@@ -205,11 +205,14 @@ function NotificationsContent() {
     if (activeFilter === 'all') return true;
     if (activeFilter === 'community') {
       // Community join requests: type is join_request but no department (no data3 or data3 is empty)
-      return notification.type === 'join_request' && (!notification.data3 || notification.data3 === '');
+      const isCommunity = notification.type === 'join_request' && (!notification.data3 || notification.data3 === '');
+      return isCommunity;
     }
     if (activeFilter === 'department') {
       // Department join requests: has department ID and name (data3 and data4 exist and are not empty)
-      return notification.data3 && notification.data3 !== '' && notification.data4 && notification.data4 !== '';
+      // Also check if type is join_request with data3/data4, or if data3/data4 exist regardless of type
+      const hasDepartment = (notification.data3 && notification.data3 !== '' && notification.data4 && notification.data4 !== '');
+      return hasDepartment;
     }
     if (activeFilter === 'friend') {
       return notification.type === 'friend_request';
