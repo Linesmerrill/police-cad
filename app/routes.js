@@ -1764,7 +1764,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     try {
       const { code } = req.params;
       const apiUrl = `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/invite/${code}`;
-      const response = await axios.get(apiUrl, { timeout: 5000 });
+      const response = await axios.get(apiUrl, { timeout: 10000 }); // Increased to 10 seconds
       const inviteData = response.data;
       if (
         !inviteData ||
@@ -1783,13 +1783,27 @@ module.exports = function (app, passport, server, nextApp, handle) {
         redirect: req.originalUrl,
       });
     } catch (error) {
-      console.error("Error validating invite code:", error);
+      // Handle timeout errors more gracefully
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        return res.status(408).render("error", {
+          message: "Request timed out. Please try again.",
+          redirect: req.originalUrl,
+        });
+      }
+      
+      // Only log non-timeout errors
       if (error.response?.status === 404) {
         return res.status(404).render("error", {
           message: "Invite code not found.",
           redirect: req.originalUrl,
         });
       }
+      
+      // Log other errors but not timeouts
+      if (error.code !== 'ECONNABORTED') {
+        console.error("Error validating invite code:", error.message || error);
+      }
+      
       return res.status(500).render("error", {
         message: "An error occurred while processing the invite.",
       });
