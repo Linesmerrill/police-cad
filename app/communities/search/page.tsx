@@ -20,8 +20,9 @@ interface Community {
   };
 }
 
-function encodeCommunityId(id: string): string {
-  return id.replace(/\//g, '_');
+function encodeCommunityId(communityId: string): string {
+  const base64 = btoa(communityId);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 function LoadingSpinner({ text = 'Loading...' }: { text?: string }) {
