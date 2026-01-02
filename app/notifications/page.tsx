@@ -88,7 +88,6 @@ function NotificationsContent() {
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
-  const [entryPath, setEntryPath] = useState<string | null>(null);
   const notificationsPerPage = 10;
 
   // Check if user is logged in
@@ -271,10 +270,6 @@ function NotificationsContent() {
 
   const handleFilterChange = (filterId: string) => {
     setActiveFilter(filterId as NotificationFilter);
-    // Update URL hash
-    if (typeof window !== 'undefined') {
-      window.location.hash = `#${filterId}`;
-    }
     // Don't clear notifications or reset page - just change the filter
     // The filteredNotifications will update automatically
   };
@@ -502,21 +497,7 @@ function NotificationsContent() {
       <div className="bg-gray-900 border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
-            onClick={() => {
-              // If we're still on the notifications page (just hash changed), go to communities
-              // Otherwise, use browser back
-              if (typeof window !== 'undefined' && entryPath && window.location.pathname === entryPath) {
-                // Check if there's a valid previous page in history
-                const referrer = document.referrer;
-                if (referrer && !referrer.includes('/notifications')) {
-                  router.back();
-                } else {
-                  router.push('/communities');
-                }
-              } else {
-                router.back();
-              }
-            }}
+            onClick={() => router.back()}
             className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
           >
             <i className="fa fa-arrow-left"></i>
