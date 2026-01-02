@@ -2112,7 +2112,32 @@ function CommunitiesPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <>
+      <style jsx global>{`
+        @keyframes floatBubble {
+          0% {
+            transform: translateY(0) translateX(0) scale(1);
+            opacity: 0.1;
+          }
+          25% {
+            transform: translateY(-30px) translateX(15px) scale(1.1);
+            opacity: 0.15;
+          }
+          50% {
+            transform: translateY(-60px) translateX(-15px) scale(0.9);
+            opacity: 0.2;
+          }
+          75% {
+            transform: translateY(-30px) translateX(8px) scale(1.05);
+            opacity: 0.15;
+          }
+          100% {
+            transform: translateY(0) translateX(0) scale(1);
+            opacity: 0.1;
+          }
+        }
+      `}</style>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       {/* Google Analytics - already in layout.tsx */}
       {/* Google AdSense Script - load asynchronously after page is interactive */}
       <Script
