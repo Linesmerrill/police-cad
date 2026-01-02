@@ -21,7 +21,10 @@ export default function Navbar() {
   const [isSmallScreen, setIsSmallScreen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [isCheckingUser, setIsCheckingUser] = useState(true);
+  const [loadingDots, setLoadingDots] = useState('.');
   const [notificationCount, setNotificationCount] = useState(0);
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
   const [hasCheckedNotifications, setHasCheckedNotifications] = useState(false);
   const menuButtonRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -50,11 +53,27 @@ export default function Navbar() {
     // Keeping this for any future adjustments if needed
   }, [isMobile, mobileMenuOpen, isSmallScreen]);
 
+  // Animate loading dots
+  useEffect(() => {
+    if (!isCheckingUser) return;
+    
+    const interval = setInterval(() => {
+      setLoadingDots((prev) => {
+        if (prev === '.') return '..';
+        if (prev === '..') return '...';
+        return '.';
+      });
+    }, 500);
+    
+    return () => clearInterval(interval);
+  }, [isCheckingUser]);
+
   useEffect(() => {
     let isMounted = true;
     
     // Check if user is logged in
     const checkUser = async () => {
+      setIsCheckingUser(true);
       try {
         const response = await fetch('/api/user/current', {
           credentials: 'include'
@@ -82,6 +101,10 @@ export default function Navbar() {
           setUser(null);
           setNotificationCount(0);
         }
+      } finally {
+        if (isMounted) {
+          setIsCheckingUser(false);
+        }
       }
     };
     
@@ -97,9 +120,11 @@ export default function Navbar() {
     if (!user?.id) {
       setNotificationCount(0);
       setHasCheckedNotifications(false);
+      setIsLoadingNotifications(false);
       return;
     }
 
+    setIsLoadingNotifications(true);
     try {
       const response = await fetch(
         `/api/user/notifications/count?userId=${user.id}`,
@@ -126,6 +151,8 @@ export default function Navbar() {
       console.error('Error fetching notification count:', error);
       setNotificationCount(0);
       setHasCheckedNotifications(true);
+    } finally {
+      setIsLoadingNotifications(false);
     }
   };
 
@@ -220,7 +247,19 @@ export default function Navbar() {
       </a>
 
       {/* Login/Register or User Menu */}
-      {user && (user.username || user.email) ? (
+      {isCheckingUser ? (
+        <div style={{ 
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          color: 'rgba(255, 255, 255, 0.6)',
+          fontSize: '0.875rem',
+          fontFamily: 'inherit',
+          justifyContent: isSmallScreen ? 'center' : 'flex-end'
+        }}>
+          Loading{loadingDots}
+        </div>
+      ) : user && (user.username || user.email) ? (
         <div style={{ 
           position: 'relative',
           display: 'flex',
@@ -366,7 +405,21 @@ export default function Navbar() {
                   <BellIcon style={{ width: '18px', height: '18px' }} />
                   <span>Notifications</span>
                 </div>
-                {hasCheckedNotifications && notificationCount > 0 && (
+                {isLoadingNotifications ? (
+                  <span
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '20px',
+                      height: '20px',
+                      flexShrink: 0
+                    }}
+                    title="Loading notifications..."
+                  >
+                    <i className="fa fa-spinner fa-spin" style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)' }}></i>
+                  </span>
+                ) : hasCheckedNotifications && notificationCount > 0 ? (
                   <span
                     style={{
                       backgroundColor: '#ef4444',
@@ -387,7 +440,7 @@ export default function Navbar() {
                   >
                     {notificationCount > 99 ? '99+' : notificationCount}
                   </span>
-                )}
+                ) : null}
               </Link>
 
               <a
