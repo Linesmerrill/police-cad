@@ -473,13 +473,13 @@ function NotificationsContent() {
       {/* Header Bar with Back Button */}
       <div className="bg-gray-900 border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link
-            href="/communities"
+          <button
+            onClick={() => router.back()}
             className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
           >
             <i className="fa fa-arrow-left"></i>
-            <span className="font-medium">Back to Communities</span>
-          </Link>
+            <span className="font-medium">Back</span>
+          </button>
           <div className="flex items-center gap-3">
             <i className="fa fa-bell text-3xl text-blue-500"></i>
             <div>
