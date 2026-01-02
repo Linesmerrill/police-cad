@@ -21,6 +21,7 @@ export default function Navbar() {
   const [isSmallScreen, setIsSmallScreen] = useState(true);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [notificationCount, setNotificationCount] = useState(0);
   const menuButtonRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
@@ -28,6 +29,8 @@ export default function Navbar() {
   
   // Hide main header on communities page
   const hideMainHeader = pathname === '/communities' || (pathname && pathname.startsWith('/communities/'));
+  
+  const API_URL = process.env.NEXT_PUBLIC_POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -64,11 +67,13 @@ export default function Navbar() {
               setUser(userData.user);
             } else {
               setUser(null);
+              setNotificationCount(0);
             }
           }
         } else {
           if (isMounted) {
             setUser(null);
+            setNotificationCount(0);
           }
         }
       } catch (error) {
@@ -76,6 +81,7 @@ export default function Navbar() {
         // User not logged in or API not available
         if (isMounted) {
           setUser(null);
+          setNotificationCount(0);
         }
       }
     };
@@ -86,6 +92,61 @@ export default function Navbar() {
       isMounted = false;
     };
   }, []);
+
+  // Fetch notification count when user is logged in
+  useEffect(() => {
+    if (!user?.id) {
+      setNotificationCount(0);
+      return;
+    }
+
+    const fetchNotificationCount = async () => {
+      try {
+        const response = await fetch(
+          `${API_URL}/api/v2/users/${user.id}/notifications?limit=1&page=0`,
+          {
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setNotificationCount(data.unseenCount || 0);
+        }
+      } catch (error) {
+        // Silently handle error - notification count won't update
+        console.error('Error fetching notification count:', error);
+      }
+    };
+
+    fetchNotificationCount();
+
+    // Poll for updates every 30 seconds
+    const interval = setInterval(fetchNotificationCount, 30000);
+
+    // Refresh when page becomes visible (user switches back to tab)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchNotificationCount();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Refresh when window gains focus
+    const handleFocus = () => {
+      fetchNotificationCount();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user?.id, API_URL, pathname]); // Refresh when pathname changes (e.g., navigating to/from notifications page)
 
   useEffect(() => {
     // Close user menu when clicking outside
@@ -175,7 +236,8 @@ export default function Navbar() {
               borderRadius: '4px',
               transition: 'all 0.2s',
               fontFamily: 'inherit',
-              fontSize: 'inherit'
+              fontSize: 'inherit',
+              position: 'relative'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = '#ffffff';
@@ -186,7 +248,34 @@ export default function Navbar() {
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            <UserIcon style={{ width: '16px', height: '16px' }} />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <UserIcon style={{ width: '16px', height: '16px' }} />
+              {notificationCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '-6px',
+                    right: '-6px',
+                    backgroundColor: '#ef4444',
+                    color: '#ffffff',
+                    borderRadius: '50%',
+                    width: '18px',
+                    height: '18px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '10px',
+                    fontWeight: '700',
+                    border: '2px solid rgba(15, 15, 20, 0.95)',
+                    minWidth: '18px',
+                    padding: notificationCount > 99 ? '0 4px' : '0'
+                  }}
+                  title={`${notificationCount} unread notification${notificationCount === 1 ? '' : 's'}`}
+                >
+                  {notificationCount > 99 ? '99+' : notificationCount}
+                </span>
+              )}
+            </div>
             <span style={{ fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
               {user.username || user.email?.split('@')[0] || 'User'}
               {user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus') && (
@@ -266,12 +355,40 @@ export default function Navbar() {
                   borderRadius: '4px',
                   transition: 'background-color 0.2s',
                   fontSize: '0.875rem',
-                  marginTop: '0.25rem'
+                  marginTop: '0.25rem',
+                  position: 'relative'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                <BellIcon style={{ width: '18px', height: '18px' }} />
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <BellIcon style={{ width: '18px', height: '18px' }} />
+                  {notificationCount > 0 && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '-8px',
+                        right: '-8px',
+                        backgroundColor: '#ef4444',
+                        color: '#ffffff',
+                        borderRadius: '50%',
+                        width: '18px',
+                        height: '18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '10px',
+                        fontWeight: '700',
+                        border: '2px solid rgba(15, 15, 20, 0.98)',
+                        minWidth: '18px',
+                        padding: notificationCount > 99 ? '0 4px' : '0'
+                      }}
+                      title={`${notificationCount} unread notification${notificationCount === 1 ? '' : 's'}`}
+                    >
+                      {notificationCount > 99 ? '99+' : notificationCount}
+                    </span>
+                  )}
+                </div>
                 Notifications
               </Link>
 
