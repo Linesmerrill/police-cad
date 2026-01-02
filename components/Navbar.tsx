@@ -360,8 +360,8 @@ export default function Navbar() {
                         right: '-8px',
                         backgroundColor: '#ef4444',
                         color: '#ffffff',
-                        borderRadius: '50%',
-                        width: '18px',
+                        borderRadius: '12px',
+                        minWidth: '18px',
                         height: '18px',
                         display: 'flex',
                         alignItems: 'center',
@@ -369,8 +369,8 @@ export default function Navbar() {
                         fontSize: '10px',
                         fontWeight: '700',
                         border: '2px solid rgba(15, 15, 20, 0.98)',
-                        minWidth: '18px',
-                        padding: notificationCount > 99 ? '0 4px' : '0'
+                        padding: notificationCount > 99 ? '0 6px' : '0 4px',
+                        whiteSpace: 'nowrap'
                       }}
                       title={`${notificationCount} unread notification${notificationCount === 1 ? '' : 's'}`}
                     >
