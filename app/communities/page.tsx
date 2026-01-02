@@ -74,8 +74,8 @@ const CommunityCard = ({
   onAction: (community: Community) => void;
 }) => (
   <div className="bg-gray-800 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-gray-700 hover:border-gray-600 overflow-hidden flex flex-col h-full relative isolate ring-1 ring-gray-600/50">
-    {/* Image Container */}
-    <div className="relative h-48 overflow-hidden">
+    {/* Image Container - 16:9 aspect ratio */}
+    <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/9' }}>
       <img
         src={community?.imageLink || "/static/images/default-logo.png"}
         alt={community?.name}
