@@ -672,54 +672,57 @@ export default function Profile() {
       <div style={{ position: 'relative', zIndex: 2 }}>
         <Navbar />
         
-        {/* Header Bar with Back Button */}
+        {/* Back Button - Glass Style */}
         <div style={{
-          background: 'rgba(17, 24, 39, 0.95)',
-          borderBottom: '1px solid rgba(55, 65, 81, 0.5)',
-          padding: '1rem clamp(1rem, 4vw, 2rem)'
+          position: 'relative',
+          padding: '1rem clamp(1rem, 4vw, 2rem)',
+          maxWidth: 'min(100%, 80rem)',
+          margin: '0 auto',
+          width: '100%'
         }}>
-          <div style={{
-            maxWidth: 'min(100%, 80rem)',
-            margin: '0 auto',
-            width: '100%'
-          }}>
-            <button
-              onClick={() => {
-                // Check if there's a valid previous page in history
-                if (typeof window !== 'undefined') {
-                  const referrer = document.referrer;
-                  if (referrer && !referrer.includes('/profile')) {
-                    router.back();
-                  } else {
-                    router.push('/communities');
-                  }
+          <button
+            onClick={() => {
+              // Check if there's a valid previous page in history
+              if (typeof window !== 'undefined') {
+                const referrer = document.referrer;
+                if (referrer && !referrer.includes('/profile')) {
+                  router.back();
+                } else {
+                  router.push('/communities');
                 }
-              }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                color: 'rgba(156, 163, 175, 1)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                padding: '0.5rem 0',
-                transition: 'color 0.2s',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'rgba(255, 255, 255, 1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'rgba(156, 163, 175, 1)';
-              }}
-            >
-              <i className="fa fa-arrow-left" style={{ fontSize: '0.875rem' }}></i>
-              <span>Back</span>
-            </button>
-          </div>
+              }
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              color: 'rgba(255, 255, 255, 0.9)',
+              background: 'rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '0.5rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              padding: '0.5rem 1rem',
+              transition: 'all 0.2s',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.9)';
+            }}
+          >
+            <i className="fa fa-arrow-left" style={{ fontSize: '0.875rem' }}></i>
+            <span>Back</span>
+          </button>
         </div>
       
       {/* Message Banner */}
