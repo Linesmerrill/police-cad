@@ -1681,8 +1681,13 @@ function CommunitiesPageContent() {
               </div>
             ) : (
               <>
-                {/* Top Ad for Elite - Only show after checking subscription, and hide for Premium and Premium Plus */}
-                {eliteCommunities.length > 0 && userSubscriptionChecked && !(user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus')) && (
+                {/* Top Ad for Elite - Only show after checking subscription, hide for Premium Plus, and show 50% of the time for Premium */}
+                {(() => {
+                  const isPremium = user?.subscription?.active && user.subscription.plan === 'premium';
+                  const isPremiumPlus = user?.subscription?.active && user.subscription.plan === 'premium_plus';
+                  const premiumShowAds = isPremium ? Math.random() < 0.5 : true; // 50% chance for premium
+                  return eliteCommunities.length > 0 && userSubscriptionChecked && !isPremiumPlus && premiumShowAds;
+                })() && (
                   <div className="mb-6">
                     <GoogleAd adSlot="1760139308" matchCardHeight={false} />
                   </div>
