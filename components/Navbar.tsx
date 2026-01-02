@@ -243,7 +243,7 @@ export default function Navbar() {
           >
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <UserIcon style={{ width: '16px', height: '16px' }} />
-              {notificationCount > 0 && (
+              {hasCheckedNotifications && notificationCount > 0 && (
                 <span
                   style={{
                     position: 'absolute',
@@ -349,7 +349,7 @@ export default function Navbar() {
                   <BellIcon style={{ width: '18px', height: '18px' }} />
                   <span>Notifications</span>
                 </div>
-                {notificationCount > 0 && (
+                {hasCheckedNotifications && notificationCount > 0 && (
                   <span
                     style={{
                       backgroundColor: '#ef4444',
