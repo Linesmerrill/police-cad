@@ -730,8 +730,14 @@ const CommunitySection = ({
   // Helper function to insert ads between cards
   const renderCardsWithAds = (userPlan?: string, subscriptionActive?: boolean, sectionName?: string) => {
     const items: React.ReactNode[] = [];
+    
+    // Don't render any ads if subscription hasn't been checked yet, or if user is premium plus
+    const shouldShowAds = userSubscriptionChecked && !(subscriptionActive && (userPlan === 'premium' || userPlan === 'premium_plus'));
+    
     // Use section name + communities length as part of the seed to ensure different patterns per section
-    const adPositions = generateAdPositions(communities.length, userPlan, subscriptionActive, sectionName || 'default');
+    const adPositions = shouldShowAds 
+      ? generateAdPositions(communities.length, userPlan, subscriptionActive, sectionName || 'default')
+      : new Set<number>(); // Empty set if ads shouldn't show
     
     communities.forEach((community, index) => {
       // Always push the card first
@@ -745,9 +751,9 @@ const CommunitySection = ({
         />
       );
       
-      // Insert ad AFTER the card if this position should have an ad
+      // Insert ad AFTER the card if this position should have an ad AND ads should be shown
       // Position 1 means after the first card (index 0)
-      if (adPositions.has(index + 1)) {
+      if (shouldShowAds && adPositions.has(index + 1)) {
         items.push(
           <GoogleAd 
             key={`ad-${index}`}
@@ -1639,6 +1645,9 @@ function CommunitiesPageContent() {
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full items-start">
                   {(() => {
+                    // Don't render any ads if subscription hasn't been checked yet, or if user is premium plus
+                    const shouldShowAds = userSubscriptionChecked && !(user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus'));
+                    
                     // Generate positions based on subscription tier
                     const generateAdPositions = (totalCards: number, userPlan?: string, subscriptionActive?: boolean): Set<number> => {
                       const positions = new Set<number>();
@@ -1684,11 +1693,13 @@ function CommunitiesPageContent() {
                       return positions;
                     };
                     
-                    const adPositions = generateAdPositions(
-                      eliteCommunities.length,
-                      user?.subscription?.plan,
-                      user?.subscription?.active
-                    );
+                    const adPositions = shouldShowAds
+                      ? generateAdPositions(
+                          eliteCommunities.length,
+                          user?.subscription?.plan,
+                          user?.subscription?.active
+                        )
+                      : new Set<number>(); // Empty set if ads shouldn't show
                     
                     const items: React.ReactNode[] = [];
                     eliteCommunities.forEach((community, index) => {
@@ -1703,9 +1714,9 @@ function CommunitiesPageContent() {
                         />
                       );
                       
-                      // Insert ad AFTER the card if this position should have an ad
+                      // Insert ad AFTER the card if this position should have an ad AND ads should be shown
                       // Position 1 means after the first card (index 0)
-                      if (adPositions.has(index + 1)) {
+                      if (shouldShowAds && adPositions.has(index + 1)) {
                         items.push(
                           <GoogleAd 
                             key={`ad-elite-${index}`}
@@ -1915,6 +1926,9 @@ function CommunitiesPageContent() {
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full items-start">
                   {(() => {
+                    // Don't render any ads if subscription hasn't been checked yet, or if user is premium plus
+                    const shouldShowAds = userSubscriptionChecked && !(user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus'));
+                    
                     // Generate positions based on subscription tier
                     const generateAdPositions = (totalCards: number, userPlan?: string, subscriptionActive?: boolean): Set<number> => {
                       const positions = new Set<number>();
@@ -1949,11 +1963,13 @@ function CommunitiesPageContent() {
                       return positions;
                     };
                     
-                    const adPositions = generateAdPositions(
-                      allCommunities.length,
-                      user?.subscription?.plan,
-                      user?.subscription?.active
-                    );
+                    const adPositions = shouldShowAds
+                      ? generateAdPositions(
+                          allCommunities.length,
+                          user?.subscription?.plan,
+                          user?.subscription?.active
+                        )
+                      : new Set<number>(); // Empty set if ads shouldn't show
                     
                     const items: React.ReactNode[] = [];
                     allCommunities.forEach((community, index) => {
@@ -1968,9 +1984,9 @@ function CommunitiesPageContent() {
                         />
                       );
                       
-                      // Insert ad AFTER the card if this position should have an ad
+                      // Insert ad AFTER the card if this position should have an ad AND ads should be shown
                       // Position 1 means after the first card (index 0)
-                      if (adPositions.has(index + 1)) {
+                      if (shouldShowAds && adPositions.has(index + 1)) {
                         items.push(
                           <GoogleAd 
                             key={`ad-browse-${index}`}
