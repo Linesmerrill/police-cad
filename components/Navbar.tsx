@@ -337,6 +337,7 @@ export default function Navbar() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'space-between',
                   gap: '0.75rem',
                   padding: '0.75rem',
                   color: 'rgba(255, 255, 255, 0.9)',
@@ -344,41 +345,37 @@ export default function Navbar() {
                   borderRadius: '4px',
                   transition: 'background-color 0.2s',
                   fontSize: '0.875rem',
-                  marginTop: '0.25rem',
-                  position: 'relative'
+                  marginTop: '0.25rem'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <BellIcon style={{ width: '18px', height: '18px' }} />
-                  {notificationCount > 0 && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: '-8px',
-                        right: '-8px',
-                        backgroundColor: '#ef4444',
-                        color: '#ffffff',
-                        borderRadius: '12px',
-                        minWidth: '18px',
-                        height: '18px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '10px',
-                        fontWeight: '700',
-                        border: '2px solid rgba(15, 15, 20, 0.98)',
-                        padding: notificationCount > 99 ? '0 6px' : '0 4px',
-                        whiteSpace: 'nowrap'
-                      }}
-                      title={`${notificationCount} unread notification${notificationCount === 1 ? '' : 's'}`}
-                    >
-                      {notificationCount > 99 ? '99+' : notificationCount}
-                    </span>
-                  )}
+                  <span>Notifications</span>
                 </div>
-                Notifications
+                {notificationCount > 0 && (
+                  <span
+                    style={{
+                      backgroundColor: '#ef4444',
+                      color: '#ffffff',
+                      borderRadius: '12px',
+                      minWidth: '20px',
+                      height: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      padding: notificationCount > 99 ? '0 7px' : '0 6px',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0
+                    }}
+                    title={`${notificationCount} unread notification${notificationCount === 1 ? '' : 's'}`}
+                  >
+                    {notificationCount > 99 ? '99+' : notificationCount}
+                  </span>
+                )}
               </Link>
 
               <a
