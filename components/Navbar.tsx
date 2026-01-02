@@ -252,26 +252,17 @@ export default function Navbar() {
                 <span
                   style={{
                     position: 'absolute',
-                    top: '-6px',
-                    right: '-6px',
+                    top: '-4px',
+                    right: '-4px',
                     backgroundColor: '#ef4444',
-                    color: '#ffffff',
                     borderRadius: '50%',
-                    width: '18px',
-                    height: '18px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '10px',
-                    fontWeight: '700',
+                    width: '10px',
+                    height: '10px',
                     border: '2px solid rgba(15, 15, 20, 0.95)',
-                    minWidth: '18px',
-                    padding: notificationCount > 99 ? '0 4px' : '0'
+                    display: 'block'
                   }}
                   title={`${notificationCount} unread notification${notificationCount === 1 ? '' : 's'}`}
-                >
-                  {notificationCount > 99 ? '99+' : notificationCount}
-                </span>
+                />
               )}
             </div>
             <span style={{ fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
