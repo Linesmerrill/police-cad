@@ -2,6 +2,7 @@
 
 import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -228,6 +229,10 @@ function NotificationsContent() {
 
   const handleFilterChange = (filterId: string) => {
     setActiveFilter(filterId as NotificationFilter);
+    // Update URL hash
+    if (typeof window !== 'undefined') {
+      window.location.hash = `#${filterId}`;
+    }
     // Don't clear notifications or reset page - just change the filter
     // The filteredNotifications will update automatically
   };
