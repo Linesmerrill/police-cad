@@ -517,9 +517,6 @@ function NotificationsContent() {
                                 {formatDate(notification.createdAt)}
                               </p>
                             </div>
-                            {isUnread && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
-                            )}
                           </div>
 
                           {showActions && (
@@ -571,6 +568,18 @@ function NotificationsContent() {
                             <p className="text-gray-400 text-sm mt-2">
                               {notification.status === 'approved' ? '✓ Accepted' : '✗ Declined'} request
                             </p>
+                          )}
+
+                          {isUnread && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMarkAsRead(notification);
+                              }}
+                              className="mt-2 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                            >
+                              Mark as read
+                            </button>
                           )}
                         </div>
                         <button
