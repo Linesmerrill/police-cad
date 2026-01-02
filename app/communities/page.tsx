@@ -2148,8 +2148,35 @@ function CommunitiesPageContent() {
         />
 
         {/* Main Content */}
-        <div className="flex-1 min-w-0 w-full overflow-x-hidden">
-          <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8 max-w-7xl mx-auto bg-gradient-to-br from-gray-900/60 via-blue-900/20 to-purple-900/20 backdrop-blur-sm rounded-tl-2xl rounded-tr-2xl lg:rounded-tl-none lg:rounded-tr-none border-t border-gray-700/50">
+        <div className="flex-1 min-w-0 w-full overflow-x-hidden relative">
+          {/* Floating Bubbles Background */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+            {Array.from({ length: 15 }).map((_, i) => {
+              const size = Math.random() * 100 + 50; // 50-150px
+              const duration = Math.random() * 20 + 15; // 15-35s
+              const delay = Math.random() * 5; // 0-5s
+              const left = Math.random() * 100; // 0-100%
+              const opacity = Math.random() * 0.15 + 0.05; // 0.05-0.2
+              
+              return (
+                <div
+                  key={i}
+                  className="absolute rounded-full bg-gradient-to-br from-blue-400/30 via-purple-400/20 to-pink-400/20 blur-xl"
+                  style={{
+                    width: `${size}px`,
+                    height: `${size}px`,
+                    left: `${left}%`,
+                    top: `${Math.random() * 100}%`,
+                    opacity: opacity,
+                    animation: `floatBubble ${duration}s ease-in-out infinite`,
+                    animationDelay: `${delay}s`,
+                  }}
+                />
+              );
+            })}
+          </div>
+          
+          <div className="relative z-10 w-full px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-8 max-w-7xl mx-auto bg-gradient-to-br from-gray-900/60 via-blue-900/20 to-purple-900/20 backdrop-blur-sm rounded-tl-2xl rounded-tr-2xl lg:rounded-tl-none lg:rounded-tr-none border-t border-gray-700/50">
             {renderContent()}
           </div>
         </div>
