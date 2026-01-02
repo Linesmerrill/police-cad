@@ -48,12 +48,10 @@ const FilterTabs = ({
   filters,
   activeFilter,
   onFilterChange,
-  countsLoaded = false,
 }: {
-  filters: Array<{ id: string; label: string; count?: number }>;
+  filters: Array<{ id: string; label: string }>;
   activeFilter: string;
   onFilterChange: (filterId: string) => void;
-  countsLoaded?: boolean;
 }) => {
   return (
     <div className="mb-6 border-b border-gray-700 pb-4 overflow-x-auto">
@@ -69,9 +67,6 @@ const FilterTabs = ({
             }`}
           >
             {filter.label}
-            {countsLoaded && filter.count !== undefined && (
-              <span className="ml-2 text-sm opacity-75">({filter.count})</span>
-            )}
           </button>
         ))}
       </div>
@@ -90,13 +85,6 @@ function NotificationsContent() {
   const [unseenCount, setUnseenCount] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [activeFilter, setActiveFilter] = useState<NotificationFilter>('all');
-  const [filterCounts, setFilterCounts] = useState({
-    all: 0,
-    community: 0,
-    department: 0,
-    friend: 0,
-  });
-  const [countsLoaded, setCountsLoaded] = useState(false);
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [notificationToDelete, setNotificationToDelete] = useState<Notification | null>(null);
@@ -199,16 +187,6 @@ function NotificationsContent() {
 
           setHasMore(currentPage * notificationsPerPage < (data.total || 0));
           
-          // Calculate filter counts from all loaded notifications
-          const allLoaded = currentPage === 1 ? uniqueNotifications : [...allNotifications, ...uniqueNotifications];
-          const counts = {
-            all: data.total || 0,
-            community: allLoaded.filter(n => n.type === 'join_request' && !n.data3).length,
-            department: allLoaded.filter(n => n.type === 'join_request' && n.data3).length,
-            friend: allLoaded.filter(n => n.type === 'friend_request').length,
-          };
-          setFilterCounts(counts);
-          setCountsLoaded(true);
         } else {
           console.error('Failed to fetch notifications');
         }
@@ -222,12 +200,20 @@ function NotificationsContent() {
     fetchNotifications();
   }, [user?.id, currentPage, isCheckingUser]);
 
-  // Filter notifications based on active filter
+  // Filter notifications based on active filter (matching mobile app logic)
   const filteredNotifications = allNotifications.filter((notification) => {
     if (activeFilter === 'all') return true;
-    if (activeFilter === 'community') return notification.type === 'join_request' && !notification.data3;
-    if (activeFilter === 'department') return notification.type === 'join_request' && notification.data3;
-    if (activeFilter === 'friend') return notification.type === 'friend_request';
+    if (activeFilter === 'community') {
+      // Community join requests: type is join_request but no department (no data3/data4)
+      return notification.type === 'join_request' && !notification.data3 && !notification.data4;
+    }
+    if (activeFilter === 'department') {
+      // Department join requests: has department ID and name (data3 and data4 exist)
+      return notification.data3 && notification.data4;
+    }
+    if (activeFilter === 'friend') {
+      return notification.type === 'friend_request';
+    }
     return true;
   });
 
@@ -334,12 +320,6 @@ function NotificationsContent() {
         setAllNotifications((prev) =>
           prev.filter((n) => n.notificationId !== notification.notificationId)
         );
-        // Update counts
-        setFilterCounts((prev) => ({
-          ...prev,
-          all: prev.all - 1,
-          [activeFilter]: Math.max(0, prev[activeFilter as keyof typeof prev] - 1),
-        }));
         if (!notification.isRead && !notification.seen) {
           setUnseenCount((prev) => Math.max(0, prev - 1));
         }
@@ -462,10 +442,10 @@ function NotificationsContent() {
   }
 
   const filters = [
-    { id: 'all', label: 'All', count: filterCounts.all },
-    { id: 'community', label: 'Community', count: filterCounts.community },
-    { id: 'department', label: 'Department', count: filterCounts.department },
-    { id: 'friend', label: 'Friend', count: filterCounts.friend },
+    { id: 'all', label: 'All' },
+    { id: 'community', label: 'Community' },
+    { id: 'department', label: 'Department' },
+    { id: 'friend', label: 'Friend' },
   ];
 
   return (
@@ -506,7 +486,6 @@ function NotificationsContent() {
               filters={filters}
               activeFilter={activeFilter}
               onFilterChange={handleFilterChange}
-              countsLoaded={countsLoaded}
             />
 
             {filteredNotifications.length === 0 ? (
