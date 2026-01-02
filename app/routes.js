@@ -176,8 +176,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (err) {
           console.error('[LOGIN POST] Session save error:', err);
         } else {
-          console.log('[LOGIN POST] Session saved successfully - sessionID:', req.sessionID);
-          console.log('[LOGIN POST] Session after save:', {
+          // Session saved successfully
             id: req.sessionID,
             cookie: req.session.cookie,
             passport: req.session.passport
@@ -2800,9 +2799,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   // API route to get current user - MUST be before catch-all
   app.get("/api/user/current", function (req, res) {
-    console.log('[GET /api/user/current] isAuthenticated:', req.isAuthenticated(), 'hasUser:', !!req.user, 'sessionID:', req.sessionID);
-    console.log('[GET /api/user/current] Cookies:', req.headers.cookie);
-    console.log('[GET /api/user/current] Session:', req.session);
     if (req.isAuthenticated() && req.user) {
       // Extract user data safely
       const userData = req.user._doc || req.user;
