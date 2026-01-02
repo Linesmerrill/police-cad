@@ -81,7 +81,7 @@ function NotificationsContent() {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `${API_URL}/api/v2/users/${user.id}/notifications?limit=${notificationsPerPage}&page=${currentPage}`,
+          `/api/user/notifications?userId=${user.id}&limit=${notificationsPerPage}&page=${currentPage}`,
           {
             credentials: 'include',
             headers: {
@@ -135,7 +135,7 @@ function NotificationsContent() {
     if (!notification.isRead && notification.notificationId) {
       try {
         await fetch(
-          `${API_URL}/api/v2/users/${user?.id}/notifications/${notification.notificationId}/read`,
+          `/api/user/notifications/${notification.notificationId}/read?userId=${user?.id}`,
           {
             method: 'POST',
             credentials: 'include',
