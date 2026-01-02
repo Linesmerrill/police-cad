@@ -73,7 +73,7 @@ const CommunityCard = ({
   actionText: string; 
   onAction: (community: Community) => void;
 }) => (
-  <div className="bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-700 overflow-hidden flex flex-col h-full">
+  <div className="bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border-2 border-gray-700 hover:border-gray-600 overflow-hidden flex flex-col h-full relative isolate">
     {/* Image Container */}
     <div className="relative h-48 overflow-hidden">
       <img
@@ -151,9 +151,9 @@ const CommunityCard = ({
     </div>
 
     {/* Content */}
-    <div className="p-6 flex flex-col flex-grow">
+    <div className="p-6 flex flex-col flex-grow bg-gradient-to-b from-gray-800 to-gray-850">
       <div className="flex-grow">
-        <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
+        <h3 className="text-xl font-bold text-white mb-3 line-clamp-2 leading-tight">
           {community?.name}
         </h3>
 
@@ -779,7 +779,7 @@ const CommunitySection = ({
           <GoogleAd adSlot="1760139308" matchCardHeight={false} />
         </div>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full items-start">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-6 lg:gap-6 w-full items-start">
         {renderCardsWithAds(userPlan, subscriptionActive, title)}
       </div>
       {showPagination && paginationProps && (
@@ -1645,7 +1645,7 @@ function CommunitiesPageContent() {
                     <GoogleAd adSlot="1760139308" matchCardHeight={false} />
                   </div>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full items-start">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-6 lg:gap-6 w-full items-start">
                   {(() => {
                     // Don't render any ads if subscription hasn't been checked yet, or if user is premium plus
                     const shouldShowAds = userSubscriptionChecked && !(user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus'));
@@ -1926,7 +1926,7 @@ function CommunitiesPageContent() {
                     <GoogleAd adSlot="1760139308" matchCardHeight={false} />
                   </div>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 w-full items-start">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-6 lg:gap-6 w-full items-start">
                   {(() => {
                     // Don't render any ads if subscription hasn't been checked yet, or if user is premium plus
                     const shouldShowAds = userSubscriptionChecked && !(user?.subscription?.active && (user.subscription.plan === 'premium' || user.subscription.plan === 'premium_plus'));
