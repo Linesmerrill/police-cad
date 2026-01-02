@@ -1052,6 +1052,7 @@ function CommunitiesPageContent() {
   useEffect(() => {
     const checkUser = async () => {
       setUserSubscriptionChecked(false);
+      setIsCheckingUser(true);
       try {
         const response = await fetch('/api/user/current', { credentials: 'include' });
         if (response.ok) {
@@ -1059,19 +1060,26 @@ function CommunitiesPageContent() {
           if (data.user && data.user.id) {
             setUser(data.user);
           } else {
-            setUser(null);
+            // User not logged in, redirect to login
+            const currentPath = window.location.pathname + window.location.search;
+            router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
           }
         } else {
-          setUser(null);
+          // User not logged in, redirect to login
+          const currentPath = window.location.pathname + window.location.search;
+          router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
         }
       } catch (error) {
-        setUser(null);
+        // User not logged in, redirect to login
+        const currentPath = window.location.pathname + window.location.search;
+        router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
       } finally {
         setUserSubscriptionChecked(true);
+        setIsCheckingUser(false);
       }
     };
     checkUser();
-  }, []);
+  }, [router]);
 
   // Fetch filter counts for Your Communities (with caching)
   useEffect(() => {
