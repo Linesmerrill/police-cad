@@ -23,6 +23,7 @@ export default function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [notificationCount, setNotificationCount] = useState(0);
   const [hasCheckedNotifications, setHasCheckedNotifications] = useState(false);
+  const [hasCheckedNotifications, setHasCheckedNotifications] = useState(false);
   const menuButtonRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
