@@ -832,6 +832,19 @@ function CommunitiesPageContent() {
     opacity: number;
   }>>([]);
   
+  // Generate bubbles only on client side to avoid hydration mismatch
+  useEffect(() => {
+    const generatedBubbles = Array.from({ length: 15 }).map(() => ({
+      size: Math.random() * 100 + 50, // 50-150px
+      duration: Math.random() * 20 + 15, // 15-35s
+      delay: Math.random() * 5, // 0-5s
+      left: Math.random() * 100, // 0-100%
+      top: Math.random() * 100, // 0-100%
+      opacity: Math.random() * 0.15 + 0.05, // 0.05-0.2
+    }));
+    setBubbles(generatedBubbles);
+  }, []);
+  
   // Function to invalidate filter counts cache (call this after creating a community)
   const invalidateCommunitiesCache = () => {
     filterCountsCache.current = null;
