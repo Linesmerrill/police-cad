@@ -18,13 +18,37 @@ function LoginForm() {
   const [passwordError, setPasswordError] = useState(false);
   const [privateBrowsingDetected, setPrivateBrowsingDetected] = useState(false);
   
-  // Check if we're being redirected from a protected page (likely private browsing issue)
+  // Check for actual private browsing - only show warning when truly needed
   useEffect(() => {
     const redirect = searchParams.get('redirect');
-    if (redirect && redirect.includes('communities')) {
-      // User tried to access communities but got redirected to login
-      // This likely means session isn't working - probably private browsing
-      setPrivateBrowsingDetected(true);
+    const error = searchParams.get('error');
+    
+    // Only show private browsing warning if:
+    // 1. We have a redirect to communities (user was trying to access protected page)
+    // 2. AND there's no error message (meaning it's not a normal auth failure)
+    // 3. AND we've been redirected multiple times (indicates session not persisting)
+    // We check for a session persistence flag in sessionStorage
+    const sessionCheckKey = 'login_session_check';
+    const sessionCheck = sessionStorage.getItem(sessionCheckKey);
+    
+    // If we've checked before and still got redirected, likely private browsing
+    if (redirect && redirect.includes('communities') && !error && sessionCheck === 'checked') {
+      // Test cookie support as additional check
+      try {
+        document.cookie = 'testCookie=1; path=/; max-age=60';
+        const canSetCookie = document.cookie.indexOf('testCookie=') !== -1;
+        document.cookie = 'testCookie=; path=/; max-age=0';
+        
+        if (!canSetCookie) {
+          setPrivateBrowsingDetected(true);
+        }
+      } catch (e) {
+        // Can't test cookies, but if we got here with redirect, likely private browsing
+        setPrivateBrowsingDetected(true);
+      }
+    } else if (redirect && redirect.includes('communities') && !error) {
+      // First time redirect - mark that we've checked
+      sessionStorage.setItem(sessionCheckKey, 'checked');
     }
   }, [searchParams]);
 
@@ -56,58 +80,89 @@ function LoginForm() {
     // Show loading state
     setLoading(true);
     
-    // Use traditional form submission like the old login-civ page
-    // This works better in private browsing mode - single POST request, server handles everything
+    // Use the exact same approach as the working login-civ.ejs
+    // This pattern works perfectly on all browsers including mobile
     try {
-      // Set redirect in session if needed
-      const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
-      if (redirect !== '/communities') {
-        try {
-          await fetch('/set-redirect', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ redirect }),
-            credentials: 'include'
-          });
-        } catch (e) {
-          // Continue even if set-redirect fails
+      // Get the API URL with fallback
+      const apiUrl = process.env.NEXT_PUBLIC_POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+      
+      // Function to submit login form (matches login-civ.ejs exactly)
+      const submitLoginForm = () => {
+        const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
+        
+        fetch('/set-redirect', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ redirect }),
+          credentials: 'same-origin'
+        }).then(() => {
+          // Now submit the login form - create new form dynamically (like login-civ.ejs)
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = '/login-civ'; // Use /login-civ like the working version
+          form.style.display = 'none';
+          
+          const emailInput = document.createElement('input');
+          emailInput.type = 'hidden';
+          emailInput.name = 'email';
+          emailInput.value = trimmedEmail;
+          
+          const passwordInput = document.createElement('input');
+          passwordInput.type = 'hidden';
+          passwordInput.name = 'password';
+          passwordInput.value = trimmedPassword;
+          
+          form.appendChild(emailInput);
+          form.appendChild(passwordInput);
+          document.body.appendChild(form);
+          form.submit();
+        }).catch(() => {
+          // Fallback: submit form without setting redirect (matches login-civ.ejs)
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = '/login-civ';
+          form.style.display = 'none';
+          
+          const emailInput = document.createElement('input');
+          emailInput.type = 'hidden';
+          emailInput.name = 'email';
+          emailInput.value = trimmedEmail;
+          
+          const passwordInput = document.createElement('input');
+          passwordInput.type = 'hidden';
+          passwordInput.name = 'password';
+          passwordInput.value = trimmedPassword;
+          
+          form.appendChild(emailInput);
+          form.appendChild(passwordInput);
+          document.body.appendChild(form);
+          form.submit();
+        });
+      };
+      
+      // Validate credentials with the API first (matches login-civ.ejs)
+      const apiResponse = await fetch(`${apiUrl}/api/v1/auth/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic ' + btoa(trimmedEmail + ':' + trimmedPassword)
         }
-      }
+      });
       
-      // Use hidden form submission - same approach as login-civ
-      const hiddenForm = document.getElementById('loginForm') as HTMLFormElement;
-      const hiddenEmail = document.getElementById('hiddenEmail') as HTMLInputElement;
-      const hiddenPassword = document.getElementById('hiddenPassword') as HTMLInputElement;
+      // Check if we got a valid token response
+      const apiData = await apiResponse.json().catch(() => ({}));
       
-      if (hiddenForm && hiddenEmail && hiddenPassword) {
-        hiddenEmail.value = trimmedEmail;
-        hiddenPassword.value = trimmedPassword;
-        // Submit the form - this will trigger Passport authentication and set the session
-        // Server will handle redirect, cookies work properly in private mode
-        hiddenForm.submit();
+      if (apiResponse.ok && apiData.token) {
+        // API validation successful, proceed with login
+        submitLoginForm();
+        return;
       } else {
-        // Fallback: create form if hidden form doesn't exist
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/login';
-        form.style.display = 'none';
-        
-        const emailInput = document.createElement('input');
-        emailInput.type = 'hidden';
-        emailInput.name = 'email';
-        emailInput.value = trimmedEmail;
-        
-        const passwordInput = document.createElement('input');
-        passwordInput.type = 'hidden';
-        passwordInput.name = 'password';
-        passwordInput.value = trimmedPassword;
-        
-        form.appendChild(emailInput);
-        form.appendChild(passwordInput);
-        document.body.appendChild(form);
-        form.submit();
+        // API validation failed - show error and stop
+        setError('Invalid email or password. Please check your credentials and try again.');
+        setLoading(false);
+        return;
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -338,16 +393,7 @@ function LoginForm() {
               </div>
             )}
 
-            {/* Hidden form for actual submission to Express (like login-civ) */}
-            <form
-              id="loginForm"
-              method="POST"
-              action="/login"
-              style={{ display: 'none' }}
-            >
-              <input type="hidden" name="email" id="hiddenEmail" />
-              <input type="hidden" name="password" id="hiddenPassword" />
-            </form>
+            {/* No hidden form needed - we create it dynamically like login-civ.ejs */}
 
             {/* Login Form */}
             <form onSubmit={handleSubmit}>

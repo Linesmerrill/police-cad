@@ -1057,111 +1057,59 @@ function CommunitiesPageContent() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [activeSection]);
 
-  // Check if user is logged in
+  // Check if user is logged in - simplified for better mobile compatibility
   useEffect(() => {
-    const checkUser = async (retryCount = 0) => {
+    const checkUser = async () => {
       setUserSubscriptionChecked(false);
       setIsCheckingUser(true);
       
-      // Check localStorage first - if we just logged in, give session more time
-      const isFromLogin = document.referrer.includes('/login') || window.location.search.includes('from=login');
-      const loginSuccess = typeof window !== 'undefined' ? localStorage.getItem('login_success') : null;
-      const loginTimestamp = typeof window !== 'undefined' ? localStorage.getItem('login_timestamp') : null;
-      
-      // If we have a recent login flag (within last 30 seconds), wait longer for session
-      let initialDelay = 0;
-      if (isFromLogin || loginSuccess === 'true') {
-        if (loginTimestamp) {
-          const timeSinceLogin = Date.now() - parseInt(loginTimestamp, 10);
-          if (timeSinceLogin < 30000) { // Within 30 seconds of login
-            initialDelay = 2000; // Wait 2 seconds for session to be ready
-          } else {
-            initialDelay = 1000; // Older login, wait 1 second
-          }
-        } else {
-          initialDelay = 2000; // No timestamp, wait 2 seconds
-        }
-      }
-      
-      if (initialDelay > 0 && retryCount === 0) {
-        await new Promise(resolve => setTimeout(resolve, initialDelay));
-      }
-      
       try {
-        // Check for tempToken in URL (for mobile Safari private mode)
-        const urlParams = new URLSearchParams(window.location.search);
-        const tempToken = urlParams.get('tempToken');
+        // Simple, direct check - session should be set immediately after login
+        const response = await fetch('/api/user/current', { 
+          credentials: 'include',
+          cache: 'no-store' // Always fetch fresh to check session
+        });
         
-        // Build fetch URL with tempToken if present
-        let fetchUrl = '/api/user/current';
-        if (tempToken) {
-          fetchUrl += `?tempToken=${encodeURIComponent(tempToken)}`;
-        }
-        
-        const response = await fetch(fetchUrl, { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
           if (data.user && data.user.id) {
             setUser(data.user);
-            setUserSubscriptionChecked(true); // Set to true when user is authenticated
+            setUserSubscriptionChecked(true);
             setIsCheckingUser(false);
-            // Clear login flags on successful check
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('login_success');
-              localStorage.removeItem('login_timestamp');
-              sessionStorage.removeItem('login_success');
-              sessionStorage.removeItem('login_timestamp');
-              // Remove tempToken from URL if present
-              if (tempToken) {
-                urlParams.delete('tempToken');
-                const newUrl = window.location.pathname + (urlParams.toString() ? `?${urlParams.toString()}` : '');
-                window.history.replaceState({}, '', newUrl);
-              }
-            }
             return;
           }
         }
         
-        // If we got here, user is not authenticated
-        // Retry multiple times if we just came from login (session might not be ready yet)
-        const maxRetries = (isFromLogin || loginSuccess === 'true') ? 3 : 0;
-        if (retryCount < maxRetries) {
-          const retryDelay = (retryCount + 1) * 1500; // 1.5s, 3s, 4.5s
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
-          return checkUser(retryCount + 1);
-        }
-        
-        // Clear login flag if we've exhausted retries
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('login_success');
-          localStorage.removeItem('login_timestamp');
-        }
-        
-        // User not logged in after retries, redirect to login
+        // User not authenticated - redirect to login
         const currentPath = window.location.pathname + window.location.search;
         router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
       } catch (error) {
-        // Retry multiple times if we just came from login
-        const maxRetries = (isFromLogin || loginSuccess === 'true') ? 3 : 0;
-        if (retryCount < maxRetries) {
-          const retryDelay = (retryCount + 1) * 1500; // 1.5s, 3s, 4.5s
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
-          return checkUser(retryCount + 1);
+        // Network error - try one more time after a short delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        try {
+          const response = await fetch('/api/user/current', { 
+            credentials: 'include',
+            cache: 'no-store'
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.user && data.user.id) {
+              setUser(data.user);
+              setUserSubscriptionChecked(true);
+              setIsCheckingUser(false);
+              return;
+            }
+          }
+        } catch (retryError) {
+          // Still failing - redirect to login
         }
         
-        // Clear login flag if we've exhausted retries
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('login_success');
-          localStorage.removeItem('login_timestamp');
-        }
-        
-        // User not logged in after retries, redirect to login
+        // User not logged in, redirect to login
         const currentPath = window.location.pathname + window.location.search;
         router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
       } finally {
-        if (retryCount >= 3 || !(isFromLogin || loginSuccess === 'true')) {
-          setIsCheckingUser(false);
-        }
+        setIsCheckingUser(false);
       }
     };
     checkUser();

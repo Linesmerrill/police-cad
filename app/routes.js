@@ -147,28 +147,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
         delete req.session.redirect; // Clear the session redirect after use
       }
       
-      // Save session before redirect - CRITICAL for incognito mode
-      // We MUST wait for session to be saved before redirecting
-      req.session.save(function(err) {
-        if (err) {
-          // Even if save fails, try to redirect (session might still work)
-        }
-        
-        if (!res.headersSent) {
-          // Check if this is a JSON request (from Next.js login page using fetch)
-          if (req.headers['content-type'] === 'application/json' || req.headers.accept?.includes('application/json')) {
-            // JSON request - return JSON response
-            return res.json({ 
-              success: true, 
-              redirect: redirect, 
-              sessionId: req.sessionID
-            });
-          }
-          // Traditional form POST - redirect directly (works better in private mode)
-          // Server-side redirect ensures cookies are properly set
-          return res.redirect(redirect);
-        }
-      });
+      // Simple redirect like /login-civ - session is saved automatically by passport
+      // This matches the working pattern from the main branch
+      return res.redirect(redirect);
     }
   );
 
