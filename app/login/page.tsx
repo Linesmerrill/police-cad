@@ -125,36 +125,48 @@ function LoginForm() {
         // Check if session was established successfully
         if (sessionResponse.ok) {
           const sessionData = await sessionResponse.json().catch(() => null);
-          // Set localStorage flag to indicate successful login (helps with incognito mode)
+          // Set localStorage/sessionStorage flags to indicate successful login (helps with incognito mode)
           try {
             localStorage.setItem('login_success', 'true');
             localStorage.setItem('login_timestamp', Date.now().toString());
+            // Also try sessionStorage as backup
+            sessionStorage.setItem('login_success', 'true');
+            sessionStorage.setItem('login_timestamp', Date.now().toString());
           } catch (e) {
-            // localStorage might not be available in some cases, continue anyway
+            // Storage might not be available in some cases, continue anyway
           }
           
           // Success - redirect to communities
           const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
-          // Add from=login parameter to help communities page detect we're coming from login
-          const redirectUrl = redirect.includes('?') 
+          // Include tempToken if provided (for mobile Safari private mode)
+          const tempToken = sessionData?.tempToken;
+          let redirectUrl = redirect.includes('?') 
             ? `${redirect}&from=login` 
             : `${redirect}?from=login`;
+          
+          if (tempToken) {
+            redirectUrl = redirectUrl.includes('?') 
+              ? `${redirectUrl}&tempToken=${tempToken}` 
+              : `${redirectUrl}?tempToken=${tempToken}`;
+          }
+          
           // Longer delay to ensure session cookie is set and available in incognito mode
           await new Promise(resolve => setTimeout(resolve, 1500));
           // Use window.location.replace to avoid back button issues and ensure cookie is sent
           window.location.replace(redirectUrl);
         } else {
           // Session setup failed - try redirecting anyway (auth was successful)
-          // Still set localStorage flag
+          // Still set storage flags
           try {
             localStorage.setItem('login_success', 'true');
             localStorage.setItem('login_timestamp', Date.now().toString());
+            sessionStorage.setItem('login_success', 'true');
+            sessionStorage.setItem('login_timestamp', Date.now().toString());
           } catch (e) {
-            // localStorage might not be available in some cases, continue anyway
+            // Storage might not be available in some cases, continue anyway
           }
           
           const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
-          // Add from=login parameter to help communities page detect we're coming from login
           const redirectUrl = redirect.includes('?') 
             ? `${redirect}&from=login` 
             : `${redirect}?from=login`;

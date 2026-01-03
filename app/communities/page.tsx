@@ -1088,17 +1088,35 @@ function CommunitiesPageContent() {
       }
       
       try {
-        const response = await fetch('/api/user/current', { credentials: 'include' });
+        // Check for tempToken in URL (for mobile Safari private mode)
+        const urlParams = new URLSearchParams(window.location.search);
+        const tempToken = urlParams.get('tempToken');
+        
+        // Build fetch URL with tempToken if present
+        let fetchUrl = '/api/user/current';
+        if (tempToken) {
+          fetchUrl += `?tempToken=${encodeURIComponent(tempToken)}`;
+        }
+        
+        const response = await fetch(fetchUrl, { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
           if (data.user && data.user.id) {
             setUser(data.user);
             setUserSubscriptionChecked(true); // Set to true when user is authenticated
             setIsCheckingUser(false);
-            // Clear login flag on successful check
+            // Clear login flags on successful check
             if (typeof window !== 'undefined') {
               localStorage.removeItem('login_success');
               localStorage.removeItem('login_timestamp');
+              sessionStorage.removeItem('login_success');
+              sessionStorage.removeItem('login_timestamp');
+              // Remove tempToken from URL if present
+              if (tempToken) {
+                urlParams.delete('tempToken');
+                const newUrl = window.location.pathname + (urlParams.toString() ? `?${urlParams.toString()}` : '');
+                window.history.replaceState({}, '', newUrl);
+              }
             }
             return;
           }

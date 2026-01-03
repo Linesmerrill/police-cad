@@ -155,25 +155,45 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
         
         if (!res.headersSent) {
-          // Explicitly set the session cookie to ensure it's sent
-          // This is critical for incognito mode
-          if (req.sessionID) {
-            res.cookie('connect.sid', req.sessionID, {
-              httpOnly: true,
-              sameSite: 'lax',
-              secure: process.env.NODE_ENV === 'production',
-              domain: undefined, // Don't set domain to allow cookies in incognito mode
-              path: '/',
-              maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
-            });
-          }
+          // Generate a temporary token for mobile Safari private mode
+          // This token will be used to verify the session on the communities page
+          const tempToken = require('crypto').randomBytes(32).toString('hex');
+          req.session.tempAuthToken = tempToken;
+          req.session.tempAuthTokenExpiry = Date.now() + 60000; // 1 minute expiry
           
-          // Check if this is a JSON request (from Next.js login page)
-          if (req.headers['content-type'] === 'application/json' || req.headers.accept?.includes('application/json')) {
-            return res.json({ success: true, redirect: redirect, sessionId: req.sessionID });
-          }
-          // Redirect to communities (or saved redirect)
-          return res.redirect(redirect);
+          // Save session again with temp token
+          req.session.save(function(saveErr) {
+            if (!res.headersSent) {
+              // Explicitly set the session cookie to ensure it's sent
+              // For mobile Safari private mode, use 'lax' which works for same-site requests
+              if (req.sessionID) {
+                res.cookie('connect.sid', req.sessionID, {
+                  httpOnly: true,
+                  sameSite: 'lax', // Works for same-site requests (better for private mode)
+                  secure: process.env.NODE_ENV === 'production', // HTTPS in production
+                  domain: undefined, // Don't set domain to allow cookies in incognito mode
+                  path: '/',
+                  maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+                });
+              }
+              
+              // Check if this is a JSON request (from Next.js login page)
+              if (req.headers['content-type'] === 'application/json' || req.headers.accept?.includes('application/json')) {
+                // Include temp token in response for mobile Safari private mode
+                return res.json({ 
+                  success: true, 
+                  redirect: redirect, 
+                  sessionId: req.sessionID,
+                  tempToken: tempToken // Include temp token for URL-based auth
+                });
+              }
+              // Redirect to communities (or saved redirect) with temp token
+              const redirectUrl = redirect.includes('?') 
+                ? `${redirect}&tempToken=${tempToken}` 
+                : `${redirect}?tempToken=${tempToken}`;
+              return res.redirect(redirectUrl);
+            }
+          });
         }
       });
     }
@@ -2787,23 +2807,34 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   // API route to get current user - MUST be before catch-all
   app.get("/api/user/current", function (req, res) {
-    if (req.isAuthenticated() && req.user) {
-      // Extract user data safely
-      const userData = req.user._doc || req.user;
-      const user = userData.user || userData;
-      
-      // Extract ObjectId from top-level _id (document _id, not user._id)
-      // Handle both MongoDB extended JSON format { $oid: "..." } and Mongoose ObjectId
+    // Check for temp token in query string (for mobile Safari private mode)
+    const tempToken = req.query.tempToken;
+    let useTempAuth = false;
+    
+    if (tempToken && req.session.tempAuthToken === tempToken) {
+      // Verify token hasn't expired
+      if (req.session.tempAuthTokenExpiry && Date.now() < req.session.tempAuthTokenExpiry) {
+        // Token is valid - user is authenticated via temp token
+        useTempAuth = true;
+        // Clear the temp token after use (one-time use)
+        delete req.session.tempAuthToken;
+        delete req.session.tempAuthTokenExpiry;
+        req.session.save(() => {
+          // Session saved
+        });
+      }
+    }
+    
+    // Helper function to format user response
+    const formatUserResponse = function(userData, user) {
       let userIdString = '';
-      const documentId = req.user._id || userData._id;
+      const documentId = userData._id;
       
       if (documentId) {
         if (typeof documentId === 'object') {
-          // Handle MongoDB extended JSON format { $oid: "..." }
           if (documentId.$oid) {
             userIdString = documentId.$oid;
           } else if (documentId.toString) {
-            // Handle Mongoose ObjectId
             userIdString = documentId.toString();
           } else {
             userIdString = String(documentId);
@@ -2813,7 +2844,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
       }
       
-      return res.json({
+      return {
         user: {
           id: userIdString,
           username: user.username,
@@ -2826,8 +2857,29 @@ module.exports = function (app, passport, server, nextApp, handle) {
           createdAt: user.createdAt,
           subscription: user.subscription || userData.subscription || null
         }
+      };
+    };
+    
+    // Check if user is authenticated via session OR temp token
+    if (req.isAuthenticated() && req.user) {
+      // Normal authentication - user is in req.user
+      const userData = req.user._doc || req.user;
+      const user = userData.user || userData;
+      return res.json(formatUserResponse(userData, user));
+    } else if (useTempAuth && req.session.passport && req.session.passport.user) {
+      // Temp token auth - fetch user from database using session user ID
+      const userId = req.session.passport.user;
+      User.findById(ObjectId(userId), function(err, dbUser) {
+        if (err || !dbUser) {
+          return res.json({ user: null });
+        }
+        const userData = dbUser;
+        const user = dbUser.user || dbUser;
+        return res.json(formatUserResponse(userData, user));
       });
+      return; // Don't continue - async callback will send response
     }
+    
     return res.json({ user: null });
   });
 
