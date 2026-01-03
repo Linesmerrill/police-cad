@@ -125,26 +125,41 @@ function LoginForm() {
         // Check if session was established successfully
         if (sessionResponse.ok) {
           const sessionData = await sessionResponse.json().catch(() => null);
+          // Set localStorage flag to indicate successful login (helps with incognito mode)
+          try {
+            localStorage.setItem('login_success', 'true');
+            localStorage.setItem('login_timestamp', Date.now().toString());
+          } catch (e) {
+            // localStorage might not be available in some cases, continue anyway
+          }
+          
           // Success - redirect to communities
           const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
           // Add from=login parameter to help communities page detect we're coming from login
           const redirectUrl = redirect.includes('?') 
             ? `${redirect}&from=login` 
             : `${redirect}?from=login`;
-          // Delay to ensure session cookie is set and available
-          // Cookies work in incognito but may need a moment to be available
-          await new Promise(resolve => setTimeout(resolve, 800));
+          // Longer delay to ensure session cookie is set and available in incognito mode
+          await new Promise(resolve => setTimeout(resolve, 1500));
           // Use window.location.replace to avoid back button issues and ensure cookie is sent
           window.location.replace(redirectUrl);
         } else {
           // Session setup failed - try redirecting anyway (auth was successful)
+          // Still set localStorage flag
+          try {
+            localStorage.setItem('login_success', 'true');
+            localStorage.setItem('login_timestamp', Date.now().toString());
+          } catch (e) {
+            // localStorage might not be available in some cases, continue anyway
+          }
+          
           const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
           // Add from=login parameter to help communities page detect we're coming from login
           const redirectUrl = redirect.includes('?') 
             ? `${redirect}&from=login` 
             : `${redirect}?from=login`;
-          // Delay to ensure session cookie is set and available
-          await new Promise(resolve => setTimeout(resolve, 800));
+          // Longer delay for incognito mode
+          await new Promise(resolve => setTimeout(resolve, 1500));
           window.location.replace(redirectUrl);
         }
       } catch (sessionError) {

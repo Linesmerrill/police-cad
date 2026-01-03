@@ -56,14 +56,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.post(
     "/login",
     function(req, res, next) {
-      console.log('[LOGIN POST] Starting authentication');
-      console.log('[LOGIN POST] Request body:', { email: req.body?.email ? 'present' : 'missing', password: req.body?.password ? 'present' : 'missing' });
-      console.log('[LOGIN POST] Content-Type:', req.headers['content-type']);
-      console.log('[LOGIN POST] Accept:', req.headers.accept);
-      
       // Check if body is missing - return 400 with JSON if Accept header is application/json
       if (!req.body || !req.body.email || !req.body.password) {
-        console.log('[LOGIN POST] Missing email or password in body');
         if (req.headers.accept?.includes('application/json')) {
           return res.status(400).json({ error: 'Email and password are required' });
         }
@@ -75,28 +69,22 @@ module.exports = function (app, passport, server, nextApp, handle) {
         failureFlash: true,
         passReqToCallback: true,
       })(req, res, function(err) {
-        console.log('[LOGIN POST] Auth callback, err:', err, 'req.user:', !!req.user);
         // If authentication failed, redirect with error
         if (err || !req.user) {
-          console.log('[LOGIN POST] Authentication failed');
           // Check flash message
           const flashError = req.flash("error");
-          console.log('[LOGIN POST] Flash error:', flashError);
           
           let errorValue = 'authentication_failed';
           if (flashError && flashError.length > 0) {
             const errorMessage = flashError[0];
-            console.log('[LOGIN POST] Flash error message:', errorMessage);
             if (errorMessage === 'account_deactivated') {
               errorValue = 'account_deactivated';
             }
           }
           
-          console.log('[LOGIN POST] Redirecting to /login?error=' + errorValue);
           // Redirect with error in query string - use res.redirect to ensure proper encoding
           return res.redirect(`/login?error=${errorValue}`);
         }
-        console.log('[LOGIN POST] Authentication succeeded, continuing');
         // Authentication succeeded, continue to next middleware
         next();
       });
@@ -159,43 +147,32 @@ module.exports = function (app, passport, server, nextApp, handle) {
         delete req.session.redirect; // Clear the session redirect after use
       }
       
-      // Save session before redirect, but don't block if it's slow
-      // Set a timeout to prevent hanging on slow MongoDB
-      const saveTimeout = setTimeout(() => {
-        if (!res.headersSent) {
-          // Session save is taking too long, redirect anyway
-          return res.redirect(redirect);
-        }
-      }, 2000); // 2 second timeout for session save
-      
-      // Log session info before saving
-      console.log('[LOGIN POST] Before session save - sessionID:', req.sessionID, 'user:', !!req.user, 'isAuthenticated:', req.isAuthenticated());
-      
+      // Save session before redirect - CRITICAL for incognito mode
+      // We MUST wait for session to be saved before redirecting
       req.session.save(function(err) {
-        clearTimeout(saveTimeout);
         if (err) {
-          console.error('[LOGIN POST] Session save error:', err);
-        } else {
-          // Session saved successfully
+          // Even if save fails, try to redirect (session might still work)
         }
+        
         if (!res.headersSent) {
+          // Explicitly set the session cookie to ensure it's sent
+          // This is critical for incognito mode
+          if (req.sessionID) {
+            res.cookie('connect.sid', req.sessionID, {
+              httpOnly: true,
+              sameSite: 'lax',
+              secure: process.env.NODE_ENV === 'production',
+              domain: undefined, // Don't set domain to allow cookies in incognito mode
+              path: '/',
+              maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+            });
+          }
+          
           // Check if this is a JSON request (from Next.js login page)
           if (req.headers['content-type'] === 'application/json' || req.headers.accept?.includes('application/json')) {
-            console.log('[LOGIN POST] Returning JSON response');
-            // Explicitly set the session cookie to ensure it's sent
-            if (req.sessionID) {
-              res.cookie('connect.sid', req.sessionID, {
-                ...req.session.cookie,
-                httpOnly: true,
-                sameSite: 'lax',
-                secure: process.env.NODE_ENV === 'production',
-                domain: undefined, // Don't set domain to allow cookies in incognito mode
-              });
-            }
-            return res.json({ success: true, redirect: redirect });
+            return res.json({ success: true, redirect: redirect, sessionId: req.sessionID });
           }
           // Redirect to communities (or saved redirect)
-          console.log('[LOGIN POST] Redirecting to:', redirect);
           return res.redirect(redirect);
         }
       });

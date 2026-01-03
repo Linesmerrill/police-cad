@@ -1063,11 +1063,28 @@ function CommunitiesPageContent() {
       setUserSubscriptionChecked(false);
       setIsCheckingUser(true);
       
-      // If we just came from login, wait a bit for session to be established
-      // Cookies work in incognito but may need a moment to be available in requests
+      // Check localStorage first - if we just logged in, give session more time
       const isFromLogin = document.referrer.includes('/login') || window.location.search.includes('from=login');
-      if (isFromLogin && retryCount === 0) {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for cookie to be available
+      const loginSuccess = typeof window !== 'undefined' ? localStorage.getItem('login_success') : null;
+      const loginTimestamp = typeof window !== 'undefined' ? localStorage.getItem('login_timestamp') : null;
+      
+      // If we have a recent login flag (within last 30 seconds), wait longer for session
+      let initialDelay = 0;
+      if (isFromLogin || loginSuccess === 'true') {
+        if (loginTimestamp) {
+          const timeSinceLogin = Date.now() - parseInt(loginTimestamp, 10);
+          if (timeSinceLogin < 30000) { // Within 30 seconds of login
+            initialDelay = 2000; // Wait 2 seconds for session to be ready
+          } else {
+            initialDelay = 1000; // Older login, wait 1 second
+          }
+        } else {
+          initialDelay = 2000; // No timestamp, wait 2 seconds
+        }
+      }
+      
+      if (initialDelay > 0 && retryCount === 0) {
+        await new Promise(resolve => setTimeout(resolve, initialDelay));
       }
       
       try {
@@ -1078,32 +1095,53 @@ function CommunitiesPageContent() {
             setUser(data.user);
             setUserSubscriptionChecked(true); // Set to true when user is authenticated
             setIsCheckingUser(false);
+            // Clear login flag on successful check
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('login_success');
+              localStorage.removeItem('login_timestamp');
+            }
             return;
           }
         }
         
         // If we got here, user is not authenticated
-        // Retry once if we just came from login (session might not be ready yet)
-        if (isFromLogin && retryCount === 0) {
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait longer before retry
-          return checkUser(1); // Retry once
+        // Retry multiple times if we just came from login (session might not be ready yet)
+        const maxRetries = (isFromLogin || loginSuccess === 'true') ? 3 : 0;
+        if (retryCount < maxRetries) {
+          const retryDelay = (retryCount + 1) * 1500; // 1.5s, 3s, 4.5s
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          return checkUser(retryCount + 1);
+        }
+        
+        // Clear login flag if we've exhausted retries
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('login_success');
+          localStorage.removeItem('login_timestamp');
         }
         
         // User not logged in after retries, redirect to login
         const currentPath = window.location.pathname + window.location.search;
         router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
       } catch (error) {
-        // Retry once if we just came from login (session might not be ready yet)
-        if ((document.referrer.includes('/login') || window.location.search.includes('from=login')) && retryCount === 0) {
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait longer before retry
-          return checkUser(1); // Retry once
+        // Retry multiple times if we just came from login
+        const maxRetries = (isFromLogin || loginSuccess === 'true') ? 3 : 0;
+        if (retryCount < maxRetries) {
+          const retryDelay = (retryCount + 1) * 1500; // 1.5s, 3s, 4.5s
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          return checkUser(retryCount + 1);
+        }
+        
+        // Clear login flag if we've exhausted retries
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('login_success');
+          localStorage.removeItem('login_timestamp');
         }
         
         // User not logged in after retries, redirect to login
         const currentPath = window.location.pathname + window.location.search;
         router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
       } finally {
-        if (retryCount > 0 || !(document.referrer.includes('/login') || window.location.search.includes('from=login'))) {
+        if (retryCount >= 3 || !(isFromLogin || loginSuccess === 'true')) {
           setIsCheckingUser(false);
         }
       }
