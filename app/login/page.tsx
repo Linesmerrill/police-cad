@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, FormEvent, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
@@ -9,12 +9,24 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 
 function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
+  const [privateBrowsingDetected, setPrivateBrowsingDetected] = useState(false);
+  
+  // Check if we're being redirected from a protected page (likely private browsing issue)
+  useEffect(() => {
+    const redirect = searchParams.get('redirect');
+    if (redirect && redirect.includes('communities')) {
+      // User tried to access communities but got redirected to login
+      // This likely means session isn't working - probably private browsing
+      setPrivateBrowsingDetected(true);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -252,6 +264,31 @@ function LoginForm() {
                 Sign in to your account
               </p>
             </div>
+
+            {/* Private Browsing Warning */}
+            {privateBrowsingDetected && (
+              <div
+                style={{
+                  background: 'rgba(251, 191, 36, 0.15)',
+                  border: '1px solid rgba(251, 191, 36, 0.3)',
+                  borderRadius: '8px',
+                  padding: '1rem',
+                  marginBottom: '1.5rem',
+                  color: '#fcd34d',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  <ExclamationTriangleIcon style={{ width: '1.25rem', height: '1.25rem', flexShrink: 0 }} />
+                  <strong style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#fbbf24' }}>Private Browsing Detected</strong>
+                </div>
+                <p style={{ margin: '0.5rem 0', lineHeight: '1.6', color: 'rgba(252, 211, 77, 0.9)' }}>
+                  We detected that you're using private browsing mode. Our authentication system requires cookies to work properly, which are often restricted in private browsing.
+                </p>
+                <p style={{ margin: '0.5rem 0', lineHeight: '1.6', color: 'rgba(252, 211, 77, 0.9)' }}>
+                  <strong>Please try logging in using a regular (non-private) browser window.</strong> This will ensure your session is properly maintained.
+                </p>
+              </div>
+            )}
 
             {/* Error Message */}
             {error && (
@@ -554,5 +591,36 @@ function LoginForm() {
 }
 
 export default function LoginCiv() {
-  return <LoginForm />;
+  return (
+    <Suspense fallback={
+      <main 
+        style={{
+          minHeight: '100vh',
+          width: '100%',
+          maxWidth: '100vw',
+          backgroundColor: '#0a0a0f',
+          position: 'relative',
+          margin: 0,
+          padding: 0,
+          overflowX: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
+        <Navbar />
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'rgba(255, 255, 255, 0.7)'
+        }}>
+          Loading...
+        </div>
+        <Footer />
+      </main>
+    }>
+      <LoginForm />
+    </Suspense>
+  );
 }
