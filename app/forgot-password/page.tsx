@@ -14,6 +14,7 @@ function ForgotPasswordForm() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState(false);
+  const [privateBrowsingDetected, setPrivateBrowsingDetected] = useState(false);
 
   useEffect(() => {
     // Check for flash messages from server (passed via query params)
@@ -26,6 +27,14 @@ function ForgotPasswordForm() {
       } else {
         setError(messageParam);
       }
+    }
+    
+    // Check if we're being redirected from a protected page (likely private browsing issue)
+    const redirect = searchParams.get('redirect');
+    if (redirect && (redirect.includes('communities') || redirect.includes('reset'))) {
+      // User tried to access a protected page or reset password but got redirected
+      // This likely means session isn't working - probably private browsing
+      setPrivateBrowsingDetected(true);
     }
   }, [searchParams]);
 
@@ -231,6 +240,31 @@ function ForgotPasswordForm() {
               Enter your email address and we&apos;ll send you a link to reset your password.
             </p>
           </div>
+
+          {/* Private Browsing Warning */}
+          {privateBrowsingDetected && (
+            <div
+              style={{
+                background: 'rgba(251, 191, 36, 0.15)',
+                border: '1px solid rgba(251, 191, 36, 0.3)',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginBottom: '1.5rem',
+                color: '#fcd34d',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                <ExclamationTriangleIcon style={{ width: '1.25rem', height: '1.25rem', flexShrink: 0 }} />
+                <strong style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#fbbf24' }}>Private Browsing Detected</strong>
+              </div>
+              <p style={{ margin: '0.5rem 0', lineHeight: '1.6', color: 'rgba(252, 211, 77, 0.9)' }}>
+                We detected that you're using private browsing mode. Our authentication system requires cookies to work properly, which are often restricted in private browsing.
+              </p>
+              <p style={{ margin: '0.5rem 0', lineHeight: '1.6', color: 'rgba(252, 211, 77, 0.9)' }}>
+                <strong>Please try using a regular (non-private) browser window.</strong> This will ensure password reset links and authentication work properly.
+              </p>
+            </div>
+          )}
 
           {/* Success Message */}
           {success && (
