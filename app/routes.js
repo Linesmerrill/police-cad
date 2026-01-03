@@ -155,45 +155,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
         
         if (!res.headersSent) {
-          // Generate a temporary token for mobile Safari private mode
-          // This token will be used to verify the session on the communities page
-          const tempToken = require('crypto').randomBytes(32).toString('hex');
-          req.session.tempAuthToken = tempToken;
-          req.session.tempAuthTokenExpiry = Date.now() + 60000; // 1 minute expiry
-          
-          // Save session again with temp token
-          req.session.save(function(saveErr) {
-            if (!res.headersSent) {
-              // Explicitly set the session cookie to ensure it's sent
-              // For mobile Safari private mode, use 'lax' which works for same-site requests
-              if (req.sessionID) {
-                res.cookie('connect.sid', req.sessionID, {
-                  httpOnly: true,
-                  sameSite: 'lax', // Works for same-site requests (better for private mode)
-                  secure: process.env.NODE_ENV === 'production', // HTTPS in production
-                  domain: undefined, // Don't set domain to allow cookies in incognito mode
-                  path: '/',
-                  maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
-                });
-              }
-              
-              // Check if this is a JSON request (from Next.js login page)
-              if (req.headers['content-type'] === 'application/json' || req.headers.accept?.includes('application/json')) {
-                // Include temp token in response for mobile Safari private mode
-                return res.json({ 
-                  success: true, 
-                  redirect: redirect, 
-                  sessionId: req.sessionID,
-                  tempToken: tempToken // Include temp token for URL-based auth
-                });
-              }
-              // Redirect to communities (or saved redirect) with temp token
-              const redirectUrl = redirect.includes('?') 
-                ? `${redirect}&tempToken=${tempToken}` 
-                : `${redirect}?tempToken=${tempToken}`;
-              return res.redirect(redirectUrl);
-            }
-          });
+          // Check if this is a JSON request (from Next.js login page using fetch)
+          if (req.headers['content-type'] === 'application/json' || req.headers.accept?.includes('application/json')) {
+            // JSON request - return JSON response
+            return res.json({ 
+              success: true, 
+              redirect: redirect, 
+              sessionId: req.sessionID
+            });
+          }
+          // Traditional form POST - redirect directly (works better in private mode)
+          // Server-side redirect ensures cookies are properly set
+          return res.redirect(redirect);
         }
       });
     }

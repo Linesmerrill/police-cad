@@ -44,155 +44,58 @@ function LoginForm() {
     // Show loading state
     setLoading(true);
     
+    // Use traditional form submission like the old login-civ page
+    // This works better in private browsing mode - single POST request, server handles everything
     try {
-      // Call our Next.js API proxy to avoid CORS issues
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          email: trimmedEmail,
-          password: trimmedPassword,
-        }),
-      });
-      
-      // Check if response is JSON
-      const contentType = response.headers.get('content-type');
-      let data;
-      
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        // If not JSON, it's probably an error page
-        const text = await response.text();
-        console.error('Non-JSON response from API:', text.substring(0, 200));
-        setError('An error occurred. Please try again.');
-        setLoading(false);
-        return;
-      }
-      
-      if (!response.ok) {
-        // Handle different error types
-        let errorMessage = 'An error occurred. Please try again.';
-        
-        if (data && typeof data === 'object') {
-          if (data.error === 'account_deactivated' || data.message === 'account_deactivated') {
-            setError('deactivated');
-            setLoading(false);
-            return;
-          } else if (response.status === 401 || response.status === 403) {
-            errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-          } else {
-            errorMessage = data.error || data.message || errorMessage;
-          }
-        } else if (response.status === 401 || response.status === 403) {
-          errorMessage = 'Invalid email or password. Please check your credentials and try again.';
-        }
-        
-        setError(errorMessage);
-        setLoading(false);
-        return;
-      }
-      
-      // Check if we got valid data
-      if (!data || !data.token) {
-        setError('Invalid response from server. Please try again.');
-        setLoading(false);
-        return;
-      }
-      
-      // If we got a token, we need to set up the session via Express/Passport
-      // This is required to establish the session cookie for authenticated requests
-      try {
-        // Use the Express login endpoint to set up Passport session
-        // Send as URL-encoded form data (not FormData) for express.urlencoded() to parse
-        const formBody = new URLSearchParams();
-        formBody.append('email', trimmedEmail);
-        formBody.append('password', trimmedPassword);
-        
-        const sessionResponse = await fetch('/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json',
-          },
-          body: formBody.toString(),
-          credentials: 'include',
-        });
-        
-        // Check if session was established successfully
-        if (sessionResponse.ok) {
-          const sessionData = await sessionResponse.json().catch(() => null);
-          // Set localStorage/sessionStorage flags to indicate successful login (helps with incognito mode)
-          try {
-            localStorage.setItem('login_success', 'true');
-            localStorage.setItem('login_timestamp', Date.now().toString());
-            // Also try sessionStorage as backup
-            sessionStorage.setItem('login_success', 'true');
-            sessionStorage.setItem('login_timestamp', Date.now().toString());
-          } catch (e) {
-            // Storage might not be available in some cases, continue anyway
-          }
-          
-          // Success - redirect to communities
-          const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
-          // Include tempToken if provided (for mobile Safari private mode)
-          const tempToken = sessionData?.tempToken;
-          let redirectUrl = redirect.includes('?') 
-            ? `${redirect}&from=login` 
-            : `${redirect}?from=login`;
-          
-          if (tempToken) {
-            redirectUrl = redirectUrl.includes('?') 
-              ? `${redirectUrl}&tempToken=${tempToken}` 
-              : `${redirectUrl}?tempToken=${tempToken}`;
-          }
-          
-          // Longer delay to ensure session cookie is set and available in incognito mode
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          // Use window.location.replace to avoid back button issues and ensure cookie is sent
-          window.location.replace(redirectUrl);
-        } else {
-          // Session setup failed - try redirecting anyway (auth was successful)
-          // Still set storage flags
-          try {
-            localStorage.setItem('login_success', 'true');
-            localStorage.setItem('login_timestamp', Date.now().toString());
-            sessionStorage.setItem('login_success', 'true');
-            sessionStorage.setItem('login_timestamp', Date.now().toString());
-          } catch (e) {
-            // Storage might not be available in some cases, continue anyway
-          }
-          
-          const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
-          const redirectUrl = redirect.includes('?') 
-            ? `${redirect}&from=login` 
-            : `${redirect}?from=login`;
-          // Longer delay for incognito mode
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          window.location.replace(redirectUrl);
-        }
-      } catch (sessionError) {
-        console.error('Session setup error:', sessionError);
-        // If session setup fails, still redirect (auth was successful)
-        const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
-        // Add from=login parameter to help communities page detect we're coming from login
-        const redirectUrl = redirect.includes('?') 
-          ? `${redirect}&from=login` 
-          : `${redirect}?from=login`;
-        // Longer delay for incognito mode
-        let isIncognito = false;
+      // Set redirect in session if needed
+      const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
+      if (redirect !== '/communities') {
         try {
-          localStorage.setItem('test', 'test');
-          localStorage.removeItem('test');
+          await fetch('/set-redirect', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ redirect }),
+            credentials: 'include'
+          });
         } catch (e) {
-          isIncognito = true;
+          // Continue even if set-redirect fails
         }
-        const delay = isIncognito ? 1000 : 500;
-        await new Promise(resolve => setTimeout(resolve, delay));
-        window.location.href = redirectUrl;
+      }
+      
+      // Use hidden form submission - same approach as login-civ
+      const hiddenForm = document.getElementById('loginForm') as HTMLFormElement;
+      const hiddenEmail = document.getElementById('hiddenEmail') as HTMLInputElement;
+      const hiddenPassword = document.getElementById('hiddenPassword') as HTMLInputElement;
+      
+      if (hiddenForm && hiddenEmail && hiddenPassword) {
+        hiddenEmail.value = trimmedEmail;
+        hiddenPassword.value = trimmedPassword;
+        // Submit the form - this will trigger Passport authentication and set the session
+        // Server will handle redirect, cookies work properly in private mode
+        hiddenForm.submit();
+      } else {
+        // Fallback: create form if hidden form doesn't exist
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/login';
+        form.style.display = 'none';
+        
+        const emailInput = document.createElement('input');
+        emailInput.type = 'hidden';
+        emailInput.name = 'email';
+        emailInput.value = trimmedEmail;
+        
+        const passwordInput = document.createElement('input');
+        passwordInput.type = 'hidden';
+        passwordInput.name = 'password';
+        passwordInput.value = trimmedPassword;
+        
+        form.appendChild(emailInput);
+        form.appendChild(passwordInput);
+        document.body.appendChild(form);
+        form.submit();
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -397,6 +300,17 @@ function LoginForm() {
                 )}
               </div>
             )}
+
+            {/* Hidden form for actual submission to Express (like login-civ) */}
+            <form
+              id="loginForm"
+              method="POST"
+              action="/login"
+              style={{ display: 'none' }}
+            >
+              <input type="hidden" name="email" id="hiddenEmail" />
+              <input type="hidden" name="password" id="hiddenPassword" />
+            </form>
 
             {/* Login Form */}
             <form onSubmit={handleSubmit}>

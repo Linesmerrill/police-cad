@@ -44,43 +44,20 @@ function ResetPasswordForm() {
       setError(decodeURIComponent(messageParam));
     }
 
-    // Check if token is valid when component mounts
-    const checkToken = async () => {
-      if (!token || token === 'encryptedToken') {
-        // If no token or encryptedToken, we need to check via session
-        // The Express route should have stored it in session
-        try {
-          const response = await fetch('/api/reset-token/validate', {
-            credentials: 'include'
-          });
-          if (response.ok) {
-            const data = await response.json();
-            if (data.valid) {
-              setTokenValid(true);
-            } else {
-              setTokenValid(false);
-              setError(data.message || 'Password reset token is invalid or has expired.');
-              // Redirect to forgot-password after 3 seconds
-              setTimeout(() => {
-                router.push('/forgot-password?message=' + encodeURIComponent('Password reset token is invalid or has expired.'));
-              }, 3000);
-            }
-          } else {
-            setTokenValid(false);
-            setError('Unable to validate reset token. Please try again.');
-          }
-        } catch {
-          setTokenValid(false);
-          setError('Unable to validate reset token. Please try again.');
-        }
-      } else {
-        // Token in URL - need to store it in session first via Express route
-        // The Express route will handle this and redirect
+    // Handle token validation - trust server-side validation
+    if (!token || token === 'encryptedToken') {
+      // If we're at /reset/encryptedToken, the Express route has already validated the token
+      // and stored it in session. We can trust that it's valid and show the form.
+      setTokenValid(true);
+    } else {
+      // Token in URL - redirect to Express route which will store it in session
+      // This ensures proper server-side handling and works in private mode
+      // Use window.location.href for full page navigation (not client-side routing)
+      if (typeof window !== 'undefined' && window.location.pathname === `/reset/${token}`) {
+        // Only redirect if we're actually on the token URL (not already redirected)
         window.location.href = `/reset/${token}`;
       }
-    };
-
-    checkToken();
+    }
   }, [token, router, searchParams]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -121,30 +98,19 @@ function ResetPasswordForm() {
     // Show loading state
     setLoading(true);
     
-    try {
-      // Submit the form to the Express route
-      // The route uses the token from session
-      // Use a hidden form to ensure cookies are sent properly
-      const form = document.getElementById('resetPasswordForm') as HTMLFormElement;
-      if (form) {
-        // Create hidden form for submission to Express
-        const submitForm = document.createElement('form');
-        submitForm.method = 'POST';
-        submitForm.action = '/reset/encryptedToken'; // Use encryptedToken since token is in session
-        submitForm.style.display = 'none';
-        
-        const passwordInput = document.createElement('input');
-        passwordInput.type = 'hidden';
-        passwordInput.name = 'password';
-        passwordInput.value = password;
-        
-        submitForm.appendChild(passwordInput);
-        document.body.appendChild(submitForm);
-        submitForm.submit();
-        // Form will redirect, so we don't need to handle response
-      }
-    } catch (error) {
-      setError('An error occurred. Please try again.');
+    // Use traditional form submission - works better in private mode
+    const submitForm = document.getElementById('submitResetForm') as HTMLFormElement;
+    const hiddenPassword = document.getElementById('hiddenPassword') as HTMLInputElement;
+    const hiddenConfirmPassword = document.getElementById('hiddenConfirmPassword') as HTMLInputElement;
+    
+    if (submitForm && hiddenPassword && hiddenConfirmPassword) {
+      // Set values in hidden form and submit
+      hiddenPassword.value = password;
+      hiddenConfirmPassword.value = confirmPassword;
+      // Form will POST to /reset/encryptedToken (token is in session)
+      submitForm.submit();
+    } else {
+      setError('Form submission error. Please try again.');
       setLoading(false);
     }
   };
@@ -435,8 +401,19 @@ function ResetPasswordForm() {
             </div>
           )}
 
+          {/* Hidden form for actual submission to Express (works better in private mode) */}
+          <form
+            id="submitResetForm"
+            method="POST"
+            action="/reset/encryptedToken"
+            style={{ display: 'none' }}
+          >
+            <input type="hidden" name="password" id="hiddenPassword" />
+            <input type="hidden" name="confirm" id="hiddenConfirmPassword" />
+          </form>
+
           {/* Reset Password Form */}
-          <form id="resetPasswordForm" onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit}>
             {/* New Password Field */}
             <div style={{ marginBottom: '1.5rem' }}>
               <label
@@ -837,4 +814,5 @@ export default function ResetPassword() {
     </Suspense>
   );
 }
+
 
