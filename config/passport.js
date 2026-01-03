@@ -43,7 +43,7 @@ module.exports = function (passport) {
               'Content-Type': 'application/json',
               'Authorization': 'Basic ' + basicAuthBase64
             },
-            timeout: 10000,
+            timeout: 15000, // Increased to 15 seconds to handle slow backend responses
             validateStatus: function (status) {
               return status < 600; // Don't throw on any status code
             }
@@ -114,7 +114,34 @@ module.exports = function (passport) {
               );
             }
           }).catch(function(apiError) {
-            // API authentication failed
+            // Handle timeout errors specifically
+            if (apiError.code === 'ECONNABORTED' || apiError.message?.includes('timeout')) {
+              console.error('[Passport Login] Backend API timeout:', apiError.message);
+              return done(
+                null,
+                false,
+                req.flash("error", "Authentication service is temporarily unavailable. Please try again in a moment.")
+              );
+            }
+            
+            // Handle network errors
+            if (apiError.code === 'ECONNREFUSED' || apiError.code === 'ENOTFOUND' || apiError.code === 'ETIMEDOUT') {
+              console.error('[Passport Login] Backend API connection error:', apiError.code, apiError.message);
+              return done(
+                null,
+                false,
+                req.flash("error", "Unable to connect to authentication service. Please try again later.")
+              );
+            }
+            
+            // Other API errors - log for debugging but don't expose details to user
+            if (apiError.response) {
+              console.error('[Passport Login] Backend API error:', apiError.response.status, apiError.response.data);
+            } else {
+              console.error('[Passport Login] Backend API error:', apiError.message);
+            }
+            
+            // API authentication failed - generic error message
             return done(
               null,
               false,
