@@ -2768,6 +2768,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
   // API route to get current user - MUST be before catch-all
   app.get("/api/user/current", function (req, res) {
+    console.log('[API] GET /api/user/current - Session ID:', req.sessionID);
+    console.log('[API] Cookies received:', req.headers.cookie);
+    console.log('[API] Is authenticated:', req.isAuthenticated());
+    console.log('[API] User exists:', !!req.user);
+    console.log('[API] Session passport:', req.session.passport);
+
     // Check for temp token in query string (for mobile Safari private mode)
     const tempToken = req.query.tempToken;
     let useTempAuth = false;
@@ -4075,16 +4081,26 @@ module.exports = function (app, passport, server, nextApp, handle) {
       passReqToCallback: true,
     }),
     function (req, res, next) {
+      console.log('[Login-Civ] POST /login-civ - User authenticated:', req.user ? 'YES' : 'NO');
+      console.log('[Login-Civ] Session ID:', req.sessionID);
+      console.log('[Login-Civ] Is authenticated:', req.isAuthenticated());
+      console.log('[Login-Civ] Cookies received:', req.headers.cookie);
+
       const redirect = req.session.redirect || "/communities";
       delete req.session.redirect; // Clear the session redirect after use
+
+      console.log('[Login-Civ] Redirecting to:', redirect);
 
       // CRITICAL: Explicitly save session before redirecting
       // This ensures the session cookie is fully written before the redirect happens
       // Especially important for incognito/private browsing modes
       req.session.save(function(err) {
         if (err) {
-          console.error('[Login] Error saving session:', err);
+          console.error('[Login-Civ] Error saving session:', err);
           // Continue anyway - session might still work
+        } else {
+          console.log('[Login-Civ] Session saved successfully');
+          console.log('[Login-Civ] Session data:', { user: req.session.passport });
         }
         res.redirect(redirect);
       });

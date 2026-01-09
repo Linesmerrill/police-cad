@@ -1,148 +1,57 @@
 'use client';
 
-import { useState, FormEvent, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, FormEvent, Suspense } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 
 function LoginForm() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
-  const [privateBrowsingDetected, setPrivateBrowsingDetected] = useState(false);
-  
-  // Check for actual private browsing - only show warning when truly needed
-  useEffect(() => {
-    const redirect = searchParams.get('redirect');
-    const error = searchParams.get('error');
-    
-    // Only show private browsing warning if:
-    // 1. We have a redirect to communities (user was trying to access protected page)
-    // 2. AND there's no error message (meaning it's not a normal auth failure)
-    // 3. AND we've been redirected multiple times (indicates session not persisting)
-    // We check for a session persistence flag in sessionStorage
-    const sessionCheckKey = 'login_session_check';
-    const sessionCheck = sessionStorage.getItem(sessionCheckKey);
-    
-    // If we've checked before and still got redirected, likely private browsing
-    if (redirect && redirect.includes('communities') && !error && sessionCheck === 'checked') {
-      // Test cookie support as additional check
-      try {
-        document.cookie = 'testCookie=1; path=/; max-age=60';
-        const canSetCookie = document.cookie.indexOf('testCookie=') !== -1;
-        document.cookie = 'testCookie=; path=/; max-age=0';
-        
-        if (!canSetCookie) {
-          setPrivateBrowsingDetected(true);
-        }
-      } catch (e) {
-        // Can't test cookies, but if we got here with redirect, likely private browsing
-        setPrivateBrowsingDetected(true);
-      }
-    } else if (redirect && redirect.includes('communities') && !error) {
-      // First time redirect - mark that we've checked
-      sessionStorage.setItem(sessionCheckKey, 'checked');
-    }
-  }, [searchParams]);
+  const [privateBrowsingDetected] = useState(false);
+
+  // Private browsing detection disabled - session save fix should handle auth issues
+  // Uncomment and implement if needed for specific browser compatibility issues
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     // Clear previous errors
     setError('');
     setEmailError(false);
     setPasswordError(false);
-    
+
     // Get form data
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPassword = password.trim();
-    
+
     // Validate inputs
     if (!trimmedEmail) {
       setError('Please enter your email address.');
       setEmailError(true);
       return;
     }
-    
+
     if (!trimmedPassword) {
       setError('Please enter your password.');
       setPasswordError(true);
       return;
     }
-    
+
     // Show loading state
     setLoading(true);
-    
-    // Use the exact same approach as the working login-civ.ejs
-    // This pattern works perfectly on all browsers including mobile
+
+    // FINAL FIX: Use HTMLFormElement.submit() which bypasses React and lets browser handle cookies
     try {
       // Get the API URL with fallback
       const apiUrl = process.env.NEXT_PUBLIC_POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
-      
-      // Function to submit login form (matches login-civ.ejs exactly)
-      const submitLoginForm = () => {
-        const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
-        
-        fetch('/set-redirect', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ redirect }),
-          credentials: 'same-origin'
-        }).then(() => {
-          // Now submit the login form - create new form dynamically (like login-civ.ejs)
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = '/login-civ'; // Use /login-civ like the working version
-          form.style.display = 'none';
-          
-          const emailInput = document.createElement('input');
-          emailInput.type = 'hidden';
-          emailInput.name = 'email';
-          emailInput.value = trimmedEmail;
-          
-          const passwordInput = document.createElement('input');
-          passwordInput.type = 'hidden';
-          passwordInput.name = 'password';
-          passwordInput.value = trimmedPassword;
-          
-          form.appendChild(emailInput);
-          form.appendChild(passwordInput);
-          document.body.appendChild(form);
-          form.submit();
-        }).catch(() => {
-          // Fallback: submit form without setting redirect (matches login-civ.ejs)
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = '/login-civ';
-          form.style.display = 'none';
-          
-          const emailInput = document.createElement('input');
-          emailInput.type = 'hidden';
-          emailInput.name = 'email';
-          emailInput.value = trimmedEmail;
-          
-          const passwordInput = document.createElement('input');
-          passwordInput.type = 'hidden';
-          passwordInput.name = 'password';
-          passwordInput.value = trimmedPassword;
-          
-          form.appendChild(emailInput);
-          form.appendChild(passwordInput);
-          document.body.appendChild(form);
-          form.submit();
-        });
-      };
-      
-      // Validate credentials with the API first (matches login-civ.ejs)
+
+      // Validate credentials with the API first
       const apiResponse = await fetch(`${apiUrl}/api/v1/auth/token`, {
         method: 'POST',
         headers: {
@@ -150,13 +59,23 @@ function LoginForm() {
           'Authorization': 'Basic ' + btoa(trimmedEmail + ':' + trimmedPassword)
         }
       });
-      
+
       // Check if we got a valid token response
       const apiData = await apiResponse.json().catch(() => ({}));
-      
+
       if (apiResponse.ok && apiData.token) {
-        // API validation successful, proceed with login
-        submitLoginForm();
+        // API validation successful - submit form natively
+        // Cast to HTMLFormElement and call submit() directly
+        const formElement = e.currentTarget as HTMLFormElement;
+
+        // Use requestSubmit() if available (respects validation), otherwise use submit()
+        if (formElement.requestSubmit) {
+          // This triggers native form submission without going through React handlers
+          formElement.requestSubmit();
+        } else {
+          // Fallback for older browsers
+          formElement.submit();
+        }
         return;
       } else {
         // API validation failed - show error and stop
@@ -396,7 +315,7 @@ function LoginForm() {
             {/* No hidden form needed - we create it dynamically like login-civ.ejs */}
 
             {/* Login Form */}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} action="/login-civ" method="POST">
               {/* Email Field */}
               <div style={{ marginBottom: '1.5rem' }}>
                 <label
