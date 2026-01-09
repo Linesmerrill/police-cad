@@ -11,7 +11,7 @@ export interface AuthHeaders {
  * Get authentication headers for API requests
  * Returns headers with Bearer token and email if available in localStorage
  */
-export function getAuthHeaders(): AuthHeaders {
+export function getAuthHeaders(): Record<string, string> {
   if (typeof window === 'undefined') {
     return {};
   }
@@ -19,7 +19,7 @@ export function getAuthHeaders(): AuthHeaders {
   const token = localStorage.getItem('auth_token');
   const userEmail = localStorage.getItem('user_email');
 
-  const headers: AuthHeaders = {};
+  const headers: Record<string, string> = {};
 
   if (token && userEmail) {
     headers['Authorization'] = `Bearer ${token}`;
