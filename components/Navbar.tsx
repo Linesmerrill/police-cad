@@ -6,6 +6,7 @@ import { UserIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { DISCORD_COMMUNITY } from '@/constants/discord';
+import { getAuthHeaders } from '@/lib/auth';
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -78,7 +79,8 @@ export default function Navbar() {
       setIsCheckingUser(true);
       try {
         const response = await fetch('/api/user/current', {
-          credentials: 'include'
+          credentials: 'include',
+          headers: getAuthHeaders()
         });
         if (response.ok) {
           const userData = await response.json();

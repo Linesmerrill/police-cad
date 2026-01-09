@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import Link from 'next/link';
 import GoogleAd from '@/components/GoogleAd';
 import Script from 'next/script';
+import { getAuthHeaders } from '@/lib/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 
@@ -612,7 +613,7 @@ const FilterTabs = ({
             }`}
           >
             {filter.label}
-            {countsLoaded && filter.count !== undefined && (
+            {countsLoaded && filter.count !== undefined && filter.count > 0 && (
               <span className="ml-2 text-sm opacity-75">({filter.count})</span>
             )}
           </button>
@@ -1065,9 +1066,11 @@ function CommunitiesPageContent() {
       
       try {
         // Simple, direct check - session should be set immediately after login
-        const response = await fetch('/api/user/current', { 
+        // Also include Bearer token for cookie-less authentication
+        const response = await fetch('/api/user/current', {
           credentials: 'include',
-          cache: 'no-store' // Always fetch fresh to check session
+          cache: 'no-store', // Always fetch fresh to check session
+          headers: getAuthHeaders()
         });
         
         if (response.ok) {
@@ -1087,9 +1090,10 @@ function CommunitiesPageContent() {
         // Network error - try one more time after a short delay
         await new Promise(resolve => setTimeout(resolve, 1000));
         try {
-          const response = await fetch('/api/user/current', { 
+          const response = await fetch('/api/user/current', {
             credentials: 'include',
-            cache: 'no-store'
+            cache: 'no-store',
+            headers: getAuthHeaders()
           });
           
           if (response.ok) {
@@ -1499,7 +1503,9 @@ function CommunitiesPageContent() {
               { credentials: 'include' }
             );
             const data = response.ok ? await response.json() : { totalCount: 0 };
-            return { tag, count: data.totalCount || 0 };
+            const count = data.totalCount || 0;
+            // Ensure count is not negative
+            return { tag, count: count >= 0 ? count : 0 };
           } catch (error) {
             return { tag, count: 0 };
           }
@@ -1508,14 +1514,15 @@ function CommunitiesPageContent() {
         const results = await Promise.all(countPromises);
         const counts: Record<string, number> = {};
         results.forEach(({ tag, count }) => {
-          counts[tag] = count;
+          // Ensure count is not negative
+          counts[tag] = count >= 0 ? count : 0;
         });
 
         setBrowseFilterCounts({
-          all: counts.all || 0,
-          PC: counts.PC || 0,
-          Xbox: counts.Xbox || 0,
-          PlayStation: counts.PlayStation || 0,
+          all: counts.all >= 0 ? counts.all : 0,
+          PC: counts.PC >= 0 ? counts.PC : 0,
+          Xbox: counts.Xbox >= 0 ? counts.Xbox : 0,
+          PlayStation: counts.PlayStation >= 0 ? counts.PlayStation : 0,
         });
         setBrowseFilterCountsLoaded(true);
       } catch (error) {

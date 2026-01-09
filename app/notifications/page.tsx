@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { getAuthHeaders } from '@/lib/auth';
 
 interface User {
   id: string;
@@ -96,6 +97,7 @@ function NotificationsContent() {
       try {
         const response = await fetch('/api/user/current', {
           credentials: 'include',
+          headers: getAuthHeaders()
         });
         if (response.ok) {
           const data = await response.json();

@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, FormEvent, Suspense } from 'react';
+import { useState, FormEvent, Suspense, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { useRouter } from 'next/navigation';
+import { storeAuth, fetchCurrentUser } from '@/lib/auth';
 
 function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,9 +17,42 @@ function LoginForm() {
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
   const [privateBrowsingDetected] = useState(false);
+  const [checkingExistingLogin, setCheckingExistingLogin] = useState(true);
+
+  // Check if user is already logged in on mount
+  useEffect(() => {
+    const checkExistingLogin = async () => {
+      try {
+        const user = await fetchCurrentUser();
+        if (user && user.id) {
+          // User is already logged in, redirect to communities
+          const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
+          window.location.href = redirect;
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking existing login:', error);
+      } finally {
+        setCheckingExistingLogin(false);
+      }
+    };
+
+    checkExistingLogin();
+  }, [router]);
 
   // Private browsing detection disabled - session save fix should handle auth issues
   // Uncomment and implement if needed for specific browser compatibility issues
+
+  // Don't render login form while checking existing login
+  if (checkingExistingLogin) {
+    return (
+      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0a0a0f' }}>
+        <div style={{ textAlign: 'center', color: '#fff' }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Checking login status...</div>
+        </div>
+      </main>
+    );
+  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -64,17 +100,35 @@ function LoginForm() {
       const apiData = await apiResponse.json().catch(() => ({}));
 
       if (apiResponse.ok && apiData.token) {
-        // API validation successful - submit form natively
-        // Cast to HTMLFormElement and call submit() directly
-        const formElement = e.currentTarget as HTMLFormElement;
+        // API validation successful
+        // Store the token in localStorage for subsequent requests
+        try {
+          storeAuth(apiData.token, trimmedEmail);
+        } catch (e) {
+          console.error('Failed to store auth token:', e);
+        }
 
-        // Use requestSubmit() if available (respects validation), otherwise use submit()
-        if (formElement.requestSubmit) {
-          // This triggers native form submission without going through React handlers
-          formElement.requestSubmit();
+        // Now authenticate with our backend to create session
+        const formData = new URLSearchParams();
+        formData.append('email', trimmedEmail);
+        formData.append('password', trimmedPassword);
+
+        const loginResponse = await fetch('/login-civ', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: formData.toString(),
+          credentials: 'include',
+        });
+
+        if (loginResponse.ok || loginResponse.redirected) {
+          // Login successful - redirect to communities
+          const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
+          window.location.href = redirect;
         } else {
-          // Fallback for older browsers
-          formElement.submit();
+          setError('Login failed. Please try again.');
+          setLoading(false);
         }
         return;
       } else {

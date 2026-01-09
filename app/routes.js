@@ -52,6 +52,46 @@ function decodeId(encoded) {
 }
 
 module.exports = function (app, passport, server, nextApp, handle) {
+  // Define auth middleware functions first, before they're used
+  async function authCheck(req, res, next) {
+    // First check session-based auth
+    if (req.isAuthenticated()) {
+      return next();
+    }
+
+    // Fallback: Check for token-based auth
+    const authHeader = req.headers.authorization;
+    const userEmailHeader = req.headers['x-user-email'];
+
+    if (authHeader && authHeader.startsWith('Bearer ') && userEmailHeader) {
+      const token = authHeader.substring(7);
+      const userEmail = userEmailHeader.toLowerCase();
+
+      try {
+        // Look up user by email
+        const user = await User.findOne({ "user.email": userEmail }).exec();
+
+        if (user) {
+          // Attach user to request object so routes can access it
+          req.user = user;
+          req.dbUser = user;
+          return next();
+        }
+      } catch (error) {
+        // Token auth error - fall through
+      }
+    }
+
+    // Not authenticated - redirect or render login
+    req.session.redirect = req.originalUrl;
+    res.render("login-civ", {
+      message: "",
+    });
+  }
+
+  // Alias for backward compatibility
+  const auth = authCheck;
+
   // POST /login - MUST be defined FIRST to prevent Next.js from intercepting
   app.post(
     "/login",
@@ -152,7 +192,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // Especially important for incognito/private browsing modes
       req.session.save(function(err) {
         if (err) {
-          console.error('[Login] Error saving session:', err);
           // Continue anyway - session might still work
         }
         return res.redirect(redirect);
@@ -175,11 +214,43 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.get(
     "/auth/discord",
     auth,
-    passport.authenticate("discord", {
-      failureRedirect: "/",
-    }),
-    (req, res) => {
-      return res.redirect(req.query.state);
+    function(req, res, next) {
+      // Check if Discord strategy is available
+      if (!passport._strategies || !passport._strategies.discord) {
+        return res.status(503).render("error", {
+          message: "Discord authentication is currently unavailable. This may be due to missing configuration or the service being temporarily unavailable. Please try again later or contact support if the issue persists.",
+          redirect: "/profile"
+        });
+      }
+      next();
+    },
+    function(req, res, next) {
+      // Wrap passport.authenticate to handle errors properly
+      passport.authenticate("discord", function(err, user, info) {
+        if (err) {
+          return res.status(500).render("error", {
+            message: "An error occurred while connecting to Discord. Please try again later. If the problem persists, contact support.",
+            redirect: "/profile"
+          });
+        }
+        if (!user) {
+          // Authentication failed
+          return res.status(401).render("error", {
+            message: "Discord authentication failed. Please try again or contact support if the issue persists.",
+            redirect: "/profile"
+          });
+        }
+        // Authentication successful - log in the user
+        req.logIn(user, function(err) {
+          if (err) {
+            return res.status(500).render("error", {
+              message: "An error occurred while completing Discord authentication. Please try again.",
+              redirect: "/profile"
+            });
+          }
+          return res.redirect(req.query.state || "/profile");
+        });
+      })(req, res, next);
     }
   );
 
@@ -756,12 +827,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
         return res.json({ success: false, error: "User not found with email: " + email });
       }
       
-      console.log("Resetting password for:", email);
-      console.log("Current password hash:", user.user.password ? user.user.password.substring(0, 30) + "..." : "NULL");
-      
       // Generate hash for the new password
       var hashedPassword = user.generateHash(tempPassword);
-      console.log("New password hash:", hashedPassword.substring(0, 30) + "...");
       
       // Update the user's password
       user.user.password = hashedPassword;
@@ -779,7 +846,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
           if (!err && verifyUser) {
             storedHash = verifyUser.user.password;
             passwordMatches = verifyUser.verifyPassword(tempPassword);
-            console.log("Password verification:", passwordMatches);
           }
         
           return res.json({ 
@@ -1127,7 +1193,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
       },
       function (err, user) {
         if (err) {
-          console.error('Error validating reset token:', err);
           return res.json({ valid: false, message: "Error validating token." });
         }
         if (!user) {
@@ -1188,7 +1253,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           },
         },
         function (err, user) {
-          if (err) return console.error(err);
+          if (err) return;
           if (!user) {
             req.flash(
               "emailSend",
@@ -1223,7 +1288,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
       req.decodedData = decoded; // Store decoded userId and communityId
       next();
     } catch (error) {
-      console.error("Error decoding data param:", error);
       res.status(400).send("Invalid data parameter");
     }
   };
@@ -1254,7 +1318,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
           
                   departmentId = Buffer.from(base64, 'base64').toString('utf8');
         } catch (e) {
-          console.error('Failed to decode department ID:', e);
           departmentId = null;
         }
       }
@@ -1297,7 +1360,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
             }
           });
         } catch (err) {
-          console.error('Error fetching community roles:', err.message);
         }
         // --- END ADMIN CHECK ---
         
@@ -1315,7 +1377,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
               });
             }
           } catch (apiError) {
-            console.error('API Error:', apiError.message);
             // Allow access if API is not available - this is a fallback
           }
         }
@@ -1332,7 +1393,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
         departmentId: departmentId,
       });
     } catch (error) {
-      console.error('🚨 Error in civ-dashboard route:', error);
       return res.status(500).render("error", {
         message: "An error occurred while loading the dashboard. Please try again.",
         redirect: "/communities",
@@ -1365,7 +1425,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
           
           departmentId = Buffer.from(base64, 'base64').toString('utf8');
         } catch (e) {
-          console.error('Failed to decode department ID:', e);
           departmentId = null;
         }
       }
@@ -1408,7 +1467,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
             }
           });
         } catch (err) {
-          console.error('Error fetching community roles:', err.message);
         }
         // --- END ADMIN CHECK ---
         
@@ -1426,7 +1484,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
               });
             }
           } catch (apiError) {
-            console.error('API Error:', apiError.message);
             // Allow access if API is not available - this is a fallback
           }
         }
@@ -1443,7 +1500,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
         );
         dbEmsVehicles = vehiclesResponse.data;
       } catch (err) {
-        console.error('Error fetching EMS vehicles:', err);
       }
       
       try {
@@ -1453,7 +1509,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
         );
         dbCalls = callsResponse.data;
       } catch (err) {
-        console.error('Error fetching calls:', err);
       }
       
       res.render("ems-dashboard", {
@@ -1467,7 +1522,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
         departmentName: departmentName,
       });
     } catch (error) {
-      console.error('🚨 Error in ems-dashboard route:', error);
       return res.status(500).render("error", {
         message: "An error occurred while loading the dashboard. Please try again.",
         redirect: "/communities",
@@ -1533,7 +1587,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
           
           departmentId = Buffer.from(base64, 'base64').toString('utf8');
         } catch (e) {
-          console.error('Failed to decode department ID:', e);
           departmentId = null;
         }
       }
@@ -1576,7 +1629,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
             }
           });
         } catch (err) {
-          console.error('Error fetching community roles:', err.message);
         }
         // --- END ADMIN CHECK ---
         
@@ -1594,7 +1646,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
               });
             }
           } catch (apiError) {
-            console.error('API Error:', apiError.message);
             // Allow access if API is not available - this is a fallback
           }
         }
@@ -1610,7 +1661,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
         apiUrl: policeCadApiUrl,
       });
     } catch (error) {
-      console.error('🚨 Error in police-dashboard route:', error);
       return res.status(500).render("error", {
         message: "An error occurred while loading the dashboard. Please try again.",
         redirect: "/communities",
@@ -1643,7 +1693,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
           
           departmentId = Buffer.from(base64, 'base64').toString('utf8');
         } catch (e) {
-          console.error('Failed to decode department ID:', e);
           departmentId = null;
         }
       }
@@ -1677,7 +1726,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
             }
           });
         } catch (err) {
-          console.error('Error fetching community roles:', err.message);
         }
         // --- END ADMIN CHECK ---
         
@@ -1695,7 +1743,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
               });
             }
           } catch (apiError) {
-            console.error('API Error:', apiError.message);
             // Allow access if API is not available - this is a fallback
           }
         }
@@ -1711,7 +1758,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
         apiUrl: policeCadApiUrl,
       });
     } catch (error) {
-      console.error('🚨 Error in dispatch-dashboard route:', error);
       return res.status(500).render("error", {
         message: "An error occurred while loading the dashboard. Please try again.",
         redirect: "/communities",
@@ -1760,7 +1806,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
       
       // Log other errors but not timeouts
       if (error.code !== 'ECONNABORTED') {
-        console.error("Error validating invite code:", error.message || error);
       }
       
       return res.status(500).render("error", {
@@ -1804,7 +1849,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
       } else {
         // API didn't return expected status - this shouldn't happen with the current backend
-        console.error("Unexpected API response:", response.data);
         
         if (req.headers['content-type'] === 'application/json') {
           return res.status(500).json({
@@ -1819,18 +1863,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
       }
     } catch (error) {
-      // Enhanced error logging for debugging
-      console.error("Error joining community:", {
-        error: error.message,
-        code: error.code,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url,
-        method: error.config?.method,
-        userId: req.user?._id,
-        inviteCode: req.body?.inviteCode
-      });
+      // Error joining community
       
       // Determine specific error message based on the error type
       let errorMessage = "Failed to join community. Please try again.";
@@ -1895,17 +1928,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
-  function authCheck(req, res, next) {
-    if (req.isAuthenticated()) {
-      return next();
-    } else {
-      req.session.redirect = req.originalUrl; // Store the original URL in session
-      res.render("login-civ", {
-        message: "",
-      });
-    }
-  }
-
   // app.js
   app.post("/select-department", authCheck, (req, res) => {
     const { departmentId, redirect } = req.body;
@@ -1929,7 +1951,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
       },
       (error, response, body) => {
         if (error || response.statusCode !== 200) {
-          console.error("Error validating department:", error || body);
           req.app.locals.specialContext = "errorInvalidDepartment";
           return res.redirect(redirect || "/communities");
         }
@@ -1947,7 +1968,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
           req.session.departmentId = departmentId;
           res.redirect(redirect);
         } catch (err) {
-          console.error("Error parsing departments:", err);
           req.app.locals.specialContext = "errorInvalidDepartment";
           return res.redirect(redirect || "/communities");
         }
@@ -1956,7 +1976,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   app.get("/firearm-search", auth, function (req, res) {
-    // console.debug(req.query)
     if (req.query.route == "dispatch-dashboard") {
       if (req.query.serialNumber == undefined) {
         res.status(400);
@@ -1980,7 +1999,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             ],
           },
           function (err, dbFirearms) {
-            if (err) return console.error(err);
+            if (err) return;
             Community.find(
               {
                 $or: [
@@ -1993,19 +2012,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 ],
               },
               function (err, dbCommunities) {
-                if (err) return console.error(err);
+                if (err) return;
                 Bolo.find(
                   {
                     "bolo.communityID": req.user.user.activeCommunity,
                   },
                   function (err, dbBolos) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     Call.find(
                       {
                         "call.communityID": req.user.user.activeCommunity,
                       },
                       function (err, dbCalls) {
-                        if (err) return console.error(err);
+                        if (err) return;
                         if (
                           req.user.user.activeCommunity == "" ||
                           req.user.user.activeCommunity == null
@@ -2034,14 +2053,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
                                 req.user.user.activeCommunity,
                             },
                             function (err, dbCommUsers) {
-                              if (err) return console.error(err);
+                              if (err) return;
                               EmsVehicle.find(
                                 {
                                   "emsVehicle.activeCommunityID":
                                     req.user.user.activeCommunity,
                                 },
                                 function (err, dbEmsEngines) {
-                                  if (err) return console.error(err);
+                                  if (err) return;
                                   return res.render("dispatch-dashboard", {
                                     user: req.user,
                                     vehicles: null,
@@ -2081,7 +2100,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "firearm.activeCommunityID": req.query.activeCommunityID,
           },
           function (err, dbFirearms) {
-            if (err) return console.error(err);
+            if (err) return;
             Community.find(
               {
                 $or: [
@@ -2094,19 +2113,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 ],
               },
               function (err, dbCommunities) {
-                if (err) return console.error(err);
+                if (err) return;
                 Bolo.find(
                   {
                     "bolo.communityID": req.user.user.activeCommunity,
                   },
                   function (err, dbBolos) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     Call.find(
                       {
                         "call.communityID": req.user.user.activeCommunity,
                       },
                       function (err, dbCalls) {
-                        if (err) return console.error(err);
+                        if (err) return;
                         if (
                           req.user.user.activeCommunity == "" ||
                           req.user.user.activeCommunity == null
@@ -2135,14 +2154,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
                                 req.user.user.activeCommunity,
                             },
                             function (err, dbCommUsers) {
-                              if (err) return console.error(err);
+                              if (err) return;
                               EmsVehicle.find(
                                 {
                                   "emsVehicle.activeCommunityID":
                                     req.user.user.activeCommunity,
                                 },
                                 function (err, dbEmsEngines) {
-                                  if (err) return console.error(err);
+                                  if (err) return;
                                   return res.render("dispatch-dashboard", {
                                     user: req.user,
                                     vehicles: null,
@@ -2199,7 +2218,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             ],
           },
           function (err, dbFirearms) {
-            if (err) return console.error(err);
+            if (err) return;
             Community.find(
               {
                 $or: [
@@ -2212,19 +2231,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 ],
               },
               function (err, dbCommunities) {
-                if (err) return console.error(err);
+                if (err) return;
                 Bolo.find(
                   {
                     "bolo.communityID": req.user.user.activeCommunity,
                   },
                   function (err, dbBolos) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     Call.find(
                       {
                         "call.communityID": req.user.user.activeCommunity,
                       },
                       function (err, dbCalls) {
-                        if (err) return console.error(err);
+                        if (err) return;
                         return res.render("police-dashboard", {
                           user: req.user,
                           civilians: null,
@@ -2255,7 +2274,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "firearm.activeCommunityID": req.query.activeCommunityID,
           },
           function (err, dbFirearms) {
-            if (err) return console.error(err);
+            if (err) return;
             var isValid = isValidObjectIdLength(
               req.user.user.activeCommunity,
               "cannot lookup invalid length activeCommunityID, route: /plate-search"
@@ -2276,19 +2295,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 ],
               },
               function (err, dbCommunities) {
-                if (err) return console.error(err);
+                if (err) return;
                 Bolo.find(
                   {
                     "bolo.communityID": req.user.user.activeCommunity,
                   },
                   function (err, dbBolos) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     Call.find(
                       {
                         "call.communityID": req.user.user.activeCommunity,
                       },
                       function (err, dbCalls) {
-                        if (err) return console.error(err);
+                        if (err) return;
                         return res.render("police-dashboard", {
                           user: req.user,
                           civilians: null,
@@ -2322,7 +2341,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         "ticket.civID": req.query.civID,
       },
       function (err, dbTickets) {
-        if (err) return console.error(err);
+        if (err) return;
         res.send(dbTickets);
       }
     );
@@ -2335,7 +2354,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         "arrestReport.accusedID": req.query.civID,
       },
       function (err, dbArrests) {
-        if (err) return console.error(err);
+        if (err) return;
         res.send(dbArrests);
       }
     );
@@ -2347,7 +2366,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         "report.civilianID": req.query.civID,
       },
       function (err, dbReports) {
-        if (err) return console.error(err);
+        if (err) return;
         res.send(dbReports);
       }
     );
@@ -2359,7 +2378,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         "medication.civilianID": req.query.civID,
       },
       function (err, dbMedications) {
-        if (err) return console.error(err);
+        if (err) return;
         res.send(dbMedications);
       }
     );
@@ -2371,7 +2390,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         "condition.civilianID": req.query.civID,
       },
       function (err, dbConditions) {
-        if (err) return console.error(err);
+        if (err) return;
         res.send(dbConditions);
       }
     );
@@ -2389,7 +2408,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
       fName = sanitize(req.query.firstName.trim().capitalize());
       medFName = sanitize(req.query.firstName.trim().toLowerCase());
     } else {
-      console.error("cannot lookup medical database without firstName");
       res.status(400);
       return res.redirect("back");
     }
@@ -2397,7 +2415,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
       lName = sanitize(req.query.lastName.trim().capitalize());
       medLName = sanitize(req.query.lastName.trim().toLowerCase());
     } else {
-      console.error("cannot lookup medical database without lastName");
       res.status(400);
       return res.redirect("back");
     }
@@ -2407,7 +2424,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
       req.query.activeCommunityID == null
     ) {
       if (!exists(req.query.dateOfBirth)) {
-        console.error("cannot lookup medical database without dateOfBirth");
         res.status(400);
         return res.redirect("back");
       }
@@ -2476,7 +2492,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           ],
         },
         function (err, dbCivilians) {
-          if (err) return console.error(err);
+          if (err) return;
 
           Medication.find(
             {
@@ -2494,7 +2510,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
               ],
             },
             function (err, dbMedications) {
-              if (err) return console.error(err);
+              if (err) return;
               Condition.find(
                 {
                   "condition.firstName": medFName,
@@ -2511,7 +2527,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                   ],
                 },
                 function (err, dbConditions) {
-                  if (err) return console.error(err);
+                  if (err) return;
                   MedicalReport.find(
                     {
                       "report.firstName": medFName,
@@ -2528,7 +2544,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                       ],
                     },
                     function (err, dbReports) {
-                      if (err) return console.error(err);
+                      if (err) return;
                       data = {
                         civilians: dbCivilians,
                         medications: dbMedications,
@@ -2574,7 +2590,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           ],
         },
         function (err, dbCivilians) {
-          if (err) return console.error(err);
+          if (err) return;
           Medication.find(
             {
               "medication.firstName": medFName,
@@ -2582,7 +2598,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
               "medication.activeCommunityID": req.query.activeCommunityID,
             },
             function (err, dbMedications) {
-              if (err) return console.error(err);
+              if (err) return;
               Condition.find(
                 {
                   "condition.firstName": medFName,
@@ -2590,7 +2606,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                   "condition.activeCommunityID": req.query.activeCommunityID,
                 },
                 function (err, dbConditions) {
-                  if (err) return console.error(err);
+                  if (err) return;
                   MedicalReport.find(
                     {
                       "report.firstName": medFName,
@@ -2598,7 +2614,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                       "report.activeCommunityID": req.query.activeCommunityID,
                     },
                     function (err, dbReports) {
-                      if (err) return console.error(err);
+                      if (err) return;
                       data = {
                         civilians: dbCivilians,
                         medications: dbMedications,
@@ -2632,7 +2648,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         _id: ObjectId(req.params.id),
       },
       function (err, status) {
-        if (err) return console.error(err);
+        if (err) return;
         res.send(status);
       }
     );
@@ -2653,7 +2669,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         _id: ObjectId(req.params.id),
       },
       function (err, status) {
-        if (err) return console.error(err);
+        if (err) return;
         res.send(status);
       }
     );
@@ -2674,7 +2690,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         _id: ObjectId(req.params.id),
       },
       function (err, status) {
-        if (err) return console.error(err);
+        if (err) return;
         res.send(status);
       }
     );
@@ -2695,7 +2711,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         _id: ObjectId(req.params.id),
       },
       function (err, status) {
-        if (err) return console.error(err);
+        if (err) return;
         res.send(status);
       }
     );
@@ -2716,7 +2732,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         _id: ObjectId(req.params.id),
       },
       function (err, status) {
-        if (err) return console.error(err);
+        if (err) return;
         res.send(status);
       }
     );
@@ -2737,7 +2753,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         _id: ObjectId(req.params.id),
       },
       function (err, status) {
-        if (err) return console.error(err);
+        if (err) return;
         res.send(status);
       }
     );
@@ -2767,36 +2783,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   // API route to get current user - MUST be before catch-all
-  app.get("/api/user/current", function (req, res) {
-    console.log('[API] GET /api/user/current - Session ID:', req.sessionID);
-    console.log('[API] Cookies received:', req.headers.cookie);
-    console.log('[API] Is authenticated:', req.isAuthenticated());
-    console.log('[API] User exists:', !!req.user);
-    console.log('[API] Session passport:', req.session.passport);
-
-    // Check for temp token in query string (for mobile Safari private mode)
-    const tempToken = req.query.tempToken;
-    let useTempAuth = false;
-    
-    if (tempToken && req.session.tempAuthToken === tempToken) {
-      // Verify token hasn't expired
-      if (req.session.tempAuthTokenExpiry && Date.now() < req.session.tempAuthTokenExpiry) {
-        // Token is valid - user is authenticated via temp token
-        useTempAuth = true;
-        // Clear the temp token after use (one-time use)
-        delete req.session.tempAuthToken;
-        delete req.session.tempAuthTokenExpiry;
-        req.session.save(() => {
-          // Session saved
-        });
-      }
-    }
-    
-    // Helper function to format user response
+  app.get("/api/user/current", async function (req, res) {
+    // Helper function to format user response - MUST BE DEFINED FIRST
     const formatUserResponse = function(userData, user) {
       let userIdString = '';
       const documentId = userData._id;
-      
+
       if (documentId) {
         if (typeof documentId === 'object') {
           if (documentId.$oid) {
@@ -2810,7 +2802,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
           userIdString = String(documentId);
         }
       }
-      
+
+      // Get subscription from multiple possible locations in the document
+      const subscription = user.subscription ||
+                          userData.subscription ||
+                          (userData._doc && userData._doc.subscription) ||
+                          null;
+
       return {
         user: {
           id: userIdString,
@@ -2822,11 +2820,98 @@ module.exports = function (app, passport, server, nextApp, handle) {
           panicButtonSound: user.panicButtonSound || false,
           alertVolumeLevel: user.alertVolumeLevel || 10,
           createdAt: user.createdAt,
-          subscription: user.subscription || userData.subscription || null
+          subscription: subscription
         }
       };
     };
-    
+
+    // FALLBACK AUTH: Check for Bearer token in Authorization header (for cookie-less auth)
+    const authHeader = req.headers.authorization;
+    const userEmailHeader = req.headers['x-user-email']; // Custom header with user email
+
+    if (authHeader && authHeader.startsWith('Bearer ') && userEmailHeader) {
+      const token = authHeader.substring(7);
+      const userEmail = userEmailHeader.toLowerCase();
+
+      try {
+        // Fetch user data from external API including subscription info
+        const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+        const axios = require('axios');
+
+        // Look up user locally by email first
+        const User = require('./models/user');
+
+        User.findOne({ "user.email": userEmail }, async function(err, dbUser) {
+          if (err) {
+            return res.json({ user: null });
+          }
+
+          if (dbUser) {
+            const userData = dbUser;
+            const user = dbUser.user || dbUser;
+
+            let apiUserData = null;
+
+            // Try to fetch subscription from API using user ID
+            if (dbUser._id) {
+              const userId = dbUser._id.toString();
+
+              try {
+                const userResponse = await axios.get(
+                  `${apiUrl}/api/v1/user/${userId}`,
+                  {
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json'
+                    },
+                    validateStatus: (status) => status < 500,
+                    timeout: 5000
+                  }
+                );
+
+                if (userResponse.status === 200 && userResponse.data) {
+                  apiUserData = userResponse.data.user || userResponse.data;
+                }
+              } catch (apiError) {
+                // API fetch failed, continue with local data
+              }
+            }
+
+            // Merge API subscription data with local user data
+            const response = formatUserResponse(userData, user);
+            if (apiUserData && apiUserData.subscription) {
+              response.user.subscription = apiUserData.subscription;
+            }
+
+            return res.json(response);
+          } else {
+            return res.json({ user: null });
+          }
+        });
+        return; // Don't continue - async callback will send response
+      } catch (error) {
+        // Fall through to session-based auth
+      }
+    }
+
+    // Check for temp token in query string (for mobile Safari private mode)
+    const tempToken = req.query.tempToken;
+    let useTempAuth = false;
+
+    if (tempToken && req.session.tempAuthToken === tempToken) {
+      // Verify token hasn't expired
+      if (req.session.tempAuthTokenExpiry && Date.now() < req.session.tempAuthTokenExpiry) {
+        // Token is valid - user is authenticated via temp token
+        useTempAuth = true;
+        // Clear the temp token after use (one-time use)
+        delete req.session.tempAuthToken;
+        delete req.session.tempAuthTokenExpiry;
+        req.session.save(() => {
+          // Session saved
+        });
+      }
+    }
+
     // Check if user is authenticated via session OR temp token
     if (req.isAuthenticated() && req.user) {
       // Normal authentication - user is in req.user
@@ -3346,19 +3431,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
           messageLower.includes('inactive') ||
           error === 'account_deactivated'
         ) {
-          console.log('[API /auth/login] Deactivated account detected:', responseData);
           return res.status(403).json({ error: 'account_deactivated' });
         }
       }
 
       res.status(response.status).json(responseData);
     } catch (error) {
-      console.error('Error proxying login request:', error);
       const status = error.response?.status || 500;
       let errorData = error.response?.data;
-      
-      // Log the actual error response for debugging
-      console.log('[API /auth/login] Error response data:', JSON.stringify(errorData));
       
       // Check if it's a deactivated account error - check multiple possible formats
       if (errorData) {
@@ -3377,7 +3457,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
           error === 'account_deactivated' ||
           errorStr.includes('deactivated')
         ) {
-          console.log('[API /auth/login] Deactivated account detected in error:', errorData);
           return res.status(403).json({ error: 'account_deactivated' });
         }
       }
@@ -4081,26 +4160,15 @@ module.exports = function (app, passport, server, nextApp, handle) {
       passReqToCallback: true,
     }),
     function (req, res, next) {
-      console.log('[Login-Civ] POST /login-civ - User authenticated:', req.user ? 'YES' : 'NO');
-      console.log('[Login-Civ] Session ID:', req.sessionID);
-      console.log('[Login-Civ] Is authenticated:', req.isAuthenticated());
-      console.log('[Login-Civ] Cookies received:', req.headers.cookie);
-
       const redirect = req.session.redirect || "/communities";
       delete req.session.redirect; // Clear the session redirect after use
-
-      console.log('[Login-Civ] Redirecting to:', redirect);
 
       // CRITICAL: Explicitly save session before redirecting
       // This ensures the session cookie is fully written before the redirect happens
       // Especially important for incognito/private browsing modes
       req.session.save(function(err) {
         if (err) {
-          console.error('[Login-Civ] Error saving session:', err);
           // Continue anyway - session might still work
-        } else {
-          console.log('[Login-Civ] Session saved successfully');
-          console.log('[Login-Civ] Session data:', { user: req.session.passport });
         }
         res.redirect(redirect);
       });
@@ -4390,8 +4458,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             },
             function (err, users) {
               if (err) {
-                console.error('Error finding user in POST /reset:', err);
-                return console.error(err);
+                return;
               }
               
               if (!users) {
@@ -4495,7 +4562,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     var myEms = new Ems();
     myEms.create(req, res);
     myEms.save(function (err) {
-      if (err) return console.error(err);
+      if (err) return;
     });
   });
 
@@ -4503,7 +4570,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     var myVeh = new EmsVehicle();
     myVeh.createVeh(req, res);
     myVeh.save(function (err) {
-      if (err) return console.error(err);
+      if (err) return;
     });
   });
 
@@ -4511,7 +4578,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     var myTicket = new Ticket();
     myTicket.updateTicket(req, res);
     myTicket.save(function (err) {
-      if (err) return console.error(err);
+      if (err) return;
     });
   });
 
@@ -4519,7 +4586,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     var myMedication = new Medication();
     myMedication.createMedication(req, res);
     myMedication.save(function (err) {
-      if (err) return console.error(err);
+      if (err) return;
     });
   });
 
@@ -4527,7 +4594,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     var myCondition = new Condition();
     myCondition.createCondition(req, res);
     myCondition.save(function (err) {
-      if (err) return console.error(err);
+      if (err) return;
     });
   });
 
@@ -4549,11 +4616,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
       },
       function (err) {
-        if (err) return console.error(err);
+        if (err) return;
       }
     );
     myReport.save(function (err) {
-      if (err) return console.error(err);
+      if (err) return;
     });
   });
 
@@ -4561,7 +4628,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     var myArrestReport = new ArrestReport();
     myArrestReport.updateArrestReport(req, res);
     myArrestReport.save(function (err) {
-      if (err) return console.error(err);
+      if (err) return;
     });
   });
 
@@ -4569,7 +4636,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     var myWarrant = new Warrant();
     myWarrant.createWarrant(req, res);
     myWarrant.save(function (err) {
-      if (err) return console.error(err);
+      if (err) return;
     });
   });
 
@@ -4596,7 +4663,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
       },
       function (err) {
-        if (err) return console.error(err);
+        if (err) return;
         return res.redirect("/" + req.body.route);
       }
     );
@@ -4607,7 +4674,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     var myBolo = new Bolo();
     myBolo.createBolo(req, res);
     myBolo.save(function (err) {
-      if (err) return console.error(err);
+      if (err) return;
     });
   });
 
@@ -4626,7 +4693,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         _id: ObjectId(req.body.boloID),
       },
       function (err) {
-        if (err) return console.error(err);
+        if (err) return;
         req.app.locals.specialContext = "clearBoloSuccess";
         return res.redirect("/" + req.body.route);
       }
@@ -4637,7 +4704,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     var myCall = new Call();
     myCall.createCall(req, res);
     myCall.save(function (err, dbCalls) {
-      if (err) return console.error(err);
+      if (err) return;
     });
   });
 
@@ -4656,7 +4723,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         "community.code": req.body.communityCode.toUpperCase(),
       },
       function (err, community) {
-        if (err) return console.error(err);
+        if (err) return;
         if (community == null) {
           req.app.locals.specialContext = "noCommunityFound";
           return res.redirect("back");
@@ -4679,7 +4746,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             },
           },
           function (err) {
-            if (err) return console.error(err);
+            if (err) return;
             req.app.locals.specialContext = "joinCommunitySuccess";
             return res.redirect("back");
           }
@@ -4708,7 +4775,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
       },
       function (err) {
-        if (err) return console.error(err);
+        if (err) return;
         req.app.locals.specialContext = "leaveCommunitySuccess";
         return res.redirect("back");
       }
@@ -4730,7 +4797,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         "community.code": req.body.communityCode.toUpperCase(),
       },
       function (err, community) {
-        if (err) return console.error(err);
+        if (err) return;
         if (community == null) {
           req.app.locals.specialContext = "noCommunityFound";
           return res.redirect("/" + req.body.route);
@@ -4753,7 +4820,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             },
           },
           function (err) {
-            if (err) return console.error(err);
+            if (err) return;
             req.app.locals.specialContext = "joinCommunitySuccess";
             return res.redirect("/" + req.body.route);
           }
@@ -4782,7 +4849,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
       },
       function (err) {
-        if (err) return console.error(err);
+        if (err) return;
         req.app.locals.specialContext = "leaveCommunitySuccess";
         return res.redirect("/" + req.body.route);
       }
@@ -4804,7 +4871,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         "community.code": req.body.communityCode.toUpperCase(),
       },
       function (err, community) {
-        if (err) return console.error(err);
+        if (err) return;
         if (community == null) {
           req.app.locals.specialContext = "noCommunityFound";
           return res.redirect("/ems-dashboard");
@@ -4827,7 +4894,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             },
           },
           function (err) {
-            if (err) return console.error(err);
+            if (err) return;
             req.app.locals.specialContext = "joinCommunitySuccess";
             return res.redirect("/ems-dashboard");
           }
@@ -4856,7 +4923,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
       },
       function (err) {
-        if (err) return console.error(err);
+        if (err) return;
         req.app.locals.specialContext = "leaveCommunitySuccess";
         return res.redirect("/ems-dashboard");
       }
@@ -4868,7 +4935,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     var myCommunity = new Community();
     myCommunity.createCommunity(req, res);
     myCommunity.save(function (err, result) {
-      if (err) return console.error(err);
+      if (err) return;
       var isValid = isValidObjectIdLength(
         req.body.userID,
         "cannot lookup invalid length userID, route: /createCommunity"
@@ -4886,7 +4953,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           },
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return (req.app.locals.specialContext = "createCommunitySuccess");
         }
       );
@@ -4898,7 +4965,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     var myCommunity = new Community();
     myCommunity.createPoliceCommunity(req, res);
     myCommunity.save(function (err, result) {
-      if (err) return console.error(err);
+      if (err) return;
       var isValid = isValidObjectIdLength(
         req.body.userID,
         "cannot lookup invalid length userID, route: /createPoliceCommunity"
@@ -4916,7 +4983,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           },
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return (req.app.locals.specialContext = "createCommunitySuccess");
         }
       );
@@ -4928,7 +4995,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     var myCommunity = new Community();
     myCommunity.createEmsCommunity(req, res);
     myCommunity.save(function (err, result) {
-      if (err) return console.error(err);
+      if (err) return;
       var isValid = isValidObjectIdLength(
         req.body.userID,
         "cannot lookup invalid length userID, route: /createEmsCommunity"
@@ -4946,7 +5013,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           },
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return (req.app.locals.specialContext = "createCommunitySuccess");
         }
       );
@@ -4969,7 +5036,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           },
         },
         function (err) {
-          if (err) console.error(err);
+          if (err) { /* Error occurred */ }
           return res.redirect("back");
         }
       );
@@ -4998,7 +5065,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
         function (err) {
           if (err) {
-            console.error(err);
+            /* Error occurred */
           }
           return res.redirect("back");
         }
@@ -5028,7 +5095,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
         function (err) {
           if (err) {
-            console.error(err);
+            /* Error occurred */
           }
           return res.redirect("back");
         }
@@ -5054,7 +5121,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
         function (err) {
           if (err) {
-            console.error(err);
+            /* Error occurred */
           }
           return res.redirect("back");
         }
@@ -5070,23 +5137,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
 
       if (!exists(req.body.newEmail) || !exists(req.body.currentPassword)) {
-        console.log('changeEmail: Missing required fields', {
-          hasNewEmail: exists(req.body.newEmail),
-          hasCurrentPassword: exists(req.body.currentPassword),
-          body: Object.keys(req.body)
-        });
         req.app.locals.specialContext = "invalidRequest";
         return res.redirect("back");
       }
 
       var newEmail = req.body.newEmail.trim().toLowerCase();
       var currentPassword = req.body.currentPassword;
-      
-      console.log('changeEmail: Processing request', {
-        userID: req.body.userID,
-        newEmail: newEmail,
-        hasPassword: !!currentPassword
-      });
 
       // Find user and verify password
       User.findOne(
@@ -5095,33 +5151,22 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
         function (err, user) {
           if (err) {
-            console.error('changeEmail: Error finding user', err);
             req.app.locals.specialContext = "error";
             return res.redirect("back");
           }
           if (!user) {
-            console.log('changeEmail: User not found', { userID: req.body.userID });
             req.app.locals.specialContext = "error";
             return res.redirect("back");
           }
 
-          console.log('changeEmail: User found, verifying password');
-
           // Verify current password
           var bcrypt = require("bcrypt-nodejs");
           var passwordMatch = bcrypt.compareSync(currentPassword, user.user.password);
-          console.log('changeEmail: Password verification', { 
-            passwordMatch: passwordMatch,
-            hasStoredPassword: !!user.user.password
-          });
           
           if (!passwordMatch) {
-            console.log('changeEmail: Password verification failed');
             req.app.locals.specialContext = "invalidPassword";
             return res.redirect("back");
           }
-
-          console.log('changeEmail: Password verified, checking if email is in use');
 
           // Check if email is already in use
           User.findOne(
@@ -5131,19 +5176,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
             },
             function (err, existingUser) {
               if (err) {
-                console.error('changeEmail: Error checking existing email', err);
                 req.app.locals.specialContext = "error";
                 return res.redirect("back");
               }
               if (existingUser) {
-                console.log('changeEmail: Email already in use', { 
-                  existingUserID: existingUser._id 
-                });
                 req.app.locals.specialContext = "emailInUse";
                 return res.redirect("back");
               }
-
-              console.log('changeEmail: Email available, updating database');
 
               // Update email
               User.findOneAndUpdate(
@@ -5159,21 +5198,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 { new: true }, // Return updated document
                 function (err, updatedUser) {
                   if (err) {
-                    console.error('changeEmail: Database error', err);
                     req.app.locals.specialContext = "error";
                     return res.redirect("back");
                   }
                   if (!updatedUser) {
-                    console.log('changeEmail: User not found for update', { userID: req.body.userID });
                     req.app.locals.specialContext = "error";
                     return res.redirect("back");
                   }
-                  console.log('changeEmail: Email updated successfully', {
-                    userID: req.body.userID,
-                    oldEmail: user.user.email,
-                    newEmail: newEmail,
-                    updatedEmail: updatedUser.user?.email
-                  });
                   req.app.locals.specialContext = "emailChanged";
                   return res.redirect("back");
                 }
@@ -5196,27 +5227,27 @@ module.exports = function (app, passport, server, nextApp, handle) {
         "civilian.userID": req.body.userID,
       },
       function (err, cursor) {
-        if (err) return console.error(err);
+        if (err) return;
         cursor.forEach((element) => {
           ArrestReport.deleteMany(
             {
               "arrestReport.accusedID": element._id,
             },
             function (err) {
-              if (err) return console.error(err);
+              if (err) return;
               Ticket.deleteMany(
                 {
                   "ticket.civID": element._id,
                 },
                 function (err) {
-                  if (err) return console.error(err);
+                  if (err) return;
                   Warrant.deleteMany(
                     {
                       "warrant.accusedID": element._id,
                     },
                     function (err) {
                       if (err) {
-                        console.error(err);
+                        /* Error occurred */
                         return res.redirect("back");
                       }
                     }
@@ -5271,7 +5302,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                               },
                               function (err) {
                                 if (err) {
-                                  console.error(err);
+                                  /* Error occurred */
                                   return res.redirect(page);
                                 }
                                 return res.redirect("/");
@@ -5311,7 +5342,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           _id: ObjectId(boloID),
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return res.redirect("/" + req.body.route);
         }
       );
@@ -5359,7 +5390,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           },
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return res.redirect("/" + req.body.route);
         }
       );
@@ -5388,7 +5419,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           _id: ObjectId(callID),
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return res.redirect("/" + req.body.route);
         }
       );
@@ -5447,7 +5478,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           },
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return res.redirect("/" + req.body.route);
         }
       );
@@ -5480,7 +5511,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           },
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return res.redirect("/" + req.body.route);
         }
       );
@@ -5508,7 +5539,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         _id: ObjectId(req.body.removeEms),
       },
       function (err) {
-        if (err) return console.error(err);
+        if (err) return;
         res.redirect("/ems-dashboard");
       }
     );
@@ -5555,7 +5586,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           },
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           req.app.locals.specialContext = "updateSuccess";
           return res.redirect(backLocation);
         }
@@ -5574,7 +5605,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           _id: ObjectId(req.body.vehicleID),
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           req.app.locals.specialContext = "deleteSuccess";
           return res.redirect(backLocation);
         }
@@ -5628,7 +5659,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           },
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return res.redirect("/civ-dashboard");
         }
       );
@@ -5652,7 +5683,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           _id: ObjectId(req.body.firearmID),
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return res.redirect("/civ-dashboard");
         }
       );
@@ -5717,7 +5748,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           },
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           req.app.locals.specialContext = "updateSuccess";
           return res.redirect(backLocation);
         }
@@ -5742,7 +5773,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           _id: ObjectId(req.body.licenseID),
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return res.redirect(backLocation);
         }
       );
@@ -5777,7 +5808,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
       },
       function (err) {
-        if (err) return console.error(err);
+        if (err) return;
         return res.redirect("back");
       }
     );
@@ -5804,7 +5835,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
       },
       function (err) {
-        if (err) return console.error(err);
+        if (err) return;
         return res.redirect("back");
       }
     );
@@ -5822,7 +5853,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
       },
       function (err) {
-        if (err) return console.error(err);
+        if (err) return;
         var isValid = isValidObjectIdLength(
           req.body.communityID,
           "cannot lookup invalid length communityID, route: /delete-community"
@@ -5836,7 +5867,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             _id: ObjectId(req.body.communityID),
           },
           function (err) {
-            if (err) return console.error(err);
+            if (err) return;
             return res.redirect("back");
           }
         );
@@ -5864,7 +5895,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
       },
       function (err) {
-        if (err) return console.error(err);
+        if (err) return;
         return res.redirect("back");
       }
     );
@@ -5903,7 +5934,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           "community.code": data.communityCode.toUpperCase(),
         },
         function (err, community) {
-          if (err) return console.error(err);
+          if (err) return;
           if (community == null) {
             return socket.emit("bot_joined_community", {
               error: "Community not found",
@@ -5928,7 +5959,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
               },
             },
             function (err) {
-              if (err) return console.error(err);
+              if (err) return;
               return socket.emit("bot_joined_community", {
                 message: "success",
                 commName: community.community.name,
@@ -5959,7 +5990,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           },
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return socket.emit("bot_left_community", {
             message: "Successfully left community",
           });
@@ -5991,7 +6022,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             ],
           },
           function (err, dbCivilians) {
-            if (err) return console.error(err);
+            if (err) return;
             Ticket.find(
               {
                 "ticket.civFirstName":
@@ -6002,7 +6033,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                   data.query.lastName.trim().slice(1),
               },
               function (err, dbTickets) {
-                if (err) return console.error(err);
+                if (err) return;
                 ArrestReport.find(
                   {
                     "arrestReport.accusedFirstName":
@@ -6013,7 +6044,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                       data.query.lastName.trim().slice(1),
                   },
                   function (err, dbArrestReports) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     Warrant.find(
                       {
                         "warrant.accusedFirstName":
@@ -6025,7 +6056,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                         "warrant.status": true,
                       },
                       function (err, dbWarrants) {
-                        if (err) return console.error(err);
+                        if (err) return;
                         Community.find(
                           {
                             $or: [
@@ -6038,21 +6069,21 @@ module.exports = function (app, passport, server, nextApp, handle) {
                             ],
                           },
                           function (err, dbCommunities) {
-                            if (err) return console.error(err);
+                            if (err) return;
                             Bolo.find(
                               {
                                 "bolo.communityID":
                                   data.user.user.activeCommunity,
                               },
                               function (err, dbBolos) {
-                                if (err) return console.error(err);
+                                if (err) return;
                                 Call.find(
                                   {
                                     "call.communityID":
                                       data.user.user.activeCommunity,
                                   },
                                   function (err, dbCalls) {
-                                    if (err) return console.error(err);
+                                    if (err) return;
                                     if (
                                       data.user.user.activeCommunity == "" ||
                                       data.user.user.activeCommunity == null
@@ -6081,7 +6112,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                                             data.user.user.activeCommunity,
                                         },
                                         function (err, dbCommUsers) {
-                                          if (err) return console.error(err);
+                                          if (err) return;
                                           return socket.emit(
                                             "bot_name_search_results",
                                             {
@@ -6125,7 +6156,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "civilian.activeCommunityID": data.query.activeCommunityID,
           },
           function (err, dbCivilians) {
-            if (err) return console.error(err);
+            if (err) return;
             Ticket.find(
               {
                 "ticket.civFirstName":
@@ -6136,7 +6167,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                   data.query.lastName.trim().slice(1),
               },
               function (err, dbTickets) {
-                if (err) return console.error(err);
+                if (err) return;
                 ArrestReport.find(
                   {
                     "arrestReport.accusedFirstName":
@@ -6147,7 +6178,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                       data.query.lastName.trim().slice(1),
                   },
                   function (err, dbArrestReports) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     Warrant.find(
                       {
                         "warrant.accusedFirstName":
@@ -6159,7 +6190,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                         "warrant.status": true,
                       },
                       function (err, dbWarrants) {
-                        if (err) return console.error(err);
+                        if (err) return;
                         Community.find(
                           {
                             $or: [
@@ -6172,21 +6203,21 @@ module.exports = function (app, passport, server, nextApp, handle) {
                             ],
                           },
                           function (err, dbCommunities) {
-                            if (err) return console.error(err);
+                            if (err) return;
                             Bolo.find(
                               {
                                 "bolo.communityID":
                                   data.user.user.activeCommunity,
                               },
                               function (err, dbBolos) {
-                                if (err) return console.error(err);
+                                if (err) return;
                                 Call.find(
                                   {
                                     "call.communityID":
                                       data.user.user.activeCommunity,
                                   },
                                   function (err, dbCalls) {
-                                    if (err) return console.error(err);
+                                    if (err) return;
                                     if (
                                       data.user.user.activeCommunity == "" ||
                                       data.user.user.activeCommunity == null
@@ -6214,7 +6245,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                                             data.user.user.activeCommunity,
                                         },
                                         function (err, dbCommUsers) {
-                                          if (err) return console.error(err);
+                                          if (err) return;
                                           return socket.emit(
                                             "bot_name_search_results",
                                             {
@@ -6271,7 +6302,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             ],
           },
           function (err, dbVehicles) {
-            if (err) return console.error(err);
+            if (err) return;
             Community.find(
               {
                 $or: [
@@ -6284,19 +6315,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 ],
               },
               function (err, dbCommunities) {
-                if (err) return console.error(err);
+                if (err) return;
                 Bolo.find(
                   {
                     "bolo.communityID": req.user.user.activeCommunity,
                   },
                   function (err, dbBolos) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     Call.find(
                       {
                         "call.communityID": req.user.user.activeCommunity,
                       },
                       function (err, dbCalls) {
-                        if (err) return console.error(err);
+                        if (err) return;
                         if (
                           req.user.user.activeCommunity == "" ||
                           req.user.user.activeCommunity == null
@@ -6322,7 +6353,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                                 req.user.user.activeCommunity,
                             },
                             function (err, dbCommUsers) {
-                              if (err) return console.error(err);
+                              if (err) return;
                               return socket.emit("bot_plate_search_results", {
                                 user: req.user,
                                 vehicles: dbVehicles,
@@ -6355,7 +6386,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "vehicle.activeCommunityID": req.query.activeCommunityID,
           },
           function (err, dbVehicles) {
-            if (err) return console.error(err);
+            if (err) return;
             Community.find(
               {
                 $or: [
@@ -6368,19 +6399,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 ],
               },
               function (err, dbCommunities) {
-                if (err) return console.error(err);
+                if (err) return;
                 Bolo.find(
                   {
                     "bolo.communityID": req.user.user.activeCommunity,
                   },
                   function (err, dbBolos) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     Call.find(
                       {
                         "call.communityID": req.user.user.activeCommunity,
                       },
                       function (err, dbCalls) {
-                        if (err) return console.error(err);
+                        if (err) return;
                         if (
                           req.user.user.activeCommunity == "" ||
                           req.user.user.activeCommunity == null
@@ -6406,7 +6437,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                                 req.user.user.activeCommunity,
                             },
                             function (err, dbCommUsers) {
-                              if (err) return console.error(err);
+                              if (err) return;
                               return socket.emit("bot_plate_search_results", {
                                 user: req.user,
                                 vehicles: dbVehicles,
@@ -6454,7 +6485,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             ],
           },
           function (err, dbFirearms) {
-            if (err) return console.error(err);
+            if (err) return;
             Community.find(
               {
                 $or: [
@@ -6467,19 +6498,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 ],
               },
               function (err, dbCommunities) {
-                if (err) return console.error(err);
+                if (err) return;
                 Bolo.find(
                   {
                     "bolo.communityID": req.user.user.activeCommunity,
                   },
                   function (err, dbBolos) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     Call.find(
                       {
                         "call.communityID": req.user.user.activeCommunity,
                       },
                       function (err, dbCalls) {
-                        if (err) return console.error(err);
+                        if (err) return;
                         if (
                           req.user.user.activeCommunity == "" ||
                           req.user.user.activeCommunity == null
@@ -6505,7 +6536,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                                 req.user.user.activeCommunity,
                             },
                             function (err, dbCommUsers) {
-                              if (err) return console.error(err);
+                              if (err) return;
                               return socket.emit("bot_firearm_search_results", {
                                 user: req.user,
                                 vehicles: null,
@@ -6538,7 +6569,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "firearm.activeCommunityID": req.query.activeCommunityID,
           },
           function (err, dbFirearms) {
-            if (err) return console.error(err);
+            if (err) return;
             Community.find(
               {
                 $or: [
@@ -6551,19 +6582,19 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 ],
               },
               function (err, dbCommunities) {
-                if (err) return console.error(err);
+                if (err) return;
                 Bolo.find(
                   {
                     "bolo.communityID": req.user.user.activeCommunity,
                   },
                   function (err, dbBolos) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     Call.find(
                       {
                         "call.communityID": req.user.user.activeCommunity,
                       },
                       function (err, dbCalls) {
-                        if (err) return console.error(err);
+                        if (err) return;
                         if (
                           req.user.user.activeCommunity == "" ||
                           req.user.user.activeCommunity == null
@@ -6589,7 +6620,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                                 req.user.user.activeCommunity,
                             },
                             function (err, dbCommUsers) {
-                              if (err) return console.error(err);
+                              if (err) return;
                               return socket.emit("bot_firearm_search_results", {
                                 user: req.user,
                                 vehicles: null,
@@ -6628,7 +6659,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "user.activeCommunity": user.user.activeCommunity,
           },
           function (err, dbCommUsers) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("load_status_result", dbCommUsers);
           }
         );
@@ -6646,7 +6677,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
               vehicle.emsVehicle.activeCommunityID,
           },
           function (err, dbCommEms) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("load_ems_status_result", dbCommEms);
           }
         );
@@ -6663,7 +6694,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "bolo.communityID": user.user.activeCommunity,
           },
           function (err, dbBolos) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("load_dispatch_bolos_result", dbBolos);
           }
         );
@@ -6680,7 +6711,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "call.communityID": user.user.activeCommunity,
           },
           function (err, dbCalls) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("load_dispatch_calls_result", dbCalls);
           }
         );
@@ -6701,7 +6732,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           _id: ObjectId(callID),
         },
         function (err, dbCalls) {
-          if (err) return console.error(err);
+          if (err) return;
           return socket.emit("load_call_by_id_result", dbCalls);
         }
       );
@@ -6717,7 +6748,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "bolo.communityID": user.user.activeCommunity,
           },
           function (err, dbBolos) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("load_police_bolos_result", dbBolos);
           }
         );
@@ -6767,7 +6798,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           },
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return socket.broadcast.emit("updated_bolo", req);
         }
       );
@@ -6793,7 +6824,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           _id: ObjectId(boloID),
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return socket.broadcast.emit("deleted_bolo", req);
         }
       );
@@ -6825,7 +6856,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             },
           },
           function (err) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.broadcast.emit("updated_status", req);
           }
         );
@@ -6848,7 +6879,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             },
           },
           function (err) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.broadcast.emit("updated_status", req);
           }
         );
@@ -6869,7 +6900,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           _id: ObjectId(req.vehicleID),
         },
         function (err) {
-          if (err) return console.error(err);
+          if (err) return;
           return socket.broadcast.emit("deleted_ems_vehicle", req);
         }
       );
@@ -6900,7 +6931,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             },
           },
           function (err) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.broadcast.emit("updated_ems_status", req);
           }
         );
@@ -6923,7 +6954,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             },
           },
           function (err) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.broadcast.emit("updated_ems_status", req);
           }
         );
@@ -6944,7 +6975,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             },
           },
           function (err) {
-            if (err) return console.error(err);
+            if (err) return;
             socket.broadcast.emit("updated_status", req);
             return socket.emit("bot_updated_status", req);
           }
@@ -6961,7 +6992,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             },
           },
           function (err) {
-            if (err) return console.error(err);
+            if (err) return;
             socket.broadcast.emit("updated_status", req);
             return socket.emit("bot_updated_status", req);
           }
@@ -6984,7 +7015,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             _id: ObjectId(req.activeCommunity),
           },
           function (err, resp) {
-            if (err) return console.error(err);
+            if (err) return;
             if (resp != null) {
               if (resp.community != null) {
                 // console.debug("resp", resp)
@@ -7023,7 +7054,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             _id: ObjectId(req.activeCommunity),
           },
           function (err, resp) {
-            if (err) return console.error(err);
+            if (err) return;
             if (resp != null) {
               if (resp.community != null) {
                 if (
@@ -7049,7 +7080,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                       },
                     },
                     function (err) {
-                      if (err) return console.error(err);
+                      if (err) return;
                       return socket.broadcast.emit(
                         "panic_button_updated",
                         mapInsert,
@@ -7079,7 +7110,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                         },
                       },
                       function (err) {
-                        if (err) return console.error(err);
+                        if (err) return;
                         return socket.broadcast.emit(
                           "panic_button_updated",
                           resp.community.activePanics,
@@ -7117,7 +7148,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             _id: ObjectId(req.communityID),
           },
           function (err, resp) {
-            if (err) return console.error(err);
+            if (err) return;
             if (resp != null) {
               if (resp.community != null) {
                 if (resp.community.activePanics != null) {
@@ -7139,7 +7170,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                       },
                     },
                     function (err) {
-                      if (err) return console.error(err);
+                      if (err) return;
                       return socket.broadcast.emit("cleared_panic", req);
                     }
                   );
@@ -7166,7 +7197,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             _id: ObjectId(req.activeCommunity),
           },
           function (err, resp) {
-            if (err) return console.error(err);
+            if (err) return;
             if (resp != null) {
               if (resp.community != null) {
                 Community.findByIdAndUpdate(
@@ -7179,7 +7210,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                     },
                   },
                   function (err) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     return socket.broadcast.emit(
                       "signal_100_button_updated",
                       req
@@ -7208,7 +7239,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             _id: ObjectId(req.activeCommunity),
           },
           function (err, resp) {
-            if (err) return console.error(err);
+            if (err) return;
             if (resp != null) {
               if (resp.community != null) {
                 Community.findByIdAndUpdate(
@@ -7221,7 +7252,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                     },
                   },
                   function (err) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     return socket.broadcast.emit(
                       "hold_traffic_button_updated",
                       req
@@ -7250,7 +7281,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             _id: ObjectId(activeCommunity),
           },
           function (err, resp) {
-            if (err) return console.error(err);
+            if (err) return;
             if (resp != null) {
               if (resp.community != null) {
                 Community.findByIdAndUpdate(
@@ -7263,7 +7294,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                     },
                   },
                   function (err) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     return socket.broadcast.emit(
                       "clear_signal_100_updated",
                       activeCommunity
@@ -7292,7 +7323,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             _id: ObjectId(activeCommunity),
           },
           function (err, resp) {
-            if (err) return console.error(err);
+            if (err) return;
             if (resp != null) {
               if (resp.community != null) {
                 Community.findByIdAndUpdate(
@@ -7305,7 +7336,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                     },
                   },
                   function (err) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     return socket.broadcast.emit(
                       "clear_hold_traffic_updated",
                       activeCommunity
@@ -7324,7 +7355,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       var myBolo = new Bolo();
       myBolo.socketCreateBolo(req);
       myBolo.save(function (err, dbBolos) {
-        if (err) return console.error(err);
+        if (err) return;
         return socket.broadcast.emit("created_bolo", dbBolos);
       });
     });
@@ -7333,7 +7364,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       var myCall = new Call();
       myCall.socketCreateCall(req);
       myCall.save(function (err, dbCalls) {
-        if (err) return console.error(err);
+        if (err) return;
         return socket.broadcast.emit("created_call", dbCalls);
       });
     });
@@ -7343,7 +7374,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       var myNew911Call = new Call();
       myNew911Call.socketCreate911Call(req);
       myNew911Call.save(function (err, dbCalls) {
-        if (err) return console.error(err);
+        if (err) return;
         socket.broadcast.emit("created_call", dbCalls);
         return socket.emit("created_911_call", dbCalls);
       });
@@ -7363,7 +7394,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
               _id: ObjectId(user._id),
             },
             function (err, dbUser) {
-              if (err) return console.error(err);
+              if (err) return;
               if (!exists(dbUser) || dbUser == null) {
                 return console.error(
                   "cannot update_panic_btn_sound with null dbUser: ",
@@ -7384,7 +7415,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                   "user.panicButtonSound": !dbUser.user.panicButtonSound,
                 },
                 function (err, dbUserUpdtd) {
-                  if (err) return console.error(err);
+                  if (err) return;
                   return socket.emit("load_panic_btn_result", dbUserUpdtd);
                 }
               );
@@ -7414,7 +7445,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 _id: ObjectId(myObj.dbUser._id),
               },
               function (err, dbUser) {
-                if (err) return console.error(err);
+                if (err) return;
                 if (!exists(dbUser) || dbUser == null) {
                   return console.error(
                     "cannot update_alert_volume_slider with null dbUser: ",
@@ -7435,7 +7466,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                     "user.alertVolumeLevel": myObj.volume,
                   },
                   function (err, dbUserUpdtd) {
-                    if (err) return console.error(err);
+                    if (err) return;
                     return socket.emit("load_alert_volume_result", dbUserUpdtd);
                   }
                 );
@@ -7474,7 +7505,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             },
             function (err, dbUser) {
               if (err) {
-                console.error(err);
+                /* Error occurred */
                 if (
                   user.bot_request != null &&
                   user.bot_request != undefined &&
@@ -7516,7 +7547,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             },
             function (err, dbFirearms) {
               // console.debug("returned from db, dbFirearms: ", dbFirearms)
-              if (err) return console.error(err);
+              if (err) return;
               return socket.emit("load_reg_arm_result", dbFirearms);
             }
           );
@@ -7555,7 +7586,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
               ],
             },
             function (err, dbVehicles) {
-              if (err) return console.error(err);
+              if (err) return;
               return socket.emit("load_reg_veh_result", dbVehicles);
             }
           );
@@ -7574,7 +7605,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
               "vehicle.activeCommunityID": req.communityID,
             },
             function (err, dbVehicles) {
-              if (err) return console.error(err);
+              if (err) return;
               return socket.emit("load_reg_veh_result", dbVehicles);
             }
           );
@@ -7589,7 +7620,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           "warrant.accusedID": req.accusedID,
         },
         function (err, dbWarrants) {
-          if (err) return console.error(err);
+          if (err) return;
           return socket.emit("load_active_warrants_result", dbWarrants);
         }
       );
@@ -7600,7 +7631,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       var myNewCiv = new Civilian();
       myNewCiv.socketCreateUpdateCiv(req);
       myNewCiv.save(function (err, dbCivilians) {
-        if (err) return console.error(err);
+        if (err) return;
         return socket.emit("created_new_civ", dbCivilians);
       });
     });
@@ -7619,7 +7650,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           _id: ObjectId(req.body.civID),
         },
         (err, doc) => {
-          if (err) return console.error(err);
+          if (err) return;
           if (!exists(doc))
             return console.error(
               `[LPS Error] cannot update civ when doc cannot be found, civID: ${req.body.civID}`
@@ -7631,7 +7662,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             );
           civ.socketCreateUpdateCiv(req);
           civ.save(function (err, dbCivilian) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("updated_civilian", dbCivilian);
           });
         }
@@ -7657,31 +7688,31 @@ module.exports = function (app, passport, server, nextApp, handle) {
               "ticket.civID": req.body.civID,
             },
             function (err) {
-              if (err) return console.error(err);
+              if (err) return;
               ArrestReport.deleteMany(
                 {
                   "arrest.accusedID": req.body.civID,
                 },
                 function (err) {
-                  if (err) return console.error(err);
+                  if (err) return;
                   MedicalReport.deleteMany(
                     {
                       "report.civilianID": req.body.civID,
                     },
                     function (err) {
-                      if (err) return console.error(err);
+                      if (err) return;
                       Medication.deleteMany(
                         {
                           "medication.civilianID": req.body.civID,
                         },
                         function (err) {
-                          if (err) return console.error(err);
+                          if (err) return;
                           Condition.deleteMany(
                             {
                               "condition.civilianID": req.body.civID,
                             },
                             function (err) {
-                              if (err) return console.error(err);
+                              if (err) return;
                               return socket.emit("deleted_civilian", req);
                             }
                           );
@@ -7705,7 +7736,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             _id: ObjectId(req.civID),
           },
           function (err, dbCiv) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("load_civ_by_id_result", dbCiv); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
           }
         );
@@ -7720,7 +7751,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             _id: ObjectId(req.vehID),
           },
           function (err, dbVeh) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("load_veh_by_id_result", dbVeh); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
           }
         );
@@ -7735,7 +7766,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             _id: ObjectId(req.firearmID),
           },
           function (err, dbFirearm) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("load_firearm_by_id_result", dbFirearm); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
           }
         );
@@ -7750,7 +7781,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             _id: ObjectId(req.licenseID),
           },
           function (err, dbLicense) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("load_license_by_id_result", dbLicense); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
           }
         );
@@ -7765,7 +7796,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             _id: ObjectId(req.warrantID),
           },
           function (err, dbWarrant) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("load_warrant_by_id_result", dbWarrant); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
           }
         );
@@ -7777,7 +7808,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       var myNewVeh = new Vehicle();
       myNewVeh.socketCreateVeh(req);
       myNewVeh.save(function (err, dbVehicles) {
-        if (err) return console.error(err);
+        if (err) return;
         return socket.emit("created_new_veh", dbVehicles); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
       });
     });
@@ -7787,7 +7818,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       var myNewFirearm = new Firearm();
       myNewFirearm.socketCreateFirearm(req);
       myNewFirearm.save(function (err, dbFirearms) {
-        if (err) return console.error(err);
+        if (err) return;
         return socket.emit("created_new_firearm", dbFirearms); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
       });
     });
@@ -7797,7 +7828,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       var myNewLicense = new License();
       myNewLicense.socketCreateLicense(req);
       myNewLicense.save(function (err, dbLicenses) {
-        if (err) return console.error(err);
+        if (err) return;
         return socket.emit("created_new_license", dbLicenses); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
       });
     });
@@ -7811,7 +7842,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "ticket.isWarning": false,
           },
           function (err, dbTickets) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("load_citation_result", dbTickets); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
           }
         );
@@ -7827,7 +7858,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "ticket.isWarning": true,
           },
           function (err, dbTickets) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("load_warnings_result", dbTickets); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
           }
         );
@@ -7847,7 +7878,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
             "arrestReport.accusedID": req.civID,
           },
           function (err, dbArrests) {
-            if (err) return console.error(err);
+            if (err) return;
             return socket.emit("load_arrests_result", dbArrests); //send message only to sender-client (ref https://stackoverflow.com/a/38026094/9392066)
           }
         );
@@ -7869,7 +7900,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         })
         .catch((err) => {
-          console.error(err);
+                        /* Error occurred */
           return socket.emit("load_civ_cards_result", undefined);
         });
     });
@@ -7889,7 +7920,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         })
         .catch((err) => {
-          console.error(err);
+                        /* Error occurred */
           return socket.emit("load_veh_cards_result", undefined);
         });
     });
@@ -7910,7 +7941,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         })
         .catch((err) => {
-          console.error(err);
+                        /* Error occurred */
           return socket.emit("load_gun_cards_result", undefined);
         });
     });
@@ -7931,7 +7962,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         })
         .catch((err) => {
-          console.error(err);
+                        /* Error occurred */
           return socket.emit("load_license_cards_result", undefined);
         });
     });
@@ -7952,7 +7983,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         })
         .catch((err) => {
-          console.error(err);
+                        /* Error occurred */
           return socket.emit("load_warrant_cards_result", undefined);
         });
     });
@@ -7972,7 +8003,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         })
         .catch((err) => {
-          console.error(err);
+                        /* Error occurred */
           return socket.emit("load_license_cards_result", undefined);
         });
     });
@@ -7992,7 +8023,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         })
         .catch((err) => {
-          console.error(err);
+                        /* Error occurred */
           // return socket.emit("load_license_cards_result", undefined);
         });
     });
@@ -8012,7 +8043,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         })
         .catch((err) => {
-          console.error(err);
+                        /* Error occurred */
           return socket.emit("load_personas", undefined);
         });
     });
@@ -8029,7 +8060,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         })
         .catch((err) => {
-          console.error(err);
+                        /* Error occurred */
           return socket.emit("load_persona_data", undefined);
         });
     });

@@ -222,31 +222,34 @@ module.exports = function (passport) {
 
   // Only initialize Discord strategy if environment variables are set
   if (process.env.CLIENT_ID && process.env.CLIENT_SECRET && process.env.CLIENT_REDIRECT) {
-    passport.use(
-      new DiscordStrategy(
-        {
-          passReqToCallback: true,
-          clientID: process.env.CLIENT_ID,
-          clientSecret: process.env.CLIENT_SECRET,
-          callbackURL: process.env.CLIENT_REDIRECT,
-          scope: ["identify"],
-        },
-        (req, accessToken, refreshToken, profile, done) => {
-          let user = req.user;
-          user.user.discordConnected = true;
-          user.user.discord = {
-            id: profile.id,
-            username: profile.username,
-            discriminator: profile.discriminator,
-          };
-          user.save(function (err) {
-            if (err) throw err;
-            return done(null, user);
-          });
-        }
-      )
-    );
-  } else {
-    console.log("Discord OAuth not configured - skipping Discord strategy initialization");
+    try {
+      // Register Discord strategy - passport-discord automatically uses "discord" as the strategy name
+      passport.use(
+        new DiscordStrategy(
+          {
+            passReqToCallback: true,
+            clientID: process.env.CLIENT_ID,
+            clientSecret: process.env.CLIENT_SECRET,
+            callbackURL: process.env.CLIENT_REDIRECT,
+            scope: ["identify"],
+          },
+          (req, accessToken, refreshToken, profile, done) => {
+            let user = req.user;
+            user.user.discordConnected = true;
+            user.user.discord = {
+              id: profile.id,
+              username: profile.username,
+              discriminator: profile.discriminator,
+            };
+            user.save(function (err) {
+              if (err) throw err;
+              return done(null, user);
+            });
+          }
+        )
+      );
+    } catch (error) {
+      // Strategy registration failed silently
+    }
   }
 };
