@@ -140,16 +140,23 @@ module.exports = function (app, passport, server, nextApp, handle) {
       
       // Clear timeout since we're proceeding normally
       clearTimeout(timeout);
-      
+
       // User is verified (either emailVerified === true or undefined/null for old accounts) - proceed with normal redirect
       const redirect = req.session.redirect || "/communities";
       if (req.session.redirect) {
         delete req.session.redirect; // Clear the session redirect after use
       }
-      
-      // Simple redirect like /login-civ - session is saved automatically by passport
-      // This matches the working pattern from the main branch
-      return res.redirect(redirect);
+
+      // CRITICAL: Explicitly save session before redirecting
+      // This ensures the session cookie is fully written before the redirect happens
+      // Especially important for incognito/private browsing modes
+      req.session.save(function(err) {
+        if (err) {
+          console.error('[Login] Error saving session:', err);
+          // Continue anyway - session might still work
+        }
+        return res.redirect(redirect);
+      });
     }
   );
 
@@ -4070,7 +4077,17 @@ module.exports = function (app, passport, server, nextApp, handle) {
     function (req, res, next) {
       const redirect = req.session.redirect || "/communities";
       delete req.session.redirect; // Clear the session redirect after use
-      res.redirect(redirect);
+
+      // CRITICAL: Explicitly save session before redirecting
+      // This ensures the session cookie is fully written before the redirect happens
+      // Especially important for incognito/private browsing modes
+      req.session.save(function(err) {
+        if (err) {
+          console.error('[Login] Error saving session:', err);
+          // Continue anyway - session might still work
+        }
+        res.redirect(redirect);
+      });
     }
   );
 
@@ -4434,7 +4451,15 @@ module.exports = function (app, passport, server, nextApp, handle) {
               // Still redirect even if login fails - they can log in manually
               return done(null);
             }
-            done(null);
+
+            // CRITICAL: Save session before redirecting
+            // This ensures session is persisted, especially for incognito/private mode
+            req.session.save(function(saveErr) {
+              if (saveErr) {
+                console.error('[Password Reset] Error saving session:', saveErr);
+              }
+              done(null);
+            });
           });
         },
       ],
