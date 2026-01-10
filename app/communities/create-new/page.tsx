@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import { getAuthHeaders } from '@/lib/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 
@@ -159,6 +160,7 @@ function CreateCommunityContent() {
       try {
         const response = await fetch('/api/user/current', {
           credentials: 'include',
+          headers: getAuthHeaders()
         });
 
         if (response.ok) {

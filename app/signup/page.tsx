@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { ExclamationTriangleIcon, CheckCircleIcon, UserIcon, EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
+import { getAuthHeaders } from '@/lib/auth';
 
 function SignupForm() {
   const router = useRouter();
@@ -35,7 +36,8 @@ function SignupForm() {
     const checkAuth = async () => {
       try {
         const response = await fetch('/api/user/current', {
-          credentials: 'include'
+          credentials: 'include',
+          headers: getAuthHeaders()
         });
         if (response.ok) {
           const data = await response.json();

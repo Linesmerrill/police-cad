@@ -75,10 +75,11 @@ try {
 // Setup session storage.
 app.use(
   session({
+    name: 'connect.sid', // Explicitly set session cookie name
     store: new MongoStore({ mongooseConnection: mongoose.connection }),
     secret: "knoldus",
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // CRITICAL FIX: Don't create session for unauthenticated users
     //expires: 1000 * 60 * 60 * 24 * 30, // 1 Month (30 days) see: https://www.npmjs.com/package/connect-mongodb-session
     cookie: {
       path: "/",

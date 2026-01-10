@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { UserIcon, EnvelopeIcon, CalendarIcon, CurrencyDollarIcon, LockClosedIcon, SpeakerWaveIcon, BellIcon, TrashIcon, EyeIcon, EyeSlashIcon, IdentificationIcon } from '@heroicons/react/24/solid';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { DISCORD_COMMUNITY } from '@/constants/discord';
+import { getAuthHeaders, storeAuth } from '@/lib/auth';
 
 export default function Profile() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function Profile() {
   const [emailVisible, setEmailVisible] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [showChangeEmailModal, setShowChangeEmailModal] = useState(false);
+  const [showDisconnectDiscordModal, setShowDisconnectDiscordModal] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -192,7 +194,8 @@ export default function Profile() {
     const fetchUser = async () => {
       try {
         const response = await fetch('/api/user/current', {
-          credentials: 'include'
+          credentials: 'include',
+          headers: getAuthHeaders()
         });
         if (response.ok) {
           const userData = await response.json();
@@ -285,6 +288,7 @@ export default function Profile() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
+          ...getAuthHeaders()
         },
         body: params.toString(),
         credentials: 'include'
@@ -328,6 +332,7 @@ export default function Profile() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
+          ...getAuthHeaders()
         },
         body: params.toString(),
         credentials: 'include'
@@ -350,7 +355,6 @@ export default function Profile() {
 
   const disconnectDiscord = async () => {
     if (!user) return;
-    if (!window.confirm('Are you sure you want to disconnect Discord?')) return;
 
     setSaving('discord');
     try {
@@ -364,6 +368,7 @@ export default function Profile() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
+          ...getAuthHeaders()
         },
         body: params.toString(),
         credentials: 'include'
@@ -371,6 +376,7 @@ export default function Profile() {
 
       if (response.ok) {
         setUser({ ...user, discordConnected: false });
+        setShowDisconnectDiscordModal(false);
         showMessage('success', 'Discord disconnected successfully');
       } else {
         showMessage('error', 'Failed to disconnect Discord');
@@ -474,10 +480,13 @@ export default function Profile() {
       // The backend redirects on both success and error, so we need to check if the email actually changed
       // by refreshing user data after a short delay to allow the backend to process
       await new Promise(resolve => setTimeout(resolve, 300)); // Small delay for backend processing
-      
+
       // Refresh user data to check if email was actually updated
+      // Use session-based auth (no headers) since the old email in localStorage would cause issues
       const userResponse = await fetch('/api/user/current', {
-        credentials: 'include'
+        credentials: 'include',
+        // Don't send auth headers - use session-based auth instead
+        // This avoids the issue where localStorage still has the old email
       });
       
       if (userResponse.ok) {
@@ -487,6 +496,12 @@ export default function Profile() {
           
           if (emailWasUpdated) {
             // Success - email was updated
+            // Update localStorage with the new email so future requests work correctly
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+              storeAuth(token, userData.user.email);
+            }
+            
             setUser(userData.user);
             setShowChangeEmailModal(false);
             setNewEmail('');
@@ -1498,7 +1513,7 @@ export default function Profile() {
                 </div>
                 {user.discordConnected ? (
                   <button
-                    onClick={disconnectDiscord}
+                    onClick={() => setShowDisconnectDiscordModal(true)}
                     disabled={saving === 'discord'}
                     style={{
                       padding: '0.75rem 1.5rem',
@@ -2194,6 +2209,176 @@ export default function Profile() {
                     />
                   )}
                   {saving === 'email' ? 'Changing...' : 'Change Email'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Disconnect Discord Modal */}
+        {showDisconnectDiscordModal && (
+          <div
+            onClick={(e) => {
+              // Only close if clicking directly on the overlay, not on child elements
+              if (e.target === e.currentTarget) {
+                setShowDisconnectDiscordModal(false);
+              }
+            }}
+            onMouseDown={(e) => {
+              // Prevent closing when clicking inside the modal
+              if (e.target !== e.currentTarget) {
+                e.stopPropagation();
+              }
+            }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.75)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 10000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '1rem'
+            }}
+          >
+            <div
+              onMouseDown={(e) => {
+                // Only stop propagation for mouse events, not for input interactions
+                const target = e.target as HTMLElement;
+                if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+                  e.stopPropagation();
+                }
+              }}
+              onClick={(e) => {
+                // Only stop propagation for click events on the modal container itself
+                const target = e.target as HTMLElement;
+                if (e.target === e.currentTarget || (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && target.tagName !== 'BUTTON')) {
+                  e.stopPropagation();
+                }
+              }}
+              style={{
+                backgroundColor: 'rgba(15, 15, 20, 0.98)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '1rem',
+                padding: '2rem',
+                maxWidth: '500px',
+                width: '100%',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)',
+                position: 'relative'
+              }}
+            >
+              <button
+                onClick={() => {
+                  setShowDisconnectDiscordModal(false);
+                }}
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  cursor: 'pointer',
+                  fontSize: '1.5rem',
+                  lineHeight: '1',
+                  padding: '0.25rem',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#ffffff';
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                ×
+              </button>
+              <h3 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                color: '#ffffff',
+                marginBottom: '0.5rem',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+              }}>
+                Disconnect Discord
+              </h3>
+              <p style={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                marginBottom: '1.5rem',
+                fontSize: '0.875rem',
+                lineHeight: '1.6',
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+              }}>
+                Are you sure you want to disconnect your Discord account? You can reconnect it at any time.
+              </p>
+
+              <div style={{
+                display: 'flex',
+                gap: '1rem',
+                justifyContent: 'flex-end',
+                flexWrap: 'wrap'
+              }}>
+                <button
+                  onClick={() => {
+                    setShowDisconnectDiscordModal(false);
+                  }}
+                  disabled={saving === 'discord'}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    borderRadius: '0.5rem',
+                    color: '#ffffff',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: saving === 'discord' ? 'not-allowed' : 'pointer',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={disconnectDiscord}
+                  disabled={saving === 'discord'}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    backgroundColor: saving === 'discord' 
+                      ? 'rgba(239, 68, 68, 0.4)' 
+                      : 'rgba(239, 68, 68, 0.6)',
+                    border: `1px solid ${saving === 'discord' 
+                      ? 'rgba(239, 68, 68, 0.4)' 
+                      : 'rgba(239, 68, 68, 0.8)'}`,
+                    borderRadius: '0.5rem',
+                    color: '#ffffff',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: saving === 'discord' ? 'not-allowed' : 'pointer',
+                    opacity: saving === 'discord' ? 0.6 : 1,
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  {saving === 'discord' && (
+                    <ArrowPathIcon 
+                      style={{ 
+                        width: '16px', 
+                        height: '16px',
+                        animation: 'spin 1s linear infinite'
+                      }} 
+                    />
+                  )}
+                  {saving === 'discord' ? 'Disconnecting...' : 'Disconnect Discord'}
                 </button>
               </div>
             </div>

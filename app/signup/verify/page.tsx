@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { ExclamationTriangleIcon, CheckCircleIcon, EnvelopeIcon } from '@heroicons/react/24/solid';
+import { getAuthHeaders } from '@/lib/auth';
 
 function VerifyForm() {
   const router = useRouter();
@@ -108,7 +109,8 @@ function VerifyForm() {
     const checkAuth = async () => {
       try {
         const response = await fetch('/api/user/current', {
-          credentials: 'include'
+          credentials: 'include',
+          headers: getAuthHeaders()
         });
         if (response.ok) {
           const data = await response.json();
