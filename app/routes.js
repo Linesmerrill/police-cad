@@ -82,8 +82,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
     }
 
-    // Not authenticated - redirect or render login
+    // Not authenticated - redirect to Next.js login page
     req.session.redirect = req.originalUrl;
+    if (nextApp && handle) {
+      // Redirect to Next.js login page
+      return res.redirect("/login?redirect=" + encodeURIComponent(req.originalUrl));
+    }
+    // Fallback to old EJS template if Next.js not available
     res.render("login-civ", {
       message: "",
     });
@@ -211,46 +216,79 @@ module.exports = function (app, passport, server, nextApp, handle) {
     });
   });
 
+  // NEW: API endpoint to establish/refresh session from token auth
+  // Returns Discord OAuth URL after ensuring session is valid
+  app.post("/api/auth/prepare-discord-oauth", async function(req, res) {
+    // Check authentication via session OR token
+    let authenticated = false;
+    let user = null;
+
+    // First check session-based auth
+    if (req.isAuthenticated() && req.user) {
+      authenticated = true;
+      user = req.user;
+    } else {
+      // Fallback: Check for token-based auth
+      const authHeader = req.headers.authorization;
+      const userEmailHeader = req.headers['x-user-email'];
+
+      if (authHeader && authHeader.startsWith('Bearer ') && userEmailHeader) {
+        const userEmail = userEmailHeader.toLowerCase();
+        try {
+          const User = require('./models/user');
+          user = await User.findOne({ "user.email": userEmail }).exec();
+          if (user) {
+            authenticated = true;
+            // Establish session for this user - must wait for completion
+            await new Promise((resolve, reject) => {
+              req.login(user, function(err) {
+                if (err) {
+                  console.error('Error establishing session for Discord OAuth:', err);
+                  reject(err);
+                } else {
+                  resolve();
+                }
+              });
+            });
+          }
+        } catch (error) {
+          console.error('Error looking up user for Discord OAuth:', error);
+          return res.status(500).json({ error: 'Failed to authenticate' });
+        }
+      }
+    }
+
+    if (!authenticated || !user) {
+      // Not authenticated
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    // User is authenticated - save session and return Discord OAuth URL
+    req.session.save(function(err) {
+      if (err) {
+        console.error('Error saving session before Discord OAuth:', err);
+        return res.status(500).json({ error: 'Failed to save session' });
+      }
+
+      // Return Discord OAuth URL
+      const state = encodeURIComponent(req.body.state || '/profile');
+      const discordClientId = process.env.CLIENT_ID || '1005557484271976569';
+      const baseUrl = req.protocol + '://' + req.get('host');
+      const redirectUri = encodeURIComponent(process.env.CLIENT_REDIRECT || baseUrl + '/auth/discord');
+      const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${discordClientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify&state=${state}`;
+
+      return res.json({ redirectUrl: discordAuthUrl });
+    });
+  });
+
   app.get(
     "/auth/discord",
     auth,
-    function(req, res, next) {
-      // Check if Discord strategy is available
-      if (!passport._strategies || !passport._strategies.discord) {
-        return res.status(503).render("error", {
-          message: "Discord authentication is currently unavailable. This may be due to missing configuration or the service being temporarily unavailable. Please try again later or contact support if the issue persists.",
-          redirect: "/profile"
-        });
-      }
-      next();
-    },
-    function(req, res, next) {
-      // Wrap passport.authenticate to handle errors properly
-      passport.authenticate("discord", function(err, user, info) {
-        if (err) {
-          return res.status(500).render("error", {
-            message: "An error occurred while connecting to Discord. Please try again later. If the problem persists, contact support.",
-            redirect: "/profile"
-          });
-        }
-        if (!user) {
-          // Authentication failed
-          return res.status(401).render("error", {
-            message: "Discord authentication failed. Please try again or contact support if the issue persists.",
-            redirect: "/profile"
-          });
-        }
-        // Authentication successful - log in the user
-        req.logIn(user, function(err) {
-          if (err) {
-            return res.status(500).render("error", {
-              message: "An error occurred while completing Discord authentication. Please try again.",
-              redirect: "/profile"
-            });
-          }
-          return res.redirect(req.query.state || "/profile");
-        });
-      })(req, res, next);
+    passport.authenticate("discord", {
+      failureRedirect: "/",
+    }),
+    (req, res) => {
+      return res.redirect(req.query.state || "/profile");
     }
   );
 

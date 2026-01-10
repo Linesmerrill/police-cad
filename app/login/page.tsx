@@ -18,15 +18,31 @@ function LoginForm() {
   const [passwordError, setPasswordError] = useState(false);
   const [privateBrowsingDetected] = useState(false);
   const [checkingExistingLogin, setCheckingExistingLogin] = useState(true);
+  const [discordSessionExpiredMessage, setDiscordSessionExpiredMessage] = useState(false);
 
   // Check if user is already logged in on mount
   useEffect(() => {
     const checkExistingLogin = async () => {
       try {
+        const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
+
+        // CRITICAL: Check if this is a Discord OAuth redirect
+        // Discord OAuth redirects contain /auth/discord with a code parameter
+        // If user's session expired during OAuth, we should NOT auto-redirect them back
+        // as this creates an infinite loop. Instead, show the login form.
+        const isDiscordOAuthRedirect = redirect.includes('/auth/discord') && redirect.includes('code=');
+
+        if (isDiscordOAuthRedirect) {
+          // Don't try to auto-redirect for Discord OAuth - session likely expired
+          // Show login form so user can re-authenticate, and display a helpful message
+          setDiscordSessionExpiredMessage(true);
+          setCheckingExistingLogin(false);
+          return;
+        }
+
         const user = await fetchCurrentUser();
         if (user && user.id) {
           // User is already logged in, redirect to communities
-          const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
           window.location.href = redirect;
           return;
         }
@@ -338,6 +354,28 @@ function LoginForm() {
                 </p>
                 <p style={{ margin: '0.5rem 0', lineHeight: '1.6', color: 'rgba(252, 211, 77, 0.9)' }}>
                   <strong>Please try logging in using a regular (non-private) browser window.</strong> This will ensure your session is properly maintained.
+                </p>
+              </div>
+            )}
+
+            {/* Discord Session Expired Warning */}
+            {discordSessionExpiredMessage && (
+              <div
+                style={{
+                  background: 'rgba(59, 130, 246, 0.15)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  borderRadius: '8px',
+                  padding: '1rem',
+                  marginBottom: '1.5rem',
+                  color: '#93c5fd',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                  <ExclamationTriangleIcon style={{ width: '1.25rem', height: '1.25rem', flexShrink: 0 }} />
+                  <strong style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#60a5fa' }}>Session Expired</strong>
+                </div>
+                <p style={{ margin: '0.5rem 0', lineHeight: '1.6', color: 'rgba(147, 197, 253, 0.9)' }}>
+                  Your session expired while connecting Discord. Please log in again, then try connecting your Discord account from your profile page.
                 </p>
               </div>
             )}

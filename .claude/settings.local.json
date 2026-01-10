@@ -16,7 +16,8 @@
       "Bash(powershell.exe -Command \"& ''C:\\\\Program Files\\\\nodejs\\\\npm.cmd'' --version\")",
       "Bash(powershell.exe -Command \"cd ''c:\\\\Users\\\\Merri\\\\workspace\\\\police-cad''; & ''C:\\\\Program Files\\\\nodejs\\\\npm.cmd'' run dev\")",
       "Bash(\"C:\\\\Program Files\\\\nodejs\\\\node.exe\" node_modules/nodemon/bin/nodemon.js --ext js,ejs server.js)",
-      "Bash(\"C:\\\\Program Files\\\\nodejs\\\\npm.cmd\" install)"
+      "Bash(\"C:\\\\Program Files\\\\nodejs\\\\npm.cmd\" install)",
+      "Bash(find:*)"
     ]
   }
 }

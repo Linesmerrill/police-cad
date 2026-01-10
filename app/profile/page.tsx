@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { UserIcon, EnvelopeIcon, CalendarIcon, CurrencyDollarIcon, LockClosedIcon, SpeakerWaveIcon, BellIcon, TrashIcon, EyeIcon, EyeSlashIcon, IdentificationIcon } from '@heroicons/react/24/solid';
@@ -11,6 +11,7 @@ import { getAuthHeaders, storeAuth, clearAuth } from '@/lib/auth';
 
 export default function Profile() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editingUsername, setEditingUsername] = useState(false);
@@ -217,6 +218,16 @@ export default function Profile() {
     fetchUser();
   }, []);
 
+  // Check for error query parameter and show message
+  useEffect(() => {
+    const error = searchParams?.get('error');
+    if (error === 'discord_login_required') {
+      showMessage('error', 'Please log in first before connecting your Discord account. The Discord connection link has expired. Please try connecting Discord again from your profile page.');
+      // Remove error from URL
+      router.replace('/profile');
+    }
+  }, [searchParams, router]);
+
   const formatDate = (dateString: string | Date) => {
     if (!dateString) return 'N/A';
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
@@ -351,6 +362,37 @@ export default function Profile() {
       console.error('Error updating call sign:', error);
       showMessage('error', 'An error occurred while updating call sign');
     } finally {
+      setSaving(null);
+    }
+  };
+
+  const connectDiscord = async () => {
+    if (!user) return;
+
+    setSaving('discord');
+    try {
+      // Call the API endpoint to establish session and get Discord OAuth URL
+      const response = await fetch('/api/auth/prepare-discord-oauth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders()
+        },
+        body: JSON.stringify({ state: '/profile' }),
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Redirect to Discord OAuth
+        window.location.href = data.redirectUrl;
+      } else {
+        showMessage('error', 'Failed to initiate Discord connection');
+        setSaving(null);
+      }
+    } catch (error) {
+      console.error('Error connecting Discord:', error);
+      showMessage('error', 'An error occurred while connecting Discord');
       setSaving(null);
     }
   };
@@ -1564,35 +1606,43 @@ export default function Profile() {
                     {saving === 'discord' ? 'Disconnecting...' : 'Disconnect Discord'}
                   </button>
                 ) : (
-                  <a
-                    href={`https://discord.com/api/oauth2/authorize?client_id=1005557484271976569&redirect_uri=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin + '/auth/discord' : '/auth/discord')}&response_type=code&scope=identify&state=${encodeURIComponent('/profile')}`}
+                  <button
+                    onClick={connectDiscord}
+                    disabled={saving === 'discord'}
                     style={{
                       display: 'inline-block',
                       padding: '0.75rem 1.5rem',
-                      backgroundColor: 'rgba(88, 101, 242, 0.6)',
+                      backgroundColor: saving === 'discord'
+                        ? 'rgba(88, 101, 242, 0.4)'
+                        : 'rgba(88, 101, 242, 0.6)',
                       border: '1px solid rgba(88, 101, 242, 0.8)',
                       borderRadius: '0.5rem',
                       color: '#ffffff',
                       fontSize: '0.875rem',
                       fontWeight: '600',
-                      textDecoration: 'none',
                       textAlign: 'center',
                       transition: 'all 0.2s',
                       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                       flexShrink: 0,
-                      flexBasis: '160px'
+                      flexBasis: '160px',
+                      cursor: saving === 'discord' ? 'not-allowed' : 'pointer',
+                      opacity: saving === 'discord' ? 0.6 : 1
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(88, 101, 242, 0.8)';
-                      e.currentTarget.style.borderColor = 'rgba(88, 101, 242, 1)';
+                      if (saving !== 'discord') {
+                        e.currentTarget.style.backgroundColor = 'rgba(88, 101, 242, 0.8)';
+                        e.currentTarget.style.borderColor = 'rgba(88, 101, 242, 1)';
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(88, 101, 242, 0.6)';
-                      e.currentTarget.style.borderColor = 'rgba(88, 101, 242, 0.8)';
+                      if (saving !== 'discord') {
+                        e.currentTarget.style.backgroundColor = 'rgba(88, 101, 242, 0.6)';
+                        e.currentTarget.style.borderColor = 'rgba(88, 101, 242, 0.8)';
+                      }
                     }}
                   >
-                    Connect Discord
-                  </a>
+                    {saving === 'discord' ? 'Connecting...' : 'Connect Discord'}
+                  </button>
                 )}
               </div>
             </div>
