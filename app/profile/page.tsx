@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import { UserIcon, EnvelopeIcon, CalendarIcon, CurrencyDollarIcon, LockClosedIcon, SpeakerWaveIcon, BellIcon, TrashIcon, EyeIcon, EyeSlashIcon, IdentificationIcon } from '@heroicons/react/24/solid';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { DISCORD_COMMUNITY } from '@/constants/discord';
-import { getAuthHeaders, storeAuth } from '@/lib/auth';
+import { getAuthHeaders, storeAuth, clearAuth } from '@/lib/auth';
 
 export default function Profile() {
   const router = useRouter();
@@ -21,6 +21,8 @@ export default function Profile() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [emailVisible, setEmailVisible] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [showDeactivateLoading, setShowDeactivateLoading] = useState(false);
+  const [deactivateStep, setDeactivateStep] = useState<'processing' | 'logging-out'>('processing');
   const [showChangeEmailModal, setShowChangeEmailModal] = useState(false);
   const [showDisconnectDiscordModal, setShowDisconnectDiscordModal] = useState(false);
   const [newEmail, setNewEmail] = useState('');
@@ -532,31 +534,47 @@ export default function Profile() {
     if (!user) return;
 
     setSaving('deactivate');
+    setShowDeactivateModal(false);
+    setShowDeactivateLoading(true);
+    setDeactivateStep('processing');
+    
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? window.location.origin : '');
-      const response = await fetch(`${API_URL}/api/v1/user/${user.id}/deactivate`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
+      
+      // Make API call and wait for it, but ensure minimum 2 seconds for processing animation
+      const [response] = await Promise.all([
+        fetch(`${API_URL}/api/v1/user/${user.id}/deactivate`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        }),
+        new Promise(resolve => setTimeout(resolve, 2000)) // Minimum 2 second processing animation
+      ]);
 
       if (response.ok) {
-        showMessage('success', 'Your account has been deactivated. You can reactivate it within 30 days by contacting us via Discord assistance ticket.');
+        // Clear localStorage auth tokens
+        clearAuth();
+        
+        // Switch to logging out step
+        setDeactivateStep('logging-out');
+        
+        // Wait a bit before redirecting to logout
         setTimeout(() => {
           window.location.href = '/logout';
-        }, 2000);
+        }, 1500);
       } else {
         const data = await response.json().catch(() => ({}));
+        setShowDeactivateLoading(false);
         showMessage('error', data.message || 'There was an error deactivating your account. Please try again later.');
       }
     } catch (error) {
       console.error('Error deactivating account:', error);
+      setShowDeactivateLoading(false);
       showMessage('error', 'An error occurred while deactivating your account');
     } finally {
       setSaving(null);
-      setShowDeactivateModal(false);
     }
   };
 
@@ -2547,6 +2565,139 @@ export default function Profile() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Deactivation Loading Modal */}
+        {showDeactivateLoading && (
+          <>
+            {/* Blur background overlay */}
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                zIndex: 9999,
+              }}
+            />
+            {/* Loading modal */}
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 10000,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '1rem'
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: 'rgba(15, 15, 20, 0.98)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '1rem',
+                  padding: '3rem',
+                  maxWidth: '500px',
+                  width: '100%',
+                  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)',
+                  textAlign: 'center'
+                }}
+              >
+                {/* Spinner Animation */}
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  margin: '0 auto 2rem',
+                  position: 'relative'
+                }}>
+                  <div
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      border: '6px solid rgba(255, 255, 255, 0.1)',
+                      borderTop: '6px solid #667eea',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                      margin: '0 auto'
+                    }}
+                  />
+                </div>
+
+                {/* Step text */}
+                <h3 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '700',
+                  color: '#ffffff',
+                  marginBottom: '1rem',
+                  fontFamily: '-apple-system, BlinkSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                }}>
+                  {deactivateStep === 'processing' ? 'Processing...' : 'Logging out...'}
+                </h3>
+
+                {/* Description */}
+                {deactivateStep === 'processing' && (
+                  <p style={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    marginBottom: '1.5rem',
+                    fontSize: '0.875rem',
+                    lineHeight: '1.6',
+                    fontFamily: '-apple-system, BlinkSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  }}>
+                    Your account is being deactivated. Please wait...
+                  </p>
+                )}
+
+                {deactivateStep === 'logging-out' && (
+                  <p style={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    marginBottom: '1.5rem',
+                    fontSize: '0.875rem',
+                    lineHeight: '1.6',
+                    fontFamily: '-apple-system, BlinkSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  }}>
+                    Redirecting to home...
+                  </p>
+                )}
+
+                {/* Reactivation notice */}
+                <div style={{
+                  marginTop: '2rem',
+                  padding: '1rem',
+                  backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                  border: '1px solid rgba(102, 126, 234, 0.3)',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  lineHeight: '1.6',
+                  color: 'rgba(255, 255, 255, 0.8)'
+                }}>
+                  <p style={{ margin: 0 }}>
+                    <strong style={{ color: '#ffffff' }}>Note:</strong> If you want to reactivate your account, you have <strong style={{ color: '#ffffff' }}>30 days</strong> and you can{' '}
+                    <a
+                      href="/contact-us"
+                      style={{
+                        color: '#667eea',
+                        textDecoration: 'underline',
+                        fontWeight: '600'
+                      }}
+                    >
+                      contact us via Discord
+                    </a>
+                    {' '}to restore your account.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* CSS for spinner animation */}
+            <style dangerouslySetInnerHTML={{__html: `
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}} />
+          </>
         )}
       </div>
       <Footer />

@@ -99,6 +99,22 @@ function LoginForm() {
       // Check if we got a valid token response
       const apiData = await apiResponse.json().catch(() => ({}));
 
+      // Check for deactivated account in API response
+      if (apiData.isDeactivated === true || apiData.deactivated === true) {
+        // Account is deactivated - stop login and show error
+        setError('deactivated');
+        setLoading(false);
+        return;
+      }
+
+      // Check for deactivated account error message
+      if (apiData.error === 'account_deactivated' || 
+          (apiData.message && typeof apiData.message === 'string' && apiData.message.toLowerCase().includes('deactivated'))) {
+        setError('deactivated');
+        setLoading(false);
+        return;
+      }
+
       if (apiResponse.ok && apiData.token) {
         // API validation successful
         // Store the token in localStorage for subsequent requests
@@ -121,6 +137,14 @@ function LoginForm() {
           body: formData.toString(),
           credentials: 'include',
         });
+
+        // Check if response indicates deactivated account (backup check)
+        const loginUrl = loginResponse.url || '';
+        if (loginUrl.includes('error=account_deactivated') || loginUrl.includes('deactivated')) {
+          setError('deactivated');
+          setLoading(false);
+          return;
+        }
 
         if (loginResponse.ok || loginResponse.redirected) {
           // Login successful - redirect to communities
@@ -341,20 +365,18 @@ function LoginForm() {
                       Your account has been deactivated and you cannot log in at this time.
                     </p>
                     <p style={{ margin: '0.5rem 0', lineHeight: '1.6', color: 'rgba(252, 165, 165, 0.9)' }}>
-                      To reactivate your account, please contact us by creating an assistance ticket in our{' '}
-                      <a
-                        href="https://discord.gg/linespolice"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      If you want to reactivate your account, you have <strong style={{ color: '#ffffff' }}>30 days</strong> and you can{' '}
+                      <Link
+                        href="/contact-us"
                         style={{
                           color: '#fbbf24',
                           textDecoration: 'underline',
                           fontWeight: '600',
                         }}
                       >
-                        Discord server
-                      </a>
-                      {' '}and we will help you restore access to your account.
+                        contact us via Discord
+                      </Link>
+                      {' '}to restore your account.
                     </p>
                   </div>
                 ) : (

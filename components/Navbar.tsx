@@ -6,7 +6,7 @@ import { UserIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { DISCORD_COMMUNITY } from '@/constants/discord';
-import { getAuthHeaders } from '@/lib/auth';
+import { getAuthHeaders, clearAuth } from '@/lib/auth';
 
 const navigation = [
   { name: 'Home', href: '/' },
@@ -523,9 +523,19 @@ export default function Navbar() {
                 ) : null}
               </Link>
 
-              <a
-                href="/logout"
-                onClick={() => setUserMenuOpen(false)}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setUserMenuOpen(false);
+                  
+                  // Clear localStorage immediately
+                  clearAuth();
+                  
+                  // Directly navigate to Express logout route
+                  // Use replace to avoid adding to history
+                  window.location.replace('/logout');
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -536,14 +546,19 @@ export default function Navbar() {
                   borderRadius: '4px',
                   transition: 'background-color 0.2s',
                   fontSize: '0.875rem',
-                  marginTop: '0.25rem'
+                  marginTop: '0.25rem',
+                  cursor: 'pointer',
+                  background: 'transparent',
+                  border: 'none',
+                  width: '100%',
+                  textAlign: 'left'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
                 <ArrowRightOnRectangleIcon style={{ width: '18px', height: '18px' }} />
                 Logout
-              </a>
+              </button>
             </div>
           )}
         </div>

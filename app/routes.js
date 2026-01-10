@@ -1122,8 +1122,52 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   app.get("/logout", function (req, res) {
-    req.logout();
-    return res.redirect("/");
+    // Clear the session cookie immediately before destroying session
+    res.clearCookie('connect.sid', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    });
+    
+    // Clear passport session
+    if (req.logout) {
+      try {
+        req.logout(function(err) {
+          if (err) {
+            console.error('Logout error:', err);
+          }
+        });
+      } catch (err) {
+        console.error('Logout error:', err);
+      }
+    }
+    
+    // Destroy the session with timeout to prevent hanging
+    if (req.session) {
+      const destroyTimeout = setTimeout(() => {
+        // Timeout after 1 second - force redirect
+        return res.redirect("/");
+      }, 1000);
+      
+      try {
+        req.session.destroy(function(err) {
+          clearTimeout(destroyTimeout);
+          if (err) {
+            console.error('Session destroy error:', err);
+          }
+          // Redirect to home
+          return res.redirect("/");
+        });
+      } catch (err) {
+        clearTimeout(destroyTimeout);
+        console.error('Session destroy error:', err);
+        return res.redirect("/");
+      }
+    } else {
+      // No session to destroy, just redirect
+      return res.redirect("/");
+    }
   });
 
   /* /communities is now handled by Next.js at app/communities/page.tsx
