@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -9,7 +9,7 @@ import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { DISCORD_COMMUNITY } from '@/constants/discord';
 import { getAuthHeaders, storeAuth, clearAuth } from '@/lib/auth';
 
-export default function Profile() {
+function ProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<any>(null);
@@ -2753,5 +2753,34 @@ export default function Profile() {
       <Footer />
       </div>
     </main>
+  );
+}
+
+export default function Profile() {
+  return (
+    <Suspense fallback={
+      <main style={{ 
+        minHeight: '100vh', 
+        backgroundColor: '#0a0a0f',
+        position: 'relative',
+        width: '100%',
+        maxWidth: '100vw',
+        overflowX: 'hidden'
+      }}>
+        <Navbar />
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: 'calc(100vh - 200px)',
+          color: 'rgba(255, 255, 255, 0.8)'
+        }}>
+          Loading...
+        </div>
+        <Footer />
+      </main>
+    }>
+      <ProfileContent />
+    </Suspense>
   );
 }
