@@ -97,6 +97,33 @@ module.exports = function (app, passport, server, nextApp, handle) {
   // Alias for backward compatibility
   const auth = authCheck;
 
+  // Optional auth check - populates req.user if session exists, but doesn't require auth
+  // This is useful for routes that should work for both authenticated and unauthenticated users
+  async function optionalAuthCheck(req, res, next) {
+    // If user is already populated (session-based auth), continue
+    if (req.user) {
+      return next();
+    }
+
+    // If session exists but user isn't populated yet, explicitly check session and populate it
+    // This is a safety net in case Passport session middleware didn't populate req.user
+    if (req.session && req.session.passport && req.session.passport.user) {
+      try {
+        const userId = req.session.passport.user;
+        const user = await User.findById(userId).exec();
+        if (user) {
+          req.user = user;
+          req.dbUser = user;
+        }
+      } catch (error) {
+        // Error loading user - continue without auth
+      }
+    }
+
+    // Continue regardless - this is optional auth
+    return next();
+  }
+
   // POST /login - MUST be defined FIRST to prevent Next.js from intercepting
   app.post(
     "/login",
@@ -320,7 +347,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
     res.render("about-us");
   });
 
-  app.get("/community/:hash", async function (req, res) {
+  app.get("/community/:hash", optionalAuthCheck, async function (req, res) {
     try {
       const hash = req.params.hash;
       const communityId = decodeId(hash);
