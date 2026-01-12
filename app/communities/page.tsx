@@ -161,7 +161,8 @@ const CommunityCard = ({
           {community?.subscription &&
            community.subscription.active === true &&
            ['elite', 'premium', 'standard'].includes(community.subscription.plan || '') && (
-            <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" title="Verified Subscription Community">
+            <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" aria-label="Verified Subscription Community">
+              <title>Verified Subscription Community</title>
               <circle cx="12" cy="12" r="10" fill="#eab308" />
               <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
