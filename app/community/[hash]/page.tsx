@@ -1063,7 +1063,8 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 {community.subscription &&
                  ['elite', 'premium', 'standard'].includes(community.subscription.plan || '') &&
                  community.subscription.active && (
-                  <svg viewBox="0 0 24 24" className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 inline-block align-middle" title="Verified Subscription Community">
+                  <svg viewBox="0 0 24 24" className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 inline-block align-middle" aria-label="Verified Subscription Community">
+                    <title>Verified Subscription Community</title>
                     <circle cx="12" cy="12" r="10" fill="#eab308" />
                     <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
