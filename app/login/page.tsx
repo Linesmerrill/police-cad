@@ -141,35 +141,28 @@ function LoginForm() {
         }
 
         // Now authenticate with our backend to create session
-        const formData = new URLSearchParams();
-        formData.append('email', trimmedEmail);
-        formData.append('password', trimmedPassword);
+        // Use a hidden form to submit - this ensures cookies are properly set
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/login';
+        form.style.display = 'none';
 
-        const loginResponse = await fetch('/login-civ', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: formData.toString(),
-          credentials: 'include',
-        });
+        const emailInput = document.createElement('input');
+        emailInput.type = 'hidden';
+        emailInput.name = 'email';
+        emailInput.value = trimmedEmail;
+        form.appendChild(emailInput);
 
-        // Check if response indicates deactivated account (backup check)
-        const loginUrl = loginResponse.url || '';
-        if (loginUrl.includes('error=account_deactivated') || loginUrl.includes('deactivated')) {
-          setError('deactivated');
-          setLoading(false);
-          return;
-        }
+        const passwordInput = document.createElement('input');
+        passwordInput.type = 'hidden';
+        passwordInput.name = 'password';
+        passwordInput.value = trimmedPassword;
+        form.appendChild(passwordInput);
 
-        if (loginResponse.ok || loginResponse.redirected) {
-          // Login successful - redirect to communities
-          const redirect = new URLSearchParams(window.location.search).get('redirect') || '/communities';
-          window.location.href = redirect;
-        } else {
-          setError('Login failed. Please try again.');
-          setLoading(false);
-        }
+        document.body.appendChild(form);
+        form.submit();
+
+        // The form submission will redirect automatically with proper cookie handling
         return;
       } else {
         // API validation failed - show error and stop

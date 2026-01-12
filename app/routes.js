@@ -114,6 +114,25 @@ module.exports = function (app, passport, server, nextApp, handle) {
         if (user) {
           req.user = user;
           req.dbUser = user;
+          return next();
+        }
+      } catch (error) {
+        // Error loading user - continue without auth
+      }
+    }
+
+    // FALLBACK: Check for token-based auth (used by Next.js pages)
+    const authHeader = req.headers.authorization;
+    const userEmailHeader = req.headers['x-user-email'];
+
+    if (authHeader && authHeader.startsWith('Bearer ') && userEmailHeader) {
+      const userEmail = userEmailHeader.toLowerCase();
+      try {
+        const user = await User.findOne({ "user.email": userEmail }).exec();
+        if (user) {
+          req.user = user;
+          req.dbUser = user;
+          return next();
         }
       } catch (error) {
         // Error loading user - continue without auth
@@ -347,75 +366,83 @@ module.exports = function (app, passport, server, nextApp, handle) {
     res.render("about-us");
   });
 
-  app.get("/community/:hash", optionalAuthCheck, async function (req, res) {
+  // API endpoint to fetch community data for Next.js page
+  app.get("/community/:hash/data", optionalAuthCheck, async function (req, res) {
     try {
-      const hash = req.params.hash;
-      const communityId = decodeId(hash);
-      
-      // Validate that the decoded communityId is a valid MongoDB ObjectId
-      if (!/^[a-fA-F0-9]{24}$/.test(communityId)) {
-        return res.status(404).render("error", {
-          message: "Community not found or an error occurred.",
-          redirect: "/communities",
-        });
-      }
-      // Fetch community details from API
-      const apiUrl = `${policeCadApiUrl}/api/v1/community/${communityId}`;
-      const response = await axios.get(apiUrl, config);
-      const community = response.data || {};
+      const communityHash = req.params.hash;
 
-      // Fetch paginated departments (6 per page, page 1 by default)
-      const userId = req.user && req.user._doc ? req.user._doc._id : (req.user && req.user._id ? req.user._id : null);
-      const page = parseInt(req.query.deptPage, 10) || 1;
-      let departments = [];
-      let totalCount = 0;
-      let totalPages = 1;
-      // Determine if user is a member of the community
-      let isMemberApproved = false;
-      if (req.user && req.user._doc && req.user._doc.user && Array.isArray(req.user._doc.user.communities) && community && community._id) {
-        req.user._doc.user.communities.forEach(function(c) {
-          if (String(c.communityId) === String(community._id) && c.status === 'approved') {
-            isMemberApproved = true;
+      // Decode the hash to get community ID
+      let base64 = communityHash.replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) {
+        base64 += '=';
+      }
+      const communityId = Buffer.from(base64, 'base64').toString('utf-8');
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+      const axios = require('axios');
+
+      // Build auth headers for API request
+      let authHeaders = {};
+      if (req.user && req.user.user && req.user.user.email) {
+        const email = req.user.user.email.toLowerCase();
+        // Get user's password hash or token if available
+        // For now, we'll use the session-based approach
+        authHeaders['X-User-Email'] = email;
+      }
+
+      // Fetch community details from API
+      const communityResponse = await axios.get(`${apiUrl}/api/v1/community/${communityId}`, {
+        headers: authHeaders,
+        validateStatus: function (status) {
+          return status < 600;
+        }
+      });
+
+      if (communityResponse.status !== 200) {
+        return res.status(communityResponse.status).json({ error: 'Community not found' });
+      }
+
+      const responseData = {
+        community: communityResponse.data
+      };
+
+      // Fetch departments if user is authenticated
+      if (req.user) {
+        try {
+          const deptsResponse = await axios.get(`${apiUrl}/api/v1/community/${communityId}/departments`, {
+            headers: authHeaders,
+            validateStatus: function (status) {
+              return status < 600;
+            }
+          });
+
+          if (deptsResponse.status === 200 && deptsResponse.data) {
+            responseData.departments = deptsResponse.data.departments || [];
           }
-        });
+        } catch (deptErr) {
+          console.error('Error fetching departments:', deptErr.message);
+          // Don't fail the whole request if departments fail
+          responseData.departments = [];
+        }
       }
-      if (community && community._id && userId && isMemberApproved) {
-        // Use v1 route to get all departments for members
-        const deptsApiUrl = `${policeCadApiUrl}/api/v1/community/${community._id}/departments`;
-        const deptsResponse = await axios.get(deptsApiUrl, config);
-        const allDepartments = deptsResponse.data.departments || [];
-        totalCount = allDepartments.length;
-        totalPages = Math.max(1, Math.ceil(totalCount / 6));
-        const startIdx = (page - 1) * 6;
-        const endIdx = startIdx + 6;
-        departments = allDepartments.slice(startIdx, endIdx);
-      } else if (community && community._id && userId) {
-        // Fallback to v2 paginated for non-members
-        const deptsApiUrl = `${policeCadApiUrl}/api/v2/community/${community._id}/departments?userId=${userId}&page=${page}&limit=6`;
-        const deptsResponse = await axios.get(deptsApiUrl, config);
-        departments = deptsResponse.data.data || [];
-        totalCount = deptsResponse.data.totalCount || 0;
-        totalPages = Math.max(1, Math.ceil(totalCount / 6));
-      }
-      res.render("community-details", {
-        user: req.user,
-        community,
-        departments,
-        query: req.query,
-        deptPagination: {
-          totalCount,
-          currentPage: page,
-          totalPages
-        },
-        referer: encodeURIComponent(`/community/${hash}`),
-        redirect: encodeURIComponent(redirect),
-      });
+
+      return res.json(responseData);
+
     } catch (error) {
-      return res.status(404).render("error", {
-        message: "Community not found or an error occurred.",
-        redirect: "/communities",
-      });
+      console.error('Error fetching community data:', error.message);
+      return res.status(500).json({ error: 'Failed to load community' });
     }
+  });
+
+  // Community page is now handled by Next.js at app/community/[hash]/page.tsx
+  app.get("/community/:hash", function (req, res) {
+    if (nextApp && handle) {
+      return handle(req, res);
+    }
+    // Fallback to archived EJS template if Next.js not available
+    res.render("community-details-archived", {
+      message: "Next.js is not available. Using archived template.",
+    });
   });
 
   app.get("/faq", function (req, res) {
@@ -2929,7 +2956,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
           panicButtonSound: user.panicButtonSound || false,
           alertVolumeLevel: user.alertVolumeLevel || 10,
           createdAt: user.createdAt,
-          subscription: subscription
+          subscription: subscription,
+          communities: user.communities || []
         }
       };
     };
@@ -3489,6 +3517,45 @@ module.exports = function (app, passport, server, nextApp, handle) {
       if (status === 429) {
         errorMessage = 'Too many requests, please try again later.';
       } else if (typeof errorMessage === 'object' && errorMessage.message) {
+        errorMessage = errorMessage.message;
+      } else if (typeof errorMessage === 'object') {
+        errorMessage = JSON.stringify(errorMessage);
+      }
+      
+      res.status(status).json({ error: errorMessage });
+    }
+  });
+
+  // POST /api/user/pending-community-request - proxy route for pending community request
+  app.post("/api/user/pending-community-request", async function (req, res) {
+    try {
+      const cookieHeader = req.headers.cookie || '';
+      const body = req.body;
+
+      if (!body || !body.userId || !body.communityId) {
+        return res.status(400).json({ error: 'User ID and Community ID are required' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+      
+      const response = await axios.post(
+        `${apiUrl}/api/v1/user/${body.userId}/pending-community-request`,
+        { communityId: body.communityId },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error('Error proxying pending community request:', error);
+      const status = error.response?.status || 500;
+      let errorMessage = error.response?.data || error.message || 'Internal server error';
+      
+      if (typeof errorMessage === 'object' && errorMessage.message) {
         errorMessage = errorMessage.message;
       } else if (typeof errorMessage === 'object') {
         errorMessage = JSON.stringify(errorMessage);

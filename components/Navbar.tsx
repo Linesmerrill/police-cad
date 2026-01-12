@@ -34,8 +34,8 @@ export default function Navbar() {
   const headerRef = useRef<HTMLElement>(null);
   const topBarRef = useRef<HTMLDivElement>(null);
   
-  // Hide main header on communities page
-  const hideMainHeader = pathname === '/communities' || (pathname && pathname.startsWith('/communities/'));
+  // Hide main header on communities page and community detail pages
+  const hideMainHeader = pathname === '/communities' || (pathname && pathname.startsWith('/communities/')) || (pathname && pathname.startsWith('/community/'));
 
   useEffect(() => {
     const checkScreenSize = () => {

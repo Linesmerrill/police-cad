@@ -577,7 +577,7 @@
           </div>
         <% } else { %>
           <!-- User is not logged in - show login button -->
-          <a href="/login-civ?redirect=<%= encodeURIComponent('/community/' + community._id) %>" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105">
+          <a href="/login?redirect=<%= referer %>" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105">
             <i class="fa fa-sign-in-alt mr-2"></i>
             Login
           </a>
@@ -7716,11 +7716,11 @@ async function deleteEditEvent() {
             Home
           </a>
           <span class="text-gray-600">•</span>
-          <a href="/login-civ" class="text-gray-400 hover:text-white transition-colors text-base">
+          <a href="/login" class="text-gray-400 hover:text-white transition-colors text-base">
             Login
           </a>
           <span class="text-gray-600">•</span>
-          <a href="/signup-civ" class="text-gray-400 hover:text-white transition-colors text-base">
+          <a href="/signup" class="text-gray-400 hover:text-white transition-colors text-base">
             Sign Up
           </a>
         </div>
