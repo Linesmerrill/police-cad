@@ -33,9 +33,10 @@ interface Department {
   _id: string;
   name: string;
   description?: string;
-  template?: string;
+  template?: string | { name?: string };
   isPrivate?: boolean;
   imageLink?: string;
+  image?: string;
   joinRequests?: Array<{ userId: string; status: string }>;
 }
 
@@ -257,6 +258,49 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestModalType, setRequestModalType] = useState<'success' | 'error' | null>(null);
   const [requestModalMessage, setRequestModalMessage] = useState<string>('');
+  const [inviteCodes, setInviteCodes] = useState<any[]>([]);
+  const [inviteCodesLoading, setInviteCodesLoading] = useState(false);
+  const [inviteCodesPagination, setInviteCodesPagination] = useState<any>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [inviteCodeToDelete, setInviteCodeToDelete] = useState<{ id: string; code: string } | null>(null);
+  const [copiedItem, setCopiedItem] = useState<string | null>(null); // Track which item was copied ('share' or invite code ID)
+  const [newlyCreatedInviteCode, setNewlyCreatedInviteCode] = useState<string | null>(null); // Store newly created invite code
+  const [showDeleteExpiredConfirm, setShowDeleteExpiredConfirm] = useState(false);
+  const [deletingExpired, setDeletingExpired] = useState(false);
+  // Helper function to get template name (handles both string and object)
+  const getTemplateName = (template: string | { name?: string } | undefined): string => {
+    if (!template) return '';
+    if (typeof template === 'string') return template.toLowerCase();
+    return (template.name || '').toLowerCase();
+  };
+
+  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+  const [departmentPage, setDepartmentPage] = useState(1);
+  const departmentsPerPage = 10;
+
+  // Filter and paginate departments
+  const filteredDepartments = departments.filter((dept) => {
+    if (departmentFilter === 'all') return true;
+    const templateName = getTemplateName(dept.template);
+    return templateName === departmentFilter.toLowerCase();
+  });
+
+  const totalPages = Math.ceil(filteredDepartments.length / departmentsPerPage);
+  const startIndex = (departmentPage - 1) * departmentsPerPage;
+  const endIndex = startIndex + departmentsPerPage;
+  const paginatedDepartments = filteredDepartments.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setDepartmentPage(1);
+  }, [departmentFilter]);
+
+  // Reset to page 1 if current page is out of bounds
+  useEffect(() => {
+    if (departmentPage > totalPages && totalPages > 0) {
+      setDepartmentPage(1);
+    }
+  }, [departmentPage, totalPages]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -339,54 +383,96 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
 
           if (Array.isArray(communitiesArray) && communityId) {
             communitiesArray.forEach((c) => {
-              const cCommunityId = c.communityId || c.community?._id || c._id;
+              // Check multiple possible locations for community ID
+              const cCommunityId = c.communityId || c.community?._id || c.community?._id || c._id || c.community?.communityId;
               const cStatus = c.status || c.community?.status;
-              console.log('Checking community:', cCommunityId, 'against', communityId, 'status:', cStatus);
+              console.log('Checking community from user object:', {
+                cCommunityId,
+                communityId,
+                match: cCommunityId && String(cCommunityId) === String(communityId),
+                status: cStatus
+              });
               if (cCommunityId && String(cCommunityId) === String(communityId)) {
                 const statusLower = String(cStatus || '').toLowerCase();
                 if (statusLower === 'approved') {
                   isApproved = true;
-                  console.log('User is APPROVED member');
+                  console.log('User is APPROVED member (from user object)');
                 } else if (statusLower === 'pending') {
                   isPending = true;
-                  console.log('User has PENDING request');
+                  console.log('User has PENDING request (from user object)');
                 }
               }
             });
+          } else {
+            console.log('No communities array found in user object:', {
+              hasCommunities: !!currentUser.communities,
+              hasUserCommunities: !!currentUser.user?.communities,
+              communitiesArray
+            });
           }
 
-          // Also fetch user's communities list from API to check for pending status
-          // This ensures we get the most up-to-date pending list
-          if (userId && communityId && !isApproved) {
+          // Also fetch user's communities list from API to check for approved and pending status
+          // This ensures we get the most up-to-date membership list
+          if (userId && communityId) {
             try {
-              // Fetch pending communities to check if user has a pending request for this community
-              const pendingResponse = await fetch(
-                `/api/user/communities?userId=${userId}&page=1&filter=${encodeURIComponent('status:pending')}&limit=100`,
-                { credentials: 'include', headers: getAuthHeaders() }
-              );
-              
-              if (pendingResponse.ok) {
-                const pendingData = await pendingResponse.json();
-                const pendingCommunities = pendingData.data || [];
+              // Fetch approved communities to check if user is a member
+              if (!isApproved) {
+                const approvedResponse = await fetch(
+                  `/api/user/communities?userId=${userId}&page=1&filter=${encodeURIComponent('status:approved')}&limit=100`,
+                  { credentials: 'include', headers: getAuthHeaders() }
+                );
                 
-                // Check if current community is in the pending list
-                // The API returns communities with _id field that matches the community ID
-                const hasPendingRequest = pendingCommunities.some((item: any) => {
-                  const itemCommunityId = item._id || item.communityId || item.community?._id;
-                  if (itemCommunityId && String(itemCommunityId) === String(communityId)) {
-                    console.log('Found pending request for community:', communityId);
-                    return true;
+                if (approvedResponse.ok) {
+                  const approvedData = await approvedResponse.json();
+                  const approvedCommunities = approvedData.data || [];
+                  
+                  // Check if current community is in the approved list
+                  // The API returns communities with _id field that matches the community ID
+                  const isMember = approvedCommunities.some((item: any) => {
+                    const itemCommunityId = item._id || item.communityId || item.community?._id;
+                    if (itemCommunityId && String(itemCommunityId) === String(communityId)) {
+                      console.log('Found approved membership for community:', communityId);
+                      return true;
+                    }
+                    return false;
+                  });
+                  
+                  if (isMember) {
+                    isApproved = true;
+                    console.log('User is approved member of this community');
                   }
-                  return false;
-                });
+                }
+              }
+
+              // Fetch pending communities to check if user has a pending request
+              if (!isPending && !isApproved) {
+                const pendingResponse = await fetch(
+                  `/api/user/communities?userId=${userId}&page=1&filter=${encodeURIComponent('status:pending')}&limit=100`,
+                  { credentials: 'include', headers: getAuthHeaders() }
+                );
                 
-                if (hasPendingRequest) {
-                  isPending = true;
-                  console.log('User has pending request for this community');
+                if (pendingResponse.ok) {
+                  const pendingData = await pendingResponse.json();
+                  const pendingCommunities = pendingData.data || [];
+                  
+                  // Check if current community is in the pending list
+                  const hasPendingRequest = pendingCommunities.some((item: any) => {
+                    const itemCommunityId = item._id || item.communityId || item.community?._id;
+                    if (itemCommunityId && String(itemCommunityId) === String(communityId)) {
+                      console.log('Found pending request for community:', communityId);
+                      return true;
+                    }
+                    return false;
+                  });
+                  
+                  if (hasPendingRequest) {
+                    isPending = true;
+                    console.log('User has pending request for this community');
+                  }
                 }
               }
             } catch (err) {
-              console.error('Error fetching pending communities:', err);
+              console.error('Error fetching user communities:', err);
               // Continue with existing logic if API call fails
             }
           }
@@ -395,24 +481,58 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
           setIsMemberApproved(isApproved);
           setIsMemberPending(isPending);
 
-          // Check permissions
-          if (userId && comm.roles && Array.isArray(comm.roles)) {
+          // Check permissions - only if user is approved member
+          // Also check if user is the owner of the community
+          if (isApproved && userId) {
             let hasPermission = false;
-            comm.roles.forEach((role: any) => {
-              if (Array.isArray(role.members) && role.members.includes(userId)) {
-                if (Array.isArray(role.permissions)) {
-                  role.permissions.forEach((perm: any) => {
-                    if (
-                      (perm.name === 'administrator' && perm.enabled === true) ||
-                      (perm.name === 'manage community settings' && perm.enabled === true)
-                    ) {
-                      hasPermission = true;
-                    }
-                  });
+            
+            // Check if user is the owner
+            const ownerId = comm.owner || comm.community?.owner;
+            if (ownerId && String(ownerId) === String(userId)) {
+              hasPermission = true;
+              console.log('User is the owner of the community');
+            }
+            
+            // Check roles for permissions
+            if (!hasPermission && comm.roles && Array.isArray(comm.roles)) {
+              console.log('Checking permissions for user:', userId);
+              console.log('Community roles:', comm.roles);
+              
+              comm.roles.forEach((role: any) => {
+                // Check if user is in the role members array
+                // Members can be array of user IDs (strings) or objects with _id
+                const roleMembers = role.members || [];
+                const isInRole = roleMembers.some((member: any) => {
+                  const memberId = typeof member === 'string' ? member : (member._id || member.id || member.userID);
+                  const matches = memberId && (String(memberId) === String(userId) || String(memberId) === String(currentUser._id) || String(memberId) === String(currentUser.id));
+                  if (matches) {
+                    console.log('User matches role member:', memberId, 'vs', userId);
+                  }
+                  return matches;
+                });
+                
+                if (isInRole) {
+                  console.log('User is in role:', role.name || role._id);
+                  if (Array.isArray(role.permissions)) {
+                    role.permissions.forEach((perm: any) => {
+                      console.log('Checking permission:', perm.name, 'enabled:', perm.enabled);
+                      if (
+                        (perm.name === 'administrator' && perm.enabled === true) ||
+                        (perm.name === 'manage community settings' && perm.enabled === true)
+                      ) {
+                        hasPermission = true;
+                        console.log('User has permission:', perm.name);
+                      }
+                    });
+                  }
                 }
-              }
-            });
+              });
+            }
+            
+            console.log('Final permission check - canManageSettings:', hasPermission);
             setCanManageSettings(hasPermission);
+          } else {
+            setCanManageSettings(false);
           }
         }
 
@@ -449,7 +569,7 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
 
     if (!dept.template) return;
 
-    const templateType = dept.template.toLowerCase();
+    const templateType = getTemplateName(dept.template);
     let dashboardUrl = '';
 
     if (templateType.includes('civilian')) {
@@ -617,6 +737,110 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
     setShowInviteModal(true);
     // Reset generated code when opening modal
     setGeneratedInviteCode('');
+    // Load invite codes when opening modal
+    loadInviteCodes();
+  };
+
+  const loadInviteCodes = async (page = 1, limit = 10) => {
+    if (!community || !user) return;
+    
+    setInviteCodesLoading(true);
+    try {
+      const response = await fetch(`/api/community/${community._id}/invite-codes?page=${page}&limit=${limit}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setInviteCodes(data.inviteCodes || []);
+        setInviteCodesPagination(data.pagination || null);
+      } else {
+        console.error('Failed to load invite codes');
+        setInviteCodes([]);
+      }
+    } catch (error) {
+      console.error('Error loading invite codes:', error);
+      setInviteCodes([]);
+    } finally {
+      setInviteCodesLoading(false);
+    }
+  };
+
+  const deleteInviteCode = async () => {
+    if (!inviteCodeToDelete || !community) return;
+
+    try {
+      const response = await fetch(`/api/community/${community._id}/invite-codes/${inviteCodeToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        // Reload invite codes list
+        loadInviteCodes(inviteCodesPagination?.currentPage || 1);
+        setShowDeleteConfirm(false);
+        setInviteCodeToDelete(null);
+      } else {
+        const error = await response.json();
+        alert(`Failed to delete invite code: ${error.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting invite code:', error);
+      alert('Failed to delete invite code');
+    }
+  };
+
+  const copyInviteLink = async (code: string, codeId: string) => {
+    const link = `https://tinyurl.com/linescad/${code}`;
+    await copyToClipboard(link, `invite-${codeId}`);
+  };
+
+  // Calculate expired codes count
+  const expiredCodesCount = inviteCodes.filter((code: any) => {
+    const expiresAt = code.expiresAt ? new Date(code.expiresAt) : null;
+    return expiresAt && expiresAt < new Date();
+  }).length;
+
+  // Delete all expired invite codes
+  const deleteExpiredCodes = async () => {
+    if (!community) return;
+    
+    setDeletingExpired(true);
+    const expiredCodes = inviteCodes.filter((code: any) => {
+      const expiresAt = code.expiresAt ? new Date(code.expiresAt) : null;
+      return expiresAt && expiresAt < new Date();
+    });
+
+    try {
+      // Delete each expired code
+      const deletePromises = expiredCodes.map((code: any) =>
+        fetch(`/api/community/${community._id}/invite-codes/${code._id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include'
+        })
+      );
+
+      await Promise.all(deletePromises);
+      
+      // Reload invite codes list
+      await loadInviteCodes(inviteCodesPagination?.currentPage || 1);
+      setShowDeleteExpiredConfirm(false);
+    } catch (error) {
+      console.error('Error deleting expired codes:', error);
+      alert('Failed to delete some expired codes');
+    } finally {
+      setDeletingExpired(false);
+    }
   };
 
   const generateRandomCode = () => {
@@ -629,31 +853,65 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
   };
 
   const createInviteCode = async () => {
-    if (!generatedInviteCode || !community) return;
+    if (!generatedInviteCode || !community || !user) return;
 
     try {
-      const response = await fetch(`${API_URL}/api/v1/community/${community._id}/invite-codes`, {
+      const userId = user.id || user._id;
+      
+      // Convert expiresAfter to expiresAt if needed
+      let expiresAt = null;
+      if (inviteExpiry !== 'never') {
+        const now = new Date();
+        const [value, unit] = inviteExpiry.match(/(\d+)([mhd])/)?.slice(1) || [];
+        if (value && unit) {
+          const milliseconds = unit === 'm' ? parseInt(value) * 60 * 1000 :
+                              unit === 'h' ? parseInt(value) * 60 * 60 * 1000 :
+                              parseInt(value) * 24 * 60 * 60 * 1000;
+          expiresAt = new Date(now.getTime() + milliseconds).toISOString();
+        }
+      }
+
+      const maxUses = inviteMaxUses === 'unlimited' ? 0 : parseInt(inviteMaxUses);
+
+      const response = await fetch(`/api/community/${community._id}/add-invite-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...getAuthHeaders()
         },
+        credentials: 'include',
         body: JSON.stringify({
           code: generatedInviteCode,
-          expiresAfter: inviteExpiry,
-          maxUses: inviteMaxUses === 'unlimited' ? null : parseInt(inviteMaxUses)
+          maxUses: maxUses,
+          expiresAt: expiresAt,
+          createdBy: userId
         })
       });
 
       if (response.ok) {
-        alert('Invite code created successfully!');
-        copyToClipboard(
-          `${window.location.origin}/invite/${generatedInviteCode}`,
-          'Invite link copied to clipboard!'
-        );
+        // Store the newly created code to show in success modal
+        setNewlyCreatedInviteCode(generatedInviteCode);
+        // Show success modal
+        setRequestModalType('success');
+        setRequestModalMessage(`Invite code "${generatedInviteCode}" created successfully!`);
+        setShowRequestModal(true);
+        // Reload invite codes list
+        loadInviteCodes();
+        // Reset form
+        setGeneratedInviteCode('');
       } else {
         const error = await response.json();
-        alert(`Failed to create invite code: ${error.message || 'Unknown error'}`);
+        const errorMessage = error.error || error.message || 'Unknown error';
+        
+        // Show friendly message for duplicate code (409)
+        if (response.status === 409) {
+          setRequestModalType('error');
+          setRequestModalMessage(`This invite code "${generatedInviteCode}" already exists. Please choose a different code.`);
+          setShowRequestModal(true);
+        } else {
+          setRequestModalType('error');
+          setRequestModalMessage(`Failed to create invite code: ${errorMessage}`);
+          setShowRequestModal(true);
+        }
       }
     } catch (error) {
       console.error('Error creating invite code:', error);
@@ -661,10 +919,13 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
     }
   };
 
-  const copyToClipboard = async (text: string, message: string) => {
+  const copyToClipboard = async (text: string, itemId: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      alert(message);
+      setCopiedItem(itemId);
+      // Reset after 2 seconds
+      setTimeout(() => setCopiedItem(null), 2000);
+      return true;
     } catch (error) {
       // Fallback for older browsers
       const textArea = document.createElement('textarea');
@@ -675,11 +936,15 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
       textArea.select();
       try {
         document.execCommand('copy');
-        alert(message);
+        setCopiedItem(itemId);
+        setTimeout(() => setCopiedItem(null), 2000);
+        return true;
       } catch (err) {
-        alert('Failed to copy to clipboard');
+        console.error('Failed to copy to clipboard:', err);
+        return false;
+      } finally {
+        document.body.removeChild(textArea);
       }
-      document.body.removeChild(textArea);
     }
   };
 
@@ -886,13 +1151,24 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 </button>
 
                 {/* Share Button */}
-                <button
-                  onClick={() => copyToClipboard(window.location.href, 'Community link copied to clipboard!')}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl shadow-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 transform hover:scale-105"
-                >
-                  <i className="fa fa-share-alt mr-2"></i>
-                  Share
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        copyToClipboard(window.location.href, 'share');
+                      }
+                    }}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl shadow-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 transform hover:scale-105"
+                  >
+                    <i className={`fa ${copiedItem === 'share' ? 'fa-check' : 'fa-share-alt'} mr-2`}></i>
+                    Share
+                  </button>
+                  {copiedItem === 'share' && (
+                    <div className="absolute top-full left-0 mt-2 text-green-400 text-sm font-medium whitespace-nowrap">
+                      Copied to clipboard
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -974,31 +1250,62 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
               Departments
             </h2>
 
-            {departments.length > 0 ? (
+            {/* Filter Tabs - Horizontally scrollable on mobile */}
+            {departments.length > 0 && (
+              <div className="mb-6 overflow-x-auto -mx-2 px-2">
+                <div className="flex gap-2 min-w-max pb-2">
+                  {[
+                    { value: 'all', label: 'All' },
+                    { value: 'civilian', label: 'Civilian' },
+                    { value: 'ems', label: 'EMS' },
+                    { value: 'police', label: 'Police' },
+                    { value: 'dispatch', label: 'Dispatch' },
+                    { value: 'fire', label: 'Fire' }
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setDepartmentFilter(option.value);
+                        setDepartmentPage(1); // Reset to first page when filter changes
+                      }}
+                      className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                        departmentFilter === option.value
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/50'
+                          : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/10'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {paginatedDepartments.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {departments.map((dept) => (
+              {paginatedDepartments.map((dept) => (
                 <div
                   key={dept._id}
                   onClick={() => navigateToDepartment(dept)}
-                  className="group backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-blue-500/50 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20"
+                  className="group backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-blue-500/50 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20 flex flex-col"
                 >
-                  {/* Department Image */}
-                  {dept.imageLink ? (
-                    <div className="h-40 overflow-hidden relative">
+                  {/* Department Image - 16:9 aspect ratio */}
+                  {(dept.imageLink || dept.image) ? (
+                    <div className="aspect-video overflow-hidden relative">
                       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900/80 z-10"></div>
                       <img
-                        src={dept.imageLink}
+                        src={dept.imageLink || dept.image}
                         alt={dept.name}
                         className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                       />
                     </div>
                   ) : (
-                    <div className="h-40 bg-gradient-to-br from-blue-900/30 to-purple-900/30 flex items-center justify-center">
+                    <div className="aspect-video bg-gradient-to-br from-blue-900/30 to-purple-900/30 flex items-center justify-center">
                       <i className="fa fa-building text-6xl text-white/20"></i>
                     </div>
                   )}
 
-                  <div className="p-6">
+                  <div className="p-6 flex flex-col flex-1">
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-xl font-semibold text-white group-hover:text-blue-400 transition-colors flex-1">
                         {dept.name}
@@ -1007,10 +1314,14 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                         <i className="fa fa-lock text-yellow-500 ml-2" title="Private - Request to Join"></i>
                       )}
                     </div>
-                    {dept.description && (
-                      <p className="text-gray-400 text-sm mb-4 line-clamp-2">{dept.description}</p>
+                    {dept.description ? (
+                      <div className="mb-4 min-h-[60px] max-h-32 overflow-y-auto resize-y scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800 bg-white/5 border border-white/10 rounded-lg p-3">
+                        <p className="text-gray-400 text-sm whitespace-pre-wrap">{dept.description}</p>
+                      </div>
+                    ) : (
+                      <div className="mb-4 min-h-[60px]"></div>
                     )}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mt-auto">
                       {checkIfRequestPending(dept) ? (
                         <div className="flex items-center text-yellow-400 text-sm font-medium">
                           <i className="fa fa-clock mr-2"></i>
@@ -1027,10 +1338,83 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 </div>
               ))}
             </div>
+            ) : filteredDepartments.length === 0 && departments.length > 0 ? (
+              <div className="text-center py-12">
+                <i className="fa fa-filter text-6xl text-gray-600 mb-4"></i>
+                <p className="text-gray-400 text-lg">No departments found for this filter</p>
+              </div>
             ) : (
               <div className="text-center py-12">
                 <i className="fa fa-building text-6xl text-gray-600 mb-4"></i>
                 <p className="text-gray-400 text-lg">No departments available yet</p>
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {filteredDepartments.length > departmentsPerPage && (
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setDepartmentPage(Math.max(1, departmentPage - 1))}
+                  disabled={departmentPage === 1}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                    departmentPage === 1
+                      ? 'bg-gray-700/50 text-gray-500 cursor-not-allowed'
+                      : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
+                  }`}
+                >
+                  <i className="fa fa-chevron-left mr-2"></i>
+                  Previous
+                </button>
+                
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (departmentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (departmentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = departmentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setDepartmentPage(pageNum)}
+                        className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                          departmentPage === pageNum
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/50'
+                            : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/10'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => setDepartmentPage(Math.min(totalPages, departmentPage + 1))}
+                  disabled={departmentPage === totalPages}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                    departmentPage === totalPages
+                      ? 'bg-gray-700/50 text-gray-500 cursor-not-allowed'
+                      : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
+                  }`}
+                >
+                  Next
+                  <i className="fa fa-chevron-right ml-2"></i>
+                </button>
+              </div>
+            )}
+
+            {/* Page Info */}
+            {filteredDepartments.length > 0 && (
+              <div className="mt-4 text-center text-gray-400 text-sm">
+                Showing {startIndex + 1}-{Math.min(endIndex, filteredDepartments.length)} of {filteredDepartments.length} department{filteredDepartments.length !== 1 ? 's' : ''}
+                {departmentFilter !== 'all' && ` (${departments.length} total)`}
               </div>
             )}
           </div>
@@ -1231,22 +1615,273 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
               </button>
             </div>
 
+            {/* Delete Expired Codes Section */}
+            {!inviteCodesLoading && expiredCodesCount > 0 && (
+              <div className="bg-gray-800/50 rounded-2xl p-6 mb-6 border border-orange-500/30">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-1">Expired Invite Codes</h3>
+                    <p className="text-gray-400 text-sm">
+                      You have {expiredCodesCount} expired invite code{expiredCodesCount !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowDeleteExpiredConfirm(true)}
+                    disabled={deletingExpired}
+                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                      deletingExpired
+                        ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                        : 'bg-red-600/20 hover:bg-red-600/30 border border-red-600/30 text-red-400'
+                    }`}
+                  >
+                    <i className={`fa ${deletingExpired ? 'fa-spinner fa-spin' : 'fa-trash'} mr-2`}></i>
+                    Delete Expired
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Existing Invite Codes Section */}
+            <div className="bg-gray-800/50 rounded-2xl p-6 mb-6 border border-white/10">
+              <h3 className="text-xl font-semibold text-white mb-4">Existing Invite Codes</h3>
+              
+              {inviteCodesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-8 h-8 border-4 border-gray-700 border-t-blue-500 rounded-full animate-spin"></div>
+                </div>
+              ) : inviteCodes.length === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  <i className="fa fa-inbox text-4xl mb-2"></i>
+                  <p>No invite codes yet</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-3 mb-4">
+                    {inviteCodes.map((inviteCode: any) => {
+                      const expiresAt = inviteCode.expiresAt ? new Date(inviteCode.expiresAt) : null;
+                      const isExpired = expiresAt && expiresAt < new Date();
+                      const isUnlimited = inviteCode.maxUses === 0;
+                      const remainingUses = isUnlimited ? '∞' : (inviteCode.remainingUses || 0);
+                      
+                      return (
+                        <div key={inviteCode._id} className="bg-gray-900/50 rounded-xl p-4 border border-gray-700/50">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                                <code className="bg-black/50 text-green-400 px-3 py-1.5 rounded-lg font-mono text-sm font-semibold border border-gray-700">
+                                  {inviteCode.code}
+                                </code>
+                                {isExpired && (
+                                  <span className="bg-red-600/20 text-red-400 px-2 py-1 rounded text-xs font-medium border border-red-600/30">
+                                    EXPIRED
+                                  </span>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-2 gap-3 text-sm text-gray-400">
+                                <div>
+                                  <span className="text-gray-300 font-medium block mb-1">Uses:</span>
+                                  <span className="text-white">{remainingUses}{isUnlimited ? '' : ` / ${inviteCode.maxUses}`}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-300 font-medium block mb-1">Expires:</span>
+                                  <span className="text-white">{expiresAt ? expiresAt.toLocaleString() : 'Never'}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-300 font-medium block mb-1">Created:</span>
+                                  <span className="text-white">{new Date(inviteCode.createdAt).toLocaleDateString()}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-300 font-medium block mb-1">By:</span>
+                                  <span className="text-white">{inviteCode.createdByUser?.username || 'Unknown'}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => copyInviteLink(inviteCode.code, inviteCode._id)}
+                                  className={`px-3 py-2 rounded-lg transition-colors ${
+                                    copiedItem === `invite-${inviteCode._id}`
+                                      ? 'bg-green-600/20 border border-green-600/30'
+                                      : 'bg-gray-700 hover:bg-gray-600'
+                                  }`}
+                                  title="Copy Link"
+                                >
+                                  <i className={`fa ${copiedItem === `invite-${inviteCode._id}` ? 'fa-check text-green-400' : 'fa-copy text-white'}`}></i>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setInviteCodeToDelete({ id: inviteCode._id, code: inviteCode.code });
+                                    setShowDeleteConfirm(true);
+                                  }}
+                                  className="px-3 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-600/30 rounded-lg transition-colors"
+                                  title="Delete Code"
+                                >
+                                  <i className="fa fa-trash text-red-400"></i>
+                                </button>
+                              </div>
+                              {copiedItem === `invite-${inviteCode._id}` && (
+                                <span className="text-green-400 text-xs font-medium">Copied to clipboard</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {/* Pagination */}
+                  {inviteCodesPagination && inviteCodesPagination.totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 pt-4 border-t border-gray-700/50">
+                      <button
+                        onClick={() => loadInviteCodes(inviteCodesPagination.currentPage - 1)}
+                        disabled={!inviteCodesPagination.hasPrevPage}
+                        className={`px-4 py-2 rounded-lg transition-colors ${
+                          inviteCodesPagination.hasPrevPage
+                            ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                            : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        <i className="fa fa-chevron-left mr-1"></i>
+                        Previous
+                      </button>
+                      <span className="text-gray-400 px-4">
+                        Page {inviteCodesPagination.currentPage} of {inviteCodesPagination.totalPages}
+                      </span>
+                      <button
+                        onClick={() => loadInviteCodes(inviteCodesPagination.currentPage + 1)}
+                        disabled={!inviteCodesPagination.hasNextPage}
+                        className={`px-4 py-2 rounded-lg transition-colors ${
+                          inviteCodesPagination.hasNextPage
+                            ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                            : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        Next
+                        <i className="fa fa-chevron-right ml-1"></i>
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
             {/* Share Community Link */}
             <div className="bg-gray-800/50 rounded-2xl p-6 border border-white/10">
               <h3 className="text-xl font-semibold text-white mb-4">Share Community Link</h3>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={window.location.href}
-                  readOnly
-                  className="flex-1 px-4 py-3 bg-black/30 rounded-xl text-blue-400 border border-white/10 focus:outline-none"
-                />
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={typeof window !== 'undefined' ? window.location.href : ''}
+                    readOnly
+                    className="flex-1 px-4 py-3 bg-black/30 rounded-xl text-blue-400 border border-white/10 focus:outline-none"
+                  />
+                  <button
+                    onClick={() => copyToClipboard(typeof window !== 'undefined' ? window.location.href : '', 'share-modal')}
+                    className={`px-4 py-3 rounded-xl transition-colors ${
+                      copiedItem === 'share-modal'
+                        ? 'bg-green-600/20 border border-green-600/30'
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    }`}
+                    title="Copy link"
+                  >
+                    <i className={`fa ${copiedItem === 'share-modal' ? 'fa-check text-green-400' : 'fa-copy text-white'}`}></i>
+                  </button>
+                </div>
+                {copiedItem === 'share-modal' && (
+                  <p className="text-green-400 text-sm font-medium">Copied to clipboard</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Invite Code Confirmation Modal */}
+      {showDeleteConfirm && inviteCodeToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <div
+            className="relative max-w-md w-full backdrop-blur-xl bg-gradient-to-br from-gray-900/95 to-gray-800/95 rounded-3xl p-8 border border-red-500/30 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-red-500/50">
+                <i className="fa fa-exclamation-triangle text-white text-2xl"></i>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Delete Invite Code?</h3>
+              <p className="text-gray-300 mb-2">
+                Are you sure you want to delete invite code:
+              </p>
+              <code className="block bg-black/50 text-green-400 px-4 py-2 rounded-lg font-mono text-lg font-semibold mb-6 border border-gray-700">
+                {inviteCodeToDelete.code}
+              </code>
+              <p className="text-gray-400 text-sm mb-6">This action cannot be undone.</p>
+              <div className="flex gap-3">
                 <button
-                  onClick={() => copyToClipboard(window.location.href, 'Community link copied to clipboard!')}
-                  className="px-4 py-3 bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors"
-                  title="Copy link"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setInviteCodeToDelete(null);
+                  }}
+                  className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl transition-colors text-white font-semibold"
                 >
-                  <i className="fa fa-copy text-white"></i>
+                  Cancel
+                </button>
+                <button
+                  onClick={deleteInviteCode}
+                  className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-xl transition-colors text-white font-semibold"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Expired Codes Confirmation Modal */}
+      {showDeleteExpiredConfirm && expiredCodesCount > 0 && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          onClick={() => setShowDeleteExpiredConfirm(false)}
+        >
+          <div
+            className="relative max-w-md w-full backdrop-blur-xl bg-gradient-to-br from-gray-900/95 to-gray-800/95 rounded-3xl p-8 border border-red-500/30 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-red-500/50">
+                <i className="fa fa-exclamation-triangle text-white text-2xl"></i>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-4">Delete Expired Codes?</h3>
+              <p className="text-gray-300 mb-2">
+                Are you sure you want to delete all {expiredCodesCount} expired invite code{expiredCodesCount !== 1 ? 's' : ''}?
+              </p>
+              <p className="text-gray-400 text-sm mb-6">This action cannot be undone.</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteExpiredConfirm(false)}
+                  disabled={deletingExpired}
+                  className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-xl transition-colors text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={deleteExpiredCodes}
+                  disabled={deletingExpired}
+                  className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-xl transition-colors text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {deletingExpired ? (
+                    <>
+                      <i className="fa fa-spinner fa-spin mr-2"></i>
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete All'
+                  )}
                 </button>
               </div>
             </div>
@@ -1258,7 +1893,10 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
       {showRequestModal && (
         <div 
           className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50"
-          onClick={() => setShowRequestModal(false)}
+          onClick={() => {
+            setShowRequestModal(false);
+            setNewlyCreatedInviteCode(null);
+          }}
         >
           <div 
             className={`relative max-w-md w-full mx-4 backdrop-blur-xl rounded-3xl p-8 border shadow-2xl ${
@@ -1283,11 +1921,44 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
               }`}>
                 {requestModalType === 'success' ? 'Success!' : 'Error'}
               </h3>
-              <p className="text-gray-300 mb-8 text-lg">
+              <p className="text-gray-300 mb-6 text-lg">
                 {requestModalMessage}
               </p>
+              
+              {/* Show invite code link for newly created codes */}
+              {requestModalType === 'success' && newlyCreatedInviteCode && (
+                <div className="mb-6 bg-gray-900/50 rounded-xl p-4 border border-gray-700/50">
+                  <p className="text-gray-400 text-sm mb-2">Invite Link:</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 px-3 py-2 bg-black/50 text-green-400 rounded-lg font-mono text-sm border border-gray-700 break-all">
+                      https://tinyurl.com/linescad/{newlyCreatedInviteCode}
+                    </code>
+                    <button
+                      onClick={() => {
+                        const link = `https://tinyurl.com/linescad/${newlyCreatedInviteCode}`;
+                        copyToClipboard(link, 'invite-success');
+                      }}
+                      className={`px-4 py-2 rounded-lg transition-colors ${
+                        copiedItem === 'invite-success'
+                          ? 'bg-green-600/20 border border-green-600/30'
+                          : 'bg-blue-600 hover:bg-blue-700'
+                      }`}
+                      title="Copy Link"
+                    >
+                      <i className={`fa ${copiedItem === 'invite-success' ? 'fa-check text-green-400' : 'fa-copy text-white'}`}></i>
+                    </button>
+                  </div>
+                  {copiedItem === 'invite-success' && (
+                    <p className="text-green-400 text-xs font-medium mt-2">Copied to clipboard</p>
+                  )}
+                </div>
+              )}
+              
               <button
-                onClick={() => setShowRequestModal(false)}
+                onClick={() => {
+                  setShowRequestModal(false);
+                  setNewlyCreatedInviteCode(null);
+                }}
                 className={`w-full px-6 py-4 rounded-xl transition-all font-semibold text-lg shadow-lg ${
                   requestModalType === 'success'
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white transform hover:scale-105'

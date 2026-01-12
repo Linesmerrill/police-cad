@@ -3537,7 +3537,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
 
       const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
-      
+
       const response = await axios.post(
         `${apiUrl}/api/v1/user/${body.userId}/pending-community-request`,
         { communityId: body.communityId },
@@ -3554,14 +3554,48 @@ module.exports = function (app, passport, server, nextApp, handle) {
       console.error('Error proxying pending community request:', error);
       const status = error.response?.status || 500;
       let errorMessage = error.response?.data || error.message || 'Internal server error';
-      
+
       if (typeof errorMessage === 'object' && errorMessage.message) {
         errorMessage = errorMessage.message;
       } else if (typeof errorMessage === 'object') {
         errorMessage = JSON.stringify(errorMessage);
       }
-      
+
       res.status(status).json({ error: errorMessage });
+    }
+  });
+
+  // POST /api/community/:id/add-invite-code - proxy route for adding invite codes
+  app.post("/api/community/:id/add-invite-code", async function (req, res) {
+    try {
+      const cookieHeader = req.headers.cookie || '';
+      const communityId = req.params.id;
+      const body = req.body;
+
+      if (!communityId) {
+        return res.status(400).json({ error: 'Community ID is required' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+      const response = await axios.post(
+        `${apiUrl}/api/v1/community/${communityId}/add-invite-code`,
+        body,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error('Error proxying add invite code request:', error);
+      const status = error.response?.status || 500;
+      let errorData = error.response?.data || { error: 'Internal server error' };
+
+      res.status(status).json(errorData);
     }
   });
 

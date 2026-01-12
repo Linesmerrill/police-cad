@@ -154,9 +154,19 @@ const CommunityCard = ({
     {/* Content */}
     <div className="p-6 flex flex-col flex-grow bg-gradient-to-b from-gray-800 via-gray-800 to-gray-850">
       <div className="flex-grow">
-        <h3 className="text-xl font-bold text-white mb-3 line-clamp-2 leading-tight border-b border-gray-700/50 pb-2">
-          {community?.name}
-        </h3>
+        <div className="flex items-center gap-2 mb-3 border-b border-gray-700/50 pb-2">
+          <h3 className="text-xl font-bold text-white line-clamp-2 leading-tight flex-1">
+            {community?.name}
+          </h3>
+          {community?.subscription &&
+           community.subscription.active === true &&
+           ['elite', 'premium', 'standard'].includes(community.subscription.plan || '') && (
+            <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" title="Verified Subscription Community">
+              <circle cx="12" cy="12" r="10" fill="#eab308" />
+              <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+        </div>
 
         {/* Tags */}
         {community?.tags && community.tags.length > 0 && (
