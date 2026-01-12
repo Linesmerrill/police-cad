@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -98,7 +98,7 @@ function encodeDepartmentId(departmentId: string): string {
 function FormattedDescription({ description }: { description: string }) {
   // Split by newlines and process each line
   const lines = description.split('\n');
-  const formattedLines: JSX.Element[] = [];
+  const formattedLines: React.ReactElement[] = [];
   
   lines.forEach((line, index) => {
     const trimmedLine = line.trim();
@@ -157,8 +157,8 @@ function FormattedDescription({ description }: { description: string }) {
 }
 
 // Helper function to format inline text (bold, italic, etc.)
-function formatInlineText(text: string): (string | JSX.Element)[] {
-  const parts: (string | JSX.Element)[] = [];
+function formatInlineText(text: string): (string | React.ReactElement)[] {
+  const parts: (string | React.ReactElement)[] = [];
   let keyCounter = 0;
   
   // Handle bold text (**text**)
@@ -199,8 +199,8 @@ function formatInlineText(text: string): (string | JSX.Element)[] {
 }
 
 // Helper function for italic formatting
-function formatItalicText(text: string, startKey: number): (string | JSX.Element)[] {
-  const parts: (string | JSX.Element)[] = [];
+function formatItalicText(text: string, startKey: number): (string | React.ReactElement)[] {
+  const parts: (string | React.ReactElement)[] = [];
   let keyCounter = startKey;
   
   // Handle italic text (*text* but not **text**)
