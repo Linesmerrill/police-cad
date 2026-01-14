@@ -2957,7 +2957,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
           alertVolumeLevel: user.alertVolumeLevel || 10,
           createdAt: user.createdAt,
           subscription: subscription,
-          communities: user.communities || []
+          communities: user.communities || [],
+          departments: user.departments || []
         }
       };
     };
@@ -3194,13 +3195,24 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
       // Handle join request (department)
       else if (notificationType === 'join_request' && data3) {
+        const departmentJoinUrl = `${apiUrl}/api/v1/community/${data1}/departments/${data3}/join-requests`;
+        const departmentJoinBody = {
+          userId: sentFromID,
+          status: action,
+        };
+
+        console.log('Processing department join request:');
+        console.log('  URL:', departmentJoinUrl);
+        console.log('  Body:', departmentJoinBody);
+        console.log('  Community ID (data1):', data1);
+        console.log('  Department ID (data3):', data3);
+        console.log('  User ID (sentFromID):', sentFromID);
+        console.log('  Action:', action);
+
         requests.push(
           axios.put(
-            `${apiUrl}/api/v1/community/${data1}/departments/${data3}/join-requests`,
-            {
-              userId: sentFromID,
-              status: action,
-            },
+            departmentJoinUrl,
+            departmentJoinBody,
             {
               headers: {
                 'Content-Type': 'application/json',
@@ -3251,11 +3263,21 @@ module.exports = function (app, passport, server, nextApp, handle) {
       );
 
       const responses = await Promise.all(requests);
+
+      console.log('All requests completed. Response statuses:');
+      responses.forEach((r, index) => {
+        console.log(`  Request ${index}: status ${r.status}`);
+        if (r.data) {
+          console.log(`  Response data:`, JSON.stringify(r.data).substring(0, 200));
+        }
+      });
+
       const errors = responses.filter(r => r.status >= 400);
-      
+
       if (errors.length > 0) {
         const errorResponse = errors[0];
         let errorText = 'Failed to process request';
+        console.error('Error in notification action:', errorResponse);
         try {
           if (errorResponse.response && errorResponse.response.data) {
             const errorData = errorResponse.response.data;
@@ -3269,6 +3291,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
         return res.status(errorResponse.status || 500).json({ error: errorText });
       }
 
+      console.log('Notification action completed successfully');
       return res.json({ success: true });
     } catch (error) {
       console.error('Error proxying notification action request:', error);
@@ -3592,6 +3615,183 @@ module.exports = function (app, passport, server, nextApp, handle) {
       res.status(response.status).json(response.data);
     } catch (error) {
       console.error('Error proxying add invite code request:', error);
+      const status = error.response?.status || 500;
+      let errorData = error.response?.data || { error: 'Internal server error' };
+
+      res.status(status).json(errorData);
+    }
+  });
+
+  // PATCH /api/community/:id/departments/:deptId - proxy route for updating departments
+  app.patch("/api/community/:id/departments/:deptId", async function (req, res) {
+    try {
+      const cookieHeader = req.headers.cookie || '';
+      const { id, deptId } = req.params;
+      const body = req.body;
+
+      if (!id || !deptId) {
+        return res.status(400).json({ error: 'Community ID and Department ID are required' });
+      }
+
+      // Log the incoming body for debugging
+      console.log('Department update payload:', JSON.stringify(body, null, 2));
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+      const response = await axios.patch(
+        `${apiUrl}/api/v1/community/${id}/departments/${deptId}`,
+        body,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      // Log the response for debugging
+      console.log('Department update response:', response.status, JSON.stringify(response.data, null, 2));
+
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error('Error proxying update department request:', error);
+      if (error.response) {
+        console.error('Backend error response:', error.response.status, JSON.stringify(error.response.data, null, 2));
+      }
+      const status = error.response?.status || 500;
+      let errorData = error.response?.data || { error: 'Internal server error' };
+
+      res.status(status).json(errorData);
+    }
+  });
+
+  // DELETE /api/community/:id/departments/:deptId - proxy route for deleting departments
+  app.delete("/api/community/:id/departments/:deptId", async function (req, res) {
+    try {
+      const cookieHeader = req.headers.cookie || '';
+      const { id, deptId } = req.params;
+
+      if (!id || !deptId) {
+        return res.status(400).json({ error: 'Community ID and Department ID are required' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+      const response = await axios.delete(
+        `${apiUrl}/api/v1/community/${id}/departments/${deptId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error('Error proxying delete department request:', error);
+      const status = error.response?.status || 500;
+      let errorData = error.response?.data || { error: 'Internal server error' };
+
+      res.status(status).json(errorData);
+    }
+  });
+
+  // POST /api/community/:id/departments/:deptId/join-requests - proxy route for department join requests
+  app.post("/api/community/:id/departments/:deptId/join-requests", async function (req, res) {
+    try {
+      const cookieHeader = req.headers.cookie || '';
+      const { id, deptId } = req.params;
+      const { userId } = req.body;
+
+      if (!id || !deptId || !userId) {
+        return res.status(400).json({ error: 'Community ID, Department ID, and User ID are required' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+      // Step 1: Send pending department request
+      const pendingResponse = await axios.post(
+        `${apiUrl}/api/v1/user/${userId}/pending-department-request`,
+        { communityId: id, departmentId: deptId },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      // Step 2: Fetch community and department details for notification
+      const communityResponse = await axios.get(
+        `${apiUrl}/api/v1/community/${id}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      const departmentResponse = await axios.get(
+        `${apiUrl}/api/v1/community/${id}/departments/${deptId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      const community = communityResponse.data;
+      const department = departmentResponse.data;
+
+      // Step 3: Get users with "manage members" or "administrator" permissions
+      const userIds = community.community?.roles
+        ?.filter((role) =>
+          role.permissions?.some(
+            (permission) =>
+              (permission.name === 'manage members' || permission.name === 'administrator') &&
+              permission.enabled
+          )
+        )
+        .flatMap((role) => role.members) || [];
+
+      // Step 4: Send notifications to admins/managers
+      for (const recipientId of userIds) {
+        try {
+          await axios.post(
+            `${apiUrl}/api/v1/users/notifications`,
+            {
+              sentFromID: userId,
+              sentToID: recipientId,
+              type: 'join_request',
+              data1: id,
+              data2: community?.community?.name,
+              data3: deptId,
+              data4: department?.department?.name,
+              message: 'has requested to join',
+            },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                Cookie: cookieHeader,
+              },
+            }
+          );
+        } catch (notifError) {
+          console.error('Error sending notification to user:', recipientId, notifError);
+          // Continue with other notifications even if one fails
+        }
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Join request sent successfully',
+        data: pendingResponse.data
+      });
+    } catch (error) {
+      console.error('Error proxying department join request:', error);
       const status = error.response?.status || 500;
       let errorData = error.response?.data || { error: 'Internal server error' };
 

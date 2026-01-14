@@ -19,7 +19,9 @@
       "Bash(\"C:\\\\Program Files\\\\nodejs\\\\npm.cmd\" install)",
       "Bash(find:*)",
       "Bash(NODE_OPTIONS=\"--no-turbo-pack\" npm run dev:*)",
-      "Bash(NEXT_SKIP_TURBOPACK=1 npm run dev:*)"
+      "Bash(NEXT_SKIP_TURBOPACK=1 npm run dev:*)",
+      "Bash(grep:*)",
+      "Bash(curl:*)"
     ]
   }
 }
