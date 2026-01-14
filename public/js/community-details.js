@@ -788,6 +788,15 @@ function updateDepartmentJoinButton(departmentId, status) {
       joinButton.classList.remove('bg-purple-600', 'hover:bg-purple-700');
       joinButton.classList.add('bg-gray-500', 'cursor-not-allowed');
       joinButton.removeAttribute('onclick');
+    } else if (status === 'Approved') {
+      // User is approved - hide the button or change it to "Go to Dashboard"
+      joinButton.style.display = 'none';
+      
+      // Remove any existing status text
+      const existingStatusText = joinButton.parentNode.parentNode.querySelector('.request-status-text');
+      if (existingStatusText) {
+        existingStatusText.remove();
+      }
     } else if (status === 'Ready') {
       joinButton.disabled = false;
       joinButton.textContent = 'Request Access';
@@ -836,13 +845,16 @@ function updateDepartmentJoinButton(departmentId, status) {
       const community = await response.json();
       const departments = community.community?.departments || [];
       
-      // Check each department for pending requests
+      // Check each department for pending requests and approved status
       departments.forEach(department => {
         const members = department.members || [];
         const userMember = members.find(member => member.userID === window.userId);
         
         if (userMember && userMember.status === 'pending') {
           updateDepartmentJoinButton(department._id, 'Pending');
+        } else if (userMember && userMember.status === 'approved') {
+          // User is approved - hide the join button or show "Go to Dashboard"
+          updateDepartmentJoinButton(department._id, 'Approved');
         } else {
           // User hasn't requested this department yet, set to ready
           updateDepartmentJoinButton(department._id, 'Ready');

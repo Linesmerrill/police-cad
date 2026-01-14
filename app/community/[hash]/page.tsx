@@ -35,9 +35,10 @@ interface Department {
   description?: string;
   template?: string | { name?: string };
   isPrivate?: boolean;
+  approvalRequired?: boolean;
   imageLink?: string;
   image?: string;
-  joinRequests?: Array<{ userId: string; status: string }>;
+  members?: Array<{ userID: string; status: string; tenCodeID?: string }>;
 }
 
 interface User {
@@ -52,9 +53,19 @@ interface User {
     status: 'approved' | 'pending' | 'rejected';
     _id?: string;
   }>;
+  departments?: Array<{
+    departmentId: string;
+    status: 'approved' | 'pending' | 'rejected';
+    _id?: string;
+  }>;
   user?: {
     communities?: Array<{
       communityId: string;
+      status: 'approved' | 'pending' | 'rejected';
+      _id?: string;
+    }>;
+    departments?: Array<{
+      departmentId: string;
       status: 'approved' | 'pending' | 'rejected';
       _id?: string;
     }>;
@@ -249,6 +260,7 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
   const [hash, setHash] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string>('overview');
   const [canManageSettings, setCanManageSettings] = useState(false);
+  const [canManageDepartments, setCanManageDepartments] = useState(false);
   const [isMemberApproved, setIsMemberApproved] = useState(false);
   const [isMemberPending, setIsMemberPending] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -277,6 +289,13 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [departmentPage, setDepartmentPage] = useState(1);
   const departmentsPerPage = 10;
+  const [showEditDepartmentModal, setShowEditDepartmentModal] = useState(false);
+  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
+  const [editDeptName, setEditDeptName] = useState('');
+  const [editDeptDescription, setEditDeptDescription] = useState('');
+  const [editDeptImage, setEditDeptImage] = useState('');
+  const [editDeptApprovalRequired, setEditDeptApprovalRequired] = useState(false);
+  const [savingDepartment, setSavingDepartment] = useState(false);
 
   // Filter and paginate departments
   const filteredDepartments = departments.filter((dept) => {
@@ -359,9 +378,15 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
 
         setCommunity(comm);
 
-        // Set departments first
+        // Set departments first - ensure isPrivate is set correctly
         if (communityData.departments && Array.isArray(communityData.departments)) {
-          setDepartments(communityData.departments);
+          const processedDepartments = communityData.departments.map((dept: any) => ({
+            ...dept,
+            // Map approvalRequired to isPrivate if isPrivate is not set
+            isPrivate: dept.isPrivate !== undefined ? dept.isPrivate : (dept.approvalRequired || false),
+          }));
+          console.log('Processed departments:', processedDepartments);
+          setDepartments(processedDepartments);
         }
 
         // Check if user is a member and has permissions
@@ -523,6 +548,13 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                         hasPermission = true;
                         console.log('User has permission:', perm.name);
                       }
+                      if (
+                        (perm.name === 'administrator' && perm.enabled === true) ||
+                        (perm.name === 'manage departments' && perm.enabled === true)
+                      ) {
+                        setCanManageDepartments(true);
+                        console.log('User can manage departments:', perm.name);
+                      }
                     });
                   }
                 }
@@ -531,8 +563,33 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
             
             console.log('Final permission check - canManageSettings:', hasPermission);
             setCanManageSettings(hasPermission);
+            
+            // Check for manage departments permission
+            let canManageDepts = false;
+            if (comm.roles && Array.isArray(comm.roles)) {
+              comm.roles.forEach((role: any) => {
+                const roleMembers = role.members || [];
+                const isInRole = roleMembers.some((member: any) => {
+                  const memberId = typeof member === 'string' ? member : (member._id || member.id || member.userID);
+                  return memberId && (String(memberId) === String(userId) || String(memberId) === String(currentUser._id) || String(memberId) === String(currentUser.id));
+                });
+                
+                if (isInRole && Array.isArray(role.permissions)) {
+                  role.permissions.forEach((perm: any) => {
+                    if (
+                      (perm.name === 'administrator' && perm.enabled === true) ||
+                      (perm.name === 'manage departments' && perm.enabled === true)
+                    ) {
+                      canManageDepts = true;
+                    }
+                  });
+                }
+              });
+            }
+            setCanManageDepartments(canManageDepts);
           } else {
             setCanManageSettings(false);
+            setCanManageDepartments(false);
           }
         }
 
@@ -553,18 +610,42 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
   }, [params]);
 
   const checkIfRequestPending = (dept: Department): boolean => {
-    if (!user || !dept.joinRequests) return false;
+    if (!user || !dept.members) return false;
+
     const userId = user.id || user._id;
-    return dept.joinRequests.some(req => req.userId === userId && req.status === 'pending');
+
+    // Check if the user has a pending request in the department's members array
+    return dept.members.some(
+      member => String(member.userID) === String(userId) && member.status === 'pending'
+    );
+  };
+
+  const checkIfApprovedMember = (dept: Department): boolean => {
+    if (!user || !dept.members) return false;
+
+    const userId = user.id || user._id;
+
+    // Check if the user is an approved member of the department
+    return dept.members.some(
+      member => String(member.userID) === String(userId) && member.status === 'approved'
+    );
   };
 
   const navigateToDepartment = (dept: Department) => {
-    // If private department, show request to join instead (unless already requested)
-    if (dept.isPrivate) {
-      if (!checkIfRequestPending(dept)) {
+    // If private department, check if user is admin, has manage permissions, or is an approved member
+    if (dept.isPrivate && !canManageDepartments) {
+      // Check if user is an approved member - if so, allow access
+      if (checkIfApprovedMember(dept)) {
+        // Approved members can access the department
+        // Continue to navigation logic below
+      } else if (!checkIfRequestPending(dept)) {
+        // Not approved and not pending - need to request to join
         handleRequestToJoinDepartment(dept);
+        return;
+      } else {
+        // Request is pending - don't allow access yet
+        return;
       }
-      return;
     }
 
     if (!dept.template) return;
@@ -613,26 +694,51 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
 
     try {
       const userId = user.id || user._id;
-      const response = await fetch(`${API_URL}/api/v1/community/${community._id}/departments/${dept._id}/join-requests`, {
+      const response = await fetch(`/api/community/${community._id}/departments/${dept._id}/join-requests`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...getAuthHeaders()
         },
+        credentials: 'include',
         body: JSON.stringify({
           userId: userId
         })
       });
 
       if (response.ok) {
-        alert(`Join request sent for ${dept.name}!`);
+        // Update the department's members array to add the pending request
+        setDepartments(prevDepts =>
+          prevDepts.map(d =>
+            d._id === dept._id
+              ? {
+                  ...d,
+                  members: [
+                    ...(d.members || []),
+                    {
+                      userID: userId,
+                      status: 'pending',
+                      tenCodeID: ''
+                    }
+                  ]
+                }
+              : d
+          )
+        );
+
+        setRequestModalType('success');
+        setRequestModalMessage(`Join request sent for ${dept.name}! Community admins have been notified and will review your request.`);
+        setShowRequestModal(true);
       } else {
         const error = await response.json();
-        alert(`Failed to send join request: ${error.message || 'Unknown error'}`);
+        setRequestModalType('error');
+        setRequestModalMessage(error.message || error.error || 'Failed to send join request');
+        setShowRequestModal(true);
       }
     } catch (error) {
       console.error('Error sending join request:', error);
-      alert('Failed to send join request');
+      setRequestModalType('error');
+      setRequestModalMessage('Failed to send join request. Please try again later.');
+      setShowRequestModal(true);
     }
   };
 
@@ -949,9 +1055,8 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
   };
 
   const openSettings = () => {
-    // TODO: Navigate to settings page or open settings modal
     if (hash) {
-      window.location.href = `/community/${hash}/settings`;
+      router.push(`/community/${hash}/settings`);
     }
   };
 
@@ -1288,8 +1393,27 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 <div
                   key={dept._id}
                   onClick={() => navigateToDepartment(dept)}
-                  className="group backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-blue-500/50 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20 flex flex-col"
+                  className="group backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-blue-500/50 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20 flex flex-col relative"
                 >
+                  {/* Edit Department Button - Only show if user can manage departments */}
+                  {canManageDepartments && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingDepartment(dept);
+                        setEditDeptName(dept.name);
+                        setEditDeptDescription(dept.description || '');
+                        setEditDeptImage(dept.imageLink || dept.image || '');
+                        setEditDeptApprovalRequired(dept.isPrivate || false);
+                        setShowEditDepartmentModal(true);
+                      }}
+                      className="absolute top-3 right-3 z-20 bg-gray-900/80 hover:bg-gray-800/90 text-gray-300 hover:text-blue-400 rounded-full w-10 h-10 flex items-center justify-center transition-all"
+                      title="Edit Department"
+                    >
+                      <i className="fa fa-pencil-alt text-sm"></i>
+                    </button>
+                  )}
+                  
                   {/* Department Image - 16:9 aspect ratio */}
                   {(dept.imageLink || dept.image) ? (
                     <div className="aspect-video overflow-hidden relative">
@@ -1326,12 +1450,17 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                       {checkIfRequestPending(dept) ? (
                         <div className="flex items-center text-yellow-400 text-sm font-medium">
                           <i className="fa fa-clock mr-2"></i>
-                          <span>Request Pending</span>
+                          <span>Awaiting Approval</span>
+                        </div>
+                      ) : checkIfApprovedMember(dept) ? (
+                        <div className="flex items-center text-blue-400 text-sm font-medium group-hover:text-blue-300 transition-colors">
+                          <span>View Dashboard</span>
+                          <i className="fa fa-arrow-right ml-2 transform group-hover:translate-x-1 transition-transform"></i>
                         </div>
                       ) : (
                         <div className="flex items-center text-blue-400 text-sm font-medium group-hover:text-blue-300 transition-colors">
-                          <span>{dept.isPrivate ? 'Request to Join' : 'View Dashboard'}</span>
-                          <i className={`fa ${dept.isPrivate ? 'fa-user-plus' : 'fa-arrow-right'} ml-2 transform group-hover:translate-x-1 transition-transform`}></i>
+                          <span>{dept.isPrivate && !canManageDepartments ? 'Request to Join' : 'View Dashboard'}</span>
+                          <i className={`fa ${dept.isPrivate && !canManageDepartments ? 'fa-user-plus' : 'fa-arrow-right'} ml-2 transform group-hover:translate-x-1 transition-transform`}></i>
                         </div>
                       )}
                     </div>
@@ -1969,6 +2098,300 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 OK
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Department Modal */}
+      {showEditDepartmentModal && editingDepartment && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setShowEditDepartmentModal(false)}
+        >
+          <div
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-lg w-full mx-4 border border-gray-700 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <i className="fa fa-pencil-alt text-2xl text-blue-400"></i>
+                <h3 className="text-2xl font-bold text-white">Edit Department</h3>
+              </div>
+              <button
+                onClick={() => setShowEditDepartmentModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <i className="fa fa-times text-xl"></i>
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!editingDepartment || !hash) return;
+
+                setSavingDepartment(true);
+                try {
+                  const communityId = decodeCommunityHash(hash);
+                  const payload = {
+                    name: editDeptName.trim(),
+                    description: editDeptDescription.trim(),
+                    image: editDeptImage || editingDepartment.imageLink || editingDepartment.image,
+                    approvalRequired: editDeptApprovalRequired,
+                    isPrivate: editDeptApprovalRequired, // Also send as isPrivate for backend compatibility
+                  };
+                  
+                  console.log('Sending department update payload:', payload);
+
+                  const response = await fetch(`/api/community/${communityId}/departments/${editingDepartment._id}`, {
+                    method: 'PATCH',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(payload),
+                  });
+
+                  if (!response.ok) {
+                    let errorMessage = 'Failed to update department';
+                    try {
+                      const errorText = await response.text();
+                      try {
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.error || errorData.message || errorMessage;
+                      } catch {
+                        errorMessage = errorText || errorMessage;
+                      }
+                    } catch {
+                      errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                    }
+                    throw new Error(errorMessage);
+                  }
+
+                  // Update the department in local state to reflect changes immediately
+                  setDepartments(prevDepartments => 
+                    prevDepartments.map(dept => 
+                      dept._id === editingDepartment._id 
+                        ? { 
+                            ...dept, 
+                            name: editDeptName.trim(),
+                            description: editDeptDescription.trim(),
+                            image: editDeptImage || editingDepartment.imageLink || editingDepartment.image,
+                            imageLink: editDeptImage || editingDepartment.imageLink || editingDepartment.image,
+                            isPrivate: editDeptApprovalRequired,
+                            approvalRequired: editDeptApprovalRequired,
+                          }
+                        : dept
+                    )
+                  );
+
+                  setShowEditDepartmentModal(false);
+                  setRequestModalType('success');
+                  setRequestModalMessage('Department updated successfully!');
+                  setShowRequestModal(true);
+                } catch (error: any) {
+                  console.error('Error updating department:', error);
+                  setRequestModalType('error');
+                  setRequestModalMessage(error.message || 'Failed to update department');
+                  setShowRequestModal(true);
+                } finally {
+                  setSavingDepartment(false);
+                }
+              }}
+              className="space-y-4"
+            >
+              {/* Department Image */}
+              <div>
+                <label className="block text-gray-300 mb-2 text-sm font-medium">Department Photo</label>
+                <div className="relative w-full border-2 border-dashed border-gray-600 rounded-lg bg-gray-800/50 hover:border-blue-500 transition cursor-pointer overflow-hidden" style={{ aspectRatio: '16/9' }}>
+                  {editDeptImage ? (
+                    <img src={editDeptImage} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <i className="fa fa-camera text-4xl text-gray-400 mb-2"></i>
+                      <p className="text-gray-400 text-sm">Click to upload photo (16:9)</p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      if (!file.type.startsWith('image/')) {
+                        setRequestModalType('error');
+                        setRequestModalMessage('Please select a valid image file');
+                        setShowRequestModal(true);
+                        return;
+                      }
+
+                      if (file.size > 5 * 1024 * 1024) {
+                        setRequestModalType('error');
+                        setRequestModalMessage('Image must be less than 5MB');
+                        setShowRequestModal(true);
+                        return;
+                      }
+
+                      try {
+                        // Upload to Cloudinary
+                        const signatureResponse = await fetch('/api/cloudinary/generate-signature', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          credentials: 'include',
+                        });
+
+                        if (!signatureResponse.ok) {
+                          throw new Error('Failed to get signature');
+                        }
+
+                        const { timestamp, signature } = await signatureResponse.json();
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        
+                        const cloudinaryApiKey = (window as any).CLOUDINARY_API_KEY || '';
+                        const cloudinaryUploadPreset = (window as any).CLOUDINARY_UPLOAD_PRESET || '';
+                        const cloudinaryCloudName = (window as any).CLOUDINARY_CLOUD_NAME || '';
+                        
+                        formData.append('api_key', cloudinaryApiKey);
+                        formData.append('timestamp', timestamp);
+                        formData.append('signature', signature);
+                        formData.append('upload_preset', cloudinaryUploadPreset);
+
+                        const cloudinaryResponse = await fetch(
+                          `https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/image/upload`,
+                          { method: 'POST', body: formData }
+                        );
+
+                        const result = await cloudinaryResponse.json();
+                        if (result.error) throw new Error(result.error.message);
+                        
+                        setEditDeptImage(result.secure_url);
+                      } catch (error: any) {
+                        console.error('Upload error:', error);
+                        setRequestModalType('error');
+                        setRequestModalMessage(error.message || 'Upload failed');
+                        setShowRequestModal(true);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Department Name */}
+              <div>
+                <label className="block text-gray-300 mb-2 text-sm font-medium">Department Name <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  value={editDeptName}
+                  onChange={(e) => setEditDeptName(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter department name"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-gray-300 mb-2 text-sm font-medium">Description</label>
+                <textarea
+                  value={editDeptDescription}
+                  onChange={(e) => setEditDeptDescription(e.target.value)}
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  placeholder="Enter department description"
+                />
+              </div>
+
+              {/* Visibility Toggle */}
+              <div>
+                <label className="block text-gray-300 mb-2 text-sm font-medium">Visibility</label>
+                <div className="flex items-center gap-3">
+                  <span className={`text-sm font-medium ${!editDeptApprovalRequired ? 'text-blue-400' : 'text-gray-400'}`}>Public</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editDeptApprovalRequired}
+                      onChange={(e) => setEditDeptApprovalRequired(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+                    <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+                  </label>
+                  <span className={`text-sm font-medium ${editDeptApprovalRequired ? 'text-blue-400' : 'text-gray-400'}`}>Private</span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!confirm('Are you sure you want to delete this department? This action is irreversible.')) return;
+                    
+                    if (!editingDepartment || !hash) return;
+                    try {
+                      const communityId = decodeCommunityHash(hash);
+                      const response = await fetch(`/api/community/${communityId}/departments/${editingDepartment._id}`, {
+                        method: 'DELETE',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                      });
+
+                      if (!response.ok) {
+                        let errorMessage = 'Failed to delete department';
+                        try {
+                          const errorText = await response.text();
+                          try {
+                            const errorData = JSON.parse(errorText);
+                            errorMessage = errorData.error || errorData.message || errorMessage;
+                          } catch {
+                            errorMessage = errorText || errorMessage;
+                          }
+                        } catch {
+                          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                        }
+                        throw new Error(errorMessage);
+                      }
+
+                      setShowEditDepartmentModal(false);
+                      setRequestModalType('success');
+                      setRequestModalMessage('Department deleted successfully!');
+                      setShowRequestModal(true);
+                      
+                      setTimeout(() => {
+                        window.location.reload();
+                      }, 1500);
+                    } catch (error: any) {
+                      console.error('Error deleting department:', error);
+                      setRequestModalType('error');
+                      setRequestModalMessage(error.message || 'Failed to delete department');
+                      setShowRequestModal(true);
+                    }
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowEditDepartmentModal(false)}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingDepartment || !editDeptName.trim()}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors"
+                >
+                  {savingDepartment ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
