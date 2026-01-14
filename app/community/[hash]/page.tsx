@@ -706,6 +706,13 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
 
     try {
       const userId = user.id || user._id;
+      if (!userId) {
+        setRequestModalType('error');
+        setRequestModalMessage('User ID not found. Please try logging in again.');
+        setShowRequestModal(true);
+        return;
+      }
+
       const response = await fetch(`/api/community/${community._id}/departments/${dept._id}/join-requests`, {
         method: 'POST',
         headers: {
