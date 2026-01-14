@@ -645,37 +645,38 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
               });
             }
             setCanManageAnnouncements(canManageAnns);
+
+            // Fetch announcements if user is approved member
+            if (comm && communityId) {
+              try {
+                const announcementsResponse = await fetch(`${API_URL}/api/v1/community/${communityId}/announcements`, {
+                  headers: getAuthHeaders(),
+                  credentials: 'include',
+                });
+                if (announcementsResponse.ok) {
+                  const announcementsData = await announcementsResponse.json();
+                  setAnnouncements(announcementsData.announcements || []);
+                  // Count unread announcements
+                  const unread = (announcementsData.announcements || []).filter((a: Announcement) => !a.read).length;
+                  setUnreadAnnouncementsCount(unread);
+                } else {
+                  setAnnouncements([]);
+                }
+              } catch (error) {
+                console.error('Error fetching announcements:', error);
+                setAnnouncements([]);
+              }
+            } else {
+              setAnnouncements([]);
+            }
+            // TODO: Fetch events
           } else {
             setCanManageSettings(false);
             setCanManageDepartments(false);
             setCanManageAnnouncements(false);
-          }
-        }
-
-        // Fetch announcements if user is approved member
-        if (comm && isApproved && communityId) {
-          try {
-            const announcementsResponse = await fetch(`${API_URL}/api/v1/community/${communityId}/announcements`, {
-              headers: getAuthHeaders(),
-              credentials: 'include',
-            });
-            if (announcementsResponse.ok) {
-              const announcementsData = await announcementsResponse.json();
-              setAnnouncements(announcementsData.announcements || []);
-              // Count unread announcements
-              const unread = (announcementsData.announcements || []).filter((a: Announcement) => !a.read).length;
-              setUnreadAnnouncementsCount(unread);
-            } else {
-              setAnnouncements([]);
-            }
-          } catch (error) {
-            console.error('Error fetching announcements:', error);
             setAnnouncements([]);
           }
-        } else {
-          setAnnouncements([]);
         }
-        // TODO: Fetch events
 
       } catch (err) {
         console.error('Error loading community:', err);
