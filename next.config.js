@@ -11,6 +11,9 @@ const nextConfig = {
     cpus: 1,
   },
 
+  // Turbopack configuration (required for Next.js 16+)
+  turbopack: {},
+
   // Allow Next.js to work alongside Express
   async rewrites() {
     return [
@@ -24,16 +27,6 @@ const nextConfig = {
   // Ensure images work correctly
   images: {
     unoptimized: true, // Disable image optimization when using external static serving
-  },
-
-  // Optimize webpack for memory
-  webpack: (config, { isServer }) => {
-    // Reduce memory usage
-    if (!isServer) {
-      config.optimization.minimize = process.env.NODE_ENV === 'production';
-    }
-
-    return config;
   },
 };
 
