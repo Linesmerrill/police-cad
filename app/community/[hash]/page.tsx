@@ -33,7 +33,7 @@ interface Department {
   _id: string;
   name: string;
   description?: string;
-  template?: string | { name?: string };
+  template?: string | { name?: string; components?: Array<{ name: string; enabled?: boolean }> };
   isPrivate?: boolean;
   approvalRequired?: boolean;
   imageLink?: string;
@@ -286,6 +286,42 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
     return (template.name || '').toLowerCase();
   };
 
+  // Helper function to get component display info
+  const getComponentDisplayInfo = (componentName: string): { label: string; icon: string; bgColor: string; iconColor: string } => {
+    const displayMap: Record<string, { label: string; icon: string; bgColor: string; iconColor: string }> = {
+      // Civilian components
+      'createCivilians': { label: 'Create Civilians', icon: 'fa-id-card', bgColor: 'bg-blue-500/20', iconColor: 'text-blue-400' },
+      'createVehicles': { label: 'Create Vehicles', icon: 'fa-car', bgColor: 'bg-green-500/20', iconColor: 'text-green-400' },
+      'createFirearms': { label: 'Create Firearms', icon: 'fa-crosshairs', bgColor: 'bg-red-500/20', iconColor: 'text-red-400' },
+      'call911': { label: 'Call 911', icon: 'fa-phone', bgColor: 'bg-yellow-500/20', iconColor: 'text-yellow-400' },
+
+      // Police components
+      '10CodesInterface': { label: '10 Codes Interface', icon: 'fa-code', bgColor: 'bg-blue-500/20', iconColor: 'text-blue-400' },
+      'personSearch': { label: 'Person Search', icon: 'fa-search', bgColor: 'bg-purple-500/20', iconColor: 'text-purple-400' },
+      'vehicleSearch': { label: 'Vehicle Search', icon: 'fa-car', bgColor: 'bg-green-500/20', iconColor: 'text-green-400' },
+      'firearmSearch': { label: 'Firearm Search', icon: 'fa-crosshairs', bgColor: 'bg-red-500/20', iconColor: 'text-red-400' },
+      'createBolos': { label: 'Create BOLOs', icon: 'fa-exclamation-triangle', bgColor: 'bg-orange-500/20', iconColor: 'text-orange-400' },
+      'viewBolosAndWarrants': { label: 'View BOLOs & Warrants', icon: 'fa-clipboard-list', bgColor: 'bg-yellow-500/20', iconColor: 'text-yellow-400' },
+      'notepad': { label: 'Notepad', icon: 'fa-sticky-note', bgColor: 'bg-gray-500/20', iconColor: 'text-gray-400' },
+
+      // Dispatch components
+      'dispatchUnits': { label: 'Dispatch Units', icon: 'fa-broadcast-tower', bgColor: 'bg-indigo-500/20', iconColor: 'text-indigo-400' },
+      'createAndManageCalls': { label: 'Create & Manage Calls', icon: 'fa-phone-volume', bgColor: 'bg-cyan-500/20', iconColor: 'text-cyan-400' },
+      'manage911Calls': { label: 'Manage 911 Calls', icon: 'fa-phone-alt', bgColor: 'bg-red-500/20', iconColor: 'text-red-400' },
+      'nameSearch': { label: 'Name Search', icon: 'fa-user', bgColor: 'bg-purple-500/20', iconColor: 'text-purple-400' },
+
+      // EMS/Fire components
+      'medicalDatabase': { label: 'Medical Database', icon: 'fa-heartbeat', bgColor: 'bg-pink-500/20', iconColor: 'text-pink-400' },
+    };
+
+    return displayMap[componentName] || {
+      label: componentName,
+      icon: 'fa-puzzle-piece',
+      bgColor: 'bg-gray-500/20',
+      iconColor: 'text-gray-400'
+    };
+  };
+
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [departmentPage, setDepartmentPage] = useState(1);
   const departmentsPerPage = 10;
@@ -295,7 +331,10 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
   const [editDeptDescription, setEditDeptDescription] = useState('');
   const [editDeptImage, setEditDeptImage] = useState('');
   const [editDeptApprovalRequired, setEditDeptApprovalRequired] = useState(false);
+  const [editDeptComponents, setEditDeptComponents] = useState<Record<string, boolean>>({});
   const [savingDepartment, setSavingDepartment] = useState(false);
+  const [showDeleteDepartmentConfirm, setShowDeleteDepartmentConfirm] = useState(false);
+  const [deletingDepartment, setDeletingDepartment] = useState(false);
 
   // Filter and paginate departments
   const filteredDepartments = departments.filter((dept) => {
@@ -320,6 +359,20 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
       setDepartmentPage(1);
     }
   }, [departmentPage, totalPages]);
+
+  // Prevent body scrolling when edit modal is open
+  useEffect(() => {
+    if (showEditDepartmentModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    
+    // Cleanup: restore scrolling when component unmounts
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showEditDepartmentModal]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -1440,6 +1493,17 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                         setEditDeptDescription(dept.description || '');
                         setEditDeptImage(dept.imageLink || dept.image || '');
                         setEditDeptApprovalRequired(dept.isPrivate || false);
+
+                        // Extract components from the department's template (already loaded from community data)
+                        const components = typeof dept.template === 'object' ? dept.template.components || [] : [];
+
+                        // Initialize components state
+                        const componentMap: Record<string, boolean> = {};
+                        components.forEach((comp: { name: string; enabled?: boolean }) => {
+                          componentMap[comp.name] = comp.enabled !== false; // Default to true if not specified
+                        });
+                        setEditDeptComponents(componentMap);
+
                         setShowEditDepartmentModal(true);
                       }}
                       className="absolute top-3 right-3 z-20 bg-gray-900/80 hover:bg-gray-800/90 text-gray-300 hover:text-blue-400 rounded-full w-10 h-10 flex items-center justify-center transition-all"
@@ -2141,11 +2205,11 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
       {/* Edit Department Modal */}
       {showEditDepartmentModal && editingDepartment && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto"
           onClick={() => setShowEditDepartmentModal(false)}
         >
           <div
-            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-lg w-full mx-4 border border-gray-700 shadow-2xl"
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-lg w-full my-8 border border-gray-700 shadow-2xl max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
@@ -2169,12 +2233,23 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 setSavingDepartment(true);
                 try {
                   const communityId = decodeCommunityHash(hash);
+                  
+                  // Convert components map to array format
+                  const components = Object.entries(editDeptComponents).map(([name, enabled]) => ({
+                    name,
+                    enabled
+                  }));
+                  
                   const payload = {
                     name: editDeptName.trim(),
                     description: editDeptDescription.trim(),
                     image: editDeptImage || editingDepartment.imageLink || editingDepartment.image,
                     approvalRequired: editDeptApprovalRequired,
                     isPrivate: editDeptApprovalRequired, // Also send as isPrivate for backend compatibility
+                    template: {
+                      ...(typeof editingDepartment.template === 'object' ? editingDepartment.template : {}),
+                      components: components
+                    }
                   };
                   
                   console.log('Sending department update payload:', payload);
@@ -2216,6 +2291,10 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                             imageLink: editDeptImage || editingDepartment.imageLink || editingDepartment.image,
                             isPrivate: editDeptApprovalRequired,
                             approvalRequired: editDeptApprovalRequired,
+                            template: {
+                              ...(typeof dept.template === 'object' ? dept.template : { name: typeof dept.template === 'string' ? dept.template : '' }),
+                              components: components
+                            }
                           }
                         : dept
                     )
@@ -2315,6 +2394,16 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 </div>
               </div>
 
+              {/* Template Name (Read-only) */}
+              <div>
+                <label className="block text-gray-300 mb-2 text-sm font-medium">Department Template</label>
+                <div className="px-4 py-3 rounded-lg border border-gray-700 bg-gray-800/50 text-gray-400 flex items-center gap-2">
+                  <i className="fa fa-tag"></i>
+                  <span>{editingDepartment?.template && typeof editingDepartment.template === 'object' ? editingDepartment.template.name : typeof editingDepartment?.template === 'string' ? editingDepartment.template : 'Unknown'}</span>
+                  <span className="ml-auto text-xs text-gray-500">Read-only</span>
+                </div>
+              </div>
+
               {/* Department Name */}
               <div>
                 <label className="block text-gray-300 mb-2 text-sm font-medium">Department Name <span className="text-red-400">*</span></label>
@@ -2359,55 +2448,52 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 </div>
               </div>
 
+              {/* Components */}
+              <div>
+                <label className="block text-gray-300 mb-3 text-sm font-medium">Components</label>
+                <div className="space-y-3">
+                  {Object.keys(editDeptComponents).length === 0 ? (
+                    <div className="text-gray-400 text-sm italic p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                      No components available for this department template
+                    </div>
+                  ) : (
+                    Object.keys(editDeptComponents).map((componentName) => {
+                      const displayInfo = getComponentDisplayInfo(componentName);
+                      return (
+                        <div key={componentName} className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 ${displayInfo.bgColor} rounded-lg flex items-center justify-center`}>
+                              <i className={`fa ${displayInfo.icon} ${displayInfo.iconColor}`}></i>
+                            </div>
+                            <span className="text-white font-medium">{displayInfo.label}</span>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={editDeptComponents[componentName] ?? false}
+                              onChange={(e) => {
+                                setEditDeptComponents(prev => ({
+                                  ...prev,
+                                  [componentName]: e.target.checked
+                                }));
+                              }}
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+                            <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+                          </label>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
               {/* Action Buttons */}
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   type="button"
-                  onClick={async () => {
-                    if (!confirm('Are you sure you want to delete this department? This action is irreversible.')) return;
-                    
-                    if (!editingDepartment || !hash) return;
-                    try {
-                      const communityId = decodeCommunityHash(hash);
-                      const response = await fetch(`/api/community/${communityId}/departments/${editingDepartment._id}`, {
-                        method: 'DELETE',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        credentials: 'include',
-                      });
-
-                      if (!response.ok) {
-                        let errorMessage = 'Failed to delete department';
-                        try {
-                          const errorText = await response.text();
-                          try {
-                            const errorData = JSON.parse(errorText);
-                            errorMessage = errorData.error || errorData.message || errorMessage;
-                          } catch {
-                            errorMessage = errorText || errorMessage;
-                          }
-                        } catch {
-                          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-                        }
-                        throw new Error(errorMessage);
-                      }
-
-                      setShowEditDepartmentModal(false);
-                      setRequestModalType('success');
-                      setRequestModalMessage('Department deleted successfully!');
-                      setShowRequestModal(true);
-                      
-                      setTimeout(() => {
-                        window.location.reload();
-                      }, 1500);
-                    } catch (error: any) {
-                      console.error('Error deleting department:', error);
-                      setRequestModalType('error');
-                      setRequestModalMessage(error.message || 'Failed to delete department');
-                      setShowRequestModal(true);
-                    }
-                  }}
+                  onClick={() => setShowDeleteDepartmentConfirm(true)}
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
                 >
                   Delete
@@ -2428,6 +2514,114 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Department Confirmation Modal */}
+      {showDeleteDepartmentConfirm && editingDepartment && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => !deletingDepartment && setShowDeleteDepartmentConfirm(false)}
+        >
+          <div
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-md w-full border border-red-700/50 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-600/20 flex items-center justify-center">
+                <i className="fa fa-exclamation-triangle text-2xl text-red-500"></i>
+              </div>
+              <h3 className="text-2xl font-bold text-white">Delete Department</h3>
+            </div>
+
+            <p className="text-gray-300 mb-2">
+              Are you sure you want to delete <span className="font-semibold text-white">{editingDepartment.name}</span>?
+            </p>
+
+            <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3 mb-6">
+              <p className="text-red-400 text-sm font-medium flex items-start gap-2">
+                <i className="fa fa-info-circle mt-0.5"></i>
+                <span>This action is irreversible. All department data, members, and settings will be permanently deleted.</span>
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteDepartmentConfirm(false)}
+                disabled={deletingDepartment}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!editingDepartment || !hash) return;
+
+                  setDeletingDepartment(true);
+                  try {
+                    const communityId = decodeCommunityHash(hash);
+                    const response = await fetch(`/api/community/${communityId}/departments/${editingDepartment._id}`, {
+                      method: 'DELETE',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      credentials: 'include',
+                    });
+
+                    if (!response.ok) {
+                      let errorMessage = 'Failed to delete department';
+                      try {
+                        const errorText = await response.text();
+                        try {
+                          const errorData = JSON.parse(errorText);
+                          errorMessage = errorData.error || errorData.message || errorMessage;
+                        } catch {
+                          errorMessage = errorText || errorMessage;
+                        }
+                      } catch {
+                        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                      }
+                      throw new Error(errorMessage);
+                    }
+
+                    // Update local state to remove the department
+                    setDepartments(prevDepartments =>
+                      prevDepartments.filter(dept => dept._id !== editingDepartment._id)
+                    );
+
+                    setShowDeleteDepartmentConfirm(false);
+                    setShowEditDepartmentModal(false);
+                    setRequestModalType('success');
+                    setRequestModalMessage('Department deleted successfully!');
+                    setShowRequestModal(true);
+                  } catch (error: any) {
+                    console.error('Error deleting department:', error);
+                    setRequestModalType('error');
+                    setRequestModalMessage(error.message || 'Failed to delete department');
+                    setShowRequestModal(true);
+                  } finally {
+                    setDeletingDepartment(false);
+                  }
+                }}
+                disabled={deletingDepartment}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-700 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
+              >
+                {deletingDepartment ? (
+                  <>
+                    <i className="fa fa-spinner fa-spin"></i>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <i className="fa fa-trash"></i>
+                    Delete Department
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
