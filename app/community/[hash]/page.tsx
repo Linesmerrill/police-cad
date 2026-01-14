@@ -653,7 +653,7 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
         }
 
         // Fetch announcements if user is approved member
-        if (comm && isApproved) {
+        if (comm && isApproved && communityId) {
           try {
             const announcementsResponse = await fetch(`${API_URL}/api/v1/community/${communityId}/announcements`, {
               headers: getAuthHeaders(),
@@ -665,14 +665,17 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
               // Count unread announcements
               const unread = (announcementsData.announcements || []).filter((a: Announcement) => !a.read).length;
               setUnreadAnnouncementsCount(unread);
+            } else {
+              setAnnouncements([]);
             }
           } catch (error) {
             console.error('Error fetching announcements:', error);
+            setAnnouncements([]);
           }
+        } else {
+          setAnnouncements([]);
         }
-        // For now, using empty arrays
-        setAnnouncements([]);
-        setEvents([]);
+        // TODO: Fetch events
 
       } catch (err) {
         console.error('Error loading community:', err);
