@@ -631,6 +631,18 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
     );
   };
 
+  const canAccessDepartment = (dept: Department): boolean => {
+    // Admins and managers can always access
+    if (canManageDepartments) return true;
+    
+    // Non-private departments are accessible to everyone
+    if (!dept.isPrivate) return true;
+    
+    // Private departments require approval
+    // Only approved members can access
+    return checkIfApprovedMember(dept);
+  };
+
   const navigateToDepartment = (dept: Department) => {
     // If private department, check if user is admin, has manage permissions, or is an approved member
     if (dept.isPrivate && !canManageDepartments) {
@@ -1124,26 +1136,28 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
         {/* Page Navigation */}
         <div className="mb-8 backdrop-blur-xl bg-white/5 rounded-2xl p-6 border border-white/10 shadow-2xl">
           <span className="text-sm text-gray-400 block mb-3">Jump to section</span>
-          <div className="flex flex-wrap gap-3">
-            {[
-              { id: 'overview', label: 'Overview', icon: 'fa-info-circle' },
-              { id: 'departments', label: 'Departments', icon: 'fa-building' },
-              { id: 'announcements', label: 'Announcements', icon: 'fa-bullhorn' },
-              { id: 'events', label: 'Events', icon: 'fa-calendar' },
-            ].map((section) => (
-              <button
-                key={section.id}
-                onClick={() => scrollToSection(section.id)}
-                className={`px-4 py-2 rounded-lg transition-all duration-300 ${
-                  activeSection === section.id
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/50'
-                    : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <i className={`fa ${section.icon} mr-2`}></i>
-                {section.label}
-              </button>
-            ))}
+          <div className="overflow-x-auto -mx-2 px-2">
+            <div className="flex gap-2 min-w-max pb-2">
+              {[
+                { id: 'overview', label: 'Overview', icon: 'fa-info-circle' },
+                { id: 'departments', label: 'Departments', icon: 'fa-building' },
+                { id: 'announcements', label: 'Announcements', icon: 'fa-bullhorn' },
+                { id: 'events', label: 'Events', icon: 'fa-calendar' },
+              ].map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => scrollToSection(section.id)}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all duration-300 whitespace-nowrap ${
+                    activeSection === section.id
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/50'
+                      : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/10'
+                  }`}
+                >
+                  <i className={`fa ${section.icon} mr-2`}></i>
+                  {section.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -1307,39 +1321,39 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
 
         {/* Stats Section - Only for approved members */}
         {user && isMemberApproved && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="backdrop-blur-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 transform">
+          <div className="grid grid-cols-3 gap-2 md:gap-6 mb-8">
+            <div className="backdrop-blur-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl md:rounded-2xl p-3 md:p-6 border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 transform">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-3xl font-bold text-white">{community.membersCount || 0}</div>
-                  <div className="text-gray-400 text-sm mt-1">Total Members</div>
+                  <div className="text-xl md:text-3xl font-bold text-white">{community.membersCount || 0}</div>
+                  <div className="text-gray-400 text-xs md:text-sm mt-1">Total Members</div>
                 </div>
-                <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                  <i className="fa fa-users text-blue-400 text-2xl"></i>
+                <div className="w-8 h-8 md:w-12 md:h-12 bg-blue-500/20 rounded-lg md:rounded-xl flex items-center justify-center">
+                  <i className="fa fa-users text-blue-400 text-lg md:text-2xl"></i>
                 </div>
               </div>
             </div>
 
-            <div className="backdrop-blur-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 transform">
+            <div className="backdrop-blur-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl md:rounded-2xl p-3 md:p-6 border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 transform">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-3xl font-bold text-white">{departments.length}</div>
-                  <div className="text-gray-400 text-sm mt-1">Departments</div>
+                  <div className="text-xl md:text-3xl font-bold text-white">{departments.length}</div>
+                  <div className="text-gray-400 text-xs md:text-sm mt-1">Departments</div>
                 </div>
-                <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
-                  <i className="fa fa-building text-green-400 text-2xl"></i>
+                <div className="w-8 h-8 md:w-12 md:h-12 bg-green-500/20 rounded-lg md:rounded-xl flex items-center justify-center">
+                  <i className="fa fa-building text-green-400 text-lg md:text-2xl"></i>
                 </div>
               </div>
             </div>
 
-            <div className="backdrop-blur-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 transform">
+            <div className="backdrop-blur-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-xl md:rounded-2xl p-3 md:p-6 border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 transform">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-3xl font-bold text-white">{announcements.length}</div>
-                  <div className="text-gray-400 text-sm mt-1">Announcements</div>
+                  <div className="text-xl md:text-3xl font-bold text-white">{announcements.length}</div>
+                  <div className="text-gray-400 text-xs md:text-sm mt-1">Announcements</div>
                 </div>
-                <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
-                  <i className="fa fa-bullhorn text-orange-400 text-2xl"></i>
+                <div className="w-8 h-8 md:w-12 md:h-12 bg-orange-500/20 rounded-lg md:rounded-xl flex items-center justify-center">
+                  <i className="fa fa-bullhorn text-orange-400 text-lg md:text-2xl"></i>
                 </div>
               </div>
             </div>
@@ -1389,11 +1403,25 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
 
             {paginatedDepartments.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {paginatedDepartments.map((dept) => (
+              {paginatedDepartments.map((dept) => {
+                const canAccess = canAccessDepartment(dept);
+                const isPending = checkIfRequestPending(dept);
+                // Card is clickable only if not pending AND (can access OR can request to join)
+                const isClickable = !isPending && (canAccess || (dept.isPrivate && !canManageDepartments));
+                
+                return (
                 <div
                   key={dept._id}
-                  onClick={() => navigateToDepartment(dept)}
-                  className="group backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-blue-500/50 transition-all duration-300 cursor-pointer transform hover:scale-105 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20 flex flex-col relative"
+                  onClick={() => {
+                    if (isClickable) {
+                      navigateToDepartment(dept);
+                    }
+                  }}
+                  className={`group backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 rounded-2xl overflow-hidden border border-white/10 transition-all duration-300 flex flex-col relative ${
+                    isClickable 
+                      ? 'hover:border-blue-500/50 cursor-pointer transform hover:scale-105 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20' 
+                      : 'cursor-not-allowed opacity-75'
+                  }`}
                 >
                   {/* Edit Department Button - Only show if user can manage departments */}
                   {canManageDepartments && (
@@ -1466,7 +1494,8 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
             ) : filteredDepartments.length === 0 && departments.length > 0 ? (
               <div className="text-center py-12">
