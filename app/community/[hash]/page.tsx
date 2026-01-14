@@ -76,8 +76,13 @@ interface Announcement {
   _id: string;
   title: string;
   content: string;
-  type: 'general' | 'important' | 'event';
+  type: 'main' | 'session' | 'training';
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  startTime?: string;
+  endTime?: string;
   createdAt: string;
+  author?: string;
+  read?: boolean;
 }
 
 interface Event {
@@ -322,6 +327,21 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
     };
   };
 
+  // Announcement states
+  const [announcementFilter, setAnnouncementFilter] = useState<string>('all');
+  const [showCreateAnnouncementModal, setShowCreateAnnouncementModal] = useState(false);
+  const [showEditAnnouncementModal, setShowEditAnnouncementModal] = useState(false);
+  const [showDeleteAnnouncementModal, setShowDeleteAnnouncementModal] = useState(false);
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [announcementTitle, setAnnouncementTitle] = useState('');
+  const [announcementType, setAnnouncementType] = useState<'main' | 'session' | 'training'>('main');
+  const [announcementPriority, setAnnouncementPriority] = useState<'low' | 'medium' | 'high' | 'urgent'>('medium');
+  const [announcementContent, setAnnouncementContent] = useState('');
+  const [announcementStartTime, setAnnouncementStartTime] = useState('');
+  const [announcementEndTime, setAnnouncementEndTime] = useState('');
+  const [canManageAnnouncements, setCanManageAnnouncements] = useState(false);
+  const [unreadAnnouncementsCount, setUnreadAnnouncementsCount] = useState(0);
+
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [departmentPage, setDepartmentPage] = useState(1);
   const departmentsPerPage = 6;
@@ -564,12 +584,18 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                       ) {
                         setCanManageDepartments(true);
                       }
+                      if (
+                        (perm.name === 'administrator' && perm.enabled === true) ||
+                        (perm.name === 'manage announcements' && perm.enabled === true)
+                      ) {
+                        setCanManageAnnouncements(true);
+                      }
                     });
                   }
                 }
               });
             }
-            
+
             setCanManageSettings(hasPermission);
             
             // Check for manage departments permission
@@ -595,13 +621,55 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
               });
             }
             setCanManageDepartments(canManageDepts);
+
+            // Check for manage announcements permission
+            let canManageAnns = false;
+            if (comm.roles && Array.isArray(comm.roles)) {
+              comm.roles.forEach((role: any) => {
+                const roleMembers = role.members || [];
+                const isInRole = roleMembers.some((member: any) => {
+                  const memberId = typeof member === 'string' ? member : (member._id || member.id || member.userID);
+                  return memberId && (String(memberId) === String(userId) || String(memberId) === String(currentUser._id) || String(memberId) === String(currentUser.id));
+                });
+
+                if (isInRole && Array.isArray(role.permissions)) {
+                  role.permissions.forEach((perm: any) => {
+                    if (
+                      (perm.name === 'administrator' && perm.enabled === true) ||
+                      (perm.name === 'manage announcements' && perm.enabled === true)
+                    ) {
+                      canManageAnns = true;
+                    }
+                  });
+                }
+              });
+            }
+            setCanManageAnnouncements(canManageAnns);
           } else {
             setCanManageSettings(false);
             setCanManageDepartments(false);
+            setCanManageAnnouncements(false);
           }
         }
 
-        // TODO: Fetch announcements and events
+        // Fetch announcements if user is approved member
+        if (comm && isApproved) {
+          try {
+            const announcementsResponse = await fetch(`${API_URL}/api/v1/community/${communityId}/announcements`, {
+              headers: getAuthHeaders(),
+              credentials: 'include',
+            });
+            if (announcementsResponse.ok) {
+              const announcementsData = await announcementsResponse.json();
+              setAnnouncements(announcementsData.announcements || []);
+              // Count unread announcements
+              const unread = (announcementsData.announcements || []).filter((a: Announcement) => !a.read).length;
+              setUnreadAnnouncementsCount(unread);
+            }
+          } catch (error) {
+            console.error('Error fetching announcements:', error);
+          }
+        }
         // For now, using empty arrays
         setAnnouncements([]);
         setEvents([]);
@@ -1386,6 +1454,190 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                   <i className="fa fa-bullhorn text-orange-400 text-2xl"></i>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Announcements Section - Only show for approved members */}
+        {user && isMemberApproved && (
+          <div id="announcements" className="mb-8 backdrop-blur-xl bg-white/5 rounded-3xl p-8 border border-white/10 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center">
+                  <i className="fa fa-bullhorn text-white text-lg"></i>
+                </div>
+                Announcements
+                {unreadAnnouncementsCount > 0 && (
+                  <span className="bg-red-500 text-white text-sm px-3 py-1 rounded-full">
+                    {unreadAnnouncementsCount} unread
+                  </span>
+                )}
+              </h2>
+              <div className="flex gap-2">
+                {unreadAnnouncementsCount > 0 && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(`${API_URL}/api/v1/community/${community?._id}/announcements/mark-all-read`, {
+                          method: 'POST',
+                          headers: getAuthHeaders(),
+                          credentials: 'include',
+                        });
+                        if (response.ok) {
+                          setAnnouncements(prev => prev.map(a => ({ ...a, read: true })));
+                          setUnreadAnnouncementsCount(0);
+                        }
+                      } catch (error) {
+                        console.error('Error marking as read:', error);
+                      }
+                    }}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors text-sm"
+                  >
+                    Mark All as Read
+                  </button>
+                )}
+                {canManageAnnouncements ? (
+                  <button
+                    onClick={() => setShowCreateAnnouncementModal(true)}
+                    className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-lg font-semibold transition-all transform hover:scale-105 shadow-lg"
+                  >
+                    <i className="fa fa-plus mr-2"></i>
+                    Create Announcement
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="px-4 py-2 bg-gray-600 text-gray-400 rounded-lg font-semibold cursor-not-allowed opacity-50"
+                    title="You need 'manage announcements' permission"
+                  >
+                    <i className="fa fa-plus mr-2"></i>
+                    Create Announcement
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
+              {[
+                { value: 'all', label: 'All', icon: 'fa-list' },
+                { value: 'main', label: 'Main', icon: 'fa-bullhorn' },
+                { value: 'session', label: 'Session', icon: 'fa-calendar' },
+                { value: 'training', label: 'Training', icon: 'fa-graduation-cap' }
+              ].map((filter) => (
+                <button
+                  key={filter.value}
+                  onClick={() => setAnnouncementFilter(filter.value)}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
+                    announcementFilter === filter.value
+                      ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg'
+                      : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                  }`}
+                >
+                  <i className={`fa ${filter.icon}`}></i>
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Announcements List */}
+            <div className="space-y-4">
+              {announcements.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <i className="fa fa-bullhorn text-6xl mb-4 opacity-20"></i>
+                  <p className="text-xl">No announcements yet</p>
+                </div>
+              ) : (
+                announcements
+                  .filter(ann => announcementFilter === 'all' || ann.type === announcementFilter)
+                  .map((announcement) => (
+                    <div
+                      key={announcement._id}
+                      className={`p-6 rounded-xl border transition-all ${
+                        announcement.read
+                          ? 'bg-white/5 border-white/10'
+                          : 'bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/30'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                              announcement.type === 'main' ? 'bg-blue-500/20 text-blue-400' :
+                              announcement.type === 'session' ? 'bg-green-500/20 text-green-400' :
+                              'bg-purple-500/20 text-purple-400'
+                            }`}>
+                              {announcement.type}
+                            </span>
+                            {announcement.priority && (
+                              <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                announcement.priority === 'urgent' ? 'bg-red-500/20 text-red-400' :
+                                announcement.priority === 'high' ? 'bg-orange-500/20 text-orange-400' :
+                                announcement.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                'bg-gray-500/20 text-gray-400'
+                              }`}>
+                                {announcement.priority}
+                              </span>
+                            )}
+                            {!announcement.read && (
+                              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">NEW</span>
+                            )}
+                          </div>
+                          <h3 className="text-xl font-bold text-white mb-2">{announcement.title}</h3>
+                          <p className="text-gray-300 whitespace-pre-wrap mb-3">{announcement.content}</p>
+                          <div className="flex items-center gap-4 text-sm text-gray-400">
+                            <span>
+                              <i className="fa fa-clock mr-1"></i>
+                              {new Date(announcement.createdAt).toLocaleString()}
+                            </span>
+                            {announcement.startTime && (
+                              <span>
+                                <i className="fa fa-calendar-check mr-1"></i>
+                                Start: {new Date(announcement.startTime).toLocaleString()}
+                              </span>
+                            )}
+                            {announcement.endTime && (
+                              <span>
+                                <i className="fa fa-calendar-times mr-1"></i>
+                                End: {new Date(announcement.endTime).toLocaleString()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {canManageAnnouncements && (
+                          <div className="flex gap-2 ml-4">
+                            <button
+                              onClick={() => {
+                                setEditingAnnouncement(announcement);
+                                setAnnouncementTitle(announcement.title);
+                                setAnnouncementType(announcement.type);
+                                setAnnouncementPriority(announcement.priority || 'medium');
+                                setAnnouncementContent(announcement.content);
+                                setAnnouncementStartTime(announcement.startTime || '');
+                                setAnnouncementEndTime(announcement.endTime || '');
+                                setShowEditAnnouncementModal(true);
+                              }}
+                              className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                              title="Edit announcement"
+                            >
+                              <i className="fa fa-pencil-alt"></i>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingAnnouncement(announcement);
+                                setShowDeleteAnnouncementModal(true);
+                              }}
+                              className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                              title="Delete announcement"
+                            >
+                              <i className="fa fa-trash"></i>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+              )}
             </div>
           </div>
         )}
@@ -2588,6 +2840,430 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                     Delete Department
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Announcement Modal */}
+      {showCreateAnnouncementModal && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setShowCreateAnnouncementModal(false)}
+        >
+          <div
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-2xl w-full border border-gray-700 shadow-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <i className="fa fa-bullhorn text-2xl text-yellow-400"></i>
+                <h3 className="text-2xl font-bold text-white">Create Announcement</h3>
+              </div>
+              <button
+                onClick={() => setShowCreateAnnouncementModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <i className="fa fa-times text-xl"></i>
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!announcementTitle.trim() || !announcementContent.trim()) {
+                  setRequestModalType('error');
+                  setRequestModalMessage('Title and content are required');
+                  setShowRequestModal(true);
+                  return;
+                }
+
+                try {
+                  const response = await fetch(`${API_URL}/api/v1/community/${community?._id}/announcements`, {
+                    method: 'POST',
+                    headers: {
+                      ...getAuthHeaders(),
+                      'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      title: announcementTitle.trim(),
+                      type: announcementType,
+                      priority: announcementPriority,
+                      content: announcementContent.trim(),
+                      startTime: announcementStartTime || undefined,
+                      endTime: announcementEndTime || undefined,
+                    }),
+                  });
+
+                  if (!response.ok) {
+                    throw new Error('Failed to create announcement');
+                  }
+
+                  const data = await response.json();
+                  setAnnouncements(prev => [data.announcement, ...prev]);
+                  setShowCreateAnnouncementModal(false);
+                  setAnnouncementTitle('');
+                  setAnnouncementContent('');
+                  setAnnouncementStartTime('');
+                  setAnnouncementEndTime('');
+                  setRequestModalType('success');
+                  setRequestModalMessage('Announcement created successfully!');
+                  setShowRequestModal(true);
+                } catch (error: any) {
+                  console.error('Error creating announcement:', error);
+                  setRequestModalType('error');
+                  setRequestModalMessage(error.message || 'Failed to create announcement');
+                  setShowRequestModal(true);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-gray-300 mb-2 text-sm font-medium">
+                  Title <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={announcementTitle}
+                  onChange={(e) => setAnnouncementTitle(e.target.value)}
+                  maxLength={200}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  placeholder="Enter announcement title"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-300 mb-2 text-sm font-medium">
+                    Type <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    value={announcementType}
+                    onChange={(e) => setAnnouncementType(e.target.value as 'main' | 'session' | 'training')}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  >
+                    <option value="main">Main</option>
+                    <option value="session">Session</option>
+                    <option value="training">Training</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 mb-2 text-sm font-medium">Priority</label>
+                  <select
+                    value={announcementPriority}
+                    onChange={(e) => setAnnouncementPriority(e.target.value as 'low' | 'medium' | 'high' | 'urgent')}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-gray-300 mb-2 text-sm font-medium">
+                  Content <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  value={announcementContent}
+                  onChange={(e) => setAnnouncementContent(e.target.value)}
+                  maxLength={5000}
+                  rows={6}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 resize-none"
+                  placeholder="Enter announcement content"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-300 mb-2 text-sm font-medium">Start Time (Optional)</label>
+                  <input
+                    type="datetime-local"
+                    value={announcementStartTime}
+                    onChange={(e) => setAnnouncementStartTime(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 mb-2 text-sm font-medium">End Time (Optional)</label>
+                  <input
+                    type="datetime-local"
+                    value={announcementEndTime}
+                    onChange={(e) => setAnnouncementEndTime(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateAnnouncementModal(false)}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-lg font-semibold transition-colors"
+                >
+                  Create Announcement
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Announcement Modal */}
+      {showEditAnnouncementModal && editingAnnouncement && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setShowEditAnnouncementModal(false)}
+        >
+          <div
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-2xl w-full border border-gray-700 shadow-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <i className="fa fa-pencil-alt text-2xl text-blue-400"></i>
+                <h3 className="text-2xl font-bold text-white">Edit Announcement</h3>
+              </div>
+              <button
+                onClick={() => setShowEditAnnouncementModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <i className="fa fa-times text-xl"></i>
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!announcementTitle.trim() || !announcementContent.trim()) {
+                  setRequestModalType('error');
+                  setRequestModalMessage('Title and content are required');
+                  setShowRequestModal(true);
+                  return;
+                }
+
+                try {
+                  const response = await fetch(`${API_URL}/api/v1/community/${community?._id}/announcements/${editingAnnouncement._id}`, {
+                    method: 'PUT',
+                    headers: {
+                      ...getAuthHeaders(),
+                      'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                      title: announcementTitle.trim(),
+                      type: announcementType,
+                      priority: announcementPriority,
+                      content: announcementContent.trim(),
+                      startTime: announcementStartTime || undefined,
+                      endTime: announcementEndTime || undefined,
+                    }),
+                  });
+
+                  if (!response.ok) {
+                    throw new Error('Failed to update announcement');
+                  }
+
+                  const data = await response.json();
+                  setAnnouncements(prev => prev.map(a => a._id === editingAnnouncement._id ? data.announcement : a));
+                  setShowEditAnnouncementModal(false);
+                  setEditingAnnouncement(null);
+                  setRequestModalType('success');
+                  setRequestModalMessage('Announcement updated successfully!');
+                  setShowRequestModal(true);
+                } catch (error: any) {
+                  console.error('Error updating announcement:', error);
+                  setRequestModalType('error');
+                  setRequestModalMessage(error.message || 'Failed to update announcement');
+                  setShowRequestModal(true);
+                }
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-gray-300 mb-2 text-sm font-medium">
+                  Title <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={announcementTitle}
+                  onChange={(e) => setAnnouncementTitle(e.target.value)}
+                  maxLength={200}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter announcement title"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-300 mb-2 text-sm font-medium">
+                    Type <span className="text-red-400">*</span>
+                  </label>
+                  <select
+                    value={announcementType}
+                    onChange={(e) => setAnnouncementType(e.target.value as 'main' | 'session' | 'training')}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="main">Main</option>
+                    <option value="session">Session</option>
+                    <option value="training">Training</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 mb-2 text-sm font-medium">Priority</label>
+                  <select
+                    value={announcementPriority}
+                    onChange={(e) => setAnnouncementPriority(e.target.value as 'low' | 'medium' | 'high' | 'urgent')}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-gray-300 mb-2 text-sm font-medium">
+                  Content <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  value={announcementContent}
+                  onChange={(e) => setAnnouncementContent(e.target.value)}
+                  maxLength={5000}
+                  rows={6}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  placeholder="Enter announcement content"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-300 mb-2 text-sm font-medium">Start Time (Optional)</label>
+                  <input
+                    type="datetime-local"
+                    value={announcementStartTime}
+                    onChange={(e) => setAnnouncementStartTime(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 mb-2 text-sm font-medium">End Time (Optional)</label>
+                  <input
+                    type="datetime-local"
+                    value={announcementEndTime}
+                    onChange={(e) => setAnnouncementEndTime(e.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEditAnnouncementModal(false)}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+                >
+                  Update Announcement
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Announcement Modal */}
+      {showDeleteAnnouncementModal && editingAnnouncement && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setShowDeleteAnnouncementModal(false)}
+        >
+          <div
+            className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-md w-full border border-red-700/50 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-600/20 flex items-center justify-center">
+                <i className="fa fa-exclamation-triangle text-2xl text-red-500"></i>
+              </div>
+              <h3 className="text-2xl font-bold text-white">Delete Announcement</h3>
+            </div>
+
+            <p className="text-gray-300 mb-2">
+              Are you sure you want to delete <span className="font-semibold text-white">{editingAnnouncement.title}</span>?
+            </p>
+
+            <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3 mb-6">
+              <p className="text-red-400 text-sm font-medium flex items-start gap-2">
+                <i className="fa fa-info-circle mt-0.5"></i>
+                <span>This action is irreversible. The announcement will be permanently deleted.</span>
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteAnnouncementModal(false)}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const response = await fetch(`${API_URL}/api/v1/community/${community?._id}/announcements/${editingAnnouncement._id}`, {
+                      method: 'DELETE',
+                      headers: getAuthHeaders(),
+                      credentials: 'include',
+                    });
+
+                    if (!response.ok) {
+                      throw new Error('Failed to delete announcement');
+                    }
+
+                    setAnnouncements(prev => prev.filter(a => a._id !== editingAnnouncement._id));
+                    setShowDeleteAnnouncementModal(false);
+                    setEditingAnnouncement(null);
+                    setRequestModalType('success');
+                    setRequestModalMessage('Announcement deleted successfully!');
+                    setShowRequestModal(true);
+                  } catch (error: any) {
+                    console.error('Error deleting announcement:', error);
+                    setRequestModalType('error');
+                    setRequestModalMessage(error.message || 'Failed to delete announcement');
+                    setShowRequestModal(true);
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors flex items-center gap-2"
+              >
+                <i className="fa fa-trash"></i>
+                Delete Announcement
               </button>
             </div>
           </div>
