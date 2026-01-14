@@ -324,7 +324,7 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
 
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [departmentPage, setDepartmentPage] = useState(1);
-  const departmentsPerPage = 10;
+  const departmentsPerPage = 6;
   const [showEditDepartmentModal, setShowEditDepartmentModal] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
   const [editDeptName, setEditDeptName] = useState('');
@@ -384,7 +384,6 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
 
         // Decode community hash
         const communityId = decodeCommunityHash(communityHash);
-        console.log('Decoded community ID:', communityId);
 
         // Fetch current user
         const currentUser = await fetchCurrentUser();
@@ -404,8 +403,6 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
         }
 
         const communityData = await communityResponse.json();
-        console.log('Raw community data:', communityData);
-        console.log('Community object:', communityData.community);
 
         // The backend returns { community: {...}, departments: [...] }
         // The community object has structure: { _id, community: {...}, __v }
@@ -420,15 +417,6 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
           };
         }
 
-        console.log('Final processed community:', comm);
-        console.log('Community name:', comm?.name);
-        console.log('Community imageLink:', comm?.imageLink);
-        console.log('Community description:', comm?.description);
-        console.log('Community tags:', comm?.tags);
-        console.log('Community membersCount:', comm?.membersCount);
-        console.log('Community subscription:', comm?.subscription);
-        console.log('Community links:', comm?.links);
-
         setCommunity(comm);
 
         // Set departments first - ensure isPrivate is set correctly
@@ -438,7 +426,6 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
             // Map approvalRequired to isPrivate if isPrivate is not set
             isPrivate: dept.isPrivate !== undefined ? dept.isPrivate : (dept.approvalRequired || false),
           }));
-          console.log('Processed departments:', processedDepartments);
           setDepartments(processedDepartments);
         }
 
@@ -451,10 +438,6 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
           let isApproved = false;
           let isPending = false;
 
-          console.log('Checking membership for user:', currentUser);
-          console.log('Community ID:', communityId);
-          console.log('User.communities:', currentUser.communities);
-          console.log('User.user?.communities:', currentUser.user?.communities);
 
           // Check both locations for communities array
           const communitiesArray = currentUser.communities || currentUser.user?.communities;
@@ -464,28 +447,14 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
               // Check multiple possible locations for community ID
               const cCommunityId = c.communityId || c.community?._id || c.community?._id || c._id || c.community?.communityId;
               const cStatus = c.status || c.community?.status;
-              console.log('Checking community from user object:', {
-                cCommunityId,
-                communityId,
-                match: cCommunityId && String(cCommunityId) === String(communityId),
-                status: cStatus
-              });
               if (cCommunityId && String(cCommunityId) === String(communityId)) {
                 const statusLower = String(cStatus || '').toLowerCase();
                 if (statusLower === 'approved') {
                   isApproved = true;
-                  console.log('User is APPROVED member (from user object)');
                 } else if (statusLower === 'pending') {
                   isPending = true;
-                  console.log('User has PENDING request (from user object)');
                 }
               }
-            });
-          } else {
-            console.log('No communities array found in user object:', {
-              hasCommunities: !!currentUser.communities,
-              hasUserCommunities: !!currentUser.user?.communities,
-              communitiesArray
             });
           }
 
@@ -509,7 +478,6 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                   const isMember = approvedCommunities.some((item: any) => {
                     const itemCommunityId = item._id || item.communityId || item.community?._id;
                     if (itemCommunityId && String(itemCommunityId) === String(communityId)) {
-                      console.log('Found approved membership for community:', communityId);
                       return true;
                     }
                     return false;
@@ -517,7 +485,6 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                   
                   if (isMember) {
                     isApproved = true;
-                    console.log('User is approved member of this community');
                   }
                 }
               }
@@ -537,7 +504,6 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                   const hasPendingRequest = pendingCommunities.some((item: any) => {
                     const itemCommunityId = item._id || item.communityId || item.community?._id;
                     if (itemCommunityId && String(itemCommunityId) === String(communityId)) {
-                      console.log('Found pending request for community:', communityId);
                       return true;
                     }
                     return false;
@@ -545,7 +511,6 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                   
                   if (hasPendingRequest) {
                     isPending = true;
-                    console.log('User has pending request for this community');
                   }
                 }
               }
@@ -555,7 +520,6 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
             }
           }
 
-          console.log('Final membership state - Approved:', isApproved, 'Pending:', isPending);
           setIsMemberApproved(isApproved);
           setIsMemberPending(isPending);
 
@@ -568,13 +532,10 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
             const ownerId = comm.owner || comm.community?.owner;
             if (ownerId && String(ownerId) === String(userId)) {
               hasPermission = true;
-              console.log('User is the owner of the community');
             }
             
             // Check roles for permissions
             if (!hasPermission && comm.roles && Array.isArray(comm.roles)) {
-              console.log('Checking permissions for user:', userId);
-              console.log('Community roles:', comm.roles);
               
               comm.roles.forEach((role: any) => {
                 // Check if user is in the role members array
@@ -584,29 +545,24 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                   const memberId = typeof member === 'string' ? member : (member._id || member.id || member.userID);
                   const matches = memberId && (String(memberId) === String(userId) || String(memberId) === String(currentUser._id) || String(memberId) === String(currentUser.id));
                   if (matches) {
-                    console.log('User matches role member:', memberId, 'vs', userId);
                   }
                   return matches;
                 });
                 
                 if (isInRole) {
-                  console.log('User is in role:', role.name || role._id);
                   if (Array.isArray(role.permissions)) {
                     role.permissions.forEach((perm: any) => {
-                      console.log('Checking permission:', perm.name, 'enabled:', perm.enabled);
                       if (
                         (perm.name === 'administrator' && perm.enabled === true) ||
                         (perm.name === 'manage community settings' && perm.enabled === true)
                       ) {
                         hasPermission = true;
-                        console.log('User has permission:', perm.name);
                       }
                       if (
                         (perm.name === 'administrator' && perm.enabled === true) ||
                         (perm.name === 'manage departments' && perm.enabled === true)
                       ) {
                         setCanManageDepartments(true);
-                        console.log('User can manage departments:', perm.name);
                       }
                     });
                   }
@@ -614,7 +570,6 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
               });
             }
             
-            console.log('Final permission check - canManageSettings:', hasPermission);
             setCanManageSettings(hasPermission);
             
             // Check for manage departments permission
@@ -1235,19 +1190,19 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
           )}
           <div className="p-8">
             <div className="mb-6">
-              <div className="flex items-center gap-3 mb-4">
-                <h1 className="text-5xl font-bold text-white bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  {community.name}
+              <div className="mb-4 min-w-0">
+                <h1 className="text-3xl sm:text-5xl font-bold text-white flex items-center gap-2 min-w-0">
+                  <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent truncate">{community.name}</span>
+                  {community.subscription &&
+                   ['elite', 'premium', 'standard'].includes(community.subscription.plan || '') &&
+                   community.subscription.active && (
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 inline-block align-middle" aria-label="Verified Subscription Community">
+                      <title>Verified Subscription Community</title>
+                      <circle cx="12" cy="12" r="10" fill="#eab308" />
+                      <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
                 </h1>
-                {community.subscription &&
-                 ['elite', 'premium', 'standard'].includes(community.subscription.plan || '') &&
-                 community.subscription.active && (
-                  <svg viewBox="0 0 24 24" className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 inline-block align-middle" aria-label="Verified Subscription Community">
-                    <title>Verified Subscription Community</title>
-                    <circle cx="12" cy="12" r="10" fill="#eab308" />
-                    <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
               </div>
               {community.description && (
                 <div className="mb-4 max-h-48 overflow-y-auto resize-y scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-800 bg-white/5 border border-white/10 rounded-xl p-4">
@@ -2251,8 +2206,6 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                       components: components
                     }
                   };
-                  
-                  console.log('Sending department update payload:', payload);
 
                   const response = await fetch(`/api/community/${communityId}/departments/${editingDepartment._id}`, {
                     method: 'PATCH',
