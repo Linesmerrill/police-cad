@@ -3842,6 +3842,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       const { id } = req.params;
       const body = req.body;
 
+      console.log('Creating announcement for community:', id);
+      console.log('Request body:', JSON.stringify(body, null, 2));
+
       if (!id) {
         return res.status(400).json({ error: 'Community ID is required' });
       }
@@ -3859,9 +3862,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
         }
       );
 
+      console.log('Announcement created successfully');
       res.status(response.status).json(response.data);
     } catch (error) {
       console.error('Error proxying create announcement request:', error);
+      console.error('Error response data:', error.response?.data);
+      console.error('Error response status:', error.response?.status);
       const status = error.response?.status || 500;
       let errorData = error.response?.data || { error: 'Internal server error' };
       res.status(status).json(errorData);
