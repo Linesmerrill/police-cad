@@ -3799,6 +3799,171 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Announcement proxy routes (to avoid Next.js body locking issues)
+
+  // GET /api/community/:id/announcements - Get announcements for a community
+  app.get("/api/community/:id/announcements", async function (req, res) {
+    try {
+      const cookieHeader = req.headers.cookie || '';
+      const { id } = req.params;
+      const { type, page, limit } = req.query;
+
+      if (!id) {
+        return res.status(400).json({ error: 'Community ID is required' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+      let url = `${apiUrl}/api/v1/community/${id}/announcements?page=${page || 1}&limit=${limit || 10}`;
+      if (type) {
+        url += `&type=${encodeURIComponent(type)}`;
+      }
+
+      const response = await axios.get(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: cookieHeader,
+        },
+      });
+
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error('Error proxying get announcements request:', error);
+      const status = error.response?.status || 500;
+      let errorData = error.response?.data || { error: 'Internal server error' };
+      res.status(status).json(errorData);
+    }
+  });
+
+  // POST /api/community/:id/announcements - Create announcement
+  app.post("/api/community/:id/announcements", async function (req, res) {
+    try {
+      const cookieHeader = req.headers.cookie || '';
+      const { id } = req.params;
+      const body = req.body;
+
+      if (!id) {
+        return res.status(400).json({ error: 'Community ID is required' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+      const response = await axios.post(
+        `${apiUrl}/api/v1/community/${id}/announcements`,
+        body,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error('Error proxying create announcement request:', error);
+      const status = error.response?.status || 500;
+      let errorData = error.response?.data || { error: 'Internal server error' };
+      res.status(status).json(errorData);
+    }
+  });
+
+  // PUT /api/community/:communityId/announcements/:announcementId - Update announcement
+  app.put("/api/community/:communityId/announcements/:announcementId", async function (req, res) {
+    try {
+      const cookieHeader = req.headers.cookie || '';
+      const { communityId, announcementId } = req.params;
+      const body = req.body;
+
+      if (!communityId || !announcementId) {
+        return res.status(400).json({ error: 'Community ID and Announcement ID are required' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+      const response = await axios.put(
+        `${apiUrl}/api/v1/announcement/${announcementId}`,
+        body,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error('Error proxying update announcement request:', error);
+      const status = error.response?.status || 500;
+      let errorData = error.response?.data || { error: 'Internal server error' };
+      res.status(status).json(errorData);
+    }
+  });
+
+  // DELETE /api/community/:communityId/announcements/:announcementId - Delete announcement
+  app.delete("/api/community/:communityId/announcements/:announcementId", async function (req, res) {
+    try {
+      const cookieHeader = req.headers.cookie || '';
+      const { communityId, announcementId } = req.params;
+
+      if (!communityId || !announcementId) {
+        return res.status(400).json({ error: 'Community ID and Announcement ID are required' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+      const response = await axios.delete(
+        `${apiUrl}/api/v1/announcement/${announcementId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error('Error proxying delete announcement request:', error);
+      const status = error.response?.status || 500;
+      let errorData = error.response?.data || { error: 'Internal server error' };
+      res.status(status).json(errorData);
+    }
+  });
+
+  // POST /api/community/:id/announcements/mark-all-read - Mark all announcements as read
+  app.post("/api/community/:id/announcements/mark-all-read", async function (req, res) {
+    try {
+      const cookieHeader = req.headers.cookie || '';
+      const { id } = req.params;
+
+      if (!id) {
+        return res.status(400).json({ error: 'Community ID is required' });
+      }
+
+      const apiUrl = process.env.POLICE_CAD_API_URL || 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
+
+      const response = await axios.post(
+        `${apiUrl}/api/v1/community/${id}/announcements/mark-all-read`,
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: cookieHeader,
+          },
+        }
+      );
+
+      res.status(response.status).json(response.data);
+    } catch (error) {
+      console.error('Error proxying mark all as read request:', error);
+      const status = error.response?.status || 500;
+      let errorData = error.response?.data || { error: 'Internal server error' };
+      res.status(status).json(errorData);
+    }
+  });
+
   // POST /api/auth/login - proxy route for login (Next.js 16 body reading issue workaround)
   app.post("/api/auth/login", async function (req, res) {
     try {
