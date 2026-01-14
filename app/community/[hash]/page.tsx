@@ -647,27 +647,38 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
             setCanManageAnnouncements(canManageAnns);
 
             // Fetch announcements if user is approved member
-            if (comm && communityId) {
+            if (comm && communityId && isApproved) {
               try {
-                const announcementsResponse = await fetch(`${API_URL}/api/v1/community/${communityId}/announcements`, {
+                const announcementsResponse = await fetch(`/api/community/${communityId}/announcements`, {
                   headers: getAuthHeaders(),
                   credentials: 'include',
                 });
                 if (announcementsResponse.ok) {
                   const announcementsData = await announcementsResponse.json();
-                  setAnnouncements(announcementsData.announcements || []);
+                  // Ensure we have an array - check if announcementsData has an announcements property or is an array itself
+                  const announcementsArray = Array.isArray(announcementsData) 
+                    ? announcementsData 
+                    : (Array.isArray(announcementsData?.announcements) 
+                        ? announcementsData.announcements 
+                        : []);
+                  setAnnouncements(announcementsArray);
                   // Count unread announcements
-                  const unread = (announcementsData.announcements || []).filter((a: Announcement) => !a.read).length;
+                  const unread = announcementsArray.filter((a: Announcement) => !a.read).length;
                   setUnreadAnnouncementsCount(unread);
                 } else {
+                  // If endpoint doesn't exist or returns error, just set empty array
                   setAnnouncements([]);
+                  setUnreadAnnouncementsCount(0);
                 }
               } catch (error) {
+                // Silently fail - announcements are optional
                 console.error('Error fetching announcements:', error);
                 setAnnouncements([]);
+                setUnreadAnnouncementsCount(0);
               }
             } else {
               setAnnouncements([]);
+              setUnreadAnnouncementsCount(0);
             }
             // TODO: Fetch events
           } else {
@@ -1465,8 +1476,8 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
         {/* Announcements Section - Only show for approved members */}
         {user && isMemberApproved && (
           <div id="announcements" className="mb-8 backdrop-blur-xl bg-white/5 rounded-3xl p-8 border border-white/10 shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3 flex-wrap">
                 <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center">
                   <i className="fa fa-bullhorn text-white text-lg"></i>
                 </div>
@@ -1477,12 +1488,12 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                   </span>
                 )}
               </h2>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {unreadAnnouncementsCount > 0 && (
                   <button
                     onClick={async () => {
                       try {
-                        const response = await fetch(`${API_URL}/api/v1/community/${community?._id}/announcements/mark-all-read`, {
+                        const response = await fetch(`/api/community/${community?._id}/announcements/mark-all-read`, {
                           method: 'POST',
                           headers: getAuthHeaders(),
                           credentials: 'include',
@@ -1495,7 +1506,7 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                         console.error('Error marking as read:', error);
                       }
                     }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors text-sm"
+                    className="px-3 py-2 sm:px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors text-xs sm:text-sm whitespace-nowrap"
                   >
                     Mark All as Read
                   </button>
@@ -1503,19 +1514,21 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 {canManageAnnouncements ? (
                   <button
                     onClick={() => setShowCreateAnnouncementModal(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-lg font-semibold transition-all transform hover:scale-105 shadow-lg"
+                    className="px-3 py-2 sm:px-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-lg font-semibold transition-all transform hover:scale-105 shadow-lg text-xs sm:text-sm whitespace-nowrap"
                   >
-                    <i className="fa fa-plus mr-2"></i>
-                    Create Announcement
+                    <i className="fa fa-plus mr-1 sm:mr-2"></i>
+                    <span className="hidden sm:inline">Create Announcement</span>
+                    <span className="sm:hidden">Create</span>
                   </button>
                 ) : (
                   <button
                     disabled
-                    className="px-4 py-2 bg-gray-600 text-gray-400 rounded-lg font-semibold cursor-not-allowed opacity-50"
+                    className="px-3 py-2 sm:px-4 bg-gray-600 text-gray-400 rounded-lg font-semibold cursor-not-allowed opacity-50 text-xs sm:text-sm whitespace-nowrap"
                     title="You need 'manage announcements' permission"
                   >
-                    <i className="fa fa-plus mr-2"></i>
-                    Create Announcement
+                    <i className="fa fa-plus mr-1 sm:mr-2"></i>
+                    <span className="hidden sm:inline">Create Announcement</span>
+                    <span className="sm:hidden">Create</span>
                   </button>
                 )}
               </div>
@@ -2884,7 +2897,7 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 }
 
                 try {
-                  const response = await fetch(`${API_URL}/api/v1/community/${community?._id}/announcements`, {
+                  const response = await fetch(`/api/community/${community?._id}/announcements`, {
                     method: 'POST',
                     headers: {
                       ...getAuthHeaders(),
@@ -2902,7 +2915,9 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                   });
 
                   if (!response.ok) {
-                    throw new Error('Failed to create announcement');
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMessage = errorData.error || errorData.message || `Failed to create announcement (${response.status})`;
+                    throw new Error(errorMessage);
                   }
 
                   const data = await response.json();
@@ -3061,7 +3076,7 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 }
 
                 try {
-                  const response = await fetch(`${API_URL}/api/v1/community/${community?._id}/announcements/${editingAnnouncement._id}`, {
+                  const response = await fetch(`/api/announcement/${editingAnnouncement._id}`, {
                     method: 'PUT',
                     headers: {
                       ...getAuthHeaders(),
@@ -3079,7 +3094,9 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                   });
 
                   if (!response.ok) {
-                    throw new Error('Failed to update announcement');
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMessage = errorData.error || errorData.message || `Failed to update announcement (${response.status})`;
+                    throw new Error(errorMessage);
                   }
 
                   const data = await response.json();
@@ -3241,14 +3258,16 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 type="button"
                 onClick={async () => {
                   try {
-                    const response = await fetch(`${API_URL}/api/v1/community/${community?._id}/announcements/${editingAnnouncement._id}`, {
+                    const response = await fetch(`/api/announcement/${editingAnnouncement._id}`, {
                       method: 'DELETE',
                       headers: getAuthHeaders(),
                       credentials: 'include',
                     });
 
                     if (!response.ok) {
-                      throw new Error('Failed to delete announcement');
+                      const errorData = await response.json().catch(() => ({}));
+                      const errorMessage = errorData.error || errorData.message || `Failed to delete announcement (${response.status})`;
+                      throw new Error(errorMessage);
                     }
 
                     setAnnouncements(prev => prev.filter(a => a._id !== editingAnnouncement._id));
