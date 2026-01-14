@@ -1338,37 +1338,52 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
         {user && isMemberApproved && (
           <div className="grid grid-cols-3 gap-2 md:gap-6 mb-8">
             <div className="backdrop-blur-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl md:rounded-2xl p-3 md:p-6 border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 transform">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xl md:text-3xl font-bold text-white">{community.membersCount || 0}</div>
-                  <div className="text-gray-400 text-xs md:text-sm mt-1">Total Members</div>
+              <div className="flex items-start justify-between md:justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="text-xl md:text-3xl font-bold text-white">{community.membersCount || 0}</div>
+                    <div className="w-6 h-6 md:w-12 md:h-12 bg-blue-500/20 rounded-lg md:rounded-xl flex items-center justify-center md:hidden flex-shrink-0">
+                      <i className="fa fa-users text-blue-400 text-sm md:text-2xl"></i>
+                    </div>
+                  </div>
+                  <div className="text-gray-400 text-xs md:text-sm break-words">Total Members</div>
                 </div>
-                <div className="w-8 h-8 md:w-12 md:h-12 bg-blue-500/20 rounded-lg md:rounded-xl flex items-center justify-center">
-                  <i className="fa fa-users text-blue-400 text-lg md:text-2xl"></i>
+                <div className="hidden md:flex w-12 h-12 bg-blue-500/20 rounded-xl items-center justify-center flex-shrink-0 ml-3">
+                  <i className="fa fa-users text-blue-400 text-2xl"></i>
                 </div>
               </div>
             </div>
 
             <div className="backdrop-blur-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl md:rounded-2xl p-3 md:p-6 border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 transform">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xl md:text-3xl font-bold text-white">{departments.length}</div>
-                  <div className="text-gray-400 text-xs md:text-sm mt-1">Departments</div>
+              <div className="flex items-start justify-between md:justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="text-xl md:text-3xl font-bold text-white">{departments.length}</div>
+                    <div className="w-6 h-6 md:w-12 md:h-12 bg-green-500/20 rounded-lg md:rounded-xl flex items-center justify-center md:hidden flex-shrink-0">
+                      <i className="fa fa-building text-green-400 text-sm md:text-2xl"></i>
+                    </div>
+                  </div>
+                  <div className="text-gray-400 text-xs md:text-sm break-words">Departments</div>
                 </div>
-                <div className="w-8 h-8 md:w-12 md:h-12 bg-green-500/20 rounded-lg md:rounded-xl flex items-center justify-center">
-                  <i className="fa fa-building text-green-400 text-lg md:text-2xl"></i>
+                <div className="hidden md:flex w-12 h-12 bg-green-500/20 rounded-xl items-center justify-center flex-shrink-0 ml-3">
+                  <i className="fa fa-building text-green-400 text-2xl"></i>
                 </div>
               </div>
             </div>
 
             <div className="backdrop-blur-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-xl md:rounded-2xl p-3 md:p-6 border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-105 transform">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xl md:text-3xl font-bold text-white">{announcements.length}</div>
-                  <div className="text-gray-400 text-xs md:text-sm mt-1">Announcements</div>
+              <div className="flex items-start justify-between md:justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="text-xl md:text-3xl font-bold text-white">{announcements.length}</div>
+                    <div className="w-6 h-6 md:w-12 md:h-12 bg-orange-500/20 rounded-lg md:rounded-xl flex items-center justify-center md:hidden flex-shrink-0">
+                      <i className="fa fa-bullhorn text-orange-400 text-sm md:text-2xl"></i>
+                    </div>
+                  </div>
+                  <div className="text-gray-400 text-xs md:text-sm break-words">Announcements</div>
                 </div>
-                <div className="w-8 h-8 md:w-12 md:h-12 bg-orange-500/20 rounded-lg md:rounded-xl flex items-center justify-center">
-                  <i className="fa fa-bullhorn text-orange-400 text-lg md:text-2xl"></i>
+                <div className="hidden md:flex w-12 h-12 bg-orange-500/20 rounded-xl items-center justify-center flex-shrink-0 ml-3">
+                  <i className="fa fa-bullhorn text-orange-400 text-2xl"></i>
                 </div>
               </div>
             </div>
