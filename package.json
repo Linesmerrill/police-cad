@@ -62,16 +62,16 @@
     "start": "node server.js",
     "start:legacy": "node app.js",
     "test": "mocha",
-    "dev": "cross-env NODE_ENV=development nodemon --ext js,ejs,tsx,ts server.js",
+    "dev": "cross-env NODE_ENV=development NODE_OPTIONS='--max-old-space-size=4096' nodemon --ext js,ejs,tsx,ts server.js",
     "dev:legacy": "nodemon --ext js,ejs app.js",
     "update-version": "node scripts/update-version.js",
-    "next:dev": "next dev",
-    "next:build": "next build",
+    "next:dev": "NODE_OPTIONS='--max-old-space-size=4096' next dev",
+    "next:build": "NODE_OPTIONS='--max-old-space-size=4096' next build",
     "next:start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "build:local": "npm run lint && next build",
-    "postinstall": "next build"
+    "postinstall": "NODE_OPTIONS='--max-old-space-size=4096' next build"
   },
   "engines": {
     "node": ">=20.9.0"
