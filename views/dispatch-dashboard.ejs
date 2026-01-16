@@ -3546,6 +3546,11 @@
         tenCodesCache = commData.community?.tenCodes || [];
         memberDataCache = commData.community?.members || {};
 
+        // Update community name in header
+        if (commData.community?.name) {
+          $('#community-name').text(commData.community.name);
+        }
+
         // Then fetch all members
         $.ajax({
           url: `${API_URL}/api/v1/community/${communityId}/members?limit=100`,
