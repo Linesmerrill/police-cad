@@ -5161,6 +5161,45 @@ module.exports = function (app, passport, server, nextApp, handle) {
   var io = require("socket.io")(server);
 
   io.sockets.on("connection", (socket) => {
+    // ==========================================
+    // SOCKET ROOM MANAGEMENT
+    // ==========================================
+    // Join a community-specific room for targeted broadcasts
+    socket.on("join_community_room", (data) => {
+      if (!data || !data.communityId) {
+        return socket.emit("room_error", { error: "Missing communityId" });
+      }
+      const roomName = `community:${data.communityId}`;
+      socket.join(roomName);
+      socket.communityRoom = roomName;
+      socket.communityId = data.communityId;
+      socket.emit("joined_room", { room: roomName, communityId: data.communityId });
+    });
+
+    // Leave community room (called when switching communities or logging out)
+    socket.on("leave_community_room", (data) => {
+      if (socket.communityRoom) {
+        socket.leave(socket.communityRoom);
+        const leftRoom = socket.communityRoom;
+        socket.communityRoom = null;
+        socket.communityId = null;
+        socket.emit("left_room", { room: leftRoom });
+      }
+    });
+
+    // Helper function to broadcast to community room or fall back to global broadcast
+    const broadcastToCommunity = (eventName, data, communityId) => {
+      const targetCommunityId = communityId || socket.communityId;
+      if (targetCommunityId) {
+        // Broadcast to ALL clients in community room (including sender)
+        const roomName = `community:${targetCommunityId}`;
+        io.to(roomName).emit(eventName, data);
+      } else {
+        // Fallback to global broadcast for backward compatibility
+        io.emit(eventName, data);
+      }
+    };
+
     // For testing bot connection
     socket.on("botping", (data) => {
       // console.debug(data) // Prove socket connection to bot works
@@ -6077,7 +6116,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
         },
         function (err) {
           if (err) return console.error(err);
-          return socket.broadcast.emit("deleted_bolo", req);
+          // Use room-based broadcast for deleted BOLO
+          broadcastToCommunity("deleted_bolo", req, req.communityId);
         }
       );
     });
@@ -6107,9 +6147,24 @@ module.exports = function (app, passport, server, nextApp, handle) {
               "user.dispatchOnDuty": req.onDuty,
             },
           },
-          function (err) {
+          { new: true },
+          function (err, updatedUser) {
             if (err) return console.error(err);
-            return socket.broadcast.emit("updated_status", req);
+            // Emit to community room if available, otherwise broadcast globally
+            broadcastToCommunity("updated_status", req, req.communityId);
+            // Also emit detailed member_status_updated event for real-time UI updates
+            const statusUpdateData = {
+              userID: req.userID,
+              status: req.status,
+              statusCode: req.statusCode || null,
+              setBy: req.setBy,
+              onDuty: req.onDuty,
+              communityId: req.communityId,
+              username: updatedUser ? updatedUser.user.username : null,
+              callSign: updatedUser ? updatedUser.user.callSign : null,
+              timestamp: new Date().toISOString()
+            };
+            broadcastToCommunity("member_status_updated", statusUpdateData, req.communityId);
           }
         );
       } else {
@@ -6130,9 +6185,23 @@ module.exports = function (app, passport, server, nextApp, handle) {
               "user.dispatchStatusSetBy": req.setBy,
             },
           },
-          function (err) {
+          { new: true },
+          function (err, updatedUser) {
             if (err) return console.error(err);
-            return socket.broadcast.emit("updated_status", req);
+            // Emit to community room if available, otherwise broadcast globally
+            broadcastToCommunity("updated_status", req, req.communityId);
+            // Also emit detailed member_status_updated event for real-time UI updates
+            const statusUpdateData = {
+              userID: req.userID,
+              status: req.status,
+              statusCode: req.statusCode || null,
+              setBy: req.setBy,
+              communityId: req.communityId,
+              username: updatedUser ? updatedUser.user.username : null,
+              callSign: updatedUser ? updatedUser.user.callSign : null,
+              timestamp: new Date().toISOString()
+            };
+            broadcastToCommunity("member_status_updated", statusUpdateData, req.communityId);
           }
         );
       }
@@ -6463,9 +6532,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
                   },
                   function (err) {
                     if (err) return console.error(err);
-                    return socket.broadcast.emit(
+                    return broadcastToCommunity(
                       "signal_100_button_updated",
-                      req
+                      req,
+                      req.activeCommunity
                     );
                   }
                 );
@@ -6547,8 +6617,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
                   },
                   function (err) {
                     if (err) return console.error(err);
-                    return socket.broadcast.emit(
+                    return broadcastToCommunity(
                       "clear_signal_100_updated",
+                      activeCommunity,
                       activeCommunity
                     );
                   }
@@ -6608,7 +6679,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       myBolo.socketCreateBolo(req);
       myBolo.save(function (err, dbBolos) {
         if (err) return console.error(err);
-        return socket.broadcast.emit("created_bolo", dbBolos);
+        // Use room-based broadcast for BOLO
+        const communityId = dbBolos.bolo ? dbBolos.bolo.activeCommunityID : req.communityId;
+        broadcastToCommunity("created_bolo", dbBolos, communityId);
       });
     });
 
@@ -6617,7 +6690,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       myCall.socketCreateCall(req);
       myCall.save(function (err, dbCalls) {
         if (err) return console.error(err);
-        return socket.broadcast.emit("created_call", dbCalls);
+        // Use room-based broadcast for calls
+        const communityId = dbCalls.call ? dbCalls.call.communityID : req.communityId;
+        broadcastToCommunity("created_call", dbCalls, communityId);
       });
     });
 
@@ -6627,14 +6702,42 @@ module.exports = function (app, passport, server, nextApp, handle) {
       myNew911Call.socketCreate911Call(req);
       myNew911Call.save(function (err, dbCalls) {
         if (err) return console.error(err);
-        socket.broadcast.emit("created_call", dbCalls);
+        // Use room-based broadcast for 911 calls
+        const communityId = dbCalls.call ? dbCalls.call.communityID : req.communityId;
+        broadcastToCommunity("created_call", dbCalls, communityId);
         return socket.emit("created_911_call", dbCalls);
       });
     });
 
     socket.on("clear_call", (req) => {
       // console.debug('clear call socket: ', req)
-      return socket.broadcast.emit("cleared_call", req); //send to all listeners except the sender (ref https://stackoverflow.com/a/38026094/9392066)
+      // Use room-based broadcast for cleared calls
+      broadcastToCommunity("cleared_call", req, req.communityId);
+    });
+
+    // New event for updating a call (for real-time call management)
+    socket.on("update_call", (req) => {
+      if (!exists(req.callId) || req.callId == "") {
+        return console.error("cannot update call without callId");
+      }
+      var isValid = isValidObjectIdLength(
+        req.callId,
+        "cannot lookup invalid length callId, socket: update_call"
+      );
+      if (!isValid) {
+        return;
+      }
+      Call.findByIdAndUpdate(
+        { _id: ObjectId(req.callId) },
+        { $set: req.updates },
+        { new: true },
+        function (err, updatedCall) {
+          if (err) return console.error(err);
+          if (!updatedCall) return;
+          const communityId = updatedCall.call ? updatedCall.call.communityID : req.communityId;
+          broadcastToCommunity("updated_call", updatedCall, communityId);
+        }
+      );
     });
 
     socket.on("update_panic_btn_sound", (user) => {
