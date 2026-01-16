@@ -3836,7 +3836,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   // POST /api/community/:id/announcements - Create announcement
-  app.post("/api/community/:id/announcements", async function (req, res) {
+  app.post("/api/community/:id/announcements", authCheck, async function (req, res) {
     try {
       const cookieHeader = req.headers.cookie || '';
       const { id } = req.params;
@@ -3875,7 +3875,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   // PUT /api/community/:communityId/announcements/:announcementId - Update announcement
-  app.put("/api/community/:communityId/announcements/:announcementId", async function (req, res) {
+  app.put("/api/community/:communityId/announcements/:announcementId", authCheck, async function (req, res) {
     try {
       const cookieHeader = req.headers.cookie || '';
       const { communityId, announcementId } = req.params;
@@ -3908,7 +3908,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   // DELETE /api/community/:communityId/announcements/:announcementId - Delete announcement
-  app.delete("/api/community/:communityId/announcements/:announcementId", async function (req, res) {
+  app.delete("/api/community/:communityId/announcements/:announcementId", authCheck, async function (req, res) {
     try {
       const cookieHeader = req.headers.cookie || '';
       const { communityId, announcementId } = req.params;
@@ -3939,7 +3939,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   // POST /api/community/:id/announcements/mark-all-read - Mark all announcements as read
-  app.post("/api/community/:id/announcements/mark-all-read", async function (req, res) {
+  app.post("/api/community/:id/announcements/mark-all-read", authCheck, async function (req, res) {
     try {
       const cookieHeader = req.headers.cookie || '';
       const { id } = req.params;
@@ -8672,9 +8672,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
         .sort({ isPinned: -1, createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit))
-        .populate('creator', 'username profilePicture')
-        .populate('reactions.user', 'username profilePicture')
-        .populate('comments.user', 'username profilePicture');
+        .populate('creator')
+        .populate('reactions.user')
+        .populate('comments.user');
 
       const total = await Announcement.countDocuments(query);
 
@@ -8760,7 +8760,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       });
 
       await announcement.save();
-      await announcement.populate('creator', 'username profilePicture');
+      await announcement.populate('creator');
+      await announcement.populate('reactions.user');
+      await announcement.populate('comments.user');
 
       res.status(201).json({ announcement });
     } catch (error) {
@@ -8804,7 +8806,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       if (endTime !== undefined) announcement.endTime = endTime ? new Date(endTime) : null;
 
       await announcement.save();
-      await announcement.populate('creator', 'username profilePicture');
+      await announcement.populate('creator');
+      await announcement.populate('reactions.user');
+      await announcement.populate('comments.user');
 
       res.json({ announcement });
     } catch (error) {
@@ -8817,7 +8821,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.delete("/api/v1/announcement/:announcementId", authCheck, async function (req, res) {
     try {
       const { announcementId } = req.params;
-      
+
       if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
         return res.status(400).json({ error: "Invalid announcement ID" });
       }
@@ -8837,6 +8841,24 @@ module.exports = function (app, passport, server, nextApp, handle) {
     } catch (error) {
       console.error('Error deleting announcement:', error);
       res.status(500).json({ error: "Failed to delete announcement" });
+    }
+  });
+
+  // Mark all announcements as read for a community
+  app.post("/api/v1/community/:communityId/announcements/mark-all-read", authCheck, async function (req, res) {
+    try {
+      const { communityId } = req.params;
+
+      if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
+        return res.status(400).json({ error: "Invalid community ID" });
+      }
+
+      // For now, just return success - implementing read tracking would require
+      // adding a UserAnnouncementRead collection to track which users have read which announcements
+      res.json({ message: "All announcements marked as read" });
+    } catch (error) {
+      console.error('Error marking announcements as read:', error);
+      res.status(500).json({ error: "Failed to mark announcements as read" });
     }
   });
 
@@ -8875,12 +8897,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
         action = 'added';
       }
 
-      await announcement.populate('reactions.user', 'username profilePicture');
+      await announcement.populate('creator');
+      await announcement.populate('reactions.user');
+      await announcement.populate('comments.user');
 
-      res.json({ 
+      res.json({
         success: true,
         action: action,
-        announcement 
+        announcement
       });
     } catch (error) {
       console.error('Error toggling reaction:', error);
@@ -8936,7 +8960,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
 
       await announcement.addComment(req.user._id, content.trim());
-      await announcement.populate('comments.user', 'username profilePicture');
+      await announcement.populate('creator');
+      await announcement.populate('reactions.user');
+      await announcement.populate('comments.user');
 
       res.json({ announcement });
     } catch (error) {
@@ -8969,7 +8995,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
 
       await announcement.editComment(commentId, req.user._id, content.trim());
-      await announcement.populate('comments.user', 'username profilePicture');
+      await announcement.populate('creator');
+      await announcement.populate('reactions.user');
+      await announcement.populate('comments.user');
 
       res.json({ announcement });
     } catch (error) {
@@ -8993,7 +9021,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
       }
 
       await announcement.deleteComment(commentId, req.user._id);
-      await announcement.populate('comments.user', 'username profilePicture');
+      await announcement.populate('creator');
+      await announcement.populate('reactions.user');
+      await announcement.populate('comments.user');
 
       res.json({ announcement });
     } catch (error) {

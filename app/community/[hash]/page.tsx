@@ -72,6 +72,34 @@ interface User {
   };
 }
 
+interface AnnouncementReaction {
+  _id: string;
+  emoji: string;
+  timestamp: string;
+  user: {
+    _id: string;
+    user: {
+      username: string;
+      profilePicture?: string;
+    };
+  };
+}
+
+interface AnnouncementComment {
+  _id: string;
+  content: string;
+  timestamp: string;
+  edited?: boolean;
+  editedAt?: string;
+  user: {
+    _id: string;
+    user: {
+      username: string;
+      profilePicture?: string;
+    };
+  };
+}
+
 interface Announcement {
   _id: string;
   title: string;
@@ -81,8 +109,18 @@ interface Announcement {
   startTime?: string;
   endTime?: string;
   createdAt: string;
+  creator?: {
+    _id: string;
+    user: {
+      username: string;
+      profilePicture?: string;
+    };
+  };
   author?: string;
   read?: boolean;
+  reactions?: AnnouncementReaction[];
+  comments?: AnnouncementComment[];
+  viewCount?: number;
 }
 
 interface Event {
@@ -329,7 +367,40 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
 
   // Announcement states
   const [announcementFilter, setAnnouncementFilter] = useState<string>('all');
+  const [announcementPage, setAnnouncementPage] = useState(1);
+  const announcementsPerPage = 5; // Show only 5 at a time
   const [showCreateAnnouncementModal, setShowCreateAnnouncementModal] = useState(false);
+  
+  // Sort and filter announcements by priority/urgency
+  const getPriorityValue = (priority?: string): number => {
+    switch (priority) {
+      case 'urgent': return 4;
+      case 'high': return 3;
+      case 'medium': return 2;
+      case 'low': return 1;
+      default: return 0;
+    }
+  };
+  
+  const filteredAndSortedAnnouncements = announcements
+    .filter(ann => announcementFilter === 'all' || ann.type === announcementFilter)
+    .sort((a, b) => {
+      // First sort by read status (unread first)
+      if (a.read !== b.read) {
+        return a.read ? 1 : -1;
+      }
+      // Then by priority (urgent > high > medium > low)
+      const priorityDiff = getPriorityValue(b.priority) - getPriorityValue(a.priority);
+      if (priorityDiff !== 0) return priorityDiff;
+      // Finally by creation date (newest first)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  
+  const announcementTotalPages = Math.ceil(filteredAndSortedAnnouncements.length / announcementsPerPage);
+  const announcementStartIndex = (announcementPage - 1) * announcementsPerPage;
+  const announcementEndIndex = announcementStartIndex + announcementsPerPage;
+  const paginatedAnnouncements = filteredAndSortedAnnouncements.slice(announcementStartIndex, announcementEndIndex);
+  
   const [showEditAnnouncementModal, setShowEditAnnouncementModal] = useState(false);
   const [showDeleteAnnouncementModal, setShowDeleteAnnouncementModal] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
@@ -341,6 +412,11 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
   const [announcementEndTime, setAnnouncementEndTime] = useState('');
   const [canManageAnnouncements, setCanManageAnnouncements] = useState(false);
   const [unreadAnnouncementsCount, setUnreadAnnouncementsCount] = useState(0);
+  const [expandedAnnouncements, setExpandedAnnouncements] = useState<Set<string>>(new Set());
+  const [commentInputs, setCommentInputs] = useState<{[key: string]: string}>({});
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editCommentInputs, setEditCommentInputs] = useState<{[key: string]: string}>({});
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState<string | null>(null);
 
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
   const [departmentPage, setDepartmentPage] = useState(1);
@@ -372,6 +448,11 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
   useEffect(() => {
     setDepartmentPage(1);
   }, [departmentFilter]);
+
+  // Reset announcement page to 1 when filter changes
+  useEffect(() => {
+    setAnnouncementPage(1);
+  }, [announcementFilter]);
 
   // Reset to page 1 if current page is out of bounds
   useEffect(() => {
@@ -649,7 +730,7 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
             // Fetch announcements if user is approved member
             if (comm && communityId && isApproved) {
               try {
-                const announcementsResponse = await fetch(`/api/community/${communityId}/announcements`, {
+                const announcementsResponse = await fetch(`/api/v1/community/${communityId}/announcements`, {
                   headers: getAuthHeaders(),
                   credentials: 'include',
                 });
@@ -1238,8 +1319,8 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
             <div className="flex gap-2 min-w-max pb-2">
               {[
                 { id: 'overview', label: 'Overview', icon: 'fa-info-circle' },
-                { id: 'departments', label: 'Departments', icon: 'fa-building' },
                 { id: 'announcements', label: 'Announcements', icon: 'fa-bullhorn' },
+                { id: 'departments', label: 'Departments', icon: 'fa-building' },
                 { id: 'events', label: 'Events', icon: 'fa-calendar' },
               ].map((section) => (
                 <button
@@ -1493,7 +1574,7 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                   <button
                     onClick={async () => {
                       try {
-                        const response = await fetch(`/api/community/${community?._id}/announcements/mark-all-read`, {
+                        const response = await fetch(`/api/v1/community/${community?._id}/announcements/mark-all-read`, {
                           method: 'POST',
                           headers: getAuthHeaders(),
                           credentials: 'include',
@@ -1559,15 +1640,15 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
 
             {/* Announcements List */}
             <div className="space-y-4">
-              {announcements.length === 0 ? (
+              {paginatedAnnouncements.length === 0 ? (
                 <div className="text-center py-12 text-gray-400">
                   <i className="fa fa-bullhorn text-6xl mb-4 opacity-20"></i>
                   <p className="text-xl">No announcements yet</p>
                 </div>
               ) : (
-                announcements
-                  .filter(ann => announcementFilter === 'all' || ann.type === announcementFilter)
-                  .map((announcement) => (
+                paginatedAnnouncements.map((announcement) => {
+                  const userId = user?.id || user?._id;
+                  return (
                     <div
                       key={announcement._id}
                       className={`p-6 rounded-xl border transition-all ${
@@ -1602,11 +1683,24 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                           </div>
                           <h3 className="text-xl font-bold text-white mb-2">{announcement.title}</h3>
                           <p className="text-gray-300 whitespace-pre-wrap mb-3">{announcement.content}</p>
-                          <div className="flex items-center gap-4 text-sm text-gray-400">
-                            <span>
-                              <i className="fa fa-clock mr-1"></i>
-                              {new Date(announcement.createdAt).toLocaleString()}
+                          <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-400 mb-4 flex-wrap">
+                            <span className="flex items-center gap-1">
+                              <i className="fa fa-clock"></i>
+                              <span className="hidden sm:inline">{new Date(announcement.createdAt).toLocaleString()}</span>
+                              <span className="sm:hidden">{new Date(announcement.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             </span>
+                            {announcement.creator?.user?.username && (
+                              <span className="flex items-center gap-1">
+                                <i className="fa fa-user"></i>
+                                {announcement.creator.user.username}
+                              </span>
+                            )}
+                            {announcement.viewCount !== undefined && (
+                              <span className="flex items-center gap-1">
+                                <i className="fa fa-eye"></i>
+                                {announcement.viewCount}
+                              </span>
+                            )}
                             {announcement.startTime && (
                               <span>
                                 <i className="fa fa-calendar-check mr-1"></i>
@@ -1619,6 +1713,82 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                                 End: {new Date(announcement.endTime).toLocaleString()}
                               </span>
                             )}
+                          </div>
+
+                          {/* Reactions */}
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {['👍', '❤️', '😂', '🎉', '🚀'].map((emoji) => {
+                                const userReacted = announcement.reactions?.some(r => {
+                                  if (!r || !r.user) return false;
+                                  // Handle both populated (object with _id) and unpopulated (just string id) formats
+                                  const reactionUserId = typeof r.user === 'string' ? r.user : r.user._id;
+                                  return r.emoji === emoji && String(reactionUserId) === String(userId);
+                                });
+                                const reactionCount = announcement.reactions?.filter(r => r.emoji === emoji).length || 0;
+
+                                return (
+                                  <button
+                                    key={emoji}
+                                    onClick={async () => {
+                                      try {
+                                        const response = await fetch(`/api/v1/announcement/${announcement._id}/reactions`, {
+                                          method: 'POST',
+                                          headers: {
+                                            ...getAuthHeaders(),
+                                            'Content-Type': 'application/json',
+                                          },
+                                          credentials: 'include',
+                                          body: JSON.stringify({ emoji }),
+                                        });
+
+                                        if (response.ok) {
+                                          const data = await response.json();
+                                          const updatedAnnouncement = data.announcement || data;
+                                          setAnnouncements(prev => prev.map(a =>
+                                            a._id === announcement._id ? {
+                                              ...a,
+                                              reactions: updatedAnnouncement.reactions,
+                                              comments: updatedAnnouncement.comments || a.comments,
+                                              viewCount: updatedAnnouncement.viewCount || a.viewCount
+                                            } : a
+                                          ));
+                                        }
+                                      } catch (error) {
+                                        console.error('Error toggling reaction:', error);
+                                      }
+                                    }}
+                                    className={`px-2 py-1 rounded-lg text-sm transition-all ${
+                                      userReacted
+                                        ? 'bg-blue-500/50 border-2 border-blue-400/70 shadow-lg shadow-blue-500/20'
+                                        : 'bg-white/5 border border-white/10 hover:bg-white/10'
+                                    }`}
+                                  >
+                                    {emoji} {reactionCount > 0 && <span className="text-gray-300 ml-1">{reactionCount}</span>}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Comments Toggle */}
+                          <div className="border-t border-white/10 pt-3 mt-3">
+                            <button
+                              onClick={() => {
+                                const newExpanded = new Set(expandedAnnouncements);
+                                if (newExpanded.has(announcement._id)) {
+                                  newExpanded.delete(announcement._id);
+                                } else {
+                                  newExpanded.add(announcement._id);
+                                }
+                                setExpandedAnnouncements(newExpanded);
+                              }}
+                              className="text-blue-400 hover:text-blue-300 transition-colors text-sm"
+                            >
+                              <i className={`fa fa-comment mr-2`}></i>
+                              {announcement.comments?.length || 0} {(announcement.comments?.length || 0) === 1 ? 'Comment' : 'Comments'}
+                              <i className={`fa fa-chevron-${expandedAnnouncements.has(announcement._id) ? 'up' : 'down'} ml-2`}></i>
+                            </button>
                           </div>
                         </div>
                         {canManageAnnouncements && (
@@ -1652,10 +1822,316 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                           </div>
                         )}
                       </div>
+
+                      {/* Comments Section - Full Width */}
+                      {expandedAnnouncements.has(announcement._id) && (
+                        <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
+                          {/* Comment Input */}
+                          <div className="w-full">
+                            <textarea
+                              value={commentInputs[announcement._id] || ''}
+                              onChange={(e) => setCommentInputs(prev => ({
+                                ...prev,
+                                [announcement._id]: e.target.value
+                              }))}
+                              onKeyDown={async (e) => {
+                                if (e.key === 'Enter' && !e.shiftKey && commentInputs[announcement._id]?.trim()) {
+                                  e.preventDefault();
+                                  try {
+                                    const response = await fetch(`/api/v1/announcement/${announcement._id}/comments`, {
+                                      method: 'POST',
+                                      headers: {
+                                        ...getAuthHeaders(),
+                                        'Content-Type': 'application/json',
+                                      },
+                                      credentials: 'include',
+                                      body: JSON.stringify({ content: commentInputs[announcement._id].trim() }),
+                                    });
+
+                                    if (response.ok) {
+                                      const data = await response.json();
+                                      setAnnouncements(prev => prev.map(a =>
+                                        a._id === announcement._id ? {
+                                          ...a,
+                                          comments: data.announcement.comments,
+                                          reactions: data.announcement.reactions || a.reactions,
+                                          viewCount: data.announcement.viewCount || a.viewCount
+                                        } : a
+                                      ));
+                                      setCommentInputs(prev => ({
+                                        ...prev,
+                                        [announcement._id]: ''
+                                      }));
+                                    }
+                                  } catch (error) {
+                                    console.error('Error adding comment:', error);
+                                  }
+                                }
+                              }}
+                              rows={3}
+                              placeholder="Add a comment... (Press Enter to send, Shift+Enter for new line)"
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500/50 resize-none"
+                            />
+                          </div>
+
+                          {/* Comments List */}
+                          <div className="space-y-2">
+                            {announcement.comments?.map((comment) => (
+                              <div key={comment._id} className="bg-white/5 rounded-lg p-3">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                      <span className="font-semibold text-blue-400 text-sm">
+                                        {comment.user?.user?.username || comment.user?.username || user?.username || 'Unknown User'}
+                                      </span>
+                                      <span className="text-xs text-gray-500">
+                                        <span className="hidden sm:inline">{new Date(comment.timestamp).toLocaleString()}</span>
+                                        <span className="sm:hidden">{new Date(comment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                      </span>
+                                      {comment.edited && (
+                                        <span className="text-xs text-gray-500 italic">(edited)</span>
+                                      )}
+                                    </div>
+                                    {editingCommentId === comment._id ? (
+                                      <textarea
+                                        value={editCommentInputs[comment._id] || ''}
+                                        onChange={(e) => setEditCommentInputs(prev => ({
+                                          ...prev,
+                                          [comment._id]: e.target.value
+                                        }))}
+                                        onKeyDown={async (e) => {
+                                          if (e.key === 'Enter' && !e.shiftKey && editCommentInputs[comment._id]?.trim()) {
+                                            e.preventDefault();
+                                            try {
+                                              const response = await fetch(`/api/v1/announcement/${announcement._id}/comments/${comment._id}`, {
+                                                method: 'PUT',
+                                                headers: {
+                                                  ...getAuthHeaders(),
+                                                  'Content-Type': 'application/json',
+                                                },
+                                                credentials: 'include',
+                                                body: JSON.stringify({ content: editCommentInputs[comment._id].trim() }),
+                                              });
+
+                                              if (response.ok) {
+                                                const data = await response.json();
+                                                setAnnouncements(prev => prev.map(a =>
+                                                  a._id === announcement._id ? {
+                                                    ...a,
+                                                    comments: data.announcement.comments,
+                                                    reactions: data.announcement.reactions || a.reactions,
+                                                    viewCount: data.announcement.viewCount || a.viewCount
+                                                  } : a
+                                                ));
+                                                setEditingCommentId(null);
+                                                setEditCommentInputs(prev => {
+                                                  const newInputs = { ...prev };
+                                                  delete newInputs[comment._id];
+                                                  return newInputs;
+                                                });
+                                              }
+                                            } catch (error) {
+                                              console.error('Error updating comment:', error);
+                                            }
+                                          }
+                                        }}
+                                        rows={3}
+                                        className="w-full bg-white/10 border border-blue-500/50 rounded px-2 py-1 text-white text-sm focus:outline-none focus:border-blue-500 resize-none"
+                                        autoFocus
+                                      />
+                                    ) : (
+                                      <p className="text-gray-300 text-sm break-words max-h-24 overflow-y-auto whitespace-pre-wrap">{comment.content}</p>
+                                    )}
+                                  </div>
+                                  {(() => {
+                                    // Handle both populated (object with _id) and unpopulated (just string id) formats
+                                    const commentUserId = typeof comment.user === 'string' ? comment.user : comment.user?._id;
+                                    return String(commentUserId) === String(userId);
+                                  })() && (
+                                    <div className="flex gap-2 flex-shrink-0">
+                                      {editingCommentId === comment._id ? (
+                                        <>
+                                          <button
+                                            onClick={async () => {
+                                              try {
+                                                const response = await fetch(`/api/v1/announcement/${announcement._id}/comments/${comment._id}`, {
+                                                  method: 'PUT',
+                                                  headers: {
+                                                    ...getAuthHeaders(),
+                                                    'Content-Type': 'application/json',
+                                                  },
+                                                  credentials: 'include',
+                                                  body: JSON.stringify({ content: editCommentInputs[comment._id]?.trim() }),
+                                                });
+
+                                                if (response.ok) {
+                                                  const data = await response.json();
+                                                  setAnnouncements(prev => prev.map(a =>
+                                                    a._id === announcement._id ? {
+                                                      ...a,
+                                                      comments: data.announcement.comments,
+                                                      reactions: data.announcement.reactions || a.reactions,
+                                                      viewCount: data.announcement.viewCount || a.viewCount
+                                                    } : a
+                                                  ));
+                                                  setEditingCommentId(null);
+                                                  setEditCommentInputs(prev => {
+                                                    const newInputs = { ...prev };
+                                                    delete newInputs[comment._id];
+                                                    return newInputs;
+                                                  });
+                                                }
+                                              } catch (error) {
+                                                console.error('Error updating comment:', error);
+                                              }
+                                            }}
+                                            className="text-green-400 hover:text-green-300 text-xs"
+                                            title="Save"
+                                          >
+                                            <i className="fa fa-check"></i>
+                                          </button>
+                                          <button
+                                            onClick={() => {
+                                              setEditingCommentId(null);
+                                              setEditCommentInputs(prev => {
+                                                const newInputs = { ...prev };
+                                                delete newInputs[comment._id];
+                                                return newInputs;
+                                              });
+                                            }}
+                                            className="text-gray-400 hover:text-gray-300 text-xs"
+                                            title="Cancel"
+                                          >
+                                            <i className="fa fa-times"></i>
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <button
+                                            onClick={() => {
+                                              setEditingCommentId(comment._id);
+                                              setEditCommentInputs(prev => ({
+                                                ...prev,
+                                                [comment._id]: comment.content
+                                              }));
+                                            }}
+                                            className="text-blue-400 hover:text-blue-300 text-xs"
+                                            title="Edit"
+                                          >
+                                            <i className="fa fa-pencil-alt"></i>
+                                          </button>
+                                          <button
+                                            onClick={async () => {
+                                              try {
+                                                const response = await fetch(`/api/v1/announcement/${announcement._id}/comments/${comment._id}`, {
+                                                  method: 'DELETE',
+                                                  headers: getAuthHeaders(),
+                                                  credentials: 'include',
+                                                });
+
+                                                if (response.ok) {
+                                                  const data = await response.json();
+                                                  setAnnouncements(prev => prev.map(a =>
+                                                    a._id === announcement._id ? {
+                                                      ...a,
+                                                      comments: data.announcement.comments,
+                                                      reactions: data.announcement.reactions || a.reactions,
+                                                      viewCount: data.announcement.viewCount || a.viewCount
+                                                    } : a
+                                                  ));
+                                                }
+                                              } catch (error) {
+                                                console.error('Error deleting comment:', error);
+                                              }
+                                            }}
+                                            className="text-red-400 hover:text-red-300 text-xs"
+                                            title="Delete"
+                                          >
+                                            <i className="fa fa-trash"></i>
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))
+                  );
+                })
               )}
             </div>
+
+            {/* Pagination Controls */}
+            {filteredAndSortedAnnouncements.length > announcementsPerPage && (
+              <div className="mt-6 flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setAnnouncementPage(Math.max(1, announcementPage - 1))}
+                  disabled={announcementPage === 1}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                    announcementPage === 1
+                      ? 'bg-gray-700/50 text-gray-500 cursor-not-allowed'
+                      : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
+                  }`}
+                >
+                  <i className="fa fa-chevron-left mr-2"></i>
+                  Previous
+                </button>
+                
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: Math.min(5, announcementTotalPages) }, (_, i) => {
+                    let pageNum;
+                    if (announcementTotalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (announcementPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (announcementPage >= announcementTotalPages - 2) {
+                      pageNum = announcementTotalPages - 4 + i;
+                    } else {
+                      pageNum = announcementPage - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setAnnouncementPage(pageNum)}
+                        className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                          announcementPage === pageNum
+                            ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg'
+                            : 'bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white border border-white/10'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button
+                  onClick={() => setAnnouncementPage(Math.min(announcementTotalPages, announcementPage + 1))}
+                  disabled={announcementPage === announcementTotalPages}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                    announcementPage === announcementTotalPages
+                      ? 'bg-gray-700/50 text-gray-500 cursor-not-allowed'
+                      : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
+                  }`}
+                >
+                  Next
+                  <i className="fa fa-chevron-right ml-2"></i>
+                </button>
+              </div>
+            )}
+
+            {/* Announcement Count */}
+            {filteredAndSortedAnnouncements.length > 0 && (
+              <div className="mt-4 text-center text-gray-400 text-sm">
+                Showing {announcementStartIndex + 1}-{Math.min(announcementEndIndex, filteredAndSortedAnnouncements.length)} of {filteredAndSortedAnnouncements.length} announcement{filteredAndSortedAnnouncements.length !== 1 ? 's' : ''}
+                {announcementFilter !== 'all' && ` (${announcements.length} total)`}
+              </div>
+            )}
           </div>
         )}
 
@@ -1888,48 +2364,6 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
             )}
           </div>
         )}
-
-        {/* Announcements Section */}
-        <div id="announcements" className="mb-8 backdrop-blur-xl bg-white/5 rounded-3xl p-8 border border-white/10 shadow-2xl">
-          <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-              <i className="fa fa-bullhorn text-white text-lg"></i>
-            </div>
-            Announcements
-          </h2>
-
-          {user && isMemberApproved ? (
-            announcements.length > 0 ? (
-              <div className="space-y-4">
-                {announcements.map((announcement) => (
-                  <div
-                    key={announcement._id}
-                    className="backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-lg"
-                  >
-                    <h3 className="text-xl font-semibold text-white mb-2">{announcement.title}</h3>
-                    <p className="text-gray-400 mb-3">{announcement.content}</p>
-                    <div className="text-sm text-gray-500">
-                      {new Date(announcement.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <i className="fa fa-bullhorn text-6xl text-gray-600 mb-4"></i>
-                <p className="text-gray-400 text-lg">No announcements yet</p>
-              </div>
-            )
-          ) : (
-            <div className="backdrop-blur-xl bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-2xl p-8 text-center border border-orange-500/20">
-              <i className="fa fa-lock text-6xl text-orange-400 mb-4"></i>
-              <h3 className="text-2xl font-bold text-white mb-2">Members Only</h3>
-              <p className="text-gray-400">
-                {user ? 'Request to join to view announcements' : 'Login to view announcements'}
-              </p>
-            </div>
-          )}
-        </div>
 
         {/* Events Section */}
         <div id="events" className="mb-8 backdrop-blur-xl bg-white/5 rounded-3xl p-8 border border-white/10 shadow-2xl">
@@ -2897,7 +3331,7 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 }
 
                 try {
-                  const response = await fetch(`/api/community/${community?._id}/announcements`, {
+                  const response = await fetch(`/api/v1/community/${community?._id}/announcements`, {
                     method: 'POST',
                     headers: {
                       ...getAuthHeaders(),
@@ -2923,7 +3357,10 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                   const data = await response.json();
                   setAnnouncements(prev => [data.announcement, ...prev]);
                   setShowCreateAnnouncementModal(false);
+                  // Clear all form fields
                   setAnnouncementTitle('');
+                  setAnnouncementType('main');
+                  setAnnouncementPriority('medium');
                   setAnnouncementContent('');
                   setAnnouncementStartTime('');
                   setAnnouncementEndTime('');
@@ -3076,7 +3513,7 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 }
 
                 try {
-                  const response = await fetch(`/api/announcement/${editingAnnouncement._id}`, {
+                  const response = await fetch(`/api/v1/announcement/${editingAnnouncement._id}`, {
                     method: 'PUT',
                     headers: {
                       ...getAuthHeaders(),
@@ -3258,7 +3695,7 @@ export default function CommunityPage({ params }: { params: Promise<{ hash: stri
                 type="button"
                 onClick={async () => {
                   try {
-                    const response = await fetch(`/api/announcement/${editingAnnouncement._id}`, {
+                    const response = await fetch(`/api/v1/announcement/${editingAnnouncement._id}`, {
                       method: 'DELETE',
                       headers: getAuthHeaders(),
                       credentials: 'include',
