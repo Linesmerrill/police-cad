@@ -4260,15 +4260,31 @@ window.showBoloModal = showBoloModal;
       error: 'rgba(239, 68, 68, 0.95)'
     };
 
-    toast.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <i class="fa ${icons[type] || 'fa-info-circle'}" style="font-size: 1.25rem;"></i>
-        <div>
-          <div style="font-weight: 600;">${message}</div>
-          ${details ? `<div style="font-size: 0.85rem; opacity: 0.9;">${details}</div>` : ''}
-        </div>
-      </div>
-    `;
+    // Build toast content safely using DOM APIs to prevent XSS
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display: flex; align-items: center; gap: 12px;';
+
+    const iconEl = document.createElement('i');
+    iconEl.className = 'fa ' + (icons[type] || 'fa-info-circle');
+    iconEl.style.fontSize = '1.25rem';
+    wrapper.appendChild(iconEl);
+
+    const textContainer = document.createElement('div');
+    const titleDiv = document.createElement('div');
+    titleDiv.style.fontWeight = '600';
+    titleDiv.textContent = message || '';
+    textContainer.appendChild(titleDiv);
+
+    if (details) {
+      const detailsDiv = document.createElement('div');
+      detailsDiv.style.cssText = 'font-size: 0.85rem; opacity: 0.9;';
+      detailsDiv.textContent = details;
+      textContainer.appendChild(detailsDiv);
+    }
+
+    wrapper.appendChild(textContainer);
+    toast.appendChild(wrapper);
+
     toast.style.cssText = `
       background: ${colors[severity] || colors.info};
       color: white;
