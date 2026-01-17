@@ -3485,14 +3485,40 @@
       // REAL-TIME SOCKET LISTENERS FOR DISPATCH
       // ==========================================
 
+      // HTML-escaping helper to prevent XSS when injecting dynamic content
+      function escapeHtml(str) {
+        if (str == null) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      // Helper to prevent prototype-polluting keys
+      function isSafeKey(key) {
+        return (
+          typeof key === 'string' &&
+          key !== '__proto__' &&
+          key !== 'constructor' &&
+          key !== 'prototype'
+        );
+      }
+
       // Listen for member status updates
       dashboardSocket.on('member_status_updated', function(data) {
         if (data.communityId && data.communityId !== communityId) return;
 
         const userId = data.userID;
 
+        // Guard against unsafe keys that could lead to prototype pollution
+        if (!isSafeKey(userId)) {
+          return;
+        }
+
         // Update the member data cache with status and active department
-        if (!memberDataCache[userId]) memberDataCache[userId] = {};
+        if (!memberDataCache[userId]) memberDataCache[userId] = Object.create(null);
         if (data.statusCode) {
           memberDataCache[userId].tenCodeID = data.statusCode;
         }
@@ -3518,9 +3544,9 @@
             const userDepts = userDepartmentMap[userId] || [];
             const otherDepts = userDepts.filter(d => d.name !== data.activeDepartmentName);
 
-            let newDeptHtml = `<span class="active-dept-badge">${data.activeDepartmentName}</span>`;
+            let newDeptHtml = `<span class="active-dept-badge">${escapeHtml(data.activeDepartmentName)}</span>`;
             if (otherDepts.length > 0) {
-              const otherBadges = otherDepts.map(d => `<span class="dept-badge">${d.name}</span>`).join('');
+              const otherBadges = otherDepts.map(d => `<span class="dept-badge">${escapeHtml(d.name)}</span>`).join('');
               newDeptHtml += `<span class="dept-expand-btn" onclick="toggleDeptExpand(this, event)" title="View all departments">+${otherDepts.length}</span>`;
               newDeptHtml += `<div class="dept-expanded hidden">${otherBadges}</div>`;
             }
