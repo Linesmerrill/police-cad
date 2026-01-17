@@ -617,12 +617,18 @@
                                 <div class="unit-controls">
                                   <div class="unit-search-container">
                                     <i class="fa fa-search"></i>
-                                    <input id="unitSearch" type="text" placeholder="Search units by name, call sign, or status..." class="unit-search-input">
+                                    <input id="unitSearch" type="text" placeholder="Search units by name, call sign, status, or department..." class="unit-search-input">
                                   </div>
-                                  <div class="unit-filter-buttons">
-                                    <button class="filter-btn active" data-filter="all" onclick="filterUnits('all')">All</button>
-                                    <button class="filter-btn" data-filter="online" onclick="filterUnits('online')">Online</button>
-                                    <button class="filter-btn" data-filter="offline" onclick="filterUnits('offline')">Offline</button>
+                                  <div class="unit-filter-row">
+                                    <select id="departmentFilter" class="dept-filter-select" onchange="filterByDepartment(this.value)">
+                                      <option value="all">All Departments</option>
+                                      <!-- Options populated by JavaScript -->
+                                    </select>
+                                    <div class="unit-filter-buttons">
+                                      <button class="filter-btn active" data-filter="all" onclick="filterUnits('all')">All</button>
+                                      <button class="filter-btn" data-filter="online" onclick="filterUnits('online')">Online</button>
+                                      <button class="filter-btn" data-filter="offline" onclick="filterUnits('offline')">Offline</button>
+                                    </div>
                                   </div>
                                 </div>
 
@@ -752,6 +758,40 @@
 
                                 .unit-search-input::placeholder {
                                   color: #64748b;
+                                }
+
+                                .unit-filter-row {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 1rem;
+                                  flex-wrap: wrap;
+                                }
+
+                                .dept-filter-select {
+                                  padding: 0.5rem 1rem;
+                                  border: 1px solid rgba(71, 85, 105, 0.5);
+                                  border-radius: 6px;
+                                  background: rgba(30, 41, 59, 0.8);
+                                  color: #f1f5f9;
+                                  font-size: 0.9rem;
+                                  cursor: pointer;
+                                  min-width: 180px;
+                                  transition: all 0.2s ease;
+                                }
+
+                                .dept-filter-select:hover {
+                                  border-color: rgba(59, 130, 246, 0.5);
+                                }
+
+                                .dept-filter-select:focus {
+                                  outline: none;
+                                  border-color: #3b82f6;
+                                  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+                                }
+
+                                .dept-filter-select option {
+                                  background: #1e293b;
+                                  color: #f1f5f9;
                                 }
 
                                 .unit-filter-buttons {
@@ -916,6 +956,90 @@
                                   white-space: nowrap;
                                   overflow: hidden;
                                   text-overflow: ellipsis;
+                                }
+
+                                .unit-departments {
+                                  display: flex;
+                                  flex-wrap: wrap;
+                                  gap: 0.3rem;
+                                  margin-top: 0.35rem;
+                                  max-height: 3.2rem; /* ~2 lines of badges */
+                                  overflow-y: auto;
+                                  overflow-x: hidden;
+                                  scrollbar-width: thin;
+                                  scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
+                                }
+
+                                .unit-departments::-webkit-scrollbar {
+                                  width: 4px;
+                                }
+
+                                .unit-departments::-webkit-scrollbar-track {
+                                  background: transparent;
+                                }
+
+                                .unit-departments::-webkit-scrollbar-thumb {
+                                  background: rgba(99, 102, 241, 0.4);
+                                  border-radius: 2px;
+                                }
+
+                                .dept-badge {
+                                  display: inline-block;
+                                  padding: 0.15rem 0.5rem;
+                                  border-radius: 4px;
+                                  font-size: 0.7rem;
+                                  font-weight: 600;
+                                  background: rgba(99, 102, 241, 0.2);
+                                  color: #818cf8;
+                                  border: 1px solid rgba(99, 102, 241, 0.3);
+                                  white-space: nowrap;
+                                }
+
+                                /* Active department badge - highlighted */
+                                .active-dept-badge {
+                                  display: inline-block;
+                                  padding: 0.15rem 0.5rem;
+                                  border-radius: 4px;
+                                  font-size: 0.7rem;
+                                  font-weight: 700;
+                                  background: rgba(16, 185, 129, 0.3);
+                                  color: #34d399;
+                                  border: 1px solid rgba(16, 185, 129, 0.5);
+                                  white-space: nowrap;
+                                  box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
+                                }
+
+                                /* Expand button for showing more departments */
+                                .dept-expand-btn {
+                                  display: inline-block;
+                                  padding: 0.1rem 0.4rem;
+                                  border-radius: 4px;
+                                  font-size: 0.65rem;
+                                  font-weight: 600;
+                                  background: rgba(71, 85, 105, 0.4);
+                                  color: #94a3b8;
+                                  border: 1px solid rgba(71, 85, 105, 0.5);
+                                  cursor: pointer;
+                                  transition: all 0.2s ease;
+                                }
+
+                                .dept-expand-btn:hover {
+                                  background: rgba(99, 102, 241, 0.3);
+                                  color: #a5b4fc;
+                                  border-color: rgba(99, 102, 241, 0.5);
+                                }
+
+                                .dept-expanded {
+                                  display: flex;
+                                  flex-wrap: wrap;
+                                  gap: 0.3rem;
+                                  margin-top: 0.3rem;
+                                  padding-top: 0.3rem;
+                                  border-top: 1px solid rgba(71, 85, 105, 0.3);
+                                }
+
+                                .dept-expanded.hidden {
+                                  display: none;
                                 }
 
                                 .unit-status-badge {
@@ -3366,6 +3490,18 @@
         if (data.communityId && data.communityId !== communityId) return;
 
         const userId = data.userID;
+
+        // Update the member data cache with status and active department
+        if (!memberDataCache[userId]) memberDataCache[userId] = {};
+        if (data.statusCode) {
+          memberDataCache[userId].tenCodeID = data.statusCode;
+        }
+        // Store active department info from the status update
+        if (data.activeDepartmentId) {
+          memberDataCache[userId].activeDepartmentId = data.activeDepartmentId;
+          memberDataCache[userId].activeDepartmentName = data.activeDepartmentName || null;
+        }
+
         const $unitCard = $(`.unit-card[data-user-id="${userId}"]`);
 
         // If the unit card exists, update it in place with animation
@@ -3374,6 +3510,27 @@
           const $select = $unitCard.find('.unit-status-select');
           if (data.statusCode) {
             $select.val(data.statusCode);
+          }
+
+          // Update the active department badge if present
+          if (data.activeDepartmentName) {
+            const userId = data.userID;
+            const userDepts = userDepartmentMap[userId] || [];
+            const otherDepts = userDepts.filter(d => d.name !== data.activeDepartmentName);
+
+            let newDeptHtml = `<span class="active-dept-badge">${data.activeDepartmentName}</span>`;
+            if (otherDepts.length > 0) {
+              const otherBadges = otherDepts.map(d => `<span class="dept-badge">${d.name}</span>`).join('');
+              newDeptHtml += `<span class="dept-expand-btn" onclick="toggleDeptExpand(this, event)" title="View all departments">+${otherDepts.length}</span>`;
+              newDeptHtml += `<div class="dept-expanded hidden">${otherBadges}</div>`;
+            }
+
+            let $deptContainer = $unitCard.find('.unit-departments');
+            if ($deptContainer.length > 0) {
+              $deptContainer.html(newDeptHtml);
+            } else {
+              $unitCard.find('.unit-info').append(`<div class="unit-departments">${newDeptHtml}</div>`);
+            }
           }
 
           // Trigger the highlight animation
@@ -3545,7 +3702,10 @@
   var unitsCache = [];
   var tenCodesCache = [];
   var memberDataCache = {};
+  var departmentsCache = [];
+  var userDepartmentMap = {}; // Maps userId -> array of department objects
   var currentUnitFilter = 'all';
+  var currentDepartmentFilter = 'all';
   var currentUnitSearch = '';
 
   // Load and display units in the new panel
@@ -3559,34 +3719,69 @@
       method: 'GET',
       success: function(commData) {
         tenCodesCache = commData.community?.tenCodes || [];
+
+        // Preserve active department info from previous cache before overwriting
+        const preservedActiveDepts = {};
+        Object.keys(memberDataCache).forEach(userId => {
+          if (memberDataCache[userId]?.activeDepartmentId || memberDataCache[userId]?.activeDepartmentName) {
+            preservedActiveDepts[userId] = {
+              activeDepartmentId: memberDataCache[userId].activeDepartmentId,
+              activeDepartmentName: memberDataCache[userId].activeDepartmentName
+            };
+          }
+        });
+
         memberDataCache = commData.community?.members || {};
+
+        // Restore preserved active department info
+        Object.keys(preservedActiveDepts).forEach(userId => {
+          if (!memberDataCache[userId]) memberDataCache[userId] = {};
+          memberDataCache[userId].activeDepartmentId = preservedActiveDepts[userId].activeDepartmentId;
+          memberDataCache[userId].activeDepartmentName = preservedActiveDepts[userId].activeDepartmentName;
+        });
 
         // Update community name in header
         if (commData.community?.name) {
           $('#community-name').text(commData.community.name);
         }
 
-        // Then fetch all members
+        // Fetch departments to build user-department mapping
         $.ajax({
-          url: `${API_URL}/api/v1/community/${communityId}/members?limit=100`,
+          url: `${API_URL}/api/v1/community/${communityId}/departments`,
           method: 'GET',
-          success: function(response) {
-            // Handle various response formats
-            if (Array.isArray(response)) {
-              unitsCache = response;
-            } else if (response && Array.isArray(response.data)) {
-              unitsCache = response.data;
-            } else if (response && Array.isArray(response.members)) {
-              unitsCache = response.members;
-            } else {
-              console.warn('Unexpected members response format:', response);
-              unitsCache = [];
-            }
-            renderUnitsGrid();
+          success: function(deptResponse) {
+            departmentsCache = (deptResponse.departments || []).filter(d => d.template?.name !== 'Civilian');
+
+            // Build user -> departments mapping
+            userDepartmentMap = {};
+            departmentsCache.forEach(dept => {
+              if (dept.members && Array.isArray(dept.members)) {
+                dept.members.forEach(member => {
+                  const userId = member.userID || member._id;
+                  if (userId) {
+                    if (!userDepartmentMap[userId]) {
+                      userDepartmentMap[userId] = [];
+                    }
+                    userDepartmentMap[userId].push({
+                      _id: dept._id,
+                      name: dept.name,
+                      template: dept.template
+                    });
+                  }
+                });
+              }
+            });
+
+            // Populate department filter dropdown
+            populateDepartmentFilter();
+
+            // Then fetch all members
+            fetchMembers(communityId);
           },
           error: function(xhr) {
-            console.error('Error loading units:', xhr.responseText);
-            $('#unitGrid').html('<div class="unit-empty"><i class="fa fa-exclamation-circle"></i> Failed to load units</div>');
+            console.error('Error loading departments:', xhr.responseText);
+            // Still fetch members even if departments fail
+            fetchMembers(communityId);
           }
         });
       },
@@ -3594,6 +3789,49 @@
         console.error('Error loading community data:', xhr.responseText);
       }
     });
+  }
+
+  // Fetch members (separated for reuse)
+  function fetchMembers(communityId) {
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}/members?limit=100`,
+      method: 'GET',
+      success: function(response) {
+        // Handle various response formats
+        if (Array.isArray(response)) {
+          unitsCache = response;
+        } else if (response && Array.isArray(response.data)) {
+          unitsCache = response.data;
+        } else if (response && Array.isArray(response.members)) {
+          unitsCache = response.members;
+        } else {
+          console.warn('Unexpected members response format:', response);
+          unitsCache = [];
+        }
+        renderUnitsGrid();
+      },
+      error: function(xhr) {
+        console.error('Error loading units:', xhr.responseText);
+        $('#unitGrid').html('<div class="unit-empty"><i class="fa fa-exclamation-circle"></i> Failed to load units</div>');
+      }
+    });
+  }
+
+  // Populate the department filter dropdown
+  function populateDepartmentFilter() {
+    const $select = $('#departmentFilter');
+    $select.empty();
+    $select.append('<option value="all">All Departments</option>');
+
+    departmentsCache.forEach(dept => {
+      $select.append(`<option value="${dept._id}">${dept.name}</option>`);
+    });
+  }
+
+  // Filter units by department
+  function filterByDepartment(departmentId) {
+    currentDepartmentFilter = departmentId;
+    renderUnitsGrid();
   }
 
   // Check if a code is specifically Signal 100 (for broadcasting alerts)
@@ -3668,9 +3906,16 @@
       const tenCodeId = memberData.tenCodeID;
       const statusCategory = getUnitStatusCategory(tenCodeId);
 
-      // Apply filter
+      // Apply status filter
       if (currentUnitFilter === 'online' && (statusCategory === 'offline' || statusCategory === 'none')) return false;
       if (currentUnitFilter === 'offline' && statusCategory !== 'offline' && statusCategory !== 'none') return false;
+
+      // Apply department filter
+      if (currentDepartmentFilter !== 'all') {
+        const userDepts = userDepartmentMap[unit._id] || [];
+        const inDept = userDepts.some(d => d._id === currentDepartmentFilter);
+        if (!inDept) return false;
+      }
 
       // Apply search
       if (currentUnitSearch) {
@@ -3679,8 +3924,11 @@
         const callSign = (unit.user?.callSign || '').toLowerCase();
         const tenCode = tenCodesCache.find(tc => tc._id === tenCodeId);
         const statusText = (tenCode?.code || '').toLowerCase();
+        // Also search in department names
+        const userDepts = userDepartmentMap[unit._id] || [];
+        const deptNames = userDepts.map(d => (d.name || '').toLowerCase()).join(' ');
 
-        if (!username.includes(search) && !callSign.includes(search) && !statusText.includes(search)) {
+        if (!username.includes(search) && !callSign.includes(search) && !statusText.includes(search) && !deptNames.includes(search)) {
           return false;
         }
       }
@@ -3736,12 +3984,38 @@
         selectOptions += `<option value="${tc._id}" ${selected}>${tc.code}</option>`;
       });
 
+      // Get department badges for this unit
+      const userDepts = userDepartmentMap[unit._id] || [];
+      const activeDeptName = memberData.activeDepartmentName || null;
+      const otherDepts = userDepts.filter(d => d.name !== activeDeptName);
+
+      let deptBadgesHtml = '';
+      if (activeDeptName) {
+        // Show active department with expand button if they have other departments
+        if (otherDepts.length > 0) {
+          const otherBadges = otherDepts.map(d => `<span class="dept-badge">${d.name}</span>`).join('');
+          deptBadgesHtml = `
+            <div class="unit-departments">
+              <span class="active-dept-badge">${activeDeptName}</span>
+              <span class="dept-expand-btn" onclick="toggleDeptExpand(this, event)" title="View all departments">+${otherDepts.length}</span>
+              <div class="dept-expanded hidden">${otherBadges}</div>
+            </div>`;
+        } else {
+          deptBadgesHtml = `<div class="unit-departments"><span class="active-dept-badge">${activeDeptName}</span></div>`;
+        }
+      } else if (userDepts.length > 0) {
+        // No active department - show all their departments
+        const badges = userDepts.map(d => `<span class="dept-badge">${d.name}</span>`).join('');
+        deptBadgesHtml = `<div class="unit-departments">${badges}</div>`;
+      }
+
       const cardHtml = `
         <div class="unit-card ${statusCategory}" data-user-id="${unit._id}">
           <div class="unit-status-indicator ${statusCategory}"></div>
           <div class="unit-info">
             <div class="unit-callsign">${callSign}</div>
             <div class="unit-name">${username}</div>
+            ${deptBadgesHtml}
           </div>
           <select class="unit-status-select" data-user-id="${unit._id}" onchange="updateUnitStatus(this)">
             ${selectOptions}
@@ -3857,9 +4131,25 @@
     renderUnitsGrid();
   });
 
+  // Toggle department expand/collapse
+  function toggleDeptExpand(btn, event) {
+    event.stopPropagation(); // Prevent card click
+    const $expanded = $(btn).siblings('.dept-expanded');
+    $expanded.toggleClass('hidden');
+    // Update button text
+    if ($expanded.hasClass('hidden')) {
+      const count = $expanded.find('.dept-badge').length;
+      $(btn).text('+' + count);
+    } else {
+      $(btn).text('−'); // minus sign to collapse
+    }
+  }
+
   // Make function globally available
   window.filterUnits = filterUnits;
+  window.filterByDepartment = filterByDepartment;
   window.updateUnitStatus = updateUnitStatus;
+  window.toggleDeptExpand = toggleDeptExpand;
 
   // Initialize socket on window load
   window.onload = function() {

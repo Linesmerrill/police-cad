@@ -45,6 +45,88 @@
   <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
   <style type='text/css'> body {position: static !important; top:0px !important;}</style>
   <style>
+    /* Signal 100 Banner - Modern Mobile-Friendly Design */
+    .signal-100-banner {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      right: 0;
+      z-index: 1050;
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      padding: 12px 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4);
+      transition: all 0.3s ease;
+      animation: signal100Glow 1.5s ease-in-out infinite;
+    }
+    .signal-100-banner:hover {
+      background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    }
+    .signal-100-banner.hide {
+      display: none;
+    }
+    .signal-100-banner.show {
+      display: block;
+    }
+    @keyframes signal100Glow {
+      0%, 100% { box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4); }
+      50% { box-shadow: 0 4px 30px rgba(220, 38, 38, 0.7); }
+    }
+    .signal-100-content {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .signal-100-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .signal-100-icon {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .signal-100-icon i {
+      color: #fef08a;
+      font-size: 1.5rem;
+      z-index: 1;
+    }
+    .signal-100-pulse {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: rgba(254, 240, 138, 0.3);
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(0.8); opacity: 0.5; }
+      50% { transform: scale(1.2); opacity: 0; }
+    }
+    .signal-100-title {
+      color: white;
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .signal-100-details {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    /* Toast animation keyframes */
+    @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+
     #persona-table tbody tr {
       cursor: pointer;
     }
@@ -1287,6 +1369,19 @@
   </style>
 </head>
 <body>
+  <!-- Signal 100 Banner (hidden by default) -->
+  <div id="signal-100-banner" class="signal-100-banner hide">
+    <div class="signal-100-content">
+      <div class="signal-100-row">
+        <div class="signal-100-icon">
+          <span class="signal-100-pulse"></span>
+          <i class="fa fa-exclamation-triangle"></i>
+        </div>
+        <span class="signal-100-title">SIGNAL 100 - HOLD ALL TRAFFIC</span>
+      </div>
+      <div id="signal-100-details" class="signal-100-details"></div>
+    </div>
+  </div>
 
   <div class="wrapper d-flex align-items-stretch">
     <nav id="sidebar" style="z-index: 9;">
@@ -2735,6 +2830,8 @@
     // all global router vars declared here to reduce duplication
     var dbUser = <%-JSON.stringify(user)%>;
     var dbVehicles = <%-JSON.stringify(vehicles)%>;
+    var departmentId = <%- JSON.stringify(departmentId || null) %>;
+    var departmentName = <%- JSON.stringify(departmentName || null) %>;
     var POLICE_CAD_API_URL = '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
     var API_URL = POLICE_CAD_API_URL; // For notifications.js compatibility
   </script>

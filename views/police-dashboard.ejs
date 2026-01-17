@@ -2652,6 +2652,7 @@
     var dbUser = <%- JSON.stringify(user) %>;
     const API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 var departmentId = <%- JSON.stringify(departmentId) %>;
+var departmentName = <%- JSON.stringify(departmentName || null) %>;
 var tenCodesCache = [];
 var tenCodeMap = {}; // Map tenCodeID to code (e.g., { "123": "10-8" })
 var filteredTenCodes = [];
@@ -2687,7 +2688,12 @@ const codesPerPage = 10;
 function updateStatus(statusCode) {
   const userId = dbUser._id;
   const communityId = dbUser.user?.lastAccessedCommunity.communityID;
-  const data = { departmentID: departmentId, tenCodeID: statusCode };
+  const data = {
+    departmentID: departmentId,
+    tenCodeID: statusCode,
+    activeDepartmentId: departmentId,
+    activeDepartmentName: departmentName || 'Police'
+  };
   $.ajax({
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/members/${userId}/tenCode`,
     method: 'PUT',
@@ -2711,7 +2717,9 @@ function updateStatus(statusCode) {
           statusCode: statusCode,
           setBy: dbUser.user.username,
           communityId: communityId,
-          updateDuty: false
+          updateDuty: false,
+          activeDepartmentId: departmentId,
+          activeDepartmentName: departmentName || 'Police'
         });
 
         // Check if this is specifically Signal 100 - trigger community-wide alert

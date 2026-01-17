@@ -50,16 +50,45 @@ function hideModal(modalId) {
   }, 150);
 }
 
+// Track Signal 100 user for clearing
+var signal100UserId = null;
+
 // Function to initialize socket after global variables are set
 function initializeSocket() {
   // Initialize socket connection
   socket = io();
-  
-  // Socket event listeners
+  window.dashboardSocket = socket; // Expose globally for other scripts
+
+  const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+
+  // Function to join room and send initial requests
+  function onSocketConnected() {
+    // Join community room for targeted broadcasts
+    if (communityId) {
+      socket.emit('join_community_room', { communityId: communityId });
+    }
+  }
+
+  // Connect handler - wait for connection before joining room
+  if (socket.connected) {
+    onSocketConnected();
+  } else {
+    socket.on('connect', onSocketConnected);
+  }
+
+  // Listen for room join confirmation
+  socket.on('joined_room', function(data) {
+    // Room joined successfully
+  });
+  socket.on('room_error', function(data) {
+    console.error('Room error:', data);
+  });
+
+  // Socket event listeners (legacy)
   socket.on('updated_ems_status', res => {
     location.reload();
   });
-  
+
   socket.on('deleted_ems_vehicle', req => {
     location.reload();
   });
@@ -86,6 +115,7 @@ function initializeSocket() {
           ).fadeTo(1, function () {
             $(this).add();
           })
+        showRealTimeToast('call', 'New call assigned!', 'info');
       }
     }
   });
@@ -95,7 +125,87 @@ function initializeSocket() {
       $('#'+res.callID+'-row').remove().fadeOut(5, function () {
         $(this).remove();
       })
+      showRealTimeToast('call', 'Call cleared', 'success');
     }
+  });
+
+  // ==========================================
+  // REAL-TIME SOCKET LISTENERS (new)
+  // ==========================================
+
+  // Listen for member status updates (when dispatch changes our status)
+  socket.on('member_status_updated', function(data) {
+    // Check if this update is for our community
+    if (data.communityId && data.communityId !== communityId) return;
+
+    // Check if this update is for the current user (e.g., dispatch changed our status)
+    if (data.userID === dbUser._id) {
+      // Update our own status display
+      const statusCode = data.status || 'Unknown';
+      const setBy = data.setBy || 'Unknown';
+
+      // Update the current status text
+      $('#currentStatus').text(statusCode);
+      $('#statusSetBy').text(`Set By: ${setBy}`);
+
+      // Show notification that someone else (dispatch) changed our status
+      if (setBy && setBy !== dbUser.user.username) {
+        showRealTimeToast('status', `${setBy} set your status to: ${statusCode}`, 'info');
+      }
+    }
+  });
+
+  // Listen for Signal 100 activation
+  socket.on('signal_100_button_updated', function(data) {
+    if (data.activeCommunity && data.activeCommunity !== communityId) return;
+
+    // Play alert sound if enabled
+    if (dbUser.panicButtonSound) {
+      var audioElement = document.createElement('audio');
+      audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
+      audioElement.volume = dbUser.user?.alertVolumeLevel / 100 || 0.5;
+      audioElement.play().catch(e => console.log('Audio play failed:', e));
+    }
+
+    // Update the banner with details
+    updateSignal100Banner(data);
+
+    // Show toast notification
+    const activatedBy = data.activatedByCallSign || data.activatedByUsername || 'Unknown';
+    showRealTimeToast('emergency', `Signal 100 Activated by ${activatedBy}!`, 'error');
+  });
+
+  // Listen for Signal 100 cleared
+  socket.on('clear_signal_100_updated', function(activeCommunity) {
+    if (activeCommunity && activeCommunity !== communityId) return;
+
+    $('#signal-100-banner').removeClass('show').addClass('hide');
+    $('#signal-100-details').text('');
+    showRealTimeToast('status', 'Signal 100 Cleared', 'success');
+  });
+
+  // Listen for new BOLOs
+  socket.on('created_bolo', function(data) {
+    // Check community match
+    const boloCommunityId = data.bolo?.activeCommunityID;
+    if (boloCommunityId && boloCommunityId !== communityId) return;
+
+    // Refresh BOLOs list if function exists
+    if (typeof loadActiveBOLOs === 'function') {
+      loadActiveBOLOs();
+    }
+
+    // Show prominent alert
+    showRealTimeToast('bolo', 'New BOLO Alert!', 'warning', data.bolo?.boloType || 'Unknown type');
+  });
+
+  // Listen for deleted BOLOs
+  socket.on('deleted_bolo', function(data) {
+    if (data.communityId && data.communityId !== communityId) return;
+    if (typeof loadActiveBOLOs === 'function') {
+      loadActiveBOLOs();
+    }
+    showRealTimeToast('bolo', 'BOLO Cleared', 'success');
   });
 
   // Load personas on page load
@@ -104,14 +214,123 @@ function initializeSocket() {
     activeCommunityID: dbUser.user.activeCommunity
   }
   // Old socket.io code removed - using new API-based approach instead
-  
+
+}
+
+// Update Signal 100 Banner
+function updateSignal100Banner(data) {
+  // Store the user ID for when we clear the Signal 100
+  signal100UserId = data.aboutUserId || data.userID || null;
+
+  // Determine who activated the signal
+  let activatedByDisplay;
+  if (data.activatedBy === 'Dispatch') {
+    // Dispatcher activated it - show dispatcher's username
+    activatedByDisplay = data.activatedByUsername || 'Dispatch';
+  } else {
+    // Officer activated it themselves
+    activatedByDisplay = data.activatedByCallSign || data.activatedByUsername || data.activatedBy || 'Unknown';
+  }
+
+  // Get the officer the signal is about (may be different from who activated)
+  const aboutUser = data.aboutCallSign || data.aboutUsername || null;
+
+  // Build the message
+  let message;
+  if (data.activatedBy === 'Dispatch' && aboutUser) {
+    // Dispatch activated it for a specific officer
+    message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
+  } else if (aboutUser && aboutUser !== activatedByDisplay) {
+    // Someone activated it for another officer
+    message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
+  } else {
+    // Self-activated or unknown
+    message = `Activated by ${activatedByDisplay}`;
+  }
+
+  // Show banner
+  $('#signal-100-banner').addClass('show').removeClass('hide');
+  $('#signal-100-details').text(message);
+}
+
+// Toast notification system for real-time updates
+function showRealTimeToast(type, message, severity, details) {
+  // Create toast container if it doesn't exist
+  let container = document.getElementById('realtime-toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'realtime-toast-container';
+    container.style.cssText = 'position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;';
+    document.body.appendChild(container);
+  }
+
+  // Create toast using DOM APIs (XSS-safe)
+  const toast = document.createElement('div');
+  const icons = {
+    status: 'fa-broadcast-tower',
+    bolo: 'fa-exclamation-triangle',
+    call: 'fa-phone',
+    emergency: 'fa-exclamation-circle'
+  };
+  const colors = {
+    info: 'rgba(59, 130, 246, 0.95)',
+    warning: 'rgba(245, 158, 11, 0.95)',
+    success: 'rgba(16, 185, 129, 0.95)',
+    error: 'rgba(239, 68, 68, 0.95)'
+  };
+
+  toast.style.cssText = `
+    background: ${colors[severity] || colors.info};
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: slideInRight 0.3s ease;
+    min-width: 250px;
+    max-width: 350px;
+  `;
+
+  // Build content using DOM APIs (safe from XSS)
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'display: flex; align-items: center; gap: 12px;';
+
+  const iconEl = document.createElement('i');
+  iconEl.className = 'fa ' + (icons[type] || 'fa-info-circle');
+  iconEl.style.fontSize = '18px';
+
+  const titleDiv = document.createElement('div');
+  titleDiv.textContent = message || '';
+
+  wrapper.appendChild(iconEl);
+  wrapper.appendChild(titleDiv);
+  toast.appendChild(wrapper);
+
+  if (details) {
+    const detailsDiv = document.createElement('div');
+    detailsDiv.style.cssText = 'font-size: 0.85em; opacity: 0.9; margin-top: 4px; margin-left: 30px;';
+    detailsDiv.textContent = details;
+    toast.appendChild(detailsDiv);
+  }
+
+  container.appendChild(toast);
+
+  // Remove after 5 seconds
+  setTimeout(() => {
+    toast.style.animation = 'slideOutRight 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 5000);
 }
 
 $(function () {
   // Global variables should be available now
 
+  // Initialize socket for real-time updates
+  if (typeof initializeSocket === 'function') {
+    initializeSocket();
+  }
+
   // DataTables removed - using custom table functionality with pagination
-  
+
   // Load EMS personas and vehicles on page load
   if (typeof loadEmsPersonas === 'function') {
     loadEmsPersonas();
@@ -4781,11 +5000,15 @@ function selectStatusCode(statusCodeID) {
 function updateStatus(statusCode) {
   const userId = dbUser._id;
   const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
-  const data = { 
-    departmentID: dbUser.user?.lastAccessedCommunity?.departmentID, 
-    tenCodeID: statusCode 
+  const activeDeptId = typeof departmentId !== 'undefined' ? departmentId : null;
+  const activeDeptName = typeof departmentName !== 'undefined' ? (departmentName || 'Fire/EMS') : 'Fire/EMS';
+  const data = {
+    departmentID: dbUser.user?.lastAccessedCommunity?.departmentID,
+    tenCodeID: statusCode,
+    activeDepartmentId: activeDeptId,
+    activeDepartmentName: activeDeptName
   };
-  
+
   $.ajax({
     url: `${POLICE_CAD_API_URL}/api/v1/community/${communityId}/members/${userId}/tenCode`,
     method: 'PUT',
@@ -4799,6 +5022,20 @@ function updateStatus(statusCode) {
       $('#currentStatus').text(status);
       $('#statusSetBy').text(`Set By: ${dbUser.user.username}`);
       showToast(`Status updated to: ${status}`, 'success');
+
+      // Emit socket event to notify other clients (dispatch, other users)
+      if (window.dashboardSocket && window.dashboardSocket.connected) {
+        window.dashboardSocket.emit('update_status', {
+          userID: userId,
+          status: status,
+          statusCode: statusCode,
+          setBy: dbUser.user.username,
+          communityId: communityId,
+          updateDuty: false,
+          activeDepartmentId: activeDeptId,
+          activeDepartmentName: activeDeptName
+        });
+      }
     },
     error: function(xhr) {
       console.error('Error updating status:', xhr.responseText);

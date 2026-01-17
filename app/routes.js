@@ -6162,6 +6162,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
               communityId: req.communityId,
               username: updatedUser ? updatedUser.user.username : null,
               callSign: updatedUser ? updatedUser.user.callSign : null,
+              activeDepartmentId: req.activeDepartmentId || null,
+              activeDepartmentName: req.activeDepartmentName || null,
               timestamp: new Date().toISOString()
             };
             broadcastToCommunity("member_status_updated", statusUpdateData, req.communityId);
@@ -6199,6 +6201,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
               communityId: req.communityId,
               username: updatedUser ? updatedUser.user.username : null,
               callSign: updatedUser ? updatedUser.user.callSign : null,
+              activeDepartmentId: req.activeDepartmentId || null,
+              activeDepartmentName: req.activeDepartmentName || null,
               timestamp: new Date().toISOString()
             };
             broadcastToCommunity("member_status_updated", statusUpdateData, req.communityId);
