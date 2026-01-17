@@ -8,6 +8,9 @@ var socket;
 var statusCodesCache = [];
 var statusCodeMap = {};
 var filteredStatusCodes = [];
+var currentTenCodeID = null;
+var currentPage = 1;
+var codesPerPage = 20;
 
 // Hide modal utility function (global scope)
 function hideModal(modalId) {
@@ -141,16 +144,22 @@ function initializeSocket() {
     // Check if this update is for the current user (e.g., dispatch changed our status)
     if (data.userID === dbUser._id) {
       // Update our own status display
-      const statusCode = data.status || 'Unknown';
+      const statusDisplay = data.status || 'Unknown';
       const setBy = data.setBy || 'Unknown';
+      const tenCodeID = data.statusCode || null;
 
-      // Update the current status text
-      $('#currentStatus').text(statusCode);
-      $('#statusSetBy').text(`Set By: ${setBy}`);
+      // Update the new status panel UI
+      $('#currentStatusCode').text(statusDisplay);
+
+      // Update currentTenCodeID and highlights if we have the tenCodeID
+      if (tenCodeID) {
+        currentTenCodeID = tenCodeID;
+        updateStatusCardHighlights(tenCodeID);
+      }
 
       // Show notification that someone else (dispatch) changed our status
       if (setBy && setBy !== dbUser.user.username) {
-        showRealTimeToast('status', `${setBy} set your status to: ${statusCode}`, 'info');
+        showRealTimeToast('status', `${setBy} set your status to: ${statusDisplay}`, 'info');
       }
     }
   });
@@ -4488,30 +4497,31 @@ function loadAssignedCalls() {
   const urlParams = new URLSearchParams(window.location.search);
   const encodedDeptId = urlParams.get('d');
   let currentDepartmentId = null;
-  
+
   if (encodedDeptId) {
     try {
       // Decode the department ID using browser-compatible atob
       let base64 = encodedDeptId
         .replace(/-/g, '+')
         .replace(/_/g, '/');
-      
+
       // Add padding back
       while (base64.length % 4) {
         base64 += '=';
       }
-      
+
       // Use atob for browser compatibility instead of Buffer
       const decoded = atob(base64);
       currentDepartmentId = decoded;
-      
-      // Debug logging to see what we're working with
-      console.log('🔍 Decoded department ID:', currentDepartmentId);
-      console.log('🔍 Original encoded ID:', encodedDeptId);
     } catch (e) {
       console.error('Failed to decode department ID:', e);
       currentDepartmentId = null;
     }
+  }
+
+  // Fallback to global departmentId if URL param not available
+  if (!currentDepartmentId && typeof departmentId !== 'undefined' && departmentId) {
+    currentDepartmentId = departmentId;
   }
   
   $.ajax({
@@ -4547,24 +4557,13 @@ function loadAssignedCalls() {
       
       if (data && data.length > 0) {
         // Filter calls to only show those assigned to the current department
-        console.log('🔍 Current department ID:', currentDepartmentId);
-        console.log('🔍 Total calls received:', data.length);
-        
         const filteredCalls = data.filter(call => {
           if (!currentDepartmentId) {
-            console.log('❌ No current department ID, filtering out call:', call._id);
             return false;
           }
-          
           const callDepartments = call?.call?.departments || [];
-          const isMatch = callDepartments.includes(currentDepartmentId);
-          
-          console.log(`🔍 Call ${call._id}: departments [${callDepartments.join(', ')}] matches current department ${currentDepartmentId}: ${isMatch}`);
-          
-          return isMatch;
+          return callDepartments.includes(currentDepartmentId);
         });
-        
-        console.log('🔍 Filtered calls count:', filteredCalls.length);
         
         if (filteredCalls.length > 0) {
           filteredCalls.forEach(call => {
@@ -4906,19 +4905,19 @@ function handleDeleteCallNote(noteId) {
   });
 }
 
-// ===== STATUS CODES FUNCTIONALITY =====
+// ===== STATUS CODES FUNCTIONALITY (Matching Police Dashboard) =====
 
 // Load status codes from API
 function loadStatusCodes() {
   const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
   if (!communityId) {
-    $('#noStatusCodes').text('Please join a community to view status codes.').show();
-    $('#statusCodesContent').hide();
+    $('#noTenCodes').text('Please join a community to view status codes.').show();
+    $('#quickStatusGrid').hide();
     return;
   }
 
   if (statusCodesCache.length > 0) {
-    displayStatusCodes(statusCodesCache);
+    displayTenCodes(statusCodesCache);
     return;
   }
 
@@ -4930,41 +4929,193 @@ function loadStatusCodes() {
     },
     success: function(data) {
       statusCodesCache = data?.community?.tenCodes || [];
-      
+
       // Build statusCodeMap
       statusCodeMap = {};
       statusCodesCache.forEach(tc => {
         statusCodeMap[tc._id] = tc.code;
       });
-      
+
       filteredStatusCodes = statusCodesCache;
-      
+
       if (statusCodesCache.length === 0) {
-        $('#noStatusCodes').show();
-        $('#statusCodesContent').hide();
+        $('#noTenCodes').show();
+        $('#quickStatusGrid').hide();
+        $('#viewAllCodesBtn').hide();
       } else {
-        $('#noStatusCodes').hide();
-        $('#statusCodesContent').show();
-        displayStatusCodes(statusCodesCache);
+        $('#noTenCodes').hide();
+        $('#quickStatusGrid').show();
+        $('#viewAllCodesBtn').show();
+        displayTenCodes(statusCodesCache);
       }
-      
+
       // Load current status after statusCodesCache is populated
       loadCurrentStatus();
     },
     error: function(xhr) {
       console.error('Error loading status codes:', xhr.responseText);
-      $('#noStatusCodes').text('Failed to load status codes: ' + (xhr.responseJSON?.message || 'Unknown error')).show();
-      $('#statusCodesContent').hide();
+      $('#noTenCodes').text('Failed to load status codes: ' + (xhr.responseJSON?.message || 'Unknown error')).show();
+      $('#quickStatusGrid').hide();
     }
   });
 }
 
-// Display status codes in modern card grid
+// Toggle show all codes section
+function toggleAllCodes() {
+  const section = $('#allCodesSection');
+  const btn = $('#viewAllCodesBtn');
+  if (section.is(':visible')) {
+    section.slideUp(200);
+    btn.removeClass('expanded');
+    btn.find('span').text('View All Codes');
+  } else {
+    section.slideDown(200);
+    btn.addClass('expanded');
+    btn.find('span').text('Hide All Codes');
+    displayAllCodes(filteredStatusCodes);
+  }
+}
+
+// Get category for a status code based on common EMS patterns
+function getCodeCategory(code, description) {
+  const descLower = description.toLowerCase();
+  const codeLower = code.toLowerCase();
+
+  // Emergency codes (for red styling)
+  if (descLower.includes('emergency') || descLower.includes('code 3') ||
+      descLower.includes('critical') || descLower.includes('trauma') ||
+      descLower.includes('cardiac arrest') || descLower.includes('signal 100') ||
+      codeLower.includes('signal 100') || code === '10-33' || code === '10-99') {
+    return 'emergency';
+  }
+  // Offline/End of shift
+  if (descLower.includes('off duty') || descLower.includes('end of') ||
+      descLower.includes('out of service') || descLower.includes('off shift') ||
+      code === '10-42' || code === '10-7') {
+    return 'offline';
+  }
+  // Busy - EMS specific
+  if (descLower.includes('busy') || descLower.includes('on scene') ||
+      descLower.includes('transporting') || descLower.includes('en route') ||
+      descLower.includes('at hospital') || descLower.includes('patient') ||
+      code === '10-6' || code === '10-17' || code === '10-19') {
+    return 'busy';
+  }
+  // Available
+  if (descLower.includes('available') || descLower.includes('in service') ||
+      descLower.includes('clear') || descLower.includes('standing by') ||
+      code === '10-8' || code === '10-41') {
+    return 'available';
+  }
+  return '';
+}
+
+// Display quick status grid with most common EMS codes
+function displayQuickStatusCodes(codes) {
+  const quickGrid = $('#quickStatusGrid');
+  quickGrid.empty();
+
+  // Define preferred EMS quick codes in order of priority
+  const preferredCodes = [
+    'signal 100', // Emergency (if available)
+    '10-8',       // In Service / Available
+    '10-7',       // Out of Service
+    '10-6',       // Busy
+    '10-17',      // En Route
+    '10-19',      // Returning to Station
+    '10-23',      // Arrived on Scene
+    '10-97',      // Arrived at Scene
+    '10-98',      // Completed Assignment
+  ];
+
+  // Find matching codes from the available codes
+  const quickCodes = [];
+  preferredCodes.forEach(preferred => {
+    const found = codes.find(c => c.code.toLowerCase() === preferred.toLowerCase());
+    if (found && !quickCodes.includes(found)) {
+      quickCodes.push(found);
+    }
+  });
+
+  // Also look for EMS-specific descriptions if we don't have 8 codes yet
+  const emsKeywords = ['available', 'in service', 'out of service', 'en route',
+                       'on scene', 'transporting', 'at hospital', 'clear'];
+  if (quickCodes.length < 8) {
+    codes.forEach(code => {
+      if (quickCodes.length >= 8) return;
+      const descLower = code.description.toLowerCase();
+      const hasEmsKeyword = emsKeywords.some(kw => descLower.includes(kw));
+      if (hasEmsKeyword && !quickCodes.find(qc => qc._id === code._id)) {
+        quickCodes.push(code);
+      }
+    });
+  }
+
+  // If we still don't have 8, fill with remaining codes
+  if (quickCodes.length < 8) {
+    codes.forEach(code => {
+      if (quickCodes.length >= 8) return;
+      if (!quickCodes.find(qc => qc._id === code._id)) {
+        quickCodes.push(code);
+      }
+    });
+  }
+
+  quickCodes.forEach(code => {
+    const category = getCodeCategory(code.code, code.description);
+    const isActive = currentTenCodeID === code._id ? 'active' : '';
+    quickGrid.append(
+      `<div class="status-card ${category} ${isActive}"
+           data-ten-code-id="${code._id}"
+           onclick="selectTenCode('${code._id}')"
+           title="${code.description}">
+        <div class="status-card-code">${code.code}</div>
+        <div class="status-card-desc">${code.description}</div>
+      </div>`
+    );
+  });
+}
+
+// Display all codes in the expanded section
+function displayAllCodes(codes) {
+  const allGrid = $('#allCodesGrid');
+  allGrid.empty();
+
+  codes.forEach(code => {
+    const category = getCodeCategory(code.code, code.description);
+    const isActive = currentTenCodeID === code._id ? 'active' : '';
+    allGrid.append(
+      `<div class="code-list-item ${category} ${isActive}"
+           data-ten-code-id="${code._id}"
+           onclick="selectTenCode('${code._id}')"
+           title="${code.description}">
+        <span class="code-list-code">${code.code}</span>
+        <span class="code-list-desc">${code.description}</span>
+      </div>`
+    );
+  });
+}
+
+// Function to display 10-codes with the new UI
+function displayTenCodes(codes) {
+  // Display quick status grid
+  displayQuickStatusCodes(codes);
+
+  // If all codes section is visible, update it too
+  if ($('#allCodesSection').is(':visible')) {
+    displayAllCodes(codes);
+  }
+
+  // Also update the old modal grid for backward compatibility
+  displayStatusCodes(codes);
+}
+
+// Display status codes in modal grid (for backward compatibility)
 function displayStatusCodes(codes) {
   const codesToDisplay = filteredStatusCodes.length > 0 ? filteredStatusCodes : codes;
-  
+
   $('#statusCodesGrid').empty();
-  
+
   codesToDisplay.forEach(code => {
     const codeHtml = `
       <div class="heroui-code-card" onclick="selectStatusCode('${code._id}')">
@@ -4976,14 +5127,38 @@ function displayStatusCodes(codes) {
   });
 }
 
-// Handle status code selection
+// Handle status code selection from quick grid
+function selectTenCode(tenCodeID) {
+  if (!tenCodeID) {
+    console.error('Invalid tenCodeID:', tenCodeID);
+    showToast('Invalid status code selected.', 'danger');
+    return;
+  }
+
+  // Verify status code in cache
+  const tenCode = statusCodesCache.find(tc => tc._id === tenCodeID);
+  if (!tenCode) {
+    console.error('Status code not found in cache:', tenCodeID);
+    showToast('Selected status code not found.', 'danger');
+    return;
+  }
+
+  // Immediately update UI for responsive feel
+  currentTenCodeID = tenCodeID;
+  $('#currentStatusCode').text(tenCode.code);
+  updateStatusCardHighlights(tenCodeID);
+
+  updateStatus(tenCodeID);
+}
+
+// Handle status code selection from modal
 function selectStatusCode(statusCodeID) {
   if (!statusCodeID) {
     console.error('Invalid statusCodeID:', statusCodeID);
     showToast('Invalid status code selected.', 'danger');
     return;
   }
-  
+
   // Verify status code in cache
   const statusCode = statusCodesCache.find(sc => sc._id === statusCodeID);
   if (!statusCode) {
@@ -4991,9 +5166,48 @@ function selectStatusCode(statusCodeID) {
     showToast('Selected status code not found.', 'danger');
     return;
   }
-  
+
+  // Update UI
+  currentTenCodeID = statusCodeID;
+  $('#currentStatusCode').text(statusCode.code);
+  updateStatusCardHighlights(statusCodeID);
+
   updateStatus(statusCodeID);
   $('#statusCodesModal').modal('hide');
+}
+
+// Update status card highlights based on current status
+function updateStatusCardHighlights(activeCodeId) {
+  // Remove active class from all cards
+  $('.status-card, .code-list-item').removeClass('active');
+  // Add active class to current status
+  if (activeCodeId) {
+    $(`.status-card[data-ten-code-id="${activeCodeId}"]`).addClass('active');
+    $(`.code-list-item[data-ten-code-id="${activeCodeId}"]`).addClass('active');
+  }
+
+  // Update emergency state on the current status badge
+  updateEmergencyBadgeState(activeCodeId);
+}
+
+// Update the current status badge to show emergency pulsing if needed
+function updateEmergencyBadgeState(activeCodeId) {
+  const $badge = $('#currentStatusBadge');
+
+  if (activeCodeId) {
+    // Find the ten code data
+    const tenCode = statusCodesCache.find(tc => tc._id === activeCodeId);
+    if (tenCode) {
+      const category = getCodeCategory(tenCode.code, tenCode.description);
+      if (category === 'emergency') {
+        $badge.addClass('emergency');
+        return;
+      }
+    }
+  }
+
+  // Remove emergency class if not an emergency status
+  $badge.removeClass('emergency');
 }
 
 // Update user status
@@ -5019,8 +5233,6 @@ function updateStatus(statusCode) {
     },
     success: function(res) {
       const status = statusCodeMap[statusCode] || 'Unknown';
-      $('#currentStatus').text(status);
-      $('#statusSetBy').text(`Set By: ${dbUser.user.username}`);
       showToast(`Status updated to: ${status}`, 'success');
 
       // Emit socket event to notify other clients (dispatch, other users)
@@ -5048,7 +5260,7 @@ function updateStatus(statusCode) {
 function loadCurrentStatus() {
   const userId = dbUser._id;
   const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
-  
+
   $.ajax({
     url: `${POLICE_CAD_API_URL}/api/v1/community/${communityId}`,
     method: 'GET',
@@ -5058,19 +5270,35 @@ function loadCurrentStatus() {
     success: function(data) {
       const tenCodeID = data?.community?.members[userId]?.tenCodeID;
       if (tenCodeID && statusCodeMap[tenCodeID]) {
-        $('#currentStatus').text(statusCodeMap[tenCodeID]);
-        $('#statusSetBy').text(`Set By: ${dbUser.user.username}`);
+        currentTenCodeID = tenCodeID;
+        $('#currentStatusCode').text(statusCodeMap[tenCodeID]);
+        updateStatusCardHighlights(tenCodeID);
       } else {
-        $('#currentStatus').text('None');
-        $('#statusSetBy').text('Set By: None');
+        currentTenCodeID = null;
+        $('#currentStatusCode').text('--');
+        updateStatusCardHighlights(null);
       }
     },
     error: function(xhr) {
       console.error('Error loading current status:', xhr.responseText);
-      $('#currentStatus').text('Unknown');
-      $('#statusSetBy').text('Set By: None');
+      $('#currentStatusCode').text('--');
     }
   });
+}
+
+// Filter 10-codes based on search
+function filterTenCodes(searchTerm) {
+  searchTerm = searchTerm.toLowerCase();
+  filteredStatusCodes = statusCodesCache.filter(code =>
+    code.code.toLowerCase().includes(searchTerm) ||
+    code.description.toLowerCase().includes(searchTerm)
+  );
+  currentPage = 1;
+  // Update both quick grid and all codes section
+  displayTenCodes(filteredStatusCodes);
+  if ($('#allCodesSection').is(':visible')) {
+    displayAllCodes(filteredStatusCodes);
+  }
 }
 
 // Initialize status codes functionality
@@ -5080,20 +5308,26 @@ $(document).ready(function() {
     // Load status codes first, then current status
     loadStatusCodes();
   }
-  
-  // Search functionality
+
+  // Search functionality for the expanded section
+  $('#tenCodeSearch').on('input', function() {
+    const searchTerm = $(this).val();
+    filterTenCodes(searchTerm);
+  });
+
+  // Search functionality for the modal (backward compatibility)
   $('#statusCodeSearch').on('input', function() {
     const searchTerm = $(this).val().toLowerCase();
-    
+
     if (searchTerm === '') {
       filteredStatusCodes = statusCodesCache;
     } else {
-      filteredStatusCodes = statusCodesCache.filter(code => 
-        code.code.toLowerCase().includes(searchTerm) || 
+      filteredStatusCodes = statusCodesCache.filter(code =>
+        code.code.toLowerCase().includes(searchTerm) ||
         code.description.toLowerCase().includes(searchTerm)
       );
     }
-    
+
     displayStatusCodes(filteredStatusCodes);
   });
 });

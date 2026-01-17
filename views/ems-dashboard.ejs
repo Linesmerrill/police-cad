@@ -226,84 +226,308 @@
       --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
 
-    .heroui-status-card {
-      background: linear-gradient(135deg, #23263a 0%, #2d3748 100%);
+    /* Status Panel Styles (matching Police Dashboard) */
+    .status-panel {
+      background: linear-gradient(135deg, #1a1f2e 0%, #2d3548 100%);
       border-radius: 12px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-      border: 1px solid #35385a;
-      position: relative;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      margin: 1.5rem auto;
+      max-width: 800px;
       overflow: hidden;
     }
 
-    .heroui-status-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    }
-
-    .heroui-status-header {
+    .status-panel-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.75rem;
+      padding: 1rem 1.5rem;
+      background: rgba(239, 68, 68, 0.1);
+      border-bottom: 1px solid rgba(239, 68, 68, 0.2);
     }
 
-    .heroui-status-title {
-      color: #f7fafc;
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin: 0;
+    .status-panel-title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: #ef4444;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.05em;
     }
 
-    .heroui-status-badge {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #fff;
-      padding: 0.6rem 1.2rem;
-      border-radius: 16px;
+    .status-panel-title i {
+      font-size: 1.25rem;
+    }
+
+    .current-status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(16, 185, 129, 0.2);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    /* Emergency badge state - pulsing red */
+    .current-status-badge.emergency {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.6);
+      animation: pulse-emergency-badge 1.5s ease-in-out infinite;
+    }
+
+    .current-status-badge.emergency .status-code {
+      color: #ef4444;
+    }
+
+    @keyframes pulse-emergency-badge {
+      0%, 100% {
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+        background: rgba(239, 68, 68, 0.2);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.7), 0 0 40px rgba(239, 68, 68, 0.3);
+        background: rgba(239, 68, 68, 0.35);
+      }
+    }
+
+    .status-label {
+      color: #9ca3af;
+      font-size: 0.85rem;
+    }
+
+    .status-code {
+      color: #10b981;
+      font-weight: 700;
       font-size: 1rem;
-      font-weight: 500;
+    }
+
+    .quick-status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 0.75rem;
+      padding: 1.25rem;
+    }
+
+    .status-card {
+      background: rgba(30, 41, 59, 0.8);
+      border: 2px solid rgba(71, 85, 105, 0.5);
+      border-radius: 10px;
+      padding: 1rem;
       cursor: pointer;
       transition: all 0.2s ease;
-      border: none;
-      box-shadow: 0 3px 8px rgba(102, 126, 234, 0.3);
+      text-align: center;
     }
 
-    .heroui-status-badge:hover {
+    .status-card:hover {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.15);
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
     }
 
-    .heroui-current-status {
-      background: #1e2028;
-      border-radius: 8px;
+    .status-card.active {
+      border-color: #10b981;
+      background: rgba(16, 185, 129, 0.2);
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    }
+
+    .status-card.active .status-card-code {
+      color: #10b981;
+    }
+
+    .status-card-code {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 0.25rem;
+    }
+
+    .status-card-desc {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Category Colors for EMS */
+    .status-card.available { border-left: 4px solid #10b981; }
+    .status-card.busy { border-left: 4px solid #f59e0b; }
+    .status-card.emergency { border-left: 4px solid #ef4444; }
+    .status-card.offline { border-left: 4px solid #6b7280; }
+
+    /* Emergency active state - pulsing red animation */
+    .status-card.emergency.active {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.25);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+      animation: pulse-emergency-card 1.5s ease-in-out infinite;
+    }
+
+    .status-card.emergency.active .status-card-code {
+      color: #ef4444;
+    }
+
+    @keyframes pulse-emergency-card {
+      0%, 100% {
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        background: rgba(239, 68, 68, 0.2);
+      }
+      50% {
+        box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4);
+        background: rgba(239, 68, 68, 0.35);
+      }
+    }
+
+    .view-all-codes-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: calc(100% - 2.5rem);
+      margin: 0 1.25rem 1.25rem;
       padding: 0.75rem;
-      border: 1px solid #35385a;
-      margin-bottom: 0;
-    }
-
-    .heroui-status-label {
-      color: #a0aec0;
-      font-size: 1rem;
-      font-weight: 500;
-      margin-bottom: 0.5rem;
-    }
-
-    .heroui-status-value {
-      color: #f7fafc;
-      font-size: 1.5rem;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px dashed rgba(239, 68, 68, 0.4);
+      border-radius: 8px;
+      color: #ef4444;
       font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    .heroui-status-setby {
-      color: #a0aec0;
-      font-size: 1rem;
-      margin-top: 0.5rem;
+    .view-all-codes-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+    }
+
+    .view-all-codes-btn.expanded i {
+      transform: rotate(180deg);
+    }
+
+    .all-codes-section {
+      border-top: 1px solid rgba(71, 85, 105, 0.3);
+      padding: 1.25rem;
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    .codes-search-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(71, 85, 105, 0.5);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .codes-search-container i {
+      color: #64748b;
+    }
+
+    .codes-search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #f1f5f9;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .codes-search-input::placeholder {
+      color: #64748b;
+    }
+
+    .all-codes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.5rem;
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+
+    .all-codes-grid::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .all-codes-grid::-webkit-scrollbar-track {
+      background: rgba(30, 41, 59, 0.5);
+      border-radius: 3px;
+    }
+
+    .all-codes-grid::-webkit-scrollbar-thumb {
+      background: rgba(239, 68, 68, 0.5);
+      border-radius: 3px;
+    }
+
+    .code-list-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(71, 85, 105, 0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .code-list-item:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+
+    .code-list-item.active {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+
+    .code-list-code {
+      font-weight: 700;
+      color: #ef4444;
+      min-width: 50px;
+    }
+
+    .code-list-item.active .code-list-code {
+      color: #10b981;
+    }
+
+    /* Emergency codes in the list - red styling */
+    .code-list-item.emergency {
+      border-left: 3px solid #ef4444;
+    }
+
+    .code-list-item.emergency .code-list-code {
+      color: #ef4444;
+    }
+
+    .code-list-item.emergency.active {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.5);
+      border-left: 3px solid #ef4444;
+      animation: pulse-emergency-list 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-emergency-list {
+      0%, 100% {
+        background: rgba(239, 68, 68, 0.15);
+      }
+      50% {
+        background: rgba(239, 68, 68, 0.25);
+      }
+    }
+
+    .code-list-desc {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .heroui-codes-grid {
@@ -404,11 +628,14 @@
       .heroui-codes-grid {
         grid-template-columns: 1fr;
       }
-      
-      .heroui-status-header {
+
+      .quick-status-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .status-panel-header {
         flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
+        gap: 0.75rem;
       }
     }
     
@@ -1491,26 +1718,53 @@
       <section style='background-image: url("/static/images/blue-clouds.jpg");'>
         <div class="container">
 
-          <!-- Status Code Component -->
+          <!-- Status Code Component - Modern Status Panel -->
           <div class="col-md-12 col-md-offset-0.75">
-            <div class="heroui-status-card">
-              <div class="heroui-status-header">
-                <h3 class="heroui-status-title">
-                  <i class="fas fa-broadcast-tower" style="margin-right: 0.5rem; color: #667eea;"></i>
-                  Status Codes
-                </h3>
-                <button class="heroui-status-badge" onclick="openStatusCodesModal()">
-                  <i class="fas fa-cog" style="margin-right: 0.5rem;"></i>
-                  Set Status
-                </button>
+            <!-- Modern 10-Codes Status Panel (matching Police Dashboard) -->
+            <div id="statusPanel" class="status-panel">
+              <div class="status-panel-header">
+                <div class="status-panel-title">
+                  <i class="fa fa-ambulance"></i>
+                  <span>EMS STATUS CODES</span>
+                </div>
+                <div id="currentStatusBadge" class="current-status-badge">
+                  <span class="status-label">Current:</span>
+                  <span id="currentStatusCode" class="status-code">--</span>
+                </div>
               </div>
-              
-              <div class="heroui-current-status">
-                <div class="heroui-status-label">Current Status</div>
-                <div id="currentStatus" class="heroui-status-value">Loading...</div>
-                <div id="statusSetBy" class="heroui-status-setby">Set By: Loading...</div>
+
+              <div id="noTenCodes" class="alert alert-info" style="display: none; margin: 1rem;">
+                No status codes available for this community.
+              </div>
+
+              <!-- Quick Status Grid - Most Common Codes -->
+              <div id="quickStatusGrid" class="quick-status-grid">
+                <!-- Populated by JavaScript -->
+              </div>
+
+              <!-- View All Button -->
+              <button id="viewAllCodesBtn" class="view-all-codes-btn" onclick="toggleAllCodes()">
+                <i class="fa fa-chevron-down"></i>
+                <span>View All Codes</span>
+              </button>
+
+              <!-- Expanded All Codes Section -->
+              <div id="allCodesSection" class="all-codes-section" style="display: none;">
+                <div class="codes-search-container">
+                  <i class="fa fa-search"></i>
+                  <input id="tenCodeSearch" type="text" placeholder="Search codes..." class="codes-search-input">
+                </div>
+                <div id="allCodesGrid" class="all-codes-grid">
+                  <!-- Populated by JavaScript -->
+                </div>
+                <nav aria-label="Status Codes Pagination">
+                  <ul id="tenCodesPagination" class="pagination justify-content-center"></ul>
+                </nav>
               </div>
             </div>
+
+            <!-- Status Set By info (hidden, for compatibility) -->
+            <div id="statusSetBy" style="display: none;"></div>
           </div>
 
           <!--Table for Personas  -->
