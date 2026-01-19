@@ -528,45 +528,72 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.post("/admin/reset-user-password", requireAdminSession, function (req, res) {
     var email = req.body.email;
     var tempPassword = req.body.tempPassword || Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-    
+
     if (!email) {
       return res.json({ success: false, error: "Email is required" });
     }
-    
+
     User.findOne({ "user.email": email.toLowerCase() }, function (err, user) {
       if (err) {
         return res.json({ success: false, error: "Error finding user: " + err.message });
       }
-      
+
       if (!user) {
         return res.json({ success: false, error: "User not found with email: " + email });
       }
-      
+
       // Generate hash for the new password
       var hashedPassword = user.generateHash(tempPassword);
-      
+
       // Update the user's password
       user.user.password = hashedPassword;
       user.user.updatedAt = new Date();
-      
-      user.save(function (err) {
+
+      // Must call markModified for nested fields or Mongoose won't save them
+      user.markModified('user.password');
+      user.markModified('user.updatedAt');
+
+      user.save(async function (err) {
         if (err) {
           return res.json({ success: false, error: "Error saving user: " + err.message });
         }
-        
+
+        // Sync password to the API database (send plain password for Go bcrypt compatibility)
+        var apiSynced = false;
+        try {
+          const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+          const apiToken = process.env.POLICE_CAD_API_TOKEN;
+
+          if (apiToken) {
+            await axios.post(`${apiUrl}/api/v1/user/sync-password`, {
+              email: email.toLowerCase(),
+              password: tempPassword  // Send plain password - API will hash with Go bcrypt
+            }, {
+              headers: {
+                'Authorization': `Bearer ${apiToken}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            apiSynced = true;
+          }
+        } catch (syncError) {
+          console.error('[ADMIN RESET] Failed to sync to API:', syncError.response?.data || syncError.message);
+        }
+
         // Verify the password was saved correctly
         User.findOne({ "user.email": email.toLowerCase() }, function (err, verifyUser) {
           var passwordMatches = false;
           if (!err && verifyUser) {
             passwordMatches = verifyUser.verifyPassword(tempPassword);
           }
-        
-          return res.json({ 
-            success: true, 
+
+          return res.json({
+            success: true,
             email: email,
             tempPassword: tempPassword,
             passwordVerified: passwordMatches,
-            message: "Password reset successful!" + (passwordMatches ? " Password verification passed." : " WARNING: Password verification failed!")
+            apiSynced: apiSynced,
+            message: "Password reset successful!" + (passwordMatches ? " Password verification passed." : " WARNING: Password verification failed!") + (apiSynced ? " API synced." : " WARNING: API sync failed!")
           });
         });
       });
@@ -646,12 +673,39 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // Update the user's password
       user.user.password = hashedPassword;
       user.user.updatedAt = new Date();
-      
-      user.save(function (err) {
+
+      // Must call markModified for nested fields or Mongoose won't save them
+      user.markModified('user.password');
+      user.markModified('user.updatedAt');
+
+      user.save(async function (err) {
         if (err) {
           return res.json({ success: false, error: "Error saving user: " + err.message });
         }
-        
+
+        // Sync password to the API database (send plain password for Go bcrypt compatibility)
+        var apiSynced = false;
+        try {
+          const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+          const apiToken = process.env.POLICE_CAD_API_TOKEN;
+
+          if (apiToken) {
+            await axios.post(`${apiUrl}/api/v1/user/sync-password`, {
+              email: email.toLowerCase(),
+              password: tempPassword  // Send plain password - API will hash with Go bcrypt
+            }, {
+              headers: {
+                'Authorization': `Bearer ${apiToken}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            apiSynced = true;
+            console.log("[EMERGENCY RESET] Password synced to API");
+          }
+        } catch (syncError) {
+          console.error('[EMERGENCY RESET] Failed to sync to API:', syncError.response?.data || syncError.message);
+        }
+
         // Verify the password was saved correctly
         User.findOne({ "user.email": email.toLowerCase() }, function (err, verifyUser) {
           var passwordMatches = false;
@@ -661,14 +715,15 @@ module.exports = function (app, passport, server, nextApp, handle) {
             passwordMatches = verifyUser.verifyPassword(tempPassword);
             console.log("Password verification:", passwordMatches);
           }
-        
-          return res.json({ 
-            success: true, 
+
+          return res.json({
+            success: true,
             email: email,
             tempPassword: tempPassword,
             passwordVerified: passwordMatches,
+            apiSynced: apiSynced,
             storedHashPreview: storedHash ? storedHash.substring(0, 30) + "..." : null,
-            message: passwordMatches ? "Password reset successful and verified!" : "Password reset but verification failed!"
+            message: (passwordMatches ? "Password reset successful and verified!" : "Password reset but verification failed!") + (apiSynced ? " API synced." : " WARNING: API sync failed!")
           });
         });
       });
@@ -3693,15 +3748,43 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 return res.redirect("back");
               }
               var user = users;
-              user.user.password = user.generateHash(req.body.password);
+              var newHash = user.generateHash(req.body.password);
+              user.user.password = newHash;
               user.user.resetPasswordToken = undefined;
               user.user.resetPasswordExpires = undefined;
 
-              user.save(function (err) {
+              // Must call markModified for nested fields or Mongoose won't save them
+              user.markModified('user.password');
+              user.markModified('user.resetPasswordToken');
+              user.markModified('user.resetPasswordExpires');
+
+              user.save(async function (err) {
                 if (err) {
                   return done(err);
                 }
-                
+
+                // Sync password to the API database (where login authenticates)
+                // Send plain password so API can hash with Go's bcrypt (ensures compatibility)
+                try {
+                  const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+                  const apiToken = process.env.POLICE_CAD_API_TOKEN;
+
+                  if (apiToken) {
+                    await axios.post(`${apiUrl}/api/v1/user/sync-password`, {
+                      email: user.user.email.toLowerCase(),
+                      password: req.body.password  // Send plain password - API will hash with Go bcrypt
+                    }, {
+                      headers: {
+                        'Authorization': `Bearer ${apiToken}`,
+                        'Content-Type': 'application/json'
+                      }
+                    });
+                  }
+                } catch (syncError) {
+                  // Log error but don't fail the reset - local DB was updated
+                  console.error('Failed to sync password to API:', syncError.response?.data || syncError.message);
+                }
+
                 // Clear the reset token from session since it's no longer needed
                 if (req.session.resetToken) {
                   delete req.session.resetToken;
@@ -3710,7 +3793,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                     // Ignore errors - token is cleared from memory anyway
                   });
                 }
-                
+
                 done(null, user);
               });
             }
