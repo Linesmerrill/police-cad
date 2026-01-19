@@ -101,8 +101,6 @@ export default function InviteCodePage() {
         setCodeError(true);
       }
     } catch (err) {
-      console.error('Error joining community:', err);
-
       // Check if JSON parsing failed (likely HTML response from auth redirect)
       if (err instanceof SyntaxError) {
         window.location.href = `/login-civ?redirect=${encodeURIComponent('/invite-code')}`;
