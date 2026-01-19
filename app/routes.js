@@ -553,24 +553,47 @@ module.exports = function (app, passport, server, nextApp, handle) {
       user.markModified('user.password');
       user.markModified('user.updatedAt');
 
-      user.save(function (err) {
+      user.save(async function (err) {
         if (err) {
           return res.json({ success: false, error: "Error saving user: " + err.message });
         }
-        
+
+        // Sync password to the API database
+        var apiSynced = false;
+        try {
+          const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+          const apiToken = process.env.POLICE_CAD_API_TOKEN;
+
+          if (apiToken) {
+            await axios.post(`${apiUrl}/api/v1/user/sync-password`, {
+              email: email.toLowerCase(),
+              passwordHash: hashedPassword
+            }, {
+              headers: {
+                'Authorization': `Bearer ${apiToken}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            apiSynced = true;
+          }
+        } catch (syncError) {
+          console.error('[ADMIN RESET] Failed to sync to API:', syncError.response?.data || syncError.message);
+        }
+
         // Verify the password was saved correctly
         User.findOne({ "user.email": email.toLowerCase() }, function (err, verifyUser) {
           var passwordMatches = false;
           if (!err && verifyUser) {
             passwordMatches = verifyUser.verifyPassword(tempPassword);
           }
-        
-          return res.json({ 
-            success: true, 
+
+          return res.json({
+            success: true,
             email: email,
             tempPassword: tempPassword,
             passwordVerified: passwordMatches,
-            message: "Password reset successful!" + (passwordMatches ? " Password verification passed." : " WARNING: Password verification failed!")
+            apiSynced: apiSynced,
+            message: "Password reset successful!" + (passwordMatches ? " Password verification passed." : " WARNING: Password verification failed!") + (apiSynced ? " API synced." : " WARNING: API sync failed!")
           });
         });
       });
@@ -655,9 +678,32 @@ module.exports = function (app, passport, server, nextApp, handle) {
       user.markModified('user.password');
       user.markModified('user.updatedAt');
 
-      user.save(function (err) {
+      user.save(async function (err) {
         if (err) {
           return res.json({ success: false, error: "Error saving user: " + err.message });
+        }
+
+        // Sync password to the API database
+        var apiSynced = false;
+        try {
+          const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+          const apiToken = process.env.POLICE_CAD_API_TOKEN;
+
+          if (apiToken) {
+            await axios.post(`${apiUrl}/api/v1/user/sync-password`, {
+              email: email.toLowerCase(),
+              passwordHash: hashedPassword
+            }, {
+              headers: {
+                'Authorization': `Bearer ${apiToken}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            apiSynced = true;
+            console.log("[EMERGENCY RESET] Password synced to API");
+          }
+        } catch (syncError) {
+          console.error('[EMERGENCY RESET] Failed to sync to API:', syncError.response?.data || syncError.message);
         }
 
         // Verify the password was saved correctly
@@ -675,8 +721,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
             email: email,
             tempPassword: tempPassword,
             passwordVerified: passwordMatches,
+            apiSynced: apiSynced,
             storedHashPreview: storedHash ? storedHash.substring(0, 30) + "..." : null,
-            message: passwordMatches ? "Password reset successful and verified!" : "Password reset but verification failed!"
+            message: (passwordMatches ? "Password reset successful and verified!" : "Password reset but verification failed!") + (apiSynced ? " API synced." : " WARNING: API sync failed!")
           });
         });
       });
@@ -3716,13 +3763,38 @@ module.exports = function (app, passport, server, nextApp, handle) {
               user.markModified('user.resetPasswordToken');
               user.markModified('user.resetPasswordExpires');
 
-              user.save(function (err) {
+              user.save(async function (err) {
                 if (err) {
                   console.error('[PASSWORD RESET] Error saving user:', err);
                   return done(err);
                 }
 
-                console.log('[PASSWORD RESET] User saved successfully');
+                console.log('[PASSWORD RESET] User saved successfully to local database');
+
+                // Sync password to the API database (where login authenticates)
+                try {
+                  const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
+                  const apiToken = process.env.POLICE_CAD_API_TOKEN;
+
+                  if (apiToken) {
+                    console.log('[PASSWORD RESET] Syncing password to API database...');
+                    const syncResponse = await axios.post(`${apiUrl}/api/v1/user/sync-password`, {
+                      email: user.user.email.toLowerCase(),
+                      passwordHash: newHash
+                    }, {
+                      headers: {
+                        'Authorization': `Bearer ${apiToken}`,
+                        'Content-Type': 'application/json'
+                      }
+                    });
+                    console.log('[PASSWORD RESET] API sync response:', syncResponse.data);
+                  } else {
+                    console.warn('[PASSWORD RESET] POLICE_CAD_API_TOKEN not set, skipping API sync');
+                  }
+                } catch (syncError) {
+                  // Log error but don't fail the reset - local DB was updated
+                  console.error('[PASSWORD RESET] Failed to sync to API:', syncError.response?.data || syncError.message);
+                }
 
                 // Verify the password was actually saved
                 User.findOne({ "user.email": user.user.email }, function(verifyErr, verifyUser) {
