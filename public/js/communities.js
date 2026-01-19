@@ -1593,7 +1593,7 @@ const PageNavigation = () => {
           <span className="text-base text-gray-400">Jump to section</span>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <button
             onClick={() => scrollToSection('elite-communities')}
             className="flex flex-col items-center p-3 bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
@@ -1601,7 +1601,7 @@ const PageNavigation = () => {
             <i className="fa fa-crown text-2xl mb-1"></i>
             <span className="text-base font-medium">Elite Communities</span>
           </button>
-          
+
           <button
             onClick={() => scrollToSection('your-communities')}
             className="flex flex-col items-center p-3 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
@@ -1609,7 +1609,7 @@ const PageNavigation = () => {
             <i className="fa fa-users text-2xl mb-1"></i>
             <span className="text-base font-medium">Your Communities</span>
           </button>
-          
+
           <button
             onClick={() => scrollToSection('discover-communities')}
             className="flex flex-col items-center p-3 bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
@@ -1617,7 +1617,7 @@ const PageNavigation = () => {
             <i className="fa fa-compass text-2xl mb-1"></i>
             <span className="text-base font-medium">Discover Communities</span>
           </button>
-          
+
           <button
             onClick={() => scrollToSection('browse-communities')}
             className="flex flex-col items-center p-3 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
@@ -1625,6 +1625,14 @@ const PageNavigation = () => {
             <i className="fa fa-globe text-2xl mb-1"></i>
             <span className="text-base font-medium">Browse Communities</span>
           </button>
+
+          <a
+            href="/invite-code"
+            className="flex flex-col items-center p-3 bg-gradient-to-br from-pink-600 to-pink-700 hover:from-pink-700 hover:to-pink-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
+          >
+            <i className="fa fa-ticket text-2xl mb-1"></i>
+            <span className="text-base font-medium">Enter Invite Code</span>
+          </a>
         </div>
       </div>
     </div>

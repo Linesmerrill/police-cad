@@ -545,17 +545,20 @@ $(document).ready(function () {
       arrestReports.length > 0
         ? arrestReports
             .map(
-              (report) => `
-          <div class="details-item">
-            <div class="d-flex justify-content-between">
+              (report, index) => `
+          <div class="details-item arrest-report-item" data-report-index="${index}" style="cursor: pointer;">
+            <div class="d-flex justify-content-between align-items-center">
               <span>Case #${report.arrestReport.reportNumber || "N/A"}</span>
-              <span>${report.arrestReport.arrestDate || "N/A"}</span>
+              <div class="d-flex align-items-center">
+                <span class="mr-2">${report.arrestReport.arrestDate || "N/A"}</span>
+                <i class="fa fa-chevron-right text-gray"></i>
+              </div>
             </div>
             <p class="text-gray mb-0">Charges: ${
               report.arrestReport.charges || "N/A"
             }</p>
-            <p class="text-gray mb-0">Location: ${
-              report.arrestReport.arrestLocation || "N/A"
+            <p class="text-gray mb-0">Officer: ${
+              report.arrestReport.officer?.name || "N/A"
             }</p>
           </div>
         `
@@ -575,6 +578,12 @@ $(document).ready(function () {
     }
   `;
       $("#arrestReports").html(arrestReportsHtml);
+
+      // Attach click handlers to arrest report items
+      $(".arrest-report-item").on("click", function() {
+        const reportIndex = $(this).data("report-index");
+        showArrestReportDetail(arrestReports[reportIndex]);
+      });
 
       // Criminal History
       let criminalHistoryHtml = "";
@@ -1865,6 +1874,93 @@ $(document).ready(function () {
     });
   }
 
+  // Show arrest report detail modal
+  function showArrestReportDetail(report) {
+    if (!report || !report.arrestReport) {
+      console.error("Invalid arrest report data");
+      return;
+    }
+
+    const ar = report.arrestReport;
+
+    // Format date and time helper
+    const formatDateTime = (date, time) => {
+      if (!date) return "N/A";
+      return time ? `${date} at ${time}` : date;
+    };
+
+    // Update modal title
+    $("#arrestReportDetailTitle").text(`Report #${ar.reportNumber || "N/A"}`);
+
+    // Arrest Details
+    $("#arrestDateTime").text(formatDateTime(ar.arrestDate, ar.arrestTime));
+    $("#arrestLocation").text(ar.arrestLocation || "N/A");
+
+    // Incident Details
+    $("#incidentDateTime").text(formatDateTime(ar.incidentDate, ar.incidentTime));
+    $("#incidentLocation").text(ar.incidentLocation || "N/A");
+
+    // Arrestee Information
+    const arrestee = ar.arrestee || {};
+    $("#arresteeName").text(arrestee.name || "N/A");
+    $("#arresteeDob").text(arrestee.dob || "N/A");
+    $("#arresteeAddress").text(arrestee.address || "N/A");
+    $("#arresteeHeight").text(arrestee.height || "N/A");
+    $("#arresteeWeight").text(arrestee.weight || "N/A");
+    $("#arresteeEyeColor").text(arrestee.eyeColor || "N/A");
+    $("#arresteeHairColor").text(arrestee.hairColor || "N/A");
+    $("#arresteePhone").text(arrestee.phone || "N/A");
+
+    // Officer Information
+    const officer = ar.officer || {};
+    $("#officerName").text(officer.name || "N/A");
+    $("#officerBadge").text(officer.badgeNumber || "N/A");
+
+    // Charges
+    let chargesHtml = "";
+    if (ar.chargesList && ar.chargesList.length > 0) {
+      chargesHtml = ar.chargesList.map(charge => `
+        <div class="charge-item">
+          <div class="charge-name">${charge.name || "Unknown"}</div>
+          ${charge.category ? `<div class="charge-category">Category: ${charge.category}</div>` : ""}
+          ${charge.amount > 0 ? `<div class="charge-fine">Fine: $${charge.amount}</div>` : ""}
+        </div>
+      `).join("");
+    } else if (ar.charges) {
+      chargesHtml = `<div class="charge-item"><div class="charge-name">${ar.charges}</div></div>`;
+    } else {
+      chargesHtml = '<p class="text-gray">No charges listed.</p>';
+    }
+    $("#chargesContainer").html(chargesHtml);
+
+    // Narrative
+    $("#arrestNarrative").text(ar.narrative || "N/A");
+
+    // Witnesses
+    if (ar.witnesses) {
+      $("#witnessesSection").show();
+      $("#arrestWitnesses").text(ar.witnesses);
+    } else {
+      $("#witnessesSection").hide();
+    }
+
+    // Force Used
+    const forceUsed = ar.forceUsed;
+    if (forceUsed) {
+      $("#forceUsedBadge").html('<span class="force-badge-yes">Yes</span>');
+    } else {
+      $("#forceUsedBadge").html('<span class="force-badge-no">No</span>');
+    }
+
+    // Show the modal
+    $("#arrestReportDetailModal").modal("show");
+  }
+
+  // Close arrest report detail modal
+  function closeArrestReportDetail() {
+    $("#arrestReportDetailModal").modal("hide");
+  }
+
   // Expose showDetailsModal and goBack globally
   window.showDetailsModal = showDetailsModal;
   window.fetchArrestReports = fetchArrestReports;
@@ -1880,4 +1976,6 @@ $(document).ready(function () {
   window.loadLicenses = loadLicenses;
   window.selectLicense = selectLicense;
   window.handleLicenseAction = handleLicenseAction;
+  window.showArrestReportDetail = showArrestReportDetail;
+  window.closeArrestReportDetail = closeArrestReportDetail;
 });
