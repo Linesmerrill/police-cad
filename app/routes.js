@@ -558,7 +558,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           return res.json({ success: false, error: "Error saving user: " + err.message });
         }
 
-        // Sync password to the API database
+        // Sync password to the API database (send plain password for Go bcrypt compatibility)
         var apiSynced = false;
         try {
           const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
@@ -567,7 +567,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           if (apiToken) {
             await axios.post(`${apiUrl}/api/v1/user/sync-password`, {
               email: email.toLowerCase(),
-              passwordHash: hashedPassword
+              password: tempPassword  // Send plain password - API will hash with Go bcrypt
             }, {
               headers: {
                 'Authorization': `Bearer ${apiToken}`,
@@ -683,7 +683,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           return res.json({ success: false, error: "Error saving user: " + err.message });
         }
 
-        // Sync password to the API database
+        // Sync password to the API database (send plain password for Go bcrypt compatibility)
         var apiSynced = false;
         try {
           const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
@@ -692,7 +692,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           if (apiToken) {
             await axios.post(`${apiUrl}/api/v1/user/sync-password`, {
               email: email.toLowerCase(),
-              passwordHash: hashedPassword
+              password: tempPassword  // Send plain password - API will hash with Go bcrypt
             }, {
               headers: {
                 'Authorization': `Bearer ${apiToken}`,
@@ -3772,6 +3772,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 console.log('[PASSWORD RESET] User saved successfully to local database');
 
                 // Sync password to the API database (where login authenticates)
+                // Send plain password so API can hash with Go's bcrypt (ensures compatibility)
                 try {
                   const apiUrl = process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
                   const apiToken = process.env.POLICE_CAD_API_TOKEN;
@@ -3780,7 +3781,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                     console.log('[PASSWORD RESET] Syncing password to API database...');
                     const syncResponse = await axios.post(`${apiUrl}/api/v1/user/sync-password`, {
                       email: user.user.email.toLowerCase(),
-                      passwordHash: newHash
+                      password: req.body.password  // Send plain password - API will hash with Go bcrypt
                     }, {
                       headers: {
                         'Authorization': `Bearer ${apiToken}`,
