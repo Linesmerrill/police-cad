@@ -528,27 +528,31 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.post("/admin/reset-user-password", requireAdminSession, function (req, res) {
     var email = req.body.email;
     var tempPassword = req.body.tempPassword || Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-    
+
     if (!email) {
       return res.json({ success: false, error: "Email is required" });
     }
-    
+
     User.findOne({ "user.email": email.toLowerCase() }, function (err, user) {
       if (err) {
         return res.json({ success: false, error: "Error finding user: " + err.message });
       }
-      
+
       if (!user) {
         return res.json({ success: false, error: "User not found with email: " + email });
       }
-      
+
       // Generate hash for the new password
       var hashedPassword = user.generateHash(tempPassword);
-      
+
       // Update the user's password
       user.user.password = hashedPassword;
       user.user.updatedAt = new Date();
-      
+
+      // Must call markModified for nested fields or Mongoose won't save them
+      user.markModified('user.password');
+      user.markModified('user.updatedAt');
+
       user.save(function (err) {
         if (err) {
           return res.json({ success: false, error: "Error saving user: " + err.message });
@@ -646,12 +650,16 @@ module.exports = function (app, passport, server, nextApp, handle) {
       // Update the user's password
       user.user.password = hashedPassword;
       user.user.updatedAt = new Date();
-      
+
+      // Must call markModified for nested fields or Mongoose won't save them
+      user.markModified('user.password');
+      user.markModified('user.updatedAt');
+
       user.save(function (err) {
         if (err) {
           return res.json({ success: false, error: "Error saving user: " + err.message });
         }
-        
+
         // Verify the password was saved correctly
         User.findOne({ "user.email": email.toLowerCase() }, function (err, verifyUser) {
           var passwordMatches = false;
@@ -661,9 +669,9 @@ module.exports = function (app, passport, server, nextApp, handle) {
             passwordMatches = verifyUser.verifyPassword(tempPassword);
             console.log("Password verification:", passwordMatches);
           }
-        
-          return res.json({ 
-            success: true, 
+
+          return res.json({
+            success: true,
             email: email,
             tempPassword: tempPassword,
             passwordVerified: passwordMatches,
@@ -3693,15 +3701,40 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 return res.redirect("back");
               }
               var user = users;
-              user.user.password = user.generateHash(req.body.password);
+              console.log('[PASSWORD RESET] Resetting password for user:', user.user.email);
+              console.log('[PASSWORD RESET] Old password hash prefix:', user.user.password ? user.user.password.substring(0, 20) : 'NULL');
+
+              var newHash = user.generateHash(req.body.password);
+              console.log('[PASSWORD RESET] New password hash prefix:', newHash.substring(0, 20));
+
+              user.user.password = newHash;
               user.user.resetPasswordToken = undefined;
               user.user.resetPasswordExpires = undefined;
 
+              // Must call markModified for nested fields or Mongoose won't save them
+              user.markModified('user.password');
+              user.markModified('user.resetPasswordToken');
+              user.markModified('user.resetPasswordExpires');
+
               user.save(function (err) {
                 if (err) {
+                  console.error('[PASSWORD RESET] Error saving user:', err);
                   return done(err);
                 }
-                
+
+                console.log('[PASSWORD RESET] User saved successfully');
+
+                // Verify the password was actually saved
+                User.findOne({ "user.email": user.user.email }, function(verifyErr, verifyUser) {
+                  if (verifyErr || !verifyUser) {
+                    console.error('[PASSWORD RESET] Could not verify save:', verifyErr);
+                  } else {
+                    var passwordMatches = verifyUser.verifyPassword(req.body.password);
+                    console.log('[PASSWORD RESET] Verification - password matches:', passwordMatches);
+                    console.log('[PASSWORD RESET] Stored hash prefix:', verifyUser.user.password ? verifyUser.user.password.substring(0, 20) : 'NULL');
+                  }
+                });
+
                 // Clear the reset token from session since it's no longer needed
                 if (req.session.resetToken) {
                   delete req.session.resetToken;
@@ -3710,7 +3743,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                     // Ignore errors - token is cleared from memory anyway
                   });
                 }
-                
+
                 done(null, user);
               });
             }
