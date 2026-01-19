@@ -51,6 +51,14 @@ export default function InviteCodePage() {
         return;
       }
 
+      // Check if response is HTML (user not logged in - server returned login page)
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        // Server returned HTML, likely a login page redirect
+        window.location.href = `/login-civ?redirect=${encodeURIComponent('/invite-code')}`;
+        return;
+      }
+
       const data = await response.json();
 
       if (response.ok && data.success) {
@@ -94,6 +102,12 @@ export default function InviteCodePage() {
       }
     } catch (err) {
       console.error('Error joining community:', err);
+
+      // Check if JSON parsing failed (likely HTML response from auth redirect)
+      if (err instanceof SyntaxError) {
+        window.location.href = `/login-civ?redirect=${encodeURIComponent('/invite-code')}`;
+        return;
+      }
 
       // Check if user is not logged in (redirected to login page)
       if (err instanceof Error && err.message.includes('fetch')) {
