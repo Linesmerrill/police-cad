@@ -3748,12 +3748,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                 return res.redirect("back");
               }
               var user = users;
-              console.log('[PASSWORD RESET] Resetting password for user:', user.user.email);
-              console.log('[PASSWORD RESET] Old password hash prefix:', user.user.password ? user.user.password.substring(0, 20) : 'NULL');
-
               var newHash = user.generateHash(req.body.password);
-              console.log('[PASSWORD RESET] New password hash prefix:', newHash.substring(0, 20));
-
               user.user.password = newHash;
               user.user.resetPasswordToken = undefined;
               user.user.resetPasswordExpires = undefined;
@@ -3765,11 +3760,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
 
               user.save(async function (err) {
                 if (err) {
-                  console.error('[PASSWORD RESET] Error saving user:', err);
                   return done(err);
                 }
-
-                console.log('[PASSWORD RESET] User saved successfully to local database');
 
                 // Sync password to the API database (where login authenticates)
                 // Send plain password so API can hash with Go's bcrypt (ensures compatibility)
@@ -3778,8 +3770,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
                   const apiToken = process.env.POLICE_CAD_API_TOKEN;
 
                   if (apiToken) {
-                    console.log('[PASSWORD RESET] Syncing password to API database...');
-                    const syncResponse = await axios.post(`${apiUrl}/api/v1/user/sync-password`, {
+                    await axios.post(`${apiUrl}/api/v1/user/sync-password`, {
                       email: user.user.email.toLowerCase(),
                       password: req.body.password  // Send plain password - API will hash with Go bcrypt
                     }, {
@@ -3788,25 +3779,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
                         'Content-Type': 'application/json'
                       }
                     });
-                    console.log('[PASSWORD RESET] API sync response:', syncResponse.data);
-                  } else {
-                    console.warn('[PASSWORD RESET] POLICE_CAD_API_TOKEN not set, skipping API sync');
                   }
                 } catch (syncError) {
                   // Log error but don't fail the reset - local DB was updated
-                  console.error('[PASSWORD RESET] Failed to sync to API:', syncError.response?.data || syncError.message);
+                  console.error('Failed to sync password to API:', syncError.response?.data || syncError.message);
                 }
-
-                // Verify the password was actually saved
-                User.findOne({ "user.email": user.user.email }, function(verifyErr, verifyUser) {
-                  if (verifyErr || !verifyUser) {
-                    console.error('[PASSWORD RESET] Could not verify save:', verifyErr);
-                  } else {
-                    var passwordMatches = verifyUser.verifyPassword(req.body.password);
-                    console.log('[PASSWORD RESET] Verification - password matches:', passwordMatches);
-                    console.log('[PASSWORD RESET] Stored hash prefix:', verifyUser.user.password ? verifyUser.user.password.substring(0, 20) : 'NULL');
-                  }
-                });
 
                 // Clear the reset token from session since it's no longer needed
                 if (req.session.resetToken) {
