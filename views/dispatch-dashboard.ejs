@@ -37,19 +37,211 @@
   <script src="/static/js/dispatch-dashboard.js"></script>
   <script src="/static/js/department-backgrounds.js"></script>
   <script src="/static/js/bootstrap.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.0/jquery.cookie.min.js"></script>
   <script type="text/javascript" src="static/js/tail.select.min.js"></script>
   <!-- To hide google translate header bar on each page -->
   <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
   <style type='text/css'> body {position: static !important; top:0px !important;}</style>
   <style>
+    /* Signal 100 Banner - Modern Mobile-Friendly Design */
+    .signal-100-banner {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      right: 0;
+      z-index: 1050;
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      padding: 12px 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4);
+      transition: all 0.3s ease;
+      animation: signal100Glow 1.5s ease-in-out infinite;
+    }
+    .signal-100-banner:hover {
+      background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    }
+    .signal-100-banner.hide {
+      display: none;
+    }
+    .signal-100-banner.show {
+      display: block;
+    }
+    @keyframes signal100Glow {
+      0%, 100% { box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4); }
+      50% { box-shadow: 0 4px 30px rgba(220, 38, 38, 0.7); }
+    }
+    .signal-100-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .signal-100-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .signal-100-icon {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+    }
+    .signal-100-icon i {
+      font-size: 24px;
+      color: #fff;
+      z-index: 2;
+      position: relative;
+    }
+    .signal-100-pulse {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      animation: signal100Pulse 1s ease-out infinite;
+    }
+    @keyframes signal100Pulse {
+      0% { transform: scale(0.8); opacity: 1; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+    .signal-100-text {
+      text-align: center;
+      flex: 1;
+      min-width: 0;
+    }
+    .signal-100-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .signal-100-details {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.9);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .signal-100-tap {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      flex-shrink: 0;
+      padding: 4px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+    }
+    @media (max-width: 480px) {
+      .signal-100-banner {
+        padding: 10px 12px;
+      }
+      .signal-100-content {
+        gap: 8px;
+      }
+      .signal-100-icon {
+        width: 28px;
+        height: 28px;
+      }
+      .signal-100-icon i {
+        font-size: 18px;
+      }
+      .signal-100-title {
+        font-size: 15px;
+        letter-spacing: 1px;
+      }
+      .signal-100-details {
+        font-size: 11px;
+      }
+      .signal-100-tap {
+        font-size: 9px;
+        padding: 3px 6px;
+      }
+    }
+
+    /* Clear Signal 100 Modal */
+    .clear-signal-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 99999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .clear-signal-modal-overlay.show {
+      display: flex;
+    }
+    .clear-signal-modal {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      animation: modalSlideIn 0.2s ease-out;
+    }
+    @keyframes modalSlideIn {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .clear-signal-modal h3 {
+      color: #fff;
+      margin: 0 0 8px 0;
+      font-size: 20px;
+    }
+    .clear-signal-modal p {
+      color: #94a3b8;
+      margin: 0 0 20px 0;
+      font-size: 14px;
+    }
+    .clear-signal-modal-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    .clear-signal-modal-buttons button {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .clear-signal-btn-cancel {
+      background: #374151;
+      color: #fff;
+    }
+    .clear-signal-btn-cancel:hover {
+      background: #4b5563;
+    }
+    .clear-signal-btn-confirm {
+      background: #dc2626;
+      color: #fff;
+    }
+    .clear-signal-btn-confirm:hover {
+      background: #ef4444;
+    }
+
     #titleCallDetail {
       background-color: transparent !important;
       color: white !important;
-      
+
     }
     #detailsCallDetail {
       background-color: transparent !important;
@@ -299,17 +491,21 @@
             <h1 class="cursive"><a href="/dispatch-dashboard"><i class="fa-solid fa-headset"></i> Dispatch Operations</a> • <a href="/community-dashboard"><span id="community-name"></span></a></h1>
           </div>
         </div>
-        <a data-toggle="modal" href="#signal100DetailModal" style="z-index: 8;width: 100%;">
-          <div id="signal-100-banner" class="panel panel-danger hide">
-            <div class="panel-heading">
-              <span class="panel-title">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
-              <button type="button" class="close" aria-label="Close"
-                style="position: absolute; margin-top: 5px; margin-left: 1em;">
-                <i class="fa fa-times"></i> Clear
-              </button>
+        <div id="signal-100-banner" class="signal-100-banner hide" onclick="showClearSignal100Modal()">
+          <div class="signal-100-content">
+            <div class="signal-100-row">
+              <div class="signal-100-icon">
+                <span class="signal-100-pulse"></span>
+                <i class="fa fa-exclamation-triangle"></i>
+              </div>
+              <div class="signal-100-text">
+                <div class="signal-100-title">SIGNAL 100</div>
+                <div id="signal-100-details" class="signal-100-details"></div>
+              </div>
             </div>
+            <div class="signal-100-tap">Tap to clear</div>
           </div>
-        </a>
+        </div>
         <a data-toggle="modal" href="#holdTrafficDetailModal" style="z-index: 8;width: 100%;">
           <div id="hold-traffic-banner" class="panel panel-warning hide">
             <div class="panel-heading">
@@ -322,6 +518,18 @@
           </div>
         </a>
       </nav>
+
+      <!-- Clear Signal 100 Confirmation Modal (outside nav for proper z-index) -->
+      <div id="clear-signal-100-modal" class="clear-signal-modal-overlay" onclick="hideClearSignal100Modal(event)">
+        <div class="clear-signal-modal" onclick="event.stopPropagation()">
+          <h3>Clear Signal 100?</h3>
+          <p>This will notify all units that the emergency has been resolved.</p>
+          <div class="clear-signal-modal-buttons">
+            <button class="clear-signal-btn-cancel" onclick="hideClearSignal100Modal()">Cancel</button>
+            <button class="clear-signal-btn-confirm" onclick="confirmClearSignal100()">Clear Signal 100</button>
+          </div>
+        </div>
+      </div>
 
       <header id="second" style='background-image: url("/static/images/city-skyline.jpg");'>
 
@@ -391,9 +599,54 @@
                             </div>
                             <%} else {%>
                               <hr style="width: 88%;max-width: 100rem;">
-                              <!-- officer list -->
-                              <h4 id="officer-list">Unit List: </h4>
-                              <table id="officerListTable" class="table table-hover table-bordered">
+
+                              <!-- Modern Unit Status Panel -->
+                              <div id="unitStatusPanel" class="unit-status-panel">
+                                <div class="unit-panel-header">
+                                  <div class="unit-panel-title">
+                                    <i class="fa fa-users"></i>
+                                    <span>UNIT STATUS</span>
+                                  </div>
+                                  <div class="unit-stats">
+                                    <span class="stat-badge online"><span id="onlineCount">0</span> Online</span>
+                                    <span class="stat-badge offline"><span id="offlineCount">0</span> Offline</span>
+                                    <span class="stat-badge total"><span id="totalCount">0</span> Total</span>
+                                  </div>
+                                </div>
+
+                                <div class="unit-controls">
+                                  <div class="unit-search-container">
+                                    <i class="fa fa-search"></i>
+                                    <input id="unitSearch" type="text" placeholder="Search units by name, call sign, status, or department..." class="unit-search-input">
+                                  </div>
+                                  <div class="unit-filter-row">
+                                    <select id="departmentFilter" class="dept-filter-select" onchange="filterByDepartment(this.value)">
+                                      <option value="all">All Departments</option>
+                                      <!-- Options populated by JavaScript -->
+                                    </select>
+                                    <div class="unit-filter-buttons">
+                                      <button class="filter-btn active" data-filter="all" onclick="filterUnits('all')">All</button>
+                                      <button class="filter-btn" data-filter="online" onclick="filterUnits('online')">Online</button>
+                                      <button class="filter-btn" data-filter="offline" onclick="filterUnits('offline')">Offline</button>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div id="unitGrid" class="unit-grid">
+                                  <!-- Units will be populated by JavaScript -->
+                                  <div class="unit-loading">
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                    <span>Loading units...</span>
+                                  </div>
+                                </div>
+
+                                <div id="unitPagination" class="unit-pagination">
+                                  <!-- Pagination will be added by JavaScript -->
+                                </div>
+                              </div>
+
+                              <!-- Hidden old table for backward compatibility -->
+                              <table id="officerListTable" class="table table-hover table-bordered" style="display: none !important;">
                                 <thead>
                                   <tr>
                                     <th>Username</th>
@@ -403,6 +656,497 @@
                                 </thead>
                                 <tbody></tbody>
                               </table>
+
+                              <style>
+                                /* Unit Status Panel Styles */
+                                .unit-status-panel {
+                                  background: linear-gradient(135deg, #1a1f2e 0%, #2d3548 100%);
+                                  border-radius: 12px;
+                                  border: 1px solid rgba(59, 130, 246, 0.3);
+                                  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                                  margin: 1.5rem 0;
+                                  overflow: hidden;
+                                }
+
+                                .unit-panel-header {
+                                  display: flex;
+                                  justify-content: space-between;
+                                  align-items: center;
+                                  padding: 1rem 1.5rem;
+                                  background: rgba(59, 130, 246, 0.1);
+                                  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+                                  flex-wrap: wrap;
+                                  gap: 1rem;
+                                }
+
+                                .unit-panel-title {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 0.75rem;
+                                  color: #60a5fa;
+                                  font-weight: 700;
+                                  font-size: 1.35rem;
+                                  letter-spacing: 0.05em;
+                                }
+
+                                .unit-panel-title i {
+                                  font-size: 1.4rem;
+                                }
+
+                                .unit-stats {
+                                  display: flex;
+                                  gap: 0.75rem;
+                                }
+
+                                .stat-badge {
+                                  padding: 0.5rem 0.9rem;
+                                  border-radius: 20px;
+                                  font-size: 1.05rem;
+                                  font-weight: 600;
+                                }
+
+                                .stat-badge.online {
+                                  background: rgba(16, 185, 129, 0.2);
+                                  color: #10b981;
+                                  border: 1px solid rgba(16, 185, 129, 0.4);
+                                }
+
+                                .stat-badge.offline {
+                                  background: rgba(107, 114, 128, 0.2);
+                                  color: #9ca3af;
+                                  border: 1px solid rgba(107, 114, 128, 0.4);
+                                }
+
+                                .stat-badge.total {
+                                  background: rgba(59, 130, 246, 0.2);
+                                  color: #60a5fa;
+                                  border: 1px solid rgba(59, 130, 246, 0.4);
+                                }
+
+                                .unit-controls {
+                                  display: flex;
+                                  gap: 1rem;
+                                  padding: 1rem 1.5rem;
+                                  background: rgba(15, 23, 42, 0.5);
+                                  flex-wrap: wrap;
+                                }
+
+                                .unit-search-container {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 0.75rem;
+                                  background: rgba(30, 41, 59, 0.8);
+                                  border: 1px solid rgba(71, 85, 105, 0.5);
+                                  border-radius: 8px;
+                                  padding: 0.6rem 1rem;
+                                  flex: 1;
+                                  min-width: 200px;
+                                }
+
+                                .unit-search-container i {
+                                  color: #64748b;
+                                }
+
+                                .unit-search-input {
+                                  flex: 1;
+                                  background: transparent;
+                                  border: none;
+                                  color: #f1f5f9;
+                                  font-size: 0.95rem;
+                                  outline: none;
+                                }
+
+                                .unit-search-input::placeholder {
+                                  color: #64748b;
+                                }
+
+                                .unit-filter-row {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 1rem;
+                                  flex-wrap: wrap;
+                                }
+
+                                .dept-filter-select {
+                                  padding: 0.5rem 1rem;
+                                  border: 1px solid rgba(71, 85, 105, 0.5);
+                                  border-radius: 6px;
+                                  background: rgba(30, 41, 59, 0.8);
+                                  color: #f1f5f9;
+                                  font-size: 0.9rem;
+                                  cursor: pointer;
+                                  min-width: 180px;
+                                  transition: all 0.2s ease;
+                                }
+
+                                .dept-filter-select:hover {
+                                  border-color: rgba(59, 130, 246, 0.5);
+                                }
+
+                                .dept-filter-select:focus {
+                                  outline: none;
+                                  border-color: #3b82f6;
+                                  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+                                }
+
+                                .dept-filter-select option {
+                                  background: #1e293b;
+                                  color: #f1f5f9;
+                                }
+
+                                .unit-filter-buttons {
+                                  display: flex;
+                                  gap: 0.5rem;
+                                }
+
+                                .filter-btn {
+                                  padding: 0.5rem 1rem;
+                                  border: 1px solid rgba(71, 85, 105, 0.5);
+                                  border-radius: 6px;
+                                  background: rgba(30, 41, 59, 0.6);
+                                  color: #94a3b8;
+                                  font-weight: 500;
+                                  cursor: pointer;
+                                  transition: all 0.2s ease;
+                                }
+
+                                .filter-btn:hover {
+                                  background: rgba(59, 130, 246, 0.2);
+                                  border-color: rgba(59, 130, 246, 0.5);
+                                  color: #60a5fa;
+                                }
+
+                                .filter-btn.active {
+                                  background: rgba(59, 130, 246, 0.3);
+                                  border-color: #3b82f6;
+                                  color: #60a5fa;
+                                }
+
+                                .unit-grid {
+                                  display: grid;
+                                  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                                  gap: 0.75rem;
+                                  padding: 1.25rem;
+                                  max-height: 500px;
+                                  overflow-y: auto;
+                                }
+
+                                .unit-grid::-webkit-scrollbar {
+                                  width: 6px;
+                                }
+
+                                .unit-grid::-webkit-scrollbar-track {
+                                  background: rgba(30, 41, 59, 0.5);
+                                }
+
+                                .unit-grid::-webkit-scrollbar-thumb {
+                                  background: rgba(59, 130, 246, 0.5);
+                                  border-radius: 3px;
+                                }
+
+                                .unit-card {
+                                  display: flex;
+                                  align-items: center;
+                                  gap: 1.25rem;
+                                  padding: 1rem 1.25rem;
+                                  background: rgba(30, 41, 59, 0.7);
+                                  border: 1px solid rgba(71, 85, 105, 0.4);
+                                  border-radius: 10px;
+                                  transition: all 0.2s ease;
+                                  cursor: pointer;
+                                }
+
+                                .unit-card:hover {
+                                  background: rgba(59, 130, 246, 0.1);
+                                  border-color: rgba(59, 130, 246, 0.5);
+                                  transform: translateY(-1px);
+                                }
+
+                                .unit-card.online {
+                                  border-left: 4px solid #10b981;
+                                }
+
+                                .unit-card.offline {
+                                  border-left: 4px solid #6b7280;
+                                  opacity: 0.7;
+                                }
+
+                                .unit-card.busy {
+                                  border-left: 4px solid #f59e0b;
+                                }
+
+                                .unit-card.emergency {
+                                  border-left: 4px solid #ef4444;
+                                  animation: pulse-emergency 2s infinite;
+                                }
+
+                                @keyframes pulse-emergency {
+                                  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+                                  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+                                }
+
+                                /* Status update highlight animation */
+                                .unit-card.status-updated {
+                                  animation: status-update-flash 1.5s ease-out;
+                                }
+
+                                @keyframes status-update-flash {
+                                  0% {
+                                    background: rgba(16, 185, 129, 0.4);
+                                    box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+                                    transform: scale(1.02);
+                                  }
+                                  50% {
+                                    background: rgba(16, 185, 129, 0.2);
+                                    box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+                                  }
+                                  100% {
+                                    background: rgba(30, 41, 59, 0.7);
+                                    box-shadow: none;
+                                    transform: scale(1);
+                                  }
+                                }
+
+                                .unit-status-indicator {
+                                  width: 12px;
+                                  height: 12px;
+                                  border-radius: 50%;
+                                  flex-shrink: 0;
+                                }
+
+                                .unit-status-indicator.online {
+                                  background: #10b981;
+                                  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+                                }
+
+                                .unit-status-indicator.offline {
+                                  background: #6b7280;
+                                }
+
+                                .unit-status-indicator.busy {
+                                  background: #f59e0b;
+                                  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+                                }
+
+                                .unit-status-indicator.emergency {
+                                  background: #ef4444;
+                                  box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+                                  animation: blink 1s infinite;
+                                }
+
+                                @keyframes blink {
+                                  0%, 100% { opacity: 1; }
+                                  50% { opacity: 0.3; }
+                                }
+
+                                .unit-info {
+                                  flex: 1;
+                                  min-width: 0;
+                                }
+
+                                .unit-callsign {
+                                  font-weight: 700;
+                                  color: #f1f5f9;
+                                  font-size: 1.35rem;
+                                }
+
+                                .unit-name {
+                                  font-size: 1.1rem;
+                                  color: #94a3b8;
+                                  white-space: nowrap;
+                                  overflow: hidden;
+                                  text-overflow: ellipsis;
+                                }
+
+                                .unit-departments {
+                                  display: flex;
+                                  flex-wrap: wrap;
+                                  gap: 0.3rem;
+                                  margin-top: 0.35rem;
+                                  max-height: 3.2rem; /* ~2 lines of badges */
+                                  overflow-y: auto;
+                                  overflow-x: hidden;
+                                  scrollbar-width: thin;
+                                  scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
+                                }
+
+                                .unit-departments::-webkit-scrollbar {
+                                  width: 4px;
+                                }
+
+                                .unit-departments::-webkit-scrollbar-track {
+                                  background: transparent;
+                                }
+
+                                .unit-departments::-webkit-scrollbar-thumb {
+                                  background: rgba(99, 102, 241, 0.4);
+                                  border-radius: 2px;
+                                }
+
+                                .dept-badge {
+                                  display: inline-block;
+                                  padding: 0.15rem 0.5rem;
+                                  border-radius: 4px;
+                                  font-size: 0.7rem;
+                                  font-weight: 600;
+                                  background: rgba(99, 102, 241, 0.2);
+                                  color: #818cf8;
+                                  border: 1px solid rgba(99, 102, 241, 0.3);
+                                  white-space: nowrap;
+                                }
+
+                                /* Active department badge - highlighted */
+                                .active-dept-badge {
+                                  display: inline-block;
+                                  padding: 0.15rem 0.5rem;
+                                  border-radius: 4px;
+                                  font-size: 0.7rem;
+                                  font-weight: 700;
+                                  background: rgba(16, 185, 129, 0.3);
+                                  color: #34d399;
+                                  border: 1px solid rgba(16, 185, 129, 0.5);
+                                  white-space: nowrap;
+                                  box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
+                                }
+
+                                /* Expand button for showing more departments */
+                                .dept-expand-btn {
+                                  display: inline-block;
+                                  padding: 0.1rem 0.4rem;
+                                  border-radius: 4px;
+                                  font-size: 0.65rem;
+                                  font-weight: 600;
+                                  background: rgba(71, 85, 105, 0.4);
+                                  color: #94a3b8;
+                                  border: 1px solid rgba(71, 85, 105, 0.5);
+                                  cursor: pointer;
+                                  transition: all 0.2s ease;
+                                }
+
+                                .dept-expand-btn:hover {
+                                  background: rgba(99, 102, 241, 0.3);
+                                  color: #a5b4fc;
+                                  border-color: rgba(99, 102, 241, 0.5);
+                                }
+
+                                .dept-expanded {
+                                  display: flex;
+                                  flex-wrap: wrap;
+                                  gap: 0.3rem;
+                                  margin-top: 0.3rem;
+                                  padding-top: 0.3rem;
+                                  border-top: 1px solid rgba(71, 85, 105, 0.3);
+                                }
+
+                                .dept-expanded.hidden {
+                                  display: none;
+                                }
+
+                                .unit-status-badge {
+                                  padding: 0.3rem 0.6rem;
+                                  border-radius: 6px;
+                                  font-size: 0.75rem;
+                                  font-weight: 600;
+                                  white-space: nowrap;
+                                }
+
+                                .unit-status-badge.online {
+                                  background: rgba(16, 185, 129, 0.2);
+                                  color: #10b981;
+                                }
+
+                                .unit-status-badge.offline {
+                                  background: rgba(107, 114, 128, 0.2);
+                                  color: #9ca3af;
+                                }
+
+                                .unit-status-badge.busy {
+                                  background: rgba(245, 158, 11, 0.2);
+                                  color: #f59e0b;
+                                }
+
+                                .unit-status-badge.emergency {
+                                  background: rgba(239, 68, 68, 0.2);
+                                  color: #ef4444;
+                                }
+
+                                .unit-status-select {
+                                  padding: 0.5rem 0.75rem;
+                                  border-radius: 6px;
+                                  border: 1px solid rgba(71, 85, 105, 0.5);
+                                  background: rgba(30, 41, 59, 0.8);
+                                  color: #f1f5f9;
+                                  font-size: 1.05rem;
+                                  cursor: pointer;
+                                  outline: none;
+                                  min-width: 110px;
+                                }
+
+                                .unit-status-select:focus {
+                                  border-color: #3b82f6;
+                                }
+
+                                .unit-loading {
+                                  grid-column: 1 / -1;
+                                  display: flex;
+                                  align-items: center;
+                                  justify-content: center;
+                                  gap: 0.75rem;
+                                  padding: 2rem;
+                                  color: #64748b;
+                                }
+
+                                .unit-empty {
+                                  grid-column: 1 / -1;
+                                  text-align: center;
+                                  padding: 2rem;
+                                  color: #64748b;
+                                }
+
+                                .unit-pagination {
+                                  display: none;
+                                }
+
+                                .page-btn {
+                                  padding: 0.4rem 0.8rem;
+                                  border: 1px solid rgba(71, 85, 105, 0.5);
+                                  border-radius: 6px;
+                                  background: rgba(30, 41, 59, 0.6);
+                                  color: #94a3b8;
+                                  cursor: pointer;
+                                  transition: all 0.2s ease;
+                                }
+
+                                .page-btn:hover:not(:disabled) {
+                                  background: rgba(59, 130, 246, 0.2);
+                                  border-color: rgba(59, 130, 246, 0.5);
+                                  color: #60a5fa;
+                                }
+
+                                .page-btn.active {
+                                  background: #3b82f6;
+                                  border-color: #3b82f6;
+                                  color: white;
+                                }
+
+                                .page-btn:disabled {
+                                  opacity: 0.5;
+                                  cursor: not-allowed;
+                                }
+
+                                @media (max-width: 600px) {
+                                  .unit-panel-header {
+                                    flex-direction: column;
+                                    align-items: flex-start;
+                                  }
+                                  .unit-controls {
+                                    flex-direction: column;
+                                  }
+                                  .unit-grid {
+                                    grid-template-columns: 1fr;
+                                  }
+                                }
+                              </style>
 
                               <hr style="width: 88%;max-width: 100rem;">
                               
@@ -2130,11 +2874,18 @@
 <!--scripts loaded here -->
 <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
 <script src="/socket.io/socket.io.js"></script>
+<script>
+  // Fallback to CDN if socket.io not served by server
+  if (typeof io === 'undefined') {
+    var script = document.createElement('script');
+    script.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+    script.crossOrigin = 'anonymous';
+    document.head.appendChild(script);
+  }
+</script>
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
 <script src="/static/js/jquery.min.js"></script>
 <script src="/static/js/jquery.easing.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap.min.js"></script>
 <script src="/static/js/wow.js"></script>
 <script src="/static/js/popper.js"></script>
 <script src="/static/js/main.js"></script>
@@ -2156,7 +2907,39 @@
 </html>
 <script>
   $(function () {
-    var socket=io();
+    // Use shared socket or create one and share it
+    var socket = window.dashboardSocket || io();
+    window.dashboardSocket = socket;
+
+    const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+
+    // Function to join community room
+    function joinCommunityRoom() {
+      if (communityId && !socket.communityRoomJoined) {
+        socket.emit('join_community_room', { communityId: communityId });
+        socket.communityRoomJoined = true;
+      }
+    }
+
+    // Join room when connected (or immediately if already connected)
+    if (socket.connected) {
+      joinCommunityRoom();
+    } else {
+      socket.on('connect', function() {
+        joinCommunityRoom();
+      });
+    }
+
+    // Listen for room join confirmation (only add once)
+    if (!socket.roomListenersAdded) {
+      socket.on('joined_room', function(data) {
+        // Room joined successfully
+      });
+      socket.on('room_error', function(data) {
+        console.error('Socket room error:', data);
+      });
+      socket.roomListenersAdded = true;
+    }
     socket.on('updated_ems_status', res => {
       if (res.onDuty&&res.updateDuty) {
         //socket coming in that a ems engine is going on-duty
@@ -2274,7 +3057,7 @@
           audioElement.volume = dbUser.user.alertVolumeLevel/100 || 0.1;
           audioElement.play();
         }
-        $('#signal-100-banner').removeClass('hide').addClass('show')
+        updateSignal100Banner(origReq);
       }
     })
 
@@ -2293,6 +3076,7 @@
     socket.on('clear_signal_100_updated', activeCommunity => {
       if (dbUser.user.activeCommunity==activeCommunity) {
         $('#signal-100-banner').removeClass('show').addClass('hide')
+        $('#signal-100-details').text('');
       }
     })
 
@@ -2641,17 +3425,767 @@
     });
   });
 
-  window.onload=function () {
+  // Global socket instance for real-time updates
+  var dashboardSocket = null;
+  window.dashboardSocket = null; // Expose globally for other scripts
+
+  // Helper function to get the shared socket (creates one if needed)
+  function getSharedSocket() {
+    if (dashboardSocket && dashboardSocket.connected) {
+      return dashboardSocket;
+    }
+    if (window.dashboardSocket && window.dashboardSocket.connected) {
+      return window.dashboardSocket;
+    }
+    // Fallback: create a new connection if no shared socket exists
+    if (typeof io !== 'undefined') {
+      return io();
+    }
+    return null;
+  }
+  window.getSharedSocket = getSharedSocket;
+
+  // Initialize socket with retry logic
+  function initializeRealtimeSocket() {
+    if (typeof io === 'undefined') {
+      // Retry after a short delay (socket.io CDN fallback may still be loading)
+      setTimeout(initializeRealtimeSocket, 100);
+      return;
+    }
     if (dbUser.user?.lastAccessedCommunity!=null) {
-      var socket=io();
-      var myReq={
-        userID: dbUser._id,
-        userUsername: dbUser.user.username,
-        activeCommunity: dbUser.user?.lastAccessedCommunity.communityID
+      // Reuse existing socket if available, or create new one
+      dashboardSocket = window.dashboardSocket || io();
+      window.dashboardSocket = dashboardSocket; // Sync global reference
+
+      const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+
+      // Function to run after socket is connected
+      function onConnected() {
+        var myReq={
+          userID: dbUser._id,
+          userUsername: dbUser.user.username,
+          activeCommunity: dbUser.user?.lastAccessedCommunity.communityID
+        }
+        dashboardSocket.emit('load_panic_statuses', myReq);
+
+        // Join community room for targeted broadcasts
+        if (communityId) {
+          dashboardSocket.emit('join_community_room', { communityId: communityId });
+        }
       }
-      socket.emit('load_panic_statuses', myReq)
+
+      // Wait for connection before emitting
+      if (dashboardSocket.connected) {
+        onConnected();
+      } else {
+        dashboardSocket.once('connect', onConnected);
+      }
+
+      // ==========================================
+      // REAL-TIME SOCKET LISTENERS FOR DISPATCH
+      // ==========================================
+
+      // HTML-escaping helper to prevent XSS when injecting dynamic content
+      function escapeHtml(str) {
+        if (str == null) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      // Helper to prevent prototype-polluting keys
+      function isSafeKey(key) {
+        return (
+          typeof key === 'string' &&
+          key !== '__proto__' &&
+          key !== 'constructor' &&
+          key !== 'prototype'
+        );
+      }
+
+      // Listen for member status updates
+      dashboardSocket.on('member_status_updated', function(data) {
+        if (data.communityId && data.communityId !== communityId) return;
+
+        const userId = data.userID;
+
+        // Guard against unsafe keys that could lead to prototype pollution
+        if (!isSafeKey(userId)) {
+          return;
+        }
+
+        // Update the member data cache with status and active department
+        if (!memberDataCache[userId]) memberDataCache[userId] = Object.create(null);
+        if (data.statusCode) {
+          memberDataCache[userId].tenCodeID = data.statusCode;
+        }
+        // Store active department info from the status update
+        if (data.activeDepartmentId) {
+          memberDataCache[userId].activeDepartmentId = data.activeDepartmentId;
+          memberDataCache[userId].activeDepartmentName = data.activeDepartmentName || null;
+        }
+
+        const $unitCard = $(`.unit-card[data-user-id="${userId}"]`);
+
+        // If the unit card exists, update it in place with animation
+        if ($unitCard.length > 0) {
+          // Update the status select dropdown
+          const $select = $unitCard.find('.unit-status-select');
+          if (data.statusCode) {
+            $select.val(data.statusCode);
+          }
+
+          // Update the active department badge if present
+          if (data.activeDepartmentName) {
+            const userId = data.userID;
+            const userDepts = userDepartmentMap[userId] || [];
+            const otherDepts = userDepts.filter(d => d.name !== data.activeDepartmentName);
+
+            let newDeptHtml = `<span class="active-dept-badge">${escapeHtml(data.activeDepartmentName)}</span>`;
+            if (otherDepts.length > 0) {
+              const otherBadges = otherDepts.map(d => `<span class="dept-badge">${escapeHtml(d.name)}</span>`).join('');
+              newDeptHtml += `<span class="dept-expand-btn" onclick="toggleDeptExpand(this, event)" title="View all departments">+${otherDepts.length}</span>`;
+              newDeptHtml += `<div class="dept-expanded hidden">${otherBadges}</div>`;
+            }
+
+            let $deptContainer = $unitCard.find('.unit-departments');
+            if ($deptContainer.length > 0) {
+              $deptContainer.html(newDeptHtml);
+            } else {
+              $unitCard.find('.unit-info').append(`<div class="unit-departments">${newDeptHtml}</div>`);
+            }
+          }
+
+          // Trigger the highlight animation
+          $unitCard.removeClass('status-updated');
+          // Force reflow to restart animation
+          void $unitCard[0].offsetWidth;
+          $unitCard.addClass('status-updated');
+
+          // Remove the class after animation completes
+          setTimeout(() => {
+            $unitCard.removeClass('status-updated');
+          }, 1500);
+
+          // Also refresh the full list to update status categories
+          if (typeof loadUnitsOnDuty === 'function') {
+            setTimeout(() => loadUnitsOnDuty(), 100);
+          }
+        } else {
+          // Unit not found, refresh the full list (might be newly on duty)
+          if (typeof loadUnitsOnDuty === 'function') {
+            loadUnitsOnDuty();
+          }
+        }
+
+        // Show notification (only if we didn't initiate the change)
+        const currentUsername = dbUser.user?.username;
+        const setBy = data.setBy;
+        const username = data.callSign || data.username || 'Unknown';
+        const statusCode = data.status || 'Unknown';
+
+        // Only show toast if the change was made by someone else (not this dispatch)
+        if (setBy && setBy !== currentUsername) {
+          showRealTimeToast('status', `${username} status: ${statusCode}`, 'info');
+        }
+      });
+
+      // Listen for new BOLOs
+      dashboardSocket.on('created_bolo', function(data) {
+        const boloCommunityId = data.bolo?.activeCommunityID;
+        if (boloCommunityId && boloCommunityId !== communityId) return;
+
+        loadActiveBOLOs();
+        showRealTimeToast('bolo', 'New BOLO Alert!', 'warning', data.bolo?.boloType || data.bolo?.title || 'Unknown');
+      });
+
+      // Listen for deleted BOLOs
+      dashboardSocket.on('deleted_bolo', function(data) {
+        if (data.communityId && data.communityId !== communityId) return;
+        loadActiveBOLOs();
+        showRealTimeToast('bolo', 'BOLO Cleared', 'success');
+      });
+
+      // Listen for new calls
+      dashboardSocket.on('created_call', function(data) {
+        const callCommunityId = data.call?.communityID;
+        if (callCommunityId && callCommunityId !== communityId) return;
+
+        if (typeof loadActiveCalls === 'function') {
+          loadActiveCalls();
+        }
+        const callType = data.call?.callType || 'New Call';
+        const location = data.call?.location || '';
+        showRealTimeToast('call', `New Call: ${callType}`, 'info', location);
+      });
+
+      // Listen for call updates
+      dashboardSocket.on('updated_call', function(data) {
+        const callCommunityId = data.call?.communityID;
+        if (callCommunityId && callCommunityId !== communityId) return;
+
+        if (typeof loadActiveCalls === 'function') {
+          loadActiveCalls();
+        }
+        showRealTimeToast('call', 'Call Updated', 'info');
+      });
+
+      // Listen for cleared calls
+      dashboardSocket.on('cleared_call', function(data) {
+        if (data.communityId && data.communityId !== communityId) return;
+
+        if (typeof loadActiveCalls === 'function') {
+          loadActiveCalls();
+        }
+        showRealTimeToast('call', 'Call Cleared', 'success');
+      });
+
+      // Listen for room join confirmation
+      dashboardSocket.on('joined_room', function(data) {
+        console.log('Dispatch joined community room:', data.room);
+      });
     }
   }
+
+  // Toast notification system for real-time updates
+  function showRealTimeToast(type, message, severity, details) {
+    let container = document.getElementById('realtime-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'realtime-toast-container';
+      container.style.cssText = 'position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;';
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    const icons = { status: 'fa-broadcast-tower', bolo: 'fa-exclamation-triangle', call: 'fa-phone' };
+    const colors = {
+      info: 'rgba(59, 130, 246, 0.95)',
+      warning: 'rgba(245, 158, 11, 0.95)',
+      success: 'rgba(16, 185, 129, 0.95)',
+      error: 'rgba(239, 68, 68, 0.95)'
+    };
+
+    // Build toast content safely using DOM APIs to prevent XSS
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display: flex; align-items: center; gap: 12px;';
+
+    const iconEl = document.createElement('i');
+    iconEl.className = 'fa ' + (icons[type] || 'fa-info-circle');
+    iconEl.style.fontSize = '1.25rem';
+    wrapper.appendChild(iconEl);
+
+    const textContainer = document.createElement('div');
+    const titleDiv = document.createElement('div');
+    titleDiv.style.fontWeight = '600';
+    titleDiv.textContent = message || '';
+    textContainer.appendChild(titleDiv);
+
+    if (details) {
+      const detailsDiv = document.createElement('div');
+      detailsDiv.style.cssText = 'font-size: 0.85rem; opacity: 0.9;';
+      detailsDiv.textContent = details;
+      textContainer.appendChild(detailsDiv);
+    }
+
+    wrapper.appendChild(textContainer);
+    toast.appendChild(wrapper);
+    toast.style.cssText = `
+      background: ${colors[severity] || colors.info};
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      animation: slideInRight 0.3s ease-out;
+      max-width: 320px;
+      cursor: pointer;
+    `;
+    toast.onclick = () => toast.remove();
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.style.animation = 'slideOutRight 0.3s ease-in';
+        setTimeout(() => toast.remove(), 300);
+      }
+    }, 5000);
+  }
+
+  // Add toast animations
+  const toastStyles = document.createElement('style');
+  toastStyles.textContent = `
+    @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+  `;
+  document.head.appendChild(toastStyles);
+
+  // ==========================================
+  // MODERN UNIT STATUS PANEL
+  // ==========================================
+  var unitsCache = [];
+  var tenCodesCache = [];
+  var memberDataCache = {};
+  var departmentsCache = [];
+  var userDepartmentMap = {}; // Maps userId -> array of department objects
+  var currentUnitFilter = 'all';
+  var currentDepartmentFilter = 'all';
+  var currentUnitSearch = '';
+
+  // Load and display units in the new panel
+  function loadUnitsPanel() {
+    const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+    if (!communityId) return;
+
+    // First, fetch ten codes and member data
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}`,
+      method: 'GET',
+      success: function(commData) {
+        tenCodesCache = commData.community?.tenCodes || [];
+
+        // Preserve active department info from previous cache before overwriting
+        const preservedActiveDepts = {};
+        Object.keys(memberDataCache).forEach(userId => {
+          if (memberDataCache[userId]?.activeDepartmentId || memberDataCache[userId]?.activeDepartmentName) {
+            preservedActiveDepts[userId] = {
+              activeDepartmentId: memberDataCache[userId].activeDepartmentId,
+              activeDepartmentName: memberDataCache[userId].activeDepartmentName
+            };
+          }
+        });
+
+        memberDataCache = commData.community?.members || {};
+
+        // Restore preserved active department info
+        Object.keys(preservedActiveDepts).forEach(userId => {
+          if (!memberDataCache[userId]) memberDataCache[userId] = {};
+          memberDataCache[userId].activeDepartmentId = preservedActiveDepts[userId].activeDepartmentId;
+          memberDataCache[userId].activeDepartmentName = preservedActiveDepts[userId].activeDepartmentName;
+        });
+
+        // Update community name in header
+        if (commData.community?.name) {
+          $('#community-name').text(commData.community.name);
+        }
+
+        // Fetch departments to build user-department mapping
+        $.ajax({
+          url: `${API_URL}/api/v1/community/${communityId}/departments`,
+          method: 'GET',
+          success: function(deptResponse) {
+            departmentsCache = (deptResponse.departments || []).filter(d => d.template?.name !== 'Civilian');
+
+            // Build user -> departments mapping
+            userDepartmentMap = {};
+            departmentsCache.forEach(dept => {
+              if (dept.members && Array.isArray(dept.members)) {
+                dept.members.forEach(member => {
+                  const userId = member.userID || member._id;
+                  if (userId) {
+                    if (!userDepartmentMap[userId]) {
+                      userDepartmentMap[userId] = [];
+                    }
+                    userDepartmentMap[userId].push({
+                      _id: dept._id,
+                      name: dept.name,
+                      template: dept.template
+                    });
+                  }
+                });
+              }
+            });
+
+            // Populate department filter dropdown
+            populateDepartmentFilter();
+
+            // Then fetch all members
+            fetchMembers(communityId);
+          },
+          error: function(xhr) {
+            console.error('Error loading departments:', xhr.responseText);
+            // Still fetch members even if departments fail
+            fetchMembers(communityId);
+          }
+        });
+      },
+      error: function(xhr) {
+        console.error('Error loading community data:', xhr.responseText);
+      }
+    });
+  }
+
+  // Fetch members (separated for reuse)
+  function fetchMembers(communityId) {
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}/members?limit=100`,
+      method: 'GET',
+      success: function(response) {
+        // Handle various response formats
+        if (Array.isArray(response)) {
+          unitsCache = response;
+        } else if (response && Array.isArray(response.data)) {
+          unitsCache = response.data;
+        } else if (response && Array.isArray(response.members)) {
+          unitsCache = response.members;
+        } else {
+          console.warn('Unexpected members response format:', response);
+          unitsCache = [];
+        }
+        renderUnitsGrid();
+      },
+      error: function(xhr) {
+        console.error('Error loading units:', xhr.responseText);
+        $('#unitGrid').html('<div class="unit-empty"><i class="fa fa-exclamation-circle"></i> Failed to load units</div>');
+      }
+    });
+  }
+
+  // Populate the department filter dropdown
+  function populateDepartmentFilter() {
+    const $select = $('#departmentFilter');
+    $select.empty();
+    $select.append('<option value="all">All Departments</option>');
+
+    departmentsCache.forEach(dept => {
+      $select.append(`<option value="${dept._id}">${dept.name}</option>`);
+    });
+  }
+
+  // Filter units by department
+  function filterByDepartment(departmentId) {
+    currentDepartmentFilter = departmentId;
+    renderUnitsGrid();
+  }
+
+  // Check if a code is specifically Signal 100 (for broadcasting alerts)
+  function isSignal100Code(code, description) {
+    const codeLower = (code || '').toLowerCase();
+    const descLower = (description || '').toLowerCase();
+    return codeLower.includes('signal 100') ||
+           descLower.includes('signal 100') ||
+           descLower.includes('hold all traffic');
+  }
+
+  // Check if a code is 10-99 (Officer needs assistance - also broadcasts to all)
+  function is1099Code(code, description) {
+    const codeLower = (code || '').toLowerCase();
+    const descLower = (description || '').toLowerCase();
+    return codeLower === '10-99' ||
+           codeLower === '1099' ||
+           descLower.includes('officer needs assistance') ||
+           descLower.includes('officer in distress');
+  }
+
+  // Check if a status should broadcast to all officers
+  function isBroadcastStatus(code, description) {
+    return isSignal100Code(code, description) || is1099Code(code, description);
+  }
+
+  // Get status category from ten-code
+  function getUnitStatusCategory(tenCodeId) {
+    if (!tenCodeId) return 'none'; // No status set
+    const tenCode = tenCodesCache.find(tc => tc._id === tenCodeId);
+    if (!tenCode) return 'none';
+
+    const code = tenCode.code?.toLowerCase() || '';
+    const desc = tenCode.description?.toLowerCase() || '';
+
+    // Emergency - including Signal 100, hold all, etc.
+    if (code.includes('10-33') || code.includes('10-99') || code.includes('10-00') ||
+        code.includes('signal 100') ||
+        desc.includes('emergency') || desc.includes('pursuit') || desc.includes('officer down') ||
+        desc.includes('shots fired') || desc.includes('hold all')) {
+      return 'emergency';
+    }
+    // Offline - log out, off duty, Signal 42, etc.
+    if (code.includes('10-42') || code.includes('10-7') || code.includes('signal 42') ||
+        desc.includes('off duty') || desc.includes('out of service') || desc.includes('end of') ||
+        desc.includes('log out') || desc.includes('logout')) {
+      return 'offline';
+    }
+    // Busy
+    if (code.includes('10-6') || code.includes('10-11') || code.includes('10-17') ||
+        desc.includes('busy') || desc.includes('traffic stop') || desc.includes('en route')) {
+      return 'busy';
+    }
+    // Online/Available - any other status
+    return 'online';
+  }
+
+  // Render the units grid
+  function renderUnitsGrid() {
+    const $grid = $('#unitGrid');
+    $grid.empty();
+
+    // Safety check
+    if (!Array.isArray(unitsCache)) {
+      console.warn('unitsCache is not an array:', unitsCache);
+      unitsCache = [];
+    }
+
+    // Filter units
+    let filteredUnits = unitsCache.filter(unit => {
+      const memberData = memberDataCache[unit._id] || {};
+      const tenCodeId = memberData.tenCodeID;
+      const statusCategory = getUnitStatusCategory(tenCodeId);
+
+      // Apply status filter
+      if (currentUnitFilter === 'online' && (statusCategory === 'offline' || statusCategory === 'none')) return false;
+      if (currentUnitFilter === 'offline' && statusCategory !== 'offline' && statusCategory !== 'none') return false;
+
+      // Apply department filter
+      if (currentDepartmentFilter !== 'all') {
+        const userDepts = userDepartmentMap[unit._id] || [];
+        const inDept = userDepts.some(d => d._id === currentDepartmentFilter);
+        if (!inDept) return false;
+      }
+
+      // Apply search
+      if (currentUnitSearch) {
+        const search = currentUnitSearch.toLowerCase();
+        const username = (unit.user?.username || '').toLowerCase();
+        const callSign = (unit.user?.callSign || '').toLowerCase();
+        const tenCode = tenCodesCache.find(tc => tc._id === tenCodeId);
+        const statusText = (tenCode?.code || '').toLowerCase();
+        // Also search in department names
+        const userDepts = userDepartmentMap[unit._id] || [];
+        const deptNames = userDepts.map(d => (d.name || '').toLowerCase()).join(' ');
+
+        if (!username.includes(search) && !callSign.includes(search) && !statusText.includes(search) && !deptNames.includes(search)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    // Sort: emergency first, then active statuses, then offline/no status last
+    filteredUnits.sort((a, b) => {
+      const aData = memberDataCache[a._id] || {};
+      const bData = memberDataCache[b._id] || {};
+      const aCategory = getUnitStatusCategory(aData.tenCodeID);
+      const bCategory = getUnitStatusCategory(bData.tenCodeID);
+
+      // Emergency first, then busy, then online/active, then offline, then no status
+      const order = { emergency: 0, busy: 1, online: 2, offline: 3, none: 4 };
+      return (order[aCategory] ?? 4) - (order[bCategory] ?? 4);
+    });
+
+    // Update stats
+    let onlineCount = 0, offlineCount = 0;
+    unitsCache.forEach(unit => {
+      const memberData = memberDataCache[unit._id] || {};
+      const category = getUnitStatusCategory(memberData.tenCodeID);
+      if (category === 'offline' || category === 'none') offlineCount++;
+      else onlineCount++;
+    });
+
+    $('#onlineCount').text(onlineCount);
+    $('#offlineCount').text(offlineCount);
+    $('#totalCount').text(unitsCache.length);
+
+    if (filteredUnits.length === 0) {
+      $grid.html('<div class="unit-empty"><i class="fa fa-users"></i> No units found</div>');
+      return;
+    }
+
+    // Render unit cards
+    filteredUnits.forEach(unit => {
+      const memberData = memberDataCache[unit._id] || {};
+      const tenCodeId = memberData.tenCodeID;
+      const tenCode = tenCodesCache.find(tc => tc._id === tenCodeId);
+      const statusCode = tenCode?.code || 'No Status';
+      const statusCategory = getUnitStatusCategory(tenCodeId);
+
+      const callSign = unit.user?.callSign ? `Unit ${unit.user.callSign}` : 'No Unit #';
+      const username = unit.user?.username || 'Unknown';
+
+      // Build status select options
+      let selectOptions = '<option value="">No Status</option>';
+      tenCodesCache.forEach(tc => {
+        const selected = tc._id === tenCodeId ? 'selected' : '';
+        selectOptions += `<option value="${tc._id}" ${selected}>${tc.code}</option>`;
+      });
+
+      // Get department badges for this unit
+      const userDepts = userDepartmentMap[unit._id] || [];
+      const activeDeptName = memberData.activeDepartmentName || null;
+      const otherDepts = userDepts.filter(d => d.name !== activeDeptName);
+
+      let deptBadgesHtml = '';
+      if (activeDeptName) {
+        // Show active department with expand button if they have other departments
+        if (otherDepts.length > 0) {
+          const otherBadges = otherDepts.map(d => `<span class="dept-badge">${d.name}</span>`).join('');
+          deptBadgesHtml = `
+            <div class="unit-departments">
+              <span class="active-dept-badge">${activeDeptName}</span>
+              <span class="dept-expand-btn" onclick="toggleDeptExpand(this, event)" title="View all departments">+${otherDepts.length}</span>
+              <div class="dept-expanded hidden">${otherBadges}</div>
+            </div>`;
+        } else {
+          deptBadgesHtml = `<div class="unit-departments"><span class="active-dept-badge">${activeDeptName}</span></div>`;
+        }
+      } else if (userDepts.length > 0) {
+        // No active department - show all their departments
+        const badges = userDepts.map(d => `<span class="dept-badge">${d.name}</span>`).join('');
+        deptBadgesHtml = `<div class="unit-departments">${badges}</div>`;
+      }
+
+      const cardHtml = `
+        <div class="unit-card ${statusCategory}" data-user-id="${unit._id}">
+          <div class="unit-status-indicator ${statusCategory}"></div>
+          <div class="unit-info">
+            <div class="unit-callsign">${callSign}</div>
+            <div class="unit-name">${username}</div>
+            ${deptBadgesHtml}
+          </div>
+          <select class="unit-status-select" data-user-id="${unit._id}" onchange="updateUnitStatus(this)">
+            ${selectOptions}
+          </select>
+        </div>
+      `;
+      $grid.append(cardHtml);
+    });
+  }
+
+  // Update unit status via API
+  function updateUnitStatus(selectElement) {
+    const userId = $(selectElement).data('user-id');
+    const tenCodeId = $(selectElement).val();
+    const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+
+    if (!communityId || !userId) return;
+
+    $.ajax({
+      url: `${API_URL}/api/v1/community/${communityId}/members/${userId}/tenCode`,
+      method: 'PUT',
+      data: JSON.stringify({
+        departmentId: departmentId,
+        tenCodeID: tenCodeId || null
+      }),
+      contentType: 'application/json',
+      success: function(res) {
+        // Update local cache
+        if (!memberDataCache[userId]) memberDataCache[userId] = {};
+        memberDataCache[userId].tenCodeID = tenCodeId || null;
+
+        // Re-render to update card styling
+        renderUnitsGrid();
+
+        // Get the ten code details
+        const tenCode = tenCodesCache.find(tc => tc._id === tenCodeId);
+        const statusCode = tenCode?.code || 'No Status';
+
+        // Find the unit's info for the Signal 100 broadcast
+        const unit = unitsCache.find(u => u._id === userId);
+        const unitCallSign = unit?.user?.callSign || null;
+        const unitUsername = unit?.user?.username || 'Unknown';
+
+        // Emit socket event for real-time updates to other clients
+        if (dashboardSocket) {
+          // Check if this is an emergency broadcast status (Signal 100 or 10-99)
+          const shouldBroadcast = tenCode && isBroadcastStatus(tenCode.code, tenCode.description);
+
+          const emitData = {
+            userID: userId,
+            status: statusCode,
+            statusCode: tenCodeId,
+            setBy: dbUser.user?.username || 'Dispatch',
+            communityId: communityId,
+            broadcastToAll: shouldBroadcast  // Flag for server to broadcast to all or just the user
+          };
+          dashboardSocket.emit('update_status', emitData);
+
+          // Check if this is Signal 100 or 10-99 - trigger community-wide alert
+          if (shouldBroadcast) {
+            dashboardSocket.emit('signal_100_button_update', {
+              userID: userId,
+              userUsername: unitUsername,
+              userCallSign: unitCallSign,
+              activeCommunity: communityId,
+              activatedBy: 'Dispatch',
+              activatedByCallSign: dbUser.user?.callSign || null,
+              activatedByUsername: dbUser.user?.username || 'Dispatch',
+              aboutUserId: userId,
+              aboutCallSign: unitCallSign,
+              aboutUsername: unitUsername,
+              statusCode: tenCode.code,
+              timestamp: new Date().toISOString()
+            });
+
+            // Update local banner
+            updateSignal100Banner({
+              activatedBy: 'Dispatch',
+              activatedByCallSign: dbUser.user?.callSign,
+              activatedByUsername: dbUser.user?.username,
+              aboutUserId: userId,
+              aboutCallSign: unitCallSign,
+              aboutUsername: unitUsername
+            });
+          }
+        } else {
+          console.error('dashboardSocket is null/undefined');
+        }
+
+        showRealTimeToast('status', 'Unit status updated', 'success');
+      },
+      error: function(xhr) {
+        console.error('Error updating unit status:', xhr.responseText);
+        showRealTimeToast('status', 'Failed to update status', 'error');
+      }
+    });
+  }
+
+  // Filter units by status
+  function filterUnits(filter) {
+    currentUnitFilter = filter;
+
+    // Update active button
+    $('.filter-btn').removeClass('active');
+    $(`.filter-btn[data-filter="${filter}"]`).addClass('active');
+
+    renderUnitsGrid();
+  }
+
+  // Search units
+  $('#unitSearch').on('input', function() {
+    currentUnitSearch = $(this).val();
+    renderUnitsGrid();
+  });
+
+  // Toggle department expand/collapse
+  function toggleDeptExpand(btn, event) {
+    event.stopPropagation(); // Prevent card click
+    const $expanded = $(btn).siblings('.dept-expanded');
+    $expanded.toggleClass('hidden');
+    // Update button text
+    if ($expanded.hasClass('hidden')) {
+      const count = $expanded.find('.dept-badge').length;
+      $(btn).text('+' + count);
+    } else {
+      $(btn).text('−'); // minus sign to collapse
+    }
+  }
+
+  // Make function globally available
+  window.filterUnits = filterUnits;
+  window.filterByDepartment = filterByDepartment;
+  window.updateUnitStatus = updateUnitStatus;
+  window.toggleDeptExpand = toggleDeptExpand;
+
+  // Initialize socket on window load
+  window.onload = function() {
+    initializeRealtimeSocket();
+    // Load units panel after a short delay to ensure everything is ready
+    setTimeout(loadUnitsPanel, 500);
+  };
+
+  // Also expose loadUnitsPanel globally for real-time refresh
+  window.loadUnitsOnDuty = loadUnitsPanel;
 
   // AJAX function to load active BOLOs
   // Needs to be inside of this file so it can access the departmentId variable
@@ -3239,10 +4773,101 @@
     $('#boloDetailModal').modal('hide')
   })
 
+  // Show the clear Signal 100 confirmation modal
+  function showClearSignal100Modal() {
+    $('#clear-signal-100-modal').addClass('show');
+  }
+
+  // Hide the clear Signal 100 confirmation modal
+  function hideClearSignal100Modal(event) {
+    // If called from overlay click, only close if clicking the overlay itself
+    if (event && event.target !== event.currentTarget) return;
+    $('#clear-signal-100-modal').removeClass('show');
+  }
+
+  // Track the user ID associated with the current Signal 100
+  let signal100UserId = null;
+
+  // Confirm and broadcast Signal 100 cleared
+  function confirmClearSignal100() {
+    const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+
+    // Emit clear signal to server
+    if (dashboardSocket && dashboardSocket.connected) {
+      dashboardSocket.emit('clear_signal_100', communityId);
+    }
+
+    // Helper to validate MongoDB ObjectId format (24 hex chars)
+    function isValidObjectId(id) {
+      return typeof id === 'string' && /^[a-fA-F0-9]{24}$/.test(id);
+    }
+
+    // Capture the userId before clearing it (for use in async callback)
+    const userIdToUpdate = signal100UserId;
+
+    // Clear the stored user ID immediately
+    signal100UserId = null;
+
+    // If we know which user triggered the Signal 100, update their status to Code 4
+    // Validate the userId to prevent prototype pollution and ensure valid API calls
+    if (userIdToUpdate && isValidObjectId(userIdToUpdate) && tenCodesCache.length > 0) {
+      const code4 = tenCodesCache.find(tc =>
+        tc.code.toLowerCase() === 'code 4' ||
+        tc.description.toLowerCase().includes('under control')
+      );
+
+      if (code4) {
+        // Update the unit's status via API
+        $.ajax({
+          url: `${API_URL}/api/v1/community/${encodeURIComponent(communityId)}/members/${encodeURIComponent(userIdToUpdate)}/tenCode`,
+          method: 'PUT',
+          data: JSON.stringify({
+            departmentId: departmentId,
+            tenCodeID: code4._id
+          }),
+          contentType: 'application/json',
+          success: function(res) {
+            // Update local cache
+            if (!memberDataCache[userIdToUpdate]) memberDataCache[userIdToUpdate] = {};
+            memberDataCache[userIdToUpdate].tenCodeID = code4._id;
+
+            // Re-render to update card styling
+            renderUnitsGrid();
+
+            // Emit socket event for real-time updates
+            if (dashboardSocket) {
+              dashboardSocket.emit('update_status', {
+                userID: userIdToUpdate,
+                status: code4.code,
+                statusCode: code4._id,
+                setBy: dbUser.user?.username || 'Dispatch',
+                communityId: communityId
+              });
+            }
+
+            showRealTimeToast('status', 'Signal 100 Cleared - Unit set to Code 4', 'success');
+          },
+          error: function(xhr) {
+            console.error('Error updating unit status to Code 4:', xhr.responseText);
+            showRealTimeToast('status', 'Signal 100 Cleared', 'success');
+          }
+        });
+      } else {
+        showRealTimeToast('status', 'Signal 100 Cleared', 'success');
+      }
+    } else {
+      showRealTimeToast('status', 'Signal 100 Cleared', 'success');
+    }
+
+    // Hide the banner and modal
+    $('#signal-100-banner').removeClass('show').addClass('hide');
+    $('#signal-100-details').text('');
+    hideClearSignal100Modal();
+  }
+
   function clearSignal100() {
-    var socket=io();
-      socket.emit('clear_signal_100', dbUser.user.activeCommunity)
-    $('#signal-100-banner').removeClass('show').addClass('hide')
+    // Legacy function - now handled by confirmClearSignal100
+    confirmClearSignal100();
   }
 
   function clearHoldTraffic() {
@@ -3338,7 +4963,7 @@
   }
 
   function updateStatus(status) {
-    var socket=io();
+    var socket = window.dashboardSocket || io();
     var onDuty=null
     var updateDuty=false
     if (status=='10-41') {
@@ -3350,12 +4975,14 @@
       updateDuty=true
       status="Offline"
     }
+    const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
     myReq={
       userID: $('#userIDDispatch').val(),
       status: status,
       setBy: 'Dispatch',
       onDuty: onDuty,
-      updateDuty: updateDuty
+      updateDuty: updateDuty,
+      communityId: communityId
     }
     socket.emit('update_status', myReq)
 
@@ -3363,12 +4990,14 @@
   }
 
   $('#clearPanic').one('click', function () {
-    var socket=io();
+    var socket = window.dashboardSocket || io();
     $('#clear-panic-form').submit(function (e) {
       e.preventDefault(); //prevents page from reloading
+      const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
       var myReq={
         userID: $('#panic-id').val(),
-        communityID: dbUser.user.activeCommunity
+        communityID: dbUser.user.activeCommunity,
+        communityId: communityId
       }
       socket.emit('clear_panic', myReq)
       panicButtonEnabled=true
@@ -3378,7 +5007,8 @@
         status: '10-8',
         setBy: 'System',
         onDuty: null,
-        updateDuty: false
+        updateDuty: false,
+        communityId: communityId
       }
       socket.emit('update_status', myUpdateReq)
       return true;
@@ -3860,16 +5490,25 @@
     })
   }
 
-  function signal100() {
+  function signal100(aboutUserId, aboutCallSign, aboutUsername) {
     //if it is already showing we don't want to show it again (there can only be 1 active
     // signal 100 per community)
     if (!$('#signal-100-banner').hasClass('show')) {
-      
+
       var socket=io();
       myReq={
         userID: dbUser._id,
         userUsername: dbUser.user.username,
-        activeCommunity: dbUser.user.activeCommunity
+        userCallSign: dbUser.user.callSign || null,
+        activeCommunity: dbUser.user.activeCommunity,
+        activatedBy: 'Dispatch',
+        activatedByCallSign: dbUser.user.callSign || null,
+        activatedByUsername: dbUser.user.username,
+        // If Signal 100 is about a specific user (e.g., officer pressed it for themselves)
+        aboutUserId: aboutUserId || null,
+        aboutCallSign: aboutCallSign || null,
+        aboutUsername: aboutUsername || null,
+        timestamp: new Date().toISOString()
       }
       if ($('#panic-button-check-sound').prop('checked')) {
         var audioElement=document.createElement('audio');
@@ -3879,7 +5518,59 @@
       }
 
       socket.emit('signal_100_button_update', myReq)
+
+      // Also update local banner with details
+      updateSignal100Banner(myReq);
     }
+  }
+
+  // Helper function to update Signal 100 banner with details
+  function updateSignal100Banner(data) {
+    const $banner = $('#signal-100-banner');
+    const $details = $('#signal-100-details');
+
+    // Store the user ID for when we clear the Signal 100
+    // Priority: aboutUserId (the officer in distress), then userID (who triggered it)
+    signal100UserId = data.aboutUserId || data.userID || null;
+
+    // Build the message
+    let message = '';
+
+    // Determine who activated it (prefer username for dispatch, callsign for officers)
+    let activatedByDisplay;
+    if (data.activatedBy === 'Dispatch') {
+      // For dispatch, use username or fallback to 'Dispatch'
+      activatedByDisplay = data.activatedByUsername || 'Dispatch';
+    } else {
+      // For officers, prefer callsign
+      activatedByDisplay = data.activatedByCallSign || data.activatedByUsername || data.activatedBy || 'Unknown';
+    }
+
+    // The person the Signal 100 is about (the officer in distress)
+    const aboutUser = data.aboutCallSign || data.aboutUsername || null;
+
+    // Build appropriate message
+    if (data.activatedBy === 'Dispatch' && aboutUser) {
+      // Dispatch activated for a specific officer
+      message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
+    } else if (aboutUser && aboutUser !== activatedByDisplay) {
+      // Someone activated it for another person
+      message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
+    } else if (aboutUser) {
+      // Officer activated for themselves
+      message = `Activated by ${aboutUser}`;
+    } else {
+      // Generic activation
+      message = `Activated by ${activatedByDisplay}`;
+    }
+
+    // Update the details span
+    if ($details.length) {
+      $details.text(message);
+    }
+
+    // Show the banner
+    $banner.removeClass('hide').addClass('show');
   }
 
   function holdTraffic() {

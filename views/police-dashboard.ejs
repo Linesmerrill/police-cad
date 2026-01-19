@@ -47,6 +47,201 @@
   <style type='text/css'> iframe.goog-te-banner-frame{ display: none !important;}</style>
   <style type='text/css'> body {position: static !important; top:0px !important;}</style>
   <style>
+  /* Signal 100 Banner - Modern Mobile-Friendly Design */
+  .signal-100-banner {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    padding: 12px 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4);
+    transition: all 0.3s ease;
+    animation: signal100Glow 1.5s ease-in-out infinite;
+  }
+  .signal-100-banner:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+  }
+  .signal-100-banner.hide {
+    display: none;
+  }
+  .signal-100-banner.show {
+    display: block;
+  }
+  @keyframes signal100Glow {
+    0%, 100% { box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4); }
+    50% { box-shadow: 0 4px 30px rgba(220, 38, 38, 0.7); }
+  }
+  .signal-100-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .signal-100-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .signal-100-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+  .signal-100-icon i {
+    font-size: 24px;
+    color: #fff;
+    z-index: 2;
+    position: relative;
+  }
+  .signal-100-pulse {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    animation: signal100Pulse 1s ease-out infinite;
+  }
+  @keyframes signal100Pulse {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+  .signal-100-text {
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+  }
+  .signal-100-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  .signal-100-details {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .signal-100-tap {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+    padding: 4px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+  }
+  @media (max-width: 480px) {
+    .signal-100-banner {
+      padding: 10px 12px;
+    }
+    .signal-100-content {
+      gap: 8px;
+    }
+    .signal-100-icon {
+      width: 28px;
+      height: 28px;
+    }
+    .signal-100-icon i {
+      font-size: 18px;
+    }
+    .signal-100-title {
+      font-size: 15px;
+      letter-spacing: 1px;
+    }
+    .signal-100-details {
+      font-size: 11px;
+    }
+    .signal-100-tap {
+      font-size: 9px;
+      padding: 3px 6px;
+    }
+  }
+
+  /* Clear Signal 100 Modal */
+  .clear-signal-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .clear-signal-modal-overlay.show {
+    display: flex;
+  }
+  .clear-signal-modal {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    animation: modalSlideIn 0.2s ease-out;
+  }
+  @keyframes modalSlideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .clear-signal-modal h3 {
+    color: #fff;
+    margin: 0 0 8px 0;
+    font-size: 20px;
+  }
+  .clear-signal-modal p {
+    color: #94a3b8;
+    margin: 0 0 20px 0;
+    font-size: 14px;
+  }
+  .clear-signal-modal-buttons {
+    display: flex;
+    gap: 12px;
+  }
+  .clear-signal-modal-buttons button {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .clear-signal-btn-cancel {
+    background: #374151;
+    color: #fff;
+  }
+  .clear-signal-btn-cancel:hover {
+    background: #4b5563;
+  }
+  .clear-signal-btn-confirm {
+    background: #dc2626;
+    color: #fff;
+  }
+  .clear-signal-btn-confirm:hover {
+    background: #ef4444;
+  }
+
   #tenCodesTable tbody tr {
     cursor: pointer;
   }
@@ -298,13 +493,21 @@
           </div>
           
         </div>
-        <a style="z-index: 8;width: 100%; cursor: default;">
-          <div id="signal-100-banner" class="panel panel-danger hide">
-            <div class="panel-heading">
-              <span class="panel-title">🚨🚨🚨 Signal 100 In Effect! 🚨🚨🚨</span>
+        <div id="signal-100-banner" class="signal-100-banner hide" onclick="showClearSignal100Modal()">
+          <div class="signal-100-content">
+            <div class="signal-100-row">
+              <div class="signal-100-icon">
+                <span class="signal-100-pulse"></span>
+                <i class="fa fa-exclamation-triangle"></i>
+              </div>
+              <div class="signal-100-text">
+                <div class="signal-100-title">SIGNAL 100</div>
+                <div id="signal-100-details" class="signal-100-details"></div>
+              </div>
             </div>
+            <div class="signal-100-tap">Tap to clear</div>
           </div>
-        </a>
+        </div>
         <a style="z-index: 8;width: 100%; cursor: default;">
           <div id="hold-traffic-banner" class="panel panel-warning hide">
             <div class="panel-heading">
@@ -313,6 +516,18 @@
           </div>
         </a>
       </nav>
+
+      <!-- Clear Signal 100 Confirmation Modal (outside nav for proper z-index) -->
+      <div id="clear-signal-100-modal" class="clear-signal-modal-overlay" onclick="hideClearSignal100Modal(event)">
+        <div class="clear-signal-modal" onclick="event.stopPropagation()">
+          <h3>Clear Signal 100?</h3>
+          <p>This will notify all units that the emergency has been resolved.</p>
+          <div class="clear-signal-modal-buttons">
+            <button class="clear-signal-btn-cancel" onclick="hideClearSignal100Modal()">Cancel</button>
+            <button class="clear-signal-btn-confirm" onclick="confirmClearSignal100()">Clear Signal 100</button>
+          </div>
+        </div>
+      </div>
 
       <header id="second" style='background-image: url("/static/images/hway_bkground.jpg");'>
         <div class="header-content margin-top-2">
@@ -402,39 +617,367 @@
                                               </div>
                                             </noscript>
                                             
-                                            <div class="modal-body">
-  <h4>10-Codes</h4>
-  <hr style="width: 88%;max-width: 100rem;">
-  
-  <div class="form-group">
-    <label for="tenCodeSearch" class="col-md-4 control-label">Search 10-Codes:</label>
-    <div class="col-md-8">
-      <input id="tenCodeSearch" type="text" placeholder="Search by code or description" class="form-control input-md">
-    </div>
-  </div>
+                                            <!-- Modern 10-Codes Status Panel -->
+                                            <div id="statusPanel" class="status-panel">
+                                              <div class="status-panel-header">
+                                                <div class="status-panel-title">
+                                                  <i class="fa fa-broadcast-tower"></i>
+                                                  <span>STATUS CODES</span>
+                                                </div>
+                                                <div id="currentStatusBadge" class="current-status-badge">
+                                                  <span class="status-label">Current:</span>
+                                                  <span id="currentStatusCode" class="status-code">--</span>
+                                                </div>
+                                              </div>
 
-  <div id="noTenCodes" class="alert alert-info" style="display: none;">
-    No 10-codes available for this community.
-  </div>
+                                              <div id="noTenCodes" class="alert alert-info" style="display: none; margin: 1rem;">
+                                                No 10-codes available for this community.
+                                              </div>
 
-  <div class="" style="color: grey; margin-top: 2em; padding-top: 2em; font-size: 1.2em;">
-    <h5> Click on the code to set as your status.</h5>
-  </div>
+                                              <!-- Quick Status Grid - Most Common Codes -->
+                                              <div id="quickStatusGrid" class="quick-status-grid">
+                                                <!-- Populated by JavaScript -->
+                                              </div>
 
-  <table id="tenCodesTable" class="table table-striped table-bordered" style="display: none;">
-    <thead>
-      <tr>
-        <th>Code</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody id="tenCodesBody"></tbody>
-  </table>
+                                              <!-- View All Button -->
+                                              <button id="viewAllCodesBtn" class="view-all-codes-btn" onclick="toggleAllCodes()">
+                                                <i class="fa fa-chevron-down"></i>
+                                                <span>View All Codes</span>
+                                              </button>
 
-  <nav aria-label="10-Codes Pagination">
-    <ul id="tenCodesPagination" class="pagination justify-content-center"></ul>
-  </nav>
-</div>
+                                              <!-- Expanded All Codes Section -->
+                                              <div id="allCodesSection" class="all-codes-section" style="display: none;">
+                                                <div class="codes-search-container">
+                                                  <i class="fa fa-search"></i>
+                                                  <input id="tenCodeSearch" type="text" placeholder="Search codes..." class="codes-search-input">
+                                                </div>
+                                                <div id="allCodesGrid" class="all-codes-grid">
+                                                  <!-- Populated by JavaScript -->
+                                                </div>
+                                                <nav aria-label="10-Codes Pagination">
+                                                  <ul id="tenCodesPagination" class="pagination justify-content-center"></ul>
+                                                </nav>
+                                              </div>
+                                            </div>
+
+                                            <style>
+                                              /* Status Panel Styles */
+                                              .status-panel {
+                                                background: linear-gradient(135deg, #1a1f2e 0%, #2d3548 100%);
+                                                border-radius: 12px;
+                                                border: 1px solid rgba(59, 130, 246, 0.3);
+                                                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+                                                margin: 1.5rem auto;
+                                                max-width: 800px;
+                                                overflow: hidden;
+                                              }
+
+                                              .status-panel-header {
+                                                display: flex;
+                                                justify-content: space-between;
+                                                align-items: center;
+                                                padding: 1rem 1.5rem;
+                                                background: rgba(59, 130, 246, 0.1);
+                                                border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+                                              }
+
+                                              .status-panel-title {
+                                                display: flex;
+                                                align-items: center;
+                                                gap: 0.75rem;
+                                                color: #60a5fa;
+                                                font-weight: 700;
+                                                font-size: 1.1rem;
+                                                letter-spacing: 0.05em;
+                                              }
+
+                                              .status-panel-title i {
+                                                font-size: 1.25rem;
+                                              }
+
+                                              .current-status-badge {
+                                                display: flex;
+                                                align-items: center;
+                                                gap: 0.5rem;
+                                                background: rgba(16, 185, 129, 0.2);
+                                                padding: 0.5rem 1rem;
+                                                border-radius: 20px;
+                                                border: 1px solid rgba(16, 185, 129, 0.4);
+                                                transition: all 0.3s ease;
+                                              }
+
+                                              /* Emergency badge state - pulsing red */
+                                              .current-status-badge.emergency {
+                                                background: rgba(239, 68, 68, 0.25);
+                                                border-color: rgba(239, 68, 68, 0.6);
+                                                animation: pulse-emergency-badge 1.5s ease-in-out infinite;
+                                              }
+
+                                              .current-status-badge.emergency .status-code {
+                                                color: #ef4444;
+                                              }
+
+                                              @keyframes pulse-emergency-badge {
+                                                0%, 100% {
+                                                  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+                                                  background: rgba(239, 68, 68, 0.2);
+                                                }
+                                                50% {
+                                                  box-shadow: 0 0 20px rgba(239, 68, 68, 0.7), 0 0 40px rgba(239, 68, 68, 0.3);
+                                                  background: rgba(239, 68, 68, 0.35);
+                                                }
+                                              }
+
+                                              .status-label {
+                                                color: #9ca3af;
+                                                font-size: 0.85rem;
+                                              }
+
+                                              .status-code {
+                                                color: #10b981;
+                                                font-weight: 700;
+                                                font-size: 1rem;
+                                              }
+
+                                              .quick-status-grid {
+                                                display: grid;
+                                                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                                                gap: 0.75rem;
+                                                padding: 1.25rem;
+                                              }
+
+                                              .status-card {
+                                                background: rgba(30, 41, 59, 0.8);
+                                                border: 2px solid rgba(71, 85, 105, 0.5);
+                                                border-radius: 10px;
+                                                padding: 1rem;
+                                                cursor: pointer;
+                                                transition: all 0.2s ease;
+                                                text-align: center;
+                                              }
+
+                                              .status-card:hover {
+                                                border-color: #3b82f6;
+                                                background: rgba(59, 130, 246, 0.15);
+                                                transform: translateY(-2px);
+                                                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                                              }
+
+                                              .status-card.active {
+                                                border-color: #10b981;
+                                                background: rgba(16, 185, 129, 0.2);
+                                                box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+                                              }
+
+                                              .status-card.active .status-card-code {
+                                                color: #10b981;
+                                              }
+
+                                              .status-card-code {
+                                                font-size: 1.25rem;
+                                                font-weight: 700;
+                                                color: #f1f5f9;
+                                                margin-bottom: 0.25rem;
+                                              }
+
+                                              .status-card-desc {
+                                                font-size: 0.75rem;
+                                                color: #94a3b8;
+                                                overflow: hidden;
+                                                text-overflow: ellipsis;
+                                                white-space: nowrap;
+                                              }
+
+                                              /* Category Colors */
+                                              .status-card.available { border-left: 4px solid #10b981; }
+                                              .status-card.busy { border-left: 4px solid #f59e0b; }
+                                              .status-card.emergency { border-left: 4px solid #ef4444; }
+                                              .status-card.offline { border-left: 4px solid #6b7280; }
+
+                                              /* Emergency active state - pulsing red animation */
+                                              .status-card.emergency.active {
+                                                border-color: #ef4444;
+                                                background: rgba(239, 68, 68, 0.25);
+                                                box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+                                                animation: pulse-emergency-card 1.5s ease-in-out infinite;
+                                              }
+
+                                              .status-card.emergency.active .status-card-code {
+                                                color: #ef4444;
+                                              }
+
+                                              @keyframes pulse-emergency-card {
+                                                0%, 100% {
+                                                  box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+                                                  background: rgba(239, 68, 68, 0.2);
+                                                }
+                                                50% {
+                                                  box-shadow: 0 0 30px rgba(239, 68, 68, 0.8), 0 0 60px rgba(239, 68, 68, 0.4);
+                                                  background: rgba(239, 68, 68, 0.35);
+                                                }
+                                              }
+
+                                              .view-all-codes-btn {
+                                                display: flex;
+                                                align-items: center;
+                                                justify-content: center;
+                                                gap: 0.5rem;
+                                                width: calc(100% - 2.5rem);
+                                                margin: 0 1.25rem 1.25rem;
+                                                padding: 0.75rem;
+                                                background: rgba(59, 130, 246, 0.1);
+                                                border: 1px dashed rgba(59, 130, 246, 0.4);
+                                                border-radius: 8px;
+                                                color: #60a5fa;
+                                                font-weight: 600;
+                                                cursor: pointer;
+                                                transition: all 0.2s ease;
+                                              }
+
+                                              .view-all-codes-btn:hover {
+                                                background: rgba(59, 130, 246, 0.2);
+                                                border-color: #3b82f6;
+                                              }
+
+                                              .view-all-codes-btn.expanded i {
+                                                transform: rotate(180deg);
+                                              }
+
+                                              .all-codes-section {
+                                                border-top: 1px solid rgba(71, 85, 105, 0.3);
+                                                padding: 1.25rem;
+                                                background: rgba(15, 23, 42, 0.5);
+                                              }
+
+                                              .codes-search-container {
+                                                display: flex;
+                                                align-items: center;
+                                                gap: 0.75rem;
+                                                background: rgba(30, 41, 59, 0.8);
+                                                border: 1px solid rgba(71, 85, 105, 0.5);
+                                                border-radius: 8px;
+                                                padding: 0.75rem 1rem;
+                                                margin-bottom: 1rem;
+                                              }
+
+                                              .codes-search-container i {
+                                                color: #64748b;
+                                              }
+
+                                              .codes-search-input {
+                                                flex: 1;
+                                                background: transparent;
+                                                border: none;
+                                                color: #f1f5f9;
+                                                font-size: 0.95rem;
+                                                outline: none;
+                                              }
+
+                                              .codes-search-input::placeholder {
+                                                color: #64748b;
+                                              }
+
+                                              .all-codes-grid {
+                                                display: grid;
+                                                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                                                gap: 0.5rem;
+                                                max-height: 300px;
+                                                overflow-y: auto;
+                                                padding-right: 0.5rem;
+                                              }
+
+                                              .all-codes-grid::-webkit-scrollbar {
+                                                width: 6px;
+                                              }
+
+                                              .all-codes-grid::-webkit-scrollbar-track {
+                                                background: rgba(30, 41, 59, 0.5);
+                                                border-radius: 3px;
+                                              }
+
+                                              .all-codes-grid::-webkit-scrollbar-thumb {
+                                                background: rgba(59, 130, 246, 0.5);
+                                                border-radius: 3px;
+                                              }
+
+                                              .code-list-item {
+                                                display: flex;
+                                                align-items: center;
+                                                gap: 0.75rem;
+                                                padding: 0.6rem 0.75rem;
+                                                background: rgba(30, 41, 59, 0.6);
+                                                border: 1px solid rgba(71, 85, 105, 0.3);
+                                                border-radius: 6px;
+                                                cursor: pointer;
+                                                transition: all 0.15s ease;
+                                              }
+
+                                              .code-list-item:hover {
+                                                background: rgba(59, 130, 246, 0.15);
+                                                border-color: rgba(59, 130, 246, 0.5);
+                                              }
+
+                                              .code-list-item.active {
+                                                background: rgba(16, 185, 129, 0.15);
+                                                border-color: rgba(16, 185, 129, 0.5);
+                                              }
+
+                                              .code-list-code {
+                                                font-weight: 700;
+                                                color: #60a5fa;
+                                                min-width: 50px;
+                                              }
+
+                                              .code-list-item.active .code-list-code {
+                                                color: #10b981;
+                                              }
+
+                                              /* Emergency codes in the list - red styling */
+                                              .code-list-item.emergency {
+                                                border-left: 3px solid #ef4444;
+                                              }
+
+                                              .code-list-item.emergency .code-list-code {
+                                                color: #ef4444;
+                                              }
+
+                                              .code-list-item.emergency.active {
+                                                background: rgba(239, 68, 68, 0.15);
+                                                border-color: rgba(239, 68, 68, 0.5);
+                                                border-left: 3px solid #ef4444;
+                                                animation: pulse-emergency-list 1.5s ease-in-out infinite;
+                                              }
+
+                                              @keyframes pulse-emergency-list {
+                                                0%, 100% {
+                                                  background: rgba(239, 68, 68, 0.15);
+                                                }
+                                                50% {
+                                                  background: rgba(239, 68, 68, 0.25);
+                                                }
+                                              }
+
+                                              .code-list-desc {
+                                                font-size: 0.8rem;
+                                                color: #94a3b8;
+                                                overflow: hidden;
+                                                text-overflow: ellipsis;
+                                                white-space: nowrap;
+                                              }
+
+                                              /* Hide old table elements */
+                                              #tenCodesTable { display: none !important; }
+
+                                              @media (max-width: 600px) {
+                                                .quick-status-grid {
+                                                  grid-template-columns: repeat(2, 1fr);
+                                                }
+                                                .status-panel-header {
+                                                  flex-direction: column;
+                                                  gap: 0.75rem;
+                                                }
+                                              }
+                                            </style>
                                             <% } %>
 
                                               
@@ -1737,6 +2280,15 @@
 <!--scripts loaded here -->
 <script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
 <script src="/socket.io/socket.io.js"></script>
+<script>
+  // Fallback to CDN if socket.io not served by server
+  if (typeof io === 'undefined') {
+    var script = document.createElement('script');
+    script.src = 'https://cdn.socket.io/4.7.2/socket.io.min.js';
+    script.crossOrigin = 'anonymous';
+    document.head.appendChild(script);
+  }
+</script>
 <script src="/static/js/jquery.min.js"></script>
 <script src="/static/js/jquery.easing.min.js"></script>
 <script src="/static/js/wow.js"></script>
@@ -2100,6 +2652,7 @@
     var dbUser = <%- JSON.stringify(user) %>;
     const API_URL = 'https://police-cad-app-api-bc6d659b60b3.herokuapp.com';
 var departmentId = <%- JSON.stringify(departmentId) %>;
+var departmentName = <%- JSON.stringify(departmentName || null) %>;
 var tenCodesCache = [];
 var tenCodeMap = {}; // Map tenCodeID to code (e.g., { "123": "10-8" })
 var filteredTenCodes = [];
@@ -2135,7 +2688,12 @@ const codesPerPage = 10;
 function updateStatus(statusCode) {
   const userId = dbUser._id;
   const communityId = dbUser.user?.lastAccessedCommunity.communityID;
-  const data = { departmentID: departmentId, tenCodeID: statusCode };
+  const data = {
+    departmentID: departmentId,
+    tenCodeID: statusCode,
+    activeDepartmentId: departmentId,
+    activeDepartmentName: departmentName || 'Police'
+  };
   $.ajax({
     url: `https://police-cad-app-api-bc6d659b60b3.herokuapp.com/api/v1/community/${communityId}/members/${userId}/tenCode`,
     method: 'PUT',
@@ -2150,6 +2708,50 @@ function updateStatus(statusCode) {
         fontSize: "18px"
       }, 600);
       $('#statusSetBy').text(`Set By: ${dbUser.user.username}`);
+
+      // Emit socket event to notify other clients (dispatch, other officers)
+      if (dashboardSocket && dashboardSocket.connected) {
+        dashboardSocket.emit('update_status', {
+          userID: userId,
+          status: status,
+          statusCode: statusCode,
+          setBy: dbUser.user.username,
+          communityId: communityId,
+          updateDuty: false,
+          activeDepartmentId: departmentId,
+          activeDepartmentName: departmentName || 'Police'
+        });
+
+        // Check if this is specifically Signal 100 - trigger community-wide alert
+        // Only actual Signal 100 codes should broadcast, not all emergency codes like 10-99
+        const tenCode = tenCodesCache.find(tc => tc._id === statusCode);
+        if (tenCode && isSignal100Code(tenCode.code, tenCode.description)) {
+            // Emit Signal 100 alert
+            dashboardSocket.emit('signal_100_button_update', {
+              userID: userId,
+              userUsername: dbUser.user.username,
+              userCallSign: dbUser.user.callSign || null,
+              activeCommunity: communityId,
+              activatedBy: 'Officer',
+              activatedByCallSign: dbUser.user.callSign || null,
+              activatedByUsername: dbUser.user.username,
+              aboutUserId: userId,
+              aboutCallSign: dbUser.user.callSign || null,
+              aboutUsername: dbUser.user.username,
+              statusCode: tenCode.code,
+              timestamp: new Date().toISOString()
+            });
+
+            // Update local banner
+            updateSignal100Banner({
+              activatedBy: 'Officer',
+              activatedByCallSign: dbUser.user.callSign,
+              activatedByUsername: dbUser.user.username,
+              aboutCallSign: dbUser.user.callSign,
+              aboutUsername: dbUser.user.username
+            });
+        }
+      }
     },
     error: function(xhr) {
       console.error('Error updating status:', xhr.responseText);
@@ -2172,6 +2774,11 @@ function selectTenCode(tenCodeID) {
     alert('Selected 10-code not found.');
     return;
   }
+  // Immediately update UI for responsive feel
+  currentTenCodeID = tenCodeID;
+  $('#currentStatusCode').text(tenCode.code);
+  updateStatusCardHighlights(tenCodeID);
+
   updateStatus(tenCodeID);
   $('#10codesModal').modal('hide'); // Close modal after selection
 }
@@ -2348,6 +2955,9 @@ function loadTenCodes() {
   });
 }
 
+// Track current status code ID for UI highlighting
+var currentTenCodeID = null;
+
 // Fetch and display user's current 10-code status
 function loadCurrentStatus() {
   const userId = dbUser._id;
@@ -2358,24 +2968,293 @@ function loadCurrentStatus() {
     success: function(data) {
       const tenCodeID = data?.community?.members[userId]?.tenCodeID;
       if (tenCodeID && tenCodeMap[tenCodeID]) {
-        $('#currentStatus').text(`Your Current Status: ${tenCodeMap[tenCodeID]}`);
+        currentTenCodeID = tenCodeID;
+        const statusCode = tenCodeMap[tenCodeID];
+        $('#currentStatus').text(`Your Current Status: ${statusCode}`);
         $('#statusSetBy').text(`Set By: ${dbUser.user.username}`);
+        // Update new status panel
+        $('#currentStatusCode').text(statusCode);
+        updateStatusCardHighlights(tenCodeID);
       } else {
+        currentTenCodeID = null;
         $('#currentStatus').text('Your Current Status: None');
         $('#statusSetBy').text('Set By: None');
+        $('#currentStatusCode').text('--');
+        updateStatusCardHighlights(null);
       }
     },
     error: function(xhr) {
       console.error('Error loading current status:', xhr.responseText);
       $('#currentStatus').text('Your Current Status: Unknown');
       $('#statusSetBy').text('Set By: None');
-      alert('Failed to load current status: ' + (xhr.responseJSON?.message || 'Unknown error'));
+      $('#currentStatusCode').text('--');
     }
   });
 }
 
-  // Function to display 10-codes with pagination
+// Update status card highlights based on current status
+function updateStatusCardHighlights(activeCodeId) {
+  // Remove active class from all cards
+  $('.status-card, .code-list-item').removeClass('active');
+  // Add active class to current status
+  if (activeCodeId) {
+    $(`.status-card[data-ten-code-id="${activeCodeId}"]`).addClass('active');
+    $(`.code-list-item[data-ten-code-id="${activeCodeId}"]`).addClass('active');
+  }
+
+  // Update emergency state on the current status badge
+  updateEmergencyBadgeState(activeCodeId);
+}
+
+// Update the current status badge to show emergency pulsing if needed
+function updateEmergencyBadgeState(activeCodeId) {
+  const $badge = $('#currentStatusBadge');
+
+  if (activeCodeId) {
+    // Find the ten code data
+    const tenCode = tenCodesCache.find(tc => tc._id === activeCodeId);
+    if (tenCode) {
+      const category = getCodeCategory(tenCode.code, tenCode.description);
+      if (category === 'emergency') {
+        $badge.addClass('emergency');
+        return;
+      }
+    }
+  }
+
+  // Remove emergency class if not an emergency status
+  $badge.removeClass('emergency');
+}
+
+// Helper function to update Signal 100 banner with details
+function updateSignal100Banner(data) {
+  const $banner = $('#signal-100-banner');
+  const $details = $('#signal-100-details');
+
+  // Build the message
+  let message = '';
+
+  // Determine who activated it (prefer username for dispatch, callsign for officers)
+  let activatedByDisplay;
+  if (data.activatedBy === 'Dispatch') {
+    // For dispatch, use username or fallback to 'Dispatch'
+    activatedByDisplay = data.activatedByUsername || 'Dispatch';
+  } else {
+    // For officers, prefer callsign
+    activatedByDisplay = data.activatedByCallSign || data.activatedByUsername || data.activatedBy || 'Unknown';
+  }
+
+  // The person the Signal 100 is about (the officer in distress)
+  const aboutUser = data.aboutCallSign || data.aboutUsername || null;
+
+  // Build appropriate message
+  if (data.activatedBy === 'Dispatch' && aboutUser) {
+    // Dispatch activated for a specific officer
+    message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
+  } else if (aboutUser && aboutUser !== activatedByDisplay) {
+    // Someone activated it for another person
+    message = `Activated by ${activatedByDisplay} for ${aboutUser}`;
+  } else if (aboutUser) {
+    // Officer activated for themselves
+    message = `Activated by ${aboutUser}`;
+  } else {
+    // Generic activation
+    message = `Activated by ${activatedByDisplay}`;
+  }
+
+  // Update the details span
+  if ($details.length) {
+    $details.text(message);
+  }
+
+  // Show the banner
+  $banner.removeClass('hide').addClass('show');
+}
+
+// Show the clear Signal 100 confirmation modal
+function showClearSignal100Modal() {
+  $('#clear-signal-100-modal').addClass('show');
+}
+
+// Hide the clear Signal 100 confirmation modal
+function hideClearSignal100Modal(event) {
+  // If called from overlay click, only close if clicking the overlay itself
+  if (event && event.target !== event.currentTarget) return;
+  $('#clear-signal-100-modal').removeClass('show');
+}
+
+// Confirm and broadcast Signal 100 cleared
+function confirmClearSignal100() {
+  const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+
+  // Emit clear signal to server
+  if (dashboardSocket && dashboardSocket.connected) {
+    dashboardSocket.emit('clear_signal_100', communityId);
+  }
+
+  // Find Code 4 in the ten codes cache and set status to it
+  const code4 = tenCodesCache.find(tc =>
+    tc.code.toLowerCase() === 'code 4' ||
+    tc.description.toLowerCase().includes('under control')
+  );
+
+  if (code4) {
+    // Update status to Code 4
+    updateStatus(code4._id);
+    currentTenCodeID = code4._id;
+    updateStatusCardHighlights(code4._id);
+  }
+
+  // Hide the banner and modal locally
+  $('#signal-100-banner').removeClass('show').addClass('hide');
+  $('#signal-100-details').text('');
+  hideClearSignal100Modal();
+
+  // Show confirmation toast
+  showRealTimeToast('status', 'Signal 100 Cleared - Status set to Code 4', 'success');
+}
+
+// Toggle show all codes section
+function toggleAllCodes() {
+  const section = $('#allCodesSection');
+  const btn = $('#viewAllCodesBtn');
+  if (section.is(':visible')) {
+    section.slideUp(200);
+    btn.removeClass('expanded');
+    btn.find('span').text('View All Codes');
+  } else {
+    section.slideDown(200);
+    btn.addClass('expanded');
+    btn.find('span').text('Hide All Codes');
+    displayAllCodes(filteredTenCodes);
+  }
+}
+
+// Check if a code is specifically Signal 100 (for broadcasting alerts)
+// This is separate from emergency category - only Signal 100 triggers the banner/broadcast
+function isSignal100Code(code, description) {
+  const codeLower = code.toLowerCase();
+  const descLower = description.toLowerCase();
+  return codeLower.includes('signal 100') ||
+         descLower.includes('signal 100') ||
+         descLower.includes('hold all traffic');
+}
+
+// Get category for a 10-code based on common patterns
+function getCodeCategory(code, description) {
+  const codeNum = code.replace(/\D/g, '');
+  const descLower = description.toLowerCase();
+  const codeLower = code.toLowerCase();
+
+  // Emergency codes (for red styling) - includes Signal 100, 10-99, etc.
+  if (descLower.includes('emergency') || descLower.includes('pursuit') ||
+      descLower.includes('officer down') || descLower.includes('shots fired') ||
+      descLower.includes('hold all') || codeLower.includes('signal 100') ||
+      code === '10-33' || code === '10-99' || code === '10-00') {
+    return 'emergency';
+  }
+  // Offline/End of shift
+  if (descLower.includes('off duty') || descLower.includes('end of') ||
+      descLower.includes('out of service') || code === '10-42' || code === '10-7') {
+    return 'offline';
+  }
+  // Busy
+  if (descLower.includes('busy') || descLower.includes('traffic stop') ||
+      descLower.includes('investigation') || descLower.includes('en route') ||
+      code === '10-6' || code === '10-11' || code === '10-17') {
+    return 'busy';
+  }
+  // Available
+  if (descLower.includes('available') || descLower.includes('in service') ||
+      descLower.includes('clear') || code === '10-8' || code === '10-41') {
+    return 'available';
+  }
+  return '';
+}
+
+// Display quick status grid with most common codes
+function displayQuickStatusCodes(codes) {
+  const quickGrid = $('#quickStatusGrid');
+  quickGrid.empty();
+
+  // Define preferred quick codes in order of priority
+  const preferredCodes = [
+    'signal 100', // Emergency
+    'code 4',     // Under Control
+    'signal 41',  // Log on to MDT
+    'signal 42',  // Log out of MDT
+    '10-8',       // In Service
+    '10-7',       // Out of Service
+    '10-11',      // Traffic Stop
+    '10-15',      // Subject in Custody
+    '10-99'       // Officer Needs Assistance
+  ];
+
+  // Find matching codes from the available codes
+  const quickCodes = [];
+  preferredCodes.forEach(preferred => {
+    const found = codes.find(c => c.code.toLowerCase() === preferred.toLowerCase());
+    if (found && !quickCodes.includes(found)) {
+      quickCodes.push(found);
+    }
+  });
+
+  // If we don't have 8, fill with remaining codes (excluding already added)
+  if (quickCodes.length < 8) {
+    codes.forEach(code => {
+      if (quickCodes.length >= 8) return;
+      if (!quickCodes.find(qc => qc._id === code._id)) {
+        quickCodes.push(code);
+      }
+    });
+  }
+
+  quickCodes.forEach(code => {
+    const category = getCodeCategory(code.code, code.description);
+    const isActive = currentTenCodeID === code._id ? 'active' : '';
+    quickGrid.append(
+      `<div class="status-card ${category} ${isActive}"
+           data-ten-code-id="${code._id}"
+           onclick="selectTenCode('${code._id}')"
+           title="${code.description}">
+        <div class="status-card-code">${code.code}</div>
+        <div class="status-card-desc">${code.description}</div>
+      </div>`
+    );
+  });
+}
+
+// Display all codes in the expanded section
+function displayAllCodes(codes) {
+  const allGrid = $('#allCodesGrid');
+  allGrid.empty();
+
+  codes.forEach(code => {
+    const category = getCodeCategory(code.code, code.description);
+    const isActive = currentTenCodeID === code._id ? 'active' : '';
+    allGrid.append(
+      `<div class="code-list-item ${category} ${isActive}"
+           data-ten-code-id="${code._id}"
+           onclick="selectTenCode('${code._id}')"
+           title="${code.description}">
+        <span class="code-list-code">${code.code}</span>
+        <span class="code-list-desc">${code.description}</span>
+      </div>`
+    );
+  });
+}
+
+// Function to display 10-codes with the new UI
 function displayTenCodes(codes) {
+  // Display quick status grid
+  displayQuickStatusCodes(codes);
+
+  // If all codes section is visible, update it too
+  if ($('#allCodesSection').is(':visible')) {
+    displayAllCodes(codes);
+  }
+
+  // Also update the old table for backward compatibility (hidden)
   const start = (currentPage - 1) * codesPerPage;
   const end = start + codesPerPage;
   const paginatedCodes = codes.slice(start, end);
@@ -2437,7 +3316,11 @@ function displayTenCodes(codes) {
       code.description.toLowerCase().includes(searchTerm)
     );
     currentPage = 1;
+    // Update both quick grid and all codes section
     displayTenCodes(filteredTenCodes);
+    if ($('#allCodesSection').is(':visible')) {
+      displayAllCodes(filteredTenCodes);
+    }
   }
 
     // Polling function to refresh dynamic data
@@ -3187,15 +4070,276 @@ window.showBoloModal = showBoloModal;
     });
   });
 
-  window.onload=function () {
-    var socket=io();
-    var myReq={
-      userID: dbUser._id,
-      userUsername: dbUser.user.username,
-      activeCommunity: dbUser.user?.lastAccessedCommunity.communityID
+  // Global socket instance for real-time updates
+  var dashboardSocket = null;
+  window.dashboardSocket = null; // Expose globally for other scripts
+
+  // Initialize socket with retry logic
+  function initializeRealtimeSocket() {
+    if (typeof io === 'undefined') {
+      // Retry after a short delay (socket.io CDN fallback may still be loading)
+      setTimeout(initializeRealtimeSocket, 100);
+      return;
     }
-    socket.emit('load_panic_statuses', myReq)
+
+    dashboardSocket = io();
+    window.dashboardSocket = dashboardSocket; // Sync global reference
+
+    const communityId = dbUser.user?.lastAccessedCommunity?.communityID;
+
+    // Function to join room and send initial requests
+    function onSocketConnected() {
+      // Join community room for targeted broadcasts
+      if (communityId) {
+        dashboardSocket.emit('join_community_room', { communityId: communityId });
+      }
+
+      // Load panic statuses
+      var myReq={
+        userID: dbUser._id,
+        userUsername: dbUser.user.username,
+        activeCommunity: dbUser.user?.lastAccessedCommunity.communityID
+      }
+      dashboardSocket.emit('load_panic_statuses', myReq);
+    }
+
+    // Connect handler - wait for connection before joining room
+    if (dashboardSocket.connected) {
+      onSocketConnected();
+    } else {
+      dashboardSocket.on('connect', onSocketConnected);
+    }
+
+    // Listen for room join confirmation
+    dashboardSocket.on('joined_room', function(data) {
+      // Room joined successfully
+    });
+    dashboardSocket.on('room_error', function(data) {
+      console.error('Room error:', data);
+    });
+
+    dashboardSocket.on('disconnect', function() {
+      // Socket disconnected
+    });
+
+    // ==========================================
+    // REAL-TIME SOCKET LISTENERS
+    // ==========================================
+
+    // Listen for member status updates
+    dashboardSocket.on('member_status_updated', function(data) {
+      // Check if this update is for our community
+      if (data.communityId && data.communityId !== communityId) return;
+
+      // Update units display if dispatch view is showing
+      updateUnitsDisplay(data);
+
+      // Check if this update is for the current user (e.g., dispatch changed our status)
+      if (data.userID === dbUser._id) {
+        // Update our own status display
+        const statusCode = data.status || 'Unknown';
+        const setBy = data.setBy || 'Unknown';
+
+        // Update the current status text
+        $('#currentStatus').text(`Your Current Status: ${statusCode}`);
+        $('#currentStatusCode').text(statusCode);
+
+        // Update currentTenCodeID for highlighting and refresh the status cards
+        if (data.statusCode) {
+          currentTenCodeID = data.statusCode;
+          updateStatusCardHighlights(data.statusCode);
+        }
+
+        // Show notification that someone else (dispatch) changed our status
+        // Only show if setBy is different from our own username
+        if (setBy && setBy !== dbUser.user.username) {
+          showRealTimeToast('status', `${setBy} set your status to: ${statusCode}`, 'info');
+        }
+      }
+      // Note: We don't show toasts for other users' routine status changes
+      // Signal 100 and 10-99 notifications come through the signal_100_button_updated event
+    });
+
+    // Listen for new BOLOs
+    dashboardSocket.on('created_bolo', function(data) {
+      // Check community match
+      const boloCommunityId = data.bolo?.activeCommunityID;
+      if (boloCommunityId && boloCommunityId !== communityId) return;
+
+      // Refresh BOLOs list
+      loadActiveBOLOs();
+
+      // Show prominent alert
+      showRealTimeToast('bolo', 'New BOLO Alert!', 'warning', data.bolo?.boloType || 'Unknown type');
+    });
+
+    // Listen for deleted BOLOs
+    dashboardSocket.on('deleted_bolo', function(data) {
+      if (data.communityId && data.communityId !== communityId) return;
+      loadActiveBOLOs();
+      showRealTimeToast('bolo', 'BOLO Cleared', 'success');
+    });
+
+    // Listen for new calls
+    dashboardSocket.on('created_call', function(data) {
+      const callCommunityId = data.call?.communityID;
+      if (callCommunityId && callCommunityId !== communityId) return;
+
+      // Refresh calls list
+      loadAssignedCalls();
+
+      // Show notification
+      const callType = data.call?.callType || 'New Call';
+      const location = data.call?.location || '';
+      showRealTimeToast('call', `New Call: ${callType}`, 'info', location);
+    });
+
+    // Listen for call updates
+    dashboardSocket.on('updated_call', function(data) {
+      const callCommunityId = data.call?.communityID;
+      if (callCommunityId && callCommunityId !== communityId) return;
+
+      loadAssignedCalls();
+      showRealTimeToast('call', 'Call Updated', 'info');
+    });
+
+    // Listen for cleared calls
+    dashboardSocket.on('cleared_call', function(data) {
+      if (data.communityId && data.communityId !== communityId) return;
+
+      loadAssignedCalls();
+      showRealTimeToast('call', 'Call Cleared', 'success');
+    });
+
+    // Listen for Signal 100 activation
+    dashboardSocket.on('signal_100_button_updated', function(data) {
+      if (data.activeCommunity && data.activeCommunity !== communityId) return;
+
+      // Play alert sound if enabled
+      if (dbUser.panicButtonSound) {
+        var audioElement = document.createElement('audio');
+        audioElement.setAttribute('src', '/static/audio/Dispatch_signal_100_beep_adj.mp3');
+        audioElement.volume = dbUser.user?.alertVolumeLevel / 100 || 0.5;
+        audioElement.play().catch(e => console.log('Audio play failed:', e));
+      }
+
+      // Update the banner with details
+      updateSignal100Banner(data);
+
+      // Show toast notification
+      const activatedBy = data.activatedByCallSign || data.activatedByUsername || 'Unknown';
+      showRealTimeToast('emergency', `🚨 Signal 100 Activated by ${activatedBy}!`, 'error');
+    });
+
+    // Listen for Signal 100 cleared
+    dashboardSocket.on('clear_signal_100_updated', function(activeCommunity) {
+      if (activeCommunity && activeCommunity !== communityId) return;
+
+      $('#signal-100-banner').removeClass('show').addClass('hide');
+      $('#signal-100-details').text('');
+      showRealTimeToast('status', 'Signal 100 Cleared', 'success');
+    });
+
   }
+
+  // Toast notification system for real-time updates
+  function showRealTimeToast(type, message, severity, details) {
+    // Create toast container if it doesn't exist
+    let container = document.getElementById('realtime-toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'realtime-toast-container';
+      container.style.cssText = 'position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;';
+      document.body.appendChild(container);
+    }
+
+    // Create toast
+    const toast = document.createElement('div');
+    const icons = {
+      status: 'fa-broadcast-tower',
+      bolo: 'fa-exclamation-triangle',
+      call: 'fa-phone',
+      emergency: 'fa-exclamation-circle'
+    };
+    const colors = {
+      info: 'rgba(59, 130, 246, 0.95)',
+      warning: 'rgba(245, 158, 11, 0.95)',
+      success: 'rgba(16, 185, 129, 0.95)',
+      error: 'rgba(239, 68, 68, 0.95)'
+    };
+
+    // Build toast content safely using DOM APIs to prevent XSS
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'display: flex; align-items: center; gap: 12px;';
+
+    const iconEl = document.createElement('i');
+    iconEl.className = 'fa ' + (icons[type] || 'fa-info-circle');
+    iconEl.style.fontSize = '1.25rem';
+    wrapper.appendChild(iconEl);
+
+    const textContainer = document.createElement('div');
+    const titleDiv = document.createElement('div');
+    titleDiv.style.fontWeight = '600';
+    titleDiv.textContent = message || '';
+    textContainer.appendChild(titleDiv);
+
+    if (details) {
+      const detailsDiv = document.createElement('div');
+      detailsDiv.style.cssText = 'font-size: 0.85rem; opacity: 0.9;';
+      detailsDiv.textContent = details;
+      textContainer.appendChild(detailsDiv);
+    }
+
+    wrapper.appendChild(textContainer);
+    toast.appendChild(wrapper);
+
+    toast.style.cssText = `
+      background: ${colors[severity] || colors.info};
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      animation: slideInRight 0.3s ease-out;
+      max-width: 320px;
+      cursor: pointer;
+    `;
+    toast.onclick = () => toast.remove();
+
+    container.appendChild(toast);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.style.animation = 'slideOutRight 0.3s ease-in';
+        setTimeout(() => toast.remove(), 300);
+      }
+    }, 5000);
+  }
+
+  // Update units display with real-time status data
+  function updateUnitsDisplay(statusData) {
+    // This function can be expanded to update any units list/table on the page
+    // For now, it's a placeholder for future unit tracking features
+  }
+
+  // Add toast animations to head
+  const toastStyles = document.createElement('style');
+  toastStyles.textContent = `
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOutRight {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(toastStyles);
+
+  // Initialize socket on DOM ready
+  $(document).ready(function() {
+    initializeRealtimeSocket();
+  });
 </script>
 
 <!--  added for google translate -->

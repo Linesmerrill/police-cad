@@ -10,7 +10,6 @@ var mongoose = require("mongoose");
 var passport = require("passport");
 var flash = require("connect-flash");
 var path = require("path");
-var http = require("http").createServer(express);
 var realFs = require("fs");
 var gracefulFs = require("graceful-fs");
 const rateLimit = require("express-rate-limit");
@@ -106,7 +105,7 @@ app.use(function forceLiveDomain(req, res, next) {
 });
 
 // Export app setup function to be used by server.js
-module.exports = function setupApp(nextApp, handle) {
+function setupApp(nextApp, handle) {
   // Get the port we'll listen to.
   var port = process.env.PORT || 8080;
 
@@ -118,13 +117,16 @@ module.exports = function setupApp(nextApp, handle) {
     });
   }
 
-  // Setup routes - Express routes will be checked first
-  require("./app/routes")(app, passport, null, nextApp, handle);
-
   /**
    * HTTP server for the express application.
+   * Created BEFORE routes so Socket.io can attach to it.
    */
-  const server = app.listen(port, function () {
+  const server = require('http').createServer(app);
+
+  // Setup routes - pass the server instance for Socket.io
+  require("./app/routes")(app, passport, server, nextApp, handle);
+
+  server.listen(port, function () {
     console.log("Server started.", server.address());
   });
 
@@ -134,4 +136,11 @@ module.exports = function setupApp(nextApp, handle) {
   });
 
   return server;
-};
+}
+
+module.exports = setupApp;
+
+// Allow running directly (legacy mode without Next.js)
+if (require.main === module) {
+  setupApp(null, null);
+}
