@@ -1682,15 +1682,15 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col"
-      style={{ background: 'rgba(10, 10, 15, 0.95)', backdropFilter: 'blur(10px)' }}
+      className="fixed top-16 left-0 right-0 bottom-0 z-50 flex flex-col"
+      style={{ background: 'rgba(10, 10, 15, 0.98)', backdropFilter: 'blur(10px)' }}
       onClick={onClose}
     >
       <div
         className="flex-1 overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="min-h-full flex items-start justify-center p-4 pt-8 pb-8">
+        <div className="min-h-full flex items-start justify-center p-4 pt-4 pb-8">
           <div className="w-full max-w-lg rounded-2xl shadow-2xl" style={{
             background: 'rgba(15, 15, 20, 0.98)',
             border: '1px solid rgba(59, 130, 246, 0.2)',
