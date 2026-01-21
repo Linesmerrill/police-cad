@@ -531,12 +531,18 @@
 
           var templateName = dept.templateName || '';
           var lowerTemplate = templateName.toLowerCase();
-          var deptIcon = 'fa-shield-halved';
-          var deptColor = '#3b82f6';
-          if (lowerTemplate.includes('police') || lowerTemplate.includes('sheriff')) {
+          var deptIcon = 'fa-building';
+          var deptColor = '#60a5fa';
+          if (lowerTemplate.includes('police')) {
             deptIcon = 'fa-shield-halved';
             deptColor = '#3b82f6';
-          } else if (lowerTemplate.includes('ems') || lowerTemplate.includes('fire')) {
+          } else if (lowerTemplate.includes('sheriff')) {
+            deptIcon = 'fa-star';
+            deptColor = '#fbbf24';
+          } else if (lowerTemplate.includes('civilian')) {
+            deptIcon = 'fa-user';
+            deptColor = '#10b981';
+          } else if (lowerTemplate.includes('fire') || lowerTemplate.includes('ems')) {
             deptIcon = 'fa-truck-medical';
             deptColor = '#ef4444';
           } else if (lowerTemplate.includes('dispatch')) {
@@ -545,16 +551,18 @@
           }
 
           var imageHtml = dept.image
-            ? '<img src="' + escapeHtml(dept.image) + '" alt="' + escapeHtml(dept.name) + '" class="w-full h-32 lg:h-40 object-cover" />'
-            : '<div class="w-full h-32 lg:h-40 flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);"><i class="fa ' + deptIcon + ' text-4xl" style="color: ' + deptColor + '; opacity: 0.5;"></i></div>';
+            ? '<div class="aspect-[2/1] overflow-hidden"><img src="' + escapeHtml(dept.image) + '" alt="' + escapeHtml(dept.name) + '" class="w-full h-full object-cover" style="pointer-events: none;" /><div class="absolute inset-0" style="background: linear-gradient(to top, rgba(10, 10, 15, 0.95) 0%, transparent 60%);"></div></div>'
+            : '<div class="aspect-[2/1] flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);"><i class="fa ' + deptIcon + ' text-4xl" style="color: ' + deptColor + '; opacity: 0.5;"></i></div>';
 
           card.innerHTML = '<div class="relative">' + imageHtml + '</div>' +
             '<div class="p-4">' +
+              '<div class="flex items-center gap-2 mb-1">' +
+                '<i class="fa ' + deptIcon + ' text-sm" style="color: ' + deptColor + ';"></i>' +
+                '<h3 class="font-bold text-white text-base line-clamp-1">' + escapeHtml(dept.name) + '</h3>' +
+              '</div>' +
+              (dept.description ? '<p class="text-slate-400 text-xs line-clamp-2 mb-2">' + escapeHtml(dept.description) + '</p>' : '') +
               '<div class="flex items-center justify-between">' +
-                '<div class="flex-1 min-w-0">' +
-                  '<h3 class="font-bold text-white text-base truncate">' + escapeHtml(dept.name) + '</h3>' +
-                  '<p class="text-slate-400 text-xs truncate">' + escapeHtml(dept.description || 'No description') + '</p>' +
-                '</div>' +
+                '<span class="text-xs text-slate-500">' + escapeHtml(templateName || 'Department') + '</span>' +
                 (canAccess ? '<span class="text-xs" style="color: #fbbf24;">Enter <i class="fa fa-arrow-right ml-1"></i></span>' : '') +
               '</div>' +
             '</div>';
@@ -997,6 +1005,9 @@
                 if (lowerTemplate.includes('police')) {
                   deptIcon = 'fa-shield-halved';
                   deptColor = '#3b82f6';
+                } else if (lowerTemplate.includes('sheriff')) {
+                  deptIcon = 'fa-star';
+                  deptColor = '#fbbf24';
                 } else if (lowerTemplate.includes('civilian')) {
                   deptIcon = 'fa-user';
                   deptColor = '#10b981';
