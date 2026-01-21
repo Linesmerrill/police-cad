@@ -1,10 +1,20 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { MagnifyingGlassIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid';
+import { MagnifyingGlassIcon, ChevronDownIcon, ChevronUpIcon, LinkIcon } from '@heroicons/react/24/solid';
 import Link from 'next/link';
+
+// Helper to generate URL-friendly slug from question text
+const generateSlug = (text: string): string => {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single
+    .trim();
+};
 
 // Link style for FAQ answers
 const linkStyle = {
@@ -212,21 +222,34 @@ const faqData = [
 ];
 
 // FAQ Item Component
-const FAQItem = ({ question, answer, isOpen, onToggle }: {
+const FAQItem = ({ question, answer, isOpen, onToggle, slug }: {
   question: string;
   answer: React.ReactNode;
   isOpen: boolean;
   onToggle: () => void;
+  slug: string;
 }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/faq#${slug}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div
+      id={slug}
       style={{
         backgroundColor: 'rgba(15, 15, 20, 0.6)',
         border: `1px solid ${isOpen ? 'rgba(251, 191, 36, 0.4)' : 'rgba(59, 130, 246, 0.2)'}`,
         borderRadius: '0.75rem',
         overflow: 'hidden',
         transition: 'all 0.3s ease',
-        marginBottom: '0.75rem'
+        marginBottom: '0.75rem',
+        scrollMarginTop: '100px'
       }}
     >
       <button
@@ -249,15 +272,33 @@ const FAQItem = ({ question, answer, isOpen, onToggle }: {
           color: isOpen ? '#fbbf24' : 'rgba(255, 255, 255, 0.9)',
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
           paddingRight: '1rem',
-          transition: 'color 0.3s'
+          transition: 'color 0.3s',
+          flex: 1
         }}>
           {question}
         </span>
-        {isOpen ? (
-          <ChevronUpIcon style={{ width: '20px', height: '20px', color: '#fbbf24', flexShrink: 0 }} />
-        ) : (
-          <ChevronDownIcon style={{ width: '20px', height: '20px', color: 'rgba(255, 255, 255, 0.5)', flexShrink: 0 }} />
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+          <span
+            onClick={handleCopyLink}
+            title="Copy link to this question"
+            style={{
+              padding: '0.25rem',
+              borderRadius: '0.25rem',
+              cursor: 'pointer',
+              opacity: copied ? 1 : 0.5,
+              transition: 'opacity 0.2s'
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+            onMouseLeave={(e) => { if (!copied) e.currentTarget.style.opacity = '0.5'; }}
+          >
+            <LinkIcon style={{ width: '16px', height: '16px', color: copied ? '#10b981' : 'rgba(255, 255, 255, 0.5)' }} />
+          </span>
+          {isOpen ? (
+            <ChevronUpIcon style={{ width: '20px', height: '20px', color: '#fbbf24' }} />
+          ) : (
+            <ChevronDownIcon style={{ width: '20px', height: '20px', color: 'rgba(255, 255, 255, 0.5)' }} />
+          )}
+        </div>
       </button>
       {isOpen && (
         <div style={{
@@ -340,15 +381,16 @@ const CategorySection = ({ category, icon, color, questions, searchQuery, openIt
         </h2>
       </div>
       <div>
-        {filteredQuestions.map((q, index) => {
-          const key = `${category}-${index}`;
+        {filteredQuestions.map((q) => {
+          const slug = generateSlug(q.question);
           return (
             <FAQItem
-              key={key}
+              key={slug}
               question={q.question}
               answer={q.answer}
-              isOpen={openItems.has(key)}
-              onToggle={() => onToggle(key)}
+              isOpen={openItems.has(slug)}
+              onToggle={() => onToggle(slug)}
+              slug={slug}
             />
           );
         })}
@@ -360,6 +402,22 @@ const CategorySection = ({ category, icon, color, questions, searchQuery, openIt
 export default function FAQ() {
   const [searchQuery, setSearchQuery] = useState('');
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
+
+  // Handle hash in URL on page load - auto-scroll and open the item
+  useEffect(() => {
+    const hash = window.location.hash.slice(1); // Remove the # symbol
+    if (hash) {
+      // Open the item
+      setOpenItems(new Set([hash]));
+      // Scroll to the element after a brief delay to ensure it's rendered
+      setTimeout(() => {
+        const element = document.getElementById(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, []);
 
   const handleToggle = (key: string) => {
     setOpenItems(prev => {
@@ -374,13 +432,13 @@ export default function FAQ() {
   };
 
   const expandAll = () => {
-    const allKeys = new Set<string>();
+    const allSlugs = new Set<string>();
     faqData.forEach(category => {
-      category.questions.forEach((_, index) => {
-        allKeys.add(`${category.category}-${index}`);
+      category.questions.forEach((q) => {
+        allSlugs.add(generateSlug(q.question));
       });
     });
-    setOpenItems(allKeys);
+    setOpenItems(allSlugs);
   };
 
   const collapseAll = () => {
