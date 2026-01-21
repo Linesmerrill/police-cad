@@ -1305,6 +1305,278 @@ const QuickNav = () => {
 };
 
 // ============================================================================
+// WELCOME MODAL (First-time visitor onboarding)
+// ============================================================================
+
+const WELCOME_MODAL_STORAGE_KEY = 'lpc_welcome_modal_seen';
+
+const WelcomeModal = ({ isOpen, onClose }) => {
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const steps = [
+    {
+      title: "Welcome to Lines Police CAD!",
+      subtitle: "The world's leading free-to-use service for role-play communities",
+      icon: "fa-hand-wave",
+      content: (
+        <div className="space-y-4">
+          <p className="text-slate-300 text-sm leading-relaxed">
+            Ready to dive into role-play? Here's how to get started:
+          </p>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' }}>
+                <i className="fa fa-crown text-xs text-black"></i>
+              </div>
+              <span className="text-slate-300 text-sm"><strong className="text-white">Elite Communities</strong> - Check out our featured communities looking for new members</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)' }}>
+                <i className="fa fa-compass text-xs text-white"></i>
+              </div>
+              <span className="text-slate-300 text-sm"><strong className="text-white">Discover</strong> - Browse trending communities and find your perfect match</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
+                <i className="fa fa-gamepad text-xs text-white"></i>
+              </div>
+              <span className="text-slate-300 text-sm"><strong className="text-white">Filter by Platform</strong> - Find communities for Xbox, PlayStation, PC, and more</span>
+            </li>
+          </ul>
+        </div>
+      )
+    },
+    {
+      title: "Join or Create",
+      subtitle: "Multiple ways to get into the action",
+      icon: "fa-rocket",
+      content: (
+        <div className="space-y-4">
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>
+                <i className="fa fa-ticket text-xs text-white"></i>
+              </div>
+              <span className="text-slate-300 text-sm"><strong className="text-white">Have an invite code?</strong> - Enter it to jump straight into a community</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)' }}>
+                <i className="fa fa-search text-xs text-white"></i>
+              </div>
+              <span className="text-slate-300 text-sm"><strong className="text-white">Search by name</strong> - Find a specific community and request to join</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+                <i className="fa fa-plus text-xs text-white"></i>
+              </div>
+              <span className="text-slate-300 text-sm"><strong className="text-white">Create your own</strong> - Start a community for FREE and invite your friends</span>
+            </li>
+          </ul>
+        </div>
+      )
+    },
+    {
+      title: "Need Help?",
+      subtitle: "We're here for you",
+      icon: "fa-circle-question",
+      content: (
+        <div className="space-y-4">
+          <p className="text-slate-300 text-sm leading-relaxed">
+            Have questions or need assistance? We've got you covered:
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <a href="/faq" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}>
+              <i className="fa fa-book text-xl text-blue-400"></i>
+              <span className="text-white text-sm font-medium">FAQ</span>
+              <span className="text-slate-500 text-xs text-center">Common questions</span>
+            </a>
+            <a href="/contact-us" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}>
+              <i className="fa fa-envelope text-xl text-green-400"></i>
+              <span className="text-white text-sm font-medium">Contact Us</span>
+              <span className="text-slate-500 text-xs text-center">Get in touch</span>
+            </a>
+            <a href="https://discord.gg/3ECFhqe" target="_blank" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}>
+              <i className="fab fa-discord text-xl text-indigo-400"></i>
+              <span className="text-white text-sm font-medium">Discord</span>
+              <span className="text-slate-500 text-xs text-center">Join our server</span>
+            </a>
+            <a href="/about-us" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}>
+              <i className="fa fa-info-circle text-xl text-amber-400"></i>
+              <span className="text-white text-sm font-medium">About</span>
+              <span className="text-slate-500 text-xs text-center">Learn more</span>
+            </a>
+          </div>
+        </div>
+      )
+    }
+  ];
+
+  const handleClose = () => {
+    localStorage.setItem(WELCOME_MODAL_STORAGE_KEY, 'true');
+    onClose();
+  };
+
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      handleClose();
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleSkip = () => {
+    handleClose();
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const currentStepData = steps[currentStep];
+  const isLastStep = currentStep === steps.length - 1;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(10, 10, 15, 0.95)', backdropFilter: 'blur(10px)' }}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl shadow-2xl relative"
+        style={{
+          background: 'rgba(15, 15, 20, 0.98)',
+          border: '1px solid rgba(59, 130, 246, 0.2)',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white transition-colors z-10"
+          style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: '50%' }}
+        >
+          <i className="fa fa-times text-sm"></i>
+        </button>
+
+        {/* Header with Logo */}
+        <div className="pt-8 pb-4 px-6 text-center">
+          <div className="relative inline-block mx-auto mb-4">
+            {/* Glow effect behind logo */}
+            <div style={{
+              position: 'absolute',
+              top: '-30%',
+              left: '-30%',
+              right: '-30%',
+              bottom: '-30%',
+              background: 'radial-gradient(circle, rgba(251, 191, 36, 0.5) 0%, rgba(245, 158, 11, 0.3) 40%, transparent 70%)',
+              filter: 'blur(20px)',
+              borderRadius: '50%'
+            }} />
+            <img
+              src="/static/images/lines-police-cad-discord-logo-2024-github-profile.png"
+              alt="Lines Police CAD"
+              style={{
+                height: '60px',
+                width: 'auto',
+                position: 'relative',
+                zIndex: 1
+              }}
+            />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-1">{currentStepData.title}</h2>
+          <p className="text-slate-400 text-sm">{currentStepData.subtitle}</p>
+        </div>
+
+        {/* Content */}
+        <div className="px-6 pb-4">
+          {currentStepData.content}
+        </div>
+
+        {/* Progress Dots */}
+        <div className="flex justify-center gap-2 py-4">
+          {steps.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentStep(index)}
+              className="w-2 h-2 rounded-full transition-all duration-300"
+              style={{
+                background: index === currentStep
+                  ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
+                  : 'rgba(255, 255, 255, 0.2)',
+                transform: index === currentStep ? 'scale(1.2)' : 'scale(1)'
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Footer Buttons */}
+        <div className="px-6 pb-6 flex items-center justify-between gap-3">
+          <button
+            onClick={handleSkip}
+            className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+          >
+            Skip
+          </button>
+
+          <div className="flex gap-2">
+            {currentStep > 0 && (
+              <button
+                onClick={handlePrev}
+                className="px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  color: 'white'
+                }}
+              >
+                <i className="fa fa-arrow-left mr-2"></i>Back
+              </button>
+            )}
+            <button
+              onClick={handleNext}
+              className="px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300"
+              style={{
+                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                color: '#000',
+                boxShadow: '0 4px 15px rgba(251, 191, 36, 0.3)'
+              }}
+            >
+              {isLastStep ? "Let's Go!" : "Next"}
+              {!isLastStep && <i className="fa fa-arrow-right ml-2"></i>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
 // CREATE COMMUNITY MODAL
 // ============================================================================
 
@@ -1713,7 +1985,20 @@ const App = () => {
   const [isAllCommunitiesLoading, setIsAllCommunitiesLoading] = useState(true);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [toast, setToast] = useState({ message: "", type: "success", isVisible: false });
+
+  // Check if first-time visitor for welcome modal
+  useEffect(() => {
+    const hasSeenWelcome = localStorage.getItem(WELCOME_MODAL_STORAGE_KEY);
+    if (!hasSeenWelcome) {
+      // Small delay to let the page load first
+      const timer = setTimeout(() => {
+        setShowWelcomeModal(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Fetch Elite Communities
   useEffect(() => {
@@ -1938,6 +2223,10 @@ const App = () => {
             fetchUserPage("owned", 1);
           }
         }}
+      />
+      <WelcomeModal
+        isOpen={showWelcomeModal}
+        onClose={() => setShowWelcomeModal(false)}
       />
       <Toast
         message={toast.message}
