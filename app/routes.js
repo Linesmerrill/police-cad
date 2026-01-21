@@ -112,9 +112,11 @@ module.exports = function (app, passport, server, nextApp, handle) {
       const response = await axios.get(apiUrl, config);
       const community = response.data || {};
 
-      // Fetch all departments (pagination is done client-side)
+      // Fetch first page of departments (6 per page, more loaded via client-side pagination)
       const userId = req.user && req.user._doc ? req.user._doc._id : (req.user && req.user._id ? req.user._id : null);
       let departments = [];
+      let departmentsTotalCount = 0;
+      const deptPerPage = 6;
       // Determine if user is a member of the community
       let isMemberApproved = false;
       if (req.user && req.user._doc && req.user._doc.user && Array.isArray(req.user._doc.user.communities) && community && community._id) {
@@ -124,21 +126,18 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         });
       }
-      if (community && community._id && userId && isMemberApproved) {
-        // Use v1 route to get all departments for members
-        const deptsApiUrl = `${policeCadApiUrl}/api/v1/community/${community._id}/departments`;
-        const deptsResponse = await axios.get(deptsApiUrl, config);
-        departments = deptsResponse.data.departments || [];
-      } else if (community && community._id && userId) {
-        // Fetch all departments for non-members (to show locked state)
-        const deptsApiUrl = `${policeCadApiUrl}/api/v2/community/${community._id}/departments?userId=${userId}&page=1&limit=100`;
+      if (community && community._id && userId) {
+        // Use v2 paginated API - fetch only first page
+        const deptsApiUrl = `${policeCadApiUrl}/api/v2/community/${community._id}/departments?userId=${userId}&page=1&limit=${deptPerPage}`;
         const deptsResponse = await axios.get(deptsApiUrl, config);
         departments = deptsResponse.data.data || [];
+        departmentsTotalCount = deptsResponse.data.totalCount || departments.length;
       }
       res.render("community-details", {
         user: req.user,
         community,
         departments,
+        departmentsTotalCount,
         query: req.query,
         referer: encodeURIComponent(`/community/${hash}`),
         redirect: encodeURIComponent(redirect),

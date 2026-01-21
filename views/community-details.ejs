@@ -459,28 +459,110 @@
         // Store permission for dynamic UI updates
         window.canManageEvents = false;
 
-        // Client-side department pagination
+        // Department pagination - fetches from API on page change
         var deptCurrentPage = 1;
         var deptPerPage = 6;
-        var deptTotalCount = <%= departments ? departments.length : 0 %>;
-        var deptTotalPages = Math.ceil(deptTotalCount / deptPerPage);
+        var deptTotalCount = <%= typeof departmentsTotalCount !== 'undefined' ? departmentsTotalCount : (departments ? departments.length : 0) %>;
+        var deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
+        var deptLoadedPages = { 1: true }; // Track which pages have been loaded
+        var deptIsLoading = false;
 
-        function changeDeptPage(delta) {
+        async function changeDeptPage(delta) {
           var newPage = deptCurrentPage + delta;
-          if (newPage < 1 || newPage > deptTotalPages) return;
+          if (newPage < 1 || newPage > deptTotalPages || deptIsLoading) return;
 
           deptCurrentPage = newPage;
+
+          // Check if we need to fetch this page from the API
+          if (!deptLoadedPages[deptCurrentPage]) {
+            await fetchDepartmentsPage(deptCurrentPage);
+          }
+
+          // Show/hide department cards based on current page
           var startIdx = (deptCurrentPage - 1) * deptPerPage;
           var endIdx = startIdx + deptPerPage;
-
-          // Hide/show department cards
           var cards = document.querySelectorAll('#departments-grid .dept-card');
           cards.forEach(function(card) {
             var idx = parseInt(card.getAttribute('data-dept-index'), 10);
             card.style.display = (idx >= startIdx && idx < endIdx) ? '' : 'none';
           });
 
-          // Update pagination UI
+          updateDeptPaginationUI();
+        }
+
+        async function fetchDepartmentsPage(page) {
+          deptIsLoading = true;
+          var container = document.getElementById('departments-grid');
+
+          try {
+            var response = await fetch(window.API_URL + '/api/v2/community/' + window.communityId + '/departments?userId=' + window.userId + '&page=' + page + '&limit=' + deptPerPage);
+            if (!response.ok) throw new Error('Failed to fetch departments');
+            var data = await response.json();
+            var departments = data.data || [];
+
+            // Calculate the starting index for these departments
+            var startIdx = (page - 1) * deptPerPage;
+
+            // Append new department cards
+            departments.forEach(function(dept, i) {
+              var globalIdx = startIdx + i;
+              var card = createDepartmentCard(dept, globalIdx);
+              container.appendChild(card);
+            });
+
+            deptLoadedPages[page] = true;
+          } catch (err) {
+            console.error('Error fetching departments:', err);
+          } finally {
+            deptIsLoading = false;
+          }
+        }
+
+        function createDepartmentCard(dept, idx) {
+          var card = document.createElement('div');
+          var canAccess = true; // Departments from API are already filtered for access
+          card.className = 'dept-card' + (canAccess ? '' : ' locked');
+          card.setAttribute('data-dept-index', idx);
+          if (canAccess) {
+            card.setAttribute('data-dept-id', dept._id);
+            card.setAttribute('data-dept-name', (dept.name || '').replace(/'/g, "\\'"));
+            card.setAttribute('data-template-name', (dept.templateName || '').replace(/'/g, "\\'"));
+          }
+
+          var templateName = dept.templateName || '';
+          var lowerTemplate = templateName.toLowerCase();
+          var deptIcon = 'fa-shield-halved';
+          var deptColor = '#3b82f6';
+          if (lowerTemplate.includes('police') || lowerTemplate.includes('sheriff')) {
+            deptIcon = 'fa-shield-halved';
+            deptColor = '#3b82f6';
+          } else if (lowerTemplate.includes('ems') || lowerTemplate.includes('fire')) {
+            deptIcon = 'fa-truck-medical';
+            deptColor = '#ef4444';
+          } else if (lowerTemplate.includes('dispatch')) {
+            deptIcon = 'fa-headset';
+            deptColor = '#f59e0b';
+          }
+
+          var imageHtml = dept.image
+            ? '<img src="' + escapeHtml(dept.image) + '" alt="' + escapeHtml(dept.name) + '" class="w-full h-32 lg:h-40 object-cover" />'
+            : '<div class="w-full h-32 lg:h-40 flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);"><i class="fa ' + deptIcon + ' text-4xl" style="color: ' + deptColor + '; opacity: 0.5;"></i></div>';
+
+          card.innerHTML = '<div class="relative">' + imageHtml + '</div>' +
+            '<div class="p-4">' +
+              '<div class="flex items-center justify-between">' +
+                '<div class="flex-1 min-w-0">' +
+                  '<h3 class="font-bold text-white text-base truncate">' + escapeHtml(dept.name) + '</h3>' +
+                  '<p class="text-slate-400 text-xs truncate">' + escapeHtml(dept.description || 'No description') + '</p>' +
+                '</div>' +
+                (canAccess ? '<span class="text-xs" style="color: #fbbf24;">Enter <i class="fa fa-arrow-right ml-1"></i></span>' : '') +
+              '</div>' +
+            '</div>';
+
+          return card;
+        }
+
+        function updateDeptPaginationUI() {
           var prevBtn = document.getElementById('dept-prev-btn');
           var nextBtn = document.getElementById('dept-next-btn');
           var pageInfo = document.getElementById('dept-page-info');
@@ -836,7 +918,7 @@
               Departments
               <% if (isMemberApproved && departments) { %>
                 <span class="text-xs px-2 py-0.5 rounded-full" style="color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
-                  <%= departments.length %>
+                  <%= typeof departmentsTotalCount !== 'undefined' ? departmentsTotalCount : departments.length %>
                 </span>
               <% } %>
             </h2>
@@ -987,12 +1069,13 @@
               <% }); %>
             </div>
 
-            <% if (departments.length > 6) { %>
+            <% var totalDepts = typeof departmentsTotalCount !== 'undefined' ? departmentsTotalCount : departments.length; %>
+            <% if (totalDepts > 6) { %>
               <div id="dept-pagination" class="flex justify-center items-center gap-4 mt-4">
                 <button id="dept-prev-btn" onclick="changeDeptPage(-1)" class="btn-secondary text-sm" disabled style="opacity:0.5;cursor:not-allowed;">
                   <i class="fa fa-chevron-left mr-1"></i>Prev
                 </button>
-                <span id="dept-page-info" class="text-slate-400 text-sm">Page 1 of <%= Math.ceil(departments.length / 6) %></span>
+                <span id="dept-page-info" class="text-slate-400 text-sm">Page 1 of <%= Math.ceil(totalDepts / 6) %></span>
                 <button id="dept-next-btn" onclick="changeDeptPage(1)" class="btn-secondary text-sm">
                   Next<i class="fa fa-chevron-right ml-1"></i>
                 </button>
@@ -1178,7 +1261,7 @@
               <div class="text-xs sm:text-sm text-slate-400 mt-1">Members</div>
             </div>
             <div class="dashboard-card text-center py-4 lg:py-6">
-              <div class="text-2xl lg:text-3xl font-bold text-white"><%= departments ? departments.length : '?' %></div>
+              <div class="text-2xl lg:text-3xl font-bold text-white"><%= typeof departmentsTotalCount !== 'undefined' ? departmentsTotalCount : (departments ? departments.length : '?') %></div>
               <div class="text-xs sm:text-sm text-slate-400 mt-1">Departments</div>
             </div>
             <div class="dashboard-card text-center py-4 lg:py-6">
