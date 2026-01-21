@@ -1781,7 +1781,7 @@ const App = () => {
         onSuccess={() => {
           // Refresh user communities list without full page reload
           if (dbUser?._id) {
-            fetchUserPage(0);
+            fetchUserPage(1);
           }
         }}
       />
