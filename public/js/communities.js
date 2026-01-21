@@ -2180,7 +2180,11 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen relative" style={{ background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%)' }}>
+    <div className="min-h-screen relative" style={{ 
+      background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%)',
+      minHeight: '100vh',
+      minHeight: '-webkit-fill-available'
+    }}>
       {/* Background particles */}
       <div style={{
         position: 'fixed',
