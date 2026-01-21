@@ -549,14 +549,17 @@ const CommunitySection = ({
       {/* Section Header */}
       {title && (
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            {icon && <i className={icon} style={{ color: '#fbbf24' }}></i>}
-            <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)' }}>{title}</h2>
+          <div className="flex items-center gap-2" style={{ lineHeight: 1 }}>
+            {icon && <i className={icon} style={{ color: '#fbbf24', fontSize: '1.125rem', display: 'flex', alignItems: 'center' }}></i>}
+            <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)', margin: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>{title}</h2>
             {totalCount > 0 && (
               <span className="text-xs px-2 py-0.5 rounded-full" style={{
                 color: 'rgba(255, 255, 255, 0.6)',
                 background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)'
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                lineHeight: 1
               }}>{totalCount}</span>
             )}
           </div>
@@ -654,9 +657,9 @@ const BrowseCommunities = ({
     <section className="py-6 px-4">
       {/* Section Header */}
       <div className="mb-4">
-        <div className="flex items-center gap-2 mb-4">
-          <i className="fa fa-globe" style={{ color: '#fbbf24' }}></i>
-          <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)' }}>Browse Communities</h2>
+        <div className="flex items-center gap-2 mb-4" style={{ lineHeight: 1 }}>
+          <i className="fa fa-globe" style={{ color: '#fbbf24', fontSize: '1.125rem', display: 'flex', alignItems: 'center' }}></i>
+          <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)', margin: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>Browse Communities</h2>
         </div>
 
         {/* Filter Tabs */}
@@ -748,9 +751,9 @@ const YourCommunities = ({
   if (showLoginPrompt) {
     return (
       <section className="py-6 px-4">
-        <div className="flex items-center gap-2 mb-4">
-          <i className="fa fa-users" style={{ color: '#fbbf24' }}></i>
-          <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)' }}>Your Communities</h2>
+        <div className="flex items-center gap-2 mb-4" style={{ lineHeight: 1 }}>
+          <i className="fa fa-users" style={{ color: '#fbbf24', fontSize: '1.125rem', display: 'flex', alignItems: 'center' }}></i>
+          <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)', margin: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>Your Communities</h2>
         </div>
         <div className="rounded-2xl p-8 text-center max-w-md mx-auto" style={{
           background: 'rgba(255, 255, 255, 0.05)',
@@ -781,14 +784,17 @@ const YourCommunities = ({
     <section className="py-6 px-4">
       {/* Section Header */}
       <div className="mb-4">
-        <div className="flex items-center gap-2 mb-4">
-          <i className="fa fa-users" style={{ color: '#fbbf24' }}></i>
-          <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)' }}>Your Communities</h2>
+        <div className="flex items-center gap-2 mb-4" style={{ lineHeight: 1 }}>
+          <i className="fa fa-users" style={{ color: '#fbbf24', fontSize: '1.125rem', display: 'flex', alignItems: 'center' }}></i>
+          <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)', margin: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>Your Communities</h2>
           {totalCount > 0 && (
             <span className="text-xs px-2 py-0.5 rounded-full" style={{
               color: 'rgba(255, 255, 255, 0.6)',
               background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)'
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              lineHeight: 1
             }}>{totalCount}</span>
           )}
         </div>
