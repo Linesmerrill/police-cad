@@ -1802,8 +1802,10 @@ const App = () => {
       let response;
       if (filter === "owned") {
         // Fetch communities owned by the user
+        // API returns raw array: [{ _id, community: { name, ownerID, imageLink, membersCount, subscription: { active } } }]
         response = await axios.get(`${API_URL}/api/v1/communities/${dbUser._id}?limit=6&page=${page}`);
-        const communities = (response.data.data || []).map(item => ({
+        const rawData = Array.isArray(response.data) ? response.data : (response.data.data || []);
+        const communities = rawData.map(item => ({
           _id: item._id,
           name: item.community?.name || item.name,
           membersCount: item.community?.membersCount || item.membersCount || 0,
@@ -1813,7 +1815,7 @@ const App = () => {
           isOwned: true
         }));
         setUserCommunities(communities);
-        setUserTotalCount(response.data.totalCount || communities.length);
+        setUserTotalCount(communities.length);
       } else {
         // Fetch joined or pending communities
         const statusFilter = filter === "pending" ? "pending" : "approved";
