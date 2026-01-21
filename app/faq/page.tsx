@@ -40,7 +40,7 @@ const faqData = [
       },
       {
         question: 'How do I create an account?',
-        answer: (<>Click the "Login" button in the top navigation, then select <a href="/signup-civ" style={linkStyle}>Sign Up</a> to create a new account. You&apos;ll need to register with your email address. After creating your account, you can link it to Discord to use our <a href="/discord-bot" style={linkStyle}>Discord bot</a> features.</>)
+        answer: (<>Click the &quot;Login&quot; button in the top navigation, then select <a href="/signup-civ" style={linkStyle}>Sign Up</a> to create a new account. You&apos;ll need to register with your email address. After creating your account, you can link it to Discord to use our <a href="/discord-bot" style={linkStyle}>Discord bot</a> features.</>)
       },
       {
         question: 'How do I join a community?',
