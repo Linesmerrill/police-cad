@@ -2,6 +2,10 @@
 node_modules/*
 .next/
 
-# Enviroment variables
+# Environment variables
 .envrc
 .envnext-env.d.ts
+.env
+
+# nextjs
+next-env.d.ts
