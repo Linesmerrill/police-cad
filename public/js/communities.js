@@ -140,7 +140,7 @@ const Toast = ({ message, type, isVisible, onClose }) => {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-[9999] animate-slide-in">
+    <div className="fixed right-4 z-[9999] animate-slide-in" style={{ top: '80px' }}>
       <div className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border text-white ${styles[type] || styles.info}`}>
         <i className={`fa ${icons[type] || icons.info}`}></i>
         <p className="font-medium text-sm">{message}</p>
