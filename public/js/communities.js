@@ -1634,9 +1634,8 @@ const Footer = () => (
     <div className="px-4 py-8">
       {/* Logo */}
       <div className="text-center mb-6">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <img src="/static/images/favicon-32x32.png" alt="LPC" className="w-8 h-8" />
-          <span className="text-lg font-bold text-white">Lines Police CAD</span>
+        <div className="flex items-center justify-center mb-2">
+          <img src="/static/images/lines-police-cad-discord-logo-2024-github-profile.png" alt="Lines Police CAD" style={{ height: '36px', width: 'auto' }} />
         </div>
         <p className="text-slate-500 text-sm">World's Leading Free-to-use Role-play Facilitator</p>
       </div>
