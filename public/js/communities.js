@@ -863,7 +863,7 @@ const CommunitySearchModal = ({ isOpen, onClose, initialQuery = "" }) => {
 
     setLoading(true);
     try {
-      const escapedQuery = searchQuery.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+      const escapedQuery = searchQuery.replace(/\\/g, '\\\\').replace(/\[/g, '\\[').replace(/\]/g, '\\]');
       const encodedQuery = encodeURIComponent(escapedQuery);
       const response = await fetch(
         `${API_URL}/api/v1/search/communities?q=${encodedQuery}&limit=${resultsPerPage}&page=${page}`
@@ -1093,7 +1093,7 @@ const SearchBar = ({ onCreateCommunity }) => {
       return;
     }
     setLoading(true);
-    const escapedQuery = query.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+    const escapedQuery = query.replace(/\\/g, '\\\\').replace(/\[/g, '\\[').replace(/\]/g, '\\]');
     fetch(`${API_URL}/api/v1/search/communities?q=${encodeURIComponent(escapedQuery)}&limit=5&page=1`)
       .then(res => res.json())
       .then(data => {
