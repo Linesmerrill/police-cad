@@ -1,897 +1,639 @@
-const { useState, useEffect } = React;
-// Remove: import Autocomplete from "@heroui/autocomplete";
+const { useState, useEffect, useRef, useCallback } = React;
 
 const API_URL = "https://police-cad-app-api-bc6d659b60b3.herokuapp.com";
 
-// Loading Spinner Component
-const LoadingSpinner = ({ size = "md", text = "Loading..." }) => {
-  const sizeClasses = {
-    sm: "w-4 h-4",
-    md: "w-8 h-8", 
-    lg: "w-12 h-12",
-    xl: "w-16 h-16"
-  };
-  
-  return (
-    <div className="flex flex-col items-center justify-center p-8">
-      <div className={`${sizeClasses[size]} animate-spin rounded-full border-4 border-gray-700 border-t-blue-500`}></div>
-      <p className="text-gray-400 mt-4 text-lg">{text}</p>
-    </div>
-  );
-};
-
-// Loading Skeleton for Community Cards
-const CommunityCardSkeleton = () => (
-  <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden flex flex-col h-full animate-pulse">
-    <div className="h-48 bg-gray-700"></div>
-    <div className="p-6 flex flex-col flex-grow">
-      <div className="h-6 bg-gray-700 rounded mb-2"></div>
-      <div className="h-4 bg-gray-700 rounded mb-3 w-3/4"></div>
-      <div className="flex gap-2 mb-3">
-        <div className="h-6 bg-gray-700 rounded-full w-16"></div>
-        <div className="h-6 bg-gray-700 rounded-full w-20"></div>
-      </div>
-      <div className="h-4 bg-gray-700 rounded mb-2"></div>
-      <div className="h-4 bg-gray-700 rounded w-2/3"></div>
-      <div className="mt-auto pt-4">
-        <div className="h-12 bg-gray-700 rounded-lg"></div>
-      </div>
-    </div>
-  </div>
-);
-
-// Loading Skeleton for Carousel
-const CarouselSkeleton = () => (
-  <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-16 mt-24">
-    <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\\"60\\" height=\\"60\\" viewBox=\\"0 0 60 60\\" xmlns=\\"http://www.w3.org/2000/svg\\"%3E%3Cg fill=\\"none\\" fill-rule=\\"evenodd\\"%3E%3Cg fill=\\"%239C92AC\\" fill-opacity=\\"0.05\\"%3E%3Ccircle cx=\\"30\\" cy=\\"30\\" r=\\"2\\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'}}></div>
-    <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="text-center mb-8">
-        <div className="h-12 bg-gray-700 rounded mb-4 mx-auto w-96 animate-pulse"></div>
-        <div className="h-6 bg-gray-700 rounded mx-auto w-80 animate-pulse"></div>
-      </div>
-      
-      <div className="w-full flex justify-center items-center py-8 z-0">
-        <div className="relative max-w-4xl w-full mx-auto z-0 flex items-center justify-center">
-          <div className="relative bg-gray-800 rounded-3xl shadow-2xl pt-16 pb-10 px-8 flex flex-col items-center text-center border border-gray-700 z-10 w-[400px] md:w-[500px] min-h-[520px] md:min-h-[600px] justify-center animate-pulse">
-            <div className="w-56 h-56 md:w-64 md:h-64 bg-gray-700 rounded-2xl mb-6"></div>
-            <div className="h-8 bg-gray-700 rounded mb-2 w-3/4"></div>
-            <div className="flex gap-2 mb-3">
-              <div className="h-6 bg-gray-700 rounded-full w-16"></div>
-              <div className="h-6 bg-gray-700 rounded-full w-20"></div>
-            </div>
-            <div className="h-4 bg-gray-700 rounded mb-2 w-full"></div>
-            <div className="h-4 bg-gray-700 rounded w-2/3"></div>
-            <div className="h-12 bg-gray-700 rounded-full w-48 mt-4"></div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="bg-gray-800 rounded-lg p-4 border border-gray-700 shadow-lg animate-pulse">
-            <div className="flex items-center space-x-3">
-              <div className="bg-gray-700 p-2 rounded-lg w-12 h-12"></div>
-              <div>
-                <div className="h-8 bg-gray-700 rounded w-20 mb-2"></div>
-                <div className="h-4 bg-gray-700 rounded w-32"></div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-);
-
-// HeroUI Pro Components
-const HeroSection = ({ children, className = "" }) => (
-  <div className={`relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-16 ${className}`}>
-    <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\\"60\\" height=\\"60\\" viewBox=\\"0 0 60 60\\" xmlns=\\"http://www.w3.org/2000/svg\\"%3E%3Cg fill=\\"none\\" fill-rule=\\"evenodd\\"%3E%3Cg fill=\\"%239C92AC\\" fill-opacity=\\"0.05\\"%3E%3Ccircle cx=\\"30\\" cy=\\"30\\" r=\\"2\\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'}}></div>
-    <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {children}
-    </div>
-  </div>
-);
-
-const SectionDivider = ({ title, subtitle, icon, className = "" }) => (
-  <div className={`relative py-12 ${className}`}>
-    <div className="absolute inset-0 flex items-center">
-      <div className="w-full border-t border-gray-700"></div>
-    </div>
-    <div className="relative flex justify-center">
-      <div className="bg-gray-900 px-6 py-3 rounded-full border border-gray-700 shadow-lg">
-        <div className="flex items-center space-x-3">
-          {icon && <i className={`${icon} text-blue-400 text-xl`}></i>}
-          <div className="text-center">
-            <h3 className="text-lg font-semibold text-white">{title}</h3>
-            {subtitle && <p className="text-sm text-gray-400">{subtitle}</p>}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const AdBanner = ({ type = "horizontal", className = "" }) => {
-  const [isVisible, setIsVisible] = useState(true);
-  const [showComingSoon, setShowComingSoon] = useState(false);
-  
-  if (!isVisible) return null;
-  
-  const handleUpgradeClick = () => {
-    setShowComingSoon(true);
-  };
-  
-  const ComingSoonModal = () => {
-    if (!showComingSoon) return null;
-    
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-gray-800 rounded-lg p-8 max-w-md mx-4 border border-gray-700 shadow-xl">
-          <div className="text-center">
-            <div className="bg-yellow-600 p-3 rounded-full w-fit mx-auto mb-4">
-              <i className="fa fa-tools text-white text-2xl"></i>
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-4">Coming Soon!</h3>
-            <p className="text-gray-300 mb-6">
-              We're currently working on the premium upgrade features. You can access these features in our mobile app right now!
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => setShowComingSoon(false)}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
-              >
-                Got it
-              </button>
-              <button
-                onClick={() => {
-                  setShowComingSoon(false);
-                  // You can add mobile app download link here
-                  window.open('https://apps.apple.com', '_blank');
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors font-semibold"
-              >
-                <i className="fa fa-mobile-alt mr-2"></i>
-                Get Mobile App
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
-  if (type === "vertical") {
-    return (
-      <>
-        <div className={`bg-gradient-to-b from-blue-900 to-purple-900 rounded-lg p-4 border border-blue-700 shadow-lg ${className}`}>
-          <div className="text-center">
-            <i className="fa fa-star text-yellow-400 text-2xl mb-2"></i>
-            <h4 className="text-white font-semibold text-sm mb-1">Premium Feature</h4>
-            <p className="text-blue-200 text-xs mb-3">Upgrade to Pro for advanced features</p>
-            <button 
-              onClick={handleUpgradeClick}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-full transition-colors"
-            >
-              Learn More
-            </button>
-          </div>
-          <button 
-            onClick={() => setIsVisible(false)}
-            className="absolute top-2 right-2 text-gray-400 hover:text-white text-xs"
-          >
-            <i className="fa fa-times"></i>
-          </button>
-        </div>
-        <ComingSoonModal />
-      </>
-    );
-  }
-  
-  return (
-    <>
-      <div className={`bg-gradient-to-r from-blue-900 via-purple-900 to-blue-900 rounded-lg p-6 border border-blue-700 shadow-lg ${className}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <i className="fa fa-rocket text-yellow-400 text-2xl"></i>
-            <div>
-              <h4 className="text-white font-semibold">Boost Your Community</h4>
-              <p className="text-blue-200 text-sm">Get featured placement and premium features</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-3">
-            <button 
-              onClick={handleUpgradeClick}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              Upgrade Now
-            </button>
-            <button 
-              onClick={() => setIsVisible(false)}
-              className="text-gray-400 hover:text-white"
-            >
-              <i className="fa fa-times"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-      <ComingSoonModal />
-    </>
-  );
-};
-
-const StatsCard = ({ icon, value, label, color = "blue" }) => (
-  <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 shadow-lg">
-    <div className="flex items-center space-x-3">
-      <div className={`bg-${color}-600 p-2 rounded-lg`}>
-        <i className={`${icon} text-white text-lg`}></i>
-      </div>
-      <div>
-        <div className="text-2xl font-bold text-white">{value}</div>
-        <div className="text-gray-400 text-sm">{label}</div>
-      </div>
-    </div>
-  </div>
-);
-
-const FeatureCard = ({ icon, title, description, color = "blue" }) => (
-  <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 shadow-lg hover:shadow-xl transition-shadow">
-    <div className={`bg-${color}-600 p-3 rounded-lg w-fit mb-4`}>
-      <i className={`${icon} text-white text-xl`}></i>
-    </div>
-    <h4 className="text-white font-semibold text-lg mb-2">{title}</h4>
-    <p className="text-gray-400 text-sm">{description}</p>
-  </div>
-);
-
-const mockNotifications = [
-  {
-    id: "notif1",
-    title: "New Community Invite",
-    message: "You've been invited to join Lines Police CAD!",
-    timestamp: "2025-05-23T14:30:00Z",
-    isRead: false,
-  },
-  {
-    id: "notif2",
-    title: "Event Reminder",
-    message: "Yacht Party starts in 1 hour.",
-    timestamp: "2025-05-23T13:00:00Z",
-    isRead: true,
-  },
-  {
-    id: "notif3",
-    title: "Status Update",
-    message: "Your status was updated to 10-8 by Dispatch.",
-    timestamp: "2025-05-23T12:15:00Z",
-    isRead: false,
-  },
-];
-
-const Navbar = () => {
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    // {
-    //   id: "notif1",
-    //   title: "New Community Invite",
-    //   message: "You've been invited to join Lines Police CAD!",
-    //   timestamp: "2025-05-23T14:30:00Z",
-    //   isRead: false,
-    // },
-    // {
-    //   id: "notif2",
-    //   title: "Event Reminder",
-    //   message: "Yacht Party starts in 1 hour.",
-    //   timestamp: "2025-05-23T13:00:00Z",
-    //   isRead: true,
-    // },
-    // {
-    //   id: "notif3",
-    //   title: "Status Update",
-    //   message: "Your status was updated to 10-8 by Dispatch.",
-    //   timestamp: "2025-05-23T12:15:00Z",
-    //   isRead: false,
-    // },
-  ]);
-  const [notifPage, setNotifPage] = useState(1);
-  const notifsPerPage = 5;
-
-  const toggleNotifPopout = () => setIsNotifOpen(!isNotifOpen);
-
-  const markAsRead = (id) => {
-    setNotifications(
-      notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
-  };
-
-  const deleteNotification = (id) => {
-    setNotifications(notifications.filter((n) => n.id !== id));
-  };
-
-  const clearAllNotifications = () => {
-    setNotifications([]);
-  };
-
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-  const paginatedNotifs = notifications.slice(
-    (notifPage - 1) * notifsPerPage,
-    notifPage * notifsPerPage
-  );
-
-  return (
-    <nav className="bg-gray-900 shadow-lg fixed w-full z-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <a href="/" className="flex items-center space-x-2">
-              <img
-                src="/static/images/favicon-32x32.png"
-                alt="LPC Logo"
-                className="h-8 w-8"
-              />
-              <span className="text-xl font-bold text-white">
-                Lines Police CAD
-              </span>
-            </a>
-          </div>
-          <div className="flex items-center space-x-4">
-            <a
-              href="/communities"
-              className="text-gray-300 hover:text-white px-3 py-2 rounded-md"
-            >
-              Communities
-            </a>
-            <div className="relative">
-              <button
-                onClick={toggleNotifPopout}
-                className="text-gray-300 hover:text-white px-3 py-2 rounded-md relative"
-              >
-                {/* <ion-icon
-                  name="notifications-outline"
-                  class="text-2xl"
-                ></ion-icon> */}
-                {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-              {isNotifOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-gray-800 rounded-lg shadow-lg z-20 max-h-96 overflow-y-auto">
-                  <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-                    <h3 className="text-lg font-semibold text-white">
-                      Notifications
-                    </h3>
-                    {notifications.length > 0 && (
-                      <button
-                        onClick={clearAllNotifications}
-                        className="text-sm text-blue-400 hover:text-blue-300"
-                      >
-                        Clear All
-                      </button>
-                    )}
-                  </div>
-                  {notifications.length === 0 ? (
-                    <p className="p-4 text-gray-400 text-center">
-                      No notifications
-                    </p>
-                  ) : (
-                    <>
-                      {paginatedNotifs.map((notification) => (
-                        <div
-                          key={notification.id}
-                          className={`p-4 border-b border-gray-700 hover:bg-gray-700 ${
-                            notification.isRead ? "opacity-75" : ""
-                          }`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="text-sm font-semibold text-white">
-                                {notification.title}
-                              </h4>
-                              <p className="text-sm text-gray-300">
-                                {notification.message}
-                              </p>
-                              <p className="text-xs text-gray-400 mt-1">
-                                {new Date(
-                                  notification.timestamp
-                                ).toLocaleString()}
-                              </p>
-                            </div>
-                            <div className="flex space-x-2">
-                              {!notification.isRead && (
-                                <button
-                                  onClick={() => markAsRead(notification.id)}
-                                  className="text-blue-400 hover:text-blue-300 text-sm"
-                                >
-                                  Mark as Read
-                                </button>
-                              )}
-                              <button
-                                onClick={() =>
-                                  deleteNotification(notification.id)
-                                }
-                                className="text-red-400 hover:text-red-300 text-sm"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      <div className="p-4 flex justify-between items-center border-t border-gray-700">
-                        <button
-                          onClick={() =>
-                            setNotifPage((prev) => Math.max(prev - 1, 1))
-                          }
-                          disabled={notifPage === 1}
-                          className="text-sm text-blue-400 hover:text-blue-300 disabled:opacity-50"
-                        >
-                          Previous
-                        </button>
-                        <span className="text-sm text-gray-400">
-                          Page {notifPage} of{" "}
-                          {Math.ceil(notifications.length / notifsPerPage)}
-                        </span>
-                        <button
-                          onClick={() => setNotifPage((prev) => prev + 1)}
-                          disabled={
-                            notifPage * notifsPerPage >= notifications.length
-                          }
-                          className="text-sm text-blue-400 hover:text-blue-300 disabled:opacity-50"
-                        >
-                          Next
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-            {/* <a
-              href="/profile"
-              className="text-gray-300 hover:text-white px-3 py-2 rounded-md"
-            >
-              <ion-icon
-                name="person-circle-outline"
-                class="text-2xl"
-              ></ion-icon>
-            </a> */}
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
-};
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
 
 function encodeCommunityId(communityId) {
-  // Use the same encoding as the server-side encodeId function
-  // For simple ASCII strings like MongoDB ObjectIds, btoa should work fine
   const base64 = btoa(communityId);
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-const Carousel = ({ communities, totalCount, onPrev, onNext, currentPage, isLoading = false }) => {
+// ============================================================================
+// LOADING COMPONENTS
+// ============================================================================
+
+const LoadingSpinner = ({ size = "md", text = "Loading..." }) => {
+  const sizeClasses = {
+    sm: "w-5 h-5",
+    md: "w-8 h-8",
+    lg: "w-12 h-12",
+    xl: "w-16 h-16"
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center py-12">
+      <div className={`${sizeClasses[size]} animate-spin rounded-full border-3`} style={{ borderColor: 'rgba(255, 255, 255, 0.1)', borderTopColor: '#fbbf24' }}></div>
+      {text && <p className="text-slate-400 mt-4 text-sm font-medium">{text}</p>}
+    </div>
+  );
+};
+
+const CommunityCardSkeleton = () => (
+  <div className="rounded-2xl overflow-hidden animate-pulse" style={{
+    background: 'rgba(255, 255, 255, 0.05)',
+    border: '1px solid rgba(59, 130, 246, 0.2)'
+  }}>
+    <div className="aspect-[4/3]" style={{ background: 'rgba(255, 255, 255, 0.03)' }}></div>
+    <div className="p-4">
+      <div className="h-5 rounded-lg mb-3 w-3/4" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+      <div className="flex gap-2 mb-3">
+        <div className="h-5 rounded-full w-14" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+        <div className="h-5 rounded-full w-16" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+      </div>
+      <div className="h-4 rounded mb-2" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+      <div className="h-4 rounded w-2/3 mb-4" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+      <div className="h-11 rounded-lg" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+    </div>
+  </div>
+);
+
+const CarouselSkeleton = () => (
+  <div className="w-full px-4 py-8">
+    <div className="max-w-md mx-auto">
+      <div className="rounded-3xl p-6 animate-pulse" style={{
+        background: 'rgba(255, 255, 255, 0.05)',
+        border: '1px solid rgba(251, 191, 36, 0.2)'
+      }}>
+        <div className="aspect-square rounded-2xl mb-4" style={{ background: 'rgba(255, 255, 255, 0.03)' }}></div>
+        <div className="h-6 rounded-lg mb-3 mx-auto w-2/3" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+        <div className="flex justify-center gap-2 mb-3">
+          <div className="h-5 rounded-full w-14" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+          <div className="h-5 rounded-full w-16" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+        </div>
+        <div className="h-4 rounded mb-2" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+        <div className="h-4 rounded w-3/4 mx-auto mb-4" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+        <div className="h-12 rounded-lg w-40 mx-auto" style={{ background: 'rgba(255, 255, 255, 0.05)' }}></div>
+      </div>
+    </div>
+  </div>
+);
+
+// ============================================================================
+// UI COMPONENTS
+// ============================================================================
+
+const Badge = ({ children, variant = "default", className = "" }) => {
+  const variants = {
+    default: "bg-slate-700/50 text-slate-300 border border-slate-600/30",
+    elite: "bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-900 font-bold shadow-lg shadow-amber-500/30",
+    premium: "bg-gradient-to-r from-violet-500 to-purple-500 text-white font-bold shadow-lg shadow-violet-500/30",
+    standard: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-bold shadow-lg shadow-blue-500/30",
+    basic: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold shadow-lg shadow-emerald-500/30",
+    active: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30",
+    tag: "bg-blue-500/10 text-blue-400 border border-blue-500/30"
+  };
+
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${variants[variant]} ${className}`}>
+      {children}
+    </span>
+  );
+};
+
+const Button = ({ children, variant = "primary", size = "md", className = "", ...props }) => {
+  const variants = {
+    primary: "bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-900 shadow-lg shadow-amber-500/30 font-bold",
+    secondary: "bg-white/5 hover:bg-white/10 text-white border border-blue-500/30 hover:border-blue-400/50",
+    ghost: "bg-transparent hover:bg-white/5 text-slate-300",
+    purple: "bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white shadow-lg shadow-indigo-500/30"
+  };
+
+  const sizes = {
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2.5 text-sm",
+    lg: "px-6 py-3 text-base"
+  };
+
+  return (
+    <button
+      className={`inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-300 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+
+const Toast = ({ message, type, isVisible, onClose }) => {
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(onClose, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, onClose]);
+
+  if (!isVisible) return null;
+
+  const styles = {
+    success: 'bg-emerald-600 border-emerald-500',
+    error: 'bg-red-600 border-red-500',
+    info: 'bg-cyan-600 border-cyan-500'
+  };
+
+  const icons = {
+    success: 'fa-check-circle',
+    error: 'fa-exclamation-circle',
+    info: 'fa-info-circle'
+  };
+
+  return (
+    <div className="fixed right-4 z-[9999] animate-slide-in" style={{ top: '80px' }}>
+      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border text-white ${styles[type] || styles.info}`}>
+        <i className={`fa ${icons[type] || icons.info}`}></i>
+        <p className="font-medium text-sm">{message}</p>
+        <button onClick={onClose} className="ml-2 opacity-70 hover:opacity-100 transition-opacity">
+          <i className="fa fa-times"></i>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// COMMUNITY CARD COMPONENT
+// ============================================================================
+
+const CommunityCard = ({ community, isActive, actionText = "View", onAction }) => {
+  const getSubscriptionBadge = () => {
+    const plan = community?.subscription?.plan;
+    const isActive = community?.subscription?.active;
+
+    if (!isActive && !community?.promotionalText) return null;
+
+    if (plan === "elite" || community?.promotionalText) {
+      return <Badge variant="elite"><i className="fa fa-crown mr-1"></i>ELITE</Badge>;
+    } else if (plan === "premium") {
+      return <Badge variant="premium"><i className="fa fa-star mr-1"></i>PREMIUM</Badge>;
+    } else if (plan === "standard") {
+      return <Badge variant="standard"><i className="fa fa-check-circle mr-1"></i>STANDARD</Badge>;
+    } else if (plan === "basic") {
+      return <Badge variant="basic"><i className="fa fa-user mr-1"></i>BASIC</Badge>;
+    }
+    return null;
+  };
+
+  return (
+    <div className="group rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 flex flex-col h-full" style={{
+      background: 'rgba(255, 255, 255, 0.05)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(59, 130, 246, 0.2)',
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
+    }}>
+      {/* Image */}
+      <div className="relative aspect-[4/3] overflow-hidden" style={{ background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%)' }}>
+        <img
+          src={community?.imageLink || "/static/images/default-logo.png"}
+          alt={community?.name}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+          onError={(e) => { e.target.src = "/static/images/default-logo.png"; }}
+        />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(10, 10, 15, 0.9) 0%, transparent 50%)' }}></div>
+
+        {/* Badges */}
+        <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+          {getSubscriptionBadge()}
+        </div>
+
+        {isActive && (
+          <div className="absolute top-3 right-3">
+            <Badge variant="active"><i className="fa fa-circle mr-1 text-[8px]"></i>Active</Badge>
+          </div>
+        )}
+
+        {/* Member Count */}
+        <div className="absolute bottom-3 left-3">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-slate-300" style={{
+            background: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
+            <i className="fa fa-users"></i>
+            <span>{community?.membersCount || 0} members</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-4 flex flex-col flex-grow">
+        <h3 className="text-base font-bold text-white mb-2 line-clamp-2 leading-tight" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.1)' }}>
+          {community?.name}
+        </h3>
+
+        {/* Tags */}
+        {community?.tags?.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {community.tags.slice(0, 2).map((tag) => (
+              <Badge key={tag} variant="tag">{tag}</Badge>
+            ))}
+            {community.tags.length > 2 && (
+              <Badge variant="default">+{community.tags.length - 2}</Badge>
+            )}
+          </div>
+        )}
+
+        {/* Promotional Text */}
+        {community?.promotionalText && (
+          <p className="text-xs font-medium mb-2 flex items-start gap-1.5" style={{ color: '#fbbf24' }}>
+            <i className="fa fa-star mt-0.5 flex-shrink-0" style={{ color: '#fbbf24' }}></i>
+            <span className="line-clamp-1">{community.promotionalText}</span>
+          </p>
+        )}
+
+        {/* Description */}
+        {community?.promotionalDescription && (
+          <p className="text-slate-400 text-xs line-clamp-2 mb-4 flex-grow">
+            {community.promotionalDescription}
+          </p>
+        )}
+
+        {/* Action Button */}
+        <Button
+          onClick={() => onAction(community)}
+          className="w-full mt-auto"
+          size="md"
+        >
+          <span>{actionText || "View"}</span>
+          <i className="fa fa-arrow-right ml-2 text-xs"></i>
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// ELITE CAROUSEL COMPONENT
+// ============================================================================
+
+const EliteCarousel = ({ communities, totalCount, isLoading }) => {
   const [current, setCurrent] = useState(0);
-  const [direction, setDirection] = useState(1); // 1 for next, -1 for prev
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
 
   useEffect(() => {
-    if (!isLoading && communities.length > 0) {
+    if (!isLoading && communities.length > 1) {
       const interval = setInterval(() => {
-        setDirection(1);
         setCurrent((prev) => (prev + 1) % communities.length);
-      }, 8000);
+      }, 6000);
       return () => clearInterval(interval);
     }
   }, [communities, isLoading]);
 
-  if (isLoading) {
-    return <CarouselSkeleton />;
-  }
+  const handleTouchStart = (e) => setTouchStart(e.touches[0].clientX);
+  const handleTouchMove = (e) => setTouchEnd(e.touches[0].clientX);
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (Math.abs(distance) > 50) {
+      if (distance > 0) {
+        setCurrent((prev) => (prev + 1) % communities.length);
+      } else {
+        setCurrent((prev) => (prev - 1 + communities.length) % communities.length);
+      }
+    }
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
 
+  if (isLoading) return <CarouselSkeleton />;
   if (!communities.length) return null;
 
   const community = communities[current];
 
   return (
-    <HeroSection className="mt-24">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-          Elite Communities
-        </h1>
-        <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-          Discover the most prestigious and active communities on our platform
-        </p>
+    <section className="py-8 px-4 relative">
+      {/* Background glow effect */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '400px',
+        height: '400px',
+        background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)',
+        filter: 'blur(60px)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+
+      {/* Section Header */}
+      <div className="text-center mb-6 relative z-10">
+        <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-3" style={{
+          background: 'rgba(251, 191, 36, 0.1)',
+          border: '1px solid rgba(251, 191, 36, 0.3)'
+        }}>
+          <i className="fa fa-crown" style={{ color: '#fbbf24' }}></i>
+          <span className="text-sm font-semibold" style={{ color: '#fbbf24' }}>Elite Communities</span>
+        </div>
+        <h2 className="text-2xl md:text-3xl font-bold text-white mb-2" style={{ textShadow: '0 0 20px rgba(251, 191, 36, 0.3)' }}>Featured Communities</h2>
+        <p className="text-slate-400 text-sm max-w-md mx-auto">Discover the most active and prestigious communities on our platform</p>
       </div>
-      
-      <div className="w-full flex justify-center items-center py-8 z-0">
-        <div className="relative max-w-4xl w-full mx-auto z-0 flex items-center justify-center">
-          {/* Enhanced Card with more content */}
-          <div className="relative bg-gray-800 rounded-3xl shadow-2xl pt-16 pb-10 px-8 flex flex-col items-center text-center border border-gray-700 z-10 w-[400px] md:w-[500px] min-h-[520px] md:min-h-[600px] justify-center"
-            style={{
-              boxShadow: '0 12px 48px 0 rgba(124, 58, 237, 0.25), 0 2px 12px 0 rgba(0,0,0,0.18)',
-              minHeight: '520px',
-              maxHeight: '600px',
-              height: '600px',
-            }}>
-            {/* Elite Badge */}
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-4 py-1 rounded-full font-bold text-sm shadow-lg">
-              <i className="fa fa-crown mr-1"></i>
-              ELITE
-            </div>
-            
-            {/* Image positioned above community name */}
+
+      {/* Carousel Card */}
+      <div
+        className="max-w-sm mx-auto relative z-10"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="relative rounded-3xl p-5 shadow-2xl" style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(251, 191, 36, 0.3)',
+          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(251, 191, 36, 0.1)'
+        }}>
+          {/* Elite Badge */}
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+            <Badge variant="elite" className="px-4 py-1.5 shadow-lg">
+              <i className="fa fa-crown mr-1.5"></i>ELITE
+            </Badge>
+          </div>
+
+          {/* Image */}
+          <div className="relative aspect-square rounded-2xl overflow-hidden mt-2 mb-4" style={{ background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 100%)' }}>
             <img
               src={community.imageLink || "/static/images/default-logo.png"}
               alt={community.name}
-              className="w-56 h-56 md:w-64 md:h-64 object-contain rounded-2xl shadow-lg bg-gray-900 border border-gray-700 mb-6"
-              style={{ background: '#181e2a' }}
+              className="w-full h-full object-cover"
+              onError={(e) => { e.target.src = "/static/images/default-logo.png"; }}
             />
-            
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 break-words max-w-full leading-tight">{community.name}</h2>
-            
-            {/* Enhanced Tags */}
-            <div className="flex flex-wrap justify-center gap-2 mb-3">
-              {community.tags && community.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white text-xs px-3 py-1 rounded-full uppercase tracking-wide font-semibold shadow-md"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-            
-            {/* Promotional Text with Icon */}
-            {community.promotionalText && (
-              <div className="flex items-center justify-center mb-2">
-                <i className="fa fa-star text-yellow-400 mr-2" style={{ transform: 'translateY(-5px)' }}></i>
-                <p className="text-blue-300 text-base font-semibold">{community.promotionalText}</p>
+            {/* Purple breathing glow behind image */}
+            <div style={{
+              position: 'absolute',
+              inset: '-20%',
+              background: 'radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%)',
+              filter: 'blur(30px)',
+              animation: 'breathe 5s ease-in-out infinite',
+              zIndex: -1,
+              pointerEvents: 'none'
+            }} />
+          </div>
+
+          {/* Content */}
+          <div className="text-center">
+            <h3 className="text-xl font-bold text-white mb-2 line-clamp-2" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.2)' }}>{community.name}</h3>
+
+            {/* Tags */}
+            {community.tags?.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2 mb-3">
+                {community.tags.map((tag) => (
+                  <Badge key={tag} variant="tag">{tag}</Badge>
+                ))}
               </div>
             )}
-            
+
+            {/* Promotional Text */}
+            {community.promotionalText && (
+              <p className="text-sm font-medium mb-2 flex items-center justify-center gap-1.5" style={{ color: '#fbbf24' }}>
+                <i className="fa fa-star" style={{ color: '#fbbf24' }}></i>
+                {community.promotionalText}
+              </p>
+            )}
+
             {/* Description */}
-            <p className="text-gray-300 mb-4 text-sm md:text-base leading-relaxed">{community.promotionalDescription}</p>
-            
-            {/* Enhanced Stats */}
-            <div className="flex items-center justify-center space-x-4 mb-4 bg-black bg-opacity-50 px-4 py-2 rounded-lg">
-              <div className="flex items-center text-gray-400">
-                <i className="fa fa-users mr-1"></i>
-                <span className="text-sm">{community.membersCount} Members</span>
+            {community.promotionalDescription && (
+              <p className="text-slate-400 text-sm mb-4 line-clamp-2">{community.promotionalDescription}</p>
+            )}
+
+            {/* Stats */}
+            <div className="flex items-center justify-center gap-4 mb-4 text-xs">
+              <div className="flex items-center gap-1.5 text-slate-400">
+                <i className="fa fa-users"></i>
+                <span>{community.membersCount || 0} members</span>
               </div>
-              <div className="flex items-center text-green-400">
-                <i className="fa fa-circle mr-1 text-xs"></i>
-                <span className="text-sm">Active</span>
+              <div className="flex items-center gap-1.5 text-emerald-400">
+                <i className="fa fa-circle text-[6px]"></i>
+                <span>Active</span>
               </div>
             </div>
-            
-            {/* Enhanced CTA Button */}
-            <button
+
+            {/* CTA Button */}
+            <Button
               onClick={() => window.location.href = `/community/${encodeCommunityId(community._id)}`}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 mb-4"
+              size="lg"
+              className="w-full"
             >
-              <i className="fa fa-arrow-right mr-2"></i>
-              Explore Community
-            </button>
-            
-            {/* Navigation Arrows */}
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+              <span>Explore Community</span>
+              <i className="fa fa-arrow-right ml-2"></i>
+            </Button>
+          </div>
+
+          {/* Navigation Arrows */}
+          {communities.length > 1 && (
+            <>
               <button
-                onClick={() => {
-                  setDirection(-1);
-                  setCurrent((current - 1 + communities.length) % communities.length);
-                }}
-                className="bg-gray-700 text-white p-3 rounded-full shadow-lg hover:bg-gray-600 focus:outline-none transition-colors"
+                onClick={() => setCurrent((current - 1 + communities.length) % communities.length)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white rounded-full transition-all duration-300"
+                style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)' }}
                 aria-label="Previous"
               >
-                <ion-icon name="chevron-back-outline" class="text-2xl"></ion-icon>
+                <i className="fa fa-chevron-left"></i>
               </button>
-            </div>
-            <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
               <button
-                onClick={() => {
-                  setDirection(1);
-                  setCurrent((current + 1) % communities.length);
-                }}
-                className="bg-gray-700 text-white p-3 rounded-full shadow-lg hover:bg-gray-600 focus:outline-none transition-colors"
+                onClick={() => setCurrent((current + 1) % communities.length)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white rounded-full transition-all duration-300"
+                style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.2)' }}
                 aria-label="Next"
               >
-                <ion-icon name="chevron-forward-outline" class="text-2xl"></ion-icon>
+                <i className="fa fa-chevron-right"></i>
               </button>
-            </div>
-            
-            {/* Enhanced Dots */}
-            <div className="flex justify-center gap-2 mt-4">
-              {communities.map((_, idx) => (
-                <span
-                  key={idx}
-                  className={`w-3 h-3 rounded-full transition-all duration-200 ${idx === current ? "bg-blue-600 scale-125" : "bg-gray-500"} inline-block`}
-                ></span>
-              ))}
-            </div>
+            </>
+          )}
+        </div>
+
+        {/* Dots */}
+        {communities.length > 1 && (
+          <div className="flex justify-center gap-2 mt-4">
+            {communities.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrent(idx)}
+                className={`h-2 rounded-full transition-all duration-300`}
+                style={{
+                  width: idx === current ? '24px' : '8px',
+                  background: idx === current ? '#fbbf24' : 'rgba(255, 255, 255, 0.2)'
+                }}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
           </div>
+        )}
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-3 gap-3 mt-8 max-w-md mx-auto relative z-10">
+        <div className="rounded-xl p-3 text-center" style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(59, 130, 246, 0.2)'
+        }}>
+          <div className="text-lg font-bold text-white">{totalCount || 0}</div>
+          <div className="text-xs text-slate-400">Elite</div>
+        </div>
+        <div className="rounded-xl p-3 text-center" style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(59, 130, 246, 0.2)'
+        }}>
+          <div className="text-lg font-bold" style={{ color: '#fbbf24' }}>Premium</div>
+          <div className="text-xs text-slate-400">Featured</div>
+        </div>
+        <div className="rounded-xl p-3 text-center" style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(59, 130, 246, 0.2)'
+        }}>
+          <div className="text-lg font-bold text-emerald-400">Verified</div>
+          <div className="text-xs text-slate-400">Quality</div>
         </div>
       </div>
-      
-      {/* Stats Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-        <StatsCard 
-          icon="fa fa-users" 
-          value={totalCount} 
-          label="Total Elite Communities" 
-          color="blue" 
-        />
-        <StatsCard 
-          icon="fa fa-star" 
-          value="Premium" 
-          label="Featured Status" 
-          color="yellow" 
-        />
-        <StatsCard 
-          icon="fa fa-shield-alt" 
-          value="Verified" 
-          label="Quality Assured" 
-          color="green" 
-        />
-      </div>
-    </HeroSection>
+    </section>
   );
 };
 
-const CommunityCard = ({ community, isActive, actionText, onAction }) => (
-  <div className="card bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-700 overflow-hidden flex flex-col h-full">
-    {/* Image Container */}
-    <div className="relative h-48 overflow-hidden">
-      <img
-        src={community?.imageLink || "/static/images/default-logo.png"}
-        alt={community?.name}
-        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-      />
-      {/* Overlay with gradient */}
-      <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60"></div>
-      
-      {/* Subscription Badge for communities with active promotions */}
-      {(community?.subscription?.active === true && ["elite", "premium", "standard", "basic"].includes(community?.subscription?.plan)) || community?.promotionalText ? (
-        <div className="absolute top-3 left-3">
-          {(() => {
-            const plan = community?.subscription?.plan;
-    
-            
-            if (plan === "elite") {
-              return (
-                <span className="inline-flex items-center bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs px-2 py-1 rounded-full font-bold shadow-lg">
-                  <i className="fa fa-crown mr-1"></i>
-                  ELITE
-                </span>
-              );
-            } else if (plan === "premium") {
-              return (
-                <span className="inline-flex items-center bg-gradient-to-r from-purple-400 to-pink-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
-                  <i className="fa fa-star mr-1"></i>
-                  PREMIUM
-                </span>
-              );
-            } else if (plan === "standard") {
-              return (
-                <span className="inline-flex items-center bg-gradient-to-r from-blue-400 to-indigo-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
-                  <i className="fa fa-check-circle mr-1"></i>
-                  STANDARD
-                </span>
-              );
-            } else if (plan === "basic") {
-              return (
-                <span className="inline-flex items-center bg-gradient-to-r from-green-400 to-teal-500 text-white text-xs px-2 py-1 rounded-full font-bold shadow-lg">
-                  <i className="fa fa-user mr-1"></i>
-                  BASIC
-                </span>
-              );
-            } else if (community?.promotionalText) {
-              // Fallback for communities with promotional text but no subscription data
-              return (
-                <span className="inline-flex items-center bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs px-2 py-1 rounded-full font-bold shadow-lg">
-                  <i className="fa fa-crown mr-1"></i>
-                  ELITE
-                </span>
-              );
-            }
-            return null;
-          })()}
-        </div>
-      ) : null}
-      
-      {/* Active Badge */}
-      {isActive && (
-        <div className="absolute top-3 right-3">
-          <span className="inline-flex items-center bg-green-600 text-white text-xs px-2 py-1 rounded-full font-semibold shadow-lg">
-            <i className="fa fa-circle mr-1 text-xs"></i>
-            Active
-          </span>
-        </div>
-      )}
-      
-      {/* Member Count Badge */}
-      <div className="absolute bottom-3 left-3">
-        <div className="flex items-center bg-black bg-opacity-50 px-4 py-2 rounded-lg">
-          <div className="flex items-center text-gray-400">
-            <i className="fa fa-users mr-1"></i>
-            <span className="text-sm">{community?.membersCount} Members</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    {/* Content - Flex grow to push button to bottom */}
-    <div className="p-6 flex flex-col flex-grow">
-      <div className="flex-grow">
-        <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
-          {community?.name}
-        </h3>
-        
-        {/* Tags */}
-        {community?.tags && community.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {community.tags.slice(0, 2).map((tag) => (
-              <span
-                key={tag}
-                className="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium"
-              >
-                {tag}
-              </span>
-            ))}
-            {community.tags.length > 2 && (
-              <span className="inline-block bg-gray-600 text-gray-300 text-xs px-2 py-1 rounded-full">
-                +{community.tags.length - 2}
-              </span>
-            )}
-          </div>
-        )}
-        
-        {/* Promotional Text */}
-        {community?.promotionalText && (
-          <p className="text-blue-300 text-sm font-medium mb-2">
-            <i className="fa fa-star mr-1 text-yellow-400"></i>
-            {community.promotionalText}
-          </p>
-        )}
-        
-        {/* Description */}
-        {community?.promotionalDescription && (
-          <p className="text-gray-400 text-sm line-clamp-2">
-            {community.promotionalDescription}
-          </p>
-        )}
-      </div>
-      
-      {/* Action Button - Now at bottom */}
-      <button
-        onClick={() => onAction(community)}
-        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 mt-4"
-      >
-        <i className="fa fa-arrow-right mr-2"></i>
-        {actionText}
-      </button>
-    </div>
-  </div>
-);
+// ============================================================================
+// COMMUNITY SECTION COMPONENT
+// ============================================================================
 
 const CommunitySection = ({
   title,
+  icon,
   communities,
   actionText,
   onAction,
-  cardsPerView = 3,
   onPrevPage,
   onNextPage,
   currentPage,
   totalCount,
-  isLoading = false,
+  isLoading,
+  emptyMessage,
+  emptyIcon,
+  showLoginPrompt
 }) => {
-  const [startIndex, setStartIndex] = useState(0);
-  const maxIndex = Math.max(0, communities.length - cardsPerView);
+  const itemsPerPage = 6;
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-  // Set a default actionText if not provided
-  const buttonLabel = actionText && actionText.trim() !== '' ? actionText : 'View';
-
-  const scrollNext = () =>
-    setStartIndex((prev) => Math.min(prev + cardsPerView, maxIndex));
-  const scrollPrev = () =>
-    setStartIndex((prev) => Math.max(prev - cardsPerView, 0));
+  if (showLoginPrompt) {
+    return (
+      <section className="py-6 px-4">
+        <div className="text-center">
+          {icon && <div className="inline-flex items-center gap-2 mb-2" style={{ color: '#fbbf24' }}><i className={icon}></i><span className="font-semibold">{title}</span></div>}
+        </div>
+        <div className="rounded-2xl p-8 text-center max-w-md mx-auto" style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(59, 130, 246, 0.2)'
+        }}>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
+            <i className={`${emptyIcon || 'fa fa-sign-in-alt'} text-2xl text-slate-500`}></i>
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">{emptyMessage || 'Sign in to see more'}</h3>
+          <p className="text-slate-400 text-sm mb-4">Join communities and they'll appear here</p>
+          <Button
+            onClick={() => window.location.href = '/login-civ?redirect=/communities'}
+            size="lg"
+          >
+            <i className="fa fa-sign-in-alt mr-2"></i>
+            Sign In
+          </Button>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <div className="py-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Enhanced Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">{title}</h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-purple-600 mx-auto rounded-full"></div>
+    <section className="py-6 px-4">
+      {/* Section Header */}
+      {title && (
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2" style={{ lineHeight: 1 }}>
+            {icon && <i className={icon} style={{ color: '#fbbf24', fontSize: '1.125rem', display: 'flex', alignItems: 'center' }}></i>}
+            <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)', margin: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>{title}</h2>
+            {totalCount > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{
+                color: 'rgba(255, 255, 255, 0.6)',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                lineHeight: 1
+              }}>{totalCount}</span>
+            )}
+          </div>
         </div>
-        
-        {/* Community Cards Grid */}
-        <div className="relative">
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: cardsPerView }).map((_, index) => (
-                <CommunityCardSkeleton key={index} />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {communities
-                .slice(startIndex, startIndex + cardsPerView)
-                .map((community) => (
-                  <CommunityCard
-                    key={community._id}
-                    community={community}
-                    isActive={community.isActive}
-                    actionText={buttonLabel}
-                    onAction={(community) => (window.location.href = `/community/${encodeCommunityId(community._id)}`)}
-                  />
-                ))}
-            </div>
-          )}
-          
-          {/* Enhanced Navigation Arrows */}
-          {!isLoading && startIndex > 0 && (
-            <button
-              onClick={scrollPrev}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-gray-700 hover:bg-gray-600 text-white p-3 rounded-full shadow-lg transition-colors"
-            >
-              <ion-icon name="chevron-back-outline" class="text-xl"></ion-icon>
-            </button>
-          )}
-          {!isLoading && startIndex < maxIndex && (
-            <button
-              onClick={scrollNext}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-gray-700 hover:bg-gray-600 text-white p-3 rounded-full shadow-lg transition-colors"
-            >
-              <ion-icon name="chevron-forward-outline" class="text-xl"></ion-icon>
-            </button>
-          )}
+      )}
+
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => <CommunityCardSkeleton key={i} />)}
         </div>
-        
-        {/* Enhanced Pagination */}
-        {!isLoading && totalCount > cardsPerView && (
-          <div className="flex justify-center items-center mt-8 space-x-4">
-            <button
-              onClick={onPrevPage}
-              disabled={currentPage === 1}
-              className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors flex items-center space-x-2"
-            >
-              <ion-icon name="chevron-back-outline" class="text-sm"></ion-icon>
-              <span>Previous</span>
-            </button>
-            
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-300 text-base font-medium">
-                Page {currentPage} of {Math.ceil(totalCount / cardsPerView)}
+      ) : communities.length === 0 ? (
+        <div className="rounded-2xl p-8 text-center" style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(59, 130, 246, 0.2)'
+        }}>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
+            <i className={`${emptyIcon || 'fa fa-users'} text-2xl text-slate-500`}></i>
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">No Communities Found</h3>
+          <p className="text-slate-400 text-sm">{emptyMessage || 'Start exploring communities or create your own!'}</p>
+        </div>
+      ) : (
+        <>
+          {/* Community Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {communities.map((community) => (
+              <CommunityCard
+                key={community._id}
+                community={community}
+                isActive={community.isActive}
+                actionText={actionText}
+                onAction={onAction || ((c) => window.location.href = `/community/${encodeCommunityId(c._id)}`)}
+              />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onPrevPage}
+                disabled={currentPage <= 1}
+              >
+                <i className="fa fa-chevron-left mr-1"></i>Prev
+              </Button>
+              <span className="text-sm text-slate-400 px-3">
+                {currentPage} / {totalPages}
               </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onNextPage}
+                disabled={currentPage >= totalPages}
+              >
+                Next<i className="fa fa-chevron-right ml-1"></i>
+              </Button>
             </div>
-            
-            <button
-              onClick={onNextPage}
-              disabled={currentPage * cardsPerView >= totalCount}
-              className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors flex items-center space-x-2"
-            >
-              <span>Next</span>
-              <ion-icon name="chevron-forward-outline" class="text-sm"></ion-icon>
-            </button>
-          </div>
-        )}
-        
-        {/* Empty State */}
-        {!isLoading && communities.length === 0 && (
-          <div className="text-center py-12">
-            <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
-              <i className="fa fa-users text-4xl text-gray-500 mb-4"></i>
-              <h3 className="text-xl font-semibold text-white mb-2">No Communities Found</h3>
-              <p className="text-gray-400">Start exploring communities or create your own!</p>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+          )}
+        </>
+      )}
+    </section>
   );
 };
+
+// ============================================================================
+// BROWSE COMMUNITIES WITH FILTERS
+// ============================================================================
 
 const BrowseCommunities = ({
   communities,
@@ -902,74 +644,215 @@ const BrowseCommunities = ({
   onNextPage,
   currentPage,
   fetchAllCommunitiesPage,
-  isLoading = false,
+  isLoading
 }) => {
-  const [filteredCommunities, setFilteredCommunities] = useState(communities);
   const tags = ["all", "PC", "Xbox", "PlayStation"];
-
-  useEffect(() => {
-    setFilteredCommunities(communities);
-  }, [communities]);
 
   const handleTagChange = (tag) => {
     setCurrentTag(tag);
     fetchAllCommunitiesPage(tag, 0);
   };
 
-  const cardsPerView =
-    window.innerWidth >= 1024 ? 6 : window.innerWidth >= 768 ? 4 : 3;
-
   return (
-    <div className="py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-white mb-6">
-          Browse Communities
-        </h2>
-        <div className="flex space-x-4 mb-6">
-          {tags.map((t) => (
+    <section className="py-6 px-4">
+      {/* Section Header */}
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-4" style={{ lineHeight: 1 }}>
+          <i className="fa fa-globe" style={{ color: '#fbbf24', fontSize: '1.125rem', display: 'flex', alignItems: 'center' }}></i>
+          <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)', margin: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>Browse Communities</h2>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+          {tags.map((tag) => (
             <button
-              key={t}
-              className={`px-4 py-2 rounded-full ${
-                currentTag === t
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-700 text-gray-300"
-              }`}
-              onClick={() => handleTagChange(t)}
+              key={tag}
+              onClick={() => handleTagChange(tag)}
+              className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300"
+              style={currentTag === tag ? {
+                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                color: '#000',
+                boxShadow: '0 4px 15px rgba(251, 191, 36, 0.3)'
+              } : {
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: 'rgba(255, 255, 255, 0.6)',
+                border: '1px solid rgba(59, 130, 246, 0.2)'
+              }}
             >
-              {t}
+              {tag === "all" ? "All" : tag}
             </button>
           ))}
         </div>
-        <CommunitySection
-          title=""
-          communities={filteredCommunities}
-          //   actionText="Explore"
-          actionText=""
-          onAction={(community) => (window.location.href = `/community/${encodeCommunityId(community._id)}`)}
-          cardsPerView={cardsPerView}
-          onPrevPage={onPrevPage}
-          onNextPage={onNextPage}
-          currentPage={currentPage + 1}
-          totalCount={totalCount}
-          isLoading={isLoading}
-        />
       </div>
-    </div>
+
+      <CommunitySection
+        communities={communities}
+        actionText="View"
+        onPrevPage={onPrevPage}
+        onNextPage={onNextPage}
+        currentPage={currentPage + 1}
+        totalCount={totalCount}
+        isLoading={isLoading}
+      />
+    </section>
   );
 };
 
-// Community Search Modal Component
+// ============================================================================
+// YOUR COMMUNITIES WITH FILTERS
+// ============================================================================
+
+const YourCommunities = ({
+  communities,
+  totalCount,
+  currentFilter,
+  onFilterChange,
+  onPrevPage,
+  onNextPage,
+  currentPage,
+  isLoading,
+  showLoginPrompt,
+  dbUser
+}) => {
+  const filters = [
+    { id: "joined", label: "Joined", icon: "fa-check-circle" },
+    { id: "pending", label: "Pending", icon: "fa-clock" },
+    { id: "owned", label: "Owned", icon: "fa-crown" }
+  ];
+
+  const handleFilterChange = (filter) => {
+    onFilterChange(filter, 1);
+  };
+
+  const getEmptyMessage = () => {
+    switch (currentFilter) {
+      case "pending": return "No pending join requests";
+      case "owned": return "You haven't created any communities yet";
+      default: return "You haven't joined any communities yet";
+    }
+  };
+
+  const getEmptyIcon = () => {
+    switch (currentFilter) {
+      case "pending": return "fa fa-clock";
+      case "owned": return "fa fa-crown";
+      default: return "fa fa-users";
+    }
+  };
+
+  const getActionText = () => {
+    switch (currentFilter) {
+      case "pending": return "View";
+      case "owned": return "Manage";
+      default: return "Jump In";
+    }
+  };
+
+  if (showLoginPrompt) {
+    return (
+      <section className="py-6 px-4">
+        <div className="flex items-center gap-2 mb-4" style={{ lineHeight: 1 }}>
+          <i className="fa fa-users" style={{ color: '#fbbf24', fontSize: '1.125rem', display: 'flex', alignItems: 'center' }}></i>
+          <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)', margin: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>Your Communities</h2>
+        </div>
+        <div className="rounded-2xl p-8 text-center max-w-md mx-auto" style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(59, 130, 246, 0.2)'
+        }}>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
+            <i className="fa fa-sign-in-alt text-2xl text-slate-500"></i>
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">Sign in to see your communities</h3>
+          <p className="text-slate-400 text-sm mb-4">Join communities and they'll appear here</p>
+          <Button
+            onClick={() => window.location.href = '/login-civ?redirect=/communities'}
+            size="lg"
+          >
+            <i className="fa fa-sign-in-alt mr-2"></i>
+            Sign In
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-6 px-4">
+      {/* Section Header */}
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-4" style={{ lineHeight: 1 }}>
+          <i className="fa fa-users" style={{ color: '#fbbf24', fontSize: '1.125rem', display: 'flex', alignItems: 'center' }}></i>
+          <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)', margin: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}>Your Communities</h2>
+          {totalCount > 0 && (
+            <span className="text-xs px-2 py-0.5 rounded-full" style={{
+              color: 'rgba(255, 255, 255, 0.6)',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              lineHeight: 1
+            }}>{totalCount}</span>
+          )}
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+          {filters.map((filter) => (
+            <button
+              key={filter.id}
+              onClick={() => handleFilterChange(filter.id)}
+              className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center gap-2"
+              style={currentFilter === filter.id ? {
+                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                color: '#000',
+                boxShadow: '0 4px 15px rgba(251, 191, 36, 0.3)'
+              } : {
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: 'rgba(255, 255, 255, 0.6)',
+                border: '1px solid rgba(59, 130, 246, 0.2)'
+              }}
+            >
+              <i className={`fa ${filter.icon}`}></i>
+              {filter.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <CommunitySection
+        communities={communities}
+        actionText={getActionText()}
+        onPrevPage={onPrevPage}
+        onNextPage={onNextPage}
+        currentPage={currentPage}
+        totalCount={totalCount}
+        isLoading={isLoading}
+        emptyMessage={getEmptyMessage()}
+        emptyIcon={getEmptyIcon()}
+      />
+    </section>
+  );
+};
+
+// ============================================================================
+// SEARCH COMPONENTS
+// ============================================================================
+
 const CommunitySearchModal = ({ isOpen, onClose, initialQuery = "" }) => {
-  const [query, setQuery] = React.useState(initialQuery);
-  const [results, setResults] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [totalPages, setTotalPages] = React.useState(1);
-  const [totalCount, setTotalCount] = React.useState(0);
-  const [hasSearched, setHasSearched] = React.useState(false);
+  const [query, setQuery] = useState(initialQuery);
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [hasSearched, setHasSearched] = useState(false);
   const resultsPerPage = 12;
-  const inputRef = React.useRef();
-  const debounceTimeout = React.useRef();
+  const inputRef = useRef();
+  const debounceTimeout = useRef();
 
   const fetchSearchResults = async (searchQuery, page = 1) => {
     if (!searchQuery.trim()) {
@@ -980,587 +863,387 @@ const CommunitySearchModal = ({ isOpen, onClose, initialQuery = "" }) => {
 
     setLoading(true);
     try {
-      // Escape brackets for regex if backend uses regex search
-      // This ensures brackets are treated as literal characters, not regex character classes
-      const escapedQuery = searchQuery.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
-      // Then URL encode for the API call
+      const escapedQuery = searchQuery.replace(/\\/g, '\\\\').replace(/\[/g, '\\[').replace(/\]/g, '\\]');
       const encodedQuery = encodeURIComponent(escapedQuery);
       const response = await fetch(
-        `${API_URL}/api/v1/search/communities?q=${encodedQuery}&limit=${resultsPerPage}&page=${page}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+        `${API_URL}/api/v1/search/communities?q=${encodedQuery}&limit=${resultsPerPage}&page=${page}`
       );
 
-      if (!response.ok) {
-        throw new Error(`Search failed: ${response.status} ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error('Search failed');
 
       const data = await response.json();
-      
-      // Validate response structure
-      if (!data || typeof data !== 'object') {
-        throw new Error('Invalid response format');
-      }
-      
       const communities = (data.data || []).map((item) => {
-        if (!item || !item._id) return null;
+        if (!item?._id) return null;
         const c = item.community || item;
         const subscription = c.subscription || {};
-        const isVerified =
-          ["elite", "premium", "standard"].includes(subscription.plan) && subscription.active === true;
         return {
           id: item._id,
+          _id: item._id,
           name: c.name || 'Unnamed Community',
           image: c.imageLink || "/static/images/default-logo.png",
-          description: c.promotionalText || c.promotionalDescription || c.description || "",
-          _id: item._id,
-          isVerified,
+          description: c.promotionalText || c.promotionalDescription || "",
+          isVerified: ["elite", "premium", "standard"].includes(subscription.plan) && subscription.active
         };
-      }).filter(Boolean); // Remove any null entries
+      }).filter(Boolean);
 
       setResults(communities);
-      setTotalCount(data.totalCount || data.total || communities.length);
-      setTotalPages(data.totalPages || Math.ceil((data.totalCount || data.total || communities.length) / resultsPerPage) || 1);
+      setTotalCount(data.totalCount || communities.length);
+      setTotalPages(Math.ceil((data.totalCount || communities.length) / resultsPerPage));
       setCurrentPage(page);
       setHasSearched(true);
     } catch (error) {
-      // Silently handle errors in production - user will see empty results
       setResults([]);
       setHasSearched(true);
-      setTotalCount(0);
-      setTotalPages(1);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSearch = () => {
-    if (query.trim()) {
-      setCurrentPage(1);
-      fetchSearchResults(query.trim(), 1);
     }
   };
 
   const handleInputChange = (e) => {
     const value = e.target.value;
     setQuery(value);
-    
-    // Clear existing timeout
-    if (debounceTimeout.current) {
-      clearTimeout(debounceTimeout.current);
-    }
-    
-    // Reset to page 1 when query changes
-    setCurrentPage(1);
-    
-    // Debounce search
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     debounceTimeout.current = setTimeout(() => {
-      if (value.trim()) {
-        fetchSearchResults(value.trim(), 1);
-      } else {
-        setResults([]);
-        setHasSearched(false);
-      }
+      if (value.trim()) fetchSearchResults(value.trim(), 1);
+      else { setResults([]); setHasSearched(false); }
     }, 300);
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      // Clear debounce and search immediately
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-      }
-      handleSearch();
-    }
-  };
-
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages && query.trim()) {
-      fetchSearchResults(query.trim(), newPage);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
   const handleCommunityClick = (community) => {
-    if (community && community._id) {
+    if (community?._id) {
       window.location.href = `/community/${encodeCommunityId(community._id)}`;
     }
   };
 
-  React.useEffect(() => {
-    if (isOpen && inputRef.current) {
-      // Small delay to ensure modal is fully rendered before focusing
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 100);
       if (initialQuery) {
         setQuery(initialQuery);
         fetchSearchResults(initialQuery, 1);
       }
-    } else if (!isOpen) {
-      // Clear debounce timeout on close
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-      }
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
       setQuery("");
       setResults([]);
       setHasSearched(false);
-      setCurrentPage(1);
     }
-    
-    // Handle escape key to close modal
-    const handleEscape = (e) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-    
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      // Prevent body scroll when modal is open
-      document.body.style.overflow = 'hidden';
-    }
-    
-    // Cleanup
+
+    const handleEscape = (e) => { if (e.key === 'Escape' && isOpen) onClose(); };
+    document.addEventListener('keydown', handleEscape);
     return () => {
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-      }
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = '';
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
-  }, [isOpen, initialQuery, onClose]);
+  }, [isOpen, initialQuery]);
 
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-start justify-center overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
+      className="fixed inset-0 z-50 flex flex-col"
+      style={{ background: 'rgba(10, 10, 15, 0.95)', backdropFilter: 'blur(10px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div
-        className="bg-gray-900 w-full max-w-6xl mx-4 my-8 rounded-lg shadow-2xl border border-gray-700"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="search-modal-title"
-      >
-        {/* Header */}
-        <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-6 rounded-t-lg z-10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 id="search-modal-title" className="text-2xl font-bold text-white flex items-center gap-2">
-              <i className="fa fa-search text-blue-400" aria-hidden="true"></i>
-              Search Communities
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white transition-colors text-2xl"
-              aria-label="Close search modal"
-              type="button"
-            >
-              <i className="fa fa-times" aria-hidden="true"></i>
-            </button>
-          </div>
-          
-          {/* Search Input */}
-          <div className="flex gap-3">
-            <div className="flex-1 relative">
-              <input
-                ref={inputRef}
-                type="text"
-                className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg pr-12"
-                placeholder="Search for a community..."
-                value={query}
-                onChange={handleInputChange}
-                onKeyPress={handleKeyPress}
-                aria-label="Search for communities"
-                aria-describedby="search-description"
-              />
-              {loading && (
-                <span className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <svg className="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                  </svg>
-                </span>
-              )}
-            </div>
-            <button
-              onClick={handleSearch}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition whitespace-nowrap"
-              aria-label="Search communities"
-              disabled={loading}
-            >
-              <i className="fa fa-search mr-2"></i>Search
-            </button>
-          </div>
+      {/* Header */}
+      <div className="sticky top-0 p-4 safe-area-top" style={{
+        background: 'rgba(10, 10, 15, 0.98)',
+        backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(59, 130, 246, 0.2)'
+      }}>
+        <div className="flex items-center gap-3 mb-3">
+          <button
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+          >
+            <i className="fa fa-times text-xl"></i>
+          </button>
+          <h2 className="text-lg font-bold text-white">Search Communities</h2>
         </div>
-
-        {/* Results */}
-        <div className="p-6">
-          {loading && !hasSearched ? (
-            <div className="flex justify-center items-center py-16">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-700 border-t-blue-500 mx-auto mb-4"></div>
-                <p className="text-gray-400 text-lg">Searching...</p>
-              </div>
-            </div>
-          ) : hasSearched && results.length === 0 ? (
-            <div className="text-center py-16">
-              <i className="fa fa-search text-gray-600 text-6xl mb-4"></i>
-              <p className="text-gray-400 text-xl">No communities found</p>
-              <p className="text-gray-500 mt-2">Try a different search term</p>
-            </div>
-          ) : hasSearched && results.length > 0 ? (
-            <>
-              <div className="mb-4 text-gray-400">
-                Found {totalCount} {totalCount === 1 ? 'community' : 'communities'}
-                {query && ` for "${query}"`}
-              </div>
-              
-              {/* Results Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {results.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-gray-800 border border-gray-700 rounded-lg p-4 hover:border-blue-500 transition-all cursor-pointer transform hover:scale-[1.02]"
-                    onClick={() => handleCommunityClick(item)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleCommunityClick(item);
-                      }
-                    }}
-                    aria-label={`View ${item.name} community`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <img
-                        src={item.image}
-                        alt={`${item.name} logo`}
-                        className="w-16 h-16 rounded-lg object-cover border border-gray-700 bg-gray-800 flex-shrink-0"
-                        loading="lazy"
-                        onError={(e) => {
-                          e.target.src = "/static/images/default-logo.png";
-                        }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-white flex items-baseline gap-2 mb-1">
-                          <span className="break-words">{item.name}</span>
-                          {item.isVerified && (
-                            <svg viewBox="0 0 24 24" className="w-4 h-4 flex-shrink-0" fill="none">
-                              <circle cx="12" cy="12" r="10" fill="#eab308" />
-                              <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          )}
-                        </div>
-                        <div className="text-sm text-gray-400 line-clamp-2">{item.description}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-6 pt-6 border-t border-gray-700">
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  >
-                    <i className="fa fa-chevron-left mr-1"></i>Previous
-                  </button>
-                  
-                  <div className="flex gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum;
-                      if (totalPages <= 5) {
-                        pageNum = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i;
-                      } else {
-                        pageNum = currentPage - 2 + i;
-                      }
-                      
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`px-4 py-2 rounded-lg transition ${
-                            currentPage === pageNum
-                              ? "bg-blue-600 text-white"
-                              : "bg-gray-800 border border-gray-700 text-white hover:bg-gray-700"
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 bg-gray-800 border border-gray-700 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  >
-                    Next<i className="fa fa-chevron-right ml-1"></i>
-                  </button>
-                  
-                  <span className="text-gray-400 ml-4">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-16">
-              <i className="fa fa-search text-gray-600 text-6xl mb-4"></i>
-              <p className="text-gray-400 text-xl">Enter a search term to find communities</p>
+        <div className="relative">
+          <input
+            ref={inputRef}
+            type="text"
+            className="w-full pl-10 pr-4 py-3 rounded-lg text-white placeholder-slate-500 focus:outline-none"
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}
+            placeholder="Search for a community..."
+            value={query}
+            onChange={handleInputChange}
+            onKeyPress={(e) => e.key === 'Enter' && query.trim() && fetchSearchResults(query.trim(), 1)}
+          />
+          <i className="fa fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+          {loading && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: 'rgba(255, 255, 255, 0.1)', borderTopColor: '#fbbf24' }}></div>
             </div>
           )}
         </div>
+      </div>
+
+      {/* Results */}
+      <div className="flex-1 overflow-y-auto p-4 safe-area-bottom">
+        {loading && !hasSearched ? (
+          <LoadingSpinner text="Searching..." />
+        ) : hasSearched && results.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <i className="fa fa-search text-2xl text-slate-600"></i>
+            </div>
+            <p className="text-slate-400">No communities found</p>
+            <p className="text-slate-600 text-sm mt-1">Try a different search term</p>
+          </div>
+        ) : hasSearched ? (
+          <>
+            <p className="text-slate-500 text-sm mb-4">
+              Found {totalCount} {totalCount === 1 ? 'community' : 'communities'}
+            </p>
+            <div className="space-y-2">
+              {results.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleCommunityClick(item)}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-300 text-left"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(59, 130, 246, 0.2)'
+                  }}
+                >
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
+                    style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+                    onError={(e) => { e.target.src = "/static/images/default-logo.png"; }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-white truncate">{item.name}</span>
+                      {item.isVerified && (
+                        <i className="fa fa-check-circle flex-shrink-0" style={{ color: '#fbbf24' }}></i>
+                      )}
+                    </div>
+                    {item.description && (
+                      <p className="text-slate-400 text-sm truncate">{item.description}</p>
+                    )}
+                  </div>
+                  <i className="fa fa-chevron-right text-slate-600"></i>
+                </button>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => fetchSearchResults(query, currentPage - 1)}
+                  disabled={currentPage <= 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-slate-400 px-3">{currentPage} / {totalPages}</span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => fetchSearchResults(query, currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-16">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <i className="fa fa-search text-2xl text-slate-600"></i>
+            </div>
+            <p className="text-slate-400">Enter a search term</p>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-// CommunitySearchBar: HeroUI Free style search bar for communities
-const CommunitySearchBar = ({ onCreateCommunity }) => {
-  const [inputValue, setInputValue] = React.useState("");
-  const [options, setOptions] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
-  const [noResults, setNoResults] = React.useState(false);
-  const [showDropdown, setShowDropdown] = React.useState(false);
-  const [showSearchModal, setShowSearchModal] = React.useState(false);
-  const debounceTimeout = React.useRef();
-  const inputRef = React.useRef();
+const SearchBar = ({ onCreateCommunity }) => {
+  const [inputValue, setInputValue] = useState("");
+  const [options, setOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const debounceTimeout = useRef();
+  const inputRef = useRef();
 
   const fetchCommunities = (query) => {
     if (!query) {
       setOptions([]);
-      setNoResults(false);
       setShowDropdown(false);
       return;
     }
     setLoading(true);
-    // Escape brackets for regex if backend uses regex search
-    const escapedQuery = query.replace(/\[/g, '\\[').replace(/\]/g, '\\]');
-    // Then URL encode for the API call
-    const encodedQuery = encodeURIComponent(escapedQuery);
-    fetch(`${API_URL}/api/v1/search/communities?q=${encodedQuery}&limit=6&page=1`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Search failed: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        if (!data || typeof data !== 'object') {
-          throw new Error('Invalid response format');
-        }
-        const communities = (data.data || []).map((item) => {
-          if (!item || !item._id) return null;
+    const escapedQuery = query.replace(/\\/g, '\\\\').replace(/\[/g, '\\[').replace(/\]/g, '\\]');
+    fetch(`${API_URL}/api/v1/search/communities?q=${encodeURIComponent(escapedQuery)}&limit=5&page=1`)
+      .then(res => res.json())
+      .then(data => {
+        const communities = (data.data || []).map(item => {
           const c = item.community || item;
-          const subscription = c.subscription || {};
-          const isVerified =
-            ["elite", "premium", "standard"].includes(subscription.plan) && subscription.active === true;
           return {
             id: item._id,
-            name: c.name || 'Unnamed Community',
-            image: c.imageLink || "/static/images/default-logo.png",
-            description: c.promotionalText || c.promotionalDescription || c.description || "",
             _id: item._id,
-            isVerified,
+            name: c.name || 'Unnamed',
+            image: c.imageLink || "/static/images/default-logo.png",
+            description: c.promotionalText || c.promotionalDescription || "",
+            isVerified: c.subscription?.active && ["elite", "premium", "standard"].includes(c.subscription?.plan)
           };
-        }).filter(Boolean); // Remove any null entries
+        }).filter(Boolean);
         setOptions(communities);
-        setNoResults(communities.length === 0);
         setShowDropdown(true);
         setLoading(false);
       })
       .catch(() => {
-        // Silently handle errors - user will see empty dropdown
         setOptions([]);
-        setNoResults(true);
         setShowDropdown(true);
         setLoading(false);
       });
   };
 
-  // Debounce input
   const handleInputChange = (e) => {
     const value = e.target.value;
     setInputValue(value);
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-    debounceTimeout.current = setTimeout(() => {
-      fetchCommunities(value);
-    }, 300);
+    debounceTimeout.current = setTimeout(() => fetchCommunities(value), 300);
   };
 
-  // Handle Enter key or search button click - open modal
-  const handleSearch = () => {
-    if (inputValue.trim()) {
-      setShowSearchModal(true);
-      setShowDropdown(false);
-    }
-  };
-
-  // Handle selection from dropdown
   const handleSelection = (selected) => {
     setShowDropdown(false);
     setInputValue("");
-    setOptions([]);
-    if (selected && selected._id) {
+    if (selected?._id) {
       window.location.href = `/community/${encodeCommunityId(selected._id)}`;
     }
   };
 
-  // Handle key press
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSearch();
+  const handleCreateCommunity = () => {
+    if (!dbUser?._id) {
+      window.location.href = '/login-civ?redirect=' + encodeURIComponent('/communities');
+      return;
     }
+    onCreateCommunity();
   };
 
-  // Hide dropdown on outside click and escape key
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClick = (e) => {
       if (inputRef.current && !inputRef.current.contains(e.target)) {
         setShowDropdown(false);
       }
     };
-    
-    const handleEscape = (e) => {
-      if (e.key === 'Escape' && showDropdown) {
-        setShowDropdown(false);
-      }
-    };
-    
     document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [showDropdown]);
-
-  // Add authentication check function
-  const handleCreateCommunity = () => {
-    if (!dbUser || !dbUser._id) {
-      // User not logged in, redirect to login with return URL
-      window.location.href = '/login-civ?redirect=' + encodeURIComponent('/communities');
-      return;
-    }
-    // User is logged in, open the modal
-    onCreateCommunity();
-  };
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
 
   return (
     <>
-      <div className="w-full flex justify-center py-8 bg-gray-900 z-10">
-        <div className="w-full max-w-4xl px-4 flex flex-col sm:flex-row items-center gap-4 mx-auto" ref={inputRef}>
-          <div className="flex-grow flex justify-center relative min-w-0 w-full">
+      <div className="sticky top-16 z-30 px-4 py-3 safe-area-top" style={{
+        background: 'rgba(10, 10, 15, 0.95)',
+        backdropFilter: 'blur(10px)',
+        borderBottom: '1px solid rgba(59, 130, 246, 0.2)'
+      }}>
+        <div className="flex gap-2" ref={inputRef}>
+          {/* Search Input */}
+          <div className="flex-1 relative">
             <input
               type="text"
-              className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg shadow pr-12"
-              placeholder="Search for a community..."
+              className="w-full pl-10 pr-4 py-3 rounded-lg text-white placeholder-slate-500 focus:outline-none text-base transition-all duration-300"
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)'
+              }}
+              placeholder="Search communities..."
               value={inputValue}
               onChange={handleInputChange}
-              onKeyPress={handleKeyPress}
+              onKeyPress={(e) => e.key === 'Enter' && inputValue.trim() && setShowSearchModal(true)}
               onFocus={() => inputValue && setShowDropdown(true)}
             />
+            <i className="fa fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
             {loading && (
-              <span className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <svg className="animate-spin h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                </svg>
-              </span>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="w-4 h-4 border-2 border-slate-600 rounded-full animate-spin" style={{ borderTopColor: '#fbbf24' }}></div>
+              </div>
             )}
+
+            {/* Dropdown */}
             {showDropdown && (
-              <div
-                className="absolute left-0 right-0 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto w-full"
-                style={{ top: '100%' }}
-              >
+              <div className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl overflow-hidden z-40" style={{
+                background: 'rgba(15, 15, 20, 0.98)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(59, 130, 246, 0.2)'
+              }}>
                 {loading ? (
-                  <div className="p-4 text-gray-400 text-center text-lg">Searching...</div>
-                ) : noResults ? (
-                  <div className="p-4 text-gray-400 text-center text-lg">No communities found</div>
+                  <div className="p-4 text-center text-slate-400 text-sm">Searching...</div>
+                ) : options.length === 0 ? (
+                  <div className="p-4 text-center text-slate-400 text-sm">No communities found</div>
                 ) : (
                   <>
                     {options.map((item) => (
-                      <div
+                      <button
                         key={item.id}
-                        className="flex items-center gap-3 p-3 hover:bg-gray-700 cursor-pointer w-full"
+                        className="w-full flex items-center gap-3 p-3 transition-colors text-left"
+                        style={{ background: 'transparent' }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                         onClick={() => handleSelection(item)}
                       >
                         <img
                           src={item.image}
                           alt={item.name}
-                          className="w-10 h-10 rounded object-cover border border-gray-700 bg-gray-800 flex-shrink-0"
+                          className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
+                          style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+                          onError={(e) => { e.target.src = "/static/images/default-logo.png"; }}
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-white flex items-baseline gap-2 text-lg">
-                            <span className="truncate">{item.name}</span>
-                            {item.isVerified && (
-                              <svg viewBox="0 0 24 24" className="w-5 h-5 flex-shrink-0" fill="none" style={{ transform: 'translateY(-3px)' }}>
-                                <circle cx="12" cy="12" r="10" fill="#eab308" />
-                                <path d="M8 12.5l3 3 5-5" stroke="#000" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
-                            )}
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-medium text-white truncate">{item.name}</span>
+                            {item.isVerified && <i className="fa fa-check-circle text-xs" style={{ color: '#fbbf24' }}></i>}
                           </div>
-                          <div className="text-base text-gray-400 truncate max-w-full sm:max-w-xs">{item.description}</div>
+                          {item.description && (
+                            <p className="text-slate-400 text-xs truncate">{item.description}</p>
+                          )}
                         </div>
-                      </div>
+                      </button>
                     ))}
-                    {options.length >= 6 && (
-                      <div
-                        className="p-3 text-center text-blue-400 hover:text-blue-300 cursor-pointer border-t border-gray-700"
-                        onClick={handleSearch}
-                      >
-                        <i className="fa fa-search mr-2"></i>View all results ({options.length}+)
-                      </div>
-                    )}
+                    <button
+                      onClick={() => { setShowSearchModal(true); setShowDropdown(false); }}
+                      className="w-full p-3 text-center text-sm font-medium transition-colors"
+                      style={{ color: '#fbbf24', borderTop: '1px solid rgba(59, 130, 246, 0.2)' }}
+                    >
+                      <i className="fa fa-search mr-2"></i>View all results
+                    </button>
                   </>
                 )}
               </div>
             )}
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <button
-              onClick={handleSearch}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition whitespace-nowrap flex-1 sm:flex-none"
-            >
-              <i className="fa fa-search mr-2"></i>Search
-            </button>
-            <button
-              id="create-community-btn"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow transition whitespace-nowrap w-full sm:w-auto"
-              onClick={handleCreateCommunity}
-            >
-              <i className="fa fa-plus"></i> Create a New Community
-            </button>
-          </div>
+
+          {/* Create Button */}
+          <Button onClick={handleCreateCommunity} className="flex-shrink-0">
+            <i className="fa fa-plus"></i>
+            <span className="hidden sm:inline ml-2">Create</span>
+          </Button>
         </div>
       </div>
-      
+
       <CommunitySearchModal
         isOpen={showSearchModal}
         onClose={() => setShowSearchModal(false)}
@@ -1570,276 +1253,334 @@ const CommunitySearchBar = ({ onCreateCommunity }) => {
   );
 };
 
-// Page Navigation Component inspired by HeroUI Pro
-const PageNavigation = () => {
-  const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-      });
-    }
+// ============================================================================
+// QUICK NAVIGATION
+// ============================================================================
+
+const QuickNav = () => {
+  const scrollToSection = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+
+  const navItems = [
+    { id: 'elite-communities', icon: 'fa-crown', label: 'Elite', bg: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)', textColor: '#000', shadow: 'rgba(251, 191, 36, 0.3)' },
+    { id: 'your-communities', icon: 'fa-users', label: 'Yours', bg: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)', textColor: '#fff', shadow: 'rgba(59, 130, 246, 0.3)' },
+    { id: 'discover-communities', icon: 'fa-compass', label: 'Discover', bg: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', textColor: '#fff', shadow: 'rgba(139, 92, 246, 0.3)' },
+    { id: 'browse-communities', icon: 'fa-globe', label: 'Browse', bg: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', textColor: '#fff', shadow: 'rgba(16, 185, 129, 0.3)' }
+  ];
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-lg mx-4 mb-6">
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xl font-semibold text-white flex items-center">
-            <i className="fa fa-compass text-blue-400 mr-2"></i>
-            Quick Navigation
-          </h3>
-          <span className="text-base text-gray-400">Jump to section</span>
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+    <div className="px-4 py-4 overflow-x-auto scrollbar-hide">
+      <div className="flex gap-3 min-w-max">
+        {navItems.map((item) => (
           <button
-            onClick={() => scrollToSection('elite-communities')}
-            className="flex flex-col items-center p-3 bg-gradient-to-br from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
+            key={item.id}
+            onClick={() => scrollToSection(item.id)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 active:scale-95"
+            style={{
+              background: item.bg,
+              color: item.textColor,
+              boxShadow: `0 4px 15px ${item.shadow}`
+            }}
           >
-            <i className="fa fa-crown text-2xl mb-1"></i>
-            <span className="text-base font-medium">Elite Communities</span>
+            <i className={`fa ${item.icon}`}></i>
+            <span>{item.label}</span>
           </button>
-
-          <button
-            onClick={() => scrollToSection('your-communities')}
-            className="flex flex-col items-center p-3 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
-          >
-            <i className="fa fa-users text-2xl mb-1"></i>
-            <span className="text-base font-medium">Your Communities</span>
-          </button>
-
-          <button
-            onClick={() => scrollToSection('discover-communities')}
-            className="flex flex-col items-center p-3 bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
-          >
-            <i className="fa fa-compass text-2xl mb-1"></i>
-            <span className="text-base font-medium">Discover Communities</span>
-          </button>
-
-          <button
-            onClick={() => scrollToSection('browse-communities')}
-            className="flex flex-col items-center p-3 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
-          >
-            <i className="fa fa-globe text-2xl mb-1"></i>
-            <span className="text-base font-medium">Browse Communities</span>
-          </button>
-
-          <a
-            href="/invite-code"
-            className="flex flex-col items-center p-3 bg-gradient-to-br from-pink-600 to-pink-700 hover:from-pink-700 hover:to-pink-800 text-white rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md"
-          >
-            <i className="fa fa-ticket text-2xl mb-1"></i>
-            <span className="text-base font-medium">Enter Invite Code</span>
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const Footer = () => (
-  <footer className="bg-gray-900 border-t border-gray-800 mt-16">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {/* Logo and Description */}
-        <div className="lg:col-span-1">
-          <div className="flex items-center space-x-3 mb-4">
-            <img src="/static/images/favicon-32x32.png" alt="LPC Logo" className="h-10 w-10" />
-            <span className="text-2xl font-bold text-white">Lines Police CAD</span>
-          </div>
-          <p className="text-gray-400 text-lg leading-relaxed mb-4">
-            World's Leading Free-to-use role-play facilitator for law enforcement communities.
-          </p>
-          <div className="flex space-x-4">
-            <a href="https://discord.gg/3ECFhqe" target="_blank" className="text-gray-400 hover:text-white transition-colors">
-              <i className="fab fa-discord text-2xl"></i>
-            </a>
-            <a href="https://x.com/LinesPoliceCAD" target="_blank" className="text-gray-400 hover:text-white transition-colors">
-              <i className="fa-brands fa-x-twitter text-2xl"></i>
-            </a>
-            <a href="https://www.facebook.com/linespoliceserver/" target="_blank" className="text-gray-400 hover:text-white transition-colors">
-              <i className="fab fa-facebook text-2xl"></i>
-            </a>
-            <a href="https://github.com/linesmerrill/police-cad" target="_blank" className="text-gray-400 hover:text-white transition-colors">
-              <i className="fab fa-github text-2xl"></i>
-            </a>
-          </div>
-        </div>
-
-        {/* Information */}
-        <div>
-          <h3 className="text-white font-semibold text-xl mb-4">Information</h3>
-          <ul className="space-y-2">
-            <li>
-              <a href="https://github.com/Linesmerrill/police-cad/releases" target="_blank" 
-                 className="text-gray-400 hover:text-white transition-colors text-lg">
-                Release Log
-              </a>
-            </li>
-            <li>
-              <a href="https://linesmerrill.github.io/MerrillLines/" target="_blank" 
-                 className="text-gray-400 hover:text-white transition-colors text-lg">
-                Developers
-              </a>
-            </li>
-            <li>
-              <a href="https://www.patreon.com/linespolicecad" target="_blank" 
-                 className="text-gray-400 hover:text-white transition-colors text-lg">
-                Patreon
-              </a>
-            </li>
-            <li>
-              <a href="https://github.com/linesmerrill/police-cad" target="_blank" 
-                 className="text-gray-400 hover:text-white transition-colors text-lg">
-                GitHub
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        {/* About */}
-        <div>
-          <h3 className="text-white font-semibold text-xl mb-4">About</h3>
-          <ul className="space-y-2">
-            <li>
-              <a href="/faq" className="text-gray-400 hover:text-white transition-colors text-lg">
-                FAQ
-              </a>
-            </li>
-            <li>
-              <a href="/contact-us" className="text-gray-400 hover:text-white transition-colors text-lg">
-                Contact Us
-              </a>
-            </li>
-            <li>
-              <a href="/terms-and-conditions" className="text-gray-400 hover:text-white transition-colors text-lg">
-                Terms and Conditions
-              </a>
-            </li>
-            <li>
-              <a href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors text-lg">
-                Privacy Policy
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        {/* Community */}
-        <div>
-          <h3 className="text-white font-semibold text-xl mb-4">Community</h3>
-          <ul className="space-y-2">
-            <li>
-              <a href="/communities" className="text-gray-400 hover:text-white transition-colors text-lg">
-                Communities
-              </a>
-            </li>
-            <li>
-              <a href="/about-us" className="text-gray-400 hover:text-white transition-colors text-lg">
-                About Us
-              </a>
-            </li>
-            <li>
-              <a href="/rules" className="text-gray-400 hover:text-white transition-colors text-lg">
-                Rules
-              </a>
-            </li>
-            <li>
-              <a href="/release-log" className="text-gray-400 hover:text-white transition-colors text-lg">
-                Release Log
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Bottom Section */}
-      <div className="border-t border-gray-800 mt-8 pt-8">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className="text-gray-400 text-lg mb-4 md:mb-0">
-            ©2024 by{" "}
-            <a href="https://sites.google.com/view/tlps-dev/home" target="_blank" 
-               className="text-blue-400 hover:text-blue-300 transition-colors">
-              TLPS
-            </a>{" "}
-            All Rights Reserved
-          </div>
-          <div className="flex items-center space-x-4">
-            <a href="/" className="text-gray-400 hover:text-white transition-colors text-lg">
-              Home
-            </a>
-            <span className="text-gray-600">•</span>
-            <a href="/login-civ" className="text-gray-400 hover:text-white transition-colors text-lg">
-              Login
-            </a>
-            <span className="text-gray-600">•</span>
-            <a href="/signup-civ" className="text-gray-400 hover:text-white transition-colors text-lg">
-              Sign Up
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </footer>
-);
-
-const modalEventName = "open-create-community-modal";
-
-// Toast component for notifications
-const Toast = ({ message, type, isVisible, onClose }) => {
-  useEffect(() => {
-    if (isVisible) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 5000); // Auto dismiss after 5 seconds
-      return () => clearTimeout(timer);
-    }
-  }, [isVisible, onClose]);
-
-  if (!isVisible) return null;
-
-  const getToastStyles = () => {
-    switch (type) {
-      case 'success':
-        return 'bg-green-600 border-green-500 text-white';
-      case 'error':
-        return 'bg-red-600 border-red-500 text-white';
-      default:
-        return 'bg-blue-600 border-blue-500 text-white';
-    }
-  };
-
-  const getIcon = () => {
-    switch (type) {
-      case 'success':
-        return 'fa-check-circle';
-      case 'error':
-        return 'fa-exclamation-circle';
-      default:
-        return 'fa-info-circle';
-    }
-  };
-
-  return (
-    <div className="fixed top-4 right-4 z-[2300] animate-slide-in">
-      <div className={`flex items-center p-4 rounded-lg shadow-lg border ${getToastStyles()} min-w-[300px] max-w-[400px]`}>
-        <i className={`fa ${getIcon()} text-xl mr-3`}></i>
-        <div className="flex-1">
-          <p className="font-medium text-base">{message}</p>
-        </div>
-        <button
-          onClick={onClose}
-          className="ml-3 text-white/80 hover:text-white transition-colors"
+        ))}
+        <a
+          href="/invite-code"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-300 active:scale-95"
+          style={{
+            background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+            color: '#fff',
+            boxShadow: '0 4px 15px rgba(236, 72, 153, 0.3)'
+          }}
         >
-          <i className="fa fa-times"></i>
-        </button>
+          <i className="fa fa-ticket"></i>
+          <span>Invite Code</span>
+        </a>
       </div>
     </div>
   );
 };
 
-const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
+// ============================================================================
+// WELCOME MODAL (First-time visitor onboarding)
+// ============================================================================
+
+const WELCOME_MODAL_STORAGE_KEY = 'lpc_welcome_modal_seen';
+
+const WelcomeModal = ({ isOpen, onClose }) => {
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const steps = [
+    {
+      title: "Welcome to Lines Police CAD!",
+      subtitle: "The world's leading free-to-use service for role-play communities",
+      icon: "fa-hand-wave",
+      content: (
+        <div className="space-y-4">
+          <p className="text-slate-300 text-sm leading-relaxed">
+            Ready to dive into role-play? Here's how to get started:
+          </p>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' }}>
+                <i className="fa fa-crown text-xs text-black"></i>
+              </div>
+              <span className="text-slate-300 text-sm"><strong className="text-white">Elite Communities</strong> - Check out our featured communities looking for new members</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)' }}>
+                <i className="fa fa-compass text-xs text-white"></i>
+              </div>
+              <span className="text-slate-300 text-sm"><strong className="text-white">Discover</strong> - Browse trending communities and find your perfect match</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
+                <i className="fa fa-gamepad text-xs text-white"></i>
+              </div>
+              <span className="text-slate-300 text-sm"><strong className="text-white">Filter by Platform</strong> - Find communities for Xbox, PlayStation, PC, and more</span>
+            </li>
+          </ul>
+        </div>
+      )
+    },
+    {
+      title: "Join or Create",
+      subtitle: "Multiple ways to get into the action",
+      icon: "fa-rocket",
+      content: (
+        <div className="space-y-4">
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>
+                <i className="fa fa-ticket text-xs text-white"></i>
+              </div>
+              <span className="text-slate-300 text-sm"><strong className="text-white">Have an invite code?</strong> - Enter it to jump straight into a community</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)' }}>
+                <i className="fa fa-search text-xs text-white"></i>
+              </div>
+              <span className="text-slate-300 text-sm"><strong className="text-white">Search by name</strong> - Find a specific community and request to join</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+                <i className="fa fa-plus text-xs text-white"></i>
+              </div>
+              <span className="text-slate-300 text-sm"><strong className="text-white">Create your own</strong> - Start a community for FREE and invite your friends</span>
+            </li>
+          </ul>
+        </div>
+      )
+    },
+    {
+      title: "Need Help?",
+      subtitle: "We're here for you",
+      icon: "fa-circle-question",
+      content: (
+        <div className="space-y-4">
+          <p className="text-slate-300 text-sm leading-relaxed">
+            Have questions or need assistance? We've got you covered:
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <a href="/faq" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}>
+              <i className="fa fa-book text-xl text-blue-400"></i>
+              <span className="text-white text-sm font-medium">FAQ</span>
+              <span className="text-slate-500 text-xs text-center">Common questions</span>
+            </a>
+            <a href="/contact-us" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}>
+              <i className="fa fa-envelope text-xl text-green-400"></i>
+              <span className="text-white text-sm font-medium">Contact Us</span>
+              <span className="text-slate-500 text-xs text-center">Get in touch</span>
+            </a>
+            <a href="https://discord.gg/3ECFhqe" target="_blank" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}>
+              <i className="fab fa-discord text-xl text-indigo-400"></i>
+              <span className="text-white text-sm font-medium">Discord</span>
+              <span className="text-slate-500 text-xs text-center">Join our server</span>
+            </a>
+            <a href="/about-us" className="flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300" style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}>
+              <i className="fa fa-info-circle text-xl text-amber-400"></i>
+              <span className="text-white text-sm font-medium">About</span>
+              <span className="text-slate-500 text-xs text-center">Learn more</span>
+            </a>
+          </div>
+        </div>
+      )
+    }
+  ];
+
+  const handleClose = () => {
+    localStorage.setItem(WELCOME_MODAL_STORAGE_KEY, 'true');
+    onClose();
+  };
+
+  const handleNext = () => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      handleClose();
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleSkip = () => {
+    handleClose();
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const currentStepData = steps[currentStep];
+  const isLastStep = currentStep === steps.length - 1;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(10, 10, 15, 0.95)', backdropFilter: 'blur(10px)' }}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl shadow-2xl relative"
+        style={{
+          background: 'rgba(15, 15, 20, 0.98)',
+          border: '1px solid rgba(59, 130, 246, 0.2)',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          onClick={handleClose}
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white transition-colors z-10"
+          style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: '50%' }}
+        >
+          <i className="fa fa-times text-sm"></i>
+        </button>
+
+        {/* Header with Logo */}
+        <div className="pt-8 pb-4 px-6 text-center">
+          <div className="relative inline-block mx-auto mb-4">
+            {/* Glow effect behind logo */}
+            <div style={{
+              position: 'absolute',
+              top: '-30%',
+              left: '-30%',
+              right: '-30%',
+              bottom: '-30%',
+              background: 'radial-gradient(circle, rgba(251, 191, 36, 0.5) 0%, rgba(245, 158, 11, 0.3) 40%, transparent 70%)',
+              filter: 'blur(20px)',
+              borderRadius: '50%'
+            }} />
+            <img
+              src="/static/images/lines-police-cad-discord-logo-2024-github-profile.png"
+              alt="Lines Police CAD"
+              style={{
+                height: '60px',
+                width: 'auto',
+                position: 'relative',
+                zIndex: 1
+              }}
+            />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-1">{currentStepData.title}</h2>
+          <p className="text-slate-400 text-sm">{currentStepData.subtitle}</p>
+        </div>
+
+        {/* Content */}
+        <div className="px-6 pb-4">
+          {currentStepData.content}
+        </div>
+
+        {/* Progress Dots */}
+        <div className="flex justify-center gap-2 py-4">
+          {steps.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentStep(index)}
+              className="w-2 h-2 rounded-full transition-all duration-300"
+              style={{
+                background: index === currentStep
+                  ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
+                  : 'rgba(255, 255, 255, 0.2)',
+                transform: index === currentStep ? 'scale(1.2)' : 'scale(1)'
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Footer Buttons */}
+        <div className="px-6 pb-6 flex items-center justify-between gap-3">
+          <button
+            onClick={handleSkip}
+            className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+          >
+            Skip
+          </button>
+
+          <div className="flex gap-2">
+            {currentStep > 0 && (
+              <button
+                onClick={handlePrev}
+                className="px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  color: 'white'
+                }}
+              >
+                <i className="fa fa-arrow-left mr-2"></i>Back
+              </button>
+            )}
+            <button
+              onClick={handleNext}
+              className="px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-300"
+              style={{
+                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                color: '#000',
+                boxShadow: '0 4px 15px rgba(251, 191, 36, 0.3)'
+              }}
+            >
+              {isLastStep ? "Let's Go!" : "Next"}
+              {!isLastStep && <i className="fa fa-arrow-right ml-2"></i>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// CREATE COMMUNITY MODAL
+// ============================================================================
+
+const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -1849,158 +1590,53 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [ownedCommunityCount, setOwnedCommunityCount] = useState(0);
+  const [ownedCount, setOwnedCount] = useState(0);
   const [userPlan, setUserPlan] = useState("free");
 
-  // Fetch user's owned communities count and subscription plan
+  const PLAN_LIMITS = { base: 5, premium: 10, premium_plus: Infinity };
+  const getCommunityLimit = (plan) => PLAN_LIMITS[plan] ?? 1;
+
   useEffect(() => {
     if (isOpen && dbUser?._id) {
-      fetchUserData();
+      fetch(`${API_URL}/api/v1/communities/${dbUser._id}`)
+        .then(res => res.json())
+        .then(data => {
+          const newFormatCommunities = (data || []).filter(item => item.community?.visibility);
+          setOwnedCount(newFormatCommunities.length);
+          setUserPlan(dbUser?.user?.subscription?.plan || "free");
+        })
+        .catch(() => {
+          setOwnedCount(0);
+          setUserPlan("free");
+        });
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
-  }, [isOpen, dbUser?._id]);
-
-  const fetchUserData = async () => {
-    try {
-      // Fetch user's owned communities using the correct endpoint
-      const response = await fetch(`${API_URL}/api/v1/communities/${dbUser._id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(
-          `Failed to fetch owned communities. \n\nMessage: ${JSON.stringify(
-            data
-          )}. \nCode: ${response.status}`
-        );
-      }
-
-      const data = await response.json();
-      const ownedCommunities = data || [];
-      
-      // Only count communities with visibility field (new format)
-      const newFormatCommunities = ownedCommunities.filter(item => {
-        const community = item.community;
-        return community && community.visibility;
-      });
-      
-      setOwnedCommunityCount(newFormatCommunities.length);
-
-      // Get user's subscription plan
-      const plan = dbUser?.user?.subscription?.plan || "free";
-      setUserPlan(plan);
-    } catch (error) {
-      
-      // Set default values on error
-      setOwnedCommunityCount(0);
-      setUserPlan("free");
-    }
-  };
-
-  // Plan limits and features mapping
-  const PLAN_LIMITS = {
-    base: 5,
-    premium: 10,
-    premium_plus: Infinity
-  };
-  const PLAN_FEATURES = {
-    base: "Create up to 5 communities",
-    premium: "Create up to 10 communities",
-    premium_plus: "Unlimited communities"
-  };
-
-  const getCommunityLimit = (plan) => PLAN_LIMITS[plan] ?? 1;
-  const getPlanFeature = (plan) => PLAN_FEATURES[plan] ?? "Create up to 1 community";
-
-  // Helper function to format plan names
-  const formatPlanName = (plan) => {
-    switch (plan) {
-      case 'premium_plus':
-        return 'Premium Plus';
-      case 'premium':
-        return 'Premium';
-      case 'base':
-        return 'Base';
-      default:
-        return plan;
-    }
-  };
-
-  // Helper function to get plan badge styling
-  const getPlanBadgeStyle = (plan) => {
-    switch (plan) {
-      case 'premium_plus':
-        return 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-yellow-900 font-bold';
-      case 'premium':
-        return 'bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold';
-      case 'base':
-        return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold';
-      default:
-        return 'bg-gradient-to-r from-gray-500 to-gray-600 text-white font-bold';
-    }
-  };
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    setError(""); // Clear error when user types
-  };
-
-  const handleTagToggle = (tag) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.includes(tag)
-        ? prev.tags.filter(t => t !== tag)
-        : [...prev.tags, tag]
-    }));
-  };
+    return () => { document.body.style.overflow = ''; };
+  }, [isOpen]);
 
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
       try {
-        // Show loading state
         setFormData(prev => ({ ...prev, imageLink: 'uploading...' }));
-        
-        // Use the same Cloudinary upload approach as community-details
         const imageUrl = await uploadToCloudinary(file, 'communities', `community_${Date.now()}`);
-        
         setFormData(prev => ({ ...prev, imageLink: imageUrl }));
       } catch (error) {
-        // Silently handle upload errors - user can retry
         setFormData(prev => ({ ...prev, imageLink: '' }));
-        // Show toast notification for user feedback
-        setToast({
-          isVisible: true,
-          message: 'Failed to upload image. Please try again.',
-          type: 'error',
-        });
-        setTimeout(() => setToast(prev => ({ ...prev, isVisible: false })), 5000);
+        setToast({ isVisible: true, message: 'Failed to upload image', type: 'error' });
       }
     }
   };
 
-  const closeToast = () => {
-    setToast(prev => ({ ...prev, isVisible: false }));
-  };
-
   const handleSubmit = async () => {
-    if (!formData.name.trim()) {
-      setError("Community name is required");
-      return;
-    }
+    if (!formData.name.trim()) { setError("Name is required"); return; }
+    if (!formData.description.trim()) { setError("Description is required"); return; }
 
-    if (!formData.description.trim()) {
-      setError("Community description is required");
-      return;
-    }
-
-    const communityLimit = getCommunityLimit(userPlan);
-    
-    if (communityLimit !== Infinity && ownedCommunityCount >= communityLimit) {
-      setError(`Your current subscription (${userPlan}) allows you to create up to ${communityLimit} communit${communityLimit === 1 ? "y" : "ies"}. Upgrade your subscription to create more.`);
+    const limit = getCommunityLimit(userPlan);
+    if (limit !== Infinity && ownedCount >= limit) {
+      setError(`Upgrade to create more communities`);
       return;
     }
 
@@ -2008,65 +1644,32 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
     setError("");
 
     try {
-      const communityData = {
-        ownerID: dbUser._id,
-        name: formData.name.trim(),
-        description: formData.description.trim(),
-        imageLink: formData.imageLink || "/static/images/default-logo.png",
-        visibility: formData.visibility,
-        tags: formData.tags,
-        promotionalText: "",
-        promotionalDescription: ""
-      };
-
       const response = await fetch(`${API_URL}/api/v1/community`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ community: communityData }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          community: {
+            ownerID: dbUser._id,
+            name: formData.name.trim(),
+            description: formData.description.trim(),
+            imageLink: formData.imageLink || "/static/images/default-logo.png",
+            visibility: formData.visibility,
+            tags: formData.tags,
+            promotionalText: "",
+            promotionalDescription: ""
+          }
+        })
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to create community");
-      }
+      if (!response.ok) throw new Error("Failed");
 
-      const result = await response.json();
-      
-      // Reset form
-      setFormData({
-        name: "",
-        description: "",
-        visibility: "public",
-        tags: [],
-        imageLink: ""
-      });
-      
-      // Show success toast
-      setToast({
-        message: `Community "${formData.name}" created successfully!`,
-        type: "success",
-        isVisible: true
-      });
-      
-      // Close modal
+      setToast({ message: `"${formData.name}" created!`, type: "success", isVisible: true });
+      setFormData({ name: "", description: "", visibility: "public", tags: [], imageLink: "" });
       onClose();
-      
-      // Refresh communities after a short delay to show the toast
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-      
+      if (onSuccess) onSuccess();
     } catch (error) {
-      
-      setError("Failed to create community. Please try again.");
-      
-      // Show error toast
-      setToast({
-        message: "Failed to create community. Please try again.",
-        type: "error",
-        isVisible: true
-      });
+      setError("Failed to create community");
+      setToast({ message: "Failed to create community", type: "error", isVisible: true });
     } finally {
       setIsLoading(false);
     }
@@ -2074,481 +1677,454 @@ const CreateCommunityModal = ({ isOpen, onClose, toast, setToast }) => {
 
   if (!isOpen) return null;
 
-  const communityLimit = getCommunityLimit(userPlan);
-  const canCreateMore = ownedCommunityCount < communityLimit;
+  const limit = getCommunityLimit(userPlan);
+  const canCreate = ownedCount < limit;
 
   return (
     <div
-      className="fixed z-[2200] left-0 top-0 w-screen h-screen bg-[rgba(30,32,44,0.65)] flex items-center justify-center p-4"
+      className="fixed top-16 left-0 right-0 bottom-0 z-50 flex flex-col"
+      style={{ background: 'rgba(10, 10, 15, 0.98)', backdropFilter: 'blur(10px)' }}
       onClick={onClose}
-      style={{ zIndex: 2200 }}
     >
       <div
-        className="bg-[#23263a] rounded-2xl max-w-[95vw] sm:max-w-md md:max-w-2xl lg:max-w-3xl w-full mx-auto shadow-2xl max-h-[90vh] overflow-y-auto"
-        onClick={e => e.stopPropagation()}
-        style={{ position: 'relative', zIndex: 2210 }}
+        className="flex-1 overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
-          <button
-            onClick={onClose}
-            className="text-white text-2xl hover:text-gray-300"
-          >
-            <i className="fa fa-arrow-left"></i>
-          </button>
-          <h2 className="text-2xl font-bold text-white">Create A Community</h2>
-          <div className="w-8"></div> {/* Spacer for centering */}
-        </div>
+        <div className="min-h-full flex items-start justify-center p-4 pt-4 pb-8">
+          <div className="w-full max-w-lg rounded-2xl shadow-2xl" style={{
+            background: 'rgba(15, 15, 20, 0.98)',
+            border: '1px solid rgba(59, 130, 246, 0.2)',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+          }}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid rgba(59, 130, 246, 0.2)' }}>
+              <button onClick={onClose} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-white">
+                <i className="fa fa-arrow-left"></i>
+              </button>
+              <h2 className="text-lg font-bold text-white">Create Community</h2>
+              <div className="w-10"></div>
+            </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Community Banner */}
-          <div className="relative">
-            <div className="w-full h-48 bg-gray-800 rounded-lg border-2 border-gray-700 flex items-center justify-center overflow-hidden">
-              {formData.imageLink ? (
-                <img 
-                  src={formData.imageLink} 
-                  alt="Community Banner" 
-                  className="w-full h-full object-cover"
+            {/* Content */}
+            <div className="p-4 space-y-5">
+              {/* Banner Upload */}
+              <div className="relative">
+                <div className="aspect-[2/1] rounded-xl flex items-center justify-center overflow-hidden" style={{
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '2px dashed rgba(59, 130, 246, 0.3)'
+                }}>
+                  {formData.imageLink && formData.imageLink !== 'uploading...' ? (
+                    <img src={formData.imageLink} alt="Banner" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="text-center text-slate-500">
+                      <i className="fa fa-image text-3xl mb-2"></i>
+                      <p className="text-sm">{formData.imageLink === 'uploading...' ? 'Uploading...' : 'Add Banner'}</p>
+                    </div>
+                  )}
+                </div>
+                <label className="absolute bottom-3 right-3 w-10 h-10 text-slate-900 rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-all duration-300" style={{
+                  background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                  boxShadow: '0 4px 15px rgba(251, 191, 36, 0.3)'
+                }}>
+                  <i className="fa fa-camera"></i>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                </label>
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Community Name <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => { setFormData(p => ({ ...p, name: e.target.value })); setError(""); }}
+                  className="w-full px-4 py-3 rounded-lg text-white placeholder-slate-500 focus:outline-none"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(59, 130, 246, 0.2)'
+                  }}
+                  placeholder="Enter community name"
                 />
-              ) : (
-                <div className="text-center text-gray-400">
-                  <i className="fa fa-image text-4xl mb-2"></i>
-                  <p className="text-base">Community Banner</p>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                  Description <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => { setFormData(p => ({ ...p, description: e.target.value })); setError(""); }}
+                  className="w-full px-4 py-3 rounded-lg text-white placeholder-slate-500 focus:outline-none resize-none"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(59, 130, 246, 0.2)'
+                  }}
+                  rows="3"
+                  placeholder="Describe your community"
+                />
+              </div>
+
+              {/* Privacy */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Privacy</label>
+                <div className="flex gap-2">
+                  {["public", "private"].map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => setFormData(p => ({ ...p, visibility: v }))}
+                      className="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300"
+                      style={formData.visibility === v ? {
+                        background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                        color: '#000',
+                        boxShadow: '0 4px 15px rgba(251, 191, 36, 0.3)'
+                      } : {
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        border: '1px solid rgba(59, 130, 246, 0.2)'
+                      }}
+                    >
+                      {v.charAt(0).toUpperCase() + v.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Platform Tags <span className="text-slate-500">(optional)</span></label>
+                <div className="flex flex-wrap gap-2">
+                  {["Xbox", "PlayStation", "PC"].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => setFormData(p => ({
+                        ...p,
+                        tags: p.tags.includes(tag) ? p.tags.filter(t => t !== tag) : [...p.tags, tag]
+                      }))}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300"
+                      style={formData.tags.includes(tag) ? {
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+                        color: '#fff',
+                        boxShadow: '0 4px 15px rgba(59, 130, 246, 0.3)'
+                      } : {
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        border: '1px solid rgba(59, 130, 246, 0.2)'
+                      }}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Limit Info */}
+              <div className="rounded-xl p-4" style={{
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid rgba(59, 130, 246, 0.2)'
+              }}>
+                <p className="text-slate-300 text-sm">
+                  <span className="font-bold text-white">{ownedCount}</span> of{" "}
+                  <span className="font-bold text-white">{limit === Infinity ? "unlimited" : limit}</span> communities created
+                </p>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="rounded-xl p-4" style={{
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)'
+                }}>
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* Upgrade prompt */}
+              {!canCreate && (
+                <div className="rounded-xl p-4 text-center" style={{
+                  background: 'rgba(251, 191, 36, 0.1)',
+                  border: '1px solid rgba(251, 191, 36, 0.3)'
+                }}>
+                  <p style={{ color: '#fbbf24' }} className="text-sm mb-3">Upgrade to create more communities</p>
+                  <div className="flex gap-2">
+                    <a
+                      href="https://apps.apple.com/us/app/lpc-app/id6503307483"
+                      target="_blank"
+                      className="flex-1 py-2 rounded-lg text-white text-sm font-medium transition-colors"
+                      style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                    >
+                      <i className="fa-brands fa-apple mr-1"></i> App Store
+                    </a>
+                    <a
+                      href="https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp"
+                      target="_blank"
+                      className="flex-1 py-2 rounded-lg text-white text-sm font-medium transition-colors"
+                      style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                    >
+                      <i className="fa-brands fa-google-play mr-1"></i> Google Play
+                    </a>
+                  </div>
                 </div>
               )}
             </div>
-            <label className="absolute bottom-3 right-3 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700">
-              <i className="fa fa-camera"></i>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </label>
-          </div>
 
-          {/* Community Name */}
-          <div>
-            <label className="block text-white text-base font-medium mb-2">
-              Community Name <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleInputChange("name", e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter community name"
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-white text-base font-medium mb-2">
-              Description <span className="text-red-400">*</span>
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-              rows="3"
-              placeholder="Describe your community"
-            />
-          </div>
-
-          {/* Community Privacy */}
-          <div>
-            <div className="flex items-center mb-3">
-              <label className="block text-white text-base font-medium">
-                Community Privacy
-              </label>
-              <div className="relative ml-2 group">
-                <i className="fa fa-info-circle text-gray-400 text-sm cursor-help"></i>
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 border border-gray-700">
-                  <div className="mb-1"><strong>Public:</strong> Anyone can search and find your community</div>
-                  <div><strong>Private:</strong> People can only join via an invite link</div>
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                </div>
-              </div>
-            </div>
-            <div className="flex space-x-3">
-              <button
-                type="button"
-                onClick={() => handleInputChange("visibility", "public")}
-                className={`px-4 py-2 rounded-full text-base font-medium transition-colors ${
-                  formData.visibility === "public"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                }`}
+            {/* Footer */}
+            <div className="p-4" style={{ borderTop: '1px solid rgba(59, 130, 246, 0.2)' }}>
+              <Button
+                onClick={handleSubmit}
+                disabled={isLoading || !canCreate}
+                className="w-full"
+                size="lg"
               >
-                Public
-              </button>
-              <button
-                type="button"
-                onClick={() => handleInputChange("visibility", "private")}
-                className={`px-4 py-2 rounded-full text-base font-medium transition-colors ${
-                  formData.visibility === "private"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                }`}
-              >
-                Private
-              </button>
+                {isLoading ? (
+                  <><i className="fa fa-spinner fa-spin mr-2"></i>Creating...</>
+                ) : (
+                  "Create Community"
+                )}
+              </Button>
             </div>
           </div>
-
-          {/* Platform Tags */}
-          <div>
-            <div className="flex items-center mb-3">
-              <label className="block text-white text-base font-medium">
-                Platform Tags
-              </label>
-              <div className="relative ml-2 group">
-                <i className="fa fa-info-circle text-gray-400 text-sm cursor-help"></i>
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 border border-gray-700 max-w-xs">
-                  You can optionally select one or many tags - these help people find platform specific communities
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                </div>
-              </div>
-            </div>
-            <p className="text-gray-400 text-sm mb-3">optional</p>
-            <div className="flex flex-wrap gap-2">
-              {["Xbox", "PlayStation", "PC"].map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => handleTagToggle(tag)}
-                  className={`px-4 py-2 rounded-full text-base font-medium transition-colors ${
-                    formData.tags.includes(tag)
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Subscription Info */}
-          {!canCreateMore && (
-            <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
-              <p className="text-red-400 text-base mb-3">
-                {error || `You've reached your community limit (${communityLimit === Infinity ? "unlimited" : communityLimit}). Upgrade your subscription to create more.`}
-              </p>
-              <div className="flex flex-col space-y-2">
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => {
-                      // Open iOS App Store
-                      window.open('https://apps.apple.com/us/app/lpc-app/id6503307483', '_blank');
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors flex items-center justify-center flex-1"
-                  >
-                    <i className="fa-brands fa-apple mr-2"></i>
-                    App Store
-                  </button>
-                  <button
-                    onClick={() => {
-                      // Open Google Play Store
-                      window.open('https://play.google.com/store/apps/details?id=com.linesmerrill.policecadapp', '_blank');
-                    }}
-                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-base font-medium transition-colors flex items-center justify-center flex-1"
-                  >
-                    <i className="fa-brands fa-google-play mr-2"></i>
-                    Google Play
-                  </button>
-                </div>
-                <p className="text-gray-400 text-sm text-center mt-2">
-                  Download the mobile app to upgrade
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && canCreateMore && (
-            <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
-              <p className="text-red-400 text-base">{error}</p>
-            </div>
-          )}
-
-          {/* Community Count Info */}
-          <div className="bg-gray-800/50 rounded-lg p-4">
-            <div className="space-y-3">
-              <p className="text-gray-300 text-base">
-                You have created <span className="font-bold text-white">{ownedCommunityCount} of {communityLimit === Infinity ? "unlimited" : communityLimit}</span> allowed communit{communityLimit === 1 ? "y" : "ies"}
-                <span className="ml-2">
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm ${getPlanBadgeStyle(userPlan)}`}>
-                    {formatPlanName(userPlan)} Plan
-                  </span>
-                </span>
-              </p>
-              <div className="flex items-center">
-                <span className={`inline-block px-3 py-2 rounded-lg text-sm font-semibold ${getPlanBadgeStyle(userPlan)}`}>
-                  {getPlanFeature(userPlan)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-700">
-          <button
-            onClick={handleSubmit}
-            disabled={isLoading || !canCreateMore}
-            className={`w-full py-3 px-6 rounded-lg font-medium transition-colors ${
-              isLoading || !canCreateMore
-                ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700"
-            }`}
-          >
-            {isLoading ? (
-              <span className="flex items-center justify-center">
-                <i className="fa fa-spinner fa-spin mr-2"></i>
-                Creating...
-              </span>
-            ) : (
-              "Create Community"
-            )}
-          </button>
         </div>
       </div>
     </div>
   );
 };
 
+// ============================================================================
+// FOOTER COMPONENT
+// ============================================================================
+
+const Footer = () => (
+  <footer className="mt-8" style={{
+    background: '#0a0a0f',
+    borderTop: '1px solid rgba(59, 130, 246, 0.2)'
+  }}>
+    <div className="px-4 py-8">
+      {/* Logo */}
+      <div className="text-center mb-6">
+        <div className="flex items-center justify-center mb-2">
+          <img src="/static/images/lines-police-cad-discord-logo-2024-github-profile.png" alt="Lines Police CAD" style={{ height: '36px', width: 'auto' }} />
+        </div>
+        <p className="text-slate-500 text-sm">World's Leading Free-to-use Role-play Facilitator</p>
+      </div>
+
+      {/* Social Links */}
+      <div className="flex justify-center gap-4 mb-6">
+        <a href="https://discord.gg/3ECFhqe" target="_blank" className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300" style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(59, 130, 246, 0.2)'
+        }}>
+          <i className="fab fa-discord"></i>
+        </a>
+        <a href="https://x.com/LinesPoliceCAD" target="_blank" className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300" style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(59, 130, 246, 0.2)'
+        }}>
+          <i className="fa-brands fa-x-twitter"></i>
+        </a>
+        <a href="https://www.facebook.com/linespoliceserver/" target="_blank" className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300" style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(59, 130, 246, 0.2)'
+        }}>
+          <i className="fab fa-facebook"></i>
+        </a>
+        <a href="https://github.com/linesmerrill/police-cad" target="_blank" className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300" style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(59, 130, 246, 0.2)'
+        }}>
+          <i className="fab fa-github"></i>
+        </a>
+      </div>
+
+      {/* Links */}
+      <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6 text-sm">
+        <a href="/faq" className="text-slate-400 hover:text-white transition-colors" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.75rem' }}>FAQ</a>
+        <a href="/contact-us" className="text-slate-400 hover:text-white transition-colors" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.75rem' }}>Contact</a>
+        <a href="/terms-and-conditions" className="text-slate-400 hover:text-white transition-colors" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.75rem' }}>Terms</a>
+        <a href="/privacy-policy" className="text-slate-400 hover:text-white transition-colors" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.75rem' }}>Privacy</a>
+        <a href="/about-us" className="text-slate-400 hover:text-white transition-colors" style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '0.75rem' }}>About</a>
+      </div>
+
+      {/* Copyright */}
+      <div className="text-center text-slate-600 text-xs">
+        &copy; 2024 <a href="https://sites.google.com/view/tlps-dev/home" target="_blank" style={{ color: '#fbbf24' }} className="hover:opacity-80 transition-opacity">TLPS</a> All Rights Reserved
+      </div>
+    </div>
+  </footer>
+);
+
+// ============================================================================
+// MAIN APP COMPONENT
+// ============================================================================
+
 const App = () => {
+  // State
   const [eliteCommunities, setEliteCommunities] = useState([]);
   const [userCommunities, setUserCommunities] = useState([]);
   const [recommendedCommunities, setRecommendedCommunities] = useState([]);
   const [allCommunities, setAllCommunities] = useState([]);
+
   const [elitePage, setElitePage] = useState(0);
   const [eliteTotalCount, setEliteTotalCount] = useState(0);
   const [userPage, setUserPage] = useState(1);
   const [userTotalCount, setUserTotalCount] = useState(0);
-  const [recommendedTotalCount, setRecommendedTotalCount] = useState(0);
   const [recommendedPage, setRecommendedPage] = useState(0);
-  const [allCommunitiesTotalCount, setAllCommunitiesTotalCount] = useState(0);
+  const [recommendedTotalCount, setRecommendedTotalCount] = useState(0);
   const [allCommunitiesPage, setAllCommunitiesPage] = useState(0);
+  const [allCommunitiesTotalCount, setAllCommunitiesTotalCount] = useState(0);
   const [currentTag, setCurrentTag] = useState("all");
-  const [showComingSoon, setShowComingSoon] = useState(false);
-  const [showCreateCommunityModal, setShowCreateCommunityModal] = useState(false);
-  const [toast, setToast] = useState({ message: "", type: "success", isVisible: false });
+  const [userFilter, setUserFilter] = useState("joined");
 
-  // Loading states for each section
   const [isEliteLoading, setIsEliteLoading] = useState(true);
   const [isUserLoading, setIsUserLoading] = useState(true);
   const [isRecommendedLoading, setIsRecommendedLoading] = useState(true);
   const [isAllCommunitiesLoading, setIsAllCommunitiesLoading] = useState(true);
 
-  // Lazy load elite communities immediately (most important)
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "success", isVisible: false });
+
+  // Check if first-time visitor for welcome modal
   useEffect(() => {
-    const fetchEliteCommunities = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/api/v2/communities/elite?limit=5&page=0`);
-        const communities = response.data.data
-          .map((item) => ({
+    const hasSeenWelcome = localStorage.getItem(WELCOME_MODAL_STORAGE_KEY);
+    if (!hasSeenWelcome) {
+      // Small delay to let the page load first
+      const timer = setTimeout(() => {
+        setShowWelcomeModal(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  // Fetch Elite Communities
+  useEffect(() => {
+    axios.get(`${API_URL}/api/v2/communities/elite?limit=5&page=0`)
+      .then(response => {
+        const communities = response.data.data.map(item => ({
+          _id: item._id,
+          name: item.name,
+          promotionalText: item.promotionalText,
+          promotionalDescription: item.promotionalDescription,
+          tags: item.tags || [],
+          imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
+          membersCount: item.membersCount
+        })).sort((a, b) => a.name.localeCompare(b.name));
+        setEliteCommunities(communities);
+        setEliteTotalCount(response.data.totalCount || 0);
+      })
+      .catch(() => { setEliteCommunities([]); setEliteTotalCount(0); })
+      .finally(() => setIsEliteLoading(false));
+  }, []);
+
+  // Fetch User Communities - initial load with "joined" filter
+  useEffect(() => {
+    if (!dbUser?._id) { setIsUserLoading(false); return; }
+    const timer = setTimeout(() => {
+      fetchUserPage("joined", 1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Fetch Recommended Communities
+  useEffect(() => {
+    if (!dbUser?._id) { setIsRecommendedLoading(false); return; }
+    const timer = setTimeout(() => {
+      axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=6&page=0`)
+        .then(response => {
+          const communities = response.data.data.map(item => ({
             _id: item._id,
             name: item.name,
             promotionalText: item.promotionalText,
             promotionalDescription: item.promotionalDescription,
             tags: item.tags || [],
-            imageLink:
-              item.imageLink && item.imageLink.includes("file:///")
-                ? "/static/images/default-logo.png"
-                : item.imageLink || "/static/images/default-logo.png",
+            imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
             membersCount: item.membersCount,
-            code: item._id,
-          }))
-          .sort((a, b) => a.name.localeCompare(b.name));
-        setEliteCommunities(communities);
-        setEliteTotalCount(response.data.totalCount || 0);
-      } catch (error) {
-
-        setEliteCommunities([]);
-        setEliteTotalCount(0);
-      } finally {
-        setIsEliteLoading(false);
-      }
-    };
-
-    fetchEliteCommunities();
-  }, []);
-
-  // Lazy load user communities after a short delay
-  useEffect(() => {
-    if (!dbUser || !dbUser._id) {
-      setIsUserLoading(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        const response = await axios.get(
-          `${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:approved&limit=3&page=1`
-        );
-        const communities = response.data.data || [];
-        setUserTotalCount(response.data.totalCount || 0);
-        const mappedCommunities = communities.map((item) => ({
-          _id: item._id,
-          name: item.name,
-          membersCount: item.membersCount,
-          isActive:
-            item._id === dbUser.user.lastAccessedCommunity?.communityID,
-          code: item._id,
-          imageLink:
-            item.imageLink && item.imageLink.includes("file:///")
-              ? "/static/images/default-logo.png"
-              : item.imageLink || "/static/images/default-logo.png",
-        }));
-        setUserCommunities(mappedCommunities);
-      } catch (error) {
-
-        setUserCommunities([]);
-        setUserTotalCount(0);
-      } finally {
-        setIsUserLoading(false);
-      }
-    }, 500); // Small delay to prioritize elite communities
-
-    return () => clearTimeout(timer);
-  }, [dbUser]);
-
-  // Lazy load recommended communities after user communities
-  useEffect(() => {
-    if (!dbUser || !dbUser._id) {
-      setIsRecommendedLoading(false);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      try {
-        const response = await axios.get(
-          `${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=3&page=0`
-        );
-        const communities = response.data.data.map((item) => ({
-          _id: item._id,
-          name: item.name,
-          promotionalText: item.promotionalText,
-          promotionalDescription: item.promotionalDescription,
-          tags: item.tags || [],
-          imageLink:
-            item.imageLink && item.imageLink.includes("file:///")
-              ? "/static/images/default-logo.png"
-              : item.imageLink || "/static/images/default-logo.png",
-          membersCount: item.membersCount,
-          code: item._id,
-        }));
-        setRecommendedCommunities(communities);
-        setRecommendedTotalCount(response.data.totalCount || 0);
-      } catch (error) {
-
-        setRecommendedCommunities([]);
-        setRecommendedTotalCount(0);
-      } finally {
-        setIsRecommendedLoading(false);
-      }
-    }, 1000); // Delay to prioritize other sections
-
-    return () => clearTimeout(timer);
-  }, [dbUser]);
-
-  // Lazy load all communities last (least priority)
-  useEffect(() => {
-    const timer = setTimeout(async () => {
-      try {
-        const response = await axios.get(`${API_URL}/api/v2/communities/tag/all?limit=4&page=0`);
-        const communities = response.data.data.map((item) => ({
-          _id: item._id,
-          name: item.name,
-          promotionalText: item.promotionalText,
-          promotionalDescription: item.promotionalDescription,
-          tags: item.tags || [],
-          imageLink:
-            item.imageLink && item.imageLink.includes("file:///")
-              ? "/static/images/default-logo.png"
-              : item.imageLink || "/static/images/default-logo.png",
-          membersCount: item.membersCount,
-          code: item._id,
-        }));
-        setAllCommunities(communities);
-        setAllCommunitiesTotalCount(response.data.totalCount || 0);
-      } catch (error) {
-
-        setAllCommunities([]);
-        setAllCommunitiesTotalCount(0);
-      } finally {
-        setIsAllCommunitiesLoading(false);
-      }
-    }, 1500); // Longer delay for lowest priority section
-
+            subscription: item.subscription
+          }));
+          setRecommendedCommunities(communities);
+          setRecommendedTotalCount(response.data.totalCount || 0);
+        })
+        .catch(() => { setRecommendedCommunities([]); setRecommendedTotalCount(0); })
+        .finally(() => setIsRecommendedLoading(false));
+    }, 600);
     return () => clearTimeout(timer);
   }, []);
 
-  // Listen for global event to open modal (for EJS link)
+  // Fetch All Communities
   useEffect(() => {
-    const handler = () => setShowCreateCommunityModal(true);
-    window.addEventListener(modalEventName, handler);
-    return () => window.removeEventListener(modalEventName, handler);
+    const timer = setTimeout(() => {
+      axios.get(`${API_URL}/api/v2/communities/tag/all?limit=6&page=0`)
+        .then(response => {
+          const communities = response.data.data.map(item => ({
+            _id: item._id,
+            name: item.name,
+            promotionalText: item.promotionalText,
+            promotionalDescription: item.promotionalDescription,
+            tags: item.tags || [],
+            imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
+            membersCount: item.membersCount,
+            subscription: item.subscription
+          }));
+          setAllCommunities(communities);
+          setAllCommunitiesTotalCount(response.data.totalCount || 0);
+        })
+        .catch(() => { setAllCommunities([]); setAllCommunitiesTotalCount(0); })
+        .finally(() => setIsAllCommunitiesLoading(false));
+    }, 900);
+    return () => clearTimeout(timer);
   }, []);
 
-  const fetchElitePage = async (page) => {
-    setIsEliteLoading(true);
-    try {
-      const response = await axios.get(`${API_URL}/api/v2/communities/elite?limit=5&page=${page}`);
-      const communities = response.data.data
-        .map((item) => ({
-          _id: item._id,
-          name: item.community?.name,
-          promotionalText: item.community?.promotionalText,
-          promotionalDescription: item.community?.promotionalDescription,
-          tags: item.community?.tags || [],
-          imageLink:
-            item.community?.imageLink && item.community?.imageLink.includes("file:///")
-              ? "/static/images/default-logo.png"
-              : item.community?.imageLink || "/static/images/default-logo.png",
-          membersCount: item.community?.membersCount,
-          subscription: item.community?.subscription || item.subscription,
-          code: item._id,
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-      setEliteCommunities(communities);
-      setElitePage(page);
-    } catch (error) {
-      
-      setEliteCommunities([]);
-    } finally {
-      setIsEliteLoading(false);
-    }
-  };
+  // Listen for modal event
+  useEffect(() => {
+    const handler = () => setShowCreateModal(true);
+    window.addEventListener("open-create-community-modal", handler);
+    return () => window.removeEventListener("open-create-community-modal", handler);
+  }, []);
 
-  const fetchUserPage = async (page) => {
+  // Pagination handlers
+  const fetchUserPage = async (filter, page) => {
     setIsUserLoading(true);
     try {
-      const response = await axios.get(
-        `${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:approved&limit=3&page=${page}`
-      );
-      const communities = response.data.data || [];
-      setUserTotalCount(response.data.totalCount || 0);
-      const mappedCommunities = communities.map((item) => ({
-        _id: item._id,
-        name: item.name,
-        membersCount: item.membersCount,
-        isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
-        subscription: item.subscription,
-        code: item._id,
-        imageLink:
-          item.imageLink && item.imageLink.includes("file:///")
-            ? "/static/images/default-logo.png"
-            : item.imageLink || "/static/images/default-logo.png",
-      }));
-      setUserCommunities(mappedCommunities);
+      let response;
+      if (filter === "owned") {
+        // Fetch communities owned by the user
+        // API returns raw array: [{ _id, community: { name, ownerID, imageLink, membersCount, subscription: { active } } }]
+        response = await axios.get(`${API_URL}/api/v1/communities/${dbUser._id}?limit=6&page=${page}`);
+        const rawData = Array.isArray(response.data) ? response.data : (response.data.data || []);
+        const communities = rawData.map(item => ({
+          _id: item._id,
+          name: item.community?.name || item.name,
+          membersCount: item.community?.membersCount || item.membersCount || 0,
+          isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
+          imageLink: (item.community?.imageLink || item.imageLink)?.includes("file:///") ? "/static/images/default-logo.png" : (item.community?.imageLink || item.imageLink || "/static/images/default-logo.png"),
+          subscription: item.community?.subscription?.active || item.subscription,
+          isOwned: true
+        }));
+        setUserCommunities(communities);
+        setUserTotalCount(communities.length);
+      } else {
+        // Fetch joined or pending communities
+        const statusFilter = filter === "pending" ? "pending" : "approved";
+        response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:${statusFilter}&limit=6&page=${page}`);
+        const communities = (response.data.data || []).map(item => ({
+          _id: item._id,
+          name: item.name,
+          membersCount: item.membersCount,
+          isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
+          imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
+          subscription: item.subscription,
+          isPending: filter === "pending"
+        }));
+        setUserCommunities(communities);
+        setUserTotalCount(response.data.totalCount || 0);
+      }
       setUserPage(page);
+      setUserFilter(filter);
     } catch (error) {
-      
       setUserCommunities([]);
       setUserTotalCount(0);
     } finally {
@@ -2559,27 +2135,20 @@ const App = () => {
   const fetchRecommendedPage = async (page) => {
     setIsRecommendedLoading(true);
     try {
-      const response = await axios.get(
-        `${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=3&page=${page}`
-      );
-      const communities = response.data.data.map((item) => ({
+      const response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/prioritized-communities?limit=6&page=${page}`);
+      const communities = response.data.data.map(item => ({
         _id: item._id,
         name: item.name,
         promotionalText: item.promotionalText,
         promotionalDescription: item.promotionalDescription,
         tags: item.tags || [],
-        imageLink:
-          item.imageLink && item.imageLink.includes("file:///")
-            ? "/static/images/default-logo.png"
-            : item.imageLink || "/static/images/default-logo.png",
+        imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
         membersCount: item.membersCount,
-        subscription: item.subscription,
-        code: item._id,
+        subscription: item.subscription
       }));
       setRecommendedCommunities(communities);
       setRecommendedPage(page);
     } catch (error) {
-      
       setRecommendedCommunities([]);
     } finally {
       setIsRecommendedLoading(false);
@@ -2590,268 +2159,157 @@ const App = () => {
     setIsAllCommunitiesLoading(true);
     try {
       const response = await axios.get(`${API_URL}/api/v2/communities/tag/${tag}?limit=6&page=${page}`);
-      const communities = response.data.data.map((item) => ({
+      const communities = response.data.data.map(item => ({
         _id: item._id,
         name: item.name,
         promotionalText: item.promotionalText,
         promotionalDescription: item.promotionalDescription,
         tags: item.tags || [],
-        imageLink:
-          item.imageLink && item.imageLink.includes("file:///")
-            ? "/static/images/default-logo.png"
-            : item.imageLink || "/static/images/default-logo.png",
+        imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
         membersCount: item.membersCount,
-        subscription: item.subscription,
-        code: item._id,
+        subscription: item.subscription
       }));
       setAllCommunities(communities);
       setAllCommunitiesTotalCount(response.data.totalCount || 0);
       setAllCommunitiesPage(page);
     } catch (error) {
-      
       setAllCommunities([]);
-      setAllCommunitiesTotalCount(0);
     } finally {
       setIsAllCommunitiesLoading(false);
     }
   };
 
-  const handleRecommendedPrevPage = () => {
-    if (recommendedPage > 0) {
-      fetchRecommendedPage(recommendedPage - 1);
-    }
-  };
-
-  const handleRecommendedNextPage = () => {
-    if (recommendedPage * 3 + 3 < recommendedTotalCount) {
-      fetchRecommendedPage(recommendedPage + 1);
-    }
-  };
-
-  const handleAllCommunitiesPrevPage = () => {
-    if (allCommunitiesPage > 0) {
-      fetchAllCommunitiesPage(currentTag, allCommunitiesPage - 1);
-    }
-  };
-
-  const handleAllCommunitiesNextPage = () => {
-    if (allCommunitiesPage * 6 + 6 < allCommunitiesTotalCount) {
-      fetchAllCommunitiesPage(currentTag, allCommunitiesPage + 1);
-    }
-  };
-
-  const handleElitePrevPage = () => {
-    if (elitePage > 0) {
-      fetchElitePage(elitePage - 1);
-    }
-  };
-
-  const handleEliteNextPage = () => {
-    if (elitePage * 5 < eliteTotalCount) {
-      fetchElitePage(elitePage + 1);
-    }
-  };
-
-  const handleUserPrevPage = () => {
-    if (userPage > 1) {
-      fetchUserPage(userPage - 1);
-    }
-  };
-
-  const handleUserNextPage = () => {
-    if (userPage * 3 < userTotalCount) {
-      fetchUserPage(userPage + 1);
-    }
-  };
-
   return (
-    <div className="min-h-screen">
-      <CreateCommunityModal isOpen={showCreateCommunityModal} onClose={() => setShowCreateCommunityModal(false)} toast={toast} setToast={setToast} />
-      <Toast message={toast.message} type={toast.type} isVisible={toast.isVisible} onClose={() => setToast({ ...toast, isVisible: false })} />
-      
-      {/* Main Layout with Side Ads */}
-      <div className="flex">
-        {/* Left Side Ad */}
-        <div className="hidden lg:block w-64 p-4 space-y-4">
-          <AdBanner type="vertical" className="sticky top-24" />
-          <AdBanner type="vertical" className="sticky top-96" />
-        </div>
-        
-        {/* Main Content */}
-        <div className="flex-1">
-          {/* HeroUI Pro Search Bar */}
-          <CommunitySearchBar onCreateCommunity={() => setShowCreateCommunityModal(true)} />
-          
-          {/* Page Navigation Component inspired by HeroUI Pro */}
-          <PageNavigation />
-          
-          {/* Elite Communities Section */}
-          <div id="elite-communities">
-            <Carousel
-              communities={eliteCommunities}
-              totalCount={eliteTotalCount}
-              onPrev={handleElitePrevPage}
-              onNext={handleEliteNextPage}
-              currentPage={elitePage}
-              isLoading={isEliteLoading}
-            />
-          </div>
-          
-          {/* Horizontal Ad after Elite */}
-          <div className="px-4 py-6">
-            <AdBanner type="horizontal" />
-          </div>
-          
-          {/* Section Divider */}
-          <SectionDivider 
-            title="Your Communities" 
-            subtitle="Communities you're part of"
-            icon="fa fa-users"
-          />
-          
-          {/* Your Communities Section */}
-          <div id="your-communities">
-            {dbUser && dbUser._id ? (
-              <div className="px-4 py-8">
-                <CommunitySection
-                  title="Your Communities"
-                  communities={userCommunities}
-                  actionText="Jump In"
-                  onAction={(community) => (window.location.href = `/community/${encodeCommunityId(community._id)}`)}
-                  cardsPerView={3}
-                  onPrevPage={handleUserPrevPage}
-                  onNextPage={handleUserNextPage}
-                  currentPage={userPage}
-                  totalCount={userTotalCount}
-                  isLoading={isUserLoading}
-                />
-              </div>
-            ) : (
-              <div className="px-4 py-8">
-                <div className="text-center py-12">
-                  <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
-                    <i className="fa fa-sign-in-alt text-4xl text-gray-500 mb-4"></i>
-                    <h3 className="text-xl font-semibold text-white mb-2">Sign In to See Your Communities</h3>
-                    <p className="text-gray-400 mb-4">Join communities and they'll appear here</p>
-                    <a href="/login-civ?redirect=/communities" className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105">
-                      <i className="fa fa-sign-in-alt mr-2"></i>
-                      Sign In
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Section Divider */}
-          <SectionDivider 
-            title="Discover Communities" 
-            subtitle="Recommended for you"
-            icon="fa fa-compass"
-          />
-          
-          {/* Discover Communities Section */}
-          <div id="discover-communities">
-            {dbUser && dbUser._id ? (
-              <div className="px-4 py-8">
-                <CommunitySection
-                  title="Discover Communities"
-                  communities={recommendedCommunities}
-                  actionText=""
-                  onAction={(community) => (window.location.href = `#`)}
-                  cardsPerView={3}
-                  onPrevPage={handleRecommendedPrevPage}
-                  onNextPage={handleRecommendedNextPage}
-                  currentPage={recommendedPage + 1}
-                  totalCount={recommendedTotalCount}
-                  isLoading={isRecommendedLoading}
-                />
-              </div>
-            ) : (
-              <div className="px-4 py-8">
-                <div className="text-center py-12">
-                  <div className="bg-gray-800 rounded-lg p-8 border border-gray-700">
-                    <i className="fa fa-compass text-4xl text-gray-500 mb-4"></i>
-                    <h3 className="text-xl font-semibold text-white mb-2">Sign In for Personalized Recommendations</h3>
-                    <p className="text-gray-400 mb-4">Get community recommendations based on your interests</p>
-                    <a href="/login-civ?redirect=/communities" className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105">
-                      <i className="fa fa-sign-in-alt mr-2"></i>
-                      Sign In
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Horizontal Ad before Browse */}
-          <div className="px-4 py-6">
-            <AdBanner type="horizontal" />
-          </div>
-          
-          {/* Section Divider */}
-          <SectionDivider 
-            title="Browse All Communities" 
-            subtitle="Explore all available communities"
-            icon="fa fa-globe"
-          />
-          
-          {/* Browse Communities Section */}
-          <div id="browse-communities" className="px-4 py-8">
-            <BrowseCommunities
-              communities={allCommunities}
-              totalCount={allCommunitiesTotalCount}
-              currentTag={currentTag}
-              setCurrentTag={setCurrentTag}
-              onPrevPage={handleAllCommunitiesPrevPage}
-              onNextPage={handleAllCommunitiesNextPage}
-              currentPage={allCommunitiesPage}
-              fetchAllCommunitiesPage={fetchAllCommunitiesPage}
-              isLoading={isAllCommunitiesLoading}
-            />
-          </div>
-          
-          {/* Features Section */}
-          <HeroSection className="mt-16">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                Why Choose Our Platform?
-              </h2>
-              <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-                Join thousands of users who trust our platform for their community needs
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <FeatureCard
-                icon="fa fa-shield-alt"
-                title="Secure & Private"
-                description="Your data is protected with enterprise-grade security and privacy controls."
-                color="green"
-              />
-              <FeatureCard
-                icon="fa fa-rocket"
-                title="Fast & Reliable"
-                description="Lightning-fast performance with 99.9% uptime guarantee."
-                color="blue"
-              />
-              <FeatureCard
-                icon="fa fa-headset"
-                title="24/7 Support"
-                description="Get help whenever you need it with our dedicated support team."
-                color="purple"
-              />
-            </div>
-          </HeroSection>
-          
-          <Footer />
-        </div>
-        
-        {/* Right Side Ad */}
-        <div className="hidden lg:block w-64 p-4 space-y-4">
-          <AdBanner type="vertical" className="sticky top-24" />
-          <AdBanner type="vertical" className="sticky top-96" />
-        </div>
+    <div className="min-h-screen relative" style={{ 
+      background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%)',
+      minHeight: '100vh',
+      minHeight: '-webkit-fill-available'
+    }}>
+      {/* Background particles */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundImage: `
+          radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+          radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+          radial-gradient(circle at 40% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%)
+        `,
+        animation: 'pulse-bg 8s ease-in-out infinite',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+
+      {/* Glowing grid overlay */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundImage: `
+          linear-gradient(rgba(59, 130, 246, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(59, 130, 246, 0.02) 1px, transparent 1px)
+        `,
+        backgroundSize: '50px 50px',
+        opacity: 0.5,
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
+
+      {/* Content */}
+      <div className="relative z-10">
+      {/* Modals */}
+      <CreateCommunityModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        setToast={setToast}
+        onSuccess={() => {
+          // Refresh user communities list without full page reload
+          // Switch to "owned" filter to show the newly created community
+          if (dbUser?._id) {
+            fetchUserPage("owned", 1);
+          }
+        }}
+      />
+      <WelcomeModal
+        isOpen={showWelcomeModal}
+        onClose={() => setShowWelcomeModal(false)}
+      />
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
+      />
+
+      {/* Search Bar */}
+      <SearchBar onCreateCommunity={() => setShowCreateModal(true)} />
+
+      {/* Quick Navigation */}
+      <QuickNav />
+
+      {/* Elite Communities */}
+      <div id="elite-communities">
+        <EliteCarousel
+          communities={eliteCommunities}
+          totalCount={eliteTotalCount}
+          isLoading={isEliteLoading}
+        />
+      </div>
+
+      {/* Divider */}
+      <div className="px-4 py-2">
+        <div className="h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+      </div>
+
+      {/* Your Communities */}
+      <div id="your-communities">
+        <YourCommunities
+          communities={userCommunities}
+          totalCount={userTotalCount}
+          currentFilter={userFilter}
+          onFilterChange={(filter, page) => fetchUserPage(filter, page)}
+          onPrevPage={() => userPage > 1 && fetchUserPage(userFilter, userPage - 1)}
+          onNextPage={() => userPage * 6 < userTotalCount && fetchUserPage(userFilter, userPage + 1)}
+          currentPage={userPage}
+          isLoading={isUserLoading}
+          showLoginPrompt={!dbUser?._id}
+          dbUser={dbUser}
+        />
+      </div>
+
+      {/* Discover Communities */}
+      <div id="discover-communities">
+        <CommunitySection
+          title="Discover"
+          icon="fa fa-compass"
+          communities={recommendedCommunities}
+          actionText="Explore"
+          onPrevPage={() => recommendedPage > 0 && fetchRecommendedPage(recommendedPage - 1)}
+          onNextPage={() => (recommendedPage + 1) * 6 < recommendedTotalCount && fetchRecommendedPage(recommendedPage + 1)}
+          currentPage={recommendedPage + 1}
+          totalCount={recommendedTotalCount}
+          isLoading={isRecommendedLoading}
+          showLoginPrompt={!dbUser?._id}
+          emptyMessage="Sign in for personalized recommendations"
+          emptyIcon="fa fa-compass"
+        />
+      </div>
+
+      {/* Browse Communities */}
+      <div id="browse-communities">
+        <BrowseCommunities
+          communities={allCommunities}
+          totalCount={allCommunitiesTotalCount}
+          currentTag={currentTag}
+          setCurrentTag={setCurrentTag}
+          onPrevPage={() => allCommunitiesPage > 0 && fetchAllCommunitiesPage(currentTag, allCommunitiesPage - 1)}
+          onNextPage={() => (allCommunitiesPage + 1) * 6 < allCommunitiesTotalCount && fetchAllCommunitiesPage(currentTag, allCommunitiesPage + 1)}
+          currentPage={allCommunitiesPage}
+          fetchAllCommunitiesPage={fetchAllCommunitiesPage}
+          isLoading={isAllCommunitiesLoading}
+        />
+      </div>
+
+      {/* Footer */}
+      <Footer />
       </div>
     </div>
   );

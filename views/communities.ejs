@@ -7,35 +7,120 @@
     <title>LPC - Communities</title>
     <link
       rel="shortcut icon"
-      type="image/ico"
-      href="/static/images/favicon.ico"
+      type="image/png"
+      href="/static/images/lines-police-cad-discord-logo-2024-github-profile.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="/static/images/lines-police-cad-discord-logo-2024-github-profile.png"
     />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      body {
-        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-        color: #e2e8f0;
+      * {
+        -webkit-tap-highlight-color: transparent;
       }
-      .carousel-item {
-        transition: transform 0.5s ease-in-out;
-      }
-      .card {
-        transition: transform 0.3s, box-shadow 0.3s;
-      }
-      .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-      }
-      .scroll-container {
+
+      html {
         scroll-behavior: smooth;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
+        background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+        height: 100%;
+        /* Ensure background covers overscroll areas */
+        background-attachment: fixed;
+        background-size: cover;
+        /* Prevent white background flash */
+        -webkit-overflow-scrolling: touch;
       }
-      .scroll-container::-webkit-scrollbar {
-        display: none;
+
+      body {
+        background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+        background-attachment: fixed;
+        background-size: cover;
+        color: #e2e8f0;
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        /* Ensure no white space shows */
+        margin: 0;
+        padding: 0;
+        /* Smooth scrolling on mobile */
+        -webkit-overflow-scrolling: touch;
       }
       
+      /* Ensure root element also has background */
+      #root {
+        background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+      }
+      
+      /* Fix for mobile overscroll - create a background layer that extends beyond viewport */
+      body::before {
+        content: '';
+        position: fixed;
+        top: -200vh;
+        bottom: -200vh;
+        left: 0;
+        right: 0;
+        background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+        z-index: -9999;
+        pointer-events: none;
+      }
+
+      /* Breathing glow animation */
+      @keyframes breathe {
+        0%, 100% {
+          opacity: 0.5;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.8;
+          transform: scale(1.1);
+        }
+      }
+
+      /* Shimmer animation for text */
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 50%;
+        }
+        100% {
+          background-position: -200% 50%;
+        }
+      }
+
+      /* Pulse animation for backgrounds */
+      @keyframes pulse-bg {
+        0%, 100% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+
+      .animate-breathe {
+        animation: breathe 5s ease-in-out infinite;
+      }
+
+      .animate-shimmer {
+        animation: shimmer 12s linear infinite;
+      }
+
+      .animate-pulse-bg {
+        animation: pulse-bg 8s ease-in-out infinite;
+      }
+
+      /* Hide scrollbar utility */
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+
       /* Line clamp utilities */
       .line-clamp-1 {
         overflow: hidden;
@@ -55,26 +140,13 @@
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 3;
       }
-      
-      @media (max-width: 600px) {
-        .promo-bar-hide-wrapper {
-          width: 100%;
-          justify-content: flex-end;
-          margin-top: 1rem;
-          order: 2;
-        }
-        #promo-bar-hide {
-          font-size: 0.85rem !important;
-          display: block;
-          width: 100%;
-          text-align: right;
-          margin-left: 0;
-        }
-        #promo-bar {
-          flex-direction: column !important;
-          align-items: flex-start !important;
-          padding: 1.25rem 1rem 1.25rem 1rem !important;
-        }
+
+      /* Safe area for mobile notch/home indicator */
+      .safe-area-top {
+        padding-top: env(safe-area-inset-top, 0);
+      }
+      .safe-area-bottom {
+        padding-bottom: env(safe-area-inset-bottom, 0);
       }
 
       /* Toast animation */
@@ -88,19 +160,119 @@
           opacity: 1;
         }
       }
-
       .animate-slide-in {
-        animation: slide-in 0.3s ease-out;
+        animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      /* Backdrop blur fallback for older browsers */
+      @supports not (backdrop-filter: blur(8px)) {
+        .backdrop-blur-sm {
+          background-color: rgba(15, 23, 42, 0.95) !important;
+        }
+      }
+
+      /* Custom scrollbar for desktop */
+      @media (min-width: 768px) {
+        ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+          background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #475569;
+          border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: #64748b;
+        }
+      }
+
+      /* Aspect ratio fallback */
+      @supports not (aspect-ratio: 4/3) {
+        .aspect-\[4\/3\]::before {
+          content: '';
+          float: left;
+          padding-top: 75%;
+        }
+        .aspect-\[4\/3\]::after {
+          content: '';
+          display: block;
+          clear: both;
+        }
+        .aspect-square::before {
+          content: '';
+          float: left;
+          padding-top: 100%;
+        }
+        .aspect-square::after {
+          content: '';
+          display: block;
+          clear: both;
+        }
+        .aspect-\[2\/1\]::before {
+          content: '';
+          float: left;
+          padding-top: 50%;
+        }
+        .aspect-\[2\/1\]::after {
+          content: '';
+          display: block;
+          clear: both;
+        }
+      }
+
+      /* Focus visible for accessibility */
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid #06b6d4;
+        outline-offset: 2px;
+      }
+
+      /* Override Bootstrap styles that conflict with Tailwind */
+      html {
+        font-size: 16px !important;
+      }
+      body {
+        font-size: 1rem !important;
+        line-height: 1.5 !important;
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+      }
+      #root {
+        font-size: 1rem;
+      }
+      #root * {
+        box-sizing: border-box;
+      }
+      /* Reset Bootstrap's tiny text */
+      #root p, #root span, #root div, #root h1, #root h2, #root h3, #root h4, #root h5, #root h6, #root a, #root button, #root input, #root textarea, #root label {
+        font-size: inherit;
+        line-height: inherit;
+      }
+      /* Ensure text sizes are correct in the React app */
+      #root .text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
+      #root .text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+      #root .text-base { font-size: 1rem !important; line-height: 1.5rem !important; }
+      #root .text-lg { font-size: 1.125rem !important; line-height: 1.75rem !important; }
+      #root .text-xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+      #root .text-2xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+      #root .text-3xl { font-size: 1.875rem !important; line-height: 2.25rem !important; }
+      #root .text-4xl { font-size: 2.25rem !important; line-height: 2.5rem !important; }
+      /* Fix button and input styles */
+      #root button, #root input, #root textarea {
+        font-family: inherit !important;
       }
     </style>
   </head>
   <body>
-    <!-- Header Bar -->
-    <nav class="flex items-center justify-between px-4 py-3 bg-gray-900 shadow-lg sticky top-0 z-20">
-      <div class="flex items-center space-x-2">
-        <a href="/" class="flex items-center space-x-2">
-          <img src="/static/images/favicon-32x32.png" alt="LPC Logo" class="h-8 w-8" />
-          <span class="text-xl font-bold text-white">Lines Police CAD</span>
+    <!-- Header Bar - matches home page style -->
+    <nav class="flex items-center justify-between px-6 h-16 sticky top-0 z-30" style="background: rgba(15, 15, 20, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(59, 130, 246, 0.2); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+      <div class="flex items-center">
+        <a href="/" class="flex items-center">
+          <img src="/static/images/lines-police-cad-discord-logo-2024-github-profile.png" alt="Lines Police CAD" style="height: 36px; width: auto;" />
         </a>
       </div>
       <div class="flex items-center space-x-4">
@@ -109,7 +281,7 @@
           <div class="flex items-center space-x-3">
             <!-- Notification Button -->
             <button id="notificationBtn" class="relative p-2 text-gray-300 hover:text-white transition-colors" style="background: none; border: none; cursor: pointer;">
-              <i class="fa fa-bell text-3xl"></i>
+              <i class="fa fa-bell text-xl"></i>
               <span id="notificationBadge" class="notification-badge" style="display: none;">0</span>
             </button>
             
@@ -122,29 +294,25 @@
           </div>
         <% } else { %>
           <!-- User is not logged in - show login button -->
-          <a href="/login-civ?redirect=<%= encodeURIComponent('/communities') %>" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105">
+          <a href="/login-civ?redirect=<%= encodeURIComponent('/communities') %>" class="inline-flex items-center px-4 py-2 text-black font-semibold rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);">
             <i class="fa fa-sign-in-alt mr-2"></i>
             Login
           </a>
         <% } %>
       </div>
     </nav>
-    <!-- Promo Bar -->
-    <div id="promo-bar" class="heroui-alert heroui-alert-info" style="display: flex;align-items: center;justify-content: space-between;background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);color: #fff;border-radius: 10px;box-shadow: 0 4px 16px rgba(102,126,234,0.10);padding: 1.25rem 2rem 1.25rem 1.5rem;/* margin-bottom: 2rem; */margin-top: 0.5rem; position: relative;">
-      <div style="display: flex; align-items: center; gap: 1.25rem;">
-        <i class="fa fa-lightbulb" style="font-size: 1.7rem; color: #f7fafc;"></i>
+    <!-- Promo Bar - Compact version with home page styling -->
+    <div id="promo-bar" class="mx-3 mt-3 rounded-xl relative" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(59, 130, 246, 0.2); color: #fff; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); padding: 0.75rem 2.5rem 0.75rem 1rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <i class="fa fa-lightbulb" style="font-size: 1.25rem; color: #fbbf24;"></i>
         <div>
-          <div style="font-size: 1.25rem; font-weight: 600; letter-spacing: 0.01em;">Welcome!</div>
-          <div style="font-size: 1.1rem; color: #e0e7ff; margin-top: 0.15rem;">
-            Search for a community or browse from the selection below.<br />
-            Looking to create your own? <a href="#" id="create-community-link" style="color: #f093fb; text-decoration: underline; font-weight: 500;">You can start by clicking here.</a>
-          </div>
+          <span style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.9);">
+            Search for a community or browse below. <a href="#" id="create-community-link" style="color: #fbbf24; text-decoration: underline; font-weight: 600;">Create your own</a>
+          </span>
         </div>
       </div>
-      <div class="promo-bar-hide-wrapper" style="display: flex; align-items: center; gap: 1.2rem;">
-        <a id="promo-bar-hide" href="#" style="color: #f093fb; font-size: 1.1rem; text-decoration: underline; font-weight: 500; opacity: 0.85;">Don't show again</a>
-      </div>
-      <button id="promo-bar-x" aria-label="Close banner" style="position:absolute; top:0.7rem; right:1.2rem; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; z-index: 10;">
+      <a id="promo-bar-hide" href="#" class="hidden sm:inline" style="color: #fbbf24; font-size: 0.8rem; text-decoration: underline; font-weight: 500; opacity: 0.9; white-space: nowrap;">Don't show again</a>
+      <button id="promo-bar-x" aria-label="Close banner" style="position:absolute; top:50%; right:0.75rem; transform: translateY(-50%); background: none; border: none; color: #fff; font-size: 1rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; z-index: 10;">
         <i class="fa fa-times"></i>
       </button>
     </div>
