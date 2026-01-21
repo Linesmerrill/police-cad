@@ -979,7 +979,7 @@
           <% } else if (departments && departments.length) { %>
             <div id="departments-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               <% departments.forEach(function(dept, deptIndex) {
-                var templateName = dept.template && dept.template.name ? dept.template.name : '';
+                var templateName = dept.templateName || (dept.template && dept.template.name ? dept.template.name : '');
                 var approvalRequired = dept.approvalRequired;
                 var members = Array.isArray(dept.members) ? dept.members : [];
                 var isDeptMember = members.some(function(m) { return m.userID === userId && m.status === 'approved'; });
