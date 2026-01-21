@@ -555,13 +555,15 @@
             : '<div class="aspect-[2/1] flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);"><i class="fa ' + deptIcon + ' text-4xl" style="color: ' + deptColor + '; opacity: 0.5;"></i></div>';
 
           card.innerHTML = '<div class="relative">' + imageHtml + '</div>' +
-            '<div class="p-4">' +
-              '<div class="flex items-center gap-2 mb-1">' +
-                '<i class="fa ' + deptIcon + ' text-sm" style="color: ' + deptColor + ';"></i>' +
-                '<h3 class="font-bold text-white text-base line-clamp-1">' + escapeHtml(dept.name) + '</h3>' +
+            '<div class="p-4 flex flex-col justify-between" style="min-height: 88px;">' +
+              '<div>' +
+                '<div class="flex items-center gap-2 mb-1">' +
+                  '<i class="fa ' + deptIcon + ' text-sm" style="color: ' + deptColor + ';"></i>' +
+                  '<h3 class="font-bold text-white text-base line-clamp-1">' + escapeHtml(dept.name) + '</h3>' +
+                '</div>' +
+                (dept.description ? '<p class="text-slate-400 text-xs line-clamp-2">' + escapeHtml(dept.description) + '</p>' : '') +
               '</div>' +
-              (dept.description ? '<p class="text-slate-400 text-xs line-clamp-2 mb-2">' + escapeHtml(dept.description) + '</p>' : '') +
-              '<div class="flex items-center justify-between">' +
+              '<div class="flex items-center justify-between mt-2">' +
                 '<span class="text-xs text-slate-500">' + escapeHtml(templateName || 'Department') + '</span>' +
                 (canAccess ? '<span class="text-xs" style="color: #fbbf24;">Enter <i class="fa fa-arrow-right ml-1"></i></span>' : '') +
               '</div>' +
@@ -1061,15 +1063,17 @@
                     <% } %>
                   </div>
 
-                  <div class="p-4">
-                    <div class="flex items-center gap-2 mb-1">
-                      <i class="fa <%= deptIcon %> text-sm" style="color: <%= deptColor %>;"></i>
-                      <h3 class="font-bold text-white text-base line-clamp-1"><%= dept.name %></h3>
+                  <div class="p-4 flex flex-col justify-between" style="min-height: 88px;">
+                    <div>
+                      <div class="flex items-center gap-2 mb-1">
+                        <i class="fa <%= deptIcon %> text-sm" style="color: <%= deptColor %>;"></i>
+                        <h3 class="font-bold text-white text-base line-clamp-1"><%= dept.name %></h3>
+                      </div>
+                      <% if (dept.description) { %>
+                        <p class="text-slate-400 text-xs line-clamp-2"><%= dept.description %></p>
+                      <% } %>
                     </div>
-                    <% if (dept.description) { %>
-                      <p class="text-slate-400 text-xs line-clamp-2 mb-2"><%= dept.description %></p>
-                    <% } %>
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between mt-2">
                       <span class="text-xs text-slate-500"><%= templateName || 'Department' %></span>
                       <% if (canAccess) { %>
                         <span class="text-xs" style="color: #fbbf24;">Enter <i class="fa fa-arrow-right ml-1"></i></span>
