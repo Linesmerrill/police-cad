@@ -459,13 +459,15 @@
         // Store permission for dynamic UI updates
         window.canManageEvents = false;
 
-        // Department pagination - fetches from API on page change
+        // Department pagination and filtering - fetches from API on page/filter change
         var deptCurrentPage = 1;
         var deptPerPage = 6;
         var deptTotalCount = <%= typeof departmentsTotalCount !== 'undefined' ? departmentsTotalCount : (departments ? departments.length : 0) %>;
         var deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
-        var deptLoadedPages = { 1: true }; // Track which pages have been loaded
+        var deptLoadedPages = { '': { 1: true } }; // Track which pages have been loaded per filter
         var deptIsLoading = false;
+        var deptCurrentFilter = ''; // Current template filter (empty = all)
+        var deptTemplateTypes = <%- JSON.stringify(typeof departmentTemplateTypes !== 'undefined' ? departmentTemplateTypes : []) %>;
 
         async function changeDeptPage(delta) {
           var newPage = deptCurrentPage + delta;
@@ -473,8 +475,9 @@
 
           deptCurrentPage = newPage;
 
-          // Check if we need to fetch this page from the API
-          if (!deptLoadedPages[deptCurrentPage]) {
+          // Check if we need to fetch this page from the API (for this filter)
+          var filterKey = deptCurrentFilter || '';
+          if (!deptLoadedPages[filterKey] || !deptLoadedPages[filterKey][deptCurrentPage]) {
             await fetchDepartmentsPage(deptCurrentPage);
           }
 
@@ -490,29 +493,86 @@
           updateDeptPaginationUI();
         }
 
-        async function fetchDepartmentsPage(page) {
+        async function filterDepartments(templateFilter) {
+          if (deptIsLoading) return;
+
+          deptCurrentFilter = templateFilter || '';
+          deptCurrentPage = 1;
+
+          // Update filter button states
+          var filterBtns = document.querySelectorAll('#dept-filter-tabs button');
+          filterBtns.forEach(function(btn) {
+            var btnFilter = btn.getAttribute('data-filter') || '';
+            if (btnFilter === deptCurrentFilter) {
+              btn.style.background = '#3b82f6';
+              btn.style.color = 'white';
+            } else {
+              btn.style.background = 'rgba(255,255,255,0.05)';
+              btn.style.color = '#94a3b8';
+            }
+          });
+
+          // Clear grid and fetch filtered departments
+          var container = document.getElementById('departments-grid');
+          container.innerHTML = '<div class="col-span-full text-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div><p class="text-slate-400 text-sm mt-2">Loading...</p></div>';
+
+          // Reset loaded pages for this filter
+          var filterKey = deptCurrentFilter || '';
+          deptLoadedPages[filterKey] = {};
+
+          await fetchDepartmentsPage(1, true);
+        }
+
+        async function fetchDepartmentsPage(page, clearContainer) {
           deptIsLoading = true;
           var container = document.getElementById('departments-grid');
 
           try {
-            var response = await fetch(window.API_URL + '/api/v2/community/' + window.communityId + '/departments?userId=' + window.userId + '&page=' + page + '&limit=' + deptPerPage);
+            var filterParam = deptCurrentFilter ? '&templateFilter=' + encodeURIComponent(deptCurrentFilter) : '';
+            var response = await fetch(window.API_URL + '/api/v2/community/' + window.communityId + '/departments?userId=' + window.userId + '&page=' + page + '&limit=' + deptPerPage + filterParam);
             if (!response.ok) throw new Error('Failed to fetch departments');
             var data = await response.json();
             var departments = data.data || [];
+
+            // Update total count and pages for this filter
+            deptTotalCount = data.totalCount || 0;
+            deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
+
+            // Update template types if returned (only on first fetch without filter)
+            if (data.templateTypes && !deptCurrentFilter) {
+              deptTemplateTypes = data.templateTypes;
+              renderDeptFilterTabs();
+            }
+
+            // Clear container if requested (filter change)
+            if (clearContainer) {
+              container.innerHTML = '';
+            }
 
             // Calculate the starting index for these departments
             var startIdx = (page - 1) * deptPerPage;
 
             // Append new department cards
-            departments.forEach(function(dept, i) {
-              var globalIdx = startIdx + i;
-              var card = createDepartmentCard(dept, globalIdx);
-              container.appendChild(card);
-            });
+            if (departments.length === 0 && clearContainer) {
+              container.innerHTML = '<div class="col-span-full dashboard-card text-center py-8"><i class="fa fa-building text-3xl text-slate-600 mb-3"></i><p class="text-slate-400">No departments found</p></div>';
+            } else {
+              departments.forEach(function(dept, i) {
+                var globalIdx = startIdx + i;
+                var card = createDepartmentCard(dept, globalIdx);
+                container.appendChild(card);
+              });
+            }
 
-            deptLoadedPages[page] = true;
+            var filterKey = deptCurrentFilter || '';
+            if (!deptLoadedPages[filterKey]) deptLoadedPages[filterKey] = {};
+            deptLoadedPages[filterKey][page] = true;
+
+            updateDeptPaginationUI();
           } catch (err) {
             console.error('Error fetching departments:', err);
+            if (clearContainer) {
+              container.innerHTML = '<div class="col-span-full dashboard-card text-center py-8"><i class="fa fa-exclamation-triangle text-3xl text-red-500 mb-3"></i><p class="text-slate-400">Failed to load departments</p></div>';
+            }
           } finally {
             deptIsLoading = false;
           }
@@ -576,6 +636,7 @@
           var prevBtn = document.getElementById('dept-prev-btn');
           var nextBtn = document.getElementById('dept-next-btn');
           var pageInfo = document.getElementById('dept-page-info');
+          var paginationContainer = document.getElementById('dept-pagination');
 
           if (prevBtn) {
             prevBtn.disabled = deptCurrentPage <= 1;
@@ -590,7 +651,77 @@
           if (pageInfo) {
             pageInfo.textContent = 'Page ' + deptCurrentPage + ' of ' + deptTotalPages;
           }
+          // Show/hide pagination based on total pages
+          if (paginationContainer) {
+            paginationContainer.style.display = deptTotalPages > 1 ? 'flex' : 'none';
+          }
         }
+
+        function getDeptIconAndColor(templateName) {
+          var lowerTemplate = (templateName || '').toLowerCase();
+          var deptIcon = 'fa-building';
+          var deptColor = '#60a5fa';
+          if (lowerTemplate.includes('police')) {
+            deptIcon = 'fa-shield-halved';
+            deptColor = '#3b82f6';
+          } else if (lowerTemplate.includes('sheriff')) {
+            deptIcon = 'fa-star';
+            deptColor = '#fbbf24';
+          } else if (lowerTemplate.includes('civilian')) {
+            deptIcon = 'fa-user';
+            deptColor = '#10b981';
+          } else if (lowerTemplate.includes('fire') || lowerTemplate.includes('ems')) {
+            deptIcon = 'fa-truck-medical';
+            deptColor = '#ef4444';
+          } else if (lowerTemplate.includes('dispatch')) {
+            deptIcon = 'fa-headset';
+            deptColor = '#f59e0b';
+          }
+          return { icon: deptIcon, color: deptColor };
+        }
+
+        function renderDeptFilterTabs() {
+          var container = document.getElementById('dept-filter-tabs');
+          if (!container || !deptTemplateTypes || deptTemplateTypes.length < 2) {
+            // Don't show filters if less than 2 types
+            if (container) container.style.display = 'none';
+            return;
+          }
+
+          container.style.display = 'flex';
+          container.innerHTML = '';
+
+          // Add "All" button
+          var allBtn = document.createElement('button');
+          allBtn.setAttribute('data-filter', '');
+          allBtn.className = 'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5';
+          allBtn.style.background = deptCurrentFilter === '' ? '#3b82f6' : 'rgba(255,255,255,0.05)';
+          allBtn.style.color = deptCurrentFilter === '' ? 'white' : '#94a3b8';
+          allBtn.innerHTML = 'All';
+          allBtn.onclick = function() { filterDepartments(''); };
+          container.appendChild(allBtn);
+
+          // Sort by count descending
+          var sortedTypes = deptTemplateTypes.slice().sort(function(a, b) { return b.count - a.count; });
+
+          // Add button for each template type
+          sortedTypes.forEach(function(type) {
+            var iconData = getDeptIconAndColor(type.name);
+            var btn = document.createElement('button');
+            btn.setAttribute('data-filter', type.name);
+            btn.className = 'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5';
+            btn.style.background = deptCurrentFilter === type.name ? '#3b82f6' : 'rgba(255,255,255,0.05)';
+            btn.style.color = deptCurrentFilter === type.name ? 'white' : '#94a3b8';
+            btn.innerHTML = '<i class="fa ' + iconData.icon + '" style="color: ' + iconData.color + ';"></i>' + escapeHtml(type.name) + ' <span class="text-xs opacity-60">(' + type.count + ')</span>';
+            btn.onclick = function() { filterDepartments(type.name); };
+            container.appendChild(btn);
+          });
+        }
+
+        // Initialize filter tabs on page load
+        document.addEventListener('DOMContentLoaded', function() {
+          renderDeptFilterTabs();
+        });
 
         // Client-side event pagination
         var eventCurrentPage = 1;
@@ -979,6 +1110,9 @@
               <% } %>
             </div>
           <% } else if (departments && departments.length) { %>
+            <!-- Department Filter Tabs -->
+            <div id="dept-filter-tabs" class="flex flex-wrap gap-2 mb-4" style="display: none;"></div>
+
             <div id="departments-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               <% departments.forEach(function(dept, deptIndex) {
                 var templateName = dept.templateName || (dept.template && dept.template.name ? dept.template.name : '');
@@ -1085,17 +1219,15 @@
             </div>
 
             <% var totalDepts = typeof departmentsTotalCount !== 'undefined' ? departmentsTotalCount : departments.length; %>
-            <% if (totalDepts > 6) { %>
-              <div id="dept-pagination" class="flex justify-center items-center gap-4 mt-4">
-                <button id="dept-prev-btn" onclick="changeDeptPage(-1)" class="btn-secondary text-sm" disabled style="opacity:0.5;cursor:not-allowed;">
-                  <i class="fa fa-chevron-left mr-1"></i>Prev
-                </button>
-                <span id="dept-page-info" class="text-slate-400 text-sm">Page 1 of <%= Math.ceil(totalDepts / 6) %></span>
-                <button id="dept-next-btn" onclick="changeDeptPage(1)" class="btn-secondary text-sm">
-                  Next<i class="fa fa-chevron-right ml-1"></i>
-                </button>
-              </div>
-            <% } %>
+            <div id="dept-pagination" class="justify-center items-center gap-4 mt-4" style="display: <%= totalDepts > 6 ? 'flex' : 'none' %>;">
+              <button id="dept-prev-btn" onclick="changeDeptPage(-1)" class="btn-secondary text-sm" disabled style="opacity:0.5;cursor:not-allowed;">
+                <i class="fa fa-chevron-left mr-1"></i>Prev
+              </button>
+              <span id="dept-page-info" class="text-slate-400 text-sm">Page 1 of <%= Math.ceil(totalDepts / 6) %></span>
+              <button id="dept-next-btn" onclick="changeDeptPage(1)" class="btn-secondary text-sm">
+                Next<i class="fa fa-chevron-right ml-1"></i>
+              </button>
+            </div>
           <% } else { %>
             <div class="dashboard-card text-center py-8">
               <i class="fa fa-building text-3xl text-slate-600 mb-3"></i>

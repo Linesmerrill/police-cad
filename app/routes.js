@@ -116,6 +116,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       const userId = req.user && req.user._doc ? req.user._doc._id : (req.user && req.user._id ? req.user._id : null);
       let departments = [];
       let departmentsTotalCount = 0;
+      let departmentTemplateTypes = [];
       const deptPerPage = 6;
       // Determine if user is a member of the community
       let isMemberApproved = false;
@@ -132,12 +133,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
         const deptsResponse = await axios.get(deptsApiUrl, config);
         departments = deptsResponse.data.data || [];
         departmentsTotalCount = deptsResponse.data.totalCount || departments.length;
+        departmentTemplateTypes = deptsResponse.data.templateTypes || [];
       }
       res.render("community-details", {
         user: req.user,
         community,
         departments,
         departmentsTotalCount,
+        departmentTemplateTypes,
         query: req.query,
         referer: encodeURIComponent(`/community/${hash}`),
         redirect: encodeURIComponent(redirect),
