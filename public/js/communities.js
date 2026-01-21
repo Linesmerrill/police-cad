@@ -696,6 +696,143 @@ const BrowseCommunities = ({
 };
 
 // ============================================================================
+// YOUR COMMUNITIES WITH FILTERS
+// ============================================================================
+
+const YourCommunities = ({
+  communities,
+  totalCount,
+  currentFilter,
+  onFilterChange,
+  onPrevPage,
+  onNextPage,
+  currentPage,
+  isLoading,
+  showLoginPrompt,
+  dbUser
+}) => {
+  const filters = [
+    { id: "joined", label: "Joined", icon: "fa-check-circle" },
+    { id: "pending", label: "Pending", icon: "fa-clock" },
+    { id: "owned", label: "Owned", icon: "fa-crown" }
+  ];
+
+  const handleFilterChange = (filter) => {
+    onFilterChange(filter, 1);
+  };
+
+  const getEmptyMessage = () => {
+    switch (currentFilter) {
+      case "pending": return "No pending join requests";
+      case "owned": return "You haven't created any communities yet";
+      default: return "You haven't joined any communities yet";
+    }
+  };
+
+  const getEmptyIcon = () => {
+    switch (currentFilter) {
+      case "pending": return "fa fa-clock";
+      case "owned": return "fa fa-crown";
+      default: return "fa fa-users";
+    }
+  };
+
+  const getActionText = () => {
+    switch (currentFilter) {
+      case "pending": return "View";
+      case "owned": return "Manage";
+      default: return "Jump In";
+    }
+  };
+
+  if (showLoginPrompt) {
+    return (
+      <section className="py-6 px-4">
+        <div className="flex items-center gap-2 mb-4">
+          <i className="fa fa-users" style={{ color: '#fbbf24' }}></i>
+          <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)' }}>Your Communities</h2>
+        </div>
+        <div className="rounded-2xl p-8 text-center max-w-md mx-auto" style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(59, 130, 246, 0.2)'
+        }}>
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)'
+          }}>
+            <i className="fa fa-sign-in-alt text-2xl text-slate-500"></i>
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">Sign in to see your communities</h3>
+          <p className="text-slate-400 text-sm mb-4">Join communities and they'll appear here</p>
+          <Button
+            onClick={() => window.location.href = '/login-civ?redirect=/communities'}
+            size="lg"
+          >
+            <i className="fa fa-sign-in-alt mr-2"></i>
+            Sign In
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-6 px-4">
+      {/* Section Header */}
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-4">
+          <i className="fa fa-users" style={{ color: '#fbbf24' }}></i>
+          <h2 className="text-lg font-bold text-white" style={{ textShadow: '0 0 10px rgba(251, 191, 36, 0.2)' }}>Your Communities</h2>
+          {totalCount > 0 && (
+            <span className="text-xs px-2 py-0.5 rounded-full" style={{
+              color: 'rgba(255, 255, 255, 0.6)',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>{totalCount}</span>
+          )}
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+          {filters.map((filter) => (
+            <button
+              key={filter.id}
+              onClick={() => handleFilterChange(filter.id)}
+              className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center gap-2"
+              style={currentFilter === filter.id ? {
+                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                color: '#000',
+                boxShadow: '0 4px 15px rgba(251, 191, 36, 0.3)'
+              } : {
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: 'rgba(255, 255, 255, 0.6)',
+                border: '1px solid rgba(59, 130, 246, 0.2)'
+              }}
+            >
+              <i className={`fa ${filter.icon}`}></i>
+              {filter.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <CommunitySection
+        communities={communities}
+        actionText={getActionText()}
+        onPrevPage={onPrevPage}
+        onNextPage={onNextPage}
+        currentPage={currentPage}
+        totalCount={totalCount}
+        isLoading={isLoading}
+        emptyMessage={getEmptyMessage()}
+        emptyIcon={getEmptyIcon()}
+      />
+    </section>
+  );
+};
+
+// ============================================================================
 // SEARCH COMPONENTS
 // ============================================================================
 
@@ -1563,6 +1700,7 @@ const App = () => {
   const [allCommunitiesPage, setAllCommunitiesPage] = useState(0);
   const [allCommunitiesTotalCount, setAllCommunitiesTotalCount] = useState(0);
   const [currentTag, setCurrentTag] = useState("all");
+  const [userFilter, setUserFilter] = useState("joined");
 
   const [isEliteLoading, setIsEliteLoading] = useState(true);
   const [isUserLoading, setIsUserLoading] = useState(true);
@@ -1592,25 +1730,11 @@ const App = () => {
       .finally(() => setIsEliteLoading(false));
   }, []);
 
-  // Fetch User Communities
+  // Fetch User Communities - initial load with "joined" filter
   useEffect(() => {
     if (!dbUser?._id) { setIsUserLoading(false); return; }
     const timer = setTimeout(() => {
-      axios.get(`${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:approved&limit=6&page=1`)
-        .then(response => {
-          const communities = (response.data.data || []).map(item => ({
-            _id: item._id,
-            name: item.name,
-            membersCount: item.membersCount,
-            isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
-            imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-            subscription: item.subscription
-          }));
-          setUserCommunities(communities);
-          setUserTotalCount(response.data.totalCount || 0);
-        })
-        .catch(() => { setUserCommunities([]); setUserTotalCount(0); })
-        .finally(() => setIsUserLoading(false));
+      fetchUserPage("joined", 1);
     }, 300);
     return () => clearTimeout(timer);
   }, []);
@@ -1672,23 +1796,45 @@ const App = () => {
   }, []);
 
   // Pagination handlers
-  const fetchUserPage = async (page) => {
+  const fetchUserPage = async (filter, page) => {
     setIsUserLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:approved&limit=6&page=${page}`);
-      const communities = (response.data.data || []).map(item => ({
-        _id: item._id,
-        name: item.name,
-        membersCount: item.membersCount,
-        isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
-        imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
-        subscription: item.subscription
-      }));
-      setUserCommunities(communities);
-      setUserTotalCount(response.data.totalCount || 0);
+      let response;
+      if (filter === "owned") {
+        // Fetch communities owned by the user
+        response = await axios.get(`${API_URL}/api/v1/communities/${dbUser._id}?limit=6&page=${page}`);
+        const communities = (response.data.data || []).map(item => ({
+          _id: item._id,
+          name: item.community?.name || item.name,
+          membersCount: item.community?.membersCount || item.membersCount || 0,
+          isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
+          imageLink: (item.community?.imageLink || item.imageLink)?.includes("file:///") ? "/static/images/default-logo.png" : (item.community?.imageLink || item.imageLink || "/static/images/default-logo.png"),
+          subscription: item.community?.subscription?.active || item.subscription,
+          isOwned: true
+        }));
+        setUserCommunities(communities);
+        setUserTotalCount(response.data.totalCount || communities.length);
+      } else {
+        // Fetch joined or pending communities
+        const statusFilter = filter === "pending" ? "pending" : "approved";
+        response = await axios.get(`${API_URL}/api/v2/user/${dbUser._id}/communities?filter=status:${statusFilter}&limit=6&page=${page}`);
+        const communities = (response.data.data || []).map(item => ({
+          _id: item._id,
+          name: item.name,
+          membersCount: item.membersCount,
+          isActive: item._id === dbUser.user.lastAccessedCommunity?.communityID,
+          imageLink: item.imageLink?.includes("file:///") ? "/static/images/default-logo.png" : item.imageLink || "/static/images/default-logo.png",
+          subscription: item.subscription,
+          isPending: filter === "pending"
+        }));
+        setUserCommunities(communities);
+        setUserTotalCount(response.data.totalCount || 0);
+      }
       setUserPage(page);
+      setUserFilter(filter);
     } catch (error) {
       setUserCommunities([]);
+      setUserTotalCount(0);
     } finally {
       setIsUserLoading(false);
     }
@@ -1780,8 +1926,9 @@ const App = () => {
         setToast={setToast}
         onSuccess={() => {
           // Refresh user communities list without full page reload
+          // Switch to "owned" filter to show the newly created community
           if (dbUser?._id) {
-            fetchUserPage(1);
+            fetchUserPage("owned", 1);
           }
         }}
       />
@@ -1814,19 +1961,17 @@ const App = () => {
 
       {/* Your Communities */}
       <div id="your-communities">
-        <CommunitySection
-          title="Your Communities"
-          icon="fa fa-users"
+        <YourCommunities
           communities={userCommunities}
-          actionText="Jump In"
-          onPrevPage={() => userPage > 1 && fetchUserPage(userPage - 1)}
-          onNextPage={() => userPage * 6 < userTotalCount && fetchUserPage(userPage + 1)}
-          currentPage={userPage}
           totalCount={userTotalCount}
+          currentFilter={userFilter}
+          onFilterChange={(filter, page) => fetchUserPage(filter, page)}
+          onPrevPage={() => userPage > 1 && fetchUserPage(userFilter, userPage - 1)}
+          onNextPage={() => userPage * 6 < userTotalCount && fetchUserPage(userFilter, userPage + 1)}
+          currentPage={userPage}
           isLoading={isUserLoading}
           showLoginPrompt={!dbUser?._id}
-          emptyMessage="Sign in to see your communities"
-          emptyIcon="fa fa-sign-in-alt"
+          dbUser={dbUser}
         />
       </div>
 
