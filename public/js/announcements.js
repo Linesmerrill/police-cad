@@ -479,20 +479,22 @@
   function filterAnnouncements(type) {
     currentAnnouncementPage = 1;
     currentFilterType = type;
-    
+
     // Update tab styles
     const tabs = ['all', 'main', 'session', 'training'];
     tabs.forEach(tabType => {
       const tab = document.getElementById(`tab-${tabType}`);
       if (tab) {
         if (tabType === type) {
-          tab.className = 'px-4 py-2 rounded-lg font-semibold transition-colors bg-blue-600 text-white';
+          tab.style.background = '#3b82f6';
+          tab.style.color = 'white';
         } else {
-          tab.className = 'px-4 py-2 rounded-lg font-semibold transition-colors bg-gray-700 text-gray-300 hover:bg-gray-600';
+          tab.style.background = 'rgba(255,255,255,0.05)';
+          tab.style.color = '#94a3b8';
         }
       }
     });
-    
+
     loadAnnouncements();
   }
 
@@ -867,12 +869,16 @@
 
   // Open delete comment modal
   function openDeleteCommentModal(announcementId, commentId, commentContent) {
+    // Truncate long comments for the preview
+    const maxLength = 100;
+    const truncatedContent = commentContent.length > maxLength
+      ? commentContent.substring(0, maxLength) + '...'
+      : commentContent;
 
-    
     // Set the form values
     document.getElementById('delete-comment-announcement-id').value = announcementId;
     document.getElementById('delete-comment-id').value = commentId;
-    document.getElementById('delete-comment-content').textContent = commentContent;
+    document.getElementById('delete-comment-content').textContent = truncatedContent;
     
     // Show the modal
     const modal = document.getElementById('deleteCommentModal');
@@ -1444,6 +1450,7 @@
   window.selectEmoji = selectEmoji;
   window.filterEmojis = filterEmojis;
   window.markAnnouncementAsSeen = markAnnouncementAsSeen;
+  window.filterAnnouncements = filterAnnouncements;
   
 
 
