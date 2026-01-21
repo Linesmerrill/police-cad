@@ -1165,7 +1165,7 @@ const QuickNav = () => {
 // CREATE COMMUNITY MODAL
 // ============================================================================
 
-const CreateCommunityModal = ({ isOpen, onClose, setToast }) => {
+const CreateCommunityModal = ({ isOpen, onClose, setToast, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -1251,7 +1251,7 @@ const CreateCommunityModal = ({ isOpen, onClose, setToast }) => {
       setToast({ message: `"${formData.name}" created!`, type: "success", isVisible: true });
       setFormData({ name: "", description: "", visibility: "public", tags: [], imageLink: "" });
       onClose();
-      setTimeout(() => window.location.reload(), 1000);
+      if (onSuccess) onSuccess();
     } catch (error) {
       setError("Failed to create community");
       setToast({ message: "Failed to create community", type: "error", isVisible: true });
@@ -1778,6 +1778,12 @@ const App = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         setToast={setToast}
+        onSuccess={() => {
+          // Refresh user communities list without full page reload
+          if (dbUser?._id) {
+            fetchUserPage(0);
+          }
+        }}
       />
       <Toast
         message={toast.message}
