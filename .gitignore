@@ -4,4 +4,4 @@ node_modules/*
 
 # Enviroment variables
 .envrc
-.env
+.envnext-env.d.ts
