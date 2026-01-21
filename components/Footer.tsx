@@ -10,6 +10,7 @@ const footerLinks = {
     { name: 'Developers', href: 'https://linesmerrill.github.io/MerrillLines/', external: true },
   ],
   about: [
+    { name: 'FAQ', href: '/faq' },
     { name: 'Contact Us', href: '/about#contact-us' },
     { name: 'Privacy Policy', href: '/privacy-policy' },
     { name: 'Terms & Conditions', href: '/terms-and-conditions' },
