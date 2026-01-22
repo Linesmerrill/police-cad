@@ -6429,15 +6429,12 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
 
 <script>
 async function saveEditDepartment() {
-  console.log('saveEditDepartment called');
   const deptId = currentEditDepartment;
   const communityId = '<%= community._id %>';
   const name = document.getElementById('editDeptName').value.trim();
   const description = document.getElementById('editDeptDescription').value.trim();
   const imageUrl = document.getElementById('editDeptImageUrl').value;
   const saveBtn = document.querySelector('#editDepartmentModal button[type="submit"]');
-
-  console.log('Department data:', { deptId, communityId, name, description, imageUrl });
 
   if (!name) {
     if (typeof showToast === 'function') {
@@ -6453,15 +6450,11 @@ async function saveEditDepartment() {
 
   try {
     // Fetch the current department data to preserve all existing structure
-    console.log('Fetching department data from API...');
-
     const fetchRes = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`);
     if (!fetchRes.ok) throw new Error('Failed to fetch department data');
 
     const response = await fetchRes.json();
-    console.log('API response:', response);
     const currentDept = response.department || response;
-    console.log('currentDept extracted:', currentDept);
 
     // Determine image value: __DELETE__ means explicitly remove, empty means keep existing
     let finalImage;
@@ -6529,8 +6522,6 @@ async function saveEditDepartment() {
         components: updatedComponents
       };
     }
-
-    console.log('Sending PATCH with payload:', JSON.stringify(payload, null, 2));
 
     const updateRes = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`, {
       method: 'PATCH',
