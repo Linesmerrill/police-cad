@@ -6560,9 +6560,7 @@ function saveEditDepartment() {
         }
         
         return {
-          _id: {
-            $oid: component._id
-          },
+          _id: component._id,
           name: component.name,
           enabled: isEnabled
         };
