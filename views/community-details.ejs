@@ -374,6 +374,42 @@
           transform: translateY(-2px);
         }
       }
+
+      /* Private indicator with tooltip */
+      .private-indicator {
+        position: relative;
+      }
+      .private-indicator:hover {
+        background: rgba(239, 68, 68, 0.2) !important;
+        border-color: rgba(239, 68, 68, 0.5) !important;
+      }
+      .private-indicator::after {
+        content: attr(title);
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: #1e2028;
+        color: #fca5a5;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        white-space: nowrap;
+        max-width: 280px;
+        white-space: normal;
+        border-radius: 0.5rem;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        z-index: 50;
+        pointer-events: none;
+      }
+      .private-indicator:hover::after {
+        opacity: 1;
+        visibility: visible;
+      }
     </style>
   </head>
   <body>
@@ -898,7 +934,13 @@
 
         <!-- Hero Section - Community Overview -->
         <section id="community-overview" class="mb-6 animate-fade-in-up" style="animation-delay: 0.1s;">
-          <div class="dashboard-card">
+          <div class="dashboard-card" style="position: relative;">
+            <% if (community.community.visibility === 'private') { %>
+              <div class="private-indicator" title="This community is private and will not appear in searches across the CAD" style="position: absolute; top: 1rem; right: 1rem; display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.75rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; cursor: help; transition: all 0.2s ease;">
+                <i class="fa fa-lock text-sm" style="color: #ef4444;"></i>
+                <span class="text-xs font-medium hidden sm:inline" style="color: #fca5a5;">Private</span>
+              </div>
+            <% } %>
             <div class="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
               <div class="relative flex-shrink-0">
                 <img
@@ -920,13 +962,20 @@
                   <%= community.community.name %>
                 </h1>
 
-                <% if (community.community.tags && community.community.tags.length) { %>
-                  <div class="flex flex-wrap justify-center sm:justify-start gap-2 mb-3">
+                <div id="community-overview-tags" class="flex flex-wrap justify-center sm:justify-start gap-2 mb-3" <% if (!community.community.tags || !community.community.tags.length) { %>style="display: none;"<% } %>>
+                  <% if (community.community.tags && community.community.tags.length) { %>
+                    <%
+                      // Format platform tags for display
+                      function formatTag(tag) {
+                        var displayMap = { 'xbox': 'Xbox', 'playstation': 'PlayStation', 'pc': 'PC' };
+                        return displayMap[tag.toLowerCase()] || tag;
+                      }
+                    %>
                     <% community.community.tags.forEach(function(tag) { %>
-                      <span class="badge badge-tag"><%= tag %></span>
+                      <span class="badge badge-tag"><%= formatTag(tag) %></span>
                     <% }); %>
-                  </div>
-                <% } %>
+                  <% } %>
+                </div>
 
                 <div class="flex flex-wrap justify-center sm:justify-start gap-2 mb-3">
                   <% if (isMemberApproved) { %>
@@ -1033,9 +1082,9 @@
                 </button>
               <% } %>
 
-              <button onclick="copyCommunityUrl()" class="action-btn" style="color: #60a5fa;">
-                <i class="fa fa-share-nodes"></i>
-                <span>Share</span>
+              <button id="shareBtn" onclick="copyCommunityUrl()" class="action-btn" style="color: #60a5fa;">
+                <i id="shareBtnIcon" class="fa fa-share-nodes"></i>
+                <span id="shareBtnText">Share</span>
               </button>
 
               <button onclick="scrollToSection('announcements-section')" class="action-btn" style="color: #f472b6;">
@@ -1475,8 +1524,28 @@
 
       function copyCommunityUrl() {
         const url = window.location.href;
+        const icon = document.getElementById('shareBtnIcon');
+        const text = document.getElementById('shareBtnText');
+
         navigator.clipboard.writeText(url).then(() => {
+          // Change icon to check mark
+          if (icon) {
+            icon.className = 'fa fa-check';
+          }
+          if (text) {
+            text.textContent = 'Copied!';
+          }
           showToast('Community link copied!', 2000, 'success');
+
+          // Revert back to share icon after 2 seconds
+          setTimeout(() => {
+            if (icon) {
+              icon.className = 'fa fa-share-nodes';
+            }
+            if (text) {
+              text.textContent = 'Share';
+            }
+          }, 2000);
         }).catch(() => {
           showToast('Failed to copy link', 2000, 'error');
         });

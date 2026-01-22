@@ -317,57 +317,6 @@
             </div>
           <% } %>
 
-          <!-- Invite Codes Management -->
-          <%
-            // Permission logic for managing invite codes (same as manage members)
-            let canManageInviteCodes = false;
-            if (userId && community.community && Array.isArray(community.community.roles)) {
-              community.community.roles.forEach(function(role) {
-                if (Array.isArray(role.members) && role.members.includes(userId)) {
-                  if (Array.isArray(role.permissions)) {
-                    role.permissions.forEach(function(perm) {
-                      if (
-                        (perm.name === "administrator" && perm.enabled === true) ||
-                        (perm.name === "manage members" && perm.enabled === true)
-                      ) {
-                        canManageInviteCodes = true;
-                      }
-                    });
-                  }
-                }
-              });
-            }
-            // Also allow community owner
-            if (community.community.ownerID === userId) {
-              canManageInviteCodes = true;
-            }
-          %>
-          
-          <% if (canManageInviteCodes) { %>
-            <!-- User has permission to manage invite codes -->
-            <div id="inviteCodesCard" onclick="openInviteCodesModal()" style="background:#2d3748; border:1px solid #4a5568; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; hover:border-color:#3b82f6;">
-              <div style="text-align:center;">
-                <div style="margin-bottom:0.5rem;">
-                  <i class="fa fa-user-plus" style="font-size:2rem; color:#10b981;"></i>
-                </div>
-                <h5 style="color:#fff; margin:0; font-size:1rem; font-weight:600;">Invite Codes</h5>
-                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Create & manage invite codes</p>
-              </div>
-            </div>
-          <% } else { %>
-            <!-- User doesn't have permission to manage invite codes -->
-            <div id="inviteCodesCard" onclick="showNoInviteCodesPermissionModal()" style="background:#1a202c; border:1px solid #2d3748; border-radius:12px; padding:1.5rem; cursor:pointer; transition:all 0.2s; opacity:0.6;">
-              <div style="text-align:center;">
-                <div style="margin-bottom:0.5rem;">
-                  <i class="fa fa-user-plus" style="font-size:2rem; color:#6b7280;"></i>
-                </div>
-                <h5 style="color:#6b7280; margin:0; font-size:1rem; font-weight:600;">Invite Codes</h5>
-                <p style="color:#a0aec0; margin:0.5rem 0 0 0; font-size:0.875rem;">Create & manage invite codes</p>
-                <p style="color:#6b7280; margin:0.5rem 0 0 0; font-size:0.75rem; font-style:italic;">Permission Required</p>
-              </div>
-            </div>
-          <% } %>
-
           <!-- Bans Management -->
           <%
             // Permission logic for managing bans
@@ -977,6 +926,114 @@ function openPromoteModal() {
   alert('Promote modal will be implemented next');
 }
 
+// Privacy and platform selection for community settings
+window.selectedPrivacy = '<%= (community && community.community && community.community.visibility) || "public" %>';
+window.selectedPlatforms = <%- JSON.stringify((community && community.community && community.community.tags) || []) %>;
+
+function setPrivacy(privacy) {
+  window.selectedPrivacy = privacy;
+
+  const publicBtn = document.getElementById('privacyPublic');
+  const privateBtn = document.getElementById('privacyPrivate');
+
+  if (privacy === 'public') {
+    publicBtn.style.background = '#3b82f6';
+    privateBtn.style.background = 'transparent';
+  } else {
+    publicBtn.style.background = 'transparent';
+    privateBtn.style.background = '#3b82f6';
+  }
+}
+
+function togglePlatform(platform) {
+  const platformLower = platform.toLowerCase();
+  const index = window.selectedPlatforms.findIndex(p => p.toLowerCase() === platformLower);
+
+  // Map to properly capitalized tag names (matching the app's standard)
+  const capitalizedMap = {
+    'xbox': 'Xbox',
+    'playstation': 'PlayStation',
+    'pc': 'PC'
+  };
+
+  if (index > -1) {
+    window.selectedPlatforms.splice(index, 1);
+  } else {
+    // Store as properly capitalized (matching app standard: Xbox, PlayStation, PC)
+    window.selectedPlatforms.push(capitalizedMap[platformLower] || platform);
+  }
+
+  // Update button styles - map to correct button IDs
+  const platformIdMap = {
+    'xbox': 'platformXbox',
+    'playstation': 'platformPlayStation',
+    'pc': 'platformPC'
+  };
+  const btnId = platformIdMap[platformLower];
+  const btn = document.getElementById(btnId);
+  if (btn) {
+    const isSelected = window.selectedPlatforms.some(p => p.toLowerCase() === platformLower);
+    btn.style.background = isSelected ? '#3b82f6' : 'transparent';
+  }
+}
+
+// Format platform tag for display (handles any case -> nice display)
+function formatPlatformTag(tag) {
+  const displayMap = {
+    'xbox': 'Xbox',
+    'playstation': 'PlayStation',
+    'pc': 'PC'
+  };
+  return displayMap[tag.toLowerCase()] || tag;
+}
+
+// Initialize platform buttons on modal open
+function initPlatformButtons() {
+  const platformIdMap = {
+    'xbox': 'platformXbox',
+    'playstation': 'platformPlayStation',
+    'pc': 'platformPC'
+  };
+
+  Object.keys(platformIdMap).forEach(platform => {
+    const btn = document.getElementById(platformIdMap[platform]);
+    if (btn) {
+      const isSelected = window.selectedPlatforms.some(p => p.toLowerCase() === platform);
+      btn.style.background = isSelected ? '#3b82f6' : 'transparent';
+    }
+  });
+}
+
+// Settings search functionality
+function filterSettings(searchTerm) {
+  const cards = document.querySelectorAll('#settingsModal [id$="Card"]');
+  const clearBtn = document.getElementById('settingsSearchClear');
+
+  if (clearBtn) {
+    clearBtn.style.display = searchTerm ? 'block' : 'none';
+  }
+
+  const term = searchTerm.toLowerCase().trim();
+
+  cards.forEach(card => {
+    if (!term) {
+      card.style.display = '';
+      return;
+    }
+
+    const text = card.textContent.toLowerCase();
+    card.style.display = text.includes(term) ? '' : 'none';
+  });
+}
+
+function clearSettingsSearch() {
+  const input = document.getElementById('settingsSearchInput');
+  if (input) {
+    input.value = '';
+    filterSettings('');
+  }
+}
+
 function saveCommunityProfile() {
   const communityId = '<%= community._id %>';
   const name = document.getElementById('communityName').value;
@@ -995,7 +1052,7 @@ function saveCommunityProfile() {
 
   // Get the API URL with fallback
   const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
-  
+
   fetch(`${apiUrl}/api/v1/community/${communityId}`, {
     method: 'PATCH',
     headers: {
@@ -1012,18 +1069,98 @@ function saveCommunityProfile() {
     if (res.ok) {
       // Close the modal
       document.getElementById('settingsModal').style.display = 'none';
-      
+
       // Show success toast
       showToast('Community profile updated successfully!', 3000, 'success');
-      
-      // Update the page title and other elements
-      document.title = `${name} - Community Details`;
-      
-      // Update the community name in the page header if it exists
+
+      // Update the page title
+      document.title = `${name.trim()} - Community Dashboard`;
+
+      // Update the community name in the hero section
+      const communityOverviewName = document.getElementById('community-overview-name');
+      if (communityOverviewName) {
+        communityOverviewName.textContent = name.trim();
+      }
+
+      // Update the community description in the hero section
+      const communityOverviewDescription = document.getElementById('community-overview-description');
+      if (communityOverviewDescription) {
+        if (description.trim()) {
+          communityOverviewDescription.textContent = description.trim();
+          communityOverviewDescription.style.display = '';
+        } else {
+          communityOverviewDescription.style.display = 'none';
+        }
+      } else if (description.trim()) {
+        // If description element doesn't exist but we have a description, create it
+        const heroTextContainer = document.querySelector('#community-overview .flex-1');
+        if (heroTextContainer) {
+          const descEl = document.createElement('p');
+          descEl.id = 'community-overview-description';
+          descEl.className = 'text-slate-400 text-sm line-clamp-2';
+          descEl.textContent = description.trim();
+          heroTextContainer.appendChild(descEl);
+        }
+      }
+
+      // Update any other elements with data-community-name attribute
       const allCommunityNameElements = document.querySelectorAll('[data-community-name], .community-name-display');
       allCommunityNameElements.forEach(element => {
-        element.textContent = name;
+        element.textContent = name.trim();
       });
+
+      // Update platform tags in the hero section
+      const tagsContainer = document.getElementById('community-overview-tags');
+      if (tagsContainer) {
+        if (window.selectedPlatforms && window.selectedPlatforms.length > 0) {
+          tagsContainer.innerHTML = '';
+          window.selectedPlatforms.forEach(tag => {
+            const tagEl = document.createElement('span');
+            tagEl.className = 'badge badge-tag';
+            tagEl.textContent = formatPlatformTag(tag);
+            tagsContainer.appendChild(tagEl);
+          });
+          tagsContainer.style.display = '';
+        } else {
+          tagsContainer.style.display = 'none';
+        }
+      } else if (window.selectedPlatforms && window.selectedPlatforms.length > 0) {
+        // Create tags container if it doesn't exist
+        const nameEl = document.getElementById('community-overview-name');
+        if (nameEl && nameEl.parentElement) {
+          const tagsDiv = document.createElement('div');
+          tagsDiv.id = 'community-overview-tags';
+          tagsDiv.className = 'flex flex-wrap justify-center sm:justify-start gap-2 mb-3';
+          window.selectedPlatforms.forEach(tag => {
+            const tagEl = document.createElement('span');
+            tagEl.className = 'badge badge-tag';
+            tagEl.textContent = formatPlatformTag(tag);
+            tagsDiv.appendChild(tagEl);
+          });
+          nameEl.insertAdjacentElement('afterend', tagsDiv);
+        }
+      }
+
+      // Update private indicator based on visibility
+      const existingIndicator = document.querySelector('.private-indicator');
+      const dashboardCard = document.querySelector('#community-overview .dashboard-card');
+
+      if (window.selectedPrivacy === 'private') {
+        // Add private indicator if it doesn't exist
+        if (!existingIndicator && dashboardCard) {
+          const indicator = document.createElement('div');
+          indicator.className = 'private-indicator';
+          indicator.title = 'This community is private and will not appear in searches across the CAD';
+          indicator.style.cssText = 'position: absolute; top: 1rem; right: 1rem; display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.75rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; cursor: help; transition: all 0.2s ease;';
+          indicator.innerHTML = '<i class="fa fa-lock text-sm" style="color: #ef4444;"></i><span class="text-xs font-medium hidden sm:inline" style="color: #fca5a5;">Private</span>';
+          dashboardCard.insertBefore(indicator, dashboardCard.firstChild);
+        }
+      } else {
+        // Remove private indicator if it exists
+        if (existingIndicator) {
+          existingIndicator.remove();
+        }
+      }
     } else {
       throw new Error('Failed to update community profile');
     }
@@ -1036,6 +1173,94 @@ function saveCommunityProfile() {
     saveBtn.textContent = originalText;
     saveBtn.disabled = false;
   });
+}
+
+// Handle community image upload with live preview
+async function handleCommunityImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    showToast('Please select an image file.', 3000, 'error');
+    return;
+  }
+
+  // Validate file size (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Image size must be less than 5MB.', 3000, 'error');
+    return;
+  }
+
+  // Show loading state on the image in the modal
+  const modalImage = document.getElementById('communityProfileImage');
+  if (modalImage) {
+    modalImage.style.opacity = '0.5';
+  }
+
+  try {
+    // Upload to Cloudinary
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', window.CLOUDINARY_UPLOAD_PRESET);
+
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${window.CLOUDINARY_CLOUD_NAME}/image/upload`;
+
+    const uploadResponse = await fetch(cloudinaryUrl, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error('Failed to upload image');
+    }
+
+    const uploadData = await uploadResponse.json();
+    const imageUrl = uploadData.secure_url;
+
+    // Update community with new image
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+
+    const updateResponse = await fetch(`${apiUrl}/api/v1/community/${communityId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        imageLink: imageUrl
+      })
+    });
+
+    if (!updateResponse.ok) {
+      throw new Error('Failed to update community image');
+    }
+
+    // Update the modal image
+    if (modalImage) {
+      modalImage.src = imageUrl;
+      modalImage.style.opacity = '1';
+    }
+
+    // Update the hero section image
+    const heroImage = document.getElementById('community-overview-image');
+    if (heroImage) {
+      heroImage.src = imageUrl;
+    }
+
+    showToast('Community image updated successfully!', 3000, 'success');
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    showToast('Failed to update image. Please try again.', 3000, 'error');
+
+    // Reset modal image opacity
+    if (modalImage) {
+      modalImage.style.opacity = '1';
+    }
+  }
+
+  // Clear the file input
+  event.target.value = '';
 }
 
 // Navigation Functions
@@ -3777,9 +4002,33 @@ function closePrivateDepartmentModal() {
 
 function copyCommunityUrl() {
   const url = window.location.href;
+  const icon = document.getElementById('shareBtnIcon');
+  const text = document.getElementById('shareBtnText');
+
+  function showCopiedFeedback() {
+    // Change icon to check mark
+    if (icon) {
+      icon.className = 'fa fa-check';
+    }
+    if (text) {
+      text.textContent = 'Copied!';
+    }
+    showToast('Link copied!', 2000);
+
+    // Revert back to share icon after 2 seconds
+    setTimeout(function() {
+      if (icon) {
+        icon.className = 'fa fa-share-nodes';
+      }
+      if (text) {
+        text.textContent = 'Share';
+      }
+    }, 2000);
+  }
+
   if (navigator.clipboard) {
     navigator.clipboard.writeText(url).then(function() {
-      showToast('Link copied!', 2000);
+      showCopiedFeedback();
     }, function() {
       showToast('Failed to copy link', 2000);
     });
@@ -3791,7 +4040,7 @@ function copyCommunityUrl() {
     tempInput.select();
     try {
       document.execCommand('copy');
-      showToast('Link copied!', 2000);
+      showCopiedFeedback();
     } catch (err) {
       showToast('Failed to copy link', 2000);
     }
@@ -3869,6 +4118,253 @@ function openNoEventPermissionModal() {
   document.getElementById('noEventPermissionModal').style.display = 'flex';
 }
 
+function openOwnerCannotLeaveModal() {
+  document.getElementById('ownerCannotLeaveModal').style.display = 'flex';
+}
+
+function openSettingsModal() {
+  document.getElementById('settingsModal').style.display = 'flex';
+  initPlatformButtons();
+}
+
+function openInviteCodesModal() {
+  document.getElementById('inviteCodesModal').style.display = 'flex';
+  loadInviteCodes();
+}
+
+function closeInviteCodesModal() {
+  document.getElementById('inviteCodesModal').style.display = 'none';
+}
+
+// Invite codes management functions
+let inviteCodesData = [];
+
+async function loadInviteCodes() {
+  const listContainer = document.getElementById('inviteCodesList');
+  const loadingDiv = document.getElementById('inviteCodesLoading');
+  const emptyDiv = document.getElementById('inviteCodesEmpty');
+
+  if (loadingDiv) loadingDiv.style.display = 'block';
+  if (listContainer) listContainer.innerHTML = '';
+  if (emptyDiv) emptyDiv.style.display = 'none';
+
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+
+    const response = await fetch(`${apiUrl}/api/v2/community/${communityId}/invite-codes`);
+    if (!response.ok) throw new Error('Failed to load invite codes');
+
+    const data = await response.json();
+    inviteCodesData = data.inviteCodes || [];
+
+    if (loadingDiv) loadingDiv.style.display = 'none';
+
+    if (inviteCodesData.length === 0) {
+      if (emptyDiv) emptyDiv.style.display = 'block';
+      if (listContainer) listContainer.style.display = 'none';
+      return;
+    }
+
+    renderInviteCodes();
+  } catch (error) {
+    console.error('Error loading invite codes:', error);
+    if (loadingDiv) loadingDiv.style.display = 'none';
+    if (listContainer) {
+      listContainer.innerHTML = '<div style="text-align:center; padding:2rem; color:#ef4444;"><i class="fa fa-exclamation-triangle" style="font-size:2rem; margin-bottom:1rem;"></i><p>Failed to load invite codes</p></div>';
+    }
+  }
+}
+
+function renderInviteCodes() {
+  const listContainer = document.getElementById('inviteCodesList');
+  if (!listContainer) return;
+
+  listContainer.innerHTML = '';
+  listContainer.style.display = 'block';
+
+  inviteCodesData.forEach(code => {
+    const isExpired = code.expiresAt && new Date(code.expiresAt) < new Date();
+    const usesLeft = code.maxUses > 0 ? code.maxUses - (code.uses || 0) : 'Unlimited';
+
+    const codeEl = document.createElement('div');
+    codeEl.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:1rem; border-bottom:1px solid #4a5568;';
+    codeEl.innerHTML = `
+      <div style="flex:1;">
+        <code style="background:#1e2028; color:${isExpired ? '#ef4444' : '#68d391'}; padding:0.5rem 0.75rem; border-radius:6px; font-family:monospace; font-size:1rem;">${code.code}</code>
+        <div style="margin-top:0.5rem; font-size:0.875rem; color:#a0aec0;">
+          ${isExpired ? '<span style="color:#ef4444;">Expired</span>' : `Uses: ${code.uses || 0}${code.maxUses > 0 ? '/' + code.maxUses : ''}`}
+          ${code.expiresAt && !isExpired ? ' • Expires: ' + new Date(code.expiresAt).toLocaleDateString() : ''}
+        </div>
+      </div>
+      <div style="display:flex; gap:0.5rem;">
+        <button onclick="copyInviteCode('${code.code}')" style="background:#4a5568; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.875rem;">
+          <i class="fa fa-copy"></i>
+        </button>
+        <button onclick="confirmDeleteInviteCode('${code._id || code.code}')" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.875rem;">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div>
+    `;
+    listContainer.appendChild(codeEl);
+  });
+}
+
+function generateInviteCode() {
+  const input = document.getElementById('inviteCodeInput');
+  if (input) {
+    // Generate a random 6-character alphanumeric code
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    input.value = code;
+  }
+}
+
+async function createInviteCode() {
+  const codeInput = document.getElementById('inviteCodeInput');
+  const expireSelect = document.getElementById('expireAfterSelect');
+  const maxUsesSelect = document.getElementById('maxUsesSelect');
+
+  let code = codeInput ? codeInput.value.trim() : '';
+
+  // Auto-generate if empty
+  if (!code) {
+    generateInviteCode();
+    code = codeInput.value;
+  }
+
+  const expireAfter = expireSelect ? expireSelect.value : '7d';
+  const maxUses = maxUsesSelect ? parseInt(maxUsesSelect.value, 10) : 0;
+
+  // Calculate expiration date
+  let expiresAt = null;
+  if (expireAfter !== 'never') {
+    const now = new Date();
+    const match = expireAfter.match(/(\d+)([mhd])/);
+    if (match) {
+      const value = parseInt(match[1], 10);
+      const unit = match[2];
+      if (unit === 'm') now.setMinutes(now.getMinutes() + value);
+      else if (unit === 'h') now.setHours(now.getHours() + value);
+      else if (unit === 'd') now.setDate(now.getDate() + value);
+      expiresAt = now.toISOString();
+    }
+  }
+
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/add-invite-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, expiresAt, maxUses })
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || 'Failed to create invite code');
+    }
+
+    // Show success modal
+    const successModal = document.getElementById('inviteCodeSuccessModal');
+    const successCode = document.getElementById('successCode');
+    const successLink = document.getElementById('successLink');
+
+    if (successCode) successCode.textContent = code;
+    if (successLink) successLink.textContent = `${window.location.origin}/join/${code}`;
+    if (successModal) successModal.style.display = 'flex';
+
+    // Clear input and reload list
+    if (codeInput) codeInput.value = '';
+    loadInviteCodes();
+
+    showToast('Invite code created successfully!', 3000, 'success');
+  } catch (error) {
+    console.error('Error creating invite code:', error);
+    showToast(error.message || 'Failed to create invite code', 3000, 'error');
+  }
+}
+
+function copyInviteCode(code) {
+  navigator.clipboard.writeText(code).then(() => {
+    showToast('Invite code copied!', 2000, 'success');
+  }).catch(() => {
+    showToast('Failed to copy code', 2000, 'error');
+  });
+}
+
+function copySuccessCode() {
+  const code = document.getElementById('successCode');
+  if (code) {
+    navigator.clipboard.writeText(code.textContent).then(() => {
+      showToast('Code copied!', 2000, 'success');
+    });
+  }
+}
+
+function copySuccessLink() {
+  const link = document.getElementById('successLink');
+  if (link) {
+    navigator.clipboard.writeText(link.textContent).then(() => {
+      showToast('Link copied!', 2000, 'success');
+    });
+  }
+}
+
+function closeInviteCodeSuccessModal() {
+  const modal = document.getElementById('inviteCodeSuccessModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function createAnotherCode() {
+  closeInviteCodeSuccessModal();
+  generateInviteCode();
+}
+
+let deleteInviteCodeId = null;
+
+function confirmDeleteInviteCode(codeId) {
+  deleteInviteCodeId = codeId;
+  const modal = document.getElementById('deleteConfirmModal');
+  const codeName = document.getElementById('deleteCodeName');
+
+  // Find the code name
+  const code = inviteCodesData.find(c => (c._id || c.code) === codeId);
+  if (codeName && code) codeName.textContent = code.code;
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeDeleteConfirmModal() {
+  const modal = document.getElementById('deleteConfirmModal');
+  if (modal) modal.style.display = 'none';
+  deleteInviteCodeId = null;
+}
+
+async function deleteInviteCode() {
+  if (!deleteInviteCodeId) return;
+
+  try {
+    const communityId = '<%= community._id %>';
+    const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+
+    const response = await fetch(`${apiUrl}/api/v1/invite-code/${deleteInviteCodeId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) throw new Error('Failed to delete invite code');
+
+    closeDeleteConfirmModal();
+    loadInviteCodes();
+    showToast('Invite code deleted', 2000, 'success');
+  } catch (error) {
+    console.error('Error deleting invite code:', error);
+    showToast('Failed to delete invite code', 3000, 'error');
+  }
+}
 
 </script> 
 
