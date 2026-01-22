@@ -6240,14 +6240,17 @@ function openEditDepartmentModal(departmentId) {
       // Update image preview
       const preview = document.getElementById('editDeptImagePreview');
       const placeholder = document.getElementById('editDeptImagePlaceholder');
+      const deleteBtn = document.getElementById('editDeptImageDeleteBtn');
       if (dept.image) {
         preview.src = dept.image;
         preview.style.display = 'block';
         placeholder.style.display = 'none';
+        if (deleteBtn) deleteBtn.style.display = 'flex';
       } else {
         preview.src = '';
         preview.style.display = 'none';
         placeholder.style.display = 'flex';
+        if (deleteBtn) deleteBtn.style.display = 'none';
       }
 
       // Populate components
@@ -6277,16 +6280,19 @@ function openEditDepartmentModal(departmentId) {
       // Update image preview
       const preview = document.getElementById('editDeptImagePreview');
       const placeholder = document.getElementById('editDeptImagePlaceholder');
+      const deleteBtn = document.getElementById('editDeptImageDeleteBtn');
       if (dept.image) {
         preview.src = dept.image;
         preview.style.display = 'block';
         placeholder.style.display = 'none';
+        if (deleteBtn) deleteBtn.style.display = 'flex';
       } else {
         preview.src = '';
         preview.style.display = 'none';
         placeholder.style.display = 'flex';
+        if (deleteBtn) deleteBtn.style.display = 'none';
       }
-      
+
       // Populate components
       if (dept.template && dept.template.components) {
         dept.template.components.forEach(component => {
@@ -6296,7 +6302,7 @@ function openEditDepartmentModal(departmentId) {
           }
         });
       }
-      
+
       updateEditDeptVisibilityLabel();
       document.getElementById('editDepartmentModal').style.display = 'flex';
     });
@@ -6312,6 +6318,7 @@ async function handleEditDeptImageChange(event) {
 
   const preview = document.getElementById('editDeptImagePreview');
   const placeholder = document.getElementById('editDeptImagePlaceholder');
+  const deleteBtn = document.getElementById('editDeptImageDeleteBtn');
 
   try {
     // Validate file type
@@ -6332,21 +6339,22 @@ async function handleEditDeptImageChange(event) {
       preview.src = e.target.result;
       preview.style.display = 'block';
       placeholder.style.display = 'none';
+      if (deleteBtn) deleteBtn.style.display = 'flex';
     };
     reader.readAsDataURL(file);
-    
+
     // Show uploading status
     showToast('Uploading photo...', 3000, 'info');
-    
+
     // Upload to Cloudinary
     const imageUrl = await uploadToCloudinary(file, 'departments', `dept_${Date.now()}`);
-    
+
     // Store the URL
     document.getElementById('editDeptImageUrl').value = imageUrl;
-    
+
     // Show success status
     showToast('Photo uploaded successfully!', 3000, 'success');
-    
+
   } catch (error) {
     console.error('Photo upload error:', error);
     showToast('Upload failed: ' + error.message, 3000, 'error');
@@ -6355,7 +6363,31 @@ async function handleEditDeptImageChange(event) {
     preview.src = '';
     preview.style.display = 'none';
     placeholder.style.display = 'flex';
+    if (deleteBtn) deleteBtn.style.display = 'none';
   }
+}
+
+// Delete department photo
+function deleteEditDeptImage() {
+  const preview = document.getElementById('editDeptImagePreview');
+  const placeholder = document.getElementById('editDeptImagePlaceholder');
+  const deleteBtn = document.getElementById('editDeptImageDeleteBtn');
+  const imageUrlInput = document.getElementById('editDeptImageUrl');
+  const fileInput = document.getElementById('editDeptImage');
+
+  // Clear the image
+  preview.src = '';
+  preview.style.display = 'none';
+  placeholder.style.display = 'flex';
+  if (deleteBtn) deleteBtn.style.display = 'none';
+
+  // Clear the stored URL (set to empty string to indicate deletion)
+  imageUrlInput.value = '';
+
+  // Clear the file input
+  if (fileInput) fileInput.value = '';
+
+  showToast('Photo removed', 2000, 'info');
 }
 </script>
 
@@ -6377,13 +6409,18 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
       <input type="hidden" id="editDeptImageUrl" value="">
       <div class="mb-3">
         <label class="block text-gray-300 mb-1 text-sm font-medium">Department Photo</label>
-        <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-lg bg-gray-800 cursor-pointer hover:border-blue-500 transition overflow-hidden" style="aspect-ratio: 16/9;" onclick="document.getElementById('editDeptImage').click()">
-          <img id="editDeptImagePreview" src="" alt="Preview" style="display:none; width:100%; height:100%; object-fit:cover;" />
-          <div id="editDeptImagePlaceholder" class="flex flex-col items-center justify-center w-full h-full">
-            <i class="fa fa-camera text-2xl text-gray-500 mb-1"></i>
-            <span class="text-gray-500 text-sm">Click to upload photo</span>
+        <div class="relative">
+          <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-lg bg-gray-800 cursor-pointer hover:border-blue-500 transition overflow-hidden" style="aspect-ratio: 16/9;" onclick="document.getElementById('editDeptImage').click()">
+            <img id="editDeptImagePreview" src="" alt="Preview" style="display:none; width:100%; height:100%; object-fit:cover;" />
+            <div id="editDeptImagePlaceholder" class="flex flex-col items-center justify-center w-full h-full">
+              <i class="fa fa-camera text-2xl text-gray-500 mb-1"></i>
+              <span class="text-gray-500 text-sm">Click to upload photo</span>
+            </div>
+            <input type="file" id="editDeptImage" accept="image/*" style="display:none;" onchange="handleEditDeptImageChange(event)" />
           </div>
-          <input type="file" id="editDeptImage" accept="image/*" style="display:none;" onchange="handleEditDeptImageChange(event)" />
+          <button type="button" id="editDeptImageDeleteBtn" onclick="event.stopPropagation(); deleteEditDeptImage();" style="display:none; position:absolute; top:0.5rem; right:0.5rem; width:2rem; height:2rem; background:rgba(239,68,68,0.9); border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s ease;" onmouseenter="this.style.background='rgba(220,38,38,1)'; this.style.transform='scale(1.1)';" onmouseleave="this.style.background='rgba(239,68,68,0.9)'; this.style.transform='scale(1)';">
+            <i class="fa fa-trash text-white text-sm"></i>
+          </button>
         </div>
       </div>
       <div class="mb-3">
