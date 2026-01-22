@@ -6482,7 +6482,7 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
 </div> 
 
 <script>
-function saveEditDepartment() {
+async function saveEditDepartment() {
   console.log('saveEditDepartment called');
   const deptId = currentEditDepartment;
   const communityId = '<%= community._id %>';
@@ -6490,55 +6490,39 @@ function saveEditDepartment() {
   const description = document.getElementById('editDeptDescription').value.trim();
   const imageUrl = document.getElementById('editDeptImageUrl').value;
   const saveBtn = document.querySelector('#editDepartmentModal button[type="submit"]');
-  
+
   console.log('Department data:', { deptId, communityId, name, description, imageUrl });
-  
+
   if (!name) {
     if (typeof showToast === 'function') {
       showToast('Department name is required', 2500);
     } else {
       alert('Department name is required');
     }
-    saveBtn.disabled = false;
-    saveBtn.textContent = 'Save';
     return;
   }
-  
+
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving...';
 
-  // Fetch the current department data to preserve all existing structure
-  console.log('Fetching department data from API...');
-  
-  fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`)
-    .then(res => {
-      if (!res.ok) throw new Error('Failed to fetch department data');
-      return res.json();
-    })
-    .then(response => {
-      console.log('API response:', response);
-      const currentDept = response.department || response; // Handle both wrapped and unwrapped responses
-      console.log('currentDept extracted:', currentDept);
-      updateDepartment(currentDept);
-    })
-    .catch(err => {
-      console.error('Error fetching department:', err);
-      if (typeof showToast === 'function') {
-        showToast('Failed to fetch department data', 3000, 'error');
-      } else {
-        alert('Failed to fetch department data');
-      }
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Save';
-    });
-  
-  function updateDepartment(currentDept) {
+  try {
+    // Fetch the current department data to preserve all existing structure
+    console.log('Fetching department data from API...');
+
+    const fetchRes = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`);
+    if (!fetchRes.ok) throw new Error('Failed to fetch department data');
+
+    const response = await fetchRes.json();
+    console.log('API response:', response);
+    const currentDept = response.department || response;
+    console.log('currentDept extracted:', currentDept);
+
     // Create the department object with only the fields we want to update
     const payload = {
-      name, // Update name
-      description, // Update description
-      approvalRequired: document.getElementById('editDeptApprovalRequired').checked, // Update approval required
-      image: imageUrl || currentDept.image // Update image (keep existing if no new one)
+      name,
+      description,
+      approvalRequired: document.getElementById('editDeptApprovalRequired').checked,
+      image: imageUrl || currentDept.image
     };
 
     // Update the template components if template exists - include in the same PATCH request
@@ -6548,20 +6532,24 @@ function saveEditDepartment() {
         let isEnabled = component.enabled; // Default to current value
 
         // Override with form values for the components we're managing
-        if (componentName === 'createCivilians') {
-          isEnabled = document.getElementById('editDeptComponentCreateCivilians').checked;
-        } else if (componentName === 'createVehicles') {
-          isEnabled = document.getElementById('editDeptComponentCreateVehicles').checked;
-        } else if (componentName === 'createFirearms') {
-          isEnabled = document.getElementById('editDeptComponentCreateFirearms').checked;
-        } else if (componentName === 'call911') {
-          isEnabled = document.getElementById('editDeptComponentCall911').checked;
+        const checkboxMap = {
+          'createCivilians': 'editDeptComponentCreateCivilians',
+          'createVehicles': 'editDeptComponentCreateVehicles',
+          'createFirearms': 'editDeptComponentCreateFirearms',
+          'call911': 'editDeptComponentCall911'
+        };
+
+        if (checkboxMap[componentName]) {
+          const checkbox = document.getElementById(checkboxMap[componentName]);
+          if (checkbox) {
+            isEnabled = checkbox.checked;
+          }
         }
 
         // Extract component ID - handle both string and {$oid: ...} formats
         let componentId = component._id;
-        if (typeof componentId === 'object' && componentId.$oid) {
-          componentId = componentId.$oid;
+        if (typeof componentId === 'object' && componentId !== null) {
+          componentId = componentId.$oid || String(componentId);
         }
 
         return {
@@ -6573,8 +6561,8 @@ function saveEditDepartment() {
 
       // Extract template ID - handle both string and {$oid: ...} formats
       let templateId = currentDept.template._id;
-      if (typeof templateId === 'object' && templateId.$oid) {
-        templateId = templateId.$oid;
+      if (typeof templateId === 'object' && templateId !== null) {
+        templateId = templateId.$oid || String(templateId);
       }
 
       // Include updated template in the payload with clean structure
@@ -6586,38 +6574,43 @@ function saveEditDepartment() {
       };
     }
 
-    doUpdate();
+    console.log('Sending PATCH with payload:', JSON.stringify(payload, null, 2));
 
-    function doUpdate() {
-      console.log('doUpdate called with payload:', payload);
-      console.log('API URL:', `${API_URL}/api/v1/community/${communityId}/departments/${deptId}`);
-      
-      fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-        .then(res => {
-          if (!res.ok) throw new Error('Failed to update department');
-          return res.json();
-        })
-        .then(() => {
-          closeEditDepartmentModal();
-          if (typeof showToast === 'function') {
-            showToast('Department updated successfully', 2500);
-          } else {
-            alert('Department updated successfully');
-          }
-          // Set flag to refresh component permissions when user returns to civilian dashboard
-          sessionStorage.setItem('refreshComponentPermissions', 'true');
-          refreshDepartmentsGrid();
-        })
-        .catch(err => {
-          alert(err.message || 'Failed to update department');
-          saveBtn.disabled = false;
-          saveBtn.textContent = 'Save';
-        });
+    const updateRes = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!updateRes.ok) {
+      const errorText = await updateRes.text();
+      console.error('Update failed with response:', errorText);
+      throw new Error('Failed to update department');
     }
+
+    await updateRes.json();
+
+    closeEditDepartmentModal();
+    if (typeof showToast === 'function') {
+      showToast('Department updated successfully', 2500);
+    } else {
+      alert('Department updated successfully');
+    }
+    // Set flag to refresh component permissions when user returns to civilian dashboard
+    sessionStorage.setItem('refreshComponentPermissions', 'true');
+    refreshDepartmentsGrid();
+
+  } catch (err) {
+    console.error('Error in saveEditDepartment:', err);
+    if (typeof showToast === 'function') {
+      showToast(err.message || 'Failed to update department', 3000, 'error');
+    } else {
+      alert(err.message || 'Failed to update department');
+    }
+  } finally {
+    // Always reset button state
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
   }
 }
 function deleteEditDepartment() {
