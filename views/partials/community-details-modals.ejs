@@ -6559,8 +6559,14 @@ function saveEditDepartment() {
           isEnabled = document.getElementById('editDeptComponentCall911').checked;
         }
         
+        // Handle _id which might be a string or an object like {$oid: "..."}
+        let componentId = component._id;
+        if (typeof componentId === 'object' && componentId.$oid) {
+          componentId = componentId.$oid;
+        }
+
         return {
-          _id: component._id,
+          _id: componentId,
           name: component.name,
           enabled: isEnabled
         };
