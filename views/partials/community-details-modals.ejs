@@ -6526,33 +6526,45 @@ async function saveEditDepartment() {
   }
 }
 function deleteEditDepartment() {
+  // Get the department name to show in the confirmation modal
+  const deptName = document.getElementById('editDeptName').value || 'this department';
+  document.getElementById('deleteDeptName').textContent = deptName;
+
+  // Show the custom delete confirmation modal
+  document.getElementById('deleteDepartmentModal').style.display = 'flex';
+}
+
+function closeDeleteDepartmentModal() {
+  document.getElementById('deleteDepartmentModal').style.display = 'none';
+}
+
+async function confirmDeleteDepartment() {
   const deptId = currentEditDepartment;
   const communityId = '<%= community._id %>';
-  if (confirm('Are you sure you want to delete this department? This action is irreversible.')) {
-    const deleteBtn = document.querySelector('#editDepartmentModal button.bg-red-600');
-    deleteBtn.disabled = true;
-    deleteBtn.textContent = 'Deleting...';
-    fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`, {
+  const deleteBtn = document.getElementById('confirmDeleteDeptBtn');
+
+  deleteBtn.disabled = true;
+  deleteBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>Deleting...';
+
+  try {
+    const response = await fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to delete department');
-        return res.json();
-      })
-      .then(() => {
-        closeEditDepartmentModal();
-        showToast('Department deleted successfully', 2500);
-        refreshDepartmentsGrid();
-      })
-      .catch(err => {
-        alert(err.message || 'Failed to delete department');
-        deleteBtn.disabled = false;
-        deleteBtn.textContent = 'Delete';
-      });
+    });
+
+    if (!response.ok) throw new Error('Failed to delete department');
+
+    closeDeleteDepartmentModal();
+    closeEditDepartmentModal();
+    showToast('Department deleted successfully', 2500);
+    refreshDepartmentsGrid();
+  } catch (err) {
+    showToast(err.message || 'Failed to delete department', 3000, 'error');
+    deleteBtn.disabled = false;
+    deleteBtn.innerHTML = '<i class="fa fa-trash mr-2"></i>Delete Department';
   }
 }
-</script> 
+</script>
 
 <script>
 function updateEditDeptVisibilityLabel() {
@@ -6560,7 +6572,37 @@ function updateEditDeptVisibilityLabel() {
   document.getElementById('editDeptVisibilityPublic').className = 'text-sm font-medium ' + (!checked ? 'text-blue-400' : 'text-gray-400');
   document.getElementById('editDeptVisibilityPrivate').className = 'text-sm font-medium ' + (checked ? 'text-blue-400' : 'text-gray-400');
 }
-</script> 
+</script>
+
+<!-- Delete Department Confirmation Modal -->
+<div id="deleteDepartmentModal" class="heroui-modal" style="display:none; position:fixed; z-index:3100; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.75); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:400px; width:90%; position:relative; border:1px solid rgba(239, 68, 68, 0.3); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+    <button onclick="closeDeleteDepartmentModal()" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <div style="width:4rem; height:4rem; margin:0 auto 1rem; background:rgba(239, 68, 68, 0.1); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+        <i class="fa fa-exclamation-triangle" style="font-size:1.75rem; color:#ef4444;"></i>
+      </div>
+      <h3 style="color:#fff; margin:0 0 0.5rem; font-size:1.25rem; font-weight:600;">Delete Department?</h3>
+      <p style="color:#94a3b8; margin:0; font-size:0.875rem; line-height:1.5;">
+        Are you sure you want to delete <strong id="deleteDeptName" style="color:#f87171;">this department</strong>?
+      </p>
+      <p style="color:#6b7280; margin:0.75rem 0 0; font-size:0.75rem;">
+        This action cannot be undone. All department data will be permanently removed.
+      </p>
+    </div>
+
+    <div style="display:flex; gap:0.75rem; justify-content:center;">
+      <button onclick="closeDeleteDepartmentModal()" style="flex:1; padding:0.75rem 1rem; background:#374151; color:#fff; border:none; border-radius:8px; font-size:0.875rem; font-weight:500; cursor:pointer; transition:all 0.2s ease;" onmouseenter="this.style.background='#4b5563'" onmouseleave="this.style.background='#374151'">
+        Cancel
+      </button>
+      <button id="confirmDeleteDeptBtn" onclick="confirmDeleteDepartment()" style="flex:1; padding:0.75rem 1rem; background:#dc2626; color:#fff; border:none; border-radius:8px; font-size:0.875rem; font-weight:500; cursor:pointer; transition:all 0.2s ease; display:flex; align-items:center; justify-content:center; gap:0.5rem;" onmouseenter="this.style.background='#b91c1c'" onmouseleave="this.style.background='#dc2626'">
+        <i class="fa fa-trash"></i>
+        Delete Department
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- Create Event Modal -->
 <div id="createEventModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
