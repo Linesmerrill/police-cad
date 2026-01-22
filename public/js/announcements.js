@@ -966,6 +966,9 @@
         throw new Error(data.message || 'Failed to delete announcement');
       }
 
+      // Close the modal first
+      closeDeleteAnnouncementModal();
+
       // Remove the card from the DOM since it's deleted
       const card = document.querySelector(`[data-announcement-id="${announcementId}"]`);
       if (card) {

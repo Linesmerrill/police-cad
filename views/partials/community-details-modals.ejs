@@ -37,13 +37,16 @@
               <div style="display:flex; align-items:center; gap:0.5rem;">
                 <span style="color:#a0aec0; font-size:0.875rem;">Subscription:</span>
                 <span id="subscriptionBadge" style="background:#10b981; color:#fff; padding:0.25rem 0.5rem; border-radius:4px; font-size:0.75rem; font-weight:600;">
-                  <% 
+                  <%
                     let subscriptionText = 'Standard';
                     if (community.community.subscription) {
                       if (typeof community.community.subscription === 'string') {
                         subscriptionText = community.community.subscription;
                       } else if (typeof community.community.subscription === 'object') {
-                        subscriptionText = community.community.subscription.name || community.community.subscription.type || 'Standard';
+                        // Use plan field (e.g., "elite", "pro", "standard")
+                        const planName = community.community.subscription.plan || community.community.subscription.name || community.community.subscription.type || 'standard';
+                        // Capitalize first letter
+                        subscriptionText = planName.charAt(0).toUpperCase() + planName.slice(1);
                       }
                     }
                   %>

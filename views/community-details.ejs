@@ -1016,7 +1016,48 @@
                 </div>
 
                 <% if (community.community.description) { %>
-                  <p id="community-overview-description" class="text-slate-400 text-sm line-clamp-2"><%= community.community.description %></p>
+                  <div id="community-description-container" class="relative">
+                    <p id="community-overview-description" class="text-slate-400 text-sm line-clamp-3" style="white-space: pre-line;"><%= community.community.description %></p>
+                    <button id="description-toggle-btn" onclick="toggleDescription()" class="text-xs mt-1 hidden" style="color: #60a5fa; background: none; border: none; cursor: pointer; padding: 0;">
+                      <span id="description-toggle-text">Show more</span>
+                      <i id="description-toggle-icon" class="fa fa-chevron-down ml-1"></i>
+                    </button>
+                  </div>
+                  <script>
+                    (function() {
+                      var desc = document.getElementById('community-overview-description');
+                      var btn = document.getElementById('description-toggle-btn');
+                      if (desc && btn) {
+                        // Check if text is truncated (scrollHeight > clientHeight)
+                        setTimeout(function() {
+                          if (desc.scrollHeight > desc.clientHeight) {
+                            btn.classList.remove('hidden');
+                          }
+                        }, 100);
+                      }
+                    })();
+                    function toggleDescription() {
+                      var desc = document.getElementById('community-overview-description');
+                      var btn = document.getElementById('description-toggle-btn');
+                      var text = document.getElementById('description-toggle-text');
+                      var icon = document.getElementById('description-toggle-icon');
+                      if (desc.classList.contains('line-clamp-3')) {
+                        desc.classList.remove('line-clamp-3');
+                        desc.style.maxHeight = '200px';
+                        desc.style.overflowY = 'auto';
+                        text.textContent = 'Show less';
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-up');
+                      } else {
+                        desc.classList.add('line-clamp-3');
+                        desc.style.maxHeight = '';
+                        desc.style.overflowY = '';
+                        text.textContent = 'Show more';
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                      }
+                    }
+                  </script>
                 <% } %>
               </div>
             </div>
