@@ -90,6 +90,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
     res.render("about");
   });
 
+  // Redirect /join/:code to /invite-code?code=:code (Next.js page)
+  app.get("/join/:code", function (req, res) {
+    const code = req.params.code;
+    res.redirect(`/invite-code?code=${encodeURIComponent(code)}`);
+  });
+
   // About Us page is now handled by Next.js at app/about-us/page.tsx
   // app.get("/about-us", function (req, res) {
   //   res.render("about-us");

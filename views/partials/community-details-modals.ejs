@@ -4294,7 +4294,10 @@ function renderInviteCodes() {
 
   inviteCodesData.forEach(code => {
     const isExpired = code.expiresAt && new Date(code.expiresAt) < new Date();
-    const usesLeft = code.maxUses > 0 ? code.maxUses - (code.uses || 0) : 'Unlimited';
+    const usesCount = code.uses || 0;
+    // Check if code has no remaining uses (maxUses > 0 means limited, remainingUses <= 0 means exhausted)
+    const isExhausted = code.maxUses > 0 && code.remainingUses <= 0;
+    const isInvalid = isExpired || isExhausted;
 
     let expiryDisplay = '';
     if (code.expiresAt) {
@@ -4308,23 +4311,32 @@ function renderInviteCodes() {
       expiryDisplay = '<span style="color:#10b981;"><i class="fa fa-infinity" style="margin-right:0.25rem;"></i>Never expires</span>';
     }
 
+    // Show uses display
+    let usesDisplay = code.maxUses > 0 ? `${usesCount} of ${code.maxUses} uses` : `${usesCount} uses (unlimited)`;
+    if (isExhausted) {
+      usesDisplay = `<span style="color:#ef4444;">${usesCount} of ${code.maxUses} uses (exhausted)</span>`;
+    }
+
     const codeEl = document.createElement('div');
     codeEl.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:1rem; border-bottom:1px solid #4a5568;';
     codeEl.innerHTML = `
       <div style="flex:1;">
-        <code style="background:#1e2028; color:${isExpired ? '#ef4444' : '#68d391'}; padding:0.5rem 0.75rem; border-radius:6px; font-family:monospace; font-size:1rem;">${code.code}</code>
+        <code style="background:#1e2028; color:${isInvalid ? '#ef4444' : '#68d391'}; padding:0.5rem 0.75rem; border-radius:6px; font-family:monospace; font-size:1rem;">${code.code}</code>
         <div style="margin-top:0.5rem; font-size:0.75rem; color:#a0aec0;">
-          Uses: ${code.uses || 0}${code.maxUses > 0 ? '/' + code.maxUses : ' (unlimited)'}
+          ${usesDisplay}
         </div>
         <div style="margin-top:0.25rem; font-size:0.75rem;">
           ${expiryDisplay}
         </div>
       </div>
       <div style="display:flex; gap:0.5rem;">
-        <button id="copyBtn-${code.code}" onclick="copyInviteCode('${code.code}', this)" style="background:#4a5568; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.875rem; transition:all 0.2s;">
+        <button id="copyCodeBtn-${code.code}" onclick="copyInviteCode('${code.code}', this)" title="Copy code" style="background:#4a5568; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.875rem; transition:all 0.2s;">
           <i class="fa fa-copy"></i>
         </button>
-        <button onclick="confirmDeleteInviteCode('${code._id || code.code}')" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.875rem;">
+        <button id="copyLinkBtn-${code.code}" onclick="copyInviteLink('${code.code}', this)" title="Copy join link" style="background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.875rem; transition:all 0.2s;">
+          <i class="fa fa-link"></i>
+        </button>
+        <button onclick="confirmDeleteInviteCode('${code._id || code.code}')" title="Delete" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.875rem;">
           <i class="fa fa-trash"></i>
         </button>
       </div>
@@ -4470,6 +4482,28 @@ function copyInviteCode(code, btn) {
     showToast('Invite code copied!', 2000, 'success');
   }).catch(() => {
     showToast('Failed to copy code', 2000, 'error');
+  });
+}
+
+function copyInviteLink(code, btn) {
+  const link = `${window.location.origin}/join/${code}`;
+  navigator.clipboard.writeText(link).then(() => {
+    // Show check icon on the button
+    if (btn) {
+      const icon = btn.querySelector('i');
+      if (icon) {
+        icon.className = 'fa fa-check';
+        btn.style.background = '#10b981';
+      }
+      // Revert after 2 seconds
+      setTimeout(() => {
+        if (icon) icon.className = 'fa fa-link';
+        btn.style.background = '#3b82f6';
+      }, 2000);
+    }
+    showToast('Join link copied!', 2000, 'success');
+  }).catch(() => {
+    showToast('Failed to copy link', 2000, 'error');
   });
 }
 

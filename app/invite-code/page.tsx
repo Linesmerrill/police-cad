@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, FormEvent } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
@@ -9,11 +9,21 @@ import { TicketIcon, ExclamationTriangleIcon, CheckCircleIcon, ArrowLeftIcon } f
 
 export default function InviteCodePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [inviteCode, setInviteCode] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [codeError, setCodeError] = useState(false);
+
+  // Pre-populate invite code from URL params
+  useEffect(() => {
+    const codeFromUrl = searchParams.get('code');
+    if (codeFromUrl) {
+      setInviteCode(codeFromUrl);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -63,15 +73,16 @@ export default function InviteCodePage() {
 
       if (response.ok && data.success) {
         setSuccess('Successfully joined the community!');
+        setRedirecting(true);
         // Redirect to community page
         if (data.communityId) {
           setTimeout(() => {
             window.location.href = `/community/${data.communityId}`;
-          }, 1000);
+          }, 1500);
         } else {
           setTimeout(() => {
             window.location.href = '/communities?success=true';
-          }, 1000);
+          }, 1500);
         }
       } else {
         // Error - show error message
@@ -422,19 +433,21 @@ export default function InviteCodePage() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || redirecting}
                 style={{
                   width: '100%',
                   padding: '0.875rem',
-                  background: loading
-                    ? 'rgba(251, 191, 36, 0.5)'
+                  background: loading || redirecting
+                    ? redirecting
+                      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                      : 'rgba(251, 191, 36, 0.5)'
                     : 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                  color: '#000000',
+                  color: redirecting ? '#ffffff' : '#000000',
                   border: 'none',
                   borderRadius: '10px',
                   fontSize: '1rem',
                   fontWeight: '600',
-                  cursor: loading ? 'not-allowed' : 'pointer',
+                  cursor: loading || redirecting ? 'not-allowed' : 'pointer',
                   transition: 'all 0.3s ease',
                   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
                   display: 'flex',
@@ -444,7 +457,7 @@ export default function InviteCodePage() {
                   marginBottom: '1.5rem',
                 }}
                 onMouseEnter={(e) => {
-                  if (!loading) {
+                  if (!loading && !redirecting) {
                     e.currentTarget.style.transform = 'translateY(-2px)';
                     e.currentTarget.style.boxShadow = '0 10px 20px rgba(251, 191, 36, 0.3)';
                   }
@@ -454,7 +467,21 @@ export default function InviteCodePage() {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                {loading ? (
+                {redirecting ? (
+                  <>
+                    <div
+                      style={{
+                        width: '1.25rem',
+                        height: '1.25rem',
+                        border: '2px solid transparent',
+                        borderTop: '2px solid #ffffff',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                      }}
+                    />
+                    <span>Redirecting...</span>
+                  </>
+                ) : loading ? (
                   <>
                     <div
                       style={{
