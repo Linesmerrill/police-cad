@@ -617,6 +617,7 @@
         function createDepartmentCard(dept, idx) {
           var card = document.createElement('div');
           var canAccess = true; // Departments from API are already filtered for access
+          var approvalRequired = dept.approvalRequired;
           card.className = 'dept-card' + (canAccess ? '' : ' locked');
           card.setAttribute('data-dept-index', idx);
           if (canAccess) {
@@ -650,7 +651,11 @@
             ? '<div class="aspect-[2/1] overflow-hidden"><img src="' + escapeHtml(dept.image) + '" alt="' + escapeHtml(dept.name) + '" class="w-full h-full object-cover" style="pointer-events: none;" /><div class="absolute inset-0" style="background: linear-gradient(to top, rgba(10, 10, 15, 0.95) 0%, transparent 60%);"></div></div>'
             : '<div class="aspect-[2/1] flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);"><i class="fa ' + deptIcon + ' text-4xl" style="color: ' + deptColor + '; opacity: 0.5;"></i></div>';
 
-          card.innerHTML = '<div class="relative">' + imageHtml + '</div>' +
+          var privateBadgeHtml = (approvalRequired && canAccess)
+            ? '<div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full z-10" style="background: rgba(0, 0, 0, 0.6);"><i class="fa fa-lock text-xs" style="color: #fbbf24;"></i><span class="text-xs font-medium" style="color: #fbbf24;">Private</span></div>'
+            : '';
+
+          card.innerHTML = '<div class="relative">' + imageHtml + privateBadgeHtml + '</div>' +
             '<div class="p-4 flex flex-col justify-between" style="min-height: 88px;">' +
               '<div>' +
                 '<div class="flex items-center gap-2 mb-1">' +
@@ -1232,6 +1237,13 @@
                           <i class="fa fa-lock text-2xl text-slate-400 mb-2"></i>
                           <p class="text-slate-400 text-xs">Private Department</p>
                         </div>
+                      </div>
+                    <% } %>
+
+                    <% if (approvalRequired && canAccess) { %>
+                      <div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full z-10" style="background: rgba(0, 0, 0, 0.6);">
+                        <i class="fa fa-lock text-xs" style="color: #fbbf24;"></i>
+                        <span class="text-xs font-medium" style="color: #fbbf24;">Private</span>
                       </div>
                     <% } %>
 

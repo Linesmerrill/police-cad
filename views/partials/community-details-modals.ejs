@@ -5154,42 +5154,50 @@ async function deleteInviteCode() {
 
 <!-- HeroUI Pro Create Department Modals (Step 1: Basic Info) -->
 <div id="createDepartmentStep1Modal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
-    <button onclick="closeCreateDepartmentModal(1)" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-    <div style="text-align:center; margin-bottom:1.5rem;">
-      <i class="fa fa-building" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
-      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create a Department - Step 1 of 3</h3>
+  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:420px; width:90%; position:relative; border:1px solid #35385a;">
+    <button onclick="closeCreateDepartmentModal(1)" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1rem;">
+      <i class="fa fa-building" style="font-size:2rem; color:#3b82f6; margin-bottom:0.5rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">Create a Department - Step 1 of 3</h3>
     </div>
     <form id="createDepartmentFormStep1">
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-lg font-medium">Department Photo (Optional)</label>
-        <div id="dept-photo-upload" class="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-4 bg-gray-800 cursor-pointer hover:border-blue-500 transition" onclick="document.getElementById('dept-photo').click()">
-          <img id="dept-photo-preview" src="" alt="Preview" style="display:none; max-width:120px; max-height:120px; border-radius:0.5rem; margin-bottom:0.5rem;" />
-          <i class="fa fa-camera text-3xl text-gray-400 mb-2"></i>
-          <span class="text-gray-400 text-lg">Click to upload photo</span>
+      <div class="mb-3">
+        <label class="block text-gray-300 mb-1 text-sm font-medium">Department Photo (Optional)</label>
+        <div id="dept-photo-upload" class="flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-lg bg-gray-800 cursor-pointer hover:border-blue-500 transition overflow-hidden" style="aspect-ratio: 16/9;" onclick="document.getElementById('dept-photo').click()">
+          <img id="dept-photo-preview" src="" alt="Preview" style="display:none; width:100%; height:100%; object-fit:cover;" />
+          <div id="dept-photo-placeholder" class="flex flex-col items-center justify-center w-full h-full">
+            <i class="fa fa-camera text-2xl text-gray-500 mb-1"></i>
+            <span class="text-gray-500 text-sm">Click to upload photo</span>
+          </div>
           <input type="file" id="dept-photo" accept="image/*" style="display:none;" onchange="handleDeptPhotoChange(event)" />
         </div>
       </div>
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-lg font-medium" for="dept-name">Department Name *</label>
-        <input type="text" id="dept-name" required class="w-full text-gray-200 bg-gray-800 rounded p-4 text-lg" />
+      <div class="mb-3">
+        <label class="block text-gray-300 mb-1 text-sm font-medium" for="dept-name">Department Name *</label>
+        <input type="text" id="dept-name" required class="w-full text-gray-200 bg-gray-800 border border-gray-600 rounded p-2.5 text-sm focus:border-blue-500 focus:outline-none" placeholder="Enter department name" />
       </div>
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-lg font-medium" for="dept-description">Description (Optional)</label>
-        <textarea id="dept-description" rows="3" class="w-full text-gray-200 bg-gray-800 rounded p-4 text-lg"></textarea>
+      <div class="mb-3">
+        <label class="block text-gray-300 mb-1 text-sm font-medium" for="dept-description">Description (Optional)</label>
+        <textarea id="dept-description" rows="2" class="w-full text-gray-200 bg-gray-800 border border-gray-600 rounded p-2.5 text-sm focus:border-blue-500 focus:outline-none" placeholder="Brief description of this department"></textarea>
       </div>
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-lg font-medium">Visibility</label>
-        <div class="flex gap-2">
-          <button type="button" id="visibility-public" class="flex-1 px-4 py-4 rounded-l-lg border border-gray-600 bg-blue-600 text-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg" onclick="setDeptVisibility('public')">Public</button>
-          <button type="button" id="visibility-private" class="flex-1 px-4 py-4 rounded-r-lg border border-gray-600 bg-gray-700 text-gray-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg" onclick="setDeptVisibility('private')">Private <span class='text-base'>(Approval required)</span></button>
+      <div class="mb-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <label class="block text-gray-300 text-sm font-medium">Visibility</label>
+            <span id="dept-visibility-label" class="text-xs text-gray-500">Public - anyone can join</span>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="dept-visibility-toggle" class="sr-only peer" onchange="toggleDeptVisibility()">
+            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+            <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+          </label>
         </div>
         <input type="hidden" id="dept-visibility" name="visibility" value="public" />
       </div>
-      <div id="createDeptStep1Error" class="text-red-400 text-base mb-2" style="display:none;"></div>
-      <div class="flex justify-end gap-2 mt-6">
-        <button type="button" onclick="closeCreateDepartmentModal(1)" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded text-lg font-medium">Cancel</button>
-        <button type="button" onclick="goToCreateDepartmentStep2()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded font-semibold text-lg">Next</button>
+      <div id="createDeptStep1Error" class="text-red-400 text-sm mb-2" style="display:none;"></div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button type="button" onclick="closeCreateDepartmentModal(1)" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm font-medium">Cancel</button>
+        <button type="button" onclick="goToCreateDepartmentStep2()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold text-sm">Next</button>
       </div>
     </form>
   </div>
@@ -5197,45 +5205,218 @@ async function deleteInviteCode() {
 
 <!-- Step 2: Template Selection -->
 <div id="createDepartmentStep2Modal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:95%; position:relative; border:1px solid #35385a;">
-    <button onclick="closeCreateDepartmentModal(2)" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-    <div style="text-align:center; margin-bottom:1.5rem;">
-      <i class="fa fa-layer-group" style="font-size:3rem; color:#a78bfa; margin-bottom:1rem;"></i>
-      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create a Department - Step 2 of 3</h3>
+  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+    <button onclick="closeCreateDepartmentModal(2)" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1rem;">
+      <i class="fa fa-layer-group" style="font-size:2rem; color:#a78bfa; margin-bottom:0.5rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">Create a Department - Step 2 of 3</h3>
     </div>
-    <div class="mb-4 text-gray-300 text-center text-lg">Select a template to quickly create a department. You can customize each template by toggling components.</div>
-    <div id="templateAccordion" class="flex flex-col gap-2 mb-4"></div>
-    <div id="createDeptStep2Error" class="text-red-400 text-base mb-2 text-center" style="display:none;"></div>
-    <div class="flex justify-between mt-6">
-      <button type="button" onclick="backToCreateDepartmentStep1()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded text-lg font-medium">Back</button>
-      <button type="button" id="createDeptStep2NextBtn" onclick="goToCreateDepartmentStep3()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded font-semibold text-lg opacity-50 cursor-not-allowed" disabled>Next</button>
+    <div class="mb-3 text-gray-400 text-center text-sm">Select a template to quickly create a department.</div>
+    <div id="templateAccordion" class="flex flex-col gap-2 mb-3"></div>
+    <div id="createDeptStep2Error" class="text-red-400 text-sm mb-2 text-center" style="display:none;"></div>
+    <div class="flex justify-between mt-4">
+      <button type="button" onclick="backToCreateDepartmentStep1()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm font-medium">Back</button>
+      <button type="button" id="createDeptStep2NextBtn" onclick="goToCreateDepartmentStep3()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold text-sm opacity-50 cursor-not-allowed" disabled>Next</button>
     </div>
   </div>
 </div>
 
 <!-- Step 3: Add Members -->
 <div id="createDepartmentStep3Modal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:95%; position:relative; border:1px solid #35385a;">
-    <button onclick="closeCreateDepartmentModal(3)" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-    <div style="text-align:center; margin-bottom:1.5rem;">
-      <i class="fa fa-users" style="font-size:3rem; color:#10b981; margin-bottom:1rem;"></i>
-      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create a Department - Step 3 of 3</h3>
+  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+    <button onclick="closeCreateDepartmentModal(3)" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1rem;">
+      <i class="fa fa-users" style="font-size:2rem; color:#10b981; margin-bottom:0.5rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">Create a Department - Step 3 of 3</h3>
     </div>
-    <div class="mb-4 text-gray-300 text-center text-lg">Add members to the department. Members can have multiple roles.</div>
-    <div class="mb-2 text-base text-green-400 text-center" id="selectedMembersCount"></div>
-    <div class="mb-4">
+    <div class="mb-3 text-gray-400 text-center text-sm">Add members to the department.</div>
+    <div class="mb-2 text-sm text-green-400 text-center" id="selectedMembersCount"></div>
+    <div class="mb-3">
       <div id="selectedMembers" class="flex flex-wrap gap-2 mb-2"></div>
-      <div id="memberList" class="max-h-60 overflow-y-auto"></div>
+      <div id="memberList" class="max-h-48 overflow-y-auto"></div>
     </div>
-    <div id="createDeptStep3Error" class="text-red-400 text-base mb-2 text-center" style="display:none;"></div>
-    <div class="flex justify-between mt-6">
-      <button type="button" onclick="backToCreateDepartmentStep2()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded text-lg font-medium">Back</button>
-      <button type="button" onclick="finishCreateDepartment()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded font-semibold text-lg">Finish</button>
+    <div id="createDeptStep3Error" class="text-red-400 text-sm mb-2 text-center" style="display:none;"></div>
+    <div class="flex justify-between mt-4">
+      <button type="button" onclick="backToCreateDepartmentStep2()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded text-sm font-medium">Back</button>
+      <button type="button" onclick="finishCreateDepartment()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold text-sm">Finish</button>
     </div>
   </div>
 </div>
 
 <script>
+// --- Refresh Departments Grid ---
+async function refreshDepartmentsGrid() {
+  const communityId = '<%= community._id %>';
+  const userId = '<%= userId || "" %>';
+  const canManageDepartments = <%= typeof canManageDepartments !== 'undefined' ? canManageDepartments : false %>;
+
+  try {
+    const response = await fetch(`${API_URL}/api/v1/community/${communityId}/departments`);
+    if (!response.ok) throw new Error('Failed to fetch departments');
+    const data = await response.json();
+    const departments = data.departments || [];
+
+    // Update the global departmentsListData
+    window.departmentsListData = departments;
+
+    // Update department count in header
+    const countEl = document.querySelector('#departments-section .section-title span');
+    if (countEl) {
+      countEl.textContent = departments.length;
+    }
+
+    // Render the departments grid
+    const grid = document.getElementById('departments-grid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    departments.forEach((dept, deptIndex) => {
+      const templateName = dept.templateName || (dept.template && dept.template.name ? dept.template.name : '');
+      const approvalRequired = dept.approvalRequired;
+      const members = Array.isArray(dept.members) ? dept.members : [];
+      const isDeptMember = members.some(m => m.userID === userId && m.status === 'approved');
+      const canAccess = canManageDepartments || !approvalRequired || isDeptMember;
+
+      let deptIcon = 'fa-building';
+      let deptColor = '#60a5fa';
+      const lowerTemplate = templateName.toLowerCase();
+      if (lowerTemplate.includes('police')) {
+        deptIcon = 'fa-shield-halved';
+        deptColor = '#3b82f6';
+      } else if (lowerTemplate.includes('sheriff')) {
+        deptIcon = 'fa-star';
+        deptColor = '#fbbf24';
+      } else if (lowerTemplate.includes('civilian')) {
+        deptIcon = 'fa-user';
+        deptColor = '#10b981';
+      } else if (lowerTemplate.includes('fire') || lowerTemplate.includes('ems')) {
+        deptIcon = 'fa-truck-medical';
+        deptColor = '#ef4444';
+      } else if (lowerTemplate.includes('dispatch')) {
+        deptIcon = 'fa-headset';
+        deptColor = '#f59e0b';
+      }
+
+      const card = document.createElement('div');
+      card.className = 'dept-card' + (canAccess ? '' : ' locked');
+      card.setAttribute('data-dept-index', deptIndex);
+      if (deptIndex >= 6) card.style.display = 'none';
+      if (canAccess) {
+        card.setAttribute('data-dept-id', dept._id);
+        card.setAttribute('data-dept-name', dept.name);
+        card.setAttribute('data-template-name', templateName);
+      }
+
+      let imageHtml = '';
+      if (dept.image) {
+        imageHtml = `
+          <div class="aspect-[2/1] overflow-hidden">
+            <img src="${dept.image}" alt="${dept.name}" class="w-full h-full object-cover" style="pointer-events: none;" />
+            <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(10, 10, 15, 0.95) 0%, transparent 60%);"></div>
+          </div>`;
+      } else {
+        imageHtml = `
+          <div class="aspect-[2/1] flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);">
+            <i class="fa ${deptIcon} text-4xl" style="color: ${deptColor}; opacity: 0.5;"></i>
+          </div>`;
+      }
+
+      let lockOverlay = '';
+      if (!canAccess) {
+        lockOverlay = `
+          <div class="absolute inset-0 flex items-center justify-center" style="background: rgba(10, 10, 15, 0.7);">
+            <div class="text-center">
+              <i class="fa fa-lock text-2xl text-slate-400 mb-2"></i>
+              <p class="text-slate-400 text-xs">Private Department</p>
+            </div>
+          </div>`;
+      }
+
+      let privateBadge = '';
+      if (approvalRequired && canAccess) {
+        privateBadge = `
+          <div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full z-10" style="background: rgba(0, 0, 0, 0.6);">
+            <i class="fa fa-lock text-xs" style="color: #fbbf24;"></i>
+            <span class="text-xs font-medium" style="color: #fbbf24;">Private</span>
+          </div>`;
+      }
+
+      let editBtn = '';
+      if (canManageDepartments) {
+        editBtn = `
+          <button
+            class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full transition-colors z-10"
+            style="background: rgba(0, 0, 0, 0.5); color: #94a3b8;"
+            onclick="event.stopPropagation(); openEditDepartmentModal('${dept._id}');"
+          >
+            <i class="fa fa-pencil text-sm"></i>
+          </button>`;
+      }
+
+      const descHtml = dept.description ? `<p class="text-slate-400 text-xs line-clamp-2">${dept.description}</p>` : '';
+      const enterHtml = canAccess ? `<span class="text-xs" style="color: #fbbf24;">Enter <i class="fa fa-arrow-right ml-1"></i></span>` : '';
+
+      card.innerHTML = `
+        <div class="relative">
+          ${imageHtml}
+          ${lockOverlay}
+          ${privateBadge}
+          ${editBtn}
+        </div>
+        <div class="p-4 flex flex-col justify-between" style="min-height: 88px;">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fa ${deptIcon} text-sm" style="color: ${deptColor};"></i>
+              <h3 class="font-bold text-white text-base line-clamp-1">${dept.name}</h3>
+            </div>
+            ${descHtml}
+          </div>
+          <div class="flex items-center justify-between mt-2">
+            <span class="text-xs text-slate-500">${templateName || 'Department'}</span>
+            ${enterHtml}
+          </div>
+        </div>`;
+
+      grid.appendChild(card);
+    });
+
+    // Re-attach click handlers for department cards
+    initDeptCardClicks();
+
+    // Update pagination visibility
+    const paginationEl = document.getElementById('dept-pagination');
+    if (paginationEl) {
+      paginationEl.style.display = departments.length > 6 ? 'flex' : 'none';
+    }
+
+    // Reinitialize filter tabs
+    if (typeof initDeptFilterTabs === 'function') {
+      initDeptFilterTabs();
+    }
+
+  } catch (error) {
+    console.error('Error refreshing departments:', error);
+    showToast('Error refreshing departments', 2500, 'error');
+  }
+}
+
+// Initialize department card click handlers
+function initDeptCardClicks() {
+  document.querySelectorAll('.dept-card[data-dept-id]').forEach(card => {
+    card.style.cursor = 'pointer';
+    card.onclick = function(e) {
+      if (e.target.closest('button')) return;
+      const deptId = this.getAttribute('data-dept-id');
+      const deptName = this.getAttribute('data-dept-name');
+      const templateName = this.getAttribute('data-template-name');
+      if (typeof handleDepartmentClick === 'function') {
+        handleDepartmentClick(deptId, deptName, templateName);
+      }
+    };
+  });
+}
+
 // --- Modal State ---
 let createDeptData = {
   name: '',
@@ -5270,6 +5451,55 @@ document.getElementById('openCreateDepartmentModalBtn')?.addEventListener('click
 function closeCreateDepartmentModal(step) {
   document.getElementById(`createDepartmentStep${step}Modal`).style.display = 'none';
 }
+
+function resetCreateDepartmentForm() {
+  // Reset form fields
+  document.getElementById('dept-name').value = '';
+  document.getElementById('dept-description').value = '';
+  document.getElementById('dept-visibility').value = 'public';
+
+  // Reset visibility toggle
+  const toggle = document.getElementById('dept-visibility-toggle');
+  const label = document.getElementById('dept-visibility-label');
+  if (toggle) toggle.checked = false;
+  if (label) label.textContent = 'Public - anyone can join';
+
+  // Reset photo preview
+  const preview = document.getElementById('dept-photo-preview');
+  const placeholder = document.getElementById('dept-photo-placeholder');
+  const photoInput = document.getElementById('dept-photo');
+  if (preview) {
+    preview.src = '';
+    preview.style.display = 'none';
+  }
+  if (placeholder) placeholder.style.display = 'flex';
+  if (photoInput) photoInput.value = '';
+
+  // Reset state
+  createDeptData = {
+    name: '',
+    description: '',
+    image: '',
+    visibility: 'public',
+    template: { name: '', components: [] },
+    members: []
+  };
+  createDeptSelectedTemplate = '';
+  createDeptMembers = [];
+
+  // Reset template permissions
+  createDeptTemplates.forEach(t => {
+    let permAcc = {};
+    t.permissions.forEach(p => { permAcc[p.key] = p.default; });
+    createDeptPermissionsState[t.name] = permAcc;
+  });
+
+  // Reset error messages
+  document.getElementById('createDeptStep1Error').style.display = 'none';
+  document.getElementById('createDeptStep2Error').style.display = 'none';
+  document.getElementById('createDeptStep3Error').style.display = 'none';
+}
+
 function backToCreateDepartmentStep1() {
   document.getElementById('createDepartmentStep2Modal').style.display = 'none';
   document.getElementById('createDepartmentStep1Modal').style.display = 'flex';
@@ -5311,28 +5541,28 @@ function renderTemplateCards() {
     card.className = 'rounded-lg shadow border bg-gray-800 border-gray-700 transition-all';
     if (isSelected) card.classList.add('border-green-500', 'ring-2', 'ring-green-400');
     card.innerHTML = `
-      <button type="button" class="w-full flex justify-between items-center px-4 py-4 focus:outline-none" onclick="expandTemplateCard(${idx})">
-        <span class="font-bold text-xl" style="color:${template.color}">${template.name}</span>
+      <button type="button" class="w-full flex justify-between items-center px-3 py-2.5 focus:outline-none" onclick="expandTemplateCard(${idx})">
+        <span class="font-bold text-base" style="color:${template.color}">${template.name}</span>
         <span class="flex items-center gap-2">
-          ${isSelected ? '<i class=\'fa fa-check-circle text-green-400 text-2xl\'></i>' : ''}
-          <i id="template-arrow-${idx}" class="fa fa-chevron-down text-gray-400 transition-transform text-lg"></i>
+          ${isSelected ? '<i class=\'fa fa-check-circle text-green-400 text-lg\'></i>' : ''}
+          <i id="template-arrow-${idx}" class="fa fa-chevron-down text-gray-400 transition-transform text-sm"></i>
         </span>
       </button>
-      <div id="template-details-${idx}" class="px-4 pb-4" style="display:${isSelected ? 'block' : 'none'};">
-        <div class="text-gray-400 text-base mb-3">${template.description}</div>
-        <div class="mb-3">
+      <div id="template-details-${idx}" class="px-3 pb-3" style="display:${isSelected ? 'block' : 'none'};">
+        <div class="text-gray-400 text-xs mb-2">${template.description}</div>
+        <div class="mb-2">
           ${template.permissions.map(perm => `
-            <label class="flex items-center gap-3 mb-2">
-              <input type="checkbox" ${createDeptPermissionsState[template.name][perm.key] ? 'checked' : ''} onchange="onTemplatePermissionChange('${template.name}','${perm.key}',this.checked)" class="form-checkbox text-blue-600 w-4 h-4" />
-              <span class="text-base">${perm.label}</span>
+            <label class="flex items-center gap-2 mb-1.5">
+              <input type="checkbox" ${createDeptPermissionsState[template.name][perm.key] ? 'checked' : ''} onchange="onTemplatePermissionChange('${template.name}','${perm.key}',this.checked)" class="form-checkbox text-blue-600 w-3.5 h-3.5" />
+              <span class="text-sm text-gray-300">${perm.label}</span>
             </label>
           `).join('')}
         </div>
         ${isSelected ? (
           hasUnsavedChanges
-            ? `<button type="button" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded mt-3 font-semibold transition text-lg" onclick="saveTemplatePermissionChanges('${template.name}')"><i class='fa fa-save mr-2'></i>Save</button>`
-            : `<button type="button" class="w-full bg-gray-600 text-gray-300 cursor-not-allowed py-2 rounded mt-3 font-semibold transition text-lg" disabled>Selected</button>`
-        ) : `<button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded mt-3 font-semibold transition text-lg" onclick="selectCreateDeptTemplate('${template.name}')">Select</button>`}
+            ? `<button type="button" class="w-full bg-green-600 hover:bg-green-700 text-white py-1.5 rounded mt-2 font-semibold transition text-sm" onclick="saveTemplatePermissionChanges('${template.name}')"><i class='fa fa-save mr-1'></i>Save</button>`
+            : `<button type="button" class="w-full bg-gray-600 text-gray-300 cursor-not-allowed py-1.5 rounded mt-2 font-semibold transition text-sm" disabled>Selected</button>`
+        ) : `<button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-1.5 rounded mt-2 font-semibold transition text-sm" onclick="selectCreateDeptTemplate('${template.name}')">Select</button>`}
       </div>
     `;
     container.appendChild(card);
@@ -5563,12 +5793,14 @@ function finishCreateDepartment(skipMembers = false) {
           .then(() => {
             closeCreateDepartmentModal(3);
             showToast('Department created successfully!', 2500);
-            window.location.reload();
+            resetCreateDepartmentForm();
+            refreshDepartmentsGrid();
           });
       } else {
         closeCreateDepartmentModal(3);
         showToast('Department created successfully!', 2500);
-        window.location.reload();
+        resetCreateDepartmentForm();
+        refreshDepartmentsGrid();
       }
     })
     .catch(err => {
@@ -5581,30 +5813,45 @@ function finishCreateDepartment(skipMembers = false) {
 function handleDeptPhotoChange(e) {
   const file = e.target.files[0];
   const preview = document.getElementById('dept-photo-preview');
+  const placeholder = document.getElementById('dept-photo-placeholder');
   if (file) {
     const reader = new FileReader();
     reader.onload = function(ev) {
       preview.src = ev.target.result;
       preview.style.display = 'block';
+      if (placeholder) placeholder.style.display = 'none';
     };
     reader.readAsDataURL(file);
   } else {
     preview.src = '';
     preview.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'flex';
   }
 }
-function setDeptVisibility(val) {
-  document.getElementById('dept-visibility').value = val;
-  if (val === 'public') {
-    document.getElementById('visibility-public').classList.add('bg-blue-600','text-white');
-    document.getElementById('visibility-public').classList.remove('bg-gray-700','text-gray-200');
-    document.getElementById('visibility-private').classList.add('bg-gray-700','text-gray-200');
-    document.getElementById('visibility-private').classList.remove('bg-blue-600','text-white');
+
+function toggleDeptVisibility() {
+  const toggle = document.getElementById('dept-visibility-toggle');
+  const label = document.getElementById('dept-visibility-label');
+  const hiddenInput = document.getElementById('dept-visibility');
+
+  if (toggle.checked) {
+    hiddenInput.value = 'private';
+    label.textContent = 'Private - approval required';
   } else {
-    document.getElementById('visibility-private').classList.add('bg-blue-600','text-white');
-    document.getElementById('visibility-private').classList.remove('bg-gray-700','text-gray-200');
-    document.getElementById('visibility-public').classList.add('bg-gray-700','text-gray-200');
-    document.getElementById('visibility-public').classList.remove('bg-blue-600','text-white');
+    hiddenInput.value = 'public';
+    label.textContent = 'Public - anyone can join';
+  }
+}
+
+function setDeptVisibility(val) {
+  const toggle = document.getElementById('dept-visibility-toggle');
+  const label = document.getElementById('dept-visibility-label');
+  document.getElementById('dept-visibility').value = val;
+  if (toggle) {
+    toggle.checked = val === 'private';
+  }
+  if (label) {
+    label.textContent = val === 'private' ? 'Private - approval required' : 'Public - anyone can join';
   }
 }
 
@@ -5985,12 +6232,24 @@ function openEditDepartmentModal(departmentId) {
       
       // Set basic department info
       document.getElementById('editDeptId').value = dept._id || '';
-      document.getElementById('editDeptImagePreview').src = dept.image || '/static/images/default-logo.png';
       document.getElementById('editDeptImageUrl').value = dept.image || '';
       document.getElementById('editDeptName').value = dept.name || '';
       document.getElementById('editDeptDescription').value = dept.description || '';
       document.getElementById('editDeptApprovalRequired').checked = !!dept.approvalRequired;
-      
+
+      // Update image preview
+      const preview = document.getElementById('editDeptImagePreview');
+      const placeholder = document.getElementById('editDeptImagePlaceholder');
+      if (dept.image) {
+        preview.src = dept.image;
+        preview.style.display = 'block';
+        placeholder.style.display = 'none';
+      } else {
+        preview.src = '';
+        preview.style.display = 'none';
+        placeholder.style.display = 'flex';
+      }
+
       // Populate components
       if (dept.template && dept.template.components) {
         dept.template.components.forEach(component => {
@@ -6000,21 +6259,33 @@ function openEditDepartmentModal(departmentId) {
           }
         });
       }
-      
+
       updateEditDeptVisibilityLabel();
       document.getElementById('editDepartmentModal').style.display = 'flex';
     })
     .catch(() => {
       // fallback to local data if API fails
       const dept = (window.departmentsListData || []).find(d => d._id === departmentId) || {};
-      
+
       // Set basic department info
       document.getElementById('editDeptId').value = dept._id || '';
-      document.getElementById('editDeptImagePreview').src = dept.image || '/static/images/default-logo.png';
       document.getElementById('editDeptImageUrl').value = dept.image || '';
       document.getElementById('editDeptName').value = dept.name || '';
       document.getElementById('editDeptDescription').value = dept.description || '';
       document.getElementById('editDeptApprovalRequired').checked = !!dept.approvalRequired;
+
+      // Update image preview
+      const preview = document.getElementById('editDeptImagePreview');
+      const placeholder = document.getElementById('editDeptImagePlaceholder');
+      if (dept.image) {
+        preview.src = dept.image;
+        preview.style.display = 'block';
+        placeholder.style.display = 'none';
+      } else {
+        preview.src = '';
+        preview.style.display = 'none';
+        placeholder.style.display = 'flex';
+      }
       
       // Populate components
       if (dept.template && dept.template.components) {
@@ -6038,24 +6309,29 @@ function closeEditDepartmentModal() {
 async function handleEditDeptImageChange(event) {
   const file = event.target.files[0];
   if (!file) return;
-  
+
+  const preview = document.getElementById('editDeptImagePreview');
+  const placeholder = document.getElementById('editDeptImagePlaceholder');
+
   try {
     // Validate file type
     if (!file.type.startsWith('image/')) {
       showToast('Please select a valid image file', 3000, 'error');
       return;
     }
-    
+
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       showToast('Image must be less than 5MB', 3000, 'error');
       return;
     }
-    
+
     // Show preview immediately
     const reader = new FileReader();
     reader.onload = function(e) {
-      document.getElementById('editDeptImagePreview').src = e.target.result;
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      placeholder.style.display = 'none';
     };
     reader.readAsDataURL(file);
     
@@ -6074,9 +6350,11 @@ async function handleEditDeptImageChange(event) {
   } catch (error) {
     console.error('Photo upload error:', error);
     showToast('Upload failed: ' + error.message, 3000, 'error');
-    
+
     // Reset preview on error
-    document.getElementById('editDeptImagePreview').src = '/static/images/default-logo.png';
+    preview.src = '';
+    preview.style.display = 'none';
+    placeholder.style.display = 'flex';
   }
 }
 </script>
@@ -6088,112 +6366,116 @@ window.departmentsListData = <%- JSON.stringify(departments || []) %>;
 
 <!-- Edit Department Modal -->
 <div id="editDepartmentModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:500px; width:90%; position:relative; border:1px solid #35385a;">
-    <button onclick="closeEditDepartmentModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-    <div style="text-align:center; margin-bottom:1.5rem;">
-      <i class="fa fa-pencil-alt" style="font-size:2.5rem; color:#3b82f6; margin-bottom:1rem;"></i>
-      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Edit Department</h3>
+  <div style="background:#1e2028; border-radius:16px; padding:1.5rem; max-width:420px; width:90%; position:relative; border:1px solid #35385a; max-height:90vh; overflow-y:auto;">
+    <button onclick="closeEditDepartmentModal()" aria-label="Close" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1rem;">
+      <i class="fa fa-pencil-alt" style="font-size:2rem; color:#3b82f6; margin-bottom:0.5rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">Edit Department</h3>
     </div>
     <form onsubmit="event.preventDefault(); saveEditDepartment();">
       <input type="hidden" id="editDeptId" value="">
       <input type="hidden" id="editDeptImageUrl" value="">
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base">Department Photo</label>
-        <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-4 bg-gray-800 cursor-pointer hover:border-blue-500 transition" onclick="document.getElementById('editDeptImage').click()">
-          <img id="editDeptImagePreview" src="/static/images/default-logo.png" alt="Preview" style="max-width:120px; max-height:120px; border-radius:0.5rem; margin-bottom:0.5rem;" />
-          <i class="fa fa-camera text-2xl text-gray-400 mb-2"></i>
-          <span class="text-gray-400 text-base">Click to upload photo</span>
+      <div class="mb-3">
+        <label class="block text-gray-300 mb-1 text-sm font-medium">Department Photo</label>
+        <div class="flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-lg bg-gray-800 cursor-pointer hover:border-blue-500 transition overflow-hidden" style="aspect-ratio: 16/9;" onclick="document.getElementById('editDeptImage').click()">
+          <img id="editDeptImagePreview" src="" alt="Preview" style="display:none; width:100%; height:100%; object-fit:cover;" />
+          <div id="editDeptImagePlaceholder" class="flex flex-col items-center justify-center w-full h-full">
+            <i class="fa fa-camera text-2xl text-gray-500 mb-1"></i>
+            <span class="text-gray-500 text-sm">Click to upload photo</span>
+          </div>
           <input type="file" id="editDeptImage" accept="image/*" style="display:none;" onchange="handleEditDeptImageChange(event)" />
         </div>
       </div>
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="editDeptName">Department Name</label>
-        <input type="text" id="editDeptName" required class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" />
+      <div class="mb-3">
+        <label class="block text-gray-300 mb-1 text-sm font-medium" for="editDeptName">Department Name</label>
+        <input type="text" id="editDeptName" required class="w-full text-gray-200 bg-gray-800 border border-gray-600 rounded p-2.5 text-sm focus:border-blue-500 focus:outline-none" />
       </div>
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="editDeptDescription">Description</label>
-        <textarea id="editDeptDescription" rows="3" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base"></textarea>
+      <div class="mb-3">
+        <label class="block text-gray-300 mb-1 text-sm font-medium" for="editDeptDescription">Description</label>
+        <textarea id="editDeptDescription" rows="2" class="w-full text-gray-200 bg-gray-800 border border-gray-600 rounded p-2.5 text-sm focus:border-blue-500 focus:outline-none"></textarea>
       </div>
       
       <!-- Components Section -->
       <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base">Components</label>
-        <div class="bg-gray-800 rounded-lg p-4 space-y-3">
+        <label class="block text-gray-300 mb-1 text-sm font-medium">Components</label>
+        <div class="bg-gray-800 border border-gray-600 rounded-lg p-3 space-y-2">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <i class="fa fa-id-card text-blue-400"></i>
-              <span class="text-gray-200">Create Civilians</span>
+              <i class="fa fa-id-card text-blue-400 text-sm"></i>
+              <span class="text-gray-300 text-sm">Create Civilians</span>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" id="editDeptComponentCreateCivilians" class="sr-only peer">
-              <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-              <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+              <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+              <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>
             </label>
           </div>
-          
+
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <i class="fa fa-car text-green-400"></i>
-              <span class="text-gray-200">Create Vehicles</span>
+              <i class="fa fa-car text-green-400 text-sm"></i>
+              <span class="text-gray-300 text-sm">Create Vehicles</span>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" id="editDeptComponentCreateVehicles" class="sr-only peer">
-              <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-              <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+              <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+              <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>
             </label>
           </div>
-          
+
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <i class="fa fa-crosshairs text-red-400"></i>
-              <span class="text-gray-200">Create Firearms</span>
+              <i class="fa fa-crosshairs text-red-400 text-sm"></i>
+              <span class="text-gray-300 text-sm">Create Firearms</span>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" id="editDeptComponentCreateFirearms" class="sr-only peer">
-              <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-              <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+              <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+              <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>
             </label>
           </div>
-          
+
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <i class="fa fa-exclamation-triangle text-yellow-400"></i>
-              <span class="text-gray-200">Call 911</span>
+              <i class="fa fa-exclamation-triangle text-yellow-400 text-sm"></i>
+              <span class="text-gray-300 text-sm">Call 911</span>
             </div>
             <label class="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" id="editDeptComponentCall911" class="sr-only peer">
-              <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-              <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-5"></div>
+              <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+              <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>
             </label>
           </div>
         </div>
       </div>
-      
-      <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base flex items-center gap-2" for="editDeptApprovalRequired">
-          Visibility
-          <span class="relative group">
-            <i class="fa fa-info-circle text-gray-400 cursor-pointer"></i>
-            <span class="absolute left-6 top-0 w-64 bg-gray-900 text-gray-200 text-sm rounded shadow-lg px-3 py-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-              <strong>Public</strong>: Anyone in your community can access it.<br/>
-              <strong>Private</strong>: Only those you add can access it (e.g. Police, Dispatch, etc).
+
+      <div class="mb-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="text-gray-300 text-sm font-medium">Visibility</span>
+            <span class="relative group flex items-center">
+              <i class="fa fa-info-circle text-gray-500 cursor-pointer text-xs"></i>
+              <span class="absolute left-5 top-0 w-48 bg-gray-900 text-gray-200 text-xs rounded shadow-lg px-2 py-1.5 z-50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                <strong>Public</strong>: Anyone can access.<br/>
+                <strong>Private</strong>: Approval required.
+              </span>
             </span>
-          </span>
-        </label>
-        <div class="flex items-center gap-3 mt-2">
-          <span id="editDeptVisibilityPublic" class="text-sm font-medium <%= !false ? 'text-blue-400' : 'text-gray-400' %>">Public</span>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" id="editDeptApprovalRequired" class="sr-only peer" onchange="updateEditDeptVisibilityLabel()">
-            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
-            <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-5"></div>
-          </label>
-          <span id="editDeptVisibilityPrivate" class="text-sm font-medium <%= false ? 'text-blue-400' : 'text-gray-400' %>">Private</span>
+          </div>
+          <div class="flex items-center gap-2" style="height: 20px;">
+            <span id="editDeptVisibilityPublic" class="text-xs text-gray-400 leading-5">Public</span>
+            <label class="relative inline-flex items-center cursor-pointer" style="height: 20px;">
+              <input type="checkbox" id="editDeptApprovalRequired" class="sr-only peer" onchange="updateEditDeptVisibilityLabel()">
+              <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 transition-all"></div>
+              <div class="absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full shadow transition-all peer-checked:translate-x-4"></div>
+            </label>
+            <span id="editDeptVisibilityPrivate" class="text-xs text-gray-400 leading-5">Private</span>
+          </div>
         </div>
       </div>
-      <div id="createDeptStep1Error" class="text-red-400 text-sm mb-2" style="display:none;"></div>
-              <div class="flex justify-end gap-2 mt-6">
-        <button type="button" onclick="deleteEditDepartment()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded font-semibold text-base">Delete</button>
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded font-semibold text-base">Save</button>
+      <div id="editDeptError" class="text-red-400 text-sm mb-2" style="display:none;"></div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button type="button" onclick="deleteEditDepartment()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded font-semibold text-sm">Delete</button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-semibold text-sm">Save</button>
       </div>
     </form>
   </div>
@@ -6344,7 +6626,7 @@ function saveEditDepartment() {
           }
           // Set flag to refresh component permissions when user returns to civilian dashboard
           sessionStorage.setItem('refreshComponentPermissions', 'true');
-          setTimeout(() => window.location.reload(), 1200);
+          refreshDepartmentsGrid();
         })
         .catch(err => {
           alert(err.message || 'Failed to update department');
@@ -6371,7 +6653,8 @@ function deleteEditDepartment() {
       })
       .then(() => {
         closeEditDepartmentModal();
-        window.location.reload();
+        showToast('Department deleted successfully', 2500);
+        refreshDepartmentsGrid();
       })
       .catch(err => {
         alert(err.message || 'Failed to delete department');
