@@ -501,6 +501,7 @@
         window.allEvents = <%- JSON.stringify(community.community.events || []) %>;
         // Store permission for dynamic UI updates
         window.canManageEvents = false;
+        window.canManageDepartments = <%= canManageDepartments %>;
 
         // Department pagination and filtering - fetches from API on page/filter change
         var deptCurrentPage = 1;
@@ -662,7 +663,11 @@
             ? '<div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full z-10" style="background: rgba(0, 0, 0, 0.6);"><i class="fa fa-lock text-xs" style="color: #fbbf24;"></i><span class="text-xs font-medium" style="color: #fbbf24;">Private</span></div>'
             : '';
 
-          card.innerHTML = '<div class="relative">' + imageHtml + privateBadgeHtml + '</div>' +
+          var editBtnHtml = window.canManageDepartments
+            ? '<button class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full transition-colors z-10" style="background: rgba(0, 0, 0, 0.5); color: #94a3b8;" onclick="event.stopPropagation(); openEditDepartmentModal(\'' + dept._id + '\');"><i class="fa fa-pencil text-sm"></i></button>'
+            : '';
+
+          card.innerHTML = '<div class="relative">' + imageHtml + privateBadgeHtml + editBtnHtml + '</div>' +
             '<div class="p-4 flex flex-col justify-between" style="min-height: 88px;">' +
               '<div>' +
                 '<div class="flex items-center gap-2 mb-1">' +
