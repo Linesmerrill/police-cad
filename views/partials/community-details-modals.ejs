@@ -4167,8 +4167,8 @@ async function loadInviteCodes(page = 1) {
     inviteCodesData = data.inviteCodes || [];
     inviteCodesPagination = data.pagination || { currentPage: 1, totalPages: 1, totalCount: 0, hasNextPage: false, hasPrevPage: false, limit: 10 };
 
-    // Count expired codes
-    expiredCodesCount = inviteCodesData.filter(code => code.expiresAt && new Date(code.expiresAt) < new Date()).length;
+    // Get total expired codes count from API (across all pages)
+    expiredCodesCount = data.expiredCount || 0;
 
     if (loadingDiv) loadingDiv.style.display = 'none';
 
