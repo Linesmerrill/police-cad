@@ -4130,6 +4130,8 @@ function openSettingsModal() {
 function openInviteCodesModal() {
   document.getElementById('inviteCodesModal').style.display = 'flex';
   loadInviteCodes();
+  // Auto-populate a random code when modal opens
+  generateInviteCode();
 }
 
 function closeInviteCodesModal() {
@@ -4176,6 +4178,36 @@ async function loadInviteCodes() {
   }
 }
 
+function formatExpiryTime(expiresAt) {
+  const expiry = new Date(expiresAt);
+  const now = new Date();
+  const diff = expiry - now;
+
+  // Format the full date/time
+  const dateStr = expiry.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  const timeStr = expiry.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+
+  // Calculate relative time
+  let relativeStr = '';
+  if (diff > 0) {
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) {
+      relativeStr = `${days} day${days > 1 ? 's' : ''}`;
+    } else if (hours > 0) {
+      relativeStr = `${hours} hour${hours > 1 ? 's' : ''}`;
+    } else if (minutes > 0) {
+      relativeStr = `${minutes} min${minutes > 1 ? 's' : ''}`;
+    } else {
+      relativeStr = 'less than a minute';
+    }
+  }
+
+  return { dateStr, timeStr, relativeStr };
+}
+
 function renderInviteCodes() {
   const listContainer = document.getElementById('inviteCodesList');
   if (!listContainer) return;
@@ -4187,14 +4219,28 @@ function renderInviteCodes() {
     const isExpired = code.expiresAt && new Date(code.expiresAt) < new Date();
     const usesLeft = code.maxUses > 0 ? code.maxUses - (code.uses || 0) : 'Unlimited';
 
+    let expiryDisplay = '';
+    if (code.expiresAt) {
+      if (isExpired) {
+        expiryDisplay = '<span style="color:#ef4444;"><i class="fa fa-clock" style="margin-right:0.25rem;"></i>Expired</span>';
+      } else {
+        const { dateStr, timeStr, relativeStr } = formatExpiryTime(code.expiresAt);
+        expiryDisplay = `<span style="color:#fbbf24;"><i class="fa fa-clock" style="margin-right:0.25rem;"></i>Expires ${dateStr} at ${timeStr} (${relativeStr} left)</span>`;
+      }
+    } else {
+      expiryDisplay = '<span style="color:#10b981;"><i class="fa fa-infinity" style="margin-right:0.25rem;"></i>Never expires</span>';
+    }
+
     const codeEl = document.createElement('div');
     codeEl.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:1rem; border-bottom:1px solid #4a5568;';
     codeEl.innerHTML = `
       <div style="flex:1;">
         <code style="background:#1e2028; color:${isExpired ? '#ef4444' : '#68d391'}; padding:0.5rem 0.75rem; border-radius:6px; font-family:monospace; font-size:1rem;">${code.code}</code>
-        <div style="margin-top:0.5rem; font-size:0.875rem; color:#a0aec0;">
-          ${isExpired ? '<span style="color:#ef4444;">Expired</span>' : `Uses: ${code.uses || 0}${code.maxUses > 0 ? '/' + code.maxUses : ''}`}
-          ${code.expiresAt && !isExpired ? ' • Expires: ' + new Date(code.expiresAt).toLocaleDateString() : ''}
+        <div style="margin-top:0.5rem; font-size:0.75rem; color:#a0aec0;">
+          Uses: ${code.uses || 0}${code.maxUses > 0 ? '/' + code.maxUses : ' (unlimited)'}
+        </div>
+        <div style="margin-top:0.25rem; font-size:0.75rem;">
+          ${expiryDisplay}
         </div>
       </div>
       <div style="display:flex; gap:0.5rem;">
@@ -4220,6 +4266,24 @@ function generateInviteCode() {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     input.value = code;
+    validateInviteCodeInput();
+  }
+}
+
+function validateInviteCodeInput() {
+  const input = document.getElementById('inviteCodeInput');
+  const icon = document.getElementById('inviteCodeValidationIcon');
+  if (!input || !icon) return;
+
+  const value = input.value.trim().replace(/[^A-Za-z0-9]/g, '');
+  const isValid = value.length >= 4 && value.length <= 16;
+
+  if (isValid) {
+    icon.style.color = '#10b981';
+    icon.innerHTML = '<i class="fa fa-check"></i>';
+  } else {
+    icon.style.color = '#ef4444';
+    icon.innerHTML = '<i class="fa fa-times"></i>';
   }
 }
 
@@ -4228,13 +4292,29 @@ async function createInviteCode() {
   const expireSelect = document.getElementById('expireAfterSelect');
   const maxUsesSelect = document.getElementById('maxUsesSelect');
 
-  let code = codeInput ? codeInput.value.trim() : '';
+  let code = codeInput ? codeInput.value.trim().toUpperCase() : '';
+
+  // Sanitize: only allow alphanumeric characters
+  code = code.replace(/[^A-Z0-9]/g, '');
 
   // Auto-generate if empty
   if (!code) {
     generateInviteCode();
     code = codeInput.value;
   }
+
+  // Validate length
+  if (code.length < 4) {
+    showToast('Invite code must be at least 4 characters', 3000, 'error');
+    return;
+  }
+  if (code.length > 16) {
+    showToast('Invite code must be 16 characters or less', 3000, 'error');
+    return;
+  }
+
+  // Update input with sanitized value
+  if (codeInput) codeInput.value = code;
 
   const expireAfter = expireSelect ? expireSelect.value : '7d';
   const maxUses = maxUsesSelect ? parseInt(maxUsesSelect.value, 10) : 0;
@@ -4266,6 +4346,12 @@ async function createInviteCode() {
 
     if (!response.ok) {
       const data = await response.json();
+      // Handle duplicate invite code - auto-regenerate and notify user
+      if (response.status === 409) {
+        generateInviteCode();
+        showToast('Code already exists. A new code has been generated.', 3000, 'error');
+        return;
+      }
       throw new Error(data.message || 'Failed to create invite code');
     }
 
@@ -4299,18 +4385,38 @@ function copyInviteCode(code) {
 
 function copySuccessCode() {
   const code = document.getElementById('successCode');
+  const icon = document.getElementById('copyCodeIcon');
+  const btn = document.getElementById('copyCodeBtn');
   if (code) {
     navigator.clipboard.writeText(code.textContent).then(() => {
+      if (icon) {
+        icon.className = 'fa fa-check';
+        if (btn) btn.style.background = '#10b981';
+      }
       showToast('Code copied!', 2000, 'success');
+      setTimeout(() => {
+        if (icon) icon.className = 'fa fa-copy';
+        if (btn) btn.style.background = '#4a5568';
+      }, 2000);
     });
   }
 }
 
 function copySuccessLink() {
   const link = document.getElementById('successLink');
+  const icon = document.getElementById('copyLinkIcon');
+  const btn = document.getElementById('copyLinkBtn');
   if (link) {
     navigator.clipboard.writeText(link.textContent).then(() => {
+      if (icon) {
+        icon.className = 'fa fa-check';
+        if (btn) btn.style.background = '#10b981';
+      }
       showToast('Link copied!', 2000, 'success');
+      setTimeout(() => {
+        if (icon) icon.className = 'fa fa-copy';
+        if (btn) btn.style.background = '#4a5568';
+      }, 2000);
     });
   }
 }
@@ -9389,14 +9495,19 @@ async function saveEditEvent() {
               <!-- Invite Code Input -->
               <div>
                 <label style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.5rem;">Invite Code</label>
-                <input id="inviteCodeInput" type="text" placeholder="Auto-generated code" maxlength="20" readonly
-                       style="width:100%; height:44px; background:#1e2028; color:#f7fafc; border:1.5px solid #35385a; border-radius:8px; font-size:1rem; font-weight:500; padding-left:1rem; padding-right:1rem;">
+                <input id="inviteCodeInput" type="text" placeholder="Enter code or generate random" minlength="4" maxlength="16" oninput="validateInviteCodeInput()"
+                       style="width:100%; height:44px; background:#1e2028; color:#f7fafc; border:1.5px solid #35385a; border-radius:8px; font-size:1rem; font-weight:500; padding-left:1rem; padding-right:1rem; text-transform:uppercase;">
+                <p id="inviteCodeValidation" style="font-size:0.75rem; margin-top:0.25rem; display:flex; align-items:center; gap:0.375rem;">
+                  <span id="inviteCodeValidationIcon" style="color:#ef4444; font-size:0.75rem;"><i class="fa fa-times"></i></span>
+                  <span style="color:#6b7280;">4-16 characters, letters and numbers only</span>
+                </p>
               </div>
-              
+
               <!-- Generate Button -->
-              <div style="display:flex; align-items:end;">
-                <button onclick="generateInviteCode()" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer; width:100%;">
-                  <i class="fa fa-random"></i> Generate Random
+              <div style="display:flex; flex-direction:column; justify-content:flex-start;">
+                <label style="color:#e0e7ff; font-weight:500; display:block; margin-bottom:0.5rem;">&nbsp;</label>
+                <button onclick="generateInviteCode()" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer; width:100%; height:44px;">
+                  <i class="fa fa-random"></i> Regenerate Random
                 </button>
               </div>
             </div>
@@ -9497,8 +9608,8 @@ async function saveEditEvent() {
               <label style="color:#e0e7ff; font-weight:500; font-size:0.875rem; display:block; margin-bottom:0.5rem;">Invite Code:</label>
               <div style="display:flex; align-items:center; gap:0.5rem;">
                 <code id="successCode" style="background:#1e2028; color:#68d391; padding:0.75rem; border-radius:8px; font-family:monospace; font-size:1.125rem; flex:1; border:1px solid #4a5568;">TWGBT7</code>
-                <button onclick="copySuccessCode()" style="background:#4a5568; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:0.875rem; transition:background 0.2s;" onmouseover="this.style.background='#5a6570'" onmouseout="this.style.background='#4a5568'">
-                  <i class="fa fa-copy"></i>
+                <button id="copyCodeBtn" onclick="copySuccessCode()" style="background:#4a5568; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.background='#5a6570'" onmouseout="this.style.background='#4a5568'">
+                  <i id="copyCodeIcon" class="fa fa-copy"></i>
                 </button>
               </div>
             </div>
@@ -9506,8 +9617,8 @@ async function saveEditEvent() {
               <label style="color:#e0e7ff; font-weight:500; font-size:0.875rem; display:block; margin-bottom:0.5rem;">Share Link:</label>
               <div style="display:flex; align-items:center; gap:0.5rem;">
                 <code id="successLink" style="background:#1e2028; color:#68d391; padding:0.75rem; border-radius:8px; font-family:monospace; font-size:0.875rem; flex:1; word-break:break-all; border:1px solid #4a5568;">https://tinyurl.com/linescad/TWGBT7</code>
-                <button onclick="copySuccessLink()" style="background:#4a5568; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:0.875rem; transition:background 0.2s;" onmouseover="this.style.background='#5a6570'" onmouseout="this.style.background='#4a5568'">
-                  <i class="fa fa-copy"></i>
+                <button id="copyLinkBtn" onclick="copySuccessLink()" style="background:#4a5568; color:#fff; border:none; border-radius:8px; padding:0.75rem; cursor:pointer; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.background='#5a6570'" onmouseout="this.style.background='#4a5568'">
+                  <i id="copyLinkIcon" class="fa fa-copy"></i>
                 </button>
               </div>
             </div>
