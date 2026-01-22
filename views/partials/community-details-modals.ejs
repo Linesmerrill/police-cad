@@ -4213,10 +4213,10 @@ function renderInviteCodes() {
 function generateInviteCode() {
   const input = document.getElementById('inviteCodeInput');
   if (input) {
-    // Generate a random 6-character alphanumeric code
+    // Generate a random 8-character alphanumeric code
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 8; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     input.value = code;
