@@ -628,8 +628,8 @@
           card.setAttribute('data-dept-index', idx);
           if (canAccess) {
             card.setAttribute('data-dept-id', dept._id);
-            card.setAttribute('data-dept-name', (dept.name || '').replace(/'/g, "\\'"));
-            card.setAttribute('data-template-name', (dept.templateName || '').replace(/'/g, "\\'"));
+            card.setAttribute('data-dept-name', (dept.name || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'"));
+            card.setAttribute('data-template-name', (dept.templateName || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'"));
           }
 
           var templateName = dept.templateName || '';
@@ -1258,8 +1258,8 @@
                   <% if (deptIndex >= 6) { %>style="display: none;"<% } %>
                   <% if (canAccess) { %>
                     data-dept-id="<%= dept._id %>"
-                    data-dept-name="<%= dept.name.replace(/'/g, "\\'") %>"
-                    data-template-name="<%= templateName.replace(/'/g, "\\'") %>"
+                    data-dept-name="<%= dept.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'") %>"
+                    data-template-name="<%= templateName.replace(/\\/g, "\\\\").replace(/'/g, "\\'") %>"
                   <% } %>
                 >
                   <div class="relative">
