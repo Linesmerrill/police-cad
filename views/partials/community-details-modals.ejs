@@ -5184,7 +5184,7 @@ async function deleteInviteCode() {
         <div class="flex items-center justify-between">
           <div>
             <label class="block text-gray-300 text-sm font-medium">Visibility</label>
-            <span id="dept-visibility-label" class="text-xs text-gray-500">Public - anyone can join</span>
+            <span id="dept-visibility-label" class="text-xs text-gray-500">Public - anyone in your community can join</span>
           </div>
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" id="dept-visibility-toggle" class="sr-only peer" onchange="toggleDeptVisibility()">
@@ -5327,7 +5327,7 @@ function resetCreateDepartmentForm() {
   const toggle = document.getElementById('dept-visibility-toggle');
   const label = document.getElementById('dept-visibility-label');
   if (toggle) toggle.checked = false;
-  if (label) label.textContent = 'Public - anyone can join';
+  if (label) label.textContent = 'Public - anyone in your community can join';
 
   // Reset photo preview
   const preview = document.getElementById('dept-photo-preview');
@@ -5704,7 +5704,7 @@ function toggleDeptVisibility() {
     label.textContent = 'Private - approval required';
   } else {
     hiddenInput.value = 'public';
-    label.textContent = 'Public - anyone can join';
+    label.textContent = 'Public - anyone in your community can join';
   }
 }
 
@@ -5716,7 +5716,7 @@ function setDeptVisibility(val) {
     toggle.checked = val === 'private';
   }
   if (label) {
-    label.textContent = val === 'private' ? 'Private - approval required' : 'Public - anyone can join';
+    label.textContent = val === 'private' ? 'Private - approval required' : 'Public - anyone in your community can join';
   }
 }
 
