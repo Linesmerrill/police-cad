@@ -2,6 +2,7 @@
 <%
   // Global permission logic - defined at the very beginning for use throughout the template
   let canManageAnnouncements = false;
+  let canManageDepartments = false;
   const userId = user && user._doc ? String(user._doc._id) : null;
   if (userId && community.community && Array.isArray(community.community.roles)) {
     community.community.roles.forEach(function(role) {
@@ -13,6 +14,12 @@
               (perm.name === "manage community settings" && perm.enabled === true)
             ) {
               canManageAnnouncements = true;
+            }
+            if (
+              (perm.name === "administrator" && perm.enabled === true) ||
+              (perm.name === "manage departments" && perm.enabled === true)
+            ) {
+              canManageDepartments = true;
             }
           });
         }
@@ -1117,23 +1124,6 @@
                 </span>
               <% } %>
             </h2>
-
-            <%
-              let canManageDepartments = false;
-              if (userId && community.community && Array.isArray(community.community.roles)) {
-                community.community.roles.forEach(function(role) {
-                  if (Array.isArray(role.members) && role.members.includes(userId)) {
-                    if (Array.isArray(role.permissions)) {
-                      role.permissions.forEach(function(perm) {
-                        if ((perm.name === "administrator" && perm.enabled === true) || (perm.name === "manage departments" && perm.enabled === true)) {
-                          canManageDepartments = true;
-                        }
-                      });
-                    }
-                  }
-                });
-              }
-            %>
 
             <% if (isMemberApproved && canManageDepartments) { %>
               <button onclick="openCreateDepartmentModal()" class="btn-secondary text-sm">

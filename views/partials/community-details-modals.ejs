@@ -5251,7 +5251,7 @@ async function refreshDepartmentsGrid() {
   const canManageDepartments = <%= typeof canManageDepartments !== 'undefined' ? canManageDepartments : false %>;
 
   try {
-    const response = await fetch(`${API_URL}/api/v1/community/${communityId}/departments`);
+    const response = await fetch(`${API_URL}/api/v1/community/${communityId}/departments?userId=${userId}`);
     if (!response.ok) throw new Error('Failed to fetch departments');
     const data = await response.json();
     const departments = data.departments || [];
