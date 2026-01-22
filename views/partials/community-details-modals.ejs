@@ -4321,7 +4321,7 @@ function renderInviteCodes() {
         </div>
       </div>
       <div style="display:flex; gap:0.5rem;">
-        <button onclick="copyInviteCode('${code.code}')" style="background:#4a5568; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.875rem;">
+        <button id="copyBtn-${code.code}" onclick="copyInviteCode('${code.code}', this)" style="background:#4a5568; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.875rem; transition:all 0.2s;">
           <i class="fa fa-copy"></i>
         </button>
         <button onclick="confirmDeleteInviteCode('${code._id || code.code}')" style="background:#ef4444; color:#fff; border:none; border-radius:6px; padding:0.5rem 0.75rem; cursor:pointer; font-size:0.875rem;">
@@ -4452,8 +4452,21 @@ async function createInviteCode() {
   }
 }
 
-function copyInviteCode(code) {
+function copyInviteCode(code, btn) {
   navigator.clipboard.writeText(code).then(() => {
+    // Show check icon on the button
+    if (btn) {
+      const icon = btn.querySelector('i');
+      if (icon) {
+        icon.className = 'fa fa-check';
+        btn.style.background = '#10b981';
+      }
+      // Revert after 2 seconds
+      setTimeout(() => {
+        if (icon) icon.className = 'fa fa-copy';
+        btn.style.background = '#4a5568';
+      }, 2000);
+    }
     showToast('Invite code copied!', 2000, 'success');
   }).catch(() => {
     showToast('Failed to copy code', 2000, 'error');
