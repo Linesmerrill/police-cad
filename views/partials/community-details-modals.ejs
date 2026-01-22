@@ -6381,8 +6381,8 @@ function deleteEditDeptImage() {
   placeholder.style.display = 'flex';
   if (deleteBtn) deleteBtn.style.display = 'none';
 
-  // Clear the stored URL (set to empty string to indicate deletion)
-  imageUrlInput.value = '';
+  // Set special marker to indicate explicit deletion (not just empty)
+  imageUrlInput.value = '__DELETE__';
 
   // Clear the file input
   if (fileInput) fileInput.value = '';
@@ -6554,12 +6554,22 @@ async function saveEditDepartment() {
     const currentDept = response.department || response;
     console.log('currentDept extracted:', currentDept);
 
+    // Determine image value: __DELETE__ means explicitly remove, empty means keep existing
+    let finalImage;
+    if (imageUrl === '__DELETE__') {
+      finalImage = ''; // Explicitly delete the image
+    } else if (imageUrl) {
+      finalImage = imageUrl; // Use new uploaded image
+    } else {
+      finalImage = currentDept.image; // Keep existing image
+    }
+
     // Create the department object with only the fields we want to update
     const payload = {
       name,
       description,
       approvalRequired: document.getElementById('editDeptApprovalRequired').checked,
-      image: imageUrl || currentDept.image
+      image: finalImage
     };
 
     // Update the template components if template exists - include in the same PATCH request
