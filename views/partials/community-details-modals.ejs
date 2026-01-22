@@ -5246,158 +5246,23 @@ async function deleteInviteCode() {
 <script>
 // --- Refresh Departments Grid ---
 async function refreshDepartmentsGrid() {
-  const communityId = '<%= community._id %>';
-  const userId = '<%= userId || "" %>';
-  const canManageDepartments = <%= typeof canManageDepartments !== 'undefined' ? canManageDepartments : false %>;
-
-  try {
-    const response = await fetch(`${API_URL}/api/v1/community/${communityId}/departments?userId=${userId}`);
-    if (!response.ok) throw new Error('Failed to fetch departments');
-    const data = await response.json();
-    const departments = data.departments || [];
-
-    // Update the global departmentsListData
-    window.departmentsListData = departments;
-
-    // Update department count in header
-    const countEl = document.querySelector('#departments-section .section-title span');
-    if (countEl) {
-      countEl.textContent = departments.length;
+  // Use the pagination-aware fetchDepartmentsPage function from community-details.ejs
+  // This preserves the current page and filter state
+  if (typeof fetchDepartmentsPage === 'function' && typeof deptCurrentPage !== 'undefined') {
+    // Clear the loaded pages cache for the current filter so it refetches
+    var filterKey = (typeof deptCurrentFilter !== 'undefined' ? deptCurrentFilter : '') || '';
+    if (typeof deptLoadedPages !== 'undefined') {
+      deptLoadedPages[filterKey] = {};
     }
-
-    // Render the departments grid
-    const grid = document.getElementById('departments-grid');
-    if (!grid) return;
-
-    grid.innerHTML = '';
-
-    departments.forEach((dept, deptIndex) => {
-      const templateName = dept.templateName || (dept.template && dept.template.name ? dept.template.name : '');
-      const approvalRequired = dept.approvalRequired;
-      const members = Array.isArray(dept.members) ? dept.members : [];
-      const isDeptMember = members.some(m => m.userID === userId && m.status === 'approved');
-      const canAccess = canManageDepartments || !approvalRequired || isDeptMember;
-
-      let deptIcon = 'fa-building';
-      let deptColor = '#60a5fa';
-      const lowerTemplate = templateName.toLowerCase();
-      if (lowerTemplate.includes('police')) {
-        deptIcon = 'fa-shield-halved';
-        deptColor = '#3b82f6';
-      } else if (lowerTemplate.includes('sheriff')) {
-        deptIcon = 'fa-star';
-        deptColor = '#fbbf24';
-      } else if (lowerTemplate.includes('civilian')) {
-        deptIcon = 'fa-user';
-        deptColor = '#10b981';
-      } else if (lowerTemplate.includes('fire') || lowerTemplate.includes('ems')) {
-        deptIcon = 'fa-truck-medical';
-        deptColor = '#ef4444';
-      } else if (lowerTemplate.includes('dispatch')) {
-        deptIcon = 'fa-headset';
-        deptColor = '#f59e0b';
-      }
-
-      const card = document.createElement('div');
-      card.className = 'dept-card' + (canAccess ? '' : ' locked');
-      card.setAttribute('data-dept-index', deptIndex);
-      if (deptIndex >= 6) card.style.display = 'none';
-      if (canAccess) {
-        card.setAttribute('data-dept-id', dept._id);
-        card.setAttribute('data-dept-name', dept.name);
-        card.setAttribute('data-template-name', templateName);
-      }
-
-      let imageHtml = '';
-      if (dept.image) {
-        imageHtml = `
-          <div class="aspect-[2/1] overflow-hidden">
-            <img src="${dept.image}" alt="${dept.name}" class="w-full h-full object-cover" style="pointer-events: none;" />
-            <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(10, 10, 15, 0.95) 0%, transparent 60%);"></div>
-          </div>`;
-      } else {
-        imageHtml = `
-          <div class="aspect-[2/1] flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);">
-            <i class="fa ${deptIcon} text-4xl" style="color: ${deptColor}; opacity: 0.5;"></i>
-          </div>`;
-      }
-
-      let lockOverlay = '';
-      if (!canAccess) {
-        lockOverlay = `
-          <div class="absolute inset-0 flex items-center justify-center" style="background: rgba(10, 10, 15, 0.7);">
-            <div class="text-center">
-              <i class="fa fa-lock text-2xl text-slate-400 mb-2"></i>
-              <p class="text-slate-400 text-xs">Private Department</p>
-            </div>
-          </div>`;
-      }
-
-      let privateBadge = '';
-      if (approvalRequired && canAccess) {
-        privateBadge = `
-          <div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full z-10" style="background: rgba(0, 0, 0, 0.6);">
-            <i class="fa fa-lock text-xs" style="color: #fbbf24;"></i>
-            <span class="text-xs font-medium" style="color: #fbbf24;">Private</span>
-          </div>`;
-      }
-
-      let editBtn = '';
-      if (canManageDepartments) {
-        editBtn = `
-          <button
-            class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full transition-colors z-10"
-            style="background: rgba(0, 0, 0, 0.5); color: #94a3b8;"
-            onclick="event.stopPropagation(); openEditDepartmentModal('${dept._id}');"
-          >
-            <i class="fa fa-pencil text-sm"></i>
-          </button>`;
-      }
-
-      const descHtml = dept.description ? `<p class="text-slate-400 text-xs line-clamp-2">${dept.description}</p>` : '';
-      const enterHtml = canAccess ? `<span class="text-xs" style="color: #fbbf24;">Enter <i class="fa fa-arrow-right ml-1"></i></span>` : '';
-
-      card.innerHTML = `
-        <div class="relative">
-          ${imageHtml}
-          ${lockOverlay}
-          ${privateBadge}
-          ${editBtn}
-        </div>
-        <div class="p-4 flex flex-col justify-between" style="min-height: 88px;">
-          <div>
-            <div class="flex items-center gap-2 mb-1">
-              <i class="fa ${deptIcon} text-sm" style="color: ${deptColor};"></i>
-              <h3 class="font-bold text-white text-base line-clamp-1">${dept.name}</h3>
-            </div>
-            ${descHtml}
-          </div>
-          <div class="flex items-center justify-between mt-2">
-            <span class="text-xs text-slate-500">${templateName || 'Department'}</span>
-            ${enterHtml}
-          </div>
-        </div>`;
-
-      grid.appendChild(card);
-    });
-
-    // Re-attach click handlers for department cards
-    initDeptCardClicks();
-
-    // Update pagination visibility
-    const paginationEl = document.getElementById('dept-pagination');
-    if (paginationEl) {
-      paginationEl.style.display = departments.length > 6 ? 'flex' : 'none';
+    // Fetch the current page (will clear and re-render)
+    await fetchDepartmentsPage(deptCurrentPage, true);
+    // Re-attach click handlers
+    if (typeof initDeptCardClicks === 'function') {
+      initDeptCardClicks();
     }
-
-    // Reinitialize filter tabs
-    if (typeof initDeptFilterTabs === 'function') {
-      initDeptFilterTabs();
-    }
-
-  } catch (error) {
-    console.error('Error refreshing departments:', error);
-    showToast('Error refreshing departments', 2500, 'error');
+  } else {
+    // Fallback: reload the page if pagination functions aren't available
+    window.location.reload();
   }
 }
 
