@@ -6530,6 +6530,11 @@ function deleteEditDepartment() {
   const deptName = document.getElementById('editDeptName').value || 'this department';
   document.getElementById('deleteDeptName').textContent = deptName;
 
+  // Reset the delete button state (in case it was left in "Deleting..." state from previous delete)
+  const deleteBtn = document.getElementById('confirmDeleteDeptBtn');
+  deleteBtn.disabled = false;
+  deleteBtn.innerHTML = '<i class="fa fa-trash"></i> Delete Department';
+
   // Show the custom delete confirmation modal
   document.getElementById('deleteDepartmentModal').style.display = 'flex';
 }
