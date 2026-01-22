@@ -4140,25 +4140,35 @@ function closeInviteCodesModal() {
 
 // Invite codes management functions
 let inviteCodesData = [];
+let inviteCodesPagination = { currentPage: 1, totalPages: 1, totalCount: 0, hasNextPage: false, hasPrevPage: false, limit: 10 };
+let expiredCodesCount = 0;
 
-async function loadInviteCodes() {
+async function loadInviteCodes(page = 1) {
   const listContainer = document.getElementById('inviteCodesList');
   const loadingDiv = document.getElementById('inviteCodesLoading');
   const emptyDiv = document.getElementById('inviteCodesEmpty');
+  const expiredHelper = document.getElementById('expiredCodesHelper');
+  const paginationDiv = document.getElementById('inviteCodesPagination');
 
   if (loadingDiv) loadingDiv.style.display = 'block';
   if (listContainer) listContainer.innerHTML = '';
   if (emptyDiv) emptyDiv.style.display = 'none';
+  if (expiredHelper) expiredHelper.style.display = 'none';
+  if (paginationDiv) paginationDiv.style.display = 'none';
 
   try {
     const communityId = '<%= community._id %>';
     const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
-    const response = await fetch(`${apiUrl}/api/v2/community/${communityId}/invite-codes`);
+    const response = await fetch(`${apiUrl}/api/v2/community/${communityId}/invite-codes?page=${page}&limit=10`);
     if (!response.ok) throw new Error('Failed to load invite codes');
 
     const data = await response.json();
     inviteCodesData = data.inviteCodes || [];
+    inviteCodesPagination = data.pagination || { currentPage: 1, totalPages: 1, totalCount: 0, hasNextPage: false, hasPrevPage: false, limit: 10 };
+
+    // Count expired codes
+    expiredCodesCount = inviteCodesData.filter(code => code.expiresAt && new Date(code.expiresAt) < new Date()).length;
 
     if (loadingDiv) loadingDiv.style.display = 'none';
 
@@ -4168,7 +4178,15 @@ async function loadInviteCodes() {
       return;
     }
 
+    // Show expired codes helper if there are expired codes
+    if (expiredCodesCount > 0 && expiredHelper) {
+      const countSpan = document.getElementById('expiredCodesCount');
+      if (countSpan) countSpan.textContent = expiredCodesCount;
+      expiredHelper.style.display = 'block';
+    }
+
     renderInviteCodes();
+    renderInviteCodesPagination();
   } catch (error) {
     console.error('Error loading invite codes:', error);
     if (loadingDiv) loadingDiv.style.display = 'none';
@@ -4176,6 +4194,65 @@ async function loadInviteCodes() {
       listContainer.innerHTML = '<div style="text-align:center; padding:2rem; color:#ef4444;"><i class="fa fa-exclamation-triangle" style="font-size:2rem; margin-bottom:1rem;"></i><p>Failed to load invite codes</p></div>';
     }
   }
+}
+
+function renderInviteCodesPagination() {
+  const paginationDiv = document.getElementById('inviteCodesPagination');
+  if (!paginationDiv) return;
+
+  if (inviteCodesPagination.totalPages <= 1) {
+    paginationDiv.style.display = 'none';
+    return;
+  }
+
+  paginationDiv.style.display = 'flex';
+  paginationDiv.innerHTML = `
+    <button onclick="loadInviteCodes(${inviteCodesPagination.currentPage - 1})"
+            ${!inviteCodesPagination.hasPrevPage ? 'disabled' : ''}
+            style="background:${inviteCodesPagination.hasPrevPage ? '#4a5568' : '#2d3748'}; color:${inviteCodesPagination.hasPrevPage ? '#fff' : '#6b7280'}; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:${inviteCodesPagination.hasPrevPage ? 'pointer' : 'not-allowed'}; font-size:0.875rem;">
+      <i class="fa fa-chevron-left"></i> Prev
+    </button>
+    <span style="color:#a0aec0; font-size:0.875rem; display:flex; align-items:center;">
+      Page ${inviteCodesPagination.currentPage} of ${inviteCodesPagination.totalPages}
+    </span>
+    <button onclick="loadInviteCodes(${inviteCodesPagination.currentPage + 1})"
+            ${!inviteCodesPagination.hasNextPage ? 'disabled' : ''}
+            style="background:${inviteCodesPagination.hasNextPage ? '#4a5568' : '#2d3748'}; color:${inviteCodesPagination.hasNextPage ? '#fff' : '#6b7280'}; border:none; border-radius:6px; padding:0.5rem 1rem; cursor:${inviteCodesPagination.hasNextPage ? 'pointer' : 'not-allowed'}; font-size:0.875rem;">
+      Next <i class="fa fa-chevron-right"></i>
+    </button>
+  `;
+}
+
+async function deleteExpiredInviteCodes() {
+  const communityId = '<%= community._id %>';
+  const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+
+  try {
+    const response = await fetch(`${apiUrl}/api/v1/community/${communityId}/invite-codes/expired`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) throw new Error('Failed to delete expired codes');
+
+    const data = await response.json();
+    showToast(`Deleted ${data.deletedCount} expired invite code${data.deletedCount !== 1 ? 's' : ''}`, 3000, 'success');
+    closeDeleteExpiredModal();
+    loadInviteCodes(1); // Reload from page 1
+  } catch (error) {
+    console.error('Error deleting expired codes:', error);
+    showToast('Failed to delete expired codes', 3000, 'error');
+  }
+}
+
+function showDeleteExpiredModal() {
+  const modal = document.getElementById('deleteExpiredModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeDeleteExpiredModal() {
+  const modal = document.getElementById('deleteExpiredModal');
+  if (modal) modal.style.display = 'none';
 }
 
 function formatExpiryTime(expiresAt) {
@@ -9548,27 +9625,72 @@ async function saveEditEvent() {
             </button>
           </div>
 
+          <!-- Expired Codes Helper Card -->
+          <div id="expiredCodesHelper" style="display:none; background:linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%); border:1px solid rgba(239, 68, 68, 0.3); border-radius:12px; padding:1rem 1.5rem; margin-bottom:1rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+              <div style="display:flex; align-items:center; gap:0.75rem;">
+                <i class="fa fa-clock" style="color:#fbbf24; font-size:1.25rem;"></i>
+                <div>
+                  <p style="color:#fbbf24; margin:0; font-weight:600; font-size:0.875rem;">You have <span id="expiredCodesCount">0</span> expired invite code(s)</p>
+                  <p style="color:#a0aec0; margin:0.25rem 0 0 0; font-size:0.75rem;">Clean up expired codes to keep your list organized</p>
+                </div>
+              </div>
+              <button onclick="showDeleteExpiredModal()" style="background:rgba(239, 68, 68, 0.2); color:#ef4444; border:1px solid rgba(239, 68, 68, 0.4); border-radius:8px; padding:0.5rem 1rem; font-weight:500; cursor:pointer; font-size:0.875rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(239, 68, 68, 0.3)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.2)'">
+                <i class="fa fa-trash"></i> Remove Expired
+              </button>
+            </div>
+          </div>
+
           <!-- Existing Invite Codes Section -->
           <div style="background:#2d3748; border-radius:12px; padding:1.5rem; border:1px solid #4a5568;">
             <h4 style="color:#fff; margin:0 0 1rem 0; font-size:1.125rem; font-weight:600;">Existing Invite Codes</h4>
-            
+
             <!-- Loading State -->
             <div id="inviteCodesLoading" style="text-align:center; padding:2rem; display:none;">
               <div class="loading-spinner" style="width:40px; height:40px; border:4px solid #4a5568; border-top:4px solid #10b981; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 1rem;"></div>
               <p style="color:#a0aec0; margin:0;">Loading invite codes...</p>
             </div>
-            
+
             <!-- Empty State -->
             <div id="inviteCodesEmpty" style="text-align:center; padding:2rem; display:none;">
               <i class="fa fa-user-plus" style="font-size:3rem; color:#6b7280; margin-bottom:1rem;"></i>
               <p style="color:#a0aec0; margin:0;">No invite codes created yet</p>
             </div>
-            
+
             <!-- Invite Codes List -->
             <div id="inviteCodesList" style="display:none;">
               <!-- Invite codes will be populated here -->
             </div>
+
+            <!-- Pagination -->
+            <div id="inviteCodesPagination" style="display:none; justify-content:center; align-items:center; gap:1rem; margin-top:1rem; padding-top:1rem; border-top:1px solid #4a5568;">
+              <!-- Pagination will be populated here -->
+            </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Expired Codes Confirmation Modal -->
+    <div id="deleteExpiredModal" class="heroui-modal" style="display:none; position:fixed; z-index:5100; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+      <div style="background:#1e2028; border-radius:16px; border:1px solid #35385a; width:90%; max-width:450px; position:relative;">
+        <button onclick="closeDeleteExpiredModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+
+        <div style="padding:2rem; text-align:center;">
+          <div style="width:60px; height:60px; background:rgba(239, 68, 68, 0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
+            <i class="fa fa-trash" style="font-size:1.5rem; color:#ef4444;"></i>
+          </div>
+          <h3 style="color:#fff; margin:0; font-size:1.25rem; font-weight:600;">Delete Expired Codes?</h3>
+          <p style="color:#a0aec0; margin:1rem 0 0 0; font-size:0.875rem;">This will permanently delete all expired invite codes for this community. This action cannot be undone.</p>
+        </div>
+
+        <div style="display:flex; gap:1rem; padding:0 2rem 2rem;">
+          <button onclick="closeDeleteExpiredModal()" style="flex:1; background:#4a5568; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer;">
+            Cancel
+          </button>
+          <button onclick="deleteExpiredInviteCodes()" style="flex:1; background:#ef4444; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer;">
+            <i class="fa fa-trash"></i> Delete All Expired
+          </button>
         </div>
       </div>
     </div>
