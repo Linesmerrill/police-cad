@@ -6540,14 +6540,13 @@ function saveEditDepartment() {
       approvalRequired: document.getElementById('editDeptApprovalRequired').checked, // Update approval required
       image: imageUrl || currentDept.image // Update image (keep existing if no new one)
     };
-    
-    // Update the template components if template exists
+
+    // Update the template components if template exists - include in the same PATCH request
     if (currentDept.template && currentDept.template.components) {
-      // Prepare components for the new API endpoint
-      const componentsToUpdate = currentDept.template.components.map(component => {
+      const updatedComponents = currentDept.template.components.map(component => {
         const componentName = component.name;
         let isEnabled = component.enabled; // Default to current value
-        
+
         // Override with form values for the components we're managing
         if (componentName === 'createCivilians') {
           isEnabled = document.getElementById('editDeptComponentCreateCivilians').checked;
@@ -6558,55 +6557,21 @@ function saveEditDepartment() {
         } else if (componentName === 'call911') {
           isEnabled = document.getElementById('editDeptComponentCall911').checked;
         }
-        
-        // Handle _id which might be a string or an object like {$oid: "..."}
-        let componentId = component._id;
-        if (typeof componentId === 'object' && componentId.$oid) {
-          componentId = componentId.$oid;
-        }
 
         return {
-          _id: componentId,
-          name: component.name,
+          ...component,
           enabled: isEnabled
         };
       });
-      
-      // Update components using the new API endpoint
-      updateDepartmentComponents(componentsToUpdate);
-      return; // Exit early since we're handling components separately
+
+      // Include updated template in the payload
+      payload.template = {
+        ...currentDept.template,
+        components: updatedComponents
+      };
     }
-    
+
     doUpdate();
-    
-    function updateDepartmentComponents(componentsToUpdate) {
-      console.log('Updating department components:', componentsToUpdate);
-      
-      fetch(`${API_URL}/api/v1/community/${communityId}/departments/${deptId}/components`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ components: componentsToUpdate })
-      })
-        .then(res => {
-          if (!res.ok) throw new Error('Failed to update department components');
-          return res.json();
-        })
-        .then(() => {
-          console.log('Components updated successfully');
-          // Now update the main department data
-          doUpdate();
-        })
-        .catch(err => {
-          console.error('Error updating components:', err);
-          if (typeof showToast === 'function') {
-            showToast('Failed to update department components', 3000, 'error');
-          } else {
-            alert('Failed to update department components');
-          }
-          saveBtn.disabled = false;
-          saveBtn.textContent = 'Save';
-        });
-    }
 
     function doUpdate() {
       console.log('doUpdate called with payload:', payload);
