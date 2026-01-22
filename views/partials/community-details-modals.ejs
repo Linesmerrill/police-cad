@@ -6558,15 +6558,30 @@ function saveEditDepartment() {
           isEnabled = document.getElementById('editDeptComponentCall911').checked;
         }
 
+        // Extract component ID - handle both string and {$oid: ...} formats
+        let componentId = component._id;
+        if (typeof componentId === 'object' && componentId.$oid) {
+          componentId = componentId.$oid;
+        }
+
         return {
-          ...component,
+          _id: componentId,
+          name: component.name,
           enabled: isEnabled
         };
       });
 
-      // Include updated template in the payload
+      // Extract template ID - handle both string and {$oid: ...} formats
+      let templateId = currentDept.template._id;
+      if (typeof templateId === 'object' && templateId.$oid) {
+        templateId = templateId.$oid;
+      }
+
+      // Include updated template in the payload with clean structure
       payload.template = {
-        ...currentDept.template,
+        _id: templateId,
+        name: currentDept.template.name,
+        description: currentDept.template.description || '',
         components: updatedComponents
       };
     }
