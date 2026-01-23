@@ -97,11 +97,29 @@
           const accessStatus = deptCard.getAttribute('data-access-status');
           // Only allow navigation if user has approved access
           if (accessStatus !== 'approved') {
-            // Don't navigate - show toast message instead
+            // Don't navigate - show appropriate message or modal
             if (accessStatus === 'pending') {
-              showToast('Your request to join this department is pending approval.', 3000, 'info');
+              // Show pending toast using the toast element directly
+              var pendingToast = document.getElementById('toast');
+              if (pendingToast) {
+                pendingToast.style.background = '#1e3a8a';
+                pendingToast.style.border = '1px solid #3b82f6';
+                pendingToast.style.color = '#fff';
+                pendingToast.textContent = 'Your request to join this department is pending approval.';
+                pendingToast.style.display = 'block';
+                setTimeout(function() { pendingToast.style.display = 'none'; }, 3000);
+              } else {
+                alert('Your request to join this department is pending approval.');
+              }
             } else {
-              showToast('You need to request access to this department first.', 3000, 'info');
+              // Locked - open the request to join modal
+              const deptId = deptCard.getAttribute('data-dept-id');
+              const deptName = deptCard.getAttribute('data-dept-name');
+              if (deptId && deptName && typeof openRequestJoinDepartmentModal === 'function') {
+                openRequestJoinDepartmentModal(deptId, deptName);
+              } else {
+                showToast('You need to request access to this department first.', 3000, 'info');
+              }
             }
             return;
           }
@@ -1721,11 +1739,27 @@
       }
 
       function showNoSettingsPermissionModal() {
-        showToast('You need the "manage community settings" permission to access settings.', 3000, 'error');
+        showPermissionDeniedToast('You don\'t have permission to access settings. Contact your community admin if you think this is a mistake.');
       }
 
       function showNoInviteCodesPermissionModal() {
-        showToast('You need the "manage members" permission to invite members.', 3000, 'error');
+        showPermissionDeniedToast('You don\'t have permission to invite members. Contact your community admin if you think this is a mistake.');
+      }
+
+      function showPermissionDeniedToast(message) {
+        // Try showing the toast
+        const toast = document.getElementById('toast');
+        if (toast) {
+          toast.style.background = '#1e3a8a';
+          toast.style.border = '1px solid #3b82f6';
+          toast.style.color = '#fff';
+          toast.textContent = message;
+          toast.style.display = 'block';
+          setTimeout(() => { toast.style.display = 'none'; }, 4000);
+        } else {
+          // Fallback to alert if toast element not found
+          alert(message);
+        }
       }
 
       document.addEventListener('DOMContentLoaded', function() {
