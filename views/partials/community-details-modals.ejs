@@ -6821,9 +6821,11 @@ function updateEditDeptVisibilityLabel() {
         <label class="block text-gray-300 mb-1" for="event-description">Description *</label>
         <textarea id="event-description" rows="3" required class="w-full text-gray-200 bg-gray-800 rounded p-2"></textarea>
       </div>
-      <div class="mb-4 flex items-center">
-        <input type="checkbox" id="event-required" class="form-checkbox text-blue-600 mr-2" />
-        <label for="event-required" class="text-gray-300">Attendance Required</label>
+      <div class="mb-4">
+        <label class="flex items-center gap-2 cursor-pointer text-gray-300">
+          <input type="checkbox" id="event-required" class="w-4 h-4 rounded border-gray-500 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-800" style="accent-color: #3b82f6;" />
+          <span>Attendance Required</span>
+        </label>
       </div>
       <div id="createEventError" class="text-red-400 text-sm mb-2" style="display:none;"></div>
       <div class="flex justify-end gap-2 mt-6">
@@ -7003,10 +7005,13 @@ function closeNoAnnouncementPermissionModal() {
         <label class="block text-gray-300 mb-1">Event Image (Optional)</label>
         <div id="edit-event-photo-upload" class="flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-4 bg-gray-800 cursor-pointer hover:border-blue-500 transition" onclick="document.getElementById('edit-event-photo').click()">
           <img id="edit-event-photo-preview" src="" alt="Preview" style="display:none; max-width:120px; max-height:120px; border-radius:0.5rem; margin-bottom:0.5rem;" />
-          <i class="fa fa-camera text-2xl text-gray-400 mb-2"></i>
-          <span class="text-gray-400 text-sm">Click to upload photo</span>
+          <i id="edit-event-camera-icon" class="fa fa-camera text-2xl text-gray-400 mb-2"></i>
+          <span id="edit-event-upload-text" class="text-gray-400 text-sm">Click to upload photo</span>
           <input type="file" id="edit-event-photo" accept="image/*" style="display:none;" onchange="handleEditEventPhotoChange(event)" />
         </div>
+        <button type="button" id="edit-event-remove-photo-btn" onclick="removeEditEventPhoto(event)" style="display:none; margin-top:0.5rem; background:#ef4444; color:#fff; border:none; padding:0.4rem 0.75rem; border-radius:6px; font-size:0.75rem; cursor:pointer;">
+          <i class="fa fa-trash mr-1"></i> Remove Photo
+        </button>
       </div>
       <div class="mb-4">
         <label class="block text-gray-300 mb-1" for="edit-event-title">Title *</label>
@@ -7024,9 +7029,11 @@ function closeNoAnnouncementPermissionModal() {
         <label class="block text-gray-300 mb-1" for="edit-event-description">Description *</label>
         <textarea id="edit-event-description" rows="3" required class="w-full text-gray-200 bg-gray-800 rounded p-2"></textarea>
       </div>
-      <div class="mb-4 flex items-center">
-        <input type="checkbox" id="edit-event-required" class="form-checkbox text-blue-600 mr-2" />
-        <label for="edit-event-required" class="text-gray-300">Attendance Required</label>
+      <div class="mb-4">
+        <label class="flex items-center gap-2 cursor-pointer text-gray-300">
+          <input type="checkbox" id="edit-event-required" class="w-4 h-4 rounded border-gray-500 bg-gray-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-800" style="accent-color: #3b82f6;" />
+          <span>Attendance Required</span>
+        </label>
       </div>
       <div id="editEventError" class="text-red-400 text-sm mb-2" style="display:none;"></div>
       <div class="flex justify-end gap-2 mt-6">
@@ -7142,13 +7149,26 @@ function openEditEventModal(eventId) {
   document.getElementById('edit-event-description').value = event.description || '';
   document.getElementById('edit-event-required').checked = !!event.required;
   const preview = document.getElementById('edit-event-photo-preview');
+  const removeBtn = document.getElementById('edit-event-remove-photo-btn');
+  const cameraIcon = document.getElementById('edit-event-camera-icon');
+  const uploadText = document.getElementById('edit-event-upload-text');
   if (event.image) {
     preview.src = event.image;
     preview.style.display = 'block';
+    removeBtn.style.display = 'inline-block';
+    if (cameraIcon) cameraIcon.style.display = 'none';
+    if (uploadText) uploadText.style.display = 'none';
   } else {
     preview.src = '';
     preview.style.display = 'none';
+    removeBtn.style.display = 'none';
+    if (cameraIcon) cameraIcon.style.display = 'block';
+    if (uploadText) uploadText.style.display = 'block';
   }
+  // Reset file input
+  document.getElementById('edit-event-photo').value = '';
+  // Store whether we want to clear the image
+  window.editEventClearImage = false;
   document.getElementById('editEventModal').style.display = 'flex';
 }
 function closeEditEventModal() {
@@ -7158,17 +7178,44 @@ function closeEditEventModal() {
 function handleEditEventPhotoChange(e) {
   const file = e.target.files[0];
   const preview = document.getElementById('edit-event-photo-preview');
+  const removeBtn = document.getElementById('edit-event-remove-photo-btn');
+  const cameraIcon = document.getElementById('edit-event-camera-icon');
+  const uploadText = document.getElementById('edit-event-upload-text');
   if (file) {
     const reader = new FileReader();
     reader.onload = function(ev) {
       preview.src = ev.target.result;
       preview.style.display = 'block';
+      removeBtn.style.display = 'inline-block';
+      if (cameraIcon) cameraIcon.style.display = 'none';
+      if (uploadText) uploadText.style.display = 'none';
+      window.editEventClearImage = false;
     };
     reader.readAsDataURL(file);
   } else {
     preview.src = '';
     preview.style.display = 'none';
+    removeBtn.style.display = 'none';
+    if (cameraIcon) cameraIcon.style.display = 'block';
+    if (uploadText) uploadText.style.display = 'block';
   }
+}
+function removeEditEventPhoto(e) {
+  if (e) e.stopPropagation();
+  const preview = document.getElementById('edit-event-photo-preview');
+  const removeBtn = document.getElementById('edit-event-remove-photo-btn');
+  const cameraIcon = document.getElementById('edit-event-camera-icon');
+  const uploadText = document.getElementById('edit-event-upload-text');
+  const photoInput = document.getElementById('edit-event-photo');
+
+  preview.src = '';
+  preview.style.display = 'none';
+  removeBtn.style.display = 'none';
+  if (cameraIcon) cameraIcon.style.display = 'block';
+  if (uploadText) uploadText.style.display = 'block';
+  if (photoInput) photoInput.value = '';
+  // Mark that we want to clear the image
+  window.editEventClearImage = true;
 }
 async function saveEditEvent() {
   if (!currentEditEvent) return;
@@ -7195,7 +7242,7 @@ async function saveEditEvent() {
   }
   document.getElementById('editEventError').style.display = 'none';
 
-  // Upload new image if one was selected, otherwise preserve the original
+  // Upload new image if one was selected, check if cleared, otherwise preserve the original
   if (photoInput && photoInput.files && photoInput.files[0]) {
     try {
       const file = photoInput.files[0];
@@ -7206,6 +7253,9 @@ async function saveEditEvent() {
       document.getElementById('editEventError').style.display = 'block';
       return;
     }
+  } else if (window.editEventClearImage) {
+    // User explicitly removed the photo
+    image = '';
   } else {
     // Preserve the original image URL from the event data
     image = originalEvent && originalEvent.image ? originalEvent.image : '';
