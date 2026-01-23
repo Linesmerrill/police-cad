@@ -773,7 +773,7 @@
           } else if (isPending) {
             actionHtml = '<span class="text-xs px-2 py-1 rounded" style="color: #94a3b8; background: rgba(148, 163, 184, 0.1);">Request Pending</span>';
           } else if (isLocked) {
-            actionHtml = '<button class="text-xs px-2 py-1 rounded transition-colors" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);" onclick="event.stopPropagation(); openRequestJoinDepartmentModal(\'' + dept._id + '\', \'' + escapeHtml(dept.name).replace(/'/g, "\\'") + '\');">Request to Join</button>';
+            actionHtml = '<button class="text-xs px-2 py-1 rounded transition-colors" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);" onclick="event.stopPropagation(); openRequestJoinDepartmentModal(\'' + dept._id + '\', \'' + escapeHtml(dept.name).replace(/\\/g, "\\\\").replace(/'/g, "\\'") + '\');">Request to Join</button>';
           }
 
           card.innerHTML = '<div class="relative">' + imageHtml + privateBadgeHtml + editBtnHtml + '</div>' +
@@ -1442,7 +1442,7 @@
                       <% } else if (isDeptPending) { %>
                         <span class="text-xs px-2 py-1 rounded" style="color: #94a3b8; background: rgba(148, 163, 184, 0.1);">Request Pending</span>
                       <% } else { %>
-                        <button class="text-xs px-2 py-1 rounded transition-colors" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);" onclick="event.stopPropagation(); openRequestJoinDepartmentModal('<%= dept._id %>', '<%= dept.name.replace(/'/g, "\\'") %>');">Request to Join</button>
+                        <button class="text-xs px-2 py-1 rounded transition-colors" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);" onclick="event.stopPropagation(); openRequestJoinDepartmentModal('<%= dept._id %>', '<%= dept.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'") %>');">Request to Join</button>
                       <% } %>
                     </div>
                   </div>

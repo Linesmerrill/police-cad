@@ -805,7 +805,7 @@
         if (!pendingDepartmentId) return;
 
         const communityId = '<%= community._id %>';
-        const communityName = '<%= community.community.name.replace(/'/g, "\\'") %>';
+        const communityName = '<%= community.community.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'") %>';
         const userId = '<%= user && user._doc ? user._doc._id : "" %>';
         const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
