@@ -276,7 +276,7 @@
       }
       .dashboard-card:hover {
         border-color: rgba(59, 130, 246, 0.4);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       }
 
       /* Department Card - responsive */
@@ -938,11 +938,28 @@
 
         function applyEventFilter() {
           var cards = document.querySelectorAll('#events-list .event-card');
-          var visibleIdx = 0;
+
+          // First pass: count filtered items to validate current page
+          var totalFiltered = 0;
+          cards.forEach(function(card) {
+            var isRequired = card.getAttribute('data-event-required') === 'true';
+            var matchesFilter = currentEventFilter === 'all' ||
+              (currentEventFilter === 'required' && isRequired) ||
+              (currentEventFilter === 'optional' && !isRequired);
+            if (matchesFilter) totalFiltered++;
+          });
+
+          // Calculate total pages and validate current page
+          eventTotalPages = Math.max(1, Math.ceil(totalFiltered / eventPerPage));
+          if (eventCurrentPage > eventTotalPages) {
+            eventCurrentPage = eventTotalPages;
+          }
+
           var startIdx = (eventCurrentPage - 1) * eventPerPage;
           var endIdx = startIdx + eventPerPage;
           var filteredCount = 0;
 
+          // Second pass: show/hide cards based on filter and pagination
           cards.forEach(function(card) {
             var isRequired = card.getAttribute('data-event-required') === 'true';
             var matchesFilter = currentEventFilter === 'all' ||
@@ -961,8 +978,7 @@
             }
           });
 
-          // Update pagination
-          eventTotalPages = Math.max(1, Math.ceil(filteredCount / eventPerPage));
+          // Update pagination UI
           updateEventPagination();
 
           // Show "no events" message if filtered list is empty

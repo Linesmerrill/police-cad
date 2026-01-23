@@ -6929,9 +6929,8 @@ document.getElementById('createEventForm').onsubmit = async function(e) {
     };
     window.allEvents = window.allEvents || [];
     window.allEvents.push(newEvent);
-    // Go to last page to show the new event
-    var newTotalPages = Math.max(1, Math.ceil(window.allEvents.length / eventPerPage));
-    eventCurrentPage = newTotalPages;
+    // Reset to page 1 to show events from the beginning (works correctly with filters)
+    eventCurrentPage = 1;
     refreshEventsUI(true);
   } catch (err) {
     document.getElementById('createEventError').textContent = err.message || 'Failed to create event.';
