@@ -888,32 +888,129 @@
           renderDeptFilterTabs();
         });
 
-        // Client-side event pagination
+        // Client-side event pagination and filtering
         var eventCurrentPage = 1;
         var eventPerPage = 4;
         var eventTotalCount = window.allEvents.length;
         var eventTotalPages = Math.max(1, Math.ceil(eventTotalCount / eventPerPage));
+        var currentEventFilter = 'all';
 
-        function changeEventPage(delta) {
-          var newPage = eventCurrentPage + delta;
-          if (newPage < 1 || newPage > eventTotalPages) return;
+        function filterEvents(filter) {
+          currentEventFilter = filter;
+          eventCurrentPage = 1;
 
-          eventCurrentPage = newPage;
-          var startIdx = (eventCurrentPage - 1) * eventPerPage;
-          var endIdx = startIdx + eventPerPage;
-
-          // Hide/show event cards
-          var cards = document.querySelectorAll('#events-list .event-card');
-          cards.forEach(function(card) {
-            var idx = parseInt(card.getAttribute('data-event-index'), 10);
-            card.style.display = (idx >= startIdx && idx < endIdx) ? '' : 'none';
+          // Update tab styles
+          var tabs = document.querySelectorAll('.event-filter-tab');
+          tabs.forEach(function(tab) {
+            var tabFilter = tab.getAttribute('data-filter');
+            if (tabFilter === filter) {
+              tab.classList.add('active');
+              if (filter === 'all') {
+                tab.style.background = 'rgba(251, 191, 36, 0.15)';
+                tab.style.borderColor = 'rgba(251, 191, 36, 0.5)';
+                tab.style.color = '#fbbf24';
+              } else if (filter === 'required') {
+                tab.style.background = 'rgba(239, 68, 68, 0.15)';
+                tab.style.borderColor = 'rgba(239, 68, 68, 0.5)';
+                tab.style.color = '#f87171';
+              } else if (filter === 'optional') {
+                tab.style.background = 'rgba(59, 130, 246, 0.15)';
+                tab.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                tab.style.color = '#60a5fa';
+              }
+            } else {
+              tab.classList.remove('active');
+              tab.style.background = 'transparent';
+              tab.style.color = '#94a3b8';
+              if (tabFilter === 'all') {
+                tab.style.borderColor = 'rgba(251, 191, 36, 0.3)';
+              } else if (tabFilter === 'required') {
+                tab.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+              } else if (tabFilter === 'optional') {
+                tab.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+              }
+            }
           });
 
-          // Update pagination UI
+          // Filter and paginate events
+          applyEventFilter();
+        }
+
+        function applyEventFilter() {
+          var cards = document.querySelectorAll('#events-list .event-card');
+          var visibleIdx = 0;
+          var startIdx = (eventCurrentPage - 1) * eventPerPage;
+          var endIdx = startIdx + eventPerPage;
+          var filteredCount = 0;
+
+          cards.forEach(function(card) {
+            var isRequired = card.getAttribute('data-event-required') === 'true';
+            var matchesFilter = currentEventFilter === 'all' ||
+              (currentEventFilter === 'required' && isRequired) ||
+              (currentEventFilter === 'optional' && !isRequired);
+
+            if (matchesFilter) {
+              if (filteredCount >= startIdx && filteredCount < endIdx) {
+                card.style.display = '';
+              } else {
+                card.style.display = 'none';
+              }
+              filteredCount++;
+            } else {
+              card.style.display = 'none';
+            }
+          });
+
+          // Update pagination
+          eventTotalPages = Math.max(1, Math.ceil(filteredCount / eventPerPage));
+          updateEventPagination();
+
+          // Show "no events" message if filtered list is empty
+          var noEventsMsg = document.getElementById('no-filtered-events');
+          if (filteredCount === 0 && cards.length > 0) {
+            if (!noEventsMsg) {
+              noEventsMsg = document.createElement('div');
+              noEventsMsg.id = 'no-filtered-events';
+              noEventsMsg.className = 'dashboard-card text-center py-8';
+              noEventsMsg.innerHTML = '<i class="fa fa-calendar-xmark text-2xl text-slate-500 mb-3"></i><p class="text-slate-400 text-sm">No ' + (currentEventFilter === 'required' ? 'required' : 'optional') + ' events</p>';
+              document.getElementById('events-list').appendChild(noEventsMsg);
+            }
+            noEventsMsg.style.display = '';
+          } else if (noEventsMsg) {
+            noEventsMsg.style.display = 'none';
+          }
+        }
+
+        function updateEventFilterTabs() {
+          var events = window.allEvents || [];
+          var requiredCount = events.filter(function(e) { return e.required; }).length;
+          var optionalCount = events.length - requiredCount;
+
+          var tabs = document.querySelectorAll('.event-filter-tab');
+          tabs.forEach(function(tab) {
+            var filter = tab.getAttribute('data-filter');
+            var countSpan = tab.querySelector('span');
+            if (countSpan) {
+              if (filter === 'all') {
+                countSpan.textContent = '(' + events.length + ')';
+              } else if (filter === 'required') {
+                countSpan.textContent = '(' + requiredCount + ')';
+              } else if (filter === 'optional') {
+                countSpan.textContent = '(' + optionalCount + ')';
+              }
+            }
+          });
+        }
+
+        function updateEventPagination() {
           var prevBtn = document.getElementById('event-prev-btn');
           var nextBtn = document.getElementById('event-next-btn');
           var pageInfo = document.getElementById('event-page-info');
+          var paginationContainer = document.getElementById('event-pagination');
 
+          if (paginationContainer) {
+            paginationContainer.style.display = eventTotalPages > 1 ? 'flex' : 'none';
+          }
           if (prevBtn) {
             prevBtn.disabled = eventCurrentPage <= 1;
             prevBtn.style.opacity = eventCurrentPage <= 1 ? '0.5' : '1';
@@ -927,6 +1024,14 @@
           if (pageInfo) {
             pageInfo.textContent = 'Page ' + eventCurrentPage + ' of ' + eventTotalPages;
           }
+        }
+
+        function changeEventPage(delta) {
+          var newPage = eventCurrentPage + delta;
+          if (newPage < 1 || newPage > eventTotalPages) return;
+
+          eventCurrentPage = newPage;
+          applyEventFilter();
         }
 
         // Refresh events UI after create/edit/delete
@@ -977,10 +1082,7 @@
             var card = document.createElement('div');
             card.className = 'dashboard-card event-card';
             card.setAttribute('data-event-index', idx);
-            // Show/hide based on current page
-            if (idx < startIdx || idx >= endIdx) {
-              card.style.display = 'none';
-            }
+            card.setAttribute('data-event-required', evt.required ? 'true' : 'false');
 
             var imageHtml = evt.image
               ? '<img src="' + evt.image + '" alt="Event" class="w-20 h-20 rounded-lg object-cover flex-shrink-0" />'
@@ -990,6 +1092,10 @@
               ? '<button onclick="event.stopPropagation(); openEditEventModal(\'' + getEventIdString(evt._id) + '\')" class="text-slate-400 hover:text-white transition-colors flex-shrink-0"><i class="fa fa-pencil text-sm"></i></button>'
               : '';
 
+            var requiredBadge = evt.required
+              ? '<span style="font-size: 0.625rem; padding: 0.15rem 0.4rem; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 600; white-space: nowrap;">Required</span>'
+              : '';
+
             var descHtml = evt.description ? '<p class="text-slate-400 text-xs line-clamp-2">' + escapeHtml(evt.description) + '</p>' : '';
             var locHtml = evt.location ? '<p class="text-slate-500 text-xs mt-1"><i class="fa fa-location-dot mr-1"></i>' + escapeHtml(evt.location) + '</p>' : '';
 
@@ -997,7 +1103,10 @@
               imageHtml +
               '<div class="flex-1 min-w-0">' +
                 '<div class="flex items-start justify-between gap-2">' +
-                  '<h3 class="font-bold text-white text-base line-clamp-1">' + escapeHtml(evt.title) + '</h3>' +
+                  '<div class="flex items-center gap-2">' +
+                    '<h3 class="font-bold text-white text-base line-clamp-1">' + escapeHtml(evt.title) + '</h3>' +
+                    requiredBadge +
+                  '</div>' +
                   editBtn +
                 '</div>' +
                 '<p class="text-xs mb-1" style="color: #fbbf24;">' + new Date(evt.scheduledDate).toLocaleString() + '</p>' +
@@ -1008,6 +1117,10 @@
 
             container.appendChild(card);
           });
+
+          // Update filter tab counts and apply current filter
+          updateEventFilterTabs();
+          applyEventFilter();
 
           // Update pagination UI
           if (paginationContainer) {
@@ -1574,9 +1687,30 @@
             %>
 
             <% if (allEvents.length > 0) { %>
+              <%
+                const requiredCount = allEvents.filter(e => e.required).length;
+                const optionalCount = allEvents.length - requiredCount;
+              %>
+              <!-- Event Filter Tabs -->
+              <div id="event-filter-tabs" class="flex flex-wrap gap-2 mb-4">
+                <button onclick="filterEvents('all')" class="event-filter-tab active" data-filter="all" style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(251, 191, 36, 0.5); background: rgba(251, 191, 36, 0.15); color: #fbbf24; cursor: pointer; transition: all 0.2s;">
+                  All <span style="opacity: 0.7;">(<%= allEvents.length %>)</span>
+                </button>
+                <% if (requiredCount > 0) { %>
+                <button onclick="filterEvents('required')" class="event-filter-tab" data-filter="required" style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(239, 68, 68, 0.3); background: transparent; color: #94a3b8; cursor: pointer; transition: all 0.2s;">
+                  Required <span style="opacity: 0.7;">(<%= requiredCount %>)</span>
+                </button>
+                <% } %>
+                <% if (optionalCount > 0) { %>
+                <button onclick="filterEvents('optional')" class="event-filter-tab" data-filter="optional" style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(59, 130, 246, 0.3); background: transparent; color: #94a3b8; cursor: pointer; transition: all 0.2s;">
+                  Optional <span style="opacity: 0.7;">(<%= optionalCount %>)</span>
+                </button>
+                <% } %>
+              </div>
+
               <div id="events-list" class="space-y-3">
                 <% allEvents.forEach(function(evt, evtIndex) { %>
-                  <div class="dashboard-card event-card" data-event-index="<%= evtIndex %>" <% if (evtIndex >= eventsPerPage) { %>style="display: none;"<% } %>>
+                  <div class="dashboard-card event-card" data-event-index="<%= evtIndex %>" data-event-required="<%= evt.required ? 'true' : 'false' %>" <% if (evtIndex >= eventsPerPage) { %>style="display: none;"<% } %>>
                     <div class="flex gap-4">
                       <% if (evt.image) { %>
                         <img src="<%= evt.image %>" alt="Event" class="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
@@ -1587,7 +1721,12 @@
                       <% } %>
                       <div class="flex-1 min-w-0">
                         <div class="flex items-start justify-between gap-2">
-                          <h3 class="font-bold text-white text-base line-clamp-1"><%= evt.title %></h3>
+                          <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-white text-base line-clamp-1"><%= evt.title %></h3>
+                            <% if (evt.required) { %>
+                              <span style="font-size: 0.625rem; padding: 0.15rem 0.4rem; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); font-weight: 600; white-space: nowrap;">Required</span>
+                            <% } %>
+                          </div>
                           <% if (canManageEvents) { %>
                             <button onclick="event.stopPropagation(); openEditEventModal('<%= evt._id %>')" class="text-slate-400 hover:text-white transition-colors flex-shrink-0">
                               <i class="fa fa-pencil text-sm"></i>
