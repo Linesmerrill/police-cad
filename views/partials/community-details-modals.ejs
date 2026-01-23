@@ -3045,42 +3045,37 @@ function backToApprovalsList() {
 // Photo upload functionality
 let currentPhotoUrl = '';
 
-// Toast notification function
-function showToast(message, duration = 3000, type = 'info') {
-  // Create toast element if it doesn't exist
-  let toast = document.getElementById('toast');
+// Simple toast notification - uses the existing #toast element
+function showToast(message, duration, type) {
+  duration = duration || 4000;
+  type = type || 'info';
+
+  // Auto-extend duration for long messages
+  var finalDuration = Math.min(Math.max(duration, message.length * 50), 8000);
+
+  var toast = document.getElementById('toast');
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'toast';
-    toast.style.cssText = 'display:none; position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); background:#23272f; color:#fff; padding:1rem 2rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); z-index:3000; font-weight:500;';
     document.body.appendChild(toast);
   }
-  
-  // Set message and type
+
+  // Color schemes
+  var colors = {
+    success: { bg: 'rgba(16, 185, 129, 0.95)', border: '#10b981' },
+    error: { bg: 'rgba(239, 68, 68, 0.95)', border: '#ef4444' },
+    warning: { bg: 'rgba(245, 158, 11, 0.95)', border: '#f59e0b' },
+    info: { bg: 'rgba(59, 130, 246, 0.95)', border: '#3b82f6' }
+  };
+  var color = colors[type] || colors.info;
+
+  toast.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:999999;background:' + color.bg + ';color:#fff;padding:14px 24px;border-radius:12px;font-weight:500;font-size:0.925rem;max-width:90vw;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);border:1px solid ' + color.border + ';backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);';
   toast.textContent = message;
-  
-  // Set background color based on type
-  switch(type) {
-    case 'success':
-      toast.style.background = '#10b981';
-      break;
-    case 'error':
-      toast.style.background = '#ef4444';
-      break;
-    case 'warning':
-      toast.style.background = '#f59e0b';
-      break;
-    default:
-      toast.style.background = '#3b82f6';
-  }
-  
-  // Show toast
   toast.style.display = 'block';
-  
-  // Hide after duration
-  setTimeout(() => {
+
+  setTimeout(function() {
     toast.style.display = 'none';
-  }, duration);
+  }, finalDuration);
 }
 
 async function handleCivilianPhotoUpload(event) {
@@ -4183,71 +4178,9 @@ function closePrivateDepartmentModal() {
   document.getElementById('privateDepartmentModal').style.display = 'none';
 }
 
-function copyCommunityUrl() {
-  const url = window.location.href;
-  const icon = document.getElementById('shareBtnIcon');
-  const text = document.getElementById('shareBtnText');
-
-  function showCopiedFeedback() {
-    // Change icon to check mark
-    if (icon) {
-      icon.className = 'fa fa-check';
-    }
-    if (text) {
-      text.textContent = 'Copied!';
-    }
-    showToast('Link copied!', 2000);
-
-    // Revert back to share icon after 2 seconds
-    setTimeout(function() {
-      if (icon) {
-        icon.className = 'fa fa-share-nodes';
-      }
-      if (text) {
-        text.textContent = 'Share';
-      }
-    }, 2000);
-  }
-
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(function() {
-      showCopiedFeedback();
-    }, function() {
-      showToast('Failed to copy link', 2000);
-    });
-  } else {
-    // fallback for older browsers
-    const tempInput = document.createElement('input');
-    tempInput.value = url;
-    document.body.appendChild(tempInput);
-    tempInput.select();
-    try {
-      document.execCommand('copy');
-      showCopiedFeedback();
-    } catch (err) {
-      showToast('Failed to copy link', 2000);
-    }
-    document.body.removeChild(tempInput);
-  }
-}
-
-</script> 
-
-<div id="toast" style="display:none; position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); background:#23272f; color:#fff; padding:1rem 2rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); z-index:3000; font-weight:500;">
-  <span id="toast-message"></span>
-</div>
+</script>
 
 <script>
-function showToast(message, duration = 2500) {
-  const toast = document.getElementById('toast');
-  const toastMsg = document.getElementById('toast-message');
-  toastMsg.textContent = message;
-  toast.style.display = 'block';
-  setTimeout(() => {
-    toast.style.display = 'none';
-  }, duration);
-}
-
 function showComingSoonModal(title, message) {
   // Create modal HTML if it doesn't exist
   let modal = document.getElementById('comingSoonModal');
@@ -7455,11 +7388,6 @@ async function saveEditEvent() {
       <button id="requestJoinDepartmentModalConfirm" type="button" onclick="submitJoinDepartmentRequest()" style="background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">Request to Join</button>
     </div>
   </div>
-</div>
-
-<!-- Toast for join request feedback (already exists, but ensure it's present) -->
-<div id="toast" style="display:none; position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); background:#23272f; color:#fff; padding:1rem 2rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); z-index:3000; font-weight:500;">
-  <span id="toast-message"></span>
 </div>
 
     <!-- Set global variables for JS -->

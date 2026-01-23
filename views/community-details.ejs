@@ -1848,22 +1848,7 @@
       let currentNotificationId = null;
       window.API_URL = '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
 
-      function showToast(message, duration = 2500, type = 'info') {
-        const toast = document.getElementById('toast');
-        if (!toast) return;
-        const colors = {
-          success: { bg: '#065f46', border: '#10b981' },
-          error: { bg: '#7f1d1d', border: '#ef4444' },
-          info: { bg: '#1e3a8a', border: '#3b82f6' }
-        };
-        const color = colors[type] || colors.info;
-        toast.style.background = color.bg;
-        toast.style.border = `1px solid ${color.border}`;
-        toast.style.color = '#fff';
-        toast.textContent = message;
-        toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, duration);
-      }
+      // showToast is defined in community-details-modals.ejs with glassmorphism styling
 
       function scrollToSection(sectionId) {
         const section = document.getElementById(sectionId);
@@ -1914,17 +1899,10 @@
       }
 
       function showPermissionDeniedToast(message) {
-        // Try showing the toast
-        const toast = document.getElementById('toast');
-        if (toast) {
-          toast.style.background = '#1e3a8a';
-          toast.style.border = '1px solid #3b82f6';
-          toast.style.color = '#fff';
-          toast.textContent = message;
-          toast.style.display = 'block';
-          setTimeout(() => { toast.style.display = 'none'; }, 4000);
+        // Use the main showToast function with info type for permission messages
+        if (typeof showToast === 'function') {
+          showToast(message, 5000, 'info');
         } else {
-          // Fallback to alert if toast element not found
           alert(message);
         }
       }
