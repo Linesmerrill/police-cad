@@ -6866,16 +6866,27 @@ document.getElementById('createEventForm').onsubmit = async function(e) {
   const host = '<%= user && user._doc ? user._doc._id : "" %>';
   let image = '';
   const photoInput = document.getElementById('event-photo');
-  if (photoInput && photoInput.files && photoInput.files[0]) {
-    // TODO: Upload image to cloud and get URL, for now use a placeholder
-    image = 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1747054441/upload_placeholder.jpg';
-  }
+
   if (!title || !scheduledDate || !location || !description) {
     document.getElementById('createEventError').textContent = 'All fields except image are required.';
     document.getElementById('createEventError').style.display = 'block';
     return;
   }
   document.getElementById('createEventError').style.display = 'none';
+
+  // Upload image if one was selected
+  if (photoInput && photoInput.files && photoInput.files[0]) {
+    try {
+      const file = photoInput.files[0];
+      image = await uploadToCloudinary(file, 'events', `event_${Date.now()}`);
+    } catch (uploadErr) {
+      console.error('Image upload failed:', uploadErr);
+      document.getElementById('createEventError').textContent = 'Failed to upload image. Please try again.';
+      document.getElementById('createEventError').style.display = 'block';
+      return;
+    }
+  }
+
   const payload = {
     communityID,
     title,
@@ -7176,19 +7187,30 @@ async function saveEditEvent() {
 
   let image = '';
   const photoInput = document.getElementById('edit-event-photo');
-  if (photoInput && photoInput.files && photoInput.files[0]) {
-    // TODO: Upload image to cloud and get URL, for now use a placeholder
-    image = 'https://res.cloudinary.com/dqtwwvm7p/image/upload/v1747054441/upload_placeholder.jpg';
-  } else {
-    // Preserve the original image URL from the event data (not the preview element)
-    image = originalEvent && originalEvent.image ? originalEvent.image : '';
-  }
+
   if (!title || !scheduledDate || !location || !description) {
     document.getElementById('editEventError').textContent = 'All fields except image are required.';
     document.getElementById('editEventError').style.display = 'block';
     return;
   }
   document.getElementById('editEventError').style.display = 'none';
+
+  // Upload new image if one was selected, otherwise preserve the original
+  if (photoInput && photoInput.files && photoInput.files[0]) {
+    try {
+      const file = photoInput.files[0];
+      image = await uploadToCloudinary(file, 'events', `event_${Date.now()}`);
+    } catch (uploadErr) {
+      console.error('Image upload failed:', uploadErr);
+      document.getElementById('editEventError').textContent = 'Failed to upload image. Please try again.';
+      document.getElementById('editEventError').style.display = 'block';
+      return;
+    }
+  } else {
+    // Preserve the original image URL from the event data
+    image = originalEvent && originalEvent.image ? originalEvent.image : '';
+  }
+
   const payload = {
     title,
     scheduledDate: new Date(scheduledDate).toISOString(),
