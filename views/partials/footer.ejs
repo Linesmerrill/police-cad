@@ -1,0 +1,52 @@
+<!-- Shared Footer for Internal Pages -->
+<footer class="mt-8" style="background: #0a0a0f; border-top: 1px solid rgba(59, 130, 246, 0.2);">
+  <div class="px-4 py-8">
+    <!-- Logo -->
+    <div class="text-center mb-6">
+      <div class="flex items-center justify-center mb-2">
+        <img src="/static/images/lines-police-cad-discord-logo-2024-github-profile.png" alt="Lines Police CAD" style="height: 36px; width: auto;" />
+      </div>
+      <p class="text-slate-500 text-sm">World's Leading Free-to-use Role-play Facilitator</p>
+    </div>
+
+    <!-- Social Links -->
+    <div class="flex justify-center gap-4 mb-6">
+      <a href="https://discord.gg/3ECFhqe" target="_blank" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(59, 130, 246, 0.2);">
+        <i class="fab fa-discord"></i>
+      </a>
+      <a href="https://x.com/LinesPoliceCAD" target="_blank" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(59, 130, 246, 0.2);">
+        <i class="fa-brands fa-x-twitter"></i>
+      </a>
+      <a href="https://www.facebook.com/linespoliceserver/" target="_blank" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(59, 130, 246, 0.2);">
+        <i class="fab fa-facebook"></i>
+      </a>
+      <a href="https://github.com/linesmerrill/police-cad" target="_blank" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition-all duration-300" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(59, 130, 246, 0.2);">
+        <i class="fab fa-github"></i>
+      </a>
+    </div>
+
+    <!-- Links -->
+    <div class="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-6 text-sm">
+      <a href="/faq" class="text-slate-400 hover:text-white transition-colors" style="text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;">FAQ</a>
+      <a href="/contact-us" class="text-slate-400 hover:text-white transition-colors" style="text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;">Contact</a>
+      <a href="/terms-and-conditions" class="text-slate-400 hover:text-white transition-colors" style="text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;">Terms</a>
+      <a href="/privacy-policy" class="text-slate-400 hover:text-white transition-colors" style="text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;">Privacy</a>
+      <a href="/about-us" class="text-slate-400 hover:text-white transition-colors" style="text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem;">About</a>
+    </div>
+
+    <!-- Copyright -->
+    <div class="text-center text-slate-600 text-xs">
+      &copy; 2020-2026 Lines Police CAD. All rights reserved.
+    </div>
+
+    <!-- Build Version -->
+    <div class="text-center text-slate-700 text-xs mt-2">
+      <span
+        id="build-version"
+        class="cursor-pointer hover:text-slate-500 transition-colors"
+        title="Click to copy build version"
+        onclick="navigator.clipboard.writeText(this.textContent).then(() => { var el = this; el.textContent = 'Copied!'; setTimeout(function() { el.textContent = 'Build: <%= typeof buildVersion !== \'undefined\' ? buildVersion : \'unknown\' %>'; }, 1500); })"
+      >Build: <%= typeof buildVersion !== 'undefined' ? buildVersion : 'unknown' %></span>
+    </div>
+  </div>
+</footer>

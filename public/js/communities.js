@@ -1951,7 +1951,24 @@ const Footer = () => (
 
       {/* Copyright */}
       <div className="text-center text-slate-600 text-xs">
-        &copy; 2024 <a href="https://sites.google.com/view/tlps-dev/home" target="_blank" style={{ color: '#fbbf24' }} className="hover:opacity-80 transition-opacity">TLPS</a> All Rights Reserved
+        &copy; 2020-2026 Lines Police CAD. All rights reserved.
+      </div>
+
+      {/* Build Version */}
+      <div className="text-center text-slate-700 text-xs mt-2">
+        <span
+          id="footer-build-version"
+          className="cursor-pointer hover:text-slate-500 transition-colors"
+          title="Click to copy build version"
+          onClick={(e) => {
+            const el = e.target;
+            const buildVersion = window.buildVersion || 'unknown';
+            navigator.clipboard.writeText('Build: ' + buildVersion).then(() => {
+              el.textContent = 'Copied!';
+              setTimeout(() => { el.textContent = 'Build: ' + buildVersion; }, 1500);
+            });
+          }}
+        >Build: {window.buildVersion || 'unknown'}</span>
       </div>
     </div>
   </footer>
