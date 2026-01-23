@@ -94,6 +94,17 @@
       document.addEventListener('click', function(event) {
         const deptCard = event.target.closest('[data-dept-id]');
         if (deptCard && !event.target.closest('button')) {
+          const accessStatus = deptCard.getAttribute('data-access-status');
+          // Only allow navigation if user has approved access
+          if (accessStatus !== 'approved') {
+            // Don't navigate - show toast message instead
+            if (accessStatus === 'pending') {
+              showToast('Your request to join this department is pending approval.', 3000, 'info');
+            } else {
+              showToast('You need to request access to this department first.', 3000, 'info');
+            }
+            return;
+          }
           const deptId = deptCard.getAttribute('data-dept-id');
           const deptName = deptCard.getAttribute('data-dept-name');
           const templateName = deptCard.getAttribute('data-template-name');
@@ -210,22 +221,25 @@
 
       .notification-badge {
         position: absolute;
-        top: 2px;
-        right: 2px;
+        top: -4px;
+        right: -4px;
         background-color: #dc3545;
         color: white;
-        border-radius: 50%;
-        width: 18px;
+        border-radius: 10px;
+        min-width: 18px;
         height: 18px;
         font-size: 10px;
-        line-height: 18px;
-        text-align: center;
-        display: none;
         font-weight: bold;
         border: 1px solid #1a202c;
-        min-width: 18px;
+        padding: 1px 5px 0 5px;
+        box-sizing: border-box;
+        display: none;
       }
-      .notification-badge.show { display: block; }
+      .notification-badge.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
 
       /* Dashboard Card - responsive */
       .dashboard-card {
@@ -501,43 +515,65 @@
         window.canManageEvents = false;
         window.canManageDepartments = <%= canManageDepartments %>;
 
-        // Department pagination and filtering - fetches from API on page/filter change
+        // Department pagination and filtering - all departments are server-rendered
         var deptCurrentPage = 1;
         var deptPerPage = 6;
-        var deptTotalCount = <%= typeof departmentsTotalCount !== 'undefined' ? departmentsTotalCount : (departments ? departments.length : 0) %>;
+        var deptOriginalCount = <%= community.community.departments ? community.community.departments.length : 0 %>;
+        var deptTotalCount = deptOriginalCount;
         var deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
         var deptLoadedPages = { '': { 1: true } }; // Track which pages have been loaded per filter
         var deptIsLoading = false;
         var deptCurrentFilter = ''; // Current template filter (empty = all)
-        var deptTemplateTypes = <%- JSON.stringify(typeof departmentTemplateTypes !== 'undefined' ? departmentTemplateTypes : []) %>;
+        // Build template types from server-side department data
+        var deptTemplateTypes = <%- JSON.stringify((function() {
+          var allDepts = community.community.departments || [];
+          var typeMap = {};
+          allDepts.forEach(function(dept) {
+            var templateName = (dept.template && dept.template.name) ? dept.template.name : '';
+            if (templateName) {
+              if (!typeMap[templateName]) {
+                typeMap[templateName] = { name: templateName, count: 0 };
+              }
+              typeMap[templateName].count++;
+            }
+          });
+          return Object.values(typeMap);
+        })()) %>;
 
-        async function changeDeptPage(delta) {
+        function changeDeptPage(delta) {
           var newPage = deptCurrentPage + delta;
-          if (newPage < 1 || newPage > deptTotalPages || deptIsLoading) return;
+          if (newPage < 1 || newPage > deptTotalPages) return;
 
           deptCurrentPage = newPage;
 
-          // Check if we need to fetch this page from the API (for this filter)
-          var filterKey = deptCurrentFilter || '';
-          if (!deptLoadedPages[filterKey] || !deptLoadedPages[filterKey][deptCurrentPage]) {
-            await fetchDepartmentsPage(deptCurrentPage);
-          }
-
-          // Show/hide department cards based on current page
+          // All departments are already rendered server-side, just show/hide based on page
           var startIdx = (deptCurrentPage - 1) * deptPerPage;
           var endIdx = startIdx + deptPerPage;
           var cards = document.querySelectorAll('#departments-grid .dept-card');
-          cards.forEach(function(card) {
-            var idx = parseInt(card.getAttribute('data-dept-index'), 10);
-            card.style.display = (idx >= startIdx && idx < endIdx) ? '' : 'none';
-          });
+
+          if (deptCurrentFilter) {
+            // When filtered, use filtered index (cards without data-filtered-index stay hidden)
+            cards.forEach(function(card) {
+              var filteredIdx = card.getAttribute('data-filtered-index');
+              if (filteredIdx !== null && filteredIdx !== '') {
+                var idx = parseInt(filteredIdx, 10);
+                card.style.display = (idx >= startIdx && idx < endIdx) ? '' : 'none';
+              } else {
+                card.style.display = 'none';
+              }
+            });
+          } else {
+            // No filter - use original index
+            cards.forEach(function(card) {
+              var idx = parseInt(card.getAttribute('data-dept-index'), 10);
+              card.style.display = (idx >= startIdx && idx < endIdx) ? '' : 'none';
+            });
+          }
 
           updateDeptPaginationUI();
         }
 
-        async function filterDepartments(templateFilter) {
-          if (deptIsLoading) return;
-
+        function filterDepartments(templateFilter) {
           deptCurrentFilter = templateFilter || '';
           deptCurrentPage = 1;
 
@@ -554,15 +590,47 @@
             }
           });
 
-          // Clear grid and fetch filtered departments
-          var container = document.getElementById('departments-grid');
-          container.innerHTML = '<div class="col-span-full text-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div><p class="text-slate-400 text-sm mt-2">Loading...</p></div>';
+          // Filter and paginate the server-rendered departments
+          var cards = document.querySelectorAll('#departments-grid .dept-card');
 
-          // Reset loaded pages for this filter
-          var filterKey = deptCurrentFilter || '';
-          deptLoadedPages[filterKey] = {};
+          if (!deptCurrentFilter) {
+            // No filter - show all cards by their original index
+            cards.forEach(function(card) {
+              var idx = parseInt(card.getAttribute('data-dept-index'), 10);
+              card.style.display = (idx < deptPerPage) ? '' : 'none';
+              card.removeAttribute('data-filtered-index');
+            });
+            deptTotalCount = deptOriginalCount;
+          } else {
+            // Filter active - show only matching cards
+            var visibleIdx = 0;
+            var matchingCount = 0;
 
-          await fetchDepartmentsPage(1, true);
+            cards.forEach(function(card) {
+              var cardTemplate = (card.getAttribute('data-template-name') || '').toLowerCase();
+              var filterLower = deptCurrentFilter.toLowerCase();
+              var matchesFilter = cardTemplate.includes(filterLower);
+
+              if (matchesFilter) {
+                // Show only first page of matching departments
+                if (visibleIdx < deptPerPage) {
+                  card.style.display = '';
+                } else {
+                  card.style.display = 'none';
+                }
+                card.setAttribute('data-filtered-index', visibleIdx);
+                visibleIdx++;
+                matchingCount++;
+              } else {
+                card.style.display = 'none';
+                card.removeAttribute('data-filtered-index');
+              }
+            });
+            deptTotalCount = matchingCount;
+          }
+
+          deptTotalPages = Math.max(1, Math.ceil(deptTotalCount / deptPerPage));
+          updateDeptPaginationUI();
         }
 
         async function fetchDepartmentsPage(page, clearContainer) {
@@ -622,15 +690,19 @@
 
         function createDepartmentCard(dept, idx) {
           var card = document.createElement('div');
-          var canAccess = true; // Departments from API are already filtered for access
           var approvalRequired = dept.approvalRequired;
+          // accessStatus: "approved" (can access), "pending" (request sent), "locked" (needs to request)
+          var accessStatus = dept.accessStatus || 'approved';
+          var canAccess = accessStatus === 'approved';
+          var isPending = accessStatus === 'pending';
+          var isLocked = accessStatus === 'locked';
+
           card.className = 'dept-card' + (canAccess ? '' : ' locked');
           card.setAttribute('data-dept-index', idx);
-          if (canAccess) {
-            card.setAttribute('data-dept-id', dept._id);
-            card.setAttribute('data-dept-name', (dept.name || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'"));
-            card.setAttribute('data-template-name', (dept.templateName || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'"));
-          }
+          card.setAttribute('data-dept-id', dept._id);
+          card.setAttribute('data-dept-name', (dept.name || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'"));
+          card.setAttribute('data-template-name', (dept.templateName || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'"));
+          card.setAttribute('data-access-status', accessStatus);
 
           var templateName = dept.templateName || '';
           var lowerTemplate = templateName.toLowerCase();
@@ -656,17 +728,35 @@
             deptColor = '#f59e0b';
           }
 
-          var imageHtml = dept.image
-            ? '<div class="aspect-[2/1] overflow-hidden"><img src="' + escapeHtml(dept.image) + '" alt="' + escapeHtml(dept.name) + '" class="w-full h-full object-cover" style="pointer-events: none;" /><div class="absolute inset-0" style="background: linear-gradient(to top, rgba(10, 10, 15, 0.95) 0%, transparent 60%);"></div></div>'
-            : '<div class="aspect-[2/1] flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);"><i class="fa ' + deptIcon + ' text-4xl" style="color: ' + deptColor + '; opacity: 0.5;"></i></div>';
+          // For locked departments, show blurred/overlay image
+          var imageHtml;
+          if (isLocked || isPending) {
+            imageHtml = dept.image
+              ? '<div class="aspect-[2/1] overflow-hidden relative"><img src="' + escapeHtml(dept.image) + '" alt="' + escapeHtml(dept.name) + '" class="w-full h-full object-cover" style="pointer-events: none; filter: blur(4px);" /><div class="absolute inset-0" style="background: rgba(10, 10, 15, 0.7);"></div><div class="absolute inset-0 flex items-center justify-center"><i class="fa fa-lock text-2xl text-slate-400"></i></div></div>'
+              : '<div class="aspect-[2/1] flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);"><i class="fa fa-lock text-4xl" style="color: #64748b; opacity: 0.5;"></i></div>';
+          } else {
+            imageHtml = dept.image
+              ? '<div class="aspect-[2/1] overflow-hidden"><img src="' + escapeHtml(dept.image) + '" alt="' + escapeHtml(dept.name) + '" class="w-full h-full object-cover" style="pointer-events: none;" /><div class="absolute inset-0" style="background: linear-gradient(to top, rgba(10, 10, 15, 0.95) 0%, transparent 60%);"></div></div>'
+              : '<div class="aspect-[2/1] flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);"><i class="fa ' + deptIcon + ' text-4xl" style="color: ' + deptColor + '; opacity: 0.5;"></i></div>';
+          }
 
-          var privateBadgeHtml = (approvalRequired && canAccess)
+          var privateBadgeHtml = approvalRequired
             ? '<div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full z-10" style="background: rgba(0, 0, 0, 0.6);"><i class="fa fa-lock text-xs" style="color: #fbbf24;"></i><span class="text-xs font-medium" style="color: #fbbf24;">Private</span></div>'
             : '';
 
           var editBtnHtml = window.canManageDepartments
             ? '<button class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full transition-colors z-10" style="background: rgba(0, 0, 0, 0.5); color: #94a3b8;" onclick="event.stopPropagation(); openEditDepartmentModal(\'' + dept._id + '\');"><i class="fa fa-pencil text-sm"></i></button>'
             : '';
+
+          // Bottom action based on access status
+          var actionHtml = '';
+          if (canAccess) {
+            actionHtml = '<span class="text-xs" style="color: #fbbf24;">Enter <i class="fa fa-arrow-right ml-1"></i></span>';
+          } else if (isPending) {
+            actionHtml = '<span class="text-xs px-2 py-1 rounded" style="color: #94a3b8; background: rgba(148, 163, 184, 0.1);">Request Pending</span>';
+          } else if (isLocked) {
+            actionHtml = '<button class="text-xs px-2 py-1 rounded transition-colors" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);" onclick="event.stopPropagation(); openRequestJoinDepartmentModal(\'' + dept._id + '\', \'' + escapeHtml(dept.name).replace(/'/g, "\\'") + '\');">Request to Join</button>';
+          }
 
           card.innerHTML = '<div class="relative">' + imageHtml + privateBadgeHtml + editBtnHtml + '</div>' +
             '<div class="p-4 flex flex-col justify-between" style="min-height: 88px;">' +
@@ -679,7 +769,7 @@
               '</div>' +
               '<div class="flex items-center justify-between mt-2">' +
                 '<span class="text-xs text-slate-500">' + escapeHtml(templateName || 'Department') + '</span>' +
-                (canAccess ? '<span class="text-xs" style="color: #fbbf24;">Enter <i class="fa fa-arrow-right ml-1"></i></span>' : '') +
+                actionHtml +
               '</div>' +
             '</div>';
 
@@ -748,13 +838,13 @@
           container.style.display = 'flex';
           container.innerHTML = '';
 
-          // Add "All" button
+          // Add "All" button with total count
           var allBtn = document.createElement('button');
           allBtn.setAttribute('data-filter', '');
           allBtn.className = 'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5';
           allBtn.style.background = deptCurrentFilter === '' ? '#3b82f6' : 'rgba(255,255,255,0.05)';
           allBtn.style.color = deptCurrentFilter === '' ? 'white' : '#94a3b8';
-          allBtn.innerHTML = 'All';
+          allBtn.innerHTML = 'All <span class="text-xs opacity-60">(' + deptTotalCount + ')</span>';
           allBtn.onclick = function() { filterDepartments(''); };
           container.appendChild(allBtn);
 
@@ -1168,9 +1258,9 @@
             <h2 class="section-title text-white flex items-center gap-2">
               <i class="fa fa-building" style="color: #fbbf24;"></i>
               Departments
-              <% if (isMemberApproved && departments) { %>
+              <% if (isMemberApproved && community.community.departments) { %>
                 <span class="text-xs px-2 py-0.5 rounded-full" style="color: rgba(255, 255, 255, 0.6); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);">
-                  <%= typeof departmentsTotalCount !== 'undefined' ? departmentsTotalCount : departments.length %>
+                  <%= community.community.departments.length %>
                 </span>
               <% } %>
             </h2>
@@ -1208,11 +1298,20 @@
             <div id="dept-filter-tabs" class="flex flex-wrap gap-2 mb-4" style="display: none;"></div>
 
             <div id="departments-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-              <% departments.forEach(function(dept, deptIndex) {
-                var templateName = dept.templateName || (dept.template && dept.template.name ? dept.template.name : '');
+              <%
+              // Use community.community.departments which has full member data
+              var allDepts = community.community.departments || [];
+              allDepts.forEach(function(dept, deptIndex) {
+                var templateName = (dept.template && dept.template.name) ? dept.template.name : '';
                 var approvalRequired = dept.approvalRequired;
                 var members = Array.isArray(dept.members) ? dept.members : [];
-                var isDeptMember = members.some(function(m) { return m.userID === userId && m.status === 'approved'; });
+
+                // Check user's membership status in this department
+                var userMembership = members.find(function(m) { return m.userID === userId; });
+                var isDeptMember = userMembership && userMembership.status === 'approved';
+                var isDeptPending = userMembership && userMembership.status === 'pending';
+
+                // Check if user is admin
                 var isAdmin = false;
                 if (userId && community.community && Array.isArray(community.community.roles)) {
                   community.community.roles.forEach(function(role) {
@@ -1227,7 +1326,10 @@
                     }
                   });
                 }
+
+                // Determine access: admin OR public dept OR approved member
                 var canAccess = isAdmin || !approvalRequired || isDeptMember;
+                var accessStatus = canAccess ? 'approved' : (isDeptPending ? 'pending' : 'locked');
 
                 var deptIcon = 'fa-building';
                 var deptColor = '#60a5fa';
@@ -1256,14 +1358,27 @@
                   class="dept-card <%= canAccess ? '' : 'locked' %>"
                   data-dept-index="<%= deptIndex %>"
                   <% if (deptIndex >= 6) { %>style="display: none;"<% } %>
-                  <% if (canAccess) { %>
-                    data-dept-id="<%= dept._id %>"
-                    data-dept-name="<%= dept.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'") %>"
-                    data-template-name="<%= templateName.replace(/\\/g, "\\\\").replace(/'/g, "\\'") %>"
-                  <% } %>
+                  data-dept-id="<%= dept._id %>"
+                  data-dept-name="<%= dept.name.replace(/\\/g, "\\\\").replace(/'/g, "\\'") %>"
+                  data-template-name="<%= templateName.replace(/\\/g, "\\\\").replace(/'/g, "\\'") %>"
+                  data-access-status="<%= accessStatus %>"
                 >
                   <div class="relative">
-                    <% if (dept.image) { %>
+                    <% if (!canAccess) { %>
+                      <% if (dept.image) { %>
+                        <div class="aspect-[2/1] overflow-hidden relative">
+                          <img src="<%= dept.image %>" alt="<%= dept.name %>" class="w-full h-full object-cover" style="pointer-events: none; filter: blur(4px);" />
+                          <div class="absolute inset-0" style="background: rgba(10, 10, 15, 0.7);"></div>
+                          <div class="absolute inset-0 flex items-center justify-center">
+                            <i class="fa fa-lock text-2xl text-slate-400"></i>
+                          </div>
+                        </div>
+                      <% } else { %>
+                        <div class="aspect-[2/1] flex items-center justify-center" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);">
+                          <i class="fa fa-lock text-4xl" style="color: #64748b; opacity: 0.5;"></i>
+                        </div>
+                      <% } %>
+                    <% } else if (dept.image) { %>
                       <div class="aspect-[2/1] overflow-hidden">
                         <img src="<%= dept.image %>" alt="<%= dept.name %>" class="w-full h-full object-cover" style="pointer-events: none;" />
                         <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(10, 10, 15, 0.95) 0%, transparent 60%);"></div>
@@ -1274,16 +1389,7 @@
                       </div>
                     <% } %>
 
-                    <% if (!canAccess) { %>
-                      <div class="absolute inset-0 flex items-center justify-center" style="background: rgba(10, 10, 15, 0.7);">
-                        <div class="text-center">
-                          <i class="fa fa-lock text-2xl text-slate-400 mb-2"></i>
-                          <p class="text-slate-400 text-xs">Private Department</p>
-                        </div>
-                      </div>
-                    <% } %>
-
-                    <% if (approvalRequired && canAccess) { %>
+                    <% if (approvalRequired) { %>
                       <div class="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full z-10" style="background: rgba(0, 0, 0, 0.6);">
                         <i class="fa fa-lock text-xs" style="color: #fbbf24;"></i>
                         <span class="text-xs font-medium" style="color: #fbbf24;">Private</span>
@@ -1315,6 +1421,10 @@
                       <span class="text-xs text-slate-500"><%= templateName || 'Department' %></span>
                       <% if (canAccess) { %>
                         <span class="text-xs" style="color: #fbbf24;">Enter <i class="fa fa-arrow-right ml-1"></i></span>
+                      <% } else if (isDeptPending) { %>
+                        <span class="text-xs px-2 py-1 rounded" style="color: #94a3b8; background: rgba(148, 163, 184, 0.1);">Request Pending</span>
+                      <% } else { %>
+                        <button class="text-xs px-2 py-1 rounded transition-colors" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);" onclick="event.stopPropagation(); openRequestJoinDepartmentModal('<%= dept._id %>', '<%= dept.name.replace(/'/g, "\\'") %>');">Request to Join</button>
                       <% } %>
                     </div>
                   </div>
@@ -1322,7 +1432,7 @@
               <% }); %>
             </div>
 
-            <% var totalDepts = typeof departmentsTotalCount !== 'undefined' ? departmentsTotalCount : departments.length; %>
+            <% var totalDepts = allDepts.length; %>
             <div id="dept-pagination" class="justify-center items-center gap-4 mt-4" style="display: <%= totalDepts > 6 ? 'flex' : 'none' %>;">
               <button id="dept-prev-btn" onclick="changeDeptPage(-1)" class="btn-secondary text-sm" disabled style="opacity:0.5;cursor:not-allowed;">
                 <i class="fa fa-chevron-left mr-1"></i>Prev
@@ -1512,7 +1622,7 @@
               <div class="text-xs sm:text-sm text-slate-400 mt-1">Members</div>
             </div>
             <div class="dashboard-card text-center py-4 lg:py-6">
-              <div class="text-2xl lg:text-3xl font-bold text-white"><%= typeof departmentsTotalCount !== 'undefined' ? departmentsTotalCount : (departments ? departments.length : '?') %></div>
+              <div class="text-2xl lg:text-3xl font-bold text-white"><%= community.community.departments ? community.community.departments.length : 0 %></div>
               <div class="text-xs sm:text-sm text-slate-400 mt-1">Departments</div>
             </div>
             <div class="dashboard-card text-center py-4 lg:py-6">

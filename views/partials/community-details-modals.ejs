@@ -773,7 +773,7 @@
       function openRequestJoinModal() {
         document.getElementById('requestJoinModal').style.display = 'flex';
       }
-      
+
       function closeRequestJoinModal() {
         document.getElementById('requestJoinModal').style.display = 'none';
       }
@@ -781,6 +781,149 @@
       // Alias for the modal button onclick
       function submitJoinRequestFromModal() {
         submitJoinRequest();
+      }
+
+      // Department join request modal functions
+      var pendingDepartmentId = null;
+      var pendingDepartmentName = null;
+
+      function openRequestJoinDepartmentModal(departmentId, departmentName) {
+        pendingDepartmentId = departmentId;
+        pendingDepartmentName = departmentName;
+        document.getElementById('requestJoinDepartmentName').textContent = departmentName;
+        document.getElementById('requestJoinDepartmentError').style.display = 'none';
+        document.getElementById('requestJoinDepartmentModal').style.display = 'flex';
+      }
+
+      function closeRequestJoinDepartmentModal() {
+        document.getElementById('requestJoinDepartmentModal').style.display = 'none';
+        pendingDepartmentId = null;
+        pendingDepartmentName = null;
+      }
+
+      async function submitJoinDepartmentRequest() {
+        if (!pendingDepartmentId) return;
+
+        const communityId = '<%= community._id %>';
+        const communityName = '<%= community.community.name.replace(/'/g, "\\'") %>';
+        const userId = '<%= user && user._doc ? user._doc._id : "" %>';
+        const apiUrl = window.API_URL || '<%= process.env.POLICE_CAD_API_URL || "https://police-cad-app-api-bc6d659b60b3.herokuapp.com" %>';
+
+        const confirmBtn = document.getElementById('requestJoinDepartmentModalConfirm');
+        const errorDiv = document.getElementById('requestJoinDepartmentError');
+
+        try {
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = 'Sending...';
+          errorDiv.style.display = 'none';
+
+          // Step 1: Send pending department request
+          const response = await fetch(`${apiUrl}/api/v1/user/${userId}/pending-department-request`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              communityId: communityId,
+              departmentId: pendingDepartmentId
+            })
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.message || 'Failed to send request');
+          }
+
+          // Step 2: Send notifications to admins/managers
+          await sendJoinDepartmentRequestNotification(communityId, communityName, pendingDepartmentId, pendingDepartmentName, userId, apiUrl);
+
+          showToast('Department join request sent!', 2500, 'success');
+
+          // Update the department card UI to show "Request Pending" BEFORE closing modal
+          // (closeRequestJoinDepartmentModal sets pendingDepartmentId to null)
+          updateDepartmentCardAfterRequest(pendingDepartmentId);
+
+          closeRequestJoinDepartmentModal();
+
+        } catch (err) {
+          console.error('Error requesting to join department:', err);
+          errorDiv.textContent = err.message || 'Failed to send request. Please try again.';
+          errorDiv.style.display = 'block';
+        } finally {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'Request to Join';
+        }
+      }
+
+      // Send notification to admins/managers about department join request
+      async function sendJoinDepartmentRequestNotification(communityId, communityName, departmentId, departmentName, userId, apiUrl) {
+        try {
+          // Get community data to find admins/managers
+          const community = window.community;
+          if (!community || !community.community || !community.community.roles) return;
+
+          // Find users with "manage members" or "administrator" permissions
+          const adminUserIds = [];
+          community.community.roles.forEach(function(role) {
+            if (Array.isArray(role.permissions)) {
+              const hasPermission = role.permissions.some(function(perm) {
+                return (perm.name === 'manage members' || perm.name === 'administrator') && perm.enabled;
+              });
+              if (hasPermission && Array.isArray(role.members)) {
+                role.members.forEach(function(memberId) {
+                  if (!adminUserIds.includes(memberId)) {
+                    adminUserIds.push(memberId);
+                  }
+                });
+              }
+            }
+          });
+
+          // Send notification to each admin/manager
+          for (const recipientId of adminUserIds) {
+            await fetch(`${apiUrl}/api/v1/users/notifications`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                sentFromID: userId,
+                sentToID: recipientId,
+                type: 'join_request',
+                data1: communityId,
+                data2: communityName,
+                data3: departmentId,
+                data4: departmentName,
+                message: 'has requested to join'
+              })
+            });
+          }
+        } catch (err) {
+          console.error('Error sending join request notification:', err);
+          // Don't throw - notification failure shouldn't block the join request
+        }
+      }
+
+      function updateDepartmentCardAfterRequest(departmentId) {
+        // Find the department card by its data-dept-id attribute
+        var card = document.querySelector('[data-dept-id="' + departmentId + '"]');
+        if (card) {
+          // Update the access status attribute
+          card.setAttribute('data-access-status', 'pending');
+          // Remove the locked class styling
+          card.classList.remove('locked');
+          card.classList.add('locked'); // Keep it locked but update status
+
+          // Find the "Request to Join" button anywhere in the card and replace it
+          var actionBtn = card.querySelector('button.text-xs');
+          if (actionBtn && actionBtn.textContent.includes('Request to Join')) {
+            var pendingSpan = document.createElement('span');
+            pendingSpan.className = 'text-xs px-2 py-1 rounded';
+            pendingSpan.style.cssText = 'color: #94a3b8; background: rgba(148, 163, 184, 0.1);';
+            pendingSpan.textContent = 'Request Pending';
+            actionBtn.replaceWith(pendingSpan);
+          }
+        }
       }
 
       // Modal close functions will be set up in DOMContentLoaded
@@ -7274,7 +7417,25 @@ async function saveEditEvent() {
   </div>
 </div>
 
-
+<!-- Request to Join Department Modal -->
+<div id="requestJoinDepartmentModal" class="heroui-modal" style="display:none; position:fixed; z-index:2000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
+  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:400px; width:90%; position:relative; border:1px solid #35385a;">
+    <button id="requestJoinDepartmentModalClose" aria-label="Close" onclick="closeRequestJoinDepartmentModal()" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
+    <div style="text-align:center; margin-bottom:1.5rem;">
+      <i class="fa fa-building" style="font-size:2.5rem; color:#3b82f6; margin-bottom:1rem;"></i>
+      <h3 style="color:#fff; margin:0; font-size:1.3rem; font-weight:600;">Request to Join Department</h3>
+    </div>
+    <div style="color:#a0aec0; text-align:center; padding:1rem; margin-bottom:1.5rem;">
+      <p>Are you sure you want to request to join <strong id="requestJoinDepartmentName" style="color:#fff;"></strong>?</p>
+      <p style="font-size:0.875rem; margin-top:0.5rem;">Your request will be sent to department administrators for approval.</p>
+    </div>
+    <div id="requestJoinDepartmentError" style="display:none; color:#f56565; text-align:center; margin-bottom:1rem;"></div>
+    <div style="margin-top:2rem; text-align:center; display:flex; justify-content:center; gap:1rem;">
+      <button id="requestJoinDepartmentModalCancel" type="button" onclick="closeRequestJoinDepartmentModal()" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">Cancel</button>
+      <button id="requestJoinDepartmentModalConfirm" type="button" onclick="submitJoinDepartmentRequest()" style="background:#3b82f6; color:#fff; border:none; border-radius:8px; padding:0.6rem 1.2rem; font-weight:500; cursor:pointer;">Request to Join</button>
+    </div>
+  </div>
+</div>
 
 <!-- Toast for join request feedback (already exists, but ensure it's present) -->
 <div id="toast" style="display:none; position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); background:#23272f; color:#fff; padding:1rem 2rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); z-index:3000; font-weight:500;">
@@ -7381,6 +7542,8 @@ async function saveEditEvent() {
             { id: 'inviteModalCancel', modalId: 'inviteModal' },
             { id: 'requestJoinModalClose', modalId: 'requestJoinModal' },
             { id: 'requestJoinModalCancel', modalId: 'requestJoinModal' },
+            { id: 'requestJoinDepartmentModalClose', modalId: 'requestJoinDepartmentModal' },
+            { id: 'requestJoinDepartmentModalCancel', modalId: 'requestJoinDepartmentModal' },
             { id: 'leaveCommunityModalClose', modalId: 'leaveCommunityModal' },
             { id: 'leaveCommunityModalCancel', modalId: 'leaveCommunityModal' },
             { id: 'ownerCannotLeaveModalClose', modalId: 'ownerCannotLeaveModal' },

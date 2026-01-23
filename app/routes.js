@@ -1239,7 +1239,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           try {
             const userDepartmentsResponse = await axios.get(apiUrl, config);
             const userDepartments = userDepartmentsResponse.data.data || [];
-            const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId && dept.accessStatus === 'approved');
             if (!userHasAccess) {
               return res.status(403).render("error", {
                 message: "You don't have access to this department. Please contact the department administrator.",
@@ -1350,7 +1350,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           try {
             const userDepartmentsResponse = await axios.get(apiUrl, config);
             const userDepartments = userDepartmentsResponse.data.data || [];
-            const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId && dept.accessStatus === 'approved');
             if (!userHasAccess) {
               return res.status(403).render("error", {
                 message: "You don't have access to this department. Please contact the department administrator.",
@@ -1518,7 +1518,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           try {
             const userDepartmentsResponse = await axios.get(apiUrl, config);
             const userDepartments = userDepartmentsResponse.data.data || [];
-            const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId && dept.accessStatus === 'approved');
             if (!userHasAccess) {
               return res.status(403).render("error", {
                 message: "You don't have access to this department. Please contact the department administrator.",
@@ -1619,7 +1619,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           try {
             const userDepartmentsResponse = await axios.get(apiUrl, config);
             const userDepartments = userDepartmentsResponse.data.data || [];
-            const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId && dept.accessStatus === 'approved');
             if (!userHasAccess) {
               return res.status(403).render("error", {
                 message: "You don't have access to this department. Please contact the department administrator.",
