@@ -31,7 +31,9 @@
   <head>
     <% include ad-header %>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title><%= community.community.name %> - Community Dashboard</title>
     <link rel="shortcut icon" type="image/ico" href="/static/images/favicon.ico" />
     <script src="https://cdn.tailwindcss.com"></script>
@@ -137,10 +139,9 @@
 
       html {
         scroll-behavior: smooth;
-        background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+        background: #0a0a0f;
         height: 100%;
-        background-attachment: fixed;
-        background-size: cover;
+        height: 100dvh;
         font-size: 16px !important;
         -webkit-overflow-scrolling: touch;
       }
@@ -151,7 +152,7 @@
         background-size: cover;
         color: #e2e8f0;
         min-height: 100vh;
-        min-height: -webkit-fill-available;
+        min-height: 100dvh;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         margin: 0;
@@ -160,13 +161,14 @@
         line-height: 1.5 !important;
         font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
         -webkit-overflow-scrolling: touch;
+        overscroll-behavior: none;
       }
 
       body::before {
         content: '';
         position: fixed;
-        top: -200vh;
-        bottom: -200vh;
+        top: -100px;
+        bottom: -100px;
         left: 0;
         right: 0;
         background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
