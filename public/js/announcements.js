@@ -226,10 +226,13 @@
 
     // Call API to mark as read (fire and forget)
     try {
-      await fetch(`${API_URL}/api/v1/announcement/${announcementId}/read`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      if (window.dbUser && window.dbUser._id) {
+        await fetch(`${API_URL}/api/v1/announcement/${announcementId}/read`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: window.dbUser._id })
+        });
+      }
     } catch (err) {
       console.error('Error marking announcement as read:', err);
     }
@@ -691,10 +694,15 @@
         page: currentAnnouncementPage,
         limit: announcementsPerPage
       });
-      
+
       // Add filter parameter if not 'all'
       if (currentFilterType && currentFilterType !== 'all') {
         params.append('type', currentFilterType);
+      }
+
+      // Add userId to get read status
+      if (window.dbUser && window.dbUser._id) {
+        params.append('userId', window.dbUser._id);
       }
 
       
@@ -833,8 +841,14 @@
     try {
       if (!window.communityId || !window.API_URL) return;
 
+      // Build params with userId for read status
+      const params = new URLSearchParams({ limit: 1000 });
+      if (window.dbUser && window.dbUser._id) {
+        params.append('userId', window.dbUser._id);
+      }
+
       // Fetch all announcements to count by type (lightweight request)
-      const response = await fetch(`${API_URL}/api/v1/community/${window.communityId}/announcements?limit=1000`, {
+      const response = await fetch(`${API_URL}/api/v1/community/${window.communityId}/announcements?${params}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });

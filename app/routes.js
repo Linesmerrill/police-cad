@@ -15,7 +15,6 @@ var Medication = require("../app/models/medication");
 var Condition = require("../app/models/medicalCondition");
 var MedicalReport = require("../app/models/medicalReport");
 var Announcement = require("../app/models/announcement");
-var AnnouncementRead = require("../app/models/announcementRead");
 var ObjectId = require("mongodb").ObjectID;
 var nodemailer = require("nodemailer");
 var nodemailerSendgrid = require("nodemailer-sendgrid");
@@ -7533,25 +7532,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
         .populate('comments.user', 'username profilePicture')
         .lean();
 
-      // Get read status for all announcements in one query
-      const announcementIds = announcements.map(a => a._id);
-      const readRecords = await AnnouncementRead.find({
-        announcement: { $in: announcementIds },
-        user: req.user._id
-      }).select('announcement').lean();
-
-      const readSet = new Set(readRecords.map(r => r.announcement.toString()));
-
-      // Add isRead flag to each announcement
-      const announcementsWithReadStatus = announcements.map(a => ({
-        ...a,
-        isRead: readSet.has(a._id.toString())
-      }));
-
       const total = await Announcement.countDocuments(query);
 
       res.json({
-        announcements: announcementsWithReadStatus,
+        announcements,
         pagination: {
           page: parseInt(page),
           limit: parseInt(limit),
@@ -7781,42 +7765,6 @@ module.exports = function (app, passport, server, nextApp, handle) {
     } catch (error) {
       console.error('Error removing reaction:', error);
       res.status(500).json({ error: "Failed to remove reaction" });
-    }
-  });
-
-  // Mark announcement as read
-  app.post("/api/v1/announcement/:announcementId/read", authCheck, async function (req, res) {
-    try {
-      const { announcementId } = req.params;
-
-      if (!isValidObjectIdLength(announcementId, "Invalid announcement ID")) {
-        return res.status(400).json({ error: "Invalid announcement ID" });
-      }
-
-      // Use upsert to create read record if it doesn't exist (atomic operation)
-      const result = await AnnouncementRead.findOneAndUpdate(
-        { announcement: announcementId, user: req.user._id },
-        { $setOnInsert: { announcement: announcementId, user: req.user._id, readAt: new Date() } },
-        { upsert: true, new: true, rawResult: true }
-      );
-
-      const wasAlreadyRead = !result.lastErrorObject.updatedExisting && !result.lastErrorObject.upserted;
-
-      // Only increment view count if this is a new read
-      if (result.lastErrorObject.upserted) {
-        await Announcement.findByIdAndUpdate(announcementId, { $inc: { viewCount: 1 } });
-      }
-
-      const announcement = await Announcement.findById(announcementId).select('viewCount');
-
-      res.json({
-        success: true,
-        wasAlreadyRead: !result.lastErrorObject.upserted,
-        viewCount: announcement ? announcement.viewCount : 0
-      });
-    } catch (error) {
-      console.error('Error marking announcement as read:', error);
-      res.status(500).json({ error: "Failed to mark announcement as read" });
     }
   });
 
