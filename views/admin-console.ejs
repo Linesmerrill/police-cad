@@ -956,6 +956,9 @@
                     <button type="button" class="btn btn-secondary cc-status-btn" data-status="rejected">
                       <i class="fas fa-times-circle" style="margin-right: 4px;"></i>Rejected
                     </button>
+                    <button type="button" class="btn btn-secondary cc-status-btn" data-status="withdrawn">
+                      <i class="fas fa-undo" style="margin-right: 4px;"></i>Withdrawn <span id="ccWithdrawnCount" class="badge" style="background: #6b7280; margin-left: 4px; display: none;"></span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -4381,6 +4384,20 @@
             $('#ccStatActive').text(data.pagination?.totalItems || 0);
           }
         });
+
+        // Load withdrawn count for the filter badge
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/content-creator-applications?status=withdrawn&limit=1`,
+          method: 'GET',
+          success: function(data) {
+            const count = data.pagination?.totalItems || 0;
+            if (count > 0) {
+              $('#ccWithdrawnCount').text(count).show();
+            } else {
+              $('#ccWithdrawnCount').hide();
+            }
+          }
+        });
       }
 
       function loadCCPendingCount() {
@@ -4407,6 +4424,9 @@
 
         if (currentCCStatus) {
           url += `&status=${currentCCStatus}`;
+        } else {
+          // "All" excludes withdrawn - show only active applications
+          url += `&exclude_status=withdrawn`;
         }
 
         $('#ccApplicationResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading applications...</div>');
@@ -4466,12 +4486,16 @@
           html += `
             <div class="result-card">
               <div class="result-header">
-                <div>
-                  <h5 class="result-title">${displayName}</h5>
-                  <p class="result-subtitle">Applied: ${createdAt} | Platform: ${primaryPlatform} | Followers: ${totalFollowers.toLocaleString()}</p>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <div>
+                    <h5 class="result-title" style="display: flex; align-items: center; gap: 10px;">
+                      ${displayName}
+                      <span class="status-badge" style="background: ${statusStyle.bg}; color: #fff; font-size: 0.7rem; padding: 0.2rem 0.6rem;">${statusStyle.label}</span>
+                    </h5>
+                    <p class="result-subtitle">Applied: ${createdAt} | Platform: ${primaryPlatform} | Followers: ${totalFollowers.toLocaleString()}</p>
+                  </div>
                 </div>
                 <div class="action-buttons">
-                  <span class="status-badge" style="background: ${statusStyle.bg}; margin-right: 0.5rem;">${statusStyle.label}</span>
                   <button class="btn btn-secondary btn-sm" onclick="viewCCApplication('${appId}')">
                     <i class="fas fa-eye"></i> View Details
                   </button>
