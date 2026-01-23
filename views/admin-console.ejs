@@ -758,6 +758,24 @@
         background: #11131a;
         color: #6b7280;
       }
+
+      /* Content Creator Pending Badge */
+      .cc-pending-badge {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 10px;
+        min-width: 18px;
+        text-align: center;
+        animation: pulse-badge 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse-badge {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+      }
     </style>
   </head>
   <body>
@@ -820,6 +838,7 @@
             <li role="presentation" id="content-creators-tab" style="display: none;">
               <a href="#content-creators-tab-content" data-toggle="tab">
                 <i class="fas fa-video" style="margin-right: 8px;"></i>Content Creators
+                <span id="ccPendingBadge" class="badge cc-pending-badge" style="display: none; margin-left: 6px;"></span>
               </a>
             </li>
             <li role="presentation" id="admin-management-tab" style="display: none;">
@@ -1391,7 +1410,12 @@
         
         // Update UI based on user roles
         updateUIForUserRoles();
-        
+
+        // Load pending content creator applications count for badge
+        if (roles.includes('owner') || roles.includes('admin')) {
+          loadCCPendingCount();
+        }
+
         // Load all admins when admin management tab is shown (using Bootstrap's shown.bs.tab event)
         $('a[href="#admin-management-tab-content"]').on('shown.bs.tab', function() {
           // Clear any existing results from other tabs
@@ -4359,6 +4383,24 @@
         });
       }
 
+      function loadCCPendingCount() {
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/content-creator-applications?status=submitted&limit=1`,
+          method: 'GET',
+          success: function(data) {
+            const count = data.pagination?.totalItems || 0;
+            if (count > 0) {
+              $('#ccPendingBadge').text(count).show();
+            } else {
+              $('#ccPendingBadge').hide();
+            }
+          },
+          error: function() {
+            $('#ccPendingBadge').hide();
+          }
+        });
+      }
+
       function loadCCApplications() {
         const searchQuery = $('#ccSearch').val().trim();
         let url = `${API_BASE}/api/v1/admin/content-creator-applications?page=${currentCCPage}&limit=${ccPageSize}`;
@@ -4663,6 +4705,7 @@
             showInfoModal('Success', '<i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>Application approved successfully! A content creator profile has been created.');
             loadCCApplications();
             loadCCStats();
+            loadCCPendingCount(); // Update badge
           },
           error: function(xhr) {
             $('#infoModal').modal('hide');
@@ -4708,6 +4751,7 @@
             showInfoModal('Success', '<i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>Application rejected successfully.');
             loadCCApplications();
             loadCCStats();
+            loadCCPendingCount(); // Update badge
           },
           error: function(xhr) {
             showInfoModal('Error', `<i class="fas fa-exclamation-circle" style="color: #ef4444; margin-right: 8px;"></i>Failed to reject application: ${xhr.responseJSON?.error || 'Unknown error'}`);
