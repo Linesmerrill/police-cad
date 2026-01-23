@@ -721,6 +721,43 @@
       .admin-footer a:hover {
         color: #c7cbe2;
       }
+
+      /* Content Creator Tab Styles */
+      .cc-status-btn {
+        margin-right: 0.25rem;
+        padding: 0.5rem 1rem;
+      }
+
+      .cc-status-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border-color: #667eea !important;
+        color: #fff !important;
+      }
+
+      .btn-group .cc-status-btn:first-child {
+        border-radius: 8px 0 0 8px;
+      }
+
+      .btn-group .cc-status-btn:last-child {
+        border-radius: 0 8px 8px 0;
+        margin-right: 0;
+      }
+
+      .pagination .page-link {
+        background: #1e2028;
+        border-color: #35385a;
+        color: #e5e7eb;
+      }
+
+      .pagination .page-item.active .page-link {
+        background: #667eea;
+        border-color: #667eea;
+      }
+
+      .pagination .page-item.disabled .page-link {
+        background: #11131a;
+        color: #6b7280;
+      }
     </style>
   </head>
   <body>
@@ -778,6 +815,11 @@
             <li role="presentation">
               <a href="#communities-tab" data-toggle="tab">
                 <i class="fas fa-building" style="margin-right: 8px;"></i>Communities
+              </a>
+            </li>
+            <li role="presentation" id="content-creators-tab" style="display: none;">
+              <a href="#content-creators-tab-content" data-toggle="tab">
+                <i class="fas fa-video" style="margin-right: 8px;"></i>Content Creators
               </a>
             </li>
             <li role="presentation" id="admin-management-tab" style="display: none;">
@@ -875,7 +917,85 @@
               
               <div id="communityResults"></div>
             </div>
-            
+
+            <!-- Content Creators Tab -->
+            <div role="tabpanel" class="tab-pane" id="content-creators-tab-content">
+              <!-- Status Filter Buttons -->
+              <div class="row" style="margin-bottom: 1rem;">
+                <div class="col-md-12">
+                  <div class="btn-group" role="group" id="ccStatusFilter">
+                    <button type="button" class="btn btn-secondary cc-status-btn active" data-status="">All</button>
+                    <button type="button" class="btn btn-secondary cc-status-btn" data-status="submitted">
+                      <i class="fas fa-inbox" style="margin-right: 4px;"></i>Submitted
+                    </button>
+                    <button type="button" class="btn btn-secondary cc-status-btn" data-status="under_review">
+                      <i class="fas fa-search" style="margin-right: 4px;"></i>Under Review
+                    </button>
+                    <button type="button" class="btn btn-secondary cc-status-btn" data-status="approved">
+                      <i class="fas fa-check-circle" style="margin-right: 4px;"></i>Approved
+                    </button>
+                    <button type="button" class="btn btn-secondary cc-status-btn" data-status="rejected">
+                      <i class="fas fa-times-circle" style="margin-right: 4px;"></i>Rejected
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-8">
+                  <input type="text" id="ccSearch" class="form-control search-input"
+                         placeholder="Search applications by display name..." />
+                </div>
+                <div class="col-md-4">
+                  <button type="button" id="searchCCBtn" class="btn btn-gradient btn-block">
+                    <i class="fas fa-search" style="margin-right: 8px;"></i>Search Applications
+                  </button>
+                </div>
+              </div>
+
+              <!-- Stats Row -->
+              <div class="row" style="margin-top: 1rem;" id="ccStatsRow">
+                <div class="col-md-3">
+                  <div class="stat-card">
+                    <div class="stat-number" id="ccStatPending">-</div>
+                    <div class="stat-label">Pending Review</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="stat-card">
+                    <div class="stat-number" id="ccStatApproved">-</div>
+                    <div class="stat-label">Approved</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="stat-card">
+                    <div class="stat-number" id="ccStatRejected">-</div>
+                    <div class="stat-label">Rejected</div>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="stat-card">
+                    <div class="stat-number" id="ccStatActive">-</div>
+                    <div class="stat-label">Active Creators</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Results -->
+              <div id="ccApplicationResults">
+                <div class="loading" style="text-align: center; padding: 2rem; color: #9aa0b4;">
+                  <i class="fas fa-spinner fa-spin"></i> Loading applications...
+                </div>
+              </div>
+
+              <!-- Pagination -->
+              <div id="ccPagination" style="margin-top: 1rem; display: none;">
+                <nav>
+                  <ul class="pagination justify-content-center" id="ccPaginationList"></ul>
+                </nav>
+              </div>
+            </div>
+
             <!-- Admin Management Tab -->
             <div role="tabpanel" class="tab-pane" id="admin-management-tab-content">
               <div class="row">
@@ -976,6 +1096,73 @@
           </div>
           <div class="modal-footer" style="border-top: 1px solid #2a2d45;">
             <button type="button" class="btn btn-gradient" data-dismiss="modal">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Creator Application Modal -->
+    <div class="modal fade" id="ccApplicationModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
+          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
+              <span>&times;</span>
+            </button>
+            <h4 class="modal-title" id="ccApplicationModalTitle">Application Details</h4>
+          </div>
+          <div class="modal-body" id="ccApplicationModalBody">
+            <!-- Application details will be loaded here -->
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #2a2d45;" id="ccApplicationModalFooter">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reject Application Modal -->
+    <div class="modal fade" id="ccRejectModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
+          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
+              <span>&times;</span>
+            </button>
+            <h4 class="modal-title">Reject Application</h4>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="rejectApplicationId" />
+            <div class="form-group">
+              <label for="rejectionReason" style="color: #e5e7eb; margin-bottom: 0.5rem;">Rejection Reason</label>
+              <select id="rejectionReason" class="form-control" style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;">
+                <option value="">Select a reason...</option>
+                <option value="insufficient_followers">Insufficient followers</option>
+                <option value="content_quality">Content quality concerns</option>
+                <option value="platform_mismatch">Platform requirements not met</option>
+                <option value="incomplete_info">Incomplete information</option>
+                <option value="policy_violation">Policy violation</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="rejectionFeedback" style="color: #e5e7eb; margin-bottom: 0.5rem;">Feedback for Applicant</label>
+              <textarea id="rejectionFeedback" class="form-control" rows="3"
+                        placeholder="Provide constructive feedback..."
+                        style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="rejectionAdminNotes" style="color: #e5e7eb; margin-bottom: 0.5rem;">Admin Notes (Internal)</label>
+              <textarea id="rejectionAdminNotes" class="form-control" rows="2"
+                        placeholder="Internal notes..."
+                        style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #2a2d45;">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmRejectBtn">
+              <i class="fas fa-times-circle" style="margin-right: 8px;"></i>Reject Application
+            </button>
           </div>
         </div>
       </div>
@@ -1102,12 +1289,20 @@
         // Safety check - if no user data, hide everything
         if (!currentUserEmail || !roles || roles.length === 0) {
           $('#admin-management-tab').hide();
+          $('#content-creators-tab').hide();
           $('#add-admin-section').hide();
           $('#adminResults').html('');
           $('#userResults').html('');
           return;
         }
-        
+
+        // Show content creators tab for admin and owner roles
+        if (roles.includes('owner') || roles.includes('admin')) {
+          $('#content-creators-tab').show();
+        } else {
+          $('#content-creators-tab').hide();
+        }
+
         if (roles.includes('owner')) {
           $('#admin-management-tab').show();
           $('#add-admin-section').show();
@@ -1115,7 +1310,7 @@
           $('#admin-management-tab').hide();
           $('#add-admin-section').hide();
           $('#admin-management-tab-content').hide();
-          
+
           // Clear any admin data that might be displayed
           $('#adminResults').html('');
           $('#userResults').html('');
@@ -4032,7 +4227,7 @@
         const originalText = button.html();
         button.html('<i class="fas fa-spinner fa-spin"></i> Sending...');
         button.prop('disabled', true);
-        
+
         $.ajax({
           url: `${API_BASE}/api/v1/admin/send-reset-email`,
           method: 'POST',
@@ -4042,21 +4237,21 @@
           success: function(data) {
             // Replace the error and info alerts with success message
             $('#addAdminModal .alert').remove();
-            
+
             const successHtml = `
               <div class="alert alert-success" style="background: #10b981; color: #fff; border: none; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                 <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
                 New password reset email sent successfully to ${email}
               </div>
             `;
-            
+
             $('#addAdminModal .modal-body').prepend(successHtml);
-            
+
             // Disable the send button and change its text
             button.prop('disabled', true);
             button.html('<i class="fas fa-check"></i> Email Sent');
             button.removeClass('btn-secondary').addClass('btn-success');
-            
+
             // Clear the email input since we successfully sent the reset
             $('#newAdminEmail').val('');
             
@@ -4089,7 +4284,441 @@
           }
         });
       }
-      
+
+      // =====================================================
+      // CONTENT CREATOR MANAGEMENT FUNCTIONS
+      // =====================================================
+
+      let currentCCPage = 1;
+      let currentCCStatus = '';
+      let ccPageSize = 10;
+
+      // Load content creator applications when tab is shown
+      $('a[href="#content-creators-tab-content"]').on('shown.bs.tab', function() {
+        loadCCApplications();
+        loadCCStats();
+      });
+
+      // Status filter buttons
+      $(document).on('click', '.cc-status-btn', function() {
+        $('.cc-status-btn').removeClass('active');
+        $(this).addClass('active');
+        currentCCStatus = $(this).data('status');
+        currentCCPage = 1;
+        loadCCApplications();
+      });
+
+      // Search button click
+      $('#searchCCBtn').click(function() {
+        currentCCPage = 1;
+        loadCCApplications();
+      });
+
+      // Search on enter key
+      $('#ccSearch').keypress(function(e) {
+        if (e.which === 13) {
+          $('#searchCCBtn').click();
+        }
+      });
+
+      function loadCCStats() {
+        // Load pending count
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/content-creator-applications?status=submitted&limit=1`,
+          method: 'GET',
+          success: function(data) {
+            $('#ccStatPending').text(data.pagination?.totalItems || 0);
+          }
+        });
+
+        // Load approved count
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/content-creator-applications?status=approved&limit=1`,
+          method: 'GET',
+          success: function(data) {
+            $('#ccStatApproved').text(data.pagination?.totalItems || 0);
+          }
+        });
+
+        // Load rejected count
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/content-creator-applications?status=rejected&limit=1`,
+          method: 'GET',
+          success: function(data) {
+            $('#ccStatRejected').text(data.pagination?.totalItems || 0);
+          }
+        });
+
+        // Load active creators count
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/content-creators?status=active&limit=1`,
+          method: 'GET',
+          success: function(data) {
+            $('#ccStatActive').text(data.pagination?.totalItems || 0);
+          }
+        });
+      }
+
+      function loadCCApplications() {
+        const searchQuery = $('#ccSearch').val().trim();
+        let url = `${API_BASE}/api/v1/admin/content-creator-applications?page=${currentCCPage}&limit=${ccPageSize}`;
+
+        if (currentCCStatus) {
+          url += `&status=${currentCCStatus}`;
+        }
+
+        $('#ccApplicationResults').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading applications...</div>');
+
+        $.ajax({
+          url: url,
+          method: 'GET',
+          success: function(data) {
+            displayCCApplications(data.applications || [], data.pagination);
+          },
+          error: function(xhr) {
+            $('#ccApplicationResults').html('<div class="loading">Failed to load applications</div>');
+            showInfoModal('Error', `Error loading applications: ${xhr.responseJSON?.error || 'Unknown error'}`);
+          }
+        });
+      }
+
+      function displayCCApplications(applications, pagination) {
+        if (applications.length === 0) {
+          $('#ccApplicationResults').html(`
+            <div class="no-users-found">
+              <div class="no-users-message">
+                <i class="fas fa-inbox" style="font-size: 3rem; color: #667eea; margin-bottom: 1rem;"></i>
+                <h4 style="color: #e5e7eb;">No Applications Found</h4>
+                <p style="color: #9aa0b4;">There are no applications matching your criteria.</p>
+              </div>
+            </div>
+          `);
+          $('#ccPagination').hide();
+          return;
+        }
+
+        let html = '';
+        applications.forEach(app => {
+          const appId = app._id || app.id;
+          const displayName = app.displayName || 'Unknown';
+          const status = app.status || 'unknown';
+          const createdAt = app.createdAt ? new Date(app.createdAt).toLocaleDateString() : 'Unknown';
+          const primaryPlatform = app.primaryPlatform || 'Unknown';
+
+          // Calculate total followers
+          let totalFollowers = 0;
+          if (app.platforms && Array.isArray(app.platforms)) {
+            totalFollowers = app.platforms.reduce((sum, p) => sum + (p.followerCount || 0), 0);
+          }
+
+          // Status badge styling
+          const statusColors = {
+            'submitted': { bg: '#3b82f6', label: 'Submitted' },
+            'under_review': { bg: '#f59e0b', label: 'Under Review' },
+            'approved': { bg: '#10b981', label: 'Approved' },
+            'rejected': { bg: '#ef4444', label: 'Rejected' },
+            'withdrawn': { bg: '#6b7280', label: 'Withdrawn' }
+          };
+          const statusStyle = statusColors[status] || { bg: '#6b7280', label: status };
+
+          html += `
+            <div class="result-card">
+              <div class="result-header">
+                <div>
+                  <h5 class="result-title">${displayName}</h5>
+                  <p class="result-subtitle">Applied: ${createdAt} | Platform: ${primaryPlatform} | Followers: ${totalFollowers.toLocaleString()}</p>
+                </div>
+                <div class="action-buttons">
+                  <span class="status-badge" style="background: ${statusStyle.bg}; margin-right: 0.5rem;">${statusStyle.label}</span>
+                  <button class="btn btn-secondary btn-sm" onclick="viewCCApplication('${appId}')">
+                    <i class="fas fa-eye"></i> View Details
+                  </button>
+                  ${status === 'submitted' || status === 'under_review' ? `
+                    <button class="btn btn-success btn-sm" onclick="approveCCApplication('${appId}')">
+                      <i class="fas fa-check"></i> Approve
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="showRejectModal('${appId}')">
+                      <i class="fas fa-times"></i> Reject
+                    </button>
+                  ` : ''}
+                </div>
+              </div>
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="info-label">Description</div>
+                  <div class="info-value" style="max-height: 60px; overflow: hidden; text-overflow: ellipsis;">${app.description || 'No description'}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        $('#ccApplicationResults').html(html);
+
+        // Update pagination
+        if (pagination && pagination.totalPages > 1) {
+          let paginationHtml = '';
+
+          // Previous button
+          paginationHtml += `
+            <li class="page-item ${pagination.hasPrevPage ? '' : 'disabled'}">
+              <a class="page-link" href="#" onclick="changeCCPage(${currentCCPage - 1}); return false;" style="background: #1e2028; border-color: #35385a; color: #e5e7eb;">
+                <i class="fas fa-chevron-left"></i>
+              </a>
+            </li>
+          `;
+
+          // Page numbers
+          for (let i = 1; i <= pagination.totalPages; i++) {
+            if (i === currentCCPage || i === 1 || i === pagination.totalPages || (i >= currentCCPage - 1 && i <= currentCCPage + 1)) {
+              paginationHtml += `
+                <li class="page-item ${i === currentCCPage ? 'active' : ''}">
+                  <a class="page-link" href="#" onclick="changeCCPage(${i}); return false;"
+                     style="background: ${i === currentCCPage ? '#667eea' : '#1e2028'}; border-color: #35385a; color: #e5e7eb;">
+                    ${i}
+                  </a>
+                </li>
+              `;
+            } else if (i === currentCCPage - 2 || i === currentCCPage + 2) {
+              paginationHtml += `<li class="page-item disabled"><span class="page-link" style="background: #1e2028; border-color: #35385a; color: #9aa0b4;">...</span></li>`;
+            }
+          }
+
+          // Next button
+          paginationHtml += `
+            <li class="page-item ${pagination.hasNextPage ? '' : 'disabled'}">
+              <a class="page-link" href="#" onclick="changeCCPage(${currentCCPage + 1}); return false;" style="background: #1e2028; border-color: #35385a; color: #e5e7eb;">
+                <i class="fas fa-chevron-right"></i>
+              </a>
+            </li>
+          `;
+
+          $('#ccPaginationList').html(paginationHtml);
+          $('#ccPagination').show();
+        } else {
+          $('#ccPagination').hide();
+        }
+      }
+
+      function changeCCPage(page) {
+        currentCCPage = page;
+        loadCCApplications();
+      }
+
+      function viewCCApplication(appId) {
+        $('#ccApplicationModalTitle').text('Loading Application...');
+        $('#ccApplicationModalBody').html('<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>');
+        $('#ccApplicationModalFooter').html('<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>');
+        $('#ccApplicationModal').modal('show');
+
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/content-creator-applications/${appId}`,
+          method: 'GET',
+          success: function(app) {
+            displayCCApplicationDetails(app);
+          },
+          error: function(xhr) {
+            $('#ccApplicationModalBody').html('<div class="loading">Failed to load application details</div>');
+          }
+        });
+      }
+
+      function displayCCApplicationDetails(app) {
+        const appId = app._id || app.id;
+        const displayName = app.displayName || 'Unknown';
+        const status = app.status || 'unknown';
+        const createdAt = app.createdAt ? new Date(app.createdAt).toLocaleString() : 'Unknown';
+        const reviewedAt = app.reviewedAt ? new Date(app.reviewedAt).toLocaleString() : 'N/A';
+        const primaryPlatform = app.primaryPlatform || 'Unknown';
+
+        // Status badge styling
+        const statusColors = {
+          'submitted': { bg: '#3b82f6', label: 'Submitted' },
+          'under_review': { bg: '#f59e0b', label: 'Under Review' },
+          'approved': { bg: '#10b981', label: 'Approved' },
+          'rejected': { bg: '#ef4444', label: 'Rejected' },
+          'withdrawn': { bg: '#6b7280', label: 'Withdrawn' }
+        };
+        const statusStyle = statusColors[status] || { bg: '#6b7280', label: status };
+
+        // Build platforms HTML
+        let platformsHtml = '';
+        if (app.platforms && Array.isArray(app.platforms)) {
+          app.platforms.forEach(p => {
+            const platformIcons = {
+              'youtube': 'fab fa-youtube',
+              'twitch': 'fab fa-twitch',
+              'tiktok': 'fab fa-tiktok',
+              'instagram': 'fab fa-instagram',
+              'twitter': 'fab fa-twitter',
+              'facebook': 'fab fa-facebook',
+              'other': 'fas fa-globe'
+            };
+            const icon = platformIcons[p.platform] || 'fas fa-globe';
+
+            platformsHtml += `
+              <div class="info-item" style="margin-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="${icon}" style="color: #667eea;"></i>
+                  <span style="color: #e5e7eb; font-weight: 500;">${p.platform}</span>
+                </div>
+                <div style="margin-top: 0.25rem;">
+                  <a href="${p.url}" target="_blank" style="color: #667eea; word-break: break-all;">${p.url}</a>
+                </div>
+                <div style="color: #9aa0b4; font-size: 0.9rem;">
+                  ${(p.followerCount || 0).toLocaleString()} followers
+                </div>
+              </div>
+            `;
+          });
+        }
+
+        $('#ccApplicationModalTitle').text(`Application: ${displayName}`);
+        $('#ccApplicationModalBody').html(`
+          <div style="margin-bottom: 1rem;">
+            <span class="status-badge" style="background: ${statusStyle.bg};">${statusStyle.label}</span>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Display Name</div>
+              <div class="info-value">${displayName}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Primary Platform</div>
+              <div class="info-value">${primaryPlatform}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Applied At</div>
+              <div class="info-value">${createdAt}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Reviewed At</div>
+              <div class="info-value">${reviewedAt}</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem;">
+            <h5 style="color: #e5e7eb; margin-bottom: 1rem;">
+              <i class="fas fa-share-alt" style="margin-right: 8px; color: #667eea;"></i>Platforms
+            </h5>
+            <div style="background: #11131a; border-radius: 8px; padding: 1rem;">
+              ${platformsHtml || '<p style="color: #9aa0b4;">No platforms listed</p>'}
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem;">
+            <h5 style="color: #e5e7eb; margin-bottom: 1rem;">
+              <i class="fas fa-align-left" style="margin-right: 8px; color: #667eea;"></i>Description
+            </h5>
+            <div style="background: #11131a; border-radius: 8px; padding: 1rem; color: #e5e7eb; white-space: pre-wrap;">
+              ${app.description || 'No description provided'}
+            </div>
+          </div>
+
+          ${app.rejectionReason ? `
+            <div style="margin-top: 1.5rem;">
+              <h5 style="color: #ef4444; margin-bottom: 1rem;">
+                <i class="fas fa-times-circle" style="margin-right: 8px;"></i>Rejection Details
+              </h5>
+              <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 1rem;">
+                <p style="margin-bottom: 0.5rem;"><strong>Reason:</strong> ${app.rejectionReason}</p>
+                ${app.feedback ? `<p style="margin-bottom: 0.5rem;"><strong>Feedback:</strong> ${app.feedback}</p>` : ''}
+                ${app.adminNotes ? `<p style="margin-bottom: 0; color: #9aa0b4;"><strong>Admin Notes:</strong> ${app.adminNotes}</p>` : ''}
+              </div>
+            </div>
+          ` : ''}
+        `);
+
+        // Update footer with action buttons if status allows
+        if (status === 'submitted' || status === 'under_review') {
+          $('#ccApplicationModalFooter').html(`
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger" onclick="$('#ccApplicationModal').modal('hide'); showRejectModal('${appId}');">
+              <i class="fas fa-times-circle" style="margin-right: 8px;"></i>Reject
+            </button>
+            <button type="button" class="btn btn-success" onclick="approveCCApplication('${appId}')">
+              <i class="fas fa-check-circle" style="margin-right: 8px;"></i>Approve
+            </button>
+          `);
+        } else {
+          $('#ccApplicationModalFooter').html('<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>');
+        }
+      }
+
+      function approveCCApplication(appId) {
+        if (!confirm('Are you sure you want to approve this application? This will create a content creator profile for the user.')) {
+          return;
+        }
+
+        showInfoModal('Processing', '<i class="fas fa-spinner fa-spin"></i> Approving application...');
+
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/content-creator-applications/${appId}/approve`,
+          method: 'POST',
+          contentType: 'application/json',
+          success: function(data) {
+            $('#infoModal').modal('hide');
+            $('#ccApplicationModal').modal('hide');
+            showInfoModal('Success', '<i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>Application approved successfully! A content creator profile has been created.');
+            loadCCApplications();
+            loadCCStats();
+          },
+          error: function(xhr) {
+            $('#infoModal').modal('hide');
+            showInfoModal('Error', `<i class="fas fa-exclamation-circle" style="color: #ef4444; margin-right: 8px;"></i>Failed to approve application: ${xhr.responseJSON?.error || 'Unknown error'}`);
+          }
+        });
+      }
+
+      function showRejectModal(appId) {
+        $('#rejectApplicationId').val(appId);
+        $('#rejectionReason').val('');
+        $('#rejectionFeedback').val('');
+        $('#rejectionAdminNotes').val('');
+        $('#ccRejectModal').modal('show');
+      }
+
+      $('#confirmRejectBtn').click(function() {
+        const appId = $('#rejectApplicationId').val();
+        const reason = $('#rejectionReason').val();
+        const feedback = $('#rejectionFeedback').val();
+        const adminNotes = $('#rejectionAdminNotes').val();
+
+        if (!reason) {
+          alert('Please select a rejection reason');
+          return;
+        }
+
+        const button = $(this);
+        button.prop('disabled', true);
+        button.html('<i class="fas fa-spinner fa-spin"></i> Rejecting...');
+
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/content-creator-applications/${appId}/reject`,
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({
+            rejectionReason: reason,
+            feedback: feedback,
+            adminNotes: adminNotes
+          }),
+          success: function(data) {
+            $('#ccRejectModal').modal('hide');
+            showInfoModal('Success', '<i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>Application rejected successfully.');
+            loadCCApplications();
+            loadCCStats();
+          },
+          error: function(xhr) {
+            showInfoModal('Error', `<i class="fas fa-exclamation-circle" style="color: #ef4444; margin-right: 8px;"></i>Failed to reject application: ${xhr.responseJSON?.error || 'Unknown error'}`);
+          },
+          complete: function() {
+            button.prop('disabled', false);
+            button.html('<i class="fas fa-times-circle" style="margin-right: 8px;"></i>Reject Application');
+          }
+        });
+      });
+
 
     </script>
     
