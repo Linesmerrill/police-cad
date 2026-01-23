@@ -2907,11 +2907,193 @@ module.exports = function (app, passport, server, nextApp, handle) {
     );
   });
 
+  // ===========================================
+  // CONTENT CREATOR API ROUTES
+  // These MUST be defined BEFORE the catch-all below
+  // ===========================================
+
+  // JSON-specific auth check for API routes (returns 401 JSON instead of rendering login page)
+  function apiAuthCheck(req, res, next) {
+    if (req.isAuthenticated()) {
+      return next();
+    } else {
+      console.log('[apiAuthCheck] Authentication failed for', req.method, req.path);
+      return res.status(401).json({ error: "Unauthorized", message: "Please log in to continue" });
+    }
+  }
+
+  // Get all content creators (public)
+  app.get("/api/v1/content-creators", async function (req, res) {
+    try {
+      const { page = 1, limit = 12, featured, platform, search } = req.query;
+      let url = `${policeCadApiUrl}/api/v1/content-creators?page=${page}&limit=${limit}`;
+      if (featured) url += `&featured=${featured}`;
+      if (platform) url += `&platform=${platform}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+
+      const response = await axios.get(url, config);
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error fetching content creators:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch content creators" });
+      }
+    }
+  });
+
+  // Get content creator by slug (public) - MUST be after /me routes to avoid matching "me" as slug
+  app.get("/api/v1/content-creators/:slug", async function (req, res) {
+    try {
+      const { slug } = req.params;
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/content-creators/${slug}`, config);
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error fetching content creator:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to fetch content creator" });
+      }
+    }
+  });
+
+  // Get current user's application/creator status
+  app.get("/api/v1/content-creator-applications/me", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      console.log('[ContentCreator /me] Fetching status for user:', userId);
+      console.log('[ContentCreator /me] Calling Go API at:', `${policeCadApiUrl}/api/v1/content-creator-applications/me`);
+
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/content-creator-applications/me`, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString()
+        }
+      });
+      console.log('[ContentCreator /me] Got response:', JSON.stringify(response.data));
+      res.json(response.data);
+    } catch (error) {
+      console.error('[ContentCreator /me] Error fetching creator status:', error.message);
+      if (error.response) {
+        console.error('[ContentCreator /me] Go API response status:', error.response.status);
+        console.error('[ContentCreator /me] Go API response data:', JSON.stringify(error.response.data));
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        console.error('[ContentCreator /me] No response from Go API');
+        res.status(500).json({ error: "Failed to fetch creator status" });
+      }
+    }
+  });
+
+  // Submit content creator application
+  app.post("/api/v1/content-creator-applications", apiAuthCheck, async function (req, res) {
+    try {
+      if (!policeCadApiUrl) {
+        console.error('[ContentCreator] POLICE_CAD_API_URL is not configured');
+        return res.status(500).json({ error: "Server configuration error", message: "API URL not configured" });
+      }
+
+      const userId = req.user._id || req.user.id;
+      console.log('[ContentCreator] Submitting application for user:', userId);
+      console.log('[ContentCreator] Calling Go API at:', `${policeCadApiUrl}/api/v1/content-creator-applications`);
+
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/content-creator-applications`, req.body, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString(),
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[ContentCreator] Error submitting application:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to submit application", message: "Could not connect to API server" });
+      }
+    }
+  });
+
+  // Withdraw content creator application
+  app.delete("/api/v1/content-creator-applications/me", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      console.log('[ContentCreator] Withdrawing application for user:', userId);
+
+      const response = await axios.delete(`${policeCadApiUrl}/api/v1/content-creator-applications/me`, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString()
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('[ContentCreator] Error withdrawing application:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to withdraw application", message: "Could not connect to API server" });
+      }
+    }
+  });
+
+  // Update content creator profile (self)
+  app.put("/api/v1/content-creators/me", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.put(`${policeCadApiUrl}/api/v1/content-creators/me`, req.body, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString(),
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error updating creator profile:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to update profile" });
+      }
+    }
+  });
+
+  // Request removal from program
+  app.post("/api/v1/content-creators/:id/request-removal", apiAuthCheck, async function (req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user._id || req.user.id;
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/content-creators/${id}/request-removal`, req.body, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString(),
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error requesting removal:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to request removal" });
+      }
+    }
+  });
+
+  // ===========================================
+  // END CONTENT CREATOR API ROUTES
+  // ===========================================
+
   // Be sure to place all GET requests above this catchall
   // Exclude Next.js internal routes
   app.get("*", function (req, res) {
     // Let Next.js handle its own routes
-    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/')) {
+    if (req.path.startsWith('/_next/') || req.path.startsWith('/api/') || req.path === '/profile' || req.path === '/discord-bot' || req.path === '/about-us' || req.path === '/contact-us' || req.path === '/privacy-policy' || req.path === '/terms-and-conditions' || req.path === '/login' || req.path === '/forgot-password' || req.path === '/signup' || req.path === '/invite-code' || req.path === '/faq' || (req.path.startsWith('/signup/') && !req.path.match(/^\/signup\/verify\/[^/]+$/)) || req.path.startsWith('/reset/') || req.path.startsWith('/content-creators')) {
       return handle(req, res);
     }
     res.render("page-not-found");
