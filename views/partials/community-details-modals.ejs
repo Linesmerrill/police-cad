@@ -4482,9 +4482,9 @@ function renderInviteCodes() {
   inviteCodesData.forEach(code => {
     const isExpired = code.expiresAt && new Date(code.expiresAt) < new Date();
     const usesCount = code.uses || 0;
-    // Check if code has no remaining uses (maxUses > 0 means limited, remainingUses <= 0 means exhausted)
-    const isExhausted = code.maxUses > 0 && code.remainingUses <= 0;
-    const isInvalid = isExpired || isExhausted;
+    // Check if code has no remaining uses (maxUses > 0 means limited, remainingUses <= 0 means fully used)
+    const isFullyUsed = code.maxUses > 0 && code.remainingUses <= 0;
+    const isInvalid = isExpired || isFullyUsed;
 
     let expiryDisplay = '';
     if (code.expiresAt) {
@@ -4500,8 +4500,8 @@ function renderInviteCodes() {
 
     // Show uses display
     let usesDisplay = code.maxUses > 0 ? `${usesCount} of ${code.maxUses} uses` : `${usesCount} uses (unlimited)`;
-    if (isExhausted) {
-      usesDisplay = `<span style="color:#ef4444;">${usesCount} of ${code.maxUses} uses (exhausted)</span>`;
+    if (isFullyUsed) {
+      usesDisplay = `<span style="color:#ef4444;">${usesCount} of ${code.maxUses} uses (limit reached)</span>`;
     }
 
     const codeEl = document.createElement('div');
