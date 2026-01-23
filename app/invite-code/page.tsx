@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { TicketIcon, ExclamationTriangleIcon, CheckCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
 
-export default function InviteCodePage() {
+function InviteCodeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [inviteCode, setInviteCode] = useState('');
@@ -131,22 +131,7 @@ export default function InviteCodePage() {
   };
 
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        width: '100%',
-        maxWidth: '100vw',
-        backgroundColor: '#0a0a0f',
-        position: 'relative',
-        margin: 0,
-        padding: 0,
-        overflowX: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <Navbar />
-
+    <>
       {/* Hero Section Background */}
       <div
         className="relative isolate overflow-hidden"
@@ -542,6 +527,50 @@ export default function InviteCodePage() {
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+// Loading fallback for Suspense
+function InviteCodeLoading() {
+  return (
+    <div
+      className="relative isolate overflow-hidden"
+      style={{
+        background: 'linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%)',
+        minHeight: 'calc(100vh - 80px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flex: 1,
+      }}
+    >
+      <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '1rem' }}>Loading...</div>
+    </div>
+  );
+}
+
+export default function InviteCodePage() {
+  return (
+    <main
+      style={{
+        minHeight: '100vh',
+        width: '100%',
+        maxWidth: '100vw',
+        backgroundColor: '#0a0a0f',
+        position: 'relative',
+        margin: 0,
+        padding: 0,
+        overflowX: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <Navbar />
+
+      <Suspense fallback={<InviteCodeLoading />}>
+        <InviteCodeContent />
+      </Suspense>
 
       <Footer />
 
