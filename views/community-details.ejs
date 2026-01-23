@@ -1626,18 +1626,22 @@
               <p class="text-slate-400 text-sm">Join to view announcements</p>
             </div>
           <% } else { %>
-            <div class="flex flex-wrap gap-2 mb-4">
-              <button onclick="filterAnnouncements('all')" id="tab-all" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors" style="background: #3b82f6; color: white;">
-                All
+            <div id="announcement-filter-tabs" class="flex flex-wrap gap-2 mb-4">
+              <button onclick="filterAnnouncements('all')" id="tab-all" class="announcement-filter-tab active" data-filter="all"
+                style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(244, 114, 182, 0.5); background: rgba(244, 114, 182, 0.15); color: #f472b6; cursor: pointer; transition: all 0.2s;">
+                All <span id="tab-all-count" style="opacity: 0.7;">(0)</span>
               </button>
-              <button onclick="filterAnnouncements('main')" id="tab-main" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors" style="background: rgba(255,255,255,0.05); color: #94a3b8;">
-                <i class="fa fa-bullhorn mr-1"></i>Main
+              <button onclick="filterAnnouncements('main')" id="tab-main" class="announcement-filter-tab" data-filter="main"
+                style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(59, 130, 246, 0.3); background: transparent; color: #94a3b8; cursor: pointer; transition: all 0.2s;">
+                <i class="fa fa-bullhorn mr-1"></i>Main <span id="tab-main-count" style="opacity: 0.7;">(0)</span>
               </button>
-              <button onclick="filterAnnouncements('session')" id="tab-session" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors" style="background: rgba(255,255,255,0.05); color: #94a3b8;">
-                <i class="fa fa-calendar-day mr-1"></i>Session
+              <button onclick="filterAnnouncements('session')" id="tab-session" class="announcement-filter-tab" data-filter="session"
+                style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(168, 85, 247, 0.3); background: transparent; color: #94a3b8; cursor: pointer; transition: all 0.2s;">
+                <i class="fa fa-calendar-day mr-1"></i>Session <span id="tab-session-count" style="opacity: 0.7;">(0)</span>
               </button>
-              <button onclick="filterAnnouncements('training')" id="tab-training" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-colors" style="background: rgba(255,255,255,0.05); color: #94a3b8;">
-                <i class="fa fa-graduation-cap mr-1"></i>Training
+              <button onclick="filterAnnouncements('training')" id="tab-training" class="announcement-filter-tab" data-filter="training"
+                style="padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.75rem; font-weight: 500; border: 1px solid rgba(34, 197, 94, 0.3); background: transparent; color: #94a3b8; cursor: pointer; transition: all 0.2s;">
+                <i class="fa fa-graduation-cap mr-1"></i>Training <span id="tab-training-count" style="opacity: 0.7;">(0)</span>
               </button>
             </div>
 
@@ -1648,7 +1652,7 @@
               </div>
             </div>
 
-            <div id="announcements-pagination" class="mt-4"></div>
+            <div id="announcements-pagination" class="flex justify-center items-center gap-4 mt-4" style="display: none;"></div>
           <% } %>
         </section>
 

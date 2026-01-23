@@ -6039,12 +6039,12 @@ window.expandTemplateCard = function(idx) {
     </div>
     <form id="createAnnouncementForm" action="javascript:void(0)" method="post">
       <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="announcement-title">Title *</label>
-        <input type="text" id="announcement-title" required maxlength="200" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" placeholder="Enter announcement title" />
+        <label class="block text-gray-300 mb-2 text-base" for="announcement-title">Title <span style="color: #f87171;">*</span></label>
+        <input type="text" id="announcement-title" maxlength="200" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" style="border: 1px solid transparent;" placeholder="Enter announcement title" />
       </div>
       <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="announcement-type">Type *</label>
-        <select id="announcement-type" required class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base">
+        <label class="block text-gray-300 mb-2 text-base" for="announcement-type">Type <span style="color: #f87171;">*</span></label>
+        <select id="announcement-type" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" style="border: 1px solid transparent;">
           <option value="">Select type</option>
           <option value="main">Main Announcement</option>
           <option value="session">Session Announcement</option>
@@ -6061,8 +6061,8 @@ window.expandTemplateCard = function(idx) {
         </select>
       </div>
       <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="announcement-content">Content *</label>
-        <textarea id="announcement-content" required maxlength="5000" rows="6" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" placeholder="Enter announcement content"></textarea>
+        <label class="block text-gray-300 mb-2 text-base" for="announcement-content">Content <span style="color: #f87171;">*</span></label>
+        <textarea id="announcement-content" maxlength="5000" rows="6" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" style="border: 1px solid transparent;" placeholder="Enter announcement content"></textarea>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
@@ -6077,7 +6077,7 @@ window.expandTemplateCard = function(idx) {
       <div id="createAnnouncementError" class="text-red-400 text-sm mb-4" style="display:none;"></div>
       <div class="flex justify-end gap-3">
         <button type="button" onclick="closeCreateAnnouncementModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded text-base font-medium">Cancel</button>
-        <button type="submit" onclick="event.preventDefault(); submitAnnouncement();" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-semibold text-base">Create Announcement</button>
+        <button type="button" onclick="submitAnnouncement();" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded font-semibold text-base">Create Announcement</button>
       </div>
     </form>
   </div>
@@ -6114,12 +6114,12 @@ window.expandTemplateCard = function(idx) {
     <form onsubmit="event.preventDefault(); submitEditAnnouncement();">
       <input type="hidden" id="edit-announcement-id" />
       <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-title">Title *</label>
-        <input type="text" id="edit-announcement-title" required maxlength="200" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" placeholder="Enter announcement title" />
+        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-title">Title <span style="color: #f87171;">*</span></label>
+        <input type="text" id="edit-announcement-title" required maxlength="200" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" style="border: 1px solid transparent; transition: border-color 0.2s;" placeholder="Enter announcement title" />
       </div>
       <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-type">Type *</label>
-        <select id="edit-announcement-type" required class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base">
+        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-type">Type <span style="color: #f87171;">*</span></label>
+        <select id="edit-announcement-type" required class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" style="border: 1px solid transparent; transition: border-color 0.2s;">
           <option value="">Select type</option>
           <option value="main">Main Announcement</option>
           <option value="session">Session Announcement</option>
@@ -6136,8 +6136,8 @@ window.expandTemplateCard = function(idx) {
         </select>
       </div>
       <div class="mb-4">
-        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-content">Content *</label>
-        <textarea id="edit-announcement-content" required maxlength="5000" rows="6" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" placeholder="Enter announcement content"></textarea>
+        <label class="block text-gray-300 mb-2 text-base" for="edit-announcement-content">Content <span style="color: #f87171;">*</span></label>
+        <textarea id="edit-announcement-content" required maxlength="5000" rows="6" class="w-full text-gray-200 bg-gray-800 rounded p-3 text-base" style="border: 1px solid transparent; transition: border-color 0.2s;" placeholder="Enter announcement content"></textarea>
       </div>
       <div id="editAnnouncementError" class="text-red-400 text-sm mb-4" style="display:none;"></div>
       <div class="flex justify-end gap-3">
@@ -6939,35 +6939,8 @@ document.getElementById('createEventForm').onsubmit = async function(e) {
 };
 </script> 
 
-<!-- Create Announcement Modal -->
-<div id="createAnnouncementModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:600px; width:90%; position:relative; border:1px solid #35385a;">
-    <button onclick="closeCreateAnnouncementModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-    <div style="text-align:center; margin-bottom:1.5rem;">
-      <i class="fa fa-bullhorn" style="font-size:3rem; color:#3b82f6; margin-bottom:1rem;"></i>
-      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Create Announcement</h3>
-    </div>
-
-  </div>
-</div>
-
-<!-- No Announcement Permission Modal -->
-<div id="noAnnouncementPermissionModal" class="heroui-modal" style="display:none; position:fixed; z-index:3000; left:0; top:0; width:100vw; height:100vh; background:rgba(30,32,44,0.65); align-items:center; justify-content:center;">
-  <div style="background:#1e2028; border-radius:16px; padding:2rem; max-width:400px; width:90%; position:relative; border:1px solid #35385a;">
-    <button onclick="closeNoAnnouncementPermissionModal()" aria-label="Close" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer; opacity:0.7;"><i class="fa fa-times"></i></button>
-    <div style="text-align:center; margin-bottom:1.5rem;">
-      <i class="fa fa-lock" style="font-size:3rem; color:#ef4444; margin-bottom:1rem;"></i>
-      <h3 style="color:#fff; margin:0; font-size:1.5rem; font-weight:600;">Permission Required</h3>
-    </div>
-    <div class="text-center">
-      <p class="text-gray-300 mb-4">You don't have permission to create announcements in this community.</p>
-      <p class="text-gray-400 text-sm mb-6">Please contact a community administrator to request this permission.</p>
-      <button onclick="closeNoAnnouncementPermissionModal()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded">Close</button>
-    </div>
-  </div>
-</div>
-
 <script>
+console.log('Announcement modal script loaded');
 // Announcement modal functions
 function openCreateAnnouncementModal() {
   document.getElementById('createAnnouncementModal').style.display = 'flex';
@@ -6978,6 +6951,127 @@ function closeCreateAnnouncementModal() {
   // Reset form
   document.getElementById('createAnnouncementForm').reset();
   document.getElementById('createAnnouncementError').style.display = 'none';
+  // Clear any error highlighting
+  clearAnnouncementFieldErrors();
+}
+
+function clearAnnouncementFieldErrors() {
+  var fields = ['announcement-title', 'announcement-type', 'announcement-content'];
+  fields.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) {
+      el.style.setProperty('border', '1px solid transparent', 'important');
+      el.style.setProperty('box-shadow', 'none', 'important');
+    }
+  });
+}
+
+function highlightAnnouncementField(fieldId) {
+  var el = document.getElementById(fieldId);
+  if (el) {
+    el.style.cssText = 'border: 2px solid #f87171 !important; box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.25) !important; background: #3b1f1f !important;';
+    // Remove highlight after 4 seconds
+    setTimeout(function() {
+      el.style.cssText = 'border: 1px solid transparent; background: rgb(31, 41, 55);';
+    }, 4000);
+  }
+}
+
+function submitAnnouncement() {
+  console.log('submitAnnouncement called');
+
+  // Clear previous error states
+  clearAnnouncementFieldErrors();
+  var errorEl = document.getElementById('createAnnouncementError');
+  if (errorEl) errorEl.style.display = 'none';
+
+  var titleEl = document.getElementById('announcement-title');
+  var typeEl = document.getElementById('announcement-type');
+  var priorityEl = document.getElementById('announcement-priority');
+  var contentEl = document.getElementById('announcement-content');
+  var startTimeEl = document.getElementById('announcement-start-time');
+  var endTimeEl = document.getElementById('announcement-end-time');
+
+  var title = titleEl ? titleEl.value.trim() : '';
+  var type = typeEl ? typeEl.value : '';
+  var priority = priorityEl ? priorityEl.value : 'medium';
+  var content = contentEl ? contentEl.value.trim() : '';
+  var startTime = startTimeEl ? startTimeEl.value : '';
+  var endTime = endTimeEl ? endTimeEl.value : '';
+
+  console.log('Form values:', { title, type, content });
+
+  // Validate required fields and highlight invalid ones
+  var hasErrors = false;
+  var errorMessages = [];
+
+  if (!title) {
+    console.log('Title is empty, highlighting');
+    highlightAnnouncementField('announcement-title');
+    errorMessages.push('Title');
+    hasErrors = true;
+  }
+  if (!type) {
+    console.log('Type is empty, highlighting');
+    highlightAnnouncementField('announcement-type');
+    errorMessages.push('Type');
+    hasErrors = true;
+  }
+  if (!content) {
+    console.log('Content is empty, highlighting');
+    highlightAnnouncementField('announcement-content');
+    errorMessages.push('Content');
+    hasErrors = true;
+  }
+
+  if (hasErrors) {
+    console.log('Has errors, showing error message');
+    if (errorEl) {
+      errorEl.textContent = 'Please fill in the required fields: ' + errorMessages.join(', ');
+      errorEl.style.display = 'block';
+    }
+    return;
+  }
+
+  // TODO: Submit announcement to API
+  // For now, show a success message
+  var communityID = '<%= community._id %>';
+  var payload = {
+    title: title,
+    type: type,
+    priority: priority,
+    content: content,
+    startTime: startTime || null,
+    endTime: endTime || null
+  };
+
+  // Show loading state on button
+  var submitBtn = document.querySelector('#createAnnouncementForm button[type="submit"]');
+  var originalContent = submitBtn.innerHTML;
+  submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin mr-1"></i>Creating...';
+  submitBtn.disabled = true;
+
+  fetch(window.API_URL + '/api/v1/community/' + communityID + '/announcements', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(function(res) {
+      if (!res.ok) throw new Error('Failed to create announcement');
+      return res.json();
+    })
+    .then(function(data) {
+      closeCreateAnnouncementModal();
+      // Reload page to show new announcement
+      window.location.reload();
+    })
+    .catch(function(err) {
+      var errorEl = document.getElementById('createAnnouncementError');
+      errorEl.textContent = err.message || 'Failed to create announcement.';
+      errorEl.style.display = 'block';
+      submitBtn.innerHTML = originalContent;
+      submitBtn.disabled = false;
+    });
 }
 
 function openNoAnnouncementPermissionModal() {
