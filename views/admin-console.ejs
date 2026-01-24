@@ -1196,6 +1196,51 @@
       </div>
     </div>
 
+    <!-- Content Creator Removal Modal -->
+    <div class="modal fade" id="ccRemoveModal" tabindex="-1" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content" style="background: #1e2028; border: 1px solid #35385a; color: #e5e7eb;">
+          <div class="modal-header" style="border-bottom: 1px solid #2a2d45;">
+            <button type="button" class="close" data-dismiss="modal" style="color: #9aa0b4;">
+              <span>&times;</span>
+            </button>
+            <h4 class="modal-title">Remove from Content Creator Program</h4>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="removeCreatorId" />
+            <div class="alert" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+              <i class="fas fa-exclamation-triangle" style="margin-right: 8px;"></i>
+              <strong>Warning:</strong> This will remove <span id="removeCreatorName" style="font-weight: 600;"></span> from the Content Creator Program. Their benefits will be revoked and they will be notified via email.
+            </div>
+            <div class="form-group">
+              <label for="removalReason" style="color: #e5e7eb; margin-bottom: 0.5rem;">Reason for Removal <span style="color: #ef4444;">*</span></label>
+              <select id="removalReason" class="form-control" style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;">
+                <option value="">Select a reason...</option>
+                <option value="Policy violation">Policy violation</option>
+                <option value="Inactivity">Inactivity</option>
+                <option value="Content quality concerns">Content quality concerns</option>
+                <option value="No longer meets requirements">No longer meets requirements</option>
+                <option value="Creator request">Creator requested removal</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="removalDetails" style="color: #e5e7eb; margin-bottom: 0.5rem;">Additional Details</label>
+              <textarea id="removalDetails" class="form-control" rows="3"
+                        placeholder="Provide additional context about the removal..."
+                        style="background: #11131a; border: 1px solid #2a2d45; color: #e5e7eb;"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #2a2d45;">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmRemoveBtn">
+              <i class="fas fa-user-slash" style="margin-right: 8px;"></i>Remove from Program
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Add Admin Modal -->
     <div class="modal fade" id="addAdminModal" tabindex="-1" role="dialog">
       <div class="modal-dialog">
@@ -4609,6 +4654,11 @@
                       <i class="fas fa-times"></i> Reject
                     </button>
                   ` : ''}
+                  ${status === 'approved' && app.creatorId ? `
+                    <button class="btn btn-danger btn-sm" onclick="showRemoveModal('${app.creatorId}', '${displayName.replace(/'/g, "\\'")}')">
+                      <i class="fas fa-user-slash"></i> Remove
+                    </button>
+                  ` : ''}
                 </div>
               </div>
               <div class="info-grid">
@@ -4884,6 +4934,16 @@
           if (currentAdminAlreadyApproved) {
             $('#ccApplicationModalFooter').append('<div style="width: 100%; margin-top: 0.75rem; text-align: center; color: #f59e0b; font-size: 0.85rem;"><i class="fas fa-info-circle" style="margin-right: 4px;"></i>A different admin must provide the second approval</div>');
           }
+        } else if (status === 'approved' && app.creatorId) {
+          // For approved creators, show a Remove from Program button
+          const creatorId = app.creatorId;
+          const safeDisplayName = displayName.replace(/'/g, "\\'");
+          $('#ccApplicationModalFooter').html(`
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger" onclick="$('#ccApplicationModal').modal('hide'); showRemoveModal('${creatorId}', '${safeDisplayName}');">
+              <i class="fas fa-user-slash" style="margin-right: 8px;"></i>Remove from Program
+            </button>
+          `);
         } else {
           $('#ccApplicationModalFooter').html('<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>');
         }
@@ -5021,6 +5081,65 @@
           complete: function() {
             button.prop('disabled', false);
             button.html('<i class="fas fa-times-circle" style="margin-right: 8px;"></i>Reject Application');
+            // Ensure modal backdrop is always cleaned up
+            setTimeout(function() {
+              if (!$('.modal.show').length) {
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').css('padding-right', '');
+              }
+            }, 300);
+          }
+        });
+      });
+
+      // Content Creator Removal Functions
+      function showRemoveModal(creatorId, displayName) {
+        $('#removeCreatorId').val(creatorId);
+        $('#removeCreatorName').text(displayName);
+        $('#removalReason').val('');
+        $('#removalDetails').val('');
+        $('#ccRemoveModal').modal('show');
+      }
+
+      $('#confirmRemoveBtn').click(function() {
+        const creatorId = $('#removeCreatorId').val();
+        const reason = $('#removalReason').val();
+        const details = $('#removalDetails').val();
+
+        if (!reason) {
+          alert('Please select a reason for removal');
+          return;
+        }
+
+        // Combine reason and details
+        const fullReason = details ? `${reason}: ${details}` : reason;
+
+        const button = $(this);
+        button.prop('disabled', true);
+        button.html('<i class="fas fa-spinner fa-spin"></i> Removing...');
+
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/content-creators/${creatorId}/remove`,
+          method: 'POST',
+          contentType: 'application/json',
+          headers: {
+            'X-User-ID': getCurrentAdminId()
+          },
+          data: JSON.stringify({
+            reason: fullReason
+          }),
+          success: function(data) {
+            $('#ccRemoveModal').modal('hide');
+            showInfoModal('Success', '<i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>Creator has been removed from the program. They have been notified via email.');
+            loadCCApplications();
+            loadCCStats();
+          },
+          error: function(xhr) {
+            showInfoModal('Error', `<i class="fas fa-exclamation-circle" style="color: #ef4444; margin-right: 8px;"></i>Failed to remove creator: ${xhr.responseJSON?.error || 'Unknown error'}`);
+          },
+          complete: function() {
+            button.prop('disabled', false);
+            button.html('<i class="fas fa-user-slash" style="margin-right: 8px;"></i>Remove from Program');
             // Ensure modal backdrop is always cleaned up
             setTimeout(function() {
               if (!$('.modal.show').length) {
