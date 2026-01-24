@@ -4654,11 +4654,16 @@
                       <i class="fas fa-times"></i> Reject
                     </button>
                   ` : ''}
-                  ${status === 'approved' && app.creatorId ? `
+                  ${status === 'approved' && app.creatorId ? (
+                    app.creatorStatus === 'removed' ? `
+                    <button class="btn btn-danger btn-sm" disabled style="opacity: 0.5; cursor: not-allowed;">
+                      <i class="fas fa-user-slash"></i> Removed
+                    </button>
+                  ` : `
                     <button class="btn btn-danger btn-sm" onclick="showRemoveModal('${app.creatorId}', '${displayName.replace(/'/g, "\\'")}')">
                       <i class="fas fa-user-slash"></i> Remove
                     </button>
-                  ` : ''}
+                  `) : ''}
                 </div>
               </div>
               <div class="info-grid">
@@ -4935,14 +4940,21 @@
             $('#ccApplicationModalFooter').append('<div style="width: 100%; margin-top: 0.75rem; text-align: center; color: #f59e0b; font-size: 0.85rem;"><i class="fas fa-info-circle" style="margin-right: 4px;"></i>A different admin must provide the second approval</div>');
           }
         } else if (status === 'approved' && app.creatorId) {
-          // For approved creators, show a Remove from Program button
+          // For approved creators, show a Remove from Program button (or disabled if already removed)
           const creatorId = app.creatorId;
           const safeDisplayName = displayName.replace(/'/g, "\\'");
+          const isRemoved = app.creatorStatus === 'removed';
           $('#ccApplicationModalFooter').html(`
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-danger" onclick="$('#ccApplicationModal').modal('hide'); showRemoveModal('${creatorId}', '${safeDisplayName}');">
-              <i class="fas fa-user-slash" style="margin-right: 8px;"></i>Remove from Program
-            </button>
+            ${isRemoved ? `
+              <button type="button" class="btn btn-danger" disabled style="opacity: 0.5; cursor: not-allowed;">
+                <i class="fas fa-user-slash" style="margin-right: 8px;"></i>Removed
+              </button>
+            ` : `
+              <button type="button" class="btn btn-danger" onclick="$('#ccApplicationModal').modal('hide'); showRemoveModal('${creatorId}', '${safeDisplayName}');">
+                <i class="fas fa-user-slash" style="margin-right: 8px;"></i>Remove from Program
+              </button>
+            `}
           `);
         } else {
           $('#ccApplicationModalFooter').html('<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>');
