@@ -4660,7 +4660,7 @@
                       <i class="fas fa-user-slash"></i> Removed
                     </button>
                   ` : `
-                    <button class="btn btn-danger btn-sm" onclick="showRemoveModal('${app.creatorId}', '${displayName.replace(/'/g, "\\'")}')">
+                    <button class="btn btn-danger btn-sm" onclick="showRemoveModal('${app.creatorId}', '${displayName.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}')">
                       <i class="fas fa-user-slash"></i> Remove
                     </button>
                   `) : ''}
@@ -4942,7 +4942,7 @@
         } else if (status === 'approved' && app.creatorId) {
           // For approved creators, show a Remove from Program button (or disabled if already removed)
           const creatorId = app.creatorId;
-          const safeDisplayName = displayName.replace(/'/g, "\\'");
+          const safeDisplayName = displayName.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
           const isRemoved = app.creatorStatus === 'removed';
           $('#ccApplicationModalFooter').html(`
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>

@@ -2940,6 +2940,13 @@ module.exports = function (app, passport, server, nextApp, handle) {
   app.get("/api/v1/content-creators/:slug", async function (req, res) {
     try {
       const { slug } = req.params;
+      // Validate slug to prevent path traversal or malformed paths reaching the upstream API
+      const slugPattern = /^[a-zA-Z0-9_-]{1,100}$/;
+      if (!slugPattern.test(slug)) {
+        console.warn('Invalid content creator slug received:', slug);
+        return res.status(400).json({ error: "Invalid content creator identifier" });
+      }
+
       const response = await axios.get(`${policeCadApiUrl}/api/v1/content-creators/${slug}`, config);
       res.json(response.data);
     } catch (error) {
