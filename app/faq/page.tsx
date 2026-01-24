@@ -245,7 +245,7 @@ const faqData = [
       },
       {
         question: 'What are the requirements to join?',
-        answer: 'We look for creators who actively produce content featuring Lines Police CAD. While there\'s no strict minimum follower count, we consider the quality and consistency of your content, your engagement with the community, and your platform presence when reviewing applications.'
+        answer: 'You must have at least 500 followers on one platform (e.g., 500 on YouTube, or 500 on Twitch). Having 200 on YouTube and 300 on Twitch would not meet this requirement. We also look for creators who actively produce content featuring Lines Police CAD and consider the quality and consistency of your content.'
       },
       {
         question: 'How long does it take to get approved?',
