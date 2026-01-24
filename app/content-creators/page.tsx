@@ -935,8 +935,8 @@ export default function ContentCreatorsPage() {
                   {[
                     'Base Plan for your personal account',
                     'Base Plan for ONE community you manage',
-                    'Priority support access',
-                    'Creator-exclusive Discord role'
+                    'Featured profile on our creators directory',
+                    'Prestige of being an exclusive Creator Program member'
                   ].map((benefit, i) => (
                     <li
                       key={i}

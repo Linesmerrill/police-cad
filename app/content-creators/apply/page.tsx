@@ -943,8 +943,8 @@ export default function ApplyPage() {
                   {[
                     'Free Base Plan for your account ($36/year value)',
                     'Free Base Plan for one community you manage ($36/year value)',
-                    'Featured in our creator directory',
-                    'Creator-exclusive Discord role'
+                    'Featured profile on our creators directory',
+                    'Prestige of being an exclusive Creator Program member'
                   ].map((benefit, i) => (
                     <li
                       key={i}

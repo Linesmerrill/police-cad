@@ -3062,6 +3062,49 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Get owned communities for content creator (for community promotion)
+  app.get("/api/v1/content-creators/me/owned-communities", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/content-creators/me/owned-communities`, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString()
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error fetching owned communities:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ success: false, message: "Failed to fetch owned communities" });
+      }
+    }
+  });
+
+  // Apply community promotion (give free Base Plan to a community)
+  app.post("/api/v1/content-creators/me/community-promotion", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/content-creators/me/community-promotion`, req.body, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString(),
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error applying community promotion:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ success: false, message: "Failed to apply community promotion" });
+      }
+    }
+  });
+
   // Request removal from program
   app.post("/api/v1/content-creators/:id/request-removal", apiAuthCheck, async function (req, res) {
     try {
