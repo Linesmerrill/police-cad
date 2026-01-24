@@ -19,7 +19,8 @@ import {
   GiftIcon,
   CalendarIcon,
   UserGroupIcon,
-  LinkIcon
+  LinkIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
 
@@ -122,6 +123,10 @@ interface CreatorProfile {
       communityId?: string;
     };
   };
+  // Grace period fields
+  gracePeriodStartedAt?: string;
+  gracePeriodEndsAt?: string;
+  lastSyncedAt?: string;
 }
 
 const statusConfig: Record<ApplicationStatus, { color: string; bgColor: string; icon: React.ReactNode; label: string }> = {
@@ -239,6 +244,12 @@ export default function CreatorStatusPage() {
   const [editThemeColor, setEditThemeColor] = useState('');
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  // Sync followers modal
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [syncPlatforms, setSyncPlatforms] = useState<Array<{ type: string; followerCount: string }>>([]);
+  const [syncSaving, setSyncSaving] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncSuccess, setSyncSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -543,6 +554,105 @@ export default function CreatorStatusPage() {
     } finally {
       setEditSaving(false);
     }
+  };
+
+  const handleOpenSyncModal = () => {
+    if (creatorProfile) {
+      // Initialize with current follower counts
+      setSyncPlatforms(
+        creatorProfile.platforms.map(p => ({
+          type: p.type,
+          followerCount: p.followerCount.toString()
+        }))
+      );
+      setSyncError(null);
+      setSyncSuccess(null);
+      setShowSyncModal(true);
+    }
+  };
+
+  const handleSyncFollowers = async () => {
+    if (!creatorProfile) return;
+
+    // Validate all platforms have valid numbers
+    const platforms = syncPlatforms.map(p => ({
+      type: p.type,
+      followerCount: parseInt(p.followerCount) || 0
+    }));
+
+    if (platforms.some(p => p.followerCount < 0)) {
+      setSyncError('Follower counts cannot be negative');
+      return;
+    }
+
+    setSyncSaving(true);
+    setSyncError(null);
+    setSyncSuccess(null);
+
+    try {
+      const response = await fetch('/api/v1/content-creators/me/sync', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ platforms })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Update the profile with new data
+        setCreatorProfile({
+          ...creatorProfile,
+          platforms: data.platforms,
+          lastSyncedAt: data.lastSyncedAt,
+          // If status changed, it will be reflected in the next fetch
+          status: data.statusChanged ? (data.maxFollowers >= 500 ? 'active' : 'warned') : creatorProfile.status
+        });
+        setSyncSuccess(data.message);
+        // Close modal after a delay to show success message
+        setTimeout(() => {
+          setShowSyncModal(false);
+          // Refresh the page to get updated data
+          window.location.reload();
+        }, 2000);
+      } else {
+        setSyncError(data.message || 'Failed to sync followers');
+      }
+    } catch (error) {
+      console.error('Error syncing followers:', error);
+      setSyncError('Failed to sync followers. Please try again.');
+    } finally {
+      setSyncSaving(false);
+    }
+  };
+
+  const canSync = (): boolean => {
+    if (!creatorProfile?.lastSyncedAt) return true;
+    const lastSync = new Date(creatorProfile.lastSyncedAt);
+    const hoursSinceSync = (Date.now() - lastSync.getTime()) / (1000 * 60 * 60);
+    return hoursSinceSync >= 24;
+  };
+
+  const getNextSyncTime = (): string => {
+    if (!creatorProfile?.lastSyncedAt) return '';
+    const lastSync = new Date(creatorProfile.lastSyncedAt);
+    const nextSync = new Date(lastSync.getTime() + 24 * 60 * 60 * 1000);
+    return nextSync.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  };
+
+  const getGracePeriodDaysRemaining = (): number => {
+    if (!creatorProfile?.gracePeriodEndsAt) return 0;
+    const endDate = new Date(creatorProfile.gracePeriodEndsAt);
+    const now = new Date();
+    const diffMs = endDate.getTime() - now.getTime();
+    return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
   };
 
   // Loading state or not logged in - show page shell with appropriate content
@@ -992,8 +1102,107 @@ export default function CreatorStatusPage() {
                     <PencilSquareIcon style={{ width: '16px', height: '16px' }} />
                     Edit Profile
                   </button>
+                  <button
+                    onClick={handleOpenSyncModal}
+                    disabled={!canSync()}
+                    title={canSync() ? 'Update your follower counts' : `Next sync available ${getNextSyncTime()}`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '14px',
+                      color: canSync() ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.4)',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      cursor: canSync() ? 'pointer' : 'not-allowed',
+                      transition: 'all 0.2s',
+                      opacity: canSync() ? 1 : 0.6
+                    }}
+                    onMouseEnter={(e) => {
+                      if (canSync()) {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.color = '#fff';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.color = canSync() ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.4)';
+                    }}
+                  >
+                    <ArrowPathIcon style={{ width: '16px', height: '16px' }} />
+                    Sync Followers
+                  </button>
                 </div>
+                {creatorProfile.lastSyncedAt && (
+                  <p style={{
+                    fontSize: '12px',
+                    color: 'rgba(255, 255, 255, 0.4)',
+                    marginTop: '8px'
+                  }}>
+                    Last synced: {formatDate(creatorProfile.lastSyncedAt)}
+                    {!canSync() && ` • Next sync available ${getNextSyncTime()}`}
+                  </p>
+                )}
               </div>
+
+              {/* Grace Period Warning Banner */}
+              {creatorProfile.gracePeriodStartedAt && creatorProfile.gracePeriodEndsAt && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)',
+                  borderRadius: '16px',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  padding: '24px',
+                  marginBottom: '24px'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '16px'
+                  }}>
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: 'rgba(245, 158, 11, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <ClockIcon style={{ width: '24px', height: '24px', color: '#f59e0b' }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <h4 style={{
+                        fontSize: '1rem',
+                        fontWeight: '700',
+                        color: '#f59e0b',
+                        margin: '0 0 8px 0'
+                      }}>
+                        Low Follower Warning - {getGracePeriodDaysRemaining()} Days Remaining
+                      </h4>
+                      <p style={{
+                        fontSize: '14px',
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        lineHeight: '1.6',
+                        margin: '0 0 12px 0'
+                      }}>
+                        Your follower count is below our minimum requirement of 500.
+                        You have until {formatDate(creatorProfile.gracePeriodEndsAt)} to increase your followers
+                        or your creator account will be removed.
+                      </p>
+                      <p style={{
+                        fontSize: '13px',
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        margin: 0
+                      }}>
+                        Once you&apos;ve gained more followers, click &quot;Sync Followers&quot; above to update your counts.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Benefits Card */}
               <div style={{
@@ -2418,6 +2627,211 @@ export default function CreatorStatusPage() {
                 }}
               >
                 {editSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sync Followers Modal */}
+      {showSyncModal && creatorProfile && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#12121f',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            padding: '32px',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '24px'
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: 'rgba(59, 130, 246, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <ArrowPathIcon style={{ width: '24px', height: '24px', color: '#3b82f6' }} />
+              </div>
+              <div>
+                <h3 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: '700',
+                  color: '#fff',
+                  margin: 0
+                }}>
+                  Sync Follower Counts
+                </h3>
+                <p style={{
+                  fontSize: '13px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  margin: 0
+                }}>
+                  Update your platform statistics
+                </p>
+              </div>
+            </div>
+
+            {syncError && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '20px',
+                fontSize: '14px',
+                color: '#ef4444'
+              }}>
+                {syncError}
+              </div>
+            )}
+
+            {syncSuccess && (
+              <div style={{
+                background: 'rgba(34, 197, 94, 0.1)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '20px',
+                fontSize: '14px',
+                color: '#22c55e'
+              }}>
+                {syncSuccess}
+              </div>
+            )}
+
+            <p style={{
+              fontSize: '14px',
+              color: 'rgba(255, 255, 255, 0.7)',
+              marginBottom: '20px',
+              lineHeight: '1.6'
+            }}>
+              Enter your current follower counts for each platform. You can sync once every 24 hours.
+            </p>
+
+            {/* Platform Inputs */}
+            <div style={{ marginBottom: '24px' }}>
+              {syncPlatforms.map((platform, index) => (
+                <div key={platform.type} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  marginBottom: '12px'
+                }}>
+                  <div style={{
+                    width: '100px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: platformColors[platform.type] || '#6366f1',
+                    textTransform: 'capitalize'
+                  }}>
+                    {platform.type}
+                  </div>
+                  <input
+                    type="number"
+                    min="0"
+                    value={platform.followerCount}
+                    onChange={(e) => {
+                      const newPlatforms = [...syncPlatforms];
+                      newPlatforms[index].followerCount = e.target.value;
+                      setSyncPlatforms(newPlatforms);
+                    }}
+                    placeholder="Follower count"
+                    style={{
+                      flex: 1,
+                      padding: '12px 14px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '10px',
+                      color: '#fff',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Note about 500 minimum */}
+            <div style={{
+              background: 'rgba(251, 191, 36, 0.1)',
+              border: '1px solid rgba(251, 191, 36, 0.2)',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '24px'
+            }}>
+              <p style={{
+                fontSize: '13px',
+                color: '#fbbf24',
+                margin: 0
+              }}>
+                <strong>Note:</strong> The Content Creator Program requires at least 500 followers on one platform.
+                If your counts drop below this, you&apos;ll enter a 30-day grace period.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div style={{
+              display: 'flex',
+              gap: '12px'
+            }}>
+              <button
+                onClick={() => {
+                  setShowSyncModal(false);
+                  setSyncError(null);
+                  setSyncSuccess(null);
+                }}
+                disabled={syncSaving}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  borderRadius: '10px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: syncSaving ? 'not-allowed' : 'pointer',
+                  opacity: syncSaving ? 0.5 : 1
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSyncFollowers}
+                disabled={syncSaving}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                  border: 'none',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  cursor: syncSaving ? 'not-allowed' : 'pointer',
+                  opacity: syncSaving ? 0.7 : 1
+                }}
+              >
+                {syncSaving ? 'Syncing...' : 'Sync Followers'}
               </button>
             </div>
           </div>

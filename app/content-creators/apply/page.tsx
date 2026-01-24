@@ -29,11 +29,11 @@ interface PlatformEntry {
   followerCount: string;
 }
 
-const platformOptions: { value: PlatformType; label: string; color: string; placeholder: string }[] = [
-  { value: 'twitch', label: 'Twitch', color: '#9146FF', placeholder: 'https://twitch.tv/yourhandle' },
-  { value: 'youtube', label: 'YouTube', color: '#FF0000', placeholder: 'https://youtube.com/@yourhandle' },
-  { value: 'tiktok', label: 'TikTok', color: '#00F2EA', placeholder: 'https://tiktok.com/@yourhandle' },
-  { value: 'other', label: 'Other', color: '#6366f1', placeholder: 'https://...' }
+const platformOptions: { value: PlatformType; label: string; color: string; baseUrl: string; placeholder: string }[] = [
+  { value: 'twitch', label: 'Twitch', color: '#9146FF', baseUrl: 'https://twitch.tv/', placeholder: 'https://twitch.tv/yourhandle' },
+  { value: 'youtube', label: 'YouTube', color: '#FF0000', baseUrl: 'https://youtube.com/@', placeholder: 'https://youtube.com/@yourhandle' },
+  { value: 'tiktok', label: 'TikTok', color: '#00F2EA', baseUrl: 'https://tiktok.com/@', placeholder: 'https://tiktok.com/@yourhandle' },
+  { value: 'other', label: 'Other', color: '#6366f1', baseUrl: '', placeholder: 'https://...' }
 ];
 
 function generateId(): string {
@@ -55,7 +55,7 @@ export default function ApplyPage() {
   const [displayName, setDisplayName] = useState('');
   const [primaryPlatform, setPrimaryPlatform] = useState<PlatformType>('twitch');
   const [platforms, setPlatforms] = useState<PlatformEntry[]>([
-    { id: generateId(), type: 'twitch', url: '', handle: '', followerCount: '' }
+    { id: generateId(), type: 'twitch', url: 'https://twitch.tv/', handle: '', followerCount: '' }
   ]);
   const [description, setDescription] = useState('');
   const [bio, setBio] = useState('');
@@ -162,12 +162,34 @@ export default function ApplyPage() {
     return () => clearTimeout(timeoutId);
   }, [displayName]);
 
+  // Get platform types that are already used
+  const getUsedPlatformTypes = (): Set<PlatformType> => {
+    return new Set(platforms.map(p => p.type));
+  };
+
+  // Get available platform types (not already used, except 'other' which can only be used once)
+  const getAvailablePlatformTypes = (): PlatformType[] => {
+    const used = getUsedPlatformTypes();
+    return platformOptions
+      .filter(opt => !used.has(opt.value))
+      .map(opt => opt.value);
+  };
+
   const addPlatform = () => {
-    if (platforms.length >= 5) return;
+    // Max 4 platforms (one for each type)
+    if (platforms.length >= 4) return;
+
+    const availableTypes = getAvailablePlatformTypes();
+    if (availableTypes.length === 0) return;
+
+    // Pick the first available type
+    const newType = availableTypes[0];
+    const platformOption = platformOptions.find(p => p.value === newType);
+
     setPlatforms([...platforms, {
       id: generateId(),
-      type: 'youtube',
-      url: '',
+      type: newType,
+      url: platformOption?.baseUrl || '',
       handle: '',
       followerCount: ''
     }]);
@@ -179,9 +201,22 @@ export default function ApplyPage() {
   };
 
   const updatePlatform = (id: string, field: keyof PlatformEntry, value: string) => {
-    setPlatforms(platforms.map(p =>
-      p.id === id ? { ...p, [field]: value } : p
-    ));
+    setPlatforms(platforms.map(p => {
+      if (p.id !== id) return p;
+
+      // If changing platform type, auto-populate the base URL
+      if (field === 'type') {
+        const newType = value as PlatformType;
+        const platformOption = platformOptions.find(opt => opt.value === newType);
+        return {
+          ...p,
+          type: newType,
+          url: platformOption?.baseUrl || ''
+        };
+      }
+
+      return { ...p, [field]: value };
+    }));
   };
 
   const getMaxFollowers = (): number => {
@@ -764,7 +799,7 @@ export default function ApplyPage() {
                   }}>
                     Platforms * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(at least one with 500+ followers)</span>
                   </label>
-                  {platforms.length < 5 && (
+                  {platforms.length < 4 && getAvailablePlatformTypes().length > 0 && (
                     <button
                       type="button"
                       onClick={addPlatform}
@@ -822,11 +857,13 @@ export default function ApplyPage() {
                               fontWeight: '600'
                             }}
                           >
-                            {platformOptions.map(opt => (
-                              <option key={opt.value} value={opt.value} style={{ background: '#1a1a2e', color: '#fff' }}>
-                                {opt.label}
-                              </option>
-                            ))}
+                            {platformOptions
+                              .filter(opt => opt.value === platform.type || !getUsedPlatformTypes().has(opt.value))
+                              .map(opt => (
+                                <option key={opt.value} value={opt.value} style={{ background: '#1a1a2e', color: '#fff' }}>
+                                  {opt.label}
+                                </option>
+                              ))}
                           </select>
 
                           {platforms.length > 1 && (
