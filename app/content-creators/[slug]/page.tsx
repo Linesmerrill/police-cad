@@ -13,7 +13,8 @@ import {
   UserGroupIcon,
   PlayIcon,
   ArrowTopRightOnSquareIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  PencilSquareIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
 
@@ -31,6 +32,7 @@ interface ContentCreator {
   displayName: string;
   profileImage?: string;
   bio: string;
+  themeColor?: string;
   platforms: ContentCreatorPlatform[];
   primaryPlatform: string;
   featured: boolean;
@@ -68,6 +70,16 @@ const platformConfig: Record<string, { name: string; color: string; bgColor: str
         <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
       </svg>
     )
+  },
+  other: {
+    name: 'Other',
+    color: '#a855f7',
+    bgColor: 'rgba(168, 85, 247, 0.12)',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+      </svg>
+    )
   }
 };
 
@@ -90,6 +102,8 @@ export default function CreatorProfilePage() {
   const [creator, setCreator] = useState<ContentCreator | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bioExpanded, setBioExpanded] = useState(false);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -139,6 +153,30 @@ export default function CreatorProfilePage() {
 
     fetchCreator();
   }, [params.slug, router]);
+
+  // Check if this is the logged-in user's own profile
+  useEffect(() => {
+    const checkOwnProfile = async () => {
+      if (!creator) return;
+
+      try {
+        const response = await fetch('/api/v1/content-creator-applications/me', {
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.creator && data.creator.slug === creator.slug) {
+            setIsOwnProfile(true);
+          }
+        }
+      } catch (err) {
+        // Silently fail - user just isn't logged in or doesn't have a creator profile
+      }
+    };
+
+    checkOwnProfile();
+  }, [creator]);
 
   if (loading) {
     return (
@@ -229,7 +267,13 @@ export default function CreatorProfilePage() {
 
   const primaryPlatform = creator.platforms.find(p => p.type === creator.primaryPlatform) || creator.platforms[0];
   const totalFollowers = creator.platforms.reduce((sum, p) => sum + p.followerCount, 0);
-  const primaryConfig = platformConfig[creator.primaryPlatform] || platformConfig.twitch;
+  const platformConf = platformConfig[creator.primaryPlatform] || platformConfig.twitch;
+
+  // Use creator's theme color if set, otherwise fall back to platform color
+  const themeColor = creator.themeColor || platformConf.color;
+  const themeBgColor = creator.themeColor
+    ? `${creator.themeColor}15`
+    : platformConf.bgColor;
 
   return (
     <div style={{
@@ -271,7 +315,7 @@ export default function CreatorProfilePage() {
           display: 'flex',
           alignItems: 'center',
           overflow: 'hidden',
-          background: `linear-gradient(180deg, #0a0a0f 0%, ${primaryConfig.bgColor} 50%, #0a0a0f 100%)`
+          background: `linear-gradient(180deg, #0a0a0f 0%, ${themeBgColor} 50%, #0a0a0f 100%)`
         }}
       >
         {/* Background Elements */}
@@ -289,7 +333,7 @@ export default function CreatorProfilePage() {
             transform: 'translateX(-50%)',
             width: '800px',
             height: '500px',
-            background: `radial-gradient(ellipse, ${primaryConfig.color}20 0%, transparent 60%)`,
+            background: `radial-gradient(ellipse, ${themeColor}20 0%, transparent 60%)`,
             filter: 'blur(80px)',
             animation: 'pulse-glow 6s ease-in-out infinite'
           }} />
@@ -299,8 +343,8 @@ export default function CreatorProfilePage() {
             position: 'absolute',
             inset: 0,
             backgroundImage: `
-              linear-gradient(${primaryConfig.color}05 1px, transparent 1px),
-              linear-gradient(90deg, ${primaryConfig.color}05 1px, transparent 1px)
+              linear-gradient(${themeColor}05 1px, transparent 1px),
+              linear-gradient(90deg, ${themeColor}05 1px, transparent 1px)
             `,
             backgroundSize: '60px 60px',
             opacity: 0.5
@@ -352,7 +396,7 @@ export default function CreatorProfilePage() {
               <div style={{
                 position: 'absolute',
                 inset: '-20px',
-                background: `radial-gradient(circle, ${primaryConfig.color}40 0%, transparent 60%)`,
+                background: `radial-gradient(circle, ${themeColor}40 0%, transparent 60%)`,
                 filter: 'blur(30px)',
                 animation: 'float 4s ease-in-out infinite'
               }} />
@@ -362,14 +406,14 @@ export default function CreatorProfilePage() {
                   width: '160px',
                   height: '160px',
                   borderRadius: '50%',
-                  background: `linear-gradient(135deg, ${primaryConfig.color}30 0%, ${primaryConfig.color}10 100%)`,
-                  border: `3px solid ${primaryConfig.color}60`,
+                  background: `linear-gradient(135deg, ${themeColor}30 0%, ${themeColor}10 100%)`,
+                  border: `3px solid ${themeColor}60`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   position: 'relative',
                   overflow: 'hidden',
-                  boxShadow: `0 20px 60px ${primaryConfig.color}30`
+                  boxShadow: `0 20px 60px ${themeColor}30`
                 }}
               >
                 {creator.profileImage ? (
@@ -382,7 +426,7 @@ export default function CreatorProfilePage() {
                   <span style={{
                     fontSize: '56px',
                     fontWeight: '800',
-                    color: primaryConfig.color,
+                    color: themeColor,
                     textTransform: 'uppercase'
                   }}>
                     {creator.displayName.slice(0, 2)}
@@ -455,6 +499,36 @@ export default function CreatorProfilePage() {
                     </span>
                   </div>
                 )}
+                {isOwnProfile && (
+                  <Link
+                    href="/content-creators/me"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '20px',
+                      padding: '6px 14px',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      textDecoration: 'none',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+                      e.currentTarget.style.color = '#fff';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.8)';
+                    }}
+                  >
+                    <PencilSquareIcon style={{ width: '14px', height: '14px' }} />
+                    Edit Profile
+                  </Link>
+                )}
               </div>
 
               {/* Meta info */}
@@ -489,15 +563,48 @@ export default function CreatorProfilePage() {
               </div>
 
               {/* Bio */}
-              <p style={{
-                fontSize: '1.1rem',
-                lineHeight: '1.7',
-                color: 'rgba(255, 255, 255, 0.8)',
-                maxWidth: '600px',
-                margin: isMobile ? '0 auto' : 0
-              }}>
-                {creator.bio}
-              </p>
+              {(() => {
+                const bioLines = creator.bio.split('\n');
+                const needsTruncation = bioLines.length > 6;
+                const displayBio = bioExpanded || !needsTruncation
+                  ? creator.bio
+                  : bioLines.slice(0, 6).join('\n');
+
+                return (
+                  <div style={{ maxWidth: '600px', margin: isMobile ? '0 auto' : 0 }}>
+                    <p style={{
+                      fontSize: '1.1rem',
+                      lineHeight: '1.7',
+                      color: 'rgba(255, 255, 255, 0.8)',
+                      whiteSpace: 'pre-wrap',
+                      margin: 0
+                    }}>
+                      {displayBio}
+                      {!bioExpanded && needsTruncation && '...'}
+                    </p>
+                    {needsTruncation && (
+                      <button
+                        onClick={() => setBioExpanded(!bioExpanded)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: themeColor,
+                          fontSize: '0.95rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          padding: '8px 0',
+                          marginTop: '4px',
+                          transition: 'opacity 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                      >
+                        {bioExpanded ? 'See less' : 'See more'}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

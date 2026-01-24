@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
@@ -22,6 +22,57 @@ import {
   LinkIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon } from '@heroicons/react/24/solid';
+
+// Confetti component for celebration
+function Confetti({ show }: { show: boolean }) {
+  const [pieces, setPieces] = useState<Array<{ id: number; left: number; delay: number; color: string; size: number }>>([]);
+
+  useEffect(() => {
+    if (show) {
+      const colors = ['#fbbf24', '#f59e0b', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#fff'];
+      const newPieces = Array.from({ length: 150 }, (_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        delay: Math.random() * 3,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: Math.random() * 8 + 4
+      }));
+      setPieces(newPieces);
+    }
+  }, [show]);
+
+  if (!show) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      pointerEvents: 'none',
+      zIndex: 9999,
+      overflow: 'hidden'
+    }}>
+      {pieces.map((piece) => (
+        <div
+          key={piece.id}
+          style={{
+            position: 'absolute',
+            left: `${piece.left}%`,
+            top: '-20px',
+            width: `${piece.size}px`,
+            height: `${piece.size}px`,
+            backgroundColor: piece.color,
+            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            animation: `confetti-fall 4s ease-out ${piece.delay}s forwards`,
+            transform: `rotate(${Math.random() * 360}deg)`
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 type ApplicationStatus = 'submitted' | 'under_review' | 'approved' | 'rejected' | 'withdrawn';
 type CreatorStatus = 'active' | 'warned' | 'pending_removal' | 'removed' | 'approved';
@@ -58,6 +109,7 @@ interface CreatorProfile {
   warningMessage?: string;
   profileImage?: string;
   bio: string;
+  themeColor: string;
   primaryPlatform: string;
   platforms: ContentCreatorPlatform[];
   entitlements: {
@@ -181,6 +233,12 @@ export default function CreatorStatusPage() {
   const [promotionError, setPromotionError] = useState<string | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedCommunity, setSelectedCommunity] = useState<{ _id: string; name: string } | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editBio, setEditBio] = useState('');
+  const [editThemeColor, setEditThemeColor] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -194,6 +252,24 @@ export default function CreatorStatusPage() {
       return () => window.removeEventListener('resize', checkScreenSize);
     }
   }, []);
+
+  // Check if this is first visit after approval and show confetti
+  useEffect(() => {
+    if (creatorProfile && (creatorProfile.status === 'active' || creatorProfile.status === 'approved')) {
+      const confettiKey = `cc_confetti_shown_${creatorProfile._id}`;
+      const hasSeenConfetti = localStorage.getItem(confettiKey);
+
+      if (!hasSeenConfetti) {
+        setShowConfetti(true);
+        localStorage.setItem(confettiKey, 'true');
+
+        // Hide confetti after animation completes
+        setTimeout(() => {
+          setShowConfetti(false);
+        }, 7000);
+      }
+    }
+  }, [creatorProfile]);
 
   useEffect(() => {
     // Check if user is logged in and fetch creator data
@@ -390,6 +466,85 @@ export default function CreatorStatusPage() {
     setSelectedCommunity(null);
   };
 
+  const handleOpenEditModal = () => {
+    if (creatorProfile) {
+      setEditBio(creatorProfile.bio);
+      setEditThemeColor(creatorProfile.themeColor || '#fbbf24');
+      setEditError(null);
+      setShowEditModal(true);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!creatorProfile) return;
+
+    // Validate bio
+    if (editBio.length < 20) {
+      setEditError('Bio must be at least 20 characters');
+      return;
+    }
+    if (editBio.length > 500) {
+      setEditError('Bio must be at most 500 characters');
+      return;
+    }
+
+    // Validate theme color
+    const colorRegex = /^#[0-9A-Fa-f]{6}$/;
+    if (!colorRegex.test(editThemeColor)) {
+      setEditError('Please enter a valid hex color (e.g. #fbbf24)');
+      return;
+    }
+
+    // Check luminance to prevent too dark or too light colors
+    const r = parseInt(editThemeColor.slice(1, 3), 16);
+    const g = parseInt(editThemeColor.slice(3, 5), 16);
+    const b = parseInt(editThemeColor.slice(5, 7), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    if (luminance < 0.15) {
+      setEditError('Color is too dark - please choose a brighter color');
+      return;
+    }
+    if (luminance > 0.85) {
+      setEditError('Color is too light - please choose a darker color');
+      return;
+    }
+
+    setEditSaving(true);
+    setEditError(null);
+
+    try {
+      const response = await fetch('/api/v1/content-creators/me', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          bio: editBio,
+          themeColor: editThemeColor.toLowerCase()
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setCreatorProfile({
+          ...creatorProfile,
+          bio: editBio,
+          themeColor: editThemeColor.toLowerCase()
+        });
+        setShowEditModal(false);
+      } else {
+        setEditError(data.message || 'Failed to save changes');
+      }
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      setEditError('Failed to save changes. Please try again.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   // Loading state or not logged in - show page shell with appropriate content
   if (loading || !user) {
     return (
@@ -512,7 +667,33 @@ export default function CreatorStatusPage() {
           0%, 100% { opacity: 0.4; transform: scale(1); }
           50% { opacity: 0.7; transform: scale(1.1); }
         }
+
+        @keyframes confetti-fall {
+          0% {
+            transform: translateY(0) rotate(0deg) scale(1);
+            opacity: 1;
+          }
+          25% {
+            transform: translateY(25vh) rotate(180deg) scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: translateY(50vh) rotate(360deg) scale(0.9);
+            opacity: 0.9;
+          }
+          75% {
+            transform: translateY(75vh) rotate(540deg) scale(0.7);
+            opacity: 0.6;
+          }
+          100% {
+            transform: translateY(100vh) rotate(720deg) scale(0.5);
+            opacity: 0;
+          }
+        }
       `}</style>
+
+      {/* Confetti celebration for new creators */}
+      <Confetti show={showConfetti} />
 
       <Navbar />
 
@@ -762,22 +943,56 @@ export default function CreatorStatusPage() {
                   </div>
                 )}
 
-                {/* Public Profile Link */}
-                <Link
-                  href={`/content-creators/${creatorProfile.slug}`}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '14px',
-                    color: '#fbbf24',
-                    textDecoration: 'none'
-                  }}
-                >
-                  <LinkIcon style={{ width: '16px', height: '16px' }} />
-                  View Public Profile
-                  <ArrowRightIcon style={{ width: '14px', height: '14px' }} />
-                </Link>
+                {/* Profile Actions */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '16px',
+                  flexWrap: 'wrap'
+                }}>
+                  <Link
+                    href={`/content-creators/${creatorProfile.slug}`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '14px',
+                      color: '#fbbf24',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    <LinkIcon style={{ width: '16px', height: '16px' }} />
+                    View Public Profile
+                    <ArrowRightIcon style={{ width: '14px', height: '14px' }} />
+                  </Link>
+                  <button
+                    onClick={handleOpenEditModal}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      fontSize: '14px',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                      e.currentTarget.style.color = '#fff';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+                    }}
+                  >
+                    <PencilSquareIcon style={{ width: '16px', height: '16px' }} />
+                    Edit Profile
+                  </button>
+                </div>
               </div>
 
               {/* Benefits Card */}
@@ -1882,6 +2097,329 @@ export default function CreatorStatusPage() {
             >
               {applyingPromotion ? 'Applying...' : 'Cancel'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Profile Modal */}
+      {showEditModal && creatorProfile && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#12121f',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            padding: '32px',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '24px'
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '50%',
+                background: 'rgba(251, 191, 36, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <PencilSquareIcon style={{ width: '24px', height: '24px', color: '#fbbf24' }} />
+              </div>
+              <div>
+                <h3 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: '700',
+                  color: '#fff',
+                  margin: 0
+                }}>
+                  Edit Profile
+                </h3>
+                <p style={{
+                  fontSize: '13px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  margin: 0
+                }}>
+                  Customize your creator profile
+                </p>
+              </div>
+            </div>
+
+            {editError && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '20px',
+                fontSize: '14px',
+                color: '#ef4444'
+              }}>
+                {editError}
+              </div>
+            )}
+
+            {/* Bio Field */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '600',
+                color: 'rgba(255, 255, 255, 0.8)',
+                marginBottom: '8px'
+              }}>
+                Bio
+              </label>
+              <textarea
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                placeholder="Tell viewers about yourself..."
+                maxLength={500}
+                style={{
+                  width: '100%',
+                  minHeight: '120px',
+                  padding: '14px',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '10px',
+                  color: '#fff',
+                  fontSize: '14px',
+                  lineHeight: '1.6',
+                  resize: 'vertical',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginTop: '6px'
+              }}>
+                <span style={{
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.4)'
+                }}>
+                  Min 20 characters
+                </span>
+                <span style={{
+                  fontSize: '12px',
+                  color: editBio.length > 500 ? '#ef4444' : 'rgba(255, 255, 255, 0.4)'
+                }}>
+                  {editBio.length}/500
+                </span>
+              </div>
+            </div>
+
+            {/* Theme Color Field */}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '600',
+                color: 'rgba(255, 255, 255, 0.8)',
+                marginBottom: '8px'
+              }}>
+                Theme Color
+              </label>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <div style={{
+                  position: 'relative',
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '10px',
+                  overflow: 'hidden',
+                  border: '2px solid rgba(255, 255, 255, 0.15)'
+                }}>
+                  <input
+                    type="color"
+                    value={editThemeColor}
+                    onChange={(e) => setEditThemeColor(e.target.value)}
+                    style={{
+                      position: 'absolute',
+                      inset: '-10px',
+                      width: 'calc(100% + 20px)',
+                      height: 'calc(100% + 20px)',
+                      cursor: 'pointer',
+                      border: 'none'
+                    }}
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={editThemeColor}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '' || val === '#' || /^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                      setEditThemeColor(val);
+                    }
+                  }}
+                  placeholder="#fbbf24"
+                  maxLength={7}
+                  style={{
+                    flex: 1,
+                    padding: '12px 14px',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '10px',
+                    color: '#fff',
+                    fontSize: '14px',
+                    fontFamily: 'monospace'
+                  }}
+                />
+              </div>
+              <p style={{
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.4)',
+                marginTop: '8px'
+              }}>
+                Choose a color for your profile accent. Avoid very dark or very light colors.
+              </p>
+
+              {/* Color Presets */}
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                flexWrap: 'wrap',
+                marginTop: '12px'
+              }}>
+                {['#fbbf24', '#f59e0b', '#ef4444', '#ec4899', '#a855f7', '#8b5cf6', '#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#22c55e', '#84cc16'].map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setEditThemeColor(color)}
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '6px',
+                      background: color,
+                      border: editThemeColor.toLowerCase() === color ? '2px solid #fff' : '2px solid transparent',
+                      cursor: 'pointer',
+                      transition: 'transform 0.15s',
+                      transform: editThemeColor.toLowerCase() === color ? 'scale(1.1)' : 'scale(1)'
+                    }}
+                    title={color}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '24px'
+            }}>
+              <span style={{
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.5)',
+                display: 'block',
+                marginBottom: '8px'
+              }}>
+                Preview
+              </span>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: `linear-gradient(135deg, ${editThemeColor}50 0%, ${editThemeColor}20 100%)`,
+                  border: `2px solid ${editThemeColor}60`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '700',
+                    color: editThemeColor
+                  }}>
+                    {creatorProfile.displayName.slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#fff'
+                  }}>
+                    {creatorProfile.displayName}
+                  </div>
+                  <div style={{
+                    fontSize: '12px',
+                    color: editThemeColor
+                  }}>
+                    @{creatorProfile.slug}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{
+              display: 'flex',
+              gap: '12px'
+            }}>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditError(null);
+                }}
+                disabled={editSaving}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  borderRadius: '10px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  color: '#fff',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: editSaving ? 'not-allowed' : 'pointer',
+                  opacity: editSaving ? 0.5 : 1
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveProfile}
+                disabled={editSaving}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                  border: 'none',
+                  color: '#000',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  cursor: editSaving ? 'not-allowed' : 'pointer',
+                  opacity: editSaving ? 0.7 : 1
+                }}
+              >
+                {editSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
           </div>
         </div>
       )}

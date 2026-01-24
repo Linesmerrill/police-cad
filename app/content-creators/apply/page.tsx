@@ -58,6 +58,7 @@ export default function ApplyPage() {
     { id: generateId(), type: 'twitch', url: '', handle: '', followerCount: '' }
   ]);
   const [description, setDescription] = useState('');
+  const [bio, setBio] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Honeypot field (anti-spam)
@@ -138,10 +139,8 @@ export default function ApplyPage() {
   };
 
   const updatePlatform = (id: string, field: keyof PlatformEntry, value: string) => {
-    // Strip leading @ symbols from handle
-    const sanitizedValue = field === 'handle' ? value.replace(/^@+/, '') : value;
     setPlatforms(platforms.map(p =>
-      p.id === id ? { ...p, [field]: sanitizedValue } : p
+      p.id === id ? { ...p, [field]: value } : p
     ));
   };
 
@@ -152,6 +151,7 @@ export default function ApplyPage() {
   const isFormValid = (): boolean => {
     if (!displayName.trim()) return false;
     if (!description.trim() || description.length < 50) return false;
+    if (!bio.trim() || bio.length < 20 || bio.length > 500) return false;
     if (!agreedToTerms) return false;
     if (getMaxFollowers() < 500) return false;
 
@@ -180,13 +180,13 @@ export default function ApplyPage() {
     setSubmitError(null);
 
     try {
-      // Format platforms for API
+      // Format platforms for API - strip leading @ from handles before submission
       const formattedPlatforms = platforms
         .filter(p => p.url && p.handle)
         .map(p => ({
           type: p.type,
           url: p.url,
-          handle: p.handle,
+          handle: p.handle.replace(/^@+/, ''),
           followerCount: parseInt(p.followerCount) || 0
         }));
 
@@ -198,7 +198,8 @@ export default function ApplyPage() {
           displayName,
           primaryPlatform,
           platforms: formattedPlatforms,
-          description
+          description,
+          bio
         })
       });
 
@@ -873,7 +874,7 @@ export default function ApplyPage() {
                 </p>
               </div>
 
-              {/* Description */}
+              {/* Description - for admin evaluation */}
               <div style={{ marginBottom: '28px' }}>
                 <label style={{
                   display: 'block',
@@ -913,6 +914,69 @@ export default function ApplyPage() {
                   textAlign: 'right'
                 }}>
                   {description.length}/50 characters minimum
+                </p>
+                <p style={{
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  marginTop: '4px',
+                  fontStyle: 'italic'
+                }}>
+                  This is for our review team only and won&apos;t be shown on your public profile.
+                </p>
+              </div>
+
+              {/* Bio - for public profile */}
+              <div style={{ marginBottom: '28px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: '#fff',
+                  marginBottom: '8px'
+                }}>
+                  Profile Bio * <span style={{ color: 'rgba(255, 255, 255, 0.5)', fontWeight: '400' }}>(20-500 characters)</span>
+                </label>
+                <textarea
+                  value={bio}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 500) {
+                      setBio(e.target.value);
+                    }
+                  }}
+                  placeholder="Write a short bio that will be displayed on your public creator profile. Tell viewers about yourself and your content..."
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '14px 16px',
+                    fontSize: '15px',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '10px',
+                    color: '#fff',
+                    outline: 'none',
+                    resize: 'vertical',
+                    minHeight: '90px',
+                    fontFamily: 'inherit',
+                    lineHeight: '1.6'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = 'rgba(251, 191, 36, 0.5)'}
+                  onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+                />
+                <p style={{
+                  fontSize: '13px',
+                  color: bio.length >= 20 && bio.length <= 500 ? '#22c55e' : 'rgba(255, 255, 255, 0.5)',
+                  marginTop: '6px',
+                  textAlign: 'right'
+                }}>
+                  {bio.length}/500 characters
+                </p>
+                <p style={{
+                  fontSize: '12px',
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  marginTop: '4px',
+                  fontStyle: 'italic'
+                }}>
+                  This will be displayed on your public creator profile page.
                 </p>
               </div>
 
