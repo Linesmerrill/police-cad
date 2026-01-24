@@ -239,18 +239,24 @@ function CreatorCard({ creator, index }: { creator: ContentCreator; index: numbe
           padding: '16px 24px',
           borderTop: '1px solid rgba(255, 255, 255, 0.06)',
           display: 'flex',
+          flexWrap: 'wrap',
           justifyContent: 'center',
-          gap: '12px',
+          gap: '8px',
           background: 'rgba(0, 0, 0, 0.2)'
         }}>
-          {creator.platforms.map((platform) => (
+          {[...creator.platforms].sort((a, b) => {
+            // Sort "other" to the end
+            if (a.type === 'other') return 1;
+            if (b.type === 'other') return -1;
+            return 0;
+          }).map((platform) => (
             <div
               key={platform.type}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
+                gap: '4px',
+                padding: '4px 10px',
                 borderRadius: '20px',
                 background: `${platformColors[platform.type]}15`,
                 border: `1px solid ${platformColors[platform.type]}30`
