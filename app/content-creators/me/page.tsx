@@ -254,10 +254,10 @@ export default function CreatorStatusPage() {
 
       if (response.ok && data.success) {
         setShowRemovalModal(false);
-        // Update the creator profile to show pending_removal status
+        // Update the creator profile to show removed status
         setCreatorProfile({
           ...creatorProfile,
-          status: 'pending_removal'
+          status: 'removed'
         });
       } else {
         setRemovalError(data.message || 'Failed to request removal. Please try again.');
