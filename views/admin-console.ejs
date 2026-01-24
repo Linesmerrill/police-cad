@@ -945,10 +945,10 @@
                   <div class="btn-group" role="group" id="ccStatusFilter">
                     <button type="button" class="btn btn-secondary cc-status-btn active" data-status="">All</button>
                     <button type="button" class="btn btn-secondary cc-status-btn" data-status="submitted">
-                      <i class="fas fa-inbox" style="margin-right: 4px;"></i>Submitted
+                      <i class="fas fa-inbox" style="margin-right: 4px;"></i>Submitted <span id="ccSubmittedCount" class="badge" style="background: #ef4444; margin-left: 4px; display: none;"></span>
                     </button>
                     <button type="button" class="btn btn-secondary cc-status-btn" data-status="under_review">
-                      <i class="fas fa-search" style="margin-right: 4px;"></i>Under Review
+                      <i class="fas fa-search" style="margin-right: 4px;"></i>Under Review <span id="ccUnderReviewCount" class="badge" style="background: #f59e0b; margin-left: 4px; display: none;"></span>
                     </button>
                     <button type="button" class="btn btn-secondary cc-status-btn" data-status="approved">
                       <i class="fas fa-check-circle" style="margin-right: 4px;"></i>Approved
@@ -976,29 +976,35 @@
               </div>
 
               <!-- Stats Row -->
-              <div class="row" style="margin-top: 1rem;" id="ccStatsRow">
-                <div class="col-md-3">
-                  <div class="stat-card">
-                    <div class="stat-number" id="ccStatPending">-</div>
-                    <div class="stat-label">Pending Review</div>
+              <div style="display: flex; gap: 0.75rem; margin-top: 1rem;" id="ccStatsRow">
+                <div style="flex: 1; min-width: 0;">
+                  <div class="stat-card" style="padding: 0.75rem 0.5rem;">
+                    <div class="stat-number" id="ccStatPending" style="font-size: 1.25rem;">-</div>
+                    <div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">SUBMITTED</div>
                   </div>
                 </div>
-                <div class="col-md-3">
-                  <div class="stat-card">
-                    <div class="stat-number" id="ccStatApproved">-</div>
-                    <div class="stat-label">Approved</div>
+                <div style="flex: 1; min-width: 0;">
+                  <div class="stat-card" style="padding: 0.75rem 0.5rem;">
+                    <div class="stat-number" id="ccStatUnderReview" style="color: #f59e0b; font-size: 1.25rem;">-</div>
+                    <div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">UNDER REVIEW</div>
                   </div>
                 </div>
-                <div class="col-md-3">
-                  <div class="stat-card">
-                    <div class="stat-number" id="ccStatRejected">-</div>
-                    <div class="stat-label">Rejected</div>
+                <div style="flex: 1; min-width: 0;">
+                  <div class="stat-card" style="padding: 0.75rem 0.5rem;">
+                    <div class="stat-number" id="ccStatApproved" style="font-size: 1.25rem;">-</div>
+                    <div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">APPROVED</div>
                   </div>
                 </div>
-                <div class="col-md-3">
-                  <div class="stat-card">
-                    <div class="stat-number" id="ccStatActive">-</div>
-                    <div class="stat-label">Active Creators</div>
+                <div style="flex: 1; min-width: 0;">
+                  <div class="stat-card" style="padding: 0.75rem 0.5rem;">
+                    <div class="stat-number" id="ccStatRejected" style="font-size: 1.25rem;">-</div>
+                    <div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">REJECTED</div>
+                  </div>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                  <div class="stat-card" style="padding: 0.75rem 0.5rem;">
+                    <div class="stat-number" id="ccStatActive" style="font-size: 1.25rem;">-</div>
+                    <div class="stat-label" style="font-size: 0.65rem; white-space: nowrap;">ACTIVE</div>
                   </div>
                 </div>
               </div>
@@ -4349,12 +4355,35 @@
       });
 
       function loadCCStats() {
-        // Load pending count
+        // Load submitted count
         $.ajax({
           url: `${API_BASE}/api/v1/admin/content-creator-applications?status=submitted&limit=1`,
           method: 'GET',
           success: function(data) {
-            $('#ccStatPending').text(data.pagination?.totalItems || 0);
+            const count = data.pagination?.totalItems || 0;
+            $('#ccStatPending').text(count);
+            // Update filter badge
+            if (count > 0) {
+              $('#ccSubmittedCount').text(count).show();
+            } else {
+              $('#ccSubmittedCount').hide();
+            }
+          }
+        });
+
+        // Load under_review count
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/content-creator-applications?status=under_review&limit=1`,
+          method: 'GET',
+          success: function(data) {
+            const count = data.pagination?.totalItems || 0;
+            $('#ccStatUnderReview').text(count);
+            // Update filter badge
+            if (count > 0) {
+              $('#ccUnderReviewCount').text(count).show();
+            } else {
+              $('#ccUnderReviewCount').hide();
+            }
           }
         });
 
@@ -4401,21 +4430,59 @@
       }
 
       function loadCCPendingCount() {
+        let submittedCount = 0;
+        let underReviewCount = 0;
+
+        // Load submitted count
         $.ajax({
           url: `${API_BASE}/api/v1/admin/content-creator-applications?status=submitted&limit=1`,
           method: 'GET',
           success: function(data) {
-            const count = data.pagination?.totalItems || 0;
-            if (count > 0) {
-              $('#ccPendingBadge').text(count).show();
+            submittedCount = data.pagination?.totalItems || 0;
+            if (submittedCount > 0) {
+              $('#ccSubmittedCount').text(submittedCount).show();
             } else {
-              $('#ccPendingBadge').hide();
+              $('#ccSubmittedCount').hide();
             }
+            updateTabBadge();
           },
           error: function() {
-            $('#ccPendingBadge').hide();
+            $('#ccSubmittedCount').hide();
+            updateTabBadge();
           }
         });
+
+        // Load under_review count
+        $.ajax({
+          url: `${API_BASE}/api/v1/admin/content-creator-applications?status=under_review&limit=1`,
+          method: 'GET',
+          success: function(data) {
+            underReviewCount = data.pagination?.totalItems || 0;
+            if (underReviewCount > 0) {
+              $('#ccUnderReviewCount').text(underReviewCount).show();
+            } else {
+              $('#ccUnderReviewCount').hide();
+            }
+            updateTabBadge();
+          },
+          error: function() {
+            $('#ccUnderReviewCount').hide();
+            updateTabBadge();
+          }
+        });
+
+        // Update tab badge to show submitted (red) or under_review (yellow) count
+        function updateTabBadge() {
+          if (submittedCount > 0) {
+            // Show red badge for submitted applications (needs first review)
+            $('#ccPendingBadge').text(submittedCount).css('background', '#ef4444').show();
+          } else if (underReviewCount > 0) {
+            // Show yellow badge for under_review applications (needs second approval)
+            $('#ccPendingBadge').text(underReviewCount).css('background', '#f59e0b').show();
+          } else {
+            $('#ccPendingBadge').hide();
+          }
+        }
       }
 
       function loadCCApplications() {
@@ -4460,6 +4527,8 @@
         }
 
         let html = '';
+        const currentAdminId = getCurrentAdminId();
+
         applications.forEach(app => {
           const appId = app._id || app.id;
           const displayName = app.displayName || 'Unknown';
@@ -4473,6 +4542,9 @@
             totalFollowers = app.platforms.reduce((sum, p) => sum + (p.followerCount || 0), 0);
           }
 
+          // Check if current admin already approved
+          const currentAdminAlreadyApproved = app.firstApprovalBy && app.firstApprovalBy === currentAdminId;
+
           // Status badge styling
           const statusColors = {
             'submitted': { bg: '#3b82f6', label: 'Submitted' },
@@ -4483,26 +4555,56 @@
           };
           const statusStyle = statusColors[status] || { bg: '#6b7280', label: status };
 
+          // Build approval progress badge
+          let approvalBadgeHtml = '';
+          if (status === 'under_review' && app.firstApprovalBy) {
+            approvalBadgeHtml = `<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; font-size: 0.85rem; padding: 0.2rem 0.6rem; border-radius: 10px; margin-left: 6px; font-weight: 600;"><i class="fas fa-user-check" style="margin-right: 3px;"></i>1/2</span>`;
+          }
+
+          // Build approve button based on whether current admin already approved
+          let approveButtonHtml = '';
+          if (status === 'submitted' || status === 'under_review') {
+            if (currentAdminAlreadyApproved) {
+              approveButtonHtml = `
+                <button class="btn btn-success btn-sm" disabled style="opacity: 0.5; cursor: not-allowed;">
+                  <i class="fas fa-check"></i> Approved
+                </button>
+              `;
+            } else {
+              approveButtonHtml = `
+                <button class="btn btn-success btn-sm" onclick="approveCCApplication('${appId}')">
+                  <i class="fas fa-check"></i> Approve
+                </button>
+              `;
+            }
+          }
+
+          // Build first approval info line
+          let firstApprovalInfoHtml = '';
+          if (app.firstApprovalBy && (status === 'under_review' || status === 'submitted')) {
+            const approvalTime = app.firstApprovalAt ? new Date(app.firstApprovalAt).toLocaleString([], { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+            firstApprovalInfoHtml = `<span style="color: #f59e0b; font-size: 0.95rem; margin-left: 8px;"><i class="fas fa-user-check" style="margin-right: 4px;"></i>1st approval${approvalTime ? ' on ' + approvalTime : ''}${currentAdminAlreadyApproved ? ' (you)' : ''}</span>`;
+          }
+
           html += `
             <div class="result-card">
               <div class="result-header">
                 <div style="display: flex; align-items: center; gap: 12px;">
                   <div>
-                    <h5 class="result-title" style="display: flex; align-items: center; gap: 10px;">
+                    <h5 class="result-title" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                       ${displayName}
                       <span class="status-badge" style="background: ${statusStyle.bg}; color: #fff; font-size: 0.7rem; padding: 0.2rem 0.6rem;">${statusStyle.label}</span>
+                      ${approvalBadgeHtml}
                     </h5>
-                    <p class="result-subtitle">Applied: ${createdAt} | Platform: ${primaryPlatform} | Followers: ${totalFollowers.toLocaleString()}</p>
+                    <p class="result-subtitle">Applied: ${createdAt} | Platform: ${primaryPlatform} | Followers: ${totalFollowers.toLocaleString()}${firstApprovalInfoHtml}</p>
                   </div>
                 </div>
                 <div class="action-buttons">
                   <button class="btn btn-secondary btn-sm" onclick="viewCCApplication('${appId}')">
                     <i class="fas fa-eye"></i> View Details
                   </button>
+                  ${approveButtonHtml}
                   ${status === 'submitted' || status === 'under_review' ? `
-                    <button class="btn btn-success btn-sm" onclick="approveCCApplication('${appId}')">
-                      <i class="fas fa-check"></i> Approve
-                    </button>
                     <button class="btn btn-danger btn-sm" onclick="showRejectModal('${appId}')">
                       <i class="fas fa-times"></i> Reject
                     </button>
@@ -4620,18 +4722,19 @@
               'facebook': 'fab fa-facebook',
               'other': 'fas fa-globe'
             };
-            const icon = platformIcons[p.platform] || 'fas fa-globe';
+            const icon = platformIcons[p.type] || 'fas fa-globe';
 
             platformsHtml += `
-              <div class="info-item" style="margin-bottom: 0.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <i class="${icon}" style="color: #667eea;"></i>
-                  <span style="color: #e5e7eb; font-weight: 500;">${p.platform}</span>
+              <div class="info-item" style="margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                  <i class="${icon}" style="color: #667eea; font-size: 1.25rem;"></i>
+                  <span style="color: #e5e7eb; font-weight: 600; text-transform: capitalize; font-size: 1.1rem;">${p.type}</span>
+                  ${p.handle ? `<span style="color: #9aa0b4; font-size: 1rem;">@${p.handle.replace(/^@+/, '')}</span>` : ''}
                 </div>
-                <div style="margin-top: 0.25rem;">
-                  <a href="${p.url}" target="_blank" style="color: #667eea; word-break: break-all;">${p.url}</a>
+                <div style="margin-bottom: 0.5rem;">
+                  <a href="${p.url}" target="_blank" style="color: #667eea; word-break: break-all; font-size: 1rem;">${p.url}</a>
                 </div>
-                <div style="color: #9aa0b4; font-size: 0.9rem;">
+                <div style="color: #e5e7eb; font-size: 1rem; font-weight: 500;">
                   ${(p.followerCount || 0).toLocaleString()} followers
                 </div>
               </div>
@@ -4639,10 +4742,31 @@
           });
         }
 
+        // Check if current admin already approved
+        const currentAdminId = getCurrentAdminId();
+        const currentAdminAlreadyApproved = app.firstApprovalBy && app.firstApprovalBy === currentAdminId;
+
+        // Build approval progress badge
+        let approvalProgressHtml = '';
+        if (status === 'under_review' && app.firstApprovalBy) {
+          approvalProgressHtml = `
+            <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; margin-left: 0.5rem;">
+              <i class="fas fa-user-check" style="margin-right: 4px;"></i>1/2 Approvals
+            </span>
+          `;
+        } else if (status === 'approved') {
+          approvalProgressHtml = `
+            <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.85rem; margin-left: 0.5rem;">
+              <i class="fas fa-check-double" style="margin-right: 4px;"></i>2/2 Approvals
+            </span>
+          `;
+        }
+
         $('#ccApplicationModalTitle').text(`Application: ${displayName}`);
         $('#ccApplicationModalBody').html(`
-          <div style="margin-bottom: 1rem;">
+          <div style="margin-bottom: 1rem; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
             <span class="status-badge" style="background: ${statusStyle.bg};">${statusStyle.label}</span>
+            ${approvalProgressHtml}
           </div>
 
           <div class="info-grid">
@@ -4682,6 +4806,21 @@
             </div>
           </div>
 
+          ${app.firstApprovalBy ? `
+            <div style="margin-top: 1.5rem;">
+              <h5 style="color: #f59e0b; margin-bottom: 1rem;">
+                <i class="fas fa-user-check" style="margin-right: 8px;"></i>First Approval
+              </h5>
+              <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 1rem;">
+                <p style="margin-bottom: 0; color: #e5e7eb;">
+                  <i class="fas fa-check" style="color: #10b981; margin-right: 8px;"></i>
+                  First approval received${app.firstApprovalAt ? ' on ' + new Date(app.firstApprovalAt).toLocaleString([], { month: 'numeric', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : ''}.
+                  <strong style="color: #f59e0b;">Awaiting second approval from a different admin.</strong>
+                </p>
+              </div>
+            </div>
+          ` : ''}
+
           ${app.rejectionReason ? `
             <div style="margin-top: 1.5rem;">
               <h5 style="color: #ef4444; margin-bottom: 1rem;">
@@ -4698,42 +4837,138 @@
 
         // Update footer with action buttons if status allows
         if (status === 'submitted' || status === 'under_review') {
+          const approveLabel = app.firstApprovalBy ? 'Second Approve' : 'First Approve';
+          const approveIcon = app.firstApprovalBy ? 'fa-check-double' : 'fa-check-circle';
+
+          // Check if current admin already gave first approval
+          let approveButtonHtml = '';
+          if (currentAdminAlreadyApproved) {
+            // Disable button and show message
+            approveButtonHtml = `
+              <button type="button" class="btn btn-success" disabled style="opacity: 0.6; cursor: not-allowed;">
+                <i class="fas fa-check" style="margin-right: 8px;"></i>You Already Approved
+              </button>
+            `;
+          } else {
+            approveButtonHtml = `
+              <button type="button" class="btn btn-success" onclick="approveCCApplication('${appId}')">
+                <i class="fas ${approveIcon}" style="margin-right: 8px;"></i>${approveLabel}
+              </button>
+            `;
+          }
+
+          // Check if current admin is an owner (can use override)
+          // Use the globally parsed 'roles' variable instead of re-parsing currentUserRoles
+          const isOwner = roles.includes('owner');
+
+          // Owner override button (shown to owners for any pending application - allows bypassing dual-approval entirely)
+          let ownerOverrideHtml = '';
+          if (isOwner && (status === 'submitted' || status === 'under_review')) {
+            ownerOverrideHtml = `
+              <button type="button" class="btn" onclick="approveCCApplication('${appId}', true)" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white;">
+                <i class="fas fa-shield-alt" style="margin-right: 8px;"></i>Override Approve
+              </button>
+            `;
+          }
+
           $('#ccApplicationModalFooter').html(`
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
             <button type="button" class="btn btn-danger" onclick="$('#ccApplicationModal').modal('hide'); showRejectModal('${appId}');">
               <i class="fas fa-times-circle" style="margin-right: 8px;"></i>Reject
             </button>
-            <button type="button" class="btn btn-success" onclick="approveCCApplication('${appId}')">
-              <i class="fas fa-check-circle" style="margin-right: 8px;"></i>Approve
-            </button>
+            ${approveButtonHtml}
+            ${ownerOverrideHtml}
           `);
+
+          // Add a note if current admin already approved
+          if (currentAdminAlreadyApproved) {
+            $('#ccApplicationModalFooter').append('<div style="width: 100%; margin-top: 0.75rem; text-align: center; color: #f59e0b; font-size: 0.85rem;"><i class="fas fa-info-circle" style="margin-right: 4px;"></i>A different admin must provide the second approval</div>');
+          }
         } else {
           $('#ccApplicationModalFooter').html('<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>');
         }
       }
 
-      function approveCCApplication(appId) {
-        if (!confirm('Are you sure you want to approve this application? This will create a content creator profile for the user.')) {
-          return;
-        }
-
-        showInfoModal('Processing', '<i class="fas fa-spinner fa-spin"></i> Approving application...');
+      function approveCCApplication(appId, ownerOverride = false) {
+        const processingMessage = ownerOverride
+          ? '<i class="fas fa-spinner fa-spin"></i> Processing approval with owner override...'
+          : '<i class="fas fa-spinner fa-spin"></i> Processing approval...';
+        showInfoModal('Processing', processingMessage);
 
         $.ajax({
           url: `${API_BASE}/api/v1/admin/content-creator-applications/${appId}/approve`,
           method: 'POST',
           contentType: 'application/json',
+          headers: {
+            'X-User-ID': getCurrentAdminId()
+          },
+          data: JSON.stringify({ ownerOverride: ownerOverride }),
           success: function(data) {
             $('#infoModal').modal('hide');
             $('#ccApplicationModal').modal('hide');
-            showInfoModal('Success', '<i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>Application approved successfully! A content creator profile has been created.');
+
+            if (data.ownerOverride) {
+              // Approved via owner override
+              showInfoModal('Success', `
+                <i class="fas fa-shield-alt" style="color: #667eea; margin-right: 8px;"></i>
+                Application approved via <strong>owner override</strong>! A content creator profile has been created.
+              `);
+            } else if (data.needsSecond) {
+              // First approval recorded, needs second
+              showInfoModal('First Approval Recorded', `
+                <i class="fas fa-user-check" style="color: #f59e0b; margin-right: 8px;"></i>
+                Your approval has been recorded. This application now requires a <strong>second approval</strong> from a different admin before the creator profile is created.
+              `);
+            } else {
+              // Fully approved
+              showInfoModal('Success', '<i class="fas fa-check-circle" style="color: #10b981; margin-right: 8px;"></i>Application approved successfully! A content creator profile has been created.');
+            }
+
             loadCCApplications();
             loadCCStats();
             loadCCPendingCount(); // Update badge
           },
           error: function(xhr) {
             $('#infoModal').modal('hide');
-            showInfoModal('Error', `<i class="fas fa-exclamation-circle" style="color: #ef4444; margin-right: 8px;"></i>Failed to approve application: ${xhr.responseJSON?.error || 'Unknown error'}`);
+
+            // Handle specific error cases
+            if (xhr.status === 403) {
+              // Forbidden - not an owner trying to use override
+              showInfoModal('Not Authorized', `
+                <i class="fas fa-lock" style="color: #ef4444; margin-right: 8px;"></i>
+                Only <strong>owners</strong> can use the override option.
+              `);
+            } else if (xhr.status === 409) {
+              // Conflict - either already approved by this admin or already processed
+              const errorMsg = xhr.responseJSON?.error || '';
+              if (errorMsg.includes('already approved')) {
+                showInfoModal('Already Approved', `
+                  <i class="fas fa-info-circle" style="color: #f59e0b; margin-right: 8px;"></i>
+                  You have already approved this application. A <strong>different admin</strong> must provide the second approval.
+                `);
+              } else {
+                showInfoModal('Already Processed', `
+                  <i class="fas fa-info-circle" style="color: #f59e0b; margin-right: 8px;"></i>
+                  This application has already been processed.
+                `);
+              }
+              // Refresh the list to show updated status
+              loadCCApplications();
+              loadCCStats();
+              loadCCPendingCount();
+            } else {
+              const errorMsg = xhr.responseJSON?.error || xhr.statusText || 'Unknown error';
+              showInfoModal('Error', `<i class="fas fa-exclamation-circle" style="color: #ef4444; margin-right: 8px;"></i>Failed to approve application: ${errorMsg}`);
+            }
+          },
+          complete: function() {
+            // Ensure modal backdrop is always cleaned up
+            setTimeout(function() {
+              if (!$('.modal.show').length) {
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').css('padding-right', '');
+              }
+            }, 300);
           }
         });
       }
@@ -4765,6 +5000,9 @@
           url: `${API_BASE}/api/v1/admin/content-creator-applications/${appId}/reject`,
           method: 'POST',
           contentType: 'application/json',
+          headers: {
+            'X-User-ID': getCurrentAdminId()
+          },
           data: JSON.stringify({
             rejectionReason: reason,
             feedback: feedback,
@@ -4783,6 +5021,13 @@
           complete: function() {
             button.prop('disabled', false);
             button.html('<i class="fas fa-times-circle" style="margin-right: 8px;"></i>Reject Application');
+            // Ensure modal backdrop is always cleaned up
+            setTimeout(function() {
+              if (!$('.modal.show').length) {
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').css('padding-right', '');
+              }
+            }, 300);
           }
         });
       });

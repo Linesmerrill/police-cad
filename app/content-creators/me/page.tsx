@@ -62,6 +62,8 @@ interface CreatorProfile {
   platforms: ContentCreatorPlatform[];
   entitlements: {
     personalPlan: boolean;
+    personalPlanFallback?: boolean;
+    currentUserPlan?: string;
     communityPlan: {
       active: boolean;
       communityName?: string;
@@ -161,6 +163,17 @@ export default function CreatorStatusPage() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
+  const [showCommunityModal, setShowCommunityModal] = useState(false);
+  const [ownedCommunities, setOwnedCommunities] = useState<Array<{
+    _id: string;
+    name: string;
+    hasPromotion: boolean;
+    currentPlan?: string;
+    isPromotionApplied: boolean;
+  }>>([]);
+  const [loadingCommunities, setLoadingCommunities] = useState(false);
+  const [applyingPromotion, setApplyingPromotion] = useState(false);
+  const [promotionError, setPromotionError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -281,6 +294,78 @@ export default function CreatorStatusPage() {
       setWithdrawError('Failed to withdraw application. Please try again.');
     } finally {
       setWithdrawSubmitting(false);
+    }
+  };
+
+  const fetchOwnedCommunities = async () => {
+    setLoadingCommunities(true);
+    setPromotionError(null);
+
+    try {
+      const response = await fetch('/api/v1/content-creators/me/owned-communities', {
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setOwnedCommunities(data.communities || []);
+      } else {
+        setPromotionError(data.message || 'Failed to load communities');
+      }
+    } catch (error) {
+      console.error('Error fetching owned communities:', error);
+      setPromotionError('Failed to load communities');
+    } finally {
+      setLoadingCommunities(false);
+    }
+  };
+
+  const handleClaimCommunityBenefit = () => {
+    setShowCommunityModal(true);
+    fetchOwnedCommunities();
+  };
+
+  const handleApplyPromotion = async (communityId: string) => {
+    setApplyingPromotion(true);
+    setPromotionError(null);
+
+    try {
+      const response = await fetch('/api/v1/content-creators/me/community-promotion', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ communityId })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setShowCommunityModal(false);
+        // Update the creator profile with the new community plan info
+        if (creatorProfile) {
+          setCreatorProfile({
+            ...creatorProfile,
+            entitlements: {
+              ...creatorProfile.entitlements,
+              communityPlan: {
+                active: true,
+                communityName: data.communityName,
+                communityId: communityId
+              }
+            }
+          });
+        }
+      } else {
+        setPromotionError(data.message || 'Failed to apply promotion');
+      }
+    } catch (error) {
+      console.error('Error applying promotion:', error);
+      setPromotionError('Failed to apply promotion');
+    } finally {
+      setApplyingPromotion(false);
     }
   };
 
@@ -722,17 +807,27 @@ export default function CreatorStatusPage() {
                         Personal Account
                       </span>
                       {creatorProfile.entitlements.personalPlan ? (
-                        <span style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          color: '#22c55e'
-                        }}>
-                          <CheckCircleIcon style={{ width: '14px', height: '14px' }} />
-                          Active
-                        </span>
+                        creatorProfile.entitlements.personalPlanFallback ? (
+                          <span style={{
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            color: '#60a5fa'
+                          }}>
+                            Fallback
+                          </span>
+                        ) : (
+                          <span style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            color: '#22c55e'
+                          }}>
+                            <CheckCircleIcon style={{ width: '14px', height: '14px' }} />
+                            Active
+                          </span>
+                        )
                       ) : (
                         <span style={{
                           fontSize: '12px',
@@ -748,14 +843,18 @@ export default function CreatorStatusPage() {
                       fontWeight: '700',
                       color: '#fff'
                     }}>
-                      Base Plan
+                      {creatorProfile.entitlements.personalPlanFallback
+                        ? `${creatorProfile.entitlements.currentUserPlan?.charAt(0).toUpperCase()}${creatorProfile.entitlements.currentUserPlan?.slice(1).replace('_', ' ')} Plan`
+                        : 'Base Plan'}
                     </div>
                     <div style={{
                       fontSize: '13px',
                       color: 'rgba(255, 255, 255, 0.5)',
                       marginTop: '4px'
                     }}>
-                      $36/year value
+                      {creatorProfile.entitlements.personalPlanFallback
+                        ? 'Base Plan activates if you cancel'
+                        : '$36/year value'}
                     </div>
                   </div>
 
@@ -799,22 +898,55 @@ export default function CreatorStatusPage() {
                         </span>
                       )}
                     </div>
-                    <div style={{
-                      fontSize: '18px',
-                      fontWeight: '700',
-                      color: '#fff'
-                    }}>
-                      {creatorProfile.entitlements.communityPlan.communityName || 'Base Plan'}
-                    </div>
-                    <div style={{
-                      fontSize: '13px',
-                      color: 'rgba(255, 255, 255, 0.5)',
-                      marginTop: '4px'
-                    }}>
-                      {creatorProfile.entitlements.communityPlan.active
-                        ? '$36/year value'
-                        : 'Contact admin to assign'}
-                    </div>
+                    {creatorProfile.entitlements.communityPlan.active ? (
+                      <>
+                        <div style={{
+                          fontSize: '18px',
+                          fontWeight: '700',
+                          color: '#fff'
+                        }}>
+                          {creatorProfile.entitlements.communityPlan.communityName || 'Base Plan'}
+                        </div>
+                        <div style={{
+                          fontSize: '13px',
+                          color: 'rgba(255, 255, 255, 0.5)',
+                          marginTop: '4px'
+                        }}>
+                          $36/year value
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{
+                          fontSize: '15px',
+                          fontWeight: '600',
+                          color: 'rgba(255, 255, 255, 0.7)',
+                          marginBottom: '12px'
+                        }}>
+                          Base Plan Available
+                        </div>
+                        <button
+                          onClick={handleClaimCommunityBenefit}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                            color: '#000',
+                            fontSize: '13px',
+                            fontWeight: '700',
+                            padding: '10px 16px',
+                            borderRadius: '8px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          <GiftIcon style={{ width: '16px', height: '16px' }} />
+                          Claim Your Benefit
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -1399,6 +1531,224 @@ export default function CreatorStatusPage() {
                 {withdrawSubmitting ? 'Withdrawing...' : 'Confirm Withdrawal'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Community Selection Modal */}
+      {showCommunityModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#12121f',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            padding: '32px',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              background: 'rgba(251, 191, 36, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px'
+            }}>
+              <GiftIcon style={{ width: '30px', height: '30px', color: '#fbbf24' }} />
+            </div>
+
+            <h3 style={{
+              fontSize: '1.25rem',
+              fontWeight: '700',
+              color: '#fff',
+              textAlign: 'center',
+              marginBottom: '12px'
+            }}>
+              Claim Community Benefit
+            </h3>
+
+            <p style={{
+              fontSize: '14px',
+              lineHeight: '1.6',
+              color: 'rgba(255, 255, 255, 0.7)',
+              textAlign: 'center',
+              marginBottom: '24px'
+            }}>
+              Select a community you own to apply your free Base Plan benefit.
+              You can only apply this to one community.
+            </p>
+
+            {promotionError && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '8px',
+                padding: '12px',
+                marginBottom: '16px',
+                fontSize: '14px',
+                color: '#ef4444',
+                textAlign: 'center'
+              }}>
+                {promotionError}
+              </div>
+            )}
+
+            {loadingCommunities ? (
+              <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  border: '3px solid rgba(251, 191, 36, 0.2)',
+                  borderTopColor: '#fbbf24',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  margin: '0 auto 12px'
+                }} />
+                <p style={{
+                  fontSize: '14px',
+                  color: 'rgba(255, 255, 255, 0.5)'
+                }}>
+                  Loading your communities...
+                </p>
+              </div>
+            ) : ownedCommunities.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '32px 16px',
+                background: 'rgba(255, 255, 255, 0.03)',
+                borderRadius: '12px',
+                marginBottom: '16px'
+              }}>
+                <UserGroupIcon style={{
+                  width: '40px',
+                  height: '40px',
+                  color: 'rgba(255, 255, 255, 0.3)',
+                  margin: '0 auto 12px'
+                }} />
+                <p style={{
+                  fontSize: '14px',
+                  color: 'rgba(255, 255, 255, 0.6)'
+                }}>
+                  You don&apos;t own any communities yet.
+                </p>
+                <p style={{
+                  fontSize: '13px',
+                  color: 'rgba(255, 255, 255, 0.4)',
+                  marginTop: '8px'
+                }}>
+                  Create a community in Lines Police CAD to claim this benefit.
+                </p>
+              </div>
+            ) : (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                marginBottom: '16px'
+              }}>
+                {ownedCommunities.map((community) => (
+                  <button
+                    key={community._id}
+                    onClick={() => !community.isPromotionApplied && !applyingPromotion && handleApplyPromotion(community._id)}
+                    disabled={community.isPromotionApplied || applyingPromotion}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '16px',
+                      background: community.isPromotionApplied
+                        ? 'rgba(34, 197, 94, 0.1)'
+                        : 'rgba(255, 255, 255, 0.03)',
+                      border: community.isPromotionApplied
+                        ? '1px solid rgba(34, 197, 94, 0.3)'
+                        : '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '12px',
+                      cursor: community.isPromotionApplied || applyingPromotion ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s',
+                      opacity: applyingPromotion && !community.isPromotionApplied ? 0.5 : 1
+                    }}
+                  >
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{
+                        fontSize: '15px',
+                        fontWeight: '600',
+                        color: '#fff'
+                      }}>
+                        {community.name}
+                      </div>
+                      {community.currentPlan && (
+                        <div style={{
+                          fontSize: '12px',
+                          color: 'rgba(255, 255, 255, 0.5)',
+                          marginTop: '4px'
+                        }}>
+                          Current: {community.currentPlan}
+                        </div>
+                      )}
+                    </div>
+                    {community.isPromotionApplied ? (
+                      <span style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: '#22c55e'
+                      }}>
+                        <CheckCircleIcon style={{ width: '16px', height: '16px' }} />
+                        Applied
+                      </span>
+                    ) : (
+                      <span style={{
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        color: '#fbbf24',
+                        padding: '6px 12px',
+                        background: 'rgba(251, 191, 36, 0.1)',
+                        borderRadius: '6px'
+                      }}>
+                        Select
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                setShowCommunityModal(false);
+                setPromotionError(null);
+              }}
+              disabled={applyingPromotion}
+              style={{
+                width: '100%',
+                padding: '14px',
+                borderRadius: '10px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#fff',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: applyingPromotion ? 'not-allowed' : 'pointer',
+                opacity: applyingPromotion ? 0.5 : 1
+              }}
+            >
+              {applyingPromotion ? 'Applying...' : 'Cancel'}
+            </button>
           </div>
         </div>
       )}

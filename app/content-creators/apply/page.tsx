@@ -135,8 +135,10 @@ export default function ApplyPage() {
   };
 
   const updatePlatform = (id: string, field: keyof PlatformEntry, value: string) => {
+    // Strip leading @ symbols from handle
+    const sanitizedValue = field === 'handle' ? value.replace(/^@+/, '') : value;
     setPlatforms(platforms.map(p =>
-      p.id === id ? { ...p, [field]: value } : p
+      p.id === id ? { ...p, [field]: sanitizedValue } : p
     ));
   };
 
