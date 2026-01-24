@@ -1092,6 +1092,72 @@ export default function CreatorStatusPage() {
             </>
           )}
 
+          {/* If creator has been removed */}
+          {creatorProfile && creatorProfile.status === 'removed' && (
+            <div style={{
+              textAlign: 'center',
+              padding: '60px 20px'
+            }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                background: 'rgba(107, 114, 128, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 24px'
+              }}>
+                <XCircleIcon style={{ width: '40px', height: '40px', color: 'rgba(255, 255, 255, 0.4)' }} />
+              </div>
+              <h2 style={{
+                fontSize: '1.5rem',
+                fontWeight: '700',
+                color: '#fff',
+                marginBottom: '12px'
+              }}>
+                Creator Profile Removed
+              </h2>
+              <p style={{
+                fontSize: '1rem',
+                color: 'rgba(255, 255, 255, 0.6)',
+                marginBottom: '16px',
+                maxWidth: '450px',
+                margin: '0 auto 16px'
+              }}>
+                You have been removed from the Content Creator Program. Your Base Plan benefits for your personal account and community have been revoked.
+              </p>
+              <p style={{
+                fontSize: '0.9rem',
+                color: 'rgba(255, 255, 255, 0.5)',
+                marginBottom: '32px',
+                maxWidth: '450px',
+                margin: '0 auto 32px'
+              }}>
+                If you&apos;d like to rejoin the program, you can submit a new application.
+              </p>
+              <Link
+                href="/content-creators/apply"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                  color: '#000',
+                  fontSize: '15px',
+                  fontWeight: '700',
+                  padding: '16px 32px',
+                  borderRadius: '12px',
+                  textDecoration: 'none',
+                  boxShadow: '0 10px 30px rgba(251, 191, 36, 0.3)'
+                }}
+              >
+                Apply Again
+                <ArrowRightIcon style={{ width: '18px', height: '18px' }} />
+              </Link>
+            </div>
+          )}
+
           {/* If user has a pending/rejected application */}
           {application && !creatorProfile && (
             <div style={{
