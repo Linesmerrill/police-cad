@@ -186,13 +186,13 @@ export default function ApplyPage() {
     const newType = availableTypes[0];
     const platformOption = platformOptions.find(p => p.value === newType);
 
-    setPlatforms([...platforms, {
+    setPlatforms([{
       id: generateId(),
       type: newType,
       url: platformOption?.baseUrl || '',
       handle: '',
       followerCount: ''
-    }]);
+    }, ...platforms]);
   };
 
   const removePlatform = (id: string) => {
