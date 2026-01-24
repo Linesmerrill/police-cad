@@ -1470,7 +1470,7 @@ export default function Profile() {
                 </div>
               </div>
               <Link
-                href="/content-creators/apply"
+                href="/content-creators"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
