@@ -242,6 +242,8 @@ export default function CreatorStatusPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editBio, setEditBio] = useState('');
   const [editThemeColor, setEditThemeColor] = useState('');
+  const [editProfileImage, setEditProfileImage] = useState('');
+  const [editProfileImageUploading, setEditProfileImageUploading] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   // Sync followers modal
@@ -481,8 +483,71 @@ export default function CreatorStatusPage() {
     if (creatorProfile) {
       setEditBio(creatorProfile.bio);
       setEditThemeColor(creatorProfile.themeColor || '#fbbf24');
+      setEditProfileImage(creatorProfile.profileImage || '');
       setEditError(null);
       setShowEditModal(true);
+    }
+  };
+
+  const handleProfileImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setEditError('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setEditError('Image must be less than 5MB');
+      return;
+    }
+
+    setEditProfileImageUploading(true);
+    setEditError(null);
+
+    try {
+      // Get signature from server
+      const signatureResponse = await fetch('/api/v1/generate-signature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({})
+      });
+
+      if (!signatureResponse.ok) {
+        throw new Error('Failed to get upload signature');
+      }
+
+      const { timestamp, signature, cloudName, apiKey } = await signatureResponse.json();
+
+      // Upload to Cloudinary
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', apiKey);
+      formData.append('timestamp', timestamp);
+      formData.append('signature', signature);
+      formData.append('folder', 'content-creators');
+
+      const cloudinaryResponse = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await cloudinaryResponse.json();
+
+      if (result.error) {
+        throw new Error(result.error.message || 'Upload failed');
+      }
+
+      setEditProfileImage(result.secure_url);
+    } catch (error) {
+      console.error('Upload error:', error);
+      setEditError('Failed to upload image. Please try again.');
+    } finally {
+      setEditProfileImageUploading(false);
     }
   };
 
@@ -532,7 +597,8 @@ export default function CreatorStatusPage() {
         },
         body: JSON.stringify({
           bio: editBio,
-          themeColor: editThemeColor.toLowerCase()
+          themeColor: editThemeColor.toLowerCase(),
+          profileImage: editProfileImage || undefined
         })
       });
 
@@ -542,7 +608,8 @@ export default function CreatorStatusPage() {
         setCreatorProfile({
           ...creatorProfile,
           bio: editBio,
-          themeColor: editThemeColor.toLowerCase()
+          themeColor: editThemeColor.toLowerCase(),
+          profileImage: editProfileImage || creatorProfile.profileImage
         });
         setShowEditModal(false);
       } else {
@@ -959,19 +1026,30 @@ export default function CreatorStatusPage() {
                       width: '64px',
                       height: '64px',
                       borderRadius: '50%',
-                      background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.1) 100%)',
+                      background: creatorProfile.profileImage
+                        ? 'transparent'
+                        : 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.1) 100%)',
                       border: '2px solid rgba(251, 191, 36, 0.4)',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      overflow: 'hidden'
                     }}>
-                      <span style={{
-                        fontSize: '24px',
-                        fontWeight: '700',
-                        color: '#fbbf24'
-                      }}>
-                        {creatorProfile.displayName.slice(0, 2).toUpperCase()}
-                      </span>
+                      {creatorProfile.profileImage ? (
+                        <img
+                          src={creatorProfile.profileImage}
+                          alt={creatorProfile.displayName}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <span style={{
+                          fontSize: '24px',
+                          fontWeight: '700',
+                          color: '#fbbf24'
+                        }}>
+                          {creatorProfile.displayName.slice(0, 2).toUpperCase()}
+                        </span>
+                      )}
                     </div>
                     <div>
                       <div style={{
@@ -2381,6 +2459,125 @@ export default function CreatorStatusPage() {
                 {editError}
               </div>
             )}
+
+            {/* Profile Image Field */}
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{
+                display: 'block',
+                fontSize: '14px',
+                fontWeight: '600',
+                color: 'rgba(255, 255, 255, 0.8)',
+                marginBottom: '8px'
+              }}>
+                Profile Picture
+              </label>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px'
+              }}>
+                {/* Preview */}
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  background: editProfileImage
+                    ? 'transparent'
+                    : `linear-gradient(135deg, ${editThemeColor}30 0%, ${editThemeColor}10 100%)`,
+                  border: `2px solid ${editThemeColor}60`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  flexShrink: 0
+                }}>
+                  {editProfileImage ? (
+                    <img
+                      src={editProfileImage}
+                      alt="Profile"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <span style={{
+                      fontSize: '28px',
+                      fontWeight: '700',
+                      color: editThemeColor
+                    }}>
+                      {creatorProfile?.displayName.slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                {/* Upload button */}
+                <div style={{ flex: 1 }}>
+                  <label
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 16px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      cursor: editProfileImageUploading ? 'not-allowed' : 'pointer',
+                      opacity: editProfileImageUploading ? 0.5 : 1,
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {editProfileImageUploading ? (
+                      <>
+                        <svg style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} fill="none" viewBox="0 0 24 24">
+                          <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <svg style={{ width: '16px', height: '16px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        {editProfileImage ? 'Change Image' : 'Upload Image'}
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfileImageUpload}
+                      disabled={editProfileImageUploading}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                  {editProfileImage && (
+                    <button
+                      onClick={() => setEditProfileImage('')}
+                      style={{
+                        marginLeft: '8px',
+                        padding: '10px 16px',
+                        background: 'transparent',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        borderRadius: '8px',
+                        color: '#ef4444',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  )}
+                  <p style={{
+                    marginTop: '8px',
+                    fontSize: '12px',
+                    color: 'rgba(255, 255, 255, 0.4)'
+                  }}>
+                    JPG, PNG or GIF. Max 5MB.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Bio Field */}
             <div style={{ marginBottom: '20px' }}>

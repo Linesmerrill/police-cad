@@ -3145,6 +3145,21 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Generate Cloudinary signature for uploads
+  app.post("/api/v1/generate-signature", apiAuthCheck, async function (req, res) {
+    try {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/generate-signature`, req.body, config);
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error generating signature:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to generate signature" });
+      }
+    }
+  });
+
   // ===========================================
   // END CONTENT CREATOR API ROUTES
   // ===========================================
