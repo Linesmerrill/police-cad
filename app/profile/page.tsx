@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { UserIcon, EnvelopeIcon, CalendarIcon, CurrencyDollarIcon, LockClosedIcon, SpeakerWaveIcon, BellIcon, TrashIcon, EyeIcon, EyeSlashIcon, IdentificationIcon } from '@heroicons/react/24/solid';
-import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ArrowRightIcon, VideoCameraIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
 import { DISCORD_COMMUNITY } from '@/constants/discord';
 
 export default function Profile() {
@@ -23,6 +24,7 @@ export default function Profile() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [emailModalError, setEmailModalError] = useState<string | null>(null);
+  const [creatorStatus, setCreatorStatus] = useState<{ hasCreatorProfile: boolean; hasApplication: boolean; status?: string } | null>(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -36,6 +38,25 @@ export default function Profile() {
             setUser(userData.user);
             setUsernameValue(userData.user.username || '');
             setCallSignValue(userData.user.callSign || '');
+
+            // Check if user is a creator or has an application
+            try {
+              const creatorResponse = await fetch('/api/v1/content-creator-applications/me', {
+                credentials: 'include'
+              });
+              if (creatorResponse.ok) {
+                const creatorData = await creatorResponse.json();
+                if (creatorData.success) {
+                  setCreatorStatus({
+                    hasCreatorProfile: !!creatorData.creator,
+                    hasApplication: !!creatorData.application,
+                    status: creatorData.creator?.status || creatorData.application?.status
+                  });
+                }
+              }
+            } catch (creatorError) {
+              console.error('Error fetching creator status:', creatorError);
+            }
           }
         }
       } catch (error) {
@@ -44,7 +65,7 @@ export default function Profile() {
         setLoading(false);
       }
     };
-    
+
     fetchUser();
   }, []);
 
@@ -1311,6 +1332,89 @@ export default function Profile() {
             </div>
           </div>
         </div>
+
+        {/* Content Creator Card - Only show if user is a creator or has applied */}
+        {creatorStatus && (creatorStatus.hasCreatorProfile || creatorStatus.hasApplication) && (
+          <div style={{
+            backgroundColor: 'rgba(15, 15, 20, 0.6)',
+            border: '1px solid rgba(251, 191, 36, 0.3)',
+            borderRadius: '1rem',
+            padding: '2rem',
+            marginBottom: '2rem',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
+            background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.08) 0%, rgba(15, 15, 20, 0.6) 100%)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
+              }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(251, 191, 36, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <VideoCameraIcon style={{ width: '24px', height: '24px', color: '#fbbf24' }} />
+                </div>
+                <div>
+                  <h2 style={{
+                    fontSize: '1.25rem',
+                    fontWeight: '700',
+                    color: '#ffffff',
+                    marginBottom: '0.25rem',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  }}>
+                    Content Creator Program
+                  </h2>
+                  <p style={{
+                    fontSize: '0.875rem',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  }}>
+                    {creatorStatus.hasCreatorProfile
+                      ? creatorStatus.status === 'removed'
+                        ? 'Your creator profile has been removed'
+                        : 'View your creator benefits and profile'
+                      : 'View your application status'}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/content-creators/me"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.5rem',
+                  background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: '#000',
+                  fontSize: '0.875rem',
+                  fontWeight: '700',
+                  textDecoration: 'none',
+                  transition: 'all 0.2s',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                }}
+              >
+                {creatorStatus.hasCreatorProfile ? 'View Creator Status' : 'View Application'}
+                <ArrowRightIcon style={{ width: '16px', height: '16px' }} />
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Danger Zone Card */}
         <div style={{

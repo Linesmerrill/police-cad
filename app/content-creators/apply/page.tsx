@@ -98,8 +98,11 @@ export default function ApplyPage() {
             if (creatorResponse.ok) {
               const data = await creatorResponse.json();
               if (data.success) {
-                // If user is already a creator or has a pending application, redirect to /me
-                if (data.creator || (data.application && ['submitted', 'under_review', 'approved'].includes(data.application.status))) {
+                // If user is already an active creator or has a pending application, redirect to /me
+                // Allow removed creators to apply again
+                const isActiveCreator = data.creator && data.creator.status !== 'removed';
+                const hasPendingApplication = data.application && ['submitted', 'under_review', 'approved'].includes(data.application.status);
+                if (isActiveCreator || hasPendingApplication) {
                   setIsRedirecting(true);
                   router.push('/content-creators/me');
                   return;
