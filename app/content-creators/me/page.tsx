@@ -245,7 +245,7 @@ export default function CreatorStatusPage() {
     setRemovalError(null);
 
     try {
-      const response = await fetch(`/api/v1/content-creators/${creatorProfile._id}/request-removal`, {
+      const response = await fetch('/api/v1/content-creators/me/removal-request', {
         method: 'POST',
         credentials: 'include'
       });

@@ -3106,11 +3106,10 @@ module.exports = function (app, passport, server, nextApp, handle) {
   });
 
   // Request removal from program
-  app.post("/api/v1/content-creators/:id/request-removal", apiAuthCheck, async function (req, res) {
+  app.post("/api/v1/content-creators/me/removal-request", apiAuthCheck, async function (req, res) {
     try {
-      const { id } = req.params;
       const userId = req.user._id || req.user.id;
-      const response = await axios.post(`${policeCadApiUrl}/api/v1/content-creators/${id}/request-removal`, req.body, {
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/content-creators/me/removal-request`, req.body, {
         headers: {
           ...config.headers,
           'X-User-ID': userId.toString(),
@@ -3123,7 +3122,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
       if (error.response) {
         res.status(error.response.status).json(error.response.data);
       } else {
-        res.status(500).json({ error: "Failed to request removal" });
+        res.status(500).json({ success: false, message: "Failed to request removal" });
       }
     }
   });
