@@ -2788,6 +2788,24 @@ export default function CreatorStatusPage() {
               </p>
             </div>
 
+            {/* Verification warning */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '24px'
+            }}>
+              <p style={{
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.5)',
+                margin: 0
+              }}>
+                Follower counts are subject to periodic verification by our system.
+                Knowingly entering false information may result in suspension from the Creator Program.
+              </p>
+            </div>
+
             {/* Actions */}
             <div style={{
               display: 'flex',
