@@ -61,6 +61,14 @@ export default function ApplyPage() {
   const [bio, setBio] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
+  // Slug availability checking
+  const [slugCheckResult, setSlugCheckResult] = useState<{
+    available: boolean;
+    slug: string;
+    message: string;
+  } | null>(null);
+  const [checkingSlug, setCheckingSlug] = useState(false);
+
   // Honeypot field (anti-spam)
   const [honeypot, setHoneypot] = useState('');
 
@@ -121,6 +129,38 @@ export default function ApplyPage() {
 
     checkUserAndApplication();
   }, [router]);
+
+  // Debounced slug availability check
+  useEffect(() => {
+    // Clear result if display name is too short
+    if (displayName.trim().length < 2) {
+      setSlugCheckResult(null);
+      return;
+    }
+
+    setCheckingSlug(true);
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/v1/content-creators/check-slug?displayName=${encodeURIComponent(displayName.trim())}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setSlugCheckResult({
+              available: data.available,
+              slug: data.slug,
+              message: data.message || ''
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error checking slug availability:', error);
+      } finally {
+        setCheckingSlug(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [displayName]);
 
   const addPlatform = () => {
     if (platforms.length >= 5) return;
@@ -673,6 +713,40 @@ export default function ApplyPage() {
                   onFocus={(e) => e.target.style.borderColor = 'rgba(251, 191, 36, 0.5)'}
                   onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
                 />
+                {/* Slug availability status */}
+                {displayName.trim().length >= 2 && (
+                  <div style={{
+                    marginTop: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '13px'
+                  }}>
+                    {checkingSlug ? (
+                      <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+                        Checking availability...
+                      </span>
+                    ) : slugCheckResult ? (
+                      <>
+                        {slugCheckResult.available ? (
+                          <>
+                            <span style={{ color: '#22c55e' }}>✓</span>
+                            <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                              Your profile URL will be: <span style={{ color: '#fbbf24' }}>/content-creators/{slugCheckResult.slug}</span>
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span style={{ color: '#f59e0b' }}>⚠</span>
+                            <span style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                              {slugCheckResult.message || 'This name is taken. Your URL will have a unique suffix added.'}
+                            </span>
+                          </>
+                        )}
+                      </>
+                    ) : null}
+                  </div>
+                )}
               </div>
 
               {/* Platforms */}
