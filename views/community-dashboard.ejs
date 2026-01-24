@@ -525,7 +525,7 @@ function renderActiveCommunity(activeCommunity) {
       cardsContainer.append(`
         <div class="col-md-3 community-card">
           ${isLegacy ? `
-            <div class="trash-icon-container" onclick="showDeleteModal('${community._id}', '${name.replace(/'/g, "\\'")}')">
+            <div class="trash-icon-container" onclick="showDeleteModal('${community._id}', '${name.replace(/\\/g, "\\\\").replace(/'/g, "\\'")}')">
               <i class="fas fa-trash-alt trash-icon"></i>
             </div>
           ` : ''}

@@ -90,6 +90,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
     res.render("about");
   });
 
+  // Redirect /join/:code to /invite-code?code=:code (Next.js page)
+  app.get("/join/:code", function (req, res) {
+    const code = req.params.code;
+    res.redirect(`/invite-code?code=${encodeURIComponent(code)}`);
+  });
+
   // About Us page is now handled by Next.js at app/about-us/page.tsx
   // app.get("/about-us", function (req, res) {
   //   res.render("about-us");
@@ -112,12 +118,12 @@ module.exports = function (app, passport, server, nextApp, handle) {
       const response = await axios.get(apiUrl, config);
       const community = response.data || {};
 
-      // Fetch paginated departments (6 per page, page 1 by default)
+      // Fetch first page of departments (6 per page, more loaded via client-side pagination)
       const userId = req.user && req.user._doc ? req.user._doc._id : (req.user && req.user._id ? req.user._id : null);
-      const page = parseInt(req.query.deptPage, 10) || 1;
       let departments = [];
-      let totalCount = 0;
-      let totalPages = 1;
+      let departmentsTotalCount = 0;
+      let departmentTemplateTypes = [];
+      const deptPerPage = 6;
       // Determine if user is a member of the community
       let isMemberApproved = false;
       if (req.user && req.user._doc && req.user._doc.user && Array.isArray(req.user._doc.user.communities) && community && community._id) {
@@ -127,34 +133,21 @@ module.exports = function (app, passport, server, nextApp, handle) {
           }
         });
       }
-      if (community && community._id && userId && isMemberApproved) {
-        // Use v1 route to get all departments for members
-        const deptsApiUrl = `${policeCadApiUrl}/api/v1/community/${community._id}/departments`;
-        const deptsResponse = await axios.get(deptsApiUrl, config);
-        const allDepartments = deptsResponse.data.departments || [];
-        totalCount = allDepartments.length;
-        totalPages = Math.max(1, Math.ceil(totalCount / 6));
-        const startIdx = (page - 1) * 6;
-        const endIdx = startIdx + 6;
-        departments = allDepartments.slice(startIdx, endIdx);
-      } else if (community && community._id && userId) {
-        // Fallback to v2 paginated for non-members
-        const deptsApiUrl = `${policeCadApiUrl}/api/v2/community/${community._id}/departments?userId=${userId}&page=${page}&limit=6`;
+      if (community && community._id && userId) {
+        // Use v2 paginated API - fetch only first page
+        const deptsApiUrl = `${policeCadApiUrl}/api/v2/community/${community._id}/departments?userId=${userId}&page=1&limit=${deptPerPage}`;
         const deptsResponse = await axios.get(deptsApiUrl, config);
         departments = deptsResponse.data.data || [];
-        totalCount = deptsResponse.data.totalCount || 0;
-        totalPages = Math.max(1, Math.ceil(totalCount / 6));
+        departmentsTotalCount = deptsResponse.data.totalCount || departments.length;
+        departmentTemplateTypes = deptsResponse.data.templateTypes || [];
       }
       res.render("community-details", {
         user: req.user,
         community,
         departments,
+        departmentsTotalCount,
+        departmentTemplateTypes,
         query: req.query,
-        deptPagination: {
-          totalCount,
-          currentPage: page,
-          totalPages
-        },
         referer: encodeURIComponent(`/community/${hash}`),
         redirect: encodeURIComponent(redirect),
       });
@@ -1246,7 +1239,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           try {
             const userDepartmentsResponse = await axios.get(apiUrl, config);
             const userDepartments = userDepartmentsResponse.data.data || [];
-            const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId && dept.accessStatus === 'approved');
             if (!userHasAccess) {
               return res.status(403).render("error", {
                 message: "You don't have access to this department. Please contact the department administrator.",
@@ -1357,7 +1350,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           try {
             const userDepartmentsResponse = await axios.get(apiUrl, config);
             const userDepartments = userDepartmentsResponse.data.data || [];
-            const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId && dept.accessStatus === 'approved');
             if (!userHasAccess) {
               return res.status(403).render("error", {
                 message: "You don't have access to this department. Please contact the department administrator.",
@@ -1525,7 +1518,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           try {
             const userDepartmentsResponse = await axios.get(apiUrl, config);
             const userDepartments = userDepartmentsResponse.data.data || [];
-            const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId && dept.accessStatus === 'approved');
             if (!userHasAccess) {
               return res.status(403).render("error", {
                 message: "You don't have access to this department. Please contact the department administrator.",
@@ -1626,7 +1619,7 @@ module.exports = function (app, passport, server, nextApp, handle) {
           try {
             const userDepartmentsResponse = await axios.get(apiUrl, config);
             const userDepartments = userDepartmentsResponse.data.data || [];
-            const userHasAccess = userDepartments.some(dept => dept._id === departmentId);
+            const userHasAccess = userDepartments.some(dept => dept._id === departmentId && dept.accessStatus === 'approved');
             if (!userHasAccess) {
               return res.status(403).render("error", {
                 message: "You don't have access to this department. Please contact the department administrator.",
@@ -7742,14 +7735,14 @@ module.exports = function (app, passport, server, nextApp, handle) {
     try {
       const { communityId } = req.params;
       const { type, page = 1, limit = 10 } = req.query;
-      
+
       if (!isValidObjectIdLength(communityId, "Invalid community ID")) {
         return res.status(400).json({ error: "Invalid community ID" });
       }
 
       const skip = (parseInt(page) - 1) * parseInt(limit);
       const query = { community: communityId, isActive: true };
-      
+
       if (type && ['main', 'session', 'training'].includes(type)) {
         query.type = type;
       }
@@ -7760,7 +7753,8 @@ module.exports = function (app, passport, server, nextApp, handle) {
         .limit(parseInt(limit))
         .populate('creator', 'username profilePicture')
         .populate('reactions.user', 'username profilePicture')
-        .populate('comments.user', 'username profilePicture');
+        .populate('comments.user', 'username profilePicture')
+        .lean();
 
       const total = await Announcement.countDocuments(query);
 

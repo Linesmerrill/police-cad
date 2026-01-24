@@ -153,7 +153,7 @@ function renderNotifications() {
             <div style="flex-shrink: 0;">
               <button style="background: none; border: none; color: #a0aec0; font-size: 1.2rem; cursor: pointer; padding: 0.5rem; border-radius: 4px; transition: all 0.2s;" onclick="openNotificationMenu('${
                 notification.notificationId
-              }')" onmouseover="this.style.color='#f7fafc'" onmouseout="this.style.color='#a0aec0'">
+              }', event)" onmouseover="this.style.color='#f7fafc'" onmouseout="this.style.color='#a0aec0'">
                 <i class="fas fa-ellipsis-v"></i>
               </button>
             </div>
@@ -318,42 +318,81 @@ function handleNotificationAction(notificationId, action) {
     });
 }
 
-function openNotificationMenu(notificationId) {
+function openNotificationMenu(notificationId, event) {
+  // Prevent event bubbling
+  if (event) {
+    event.stopPropagation();
+  }
+
   selectedNotificationId = notificationId;
   const notification = allNotifications.find(
     (n) => n.notificationId === notificationId
   );
   if (!notification) return;
 
-  // Update modal content based on seen status
-  const $modalBody = $("#notificationMenuModal .heroui-modal-content div:last-child");
-  $modalBody.empty();
-  if (!notification.seen) {
-    $modalBody.append(`
-        <button onclick="markNotificationAsRead()" style="background:#35385a; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:left; width:100%; margin-bottom:0.75rem;">
-          <i class="fa fa-check" style="margin-right:0.5rem; color:#48bb78;"></i>
-          Mark as Read
-        </button>
-        <button onclick="deleteNotification()" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:left; width:100%;">
-          <i class="fa fa-trash" style="margin-right:0.5rem;"></i>
-          Delete
-        </button>
-      `);
-  } else {
-    $modalBody.append(`
-        <button onclick="deleteNotification()" style="background:#f56565; color:#fff; border:none; border-radius:8px; padding:0.75rem 1rem; font-weight:500; cursor:pointer; transition:all 0.2s; text-align:left; width:100%;">
-          <i class="fa fa-trash" style="margin-right:0.5rem;"></i>
-          Delete
-        </button>
-      `);
+  const menu = document.getElementById('notificationContextMenu');
+  if (!menu) return;
+
+  // Show/hide "Mark as Read" button based on seen status
+  const markReadBtn = document.getElementById('notificationMarkReadBtn');
+  if (markReadBtn) {
+    markReadBtn.style.display = notification.seen ? 'none' : 'flex';
   }
 
-  openNotificationMenuModal();
+  // Position the menu near the click
+  const button = event ? event.currentTarget : null;
+  if (button) {
+    const rect = button.getBoundingClientRect();
+    const menuWidth = 160;
+    const menuHeight = notification.seen ? 44 : 88; // Approximate height
+
+    // Position to the left of the button, aligned to top
+    let left = rect.left - menuWidth - 8;
+    let top = rect.top;
+
+    // If menu would go off left edge, position to the right instead
+    if (left < 8) {
+      left = rect.right + 8;
+    }
+
+    // If menu would go off bottom, adjust up
+    if (top + menuHeight > window.innerHeight - 8) {
+      top = window.innerHeight - menuHeight - 8;
+    }
+
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+  }
+
+  menu.style.display = 'block';
+
+  // Close menu when clicking outside
+  setTimeout(() => {
+    document.addEventListener('click', closeNotificationMenuOnClickOutside);
+  }, 0);
+}
+
+function closeNotificationMenuOnClickOutside(event) {
+  const menu = document.getElementById('notificationContextMenu');
+  if (menu && !menu.contains(event.target)) {
+    closeNotificationContextMenu();
+  }
+}
+
+function closeNotificationContextMenu() {
+  const menu = document.getElementById('notificationContextMenu');
+  if (menu) {
+    menu.style.display = 'none';
+  }
+  document.removeEventListener('click', closeNotificationMenuOnClickOutside);
 }
 
 function markNotificationAsRead() {
   const userId = dbUser._id;
   if (!selectedNotificationId) return;
+
+  // Close menu immediately for better UX
+  closeNotificationContextMenu();
 
   $.ajax({
     url: `${API_URL}/api/v1/user/${userId}/notifications/${selectedNotificationId}/read`,
@@ -366,7 +405,6 @@ function markNotificationAsRead() {
       );
       renderNotifications();
       fetchNotifications(0); // Refresh unseenCount
-      closeNotificationMenuModal();
     },
     error: function (xhr) {
       console.error("Error marking notification as read:", xhr.responseText);
@@ -382,6 +420,9 @@ function deleteNotification() {
   const userId = dbUser._id;
   if (!selectedNotificationId) return;
 
+  // Close menu immediately for better UX
+  closeNotificationContextMenu();
+
   allNotifications = allNotifications.filter(
     (n) => n.notificationId !== selectedNotificationId
   );
@@ -392,7 +433,6 @@ function deleteNotification() {
     method: "DELETE",
     success: function () {
       fetchNotifications(0); // Refresh unseenCount
-      closeNotificationMenuModal();
     },
     error: function (xhr) {
       console.error("Error deleting notification:", xhr.responseText);
@@ -402,10 +442,6 @@ function deleteNotification() {
       );
     },
   });
-}
-
-function closeNotificationMenuModal() {
-  $("#notificationMenuModal").modal("hide");
 }
 
 function showToastNotification(notification) {
