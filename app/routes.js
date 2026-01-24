@@ -3080,6 +3080,28 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Sync follower counts for content creator
+  app.post("/api/v1/content-creators/me/sync", apiAuthCheck, async function (req, res) {
+    try {
+      const userId = req.user._id || req.user.id;
+      const response = await axios.post(`${policeCadApiUrl}/api/v1/content-creators/me/sync`, req.body, {
+        headers: {
+          ...config.headers,
+          'X-User-ID': userId.toString(),
+          'Content-Type': 'application/json'
+        }
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error syncing followers:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ success: false, message: "Failed to sync followers" });
+      }
+    }
+  });
+
   // Get owned communities for content creator (for community promotion)
   app.get("/api/v1/content-creators/me/owned-communities", apiAuthCheck, async function (req, res) {
     try {
@@ -3145,15 +3167,24 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Get Cloudinary config for uploads
+  app.get("/api/v1/cloudinary-config", function (req, res) {
+    res.json({
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+      apiKey: process.env.CLOUDINARY_API_KEY || '',
+      uploadPreset: process.env.CLOUDINARY_UPLOAD_PRESET || ''
+    });
+  });
+
   // Generate Cloudinary signature for uploads
-  app.post("/api/v1/generate-signature", apiAuthCheck, async function (req, res) {
+  app.post("/api/v1/generate-signature", async function (req, res) {
     try {
       const response = await axios.post(`${policeCadApiUrl}/api/v1/generate-signature`, req.body, config);
       res.json(response.data);
     } catch (error) {
-      console.error('Error generating signature:', error.message);
+      console.error('Error generating signature:', error.message, error.response?.data);
       if (error.response) {
-        res.status(error.response.status).json(error.response.data);
+        res.status(error.response.status).json(error.response.data || { error: "Signature generation failed" });
       } else {
         res.status(500).json({ error: "Failed to generate signature" });
       }

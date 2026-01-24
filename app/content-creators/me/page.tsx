@@ -509,6 +509,10 @@ export default function CreatorStatusPage() {
     setEditError(null);
 
     try {
+      // Get Cloudinary config from server
+      const configResponse = await fetch('/api/v1/cloudinary-config');
+      const { cloudName, apiKey, uploadPreset } = await configResponse.json();
+
       // Get signature from server
       const signatureResponse = await fetch('/api/v1/generate-signature', {
         method: 'POST',
@@ -521,20 +525,23 @@ export default function CreatorStatusPage() {
         throw new Error('Failed to get upload signature');
       }
 
-      const { timestamp, signature, cloudName, apiKey } = await signatureResponse.json();
+      const { timestamp, signature } = await signatureResponse.json();
 
-      // Upload to Cloudinary
+      // Upload to Cloudinary with signed parameters (matching cloudinary-upload.js)
       const formData = new FormData();
       formData.append('file', file);
       formData.append('api_key', apiKey);
       formData.append('timestamp', timestamp);
       formData.append('signature', signature);
-      formData.append('folder', 'content-creators');
+      formData.append('upload_preset', uploadPreset);
 
-      const cloudinaryResponse = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: 'POST',
-        body: formData
-      });
+      const cloudinaryResponse = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        {
+          method: 'POST',
+          body: formData
+        }
+      );
 
       const result = await cloudinaryResponse.json();
 

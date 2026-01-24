@@ -311,9 +311,6 @@ export default function CreatorProfilePage() {
       <section
         style={{
           position: 'relative',
-          minHeight: '60vh',
-          display: 'flex',
-          alignItems: 'center',
           overflow: 'hidden',
           background: `linear-gradient(180deg, #0a0a0f 0%, ${themeBgColor} 50%, #0a0a0f 100%)`
         }}
@@ -640,7 +637,12 @@ export default function CreatorProfilePage() {
             flexDirection: 'column',
             gap: '16px'
           }}>
-            {creator.platforms.map((platform) => {
+            {[...creator.platforms].sort((a, b) => {
+              // Sort "other" to the end
+              if (a.type === 'other') return 1;
+              if (b.type === 'other') return -1;
+              return 0;
+            }).map((platform) => {
               const config = platformConfig[platform.type];
               if (!config) return null;
 
