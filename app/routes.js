@@ -2936,6 +2936,24 @@ module.exports = function (app, passport, server, nextApp, handle) {
     }
   });
 
+  // Check if slug is available (public) - MUST be before /:slug route
+  app.get("/api/v1/content-creators/check-slug", async function (req, res) {
+    try {
+      const response = await axios.get(`${policeCadApiUrl}/api/v1/content-creators/check-slug`, {
+        ...config,
+        params: req.query
+      });
+      res.json(response.data);
+    } catch (error) {
+      console.error('Error checking slug:', error.message);
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+      } else {
+        res.status(500).json({ error: "Failed to check slug" });
+      }
+    }
+  });
+
   // Get content creator by slug (public) - MUST be after /me routes to avoid matching "me" as slug
   app.get("/api/v1/content-creators/:slug", async function (req, res) {
     try {
